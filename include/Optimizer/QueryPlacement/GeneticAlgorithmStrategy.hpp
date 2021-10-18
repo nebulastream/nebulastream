@@ -45,11 +45,11 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
     std::set<int> sourceNodesIndices;
     std::map<int, std::vector<int>> mapOfOperatorToSourceNodes;
     std::vector<TopologyNodePtr> topologyNodes;
+    std::vector<uint32_t> mapOfBreadthFirstToDepthFirst;
     std::vector<NodePtr> queryOperators;
     std::vector<bool> transitiveClosureOfTopology;//transitive closure of the topology (reachability matrix)
     std::vector<double> operatorDMF;
     std::vector<int> operatorLoad;
-    int numOfOperators;
     struct Placement {
         std::vector<bool> chromosome;
         double cost;
@@ -74,7 +74,7 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     double getCost(Placement placement);
 
-    Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t time, QueryPlanPtr queryPlan);
+    Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t numOfIterations, QueryPlanPtr queryPlan);
 
     Placement mutate(Placement placement, QueryPlanPtr queryPlan);
 
@@ -82,6 +82,7 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     bool checkPlacementValidation(Placement placement, QueryPlanPtr queryPlan);
     std::vector<TopologyNodePtr> topologySnapshot(TopologyPtr topology);
+    std::vector<uint32_t> breadthFirstNodeIterator(TopologyPtr topology);
     //void eliminateReachableNodes(std::vector<int>* topologyIndices);
     Placement crossOver(GeneticAlgorithmStrategy::Placement placement, GeneticAlgorithmStrategy::Placement other,uint32_t crossOverIndex);
     bool placementAlreadyExists(std::vector<GeneticAlgorithmStrategy::Placement> population, GeneticAlgorithmStrategy::Placement offpring);

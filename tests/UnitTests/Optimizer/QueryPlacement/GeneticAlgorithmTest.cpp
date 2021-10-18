@@ -1078,13 +1078,13 @@ TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest2) {
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
-    TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 14);
+    TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 50);
     topology->setAsRoot(rootNode);
 
     TopologyNodePtr fogTopNode1 = TopologyNode::create(2, "localhost", grpcPort, dataPort, 10);
     topology->addNewPhysicalNodeAsChild(rootNode, fogTopNode1);
 
-    TopologyNodePtr fogTopNode2 = TopologyNode::create(3, "localhost", grpcPort, dataPort, 8);
+    TopologyNodePtr fogTopNode2 = TopologyNode::create(3, "localhost", grpcPort, dataPort, 10);
     topology->addNewPhysicalNodeAsChild(rootNode, fogTopNode2);
 
     TopologyNodePtr fogBottomNode1 = TopologyNode::create(4, "localhost", grpcPort, dataPort, 5);
@@ -1208,12 +1208,12 @@ TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest2) {
     // adding property of the filter
     std::map<std::string, std::any> filterProp;
     filterProp.insert(std::make_pair("load", 2));
-    filterProp.insert(std::make_pair("dmf", 0.3));
+    filterProp.insert(std::make_pair("dmf", 0.6));
 
     // adding property of the map
     std::map<std::string, std::any> mapProp;
     mapProp.insert(std::make_pair("load", 3));
-    mapProp.insert(std::make_pair("dmf", 3.0));
+    mapProp.insert(std::make_pair("dmf", 1.2));
 
     // adding property of the sink
     std::map<std::string, std::any> sinkProp;
@@ -1253,6 +1253,8 @@ TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest2) {
     typeInferencePhase->execute(queryPlan);
 
     UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties);
+    NES_DEBUG(queryPlan->toString());
+    auto testOperators =  QueryPlanIterator(queryPlan).snapshot();
     auto start = std::chrono::high_resolution_clock::now();
     ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(queryPlan));
     auto stop = std::chrono::high_resolution_clock::now();

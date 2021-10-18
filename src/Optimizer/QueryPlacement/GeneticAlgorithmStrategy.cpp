@@ -54,6 +54,7 @@ GeneticAlgorithmStrategy::GeneticAlgorithmStrategy(GlobalExecutionPlanPtr global
 bool GeneticAlgorithmStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const QueryId queryId = queryPlan->getQueryId();
     topologyNodes = topologySnapshot(topology);
+    mapOfBreadthFirstToDepthFirst = breadthFirstNodeIterator(topology);
     queryOperators = QueryPlanIterator(queryPlan).snapshot();
     try {
         NES_INFO("GeneticAlgorithmStrategy: Performing placement of the input query plan with id " << queryId);
@@ -97,7 +98,8 @@ bool GeneticAlgorithmStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan)
 }
 
 void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
-
+    //topology->print();
+    //NES_DEBUG(queryPlan->toString());
     transitiveClosureOfTopology = getTransitiveClosure();
     //Get the DMF and load of each query operator and save it in the corresponding vector
     for (auto currentOperator : queryOperators) {
@@ -106,16 +108,36 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
     }
     population.clear();
     initializePopulation(queryPlan);
-    Placement optimizedPlacement;
-    //check if the query contains more than one operator other than sink and
-    int numOfSourceOperators = queryPlan->getSourceOperators().size();
-    if(numOfOperators > numOfSourceOperators+2){
-        optimizedPlacement = getOptimizedPlacement(population, 10, queryPlan);
-    }else{
-        optimizedPlacement = population[0];
+    Placement initialPlacement = population[0];
+    Placement optimizedPlacement = getOptimizedPlacement(population, 100, queryPlan);
+    NES_DEBUG("Best Initial Placement: ");
+    // print the placement
+    for(uint32_t f = 0 ; f < topologyNodes.size();f++){
+        std::string s2 = "";
+        for(uint32_t j = 0; j <queryOperators.size(); j++){
+            if(initialPlacement.chromosome.at(f*queryOperators.size()+j)){
+                s2.append(std::to_string(queryOperators[j]->as<OperatorNode>()->getId()));
+                s2.append(" ");
+            }
+        }
+        NES_DEBUG("Topology Node with ID:  "<<topologyNodes[f]->getId()<<" has Operators:  "<<s2);
     }
+    NES_DEBUG("Optimized Placement: ");
+    // print the placement
+    for(uint32_t f = 0 ; f < topologyNodes.size();f++){
+        std::string s2 = "";
+        for(uint32_t j = 0; j <queryOperators.size(); j++){
 
-    //Placement optimizedPlacement = population[0];
+            if(optimizedPlacement.chromosome.at(f*queryOperators.size()+j)){
+                s2.append(std::to_string(queryOperators[j]->as<OperatorNode>()->getId()));
+                s2.append(" ");
+            }
+        }
+        NES_DEBUG("Topology Node with ID:  "<<topologyNodes[f]->getId()<<" has Operators:  "<<s2);
+    }
+    NES_DEBUG("Initial Cost: " << initialPlacement.cost);
+    NES_DEBUG("Optimized Cost: " << optimizedPlacement.cost);
+
     PlacementMatrix mapping;
     for (uint32_t i = 0; i < topologyNodes.size(); i++) {
         std::vector<bool> genome;
@@ -129,27 +151,24 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
 
 void GeneticAlgorithmStrategy::initializePopulation(QueryPlanPtr queryPlan) {
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 500; i++) {
         Placement placement = generatePlacement(queryPlan);
+        // check if an identical placement already exists to avoid duplicate placements.
         if(placementAlreadyExists(population,placement))
             continue;
         placement.cost = getCost(placement);
+        // Find the index of the current placement in population depending on the cost, we order the placements from low to high cost
         auto pos = std::find_if(population.begin(), population.end(), [placement](auto s) {
             return s.cost > placement.cost;
         });
         population.insert(pos, placement);
-        bool valid = checkPlacementValidation(placement, queryPlan);
-        if (!valid) {
-            NES_DEBUG("Placement is invalid ");
-            exit(1);
-        }
     }
 }
 
 GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::generatePlacement(QueryPlanPtr queryPlan) {
     Placement placement;
     uint32_t numOfTopologyNodes = topologyNodes.size();
-    numOfOperators = queryOperators.size();
+    uint32_t numOfOperators = queryOperators.size();
     std::vector<bool> chromosome(numOfOperators * numOfTopologyNodes);
     int candidateTopologyNodeIndex = 0;//the position of candidate nodes in "topologyNodes" vector
     uint32_t operatorIndex = 1;        // start from the second operator because the first operator is sink
@@ -162,6 +181,7 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::generatePlacement(
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(0, 1);
     while (numOfOperatorsToPlace) {
+        //Get the vector of topology source nodes of the current operator
         std::vector<int> operatorSourceNodeIndices = mapOfOperatorToSourceNodes.find(operatorIndex)->second;
         // Check if the current operator to place is a source operator
         if ((queryOperators[operatorIndex]->as<OperatorNode>()->instanceOf<SourceLogicalOperatorNode>())) {
@@ -187,14 +207,14 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::generatePlacement(
                 operatorIndex += 1;
                 numOfOperatorsToPlace -= 1;
                 continue;
-        }
+        }    //  if the current topology node is not a source node
         if (!visitedQueryOperators.at(operatorIndex)) {
             OperatorNodePtr parentOperator = queryOperators.at(operatorIndex)
                                                  ->getParents()[0]
                                                  ->as<OperatorNode>();//We assume each operator to have only one parent
             auto it = std::find(queryOperators.begin(), queryOperators.end(), parentOperator);
             int parentOperatorIndex = std::distance(queryOperators.begin(), it);
-            int parentOperatorTopologyIndex = -1;//topology nodes where the parent operator is assigned
+            int parentOperatorTopologyIndex = -1;//topology node where the parent operator is assigned
             for (uint32_t i = 0; i < topologyNodes.size(); i++) {
                 if (chromosome[i * numOfOperators + parentOperatorIndex]) {
                     parentOperatorTopologyIndex = i;
@@ -205,10 +225,11 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::generatePlacement(
             candidateTopologyNodeIndex = parentOperatorTopologyIndex;
         }
 
-        int placeTheOperator = distrib(gen);
+        int placeTheOperator = distrib(gen);    //randomly decide whether to place the operator in the current topology node
         if (!placeTheOperator) {
             int newCandidateNodeIndex = -1;
-            auto children = topologyNodes[candidateTopologyNodeIndex]->getChildren();
+            auto children = topologyNodes[candidateTopologyNodeIndex]->getChildren();   // get children topology nodes of the current topology node
+            // find the child node that is reachable from all source nodes of the operator, since we assume a tree-like topology there will be at most only one valid child node
             for (auto child : children) {
                 auto iterator = std::find(topologyNodes.begin() + candidateTopologyNodeIndex, topologyNodes.end(), child);
                 int childNodeIndex = std::distance(topologyNodes.begin(), iterator);
@@ -224,6 +245,7 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::generatePlacement(
                     break;
                 }
             }
+            // if none of the child nodes is valid, then place the operator in the parent node
             if (newCandidateNodeIndex < 0) {
                 chromosome[candidateTopologyNodeIndex * numOfOperators + operatorIndex] = true;
                 operatorIndex += 1;
@@ -243,70 +265,32 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::generatePlacement(
 }
 
 GeneticAlgorithmStrategy::Placement
-GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> population, uint32_t time, QueryPlanPtr queryPlan) {
+GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> population, uint32_t numOfIterations, QueryPlanPtr queryPlan) {
 
-    Placement optimizedPlacement = population[0];
+    Placement optimizedPlacement = population[0];   //keep track of the best placement so far.
     std::vector<GeneticAlgorithmStrategy::Placement> offspringPopulation;
-    std::map<uint32_t, int> counts;
-    std::map<uint32_t, uint32_t> populationSize;
+    uint32_t populationSize = population.size();
+    /*std::map<uint32_t, uint32_t> populationSizes;
     std::map<uint32_t, double> costsAfterGA;
-     NES_DEBUG("Cost before Optimization:  " << population[0].cost);
-    costsAfterGA.insert(std::make_pair(0, optimizedPlacement.cost));
-    for (uint32_t i = 0; i < time; i++) {
+    std::map<uint32_t, int> counts;
+    NES_DEBUG("Cost before Optimization:  " << population[0].cost);
+    costsAfterGA.insert(std::make_pair(0, optimizedPlacement.cost));    */
+    for (uint32_t i = 0; i < numOfIterations; i++) {
         /* int i = 0;
     for (auto start = std::chrono::steady_clock::now(), now = start; now < start + std::chrono::seconds{time};
          now = std::chrono::steady_clock::now()) {
         int numOfInvalidOffsprings = 0; */
-        // cross over placements from the current generation
-        int numOfInvalidOffsprings = 0;
-        uint32_t selectedPortion = 10;
-        if (population.size() < selectedPortion)
-            selectedPortion = population.size();
 
-        for (uint32_t j = 0; j < selectedPortion; j++) {
+        uint32_t j = 0;
+        while ( j < population.size() -2) {
+            if(offspringPopulation.size() >= populationSize)
+                break;
             Placement parent1 = population[j];
-            int beginPlacementParent1 = -1;
-            int endPlacementParent1 = -1;
-            for (uint32_t m = 1; m < parent1.chromosome.size(); m++) {
-                if ( parent1.chromosome.at(m)) {
-                    beginPlacementParent1 = m;
-                    break;
-                }
-            }
-            for (uint32_t m = parent1.chromosome.size()-2; m > 0 ; m--) {
-                if ( parent1.chromosome.at(m)) {
-                    endPlacementParent1 = m;
-                    break;
-                }
-            }
-            for (uint32_t k = j+1; k < selectedPortion; k++) {
-
+            for (uint32_t k = j+1; k < population.size() -1; k++) {
                 Placement parent2 = population[k];
-                int beginPlacementParent2 = -1;
-                int endPlacementParent2 = -1;
-                for (uint32_t m = 1; m < parent2.chromosome.size(); m++) {
-                    if ( parent2.chromosome.at(m)) {
-                        beginPlacementParent2 = m;
-                        break;
-                    }
-                }
-                for (uint32_t m = parent2.chromosome.size()-2; m > 0 ; m--) {
-                    if ( parent2.chromosome.at(m)) {
-                        endPlacementParent2 = m;
-                        break;
-                    }
-                }
-                uint32_t begin = beginPlacementParent2;
-                if(beginPlacementParent1 > beginPlacementParent2)
-                    begin = beginPlacementParent1;
-                uint32_t end = endPlacementParent2;
-                if(endPlacementParent1 < endPlacementParent2)
-                    end = endPlacementParent1;
-                if(begin >= end)
-                    continue;
                 //srand(time(NULL));
-                uint32_t crossOverIndex = (uint32_t) (begin + rand() % (end-begin));
-
+                //uint32_t crossOverIndex = (uint32_t) (1 + rand() % (queryOperators.size()-2));
+                uint32_t crossOverIndex = queryOperators.size()/2;  // We cross over the query in the middle
                 Placement offspring1 = crossOver(parent1, parent2,crossOverIndex);
                 Placement offspring2 = crossOver(parent2, parent1,crossOverIndex);
 
@@ -318,13 +302,13 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
                     tempOffspring1.cost = getCost(tempOffspring1);
                 }
                 else{
-                    numOfInvalidOffsprings += 1;
+                    //numOfInvalidOffsprings += 1;
                 }
                 if (checkPlacementValidation(tempOffspring2, queryPlan)) {
                     tempOffspring2.cost = getCost(tempOffspring2);
                 }
                 else{
-                    numOfInvalidOffsprings += 1;
+                    //numOfInvalidOffsprings += 1;
                 }
                 offspring1 = mutate(offspring1, queryPlan);
                 offspring2 = mutate(offspring2, queryPlan);
@@ -348,23 +332,29 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
                     });
                     offspringPopulation.insert(pos, offspring1);
                 }
+                if(offspringPopulation.size() >= populationSize)
+                    break;
                 if (!placementAlreadyExists(offspringPopulation, offspring2)) {
                     auto pos = std::find_if(offspringPopulation.begin(), offspringPopulation.end(), [offspring2](auto s) {
                         return s.cost > offspring2.cost;
                     });
                     offspringPopulation.insert(pos, offspring2);
                 }
+                if(offspringPopulation.size() >= populationSize)
+                    break;
             }
+            j += 1;
         }
 
-        populationSize.insert(std::make_pair(i, selectedPortion));
+        /*populationSizes.insert(std::make_pair(i, selectedPortion));
         counts.insert(std::make_pair(i, numOfInvalidOffsprings));
-        costsAfterGA.insert(std::make_pair(i + 1, offspringPopulation[0].cost));
+        costsAfterGA.insert(std::make_pair(i + 1, offspringPopulation[0].cost));  */
 
         if (offspringPopulation.size() && optimizedPlacement.cost > offspringPopulation[0].cost) {
             optimizedPlacement = offspringPopulation[0];
         }
         //i += 1;
+        population.clear();
         population = offspringPopulation;
         offspringPopulation.clear();
     }
@@ -373,12 +363,12 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
     for (auto& [i, numOfInvalidOffsprings] : counts) {
         NES_DEBUG("Current Generation:  " << i+1);
         NES_DEBUG("Optimized Cost of this Generation:  " << costsAfterGA[i+1]);
-        NES_DEBUG("Current Population Size:  " << populationSize.at(i));
+        NES_DEBUG("Current Population Size:  " << populationSizes.at(i));
         NES_DEBUG("Number of invalid offsprings:  " << numOfInvalidOffsprings);
         //NES_DEBUG("Best cost of this generation:  " << costs[i]);
 
-    }
-    */
+    }   */
+
     return optimizedPlacement;
 }
 
@@ -399,6 +389,7 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::mutate(GeneticAlgo
                    != sourceOperators.end())) {
             mutationOperatorIdx = rand() % queryOperators.size();
         }
+        //find the node where the operator to mutate is placed in
         uint32_t mutationNodeIdx = (uint32_t)RAND_MAX;
         for (uint32_t i = 0; i < topologyNodes.size(); i++) {
             if (placement.chromosome.at(i * queryOperators.size() + mutationOperatorIdx)){
@@ -408,9 +399,10 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::mutate(GeneticAlgo
         }
         if(mutationNodeIdx == RAND_MAX)
             return placement;
+        //move the operator from the old node to the new one
         uint32_t newMutationNodeIdx = rand() % topologyNodes.size();
-        uint32_t test = mutationNodeIdx*queryOperators.size() + mutationOperatorIdx;
-        mutatedPlacement.chromosome.at(test) = false;
+        uint32_t temp = mutationNodeIdx*queryOperators.size() + mutationOperatorIdx;
+        mutatedPlacement.chromosome.at(temp) = false;
         mutatedPlacement.chromosome.at(newMutationNodeIdx*queryOperators.size() + mutationOperatorIdx) = true;
     }
 
@@ -553,7 +545,7 @@ void GeneticAlgorithmStrategy ::setMapOfOperatorToSourceNodes(int queryId,
         mapOfStreamNameToSourceNodes[streamName] = streamSourceNodesIndices;
     }
     // map of query operator to logical stream names
-    std::map<int, std::vector<int>> mapOfOperatorToSourceOperatorId;
+    std::map<int, std::set<int>> mapOfOperatorToSourceOperatorId;
     // map of source operator to topology node
     std::map<int, int> mapOfSrcOperatorToTopologyNodeIdx;
 
@@ -573,7 +565,7 @@ void GeneticAlgorithmStrategy ::setMapOfOperatorToSourceNodes(int queryId,
         mapOfSrcOperatorToTopologyNodeIdx[sourceOperator->getId()] = streamSourceNodesIndices[0];
         streamSourceNodesIndices.erase(streamSourceNodesIndices.begin());
         mapOfStreamNameToSourceNodes[streamName] = streamSourceNodesIndices;
-
+        // create a vector of all operators that process data from this source operator
         std::vector<NodePtr> streamOperators = {sourceOperator};//parentOperators;
         std::vector<NodePtr> workStack = {sourceOperator};
         while (!workStack.empty()) {
@@ -585,18 +577,7 @@ void GeneticAlgorithmStrategy ::setMapOfOperatorToSourceNodes(int queryId,
         for (auto streamOperator : streamOperators) {
             auto iterator = std::find(queryOperators.begin(), queryOperators.end(), streamOperator);
             int index = std::distance(queryOperators.begin(), iterator);
-            if (mapOfOperatorToSourceOperatorId.find(index) != mapOfOperatorToSourceOperatorId.end()) {
-                if (std::find(mapOfOperatorToSourceOperatorId[index].begin(),
-                              mapOfOperatorToSourceOperatorId[index].end(),
-                              sourceOperator->getId())
-                    != mapOfOperatorToSourceOperatorId[index].end()) {
-                    continue;
-                } else {
-                    mapOfOperatorToSourceOperatorId[index].push_back(sourceOperator->getId());
-                }
-            } else {
-                mapOfOperatorToSourceOperatorId[index].push_back(sourceOperator->getId());
-            }
+            mapOfOperatorToSourceOperatorId[index].insert(sourceOperator->getId());
         }
     }
     // map of query operator to topology source nodes
@@ -609,63 +590,80 @@ void GeneticAlgorithmStrategy ::setMapOfOperatorToSourceNodes(int queryId,
     }
 }
 double GeneticAlgorithmStrategy::getCost(Placement placement) {
+
     int numberOfOperators = queryOperators.size();
-    //global cost of nodes in the placement
-    std::map<NodePtr, double> globalNodesCost;
-    //std::vector<TopologyNodePtr> placementTopologyNodes = topologySnapshot(placement.topology);
-    //Iterate over all nodes in the placement to calculate the global cost of each node
-    for (int i = topologyNodes.size() - 1; i >= 0; i--) {
-        int assignment_begin = i * numberOfOperators;
-        double localCost = 1;    //if no operators are assigned to the  current node then the local cost is 1
-
+    std::map<uint32_t , double> globalNodesCost;    //global cost of nodes in the placement
+    // we calculate the global costs of the nodes at the bottom of the topology and move upwards, we exclude the root node from the cost
+    for (int i = mapOfBreadthFirstToDepthFirst.size() - 1; i >0; i--) {
+        uint32_t nodeIndex = mapOfBreadthFirstToDepthFirst[i];   // when generating the placement we use depth first iteration, when calculating the cost we use depth first
+        uint32_t assignment_begin = nodeIndex * numberOfOperators;
+        double localCost = 0.0;    //if no operators are assigned to the  current node then the local cost is 1
         int nodeLoad = 0;
-
+        std::map<int, std::vector<double>> mapOfSourceNodeToDMFs; // map of source node to the DMFs of its stream operators (we group the operators placed in the current node based on their physical streams)
         //check which operators are assigned to the current node and add the cost of these operators to the local cost of the current node
         for (int j = 0; j < numberOfOperators; j++) {
             if (placement.chromosome[assignment_begin+j]) {
-                localCost *= operatorDMF.at(j);
+                auto sourcesNodesOfTheCurrentOperator = mapOfOperatorToSourceNodes[j];
+                for(auto sourcesNodeOfTheCurrentOperator : sourcesNodesOfTheCurrentOperator){
+                    mapOfSourceNodeToDMFs[sourcesNodeOfTheCurrentOperator].push_back(operatorDMF.at(j));
+                }
                 nodeLoad += operatorLoad.at(j);
             }
         }
+        //For each physical stream, we multiply the DMFs of its operators then we sum up the results
+        for(auto physicalStreamDMFs : mapOfSourceNodeToDMFs){
+            double streamCost = 1.0;    // In case the none of the operators of this physical stream is placed in the current node (avoid multiplying by zero)
+            for(auto streamDMF : physicalStreamDMFs.second){
+                streamCost *= streamDMF;
+            }
+            localCost += streamCost;
+        }
 
-        //check wether the current node is overloaded if yes then add the overloading penalization  the local cost
-        auto availableCapacity = topologyNodes.at(i)->getAvailableResources();
-        if (nodeLoad > availableCapacity)
-            localCost += (nodeLoad - availableCapacity);
+        //check whether the current node is overloaded if yes then add the overloading penalization the local cost
+        auto availableCapacity = topologyNodes[nodeIndex]->getAvailableResources();
+        if (nodeLoad > availableCapacity){
+            localCost += (double)(nodeLoad - availableCapacity);
+        }
 
         //Add the global cost of the children nodes to the global cost of the current node
         double childGlobalCost = 0;
         double globalCost = 0;
-        auto children = topologyNodes.at(i)->getChildren();
+        auto children = topologyNodes.at(nodeIndex)->getChildren();
         for (auto& child : children) {
-            childGlobalCost = globalNodesCost.at(child);
+            childGlobalCost = globalNodesCost.at(child->as<TopologyNode>()->getId());
             globalCost += localCost * childGlobalCost;
         }
         //In case the current node has no children then the global cost is the local cost
-        if (globalCost == 0)
+        if (globalCost == 0){
             globalCost = localCost;
-        globalNodesCost.insert(std::make_pair(topologyNodes.at(i), globalCost));
+        }
+        globalNodesCost.insert(std::make_pair(topologyNodes[nodeIndex]->getId(), globalCost));
     }
     double cost = 0;
-    std::map<NodePtr, double>::iterator it;
+    std::map<uint32_t , double>::iterator it;
     for (it = globalNodesCost.begin(); it != globalNodesCost.end(); it++) {
         cost += it->second;
     }
-    // return globalNodesCost[placementTopologyNodes.at(0)];
     return cost;
 }
 
 GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::crossOver(GeneticAlgorithmStrategy::Placement placement,
                                                                         GeneticAlgorithmStrategy::Placement other, uint32_t crossOverIndex) {
 
-    Placement offspring = placement;
+    Placement offspring;
     std::vector<bool> offspringChromosome;
-    for (uint32_t i = 0; i < placement.chromosome.size(); i++) {
-        if (i <= crossOverIndex) {
-            offspringChromosome.push_back(placement.chromosome[i]);
-        } else {
-            offspringChromosome.push_back(other.chromosome[i]);
-        }
+    // for each node we cross over the query from both parents.
+    for (uint32_t i = 0; i < topologyNodes.size(); i++) {
+        std::vector<bool> genome;       //operator assignment to the current node
+        std::vector<bool> genomePart1;  //from parent 1
+        std::vector<bool> genomePart2;  //from parent 2
+        auto genomPart1Beginn = placement.chromosome.begin() + i * queryOperators.size();
+        auto genomPart2Beginn = other.chromosome.begin()+crossOverIndex + i * queryOperators.size();
+        genomePart1.assign(genomPart1Beginn, genomPart1Beginn + crossOverIndex);
+        genomePart2.assign(genomPart2Beginn, genomPart2Beginn + (queryOperators.size()-crossOverIndex));
+        genome.insert(genome.end(),genomePart1.begin(),genomePart1.end());
+        genome.insert(genome.end(),genomePart2.begin(),genomePart2.end());
+        offspringChromosome.insert(offspringChromosome.end(),genome.begin(),genome.end());
     }
     offspring.chromosome = offspringChromosome;
     return offspring;
@@ -680,6 +678,20 @@ bool GeneticAlgorithmStrategy::placementAlreadyExists(std::vector<GeneticAlgorit
         ++populationIterator;
     }
     return false;
+}
+std::vector<uint32_t> GeneticAlgorithmStrategy::breadthFirstNodeIterator(TopologyPtr topology) {
+
+    std::vector<uint32_t> mapOfBreadthFirstToDeepFirst;
+    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot());
+    for (auto itr = bfIterator.begin(); itr != bfIterator.end(); ++itr) {
+        for(uint32_t i = 0; i < topologyNodes.size(); i++){
+            if((*itr)->as<TopologyNode>()->getId() == topologyNodes[i]->getId()){
+                mapOfBreadthFirstToDeepFirst.push_back(i);
+                break;
+            }
+        }
+    }
+    return mapOfBreadthFirstToDeepFirst;
 }
 }// namespace NES::Optimizer
 
