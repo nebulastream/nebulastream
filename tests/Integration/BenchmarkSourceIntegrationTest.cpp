@@ -49,8 +49,8 @@ class BenchmarkSourceIntegrationTest : public testing::Test {
     }
 };
 
-/// This test checks that a deployed MemorySource can write M records spanning exactly N records
-TEST_F(BenchmarkSourceIntegrationTest, testMemorySource) {
+/// This test checks that a deployed BenchmarkSource can write M records spanning exactly N records
+TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -91,7 +91,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySource) {
     EXPECT_TRUE(retStart1);
     NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
-    constexpr auto memAreaSize = 1 * 1024 * 1024;// 1 MB
+    constexpr auto memAreaSize = 4096;// 1 MB
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
     auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
