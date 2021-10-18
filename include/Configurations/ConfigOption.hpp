@@ -56,7 +56,7 @@ class ConfigOption {
      * @brief converts config object to human readable form, only prints name and current value
      * @return Name: current Value of config object
      */
-    std::string toStringNameCurrentValue(){
+    std::string toStringNameCurrentValue() {
         std::stringstream ss;
         ss << name << ": " << value << "\n";
         return ss.str();

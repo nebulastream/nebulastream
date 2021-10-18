@@ -32,8 +32,8 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/Array.hpp>
 #include <iostream>
 

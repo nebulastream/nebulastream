@@ -935,10 +935,14 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(const SourceDescripto
                   "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
         auto mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
         auto* serializedSourceConfig = new SerializableSourceConfig();
-        serializedSourceConfig->set_numberofbufferstoproduce(mqttSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
-        serializedSourceConfig->set_numberoftuplestoproduceperbuffer(mqttSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
-        serializedSourceConfig->set_physicalstreamname(mqttSourceDescriptor->getSourceConfig()->getPhysicalStreamName()->getValue());
-        serializedSourceConfig->set_logicalstreamname(mqttSourceDescriptor->getSourceConfig()->getLogicalStreamName()->getValue());
+        serializedSourceConfig->set_numberofbufferstoproduce(
+            mqttSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
+        serializedSourceConfig->set_numberoftuplestoproduceperbuffer(
+            mqttSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
+        serializedSourceConfig->set_physicalstreamname(
+            mqttSourceDescriptor->getSourceConfig()->getPhysicalStreamName()->getValue());
+        serializedSourceConfig->set_logicalstreamname(
+            mqttSourceDescriptor->getSourceConfig()->getLogicalStreamName()->getValue());
         serializedSourceConfig->set_sourcefrequency(mqttSourceDescriptor->getSourceConfig()->getSourceFrequency()->getValue());
         serializedSourceConfig->set_rowlayout(mqttSourceDescriptor->getSourceConfig()->getRowLayout()->getValue());
         serializedSourceConfig->set_flushintervalms(mqttSourceDescriptor->getSourceConfig()->getFlushIntervalMS()->getValue());
@@ -1100,7 +1104,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->release_sourceschema());
         auto ret = MQTTSourceDescriptor::create(schema,
-                                         (const MQTTSourceConfigPtr&) mqttSerializedSourceDescriptor->sourceconfig(),
+                                                (const MQTTSourceConfigPtr&) mqttSerializedSourceDescriptor->sourceconfig(),
                                                 (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor->inputformat());
         return ret;
     }

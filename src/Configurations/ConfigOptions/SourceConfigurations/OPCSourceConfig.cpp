@@ -25,9 +25,7 @@ std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create(std::map<std::string, s
     return std::make_shared<OPCSourceConfig>(OPCSourceConfig(std::move(sourceConfigMap)));
 }
 
-std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create() {
-    return std::make_shared<OPCSourceConfig>(OPCSourceConfig());
-}
+std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create() { return std::make_shared<OPCSourceConfig>(OPCSourceConfig()); }
 
 OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(sourceConfigMap),
@@ -61,7 +59,6 @@ OPCSourceConfig::OPCSourceConfig()
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
       password(ConfigOption<std::string>::create("password", "", "password, needed for: OPCSource")) {
     NES_INFO("OPCSourceConfig: Init source config object with default values.");
-
 }
 
 void OPCSourceConfig::resetSourceOptions() {

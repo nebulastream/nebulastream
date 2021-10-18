@@ -25,9 +25,7 @@ CSVSourceConfigPtr CSVSourceConfig::create(std::map<std::string, std::string> so
     return std::make_shared<CSVSourceConfig>(CSVSourceConfig(std::move(sourceConfigMap)));
 }
 
-CSVSourceConfigPtr CSVSourceConfig::create() {
-    return std::make_shared<CSVSourceConfig>(CSVSourceConfig());
-}
+CSVSourceConfigPtr CSVSourceConfig::create() { return std::make_shared<CSVSourceConfig>(CSVSourceConfig()); }
 
 CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(sourceConfigMap),
@@ -45,10 +43,9 @@ CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfig
 }
 
 CSVSourceConfig::CSVSourceConfig()
-    : SourceConfig(),
-      filePath(ConfigOption<std::string>::create("filePath",
-                                                 "../tests/test_data/QnV_short.csv",
-                                                 "file path, needed for: CSVSource, BinarySource")),
+    : SourceConfig(), filePath(ConfigOption<std::string>::create("filePath",
+                                                                 "../tests/test_data/QnV_short.csv",
+                                                                 "file path, needed for: CSVSource, BinarySource")),
       skipHeader(ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.")) {
     NES_INFO("CSVSourceConfig: Init source config object with default values.");
 }
