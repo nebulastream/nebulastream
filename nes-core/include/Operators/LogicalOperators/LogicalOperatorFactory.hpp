@@ -87,7 +87,7 @@ class LogicalOperatorFactory {
     static LogicalUnaryOperatorNodePtr createInferModelOperator(std::string model,
                                                                 std::vector<ExpressionItemPtr> inputFields,
                                                                 std::vector<ExpressionItemPtr> outputFields,
-                                                                OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                                OperatorId id = Util::getNextOperatorId());
     /**
      * @brief Create a new source operator with source descriptor.
      * @param sourceDescriptor the SourceDescriptorPtr.

@@ -36,7 +36,7 @@ GeneratableInferModelOperator::GeneratableInferModelOperator(OperatorId id,
 
 GeneratableOperatorPtr
 GeneratableInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields, Join::InferModelOperatorHandlerPtr operatorHandler) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);
+    return create(Util::getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields, operatorHandler);
 }
 
 GeneratableOperatorPtr GeneratableInferModelOperator::create(OperatorId id,

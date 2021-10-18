@@ -18,6 +18,8 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <API/Schema.hpp>
+#include <API/Expressions/Expressions.hpp>
 
 namespace NES {
 
@@ -47,7 +49,7 @@ OperatorNodePtr InferModelLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setStringSignature(stringSignature);
+    copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
     return copy;
 }
@@ -125,8 +127,12 @@ void InferModelLogicalOperatorNode::inferStringSignature() {
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    signatureStream << "INFER_MODEL(" + model + ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
-    setStringSignature(signatureStream.str());
+    auto childSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
+    signatureStream << "INFER_MODEL(" + model + ")." << *childSignature.begin()->second.begin();
+
+    //Update the signature
+    auto hashCode = hashGenerator(signatureStream.str());
+    hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 const std::string& InferModelLogicalOperatorNode::getModel() const { return model; }
 

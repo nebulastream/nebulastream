@@ -24,6 +24,7 @@
 #include <Compiler/SourceCode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
+//#include <Nodes/Expressions/ExpressionItem.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
@@ -75,6 +76,7 @@
 #include <Windowing/WindowHandler/InferModelOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <API/Expressions/Expressions.hpp>
 
 namespace NES::QueryCompilation {
 CCodeGenerator::CCodeGenerator() {}
