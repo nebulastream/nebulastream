@@ -17,7 +17,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
@@ -40,7 +40,7 @@ class SimplePatternTest : public testing::Test {
   public:
     CoordinatorConfigPtr coConf;
     WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
+    CSVSourceConfigPtr srcConf;
 
     static void SetUpTestCase() {
         NES::setupLogging("SimplePatternTest.log", NES::LOG_DEBUG);
@@ -52,7 +52,7 @@ class SimplePatternTest : public testing::Test {
         restPort = restPort + 2;
         coConf = CoordinatorConfig::create();
         wrkConf = WorkerConfig::create();
-        srcConf = SourceConfig::create();
+        srcConf = CSVSourceConfig::create();
 
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);

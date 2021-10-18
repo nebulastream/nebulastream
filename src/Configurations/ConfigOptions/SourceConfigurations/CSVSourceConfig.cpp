@@ -30,7 +30,7 @@ CSVSourceConfigPtr CSVSourceConfig::create() {
 }
 
 CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(std::move(sourceConfigMap)),
+    : SourceConfig(sourceConfigMap),
       filePath(ConfigOption<std::string>::create("filePath",
                                                  "../tests/test_data/QnV_short.csv",
                                                  "file path, needed for: CSVSource, BinarySource")),

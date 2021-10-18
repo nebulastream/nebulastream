@@ -19,7 +19,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -58,7 +59,7 @@ class UnionDeploymentTest : public testing::Test {
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -99,22 +100,22 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_car");
-    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_car");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("car");
     //register physical stream
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_truck");
-    sourceConfig->setLogicalStreamName("truck");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_truck");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("truck");
     //register physical stream
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(confTruck);
@@ -245,7 +246,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -286,22 +287,22 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_car");
-    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_car");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("car");
     //register physical stream
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_truck");
-    sourceConfig->setLogicalStreamName("truck");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_truck");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("truck");
     //register physical stream
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(confTruck);
@@ -432,7 +433,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -473,23 +474,23 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_car");
-    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_car");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("car");
     //register physical stream
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    sourceConfig->setFilePath("");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_truck");
-    sourceConfig->setLogicalStreamName("truck");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_truck");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("truck");
     //register physical stream
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(confTruck);
@@ -620,7 +621,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
 TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -661,11 +662,11 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_car");
-    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_car");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("car");
     //register physical stream
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(sourceConfig);
 
@@ -678,11 +679,11 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     out2.close();
     wrk2->registerLogicalStream("truck", testSchemaFileName2);
 
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_truck");
-    sourceConfig->setLogicalStreamName("truck");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_truck");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("truck");
     //register physical stream
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create(sourceConfig);
     wrk2->registerPhysicalStream(confTruck);
@@ -720,7 +721,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -764,16 +765,16 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
-    sourceConfig->setPhysicalStreamName("physical_ruby");
-    sourceConfig->setLogicalStreamName("ruby");
+    sourceConfig->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(28);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_ruby");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("ruby");
     //register physical stream
     PhysicalStreamConfigPtr confStreamRuby = PhysicalStreamConfig::create(sourceConfig);
 
-    sourceConfig->setPhysicalStreamName("physical_diamond");
-    sourceConfig->setLogicalStreamName("diamond");
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_diamond");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("diamond");
 
     PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create(sourceConfig);
 
@@ -888,7 +889,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
 TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -932,16 +933,16 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
-    sourceConfig->setPhysicalStreamName("physical_ruby");
-    sourceConfig->setLogicalStreamName("ruby");
+    sourceConfig->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(28);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_ruby");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("ruby");
     //register physical stream
     PhysicalStreamConfigPtr confStreamRuby = PhysicalStreamConfig::create(sourceConfig);
 
-    sourceConfig->setPhysicalStreamName("physical_diamond");
-    sourceConfig->setLogicalStreamName("diamond");
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_diamond");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("diamond");
 
     PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create(sourceConfig);
 
@@ -1025,7 +1026,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -1069,16 +1070,16 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
-    sourceConfig->setPhysicalStreamName("physical_ruby");
-    sourceConfig->setLogicalStreamName("ruby");
+    sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(28);
+    sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setPhysicalStreamName("physical_ruby");
+    sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setLogicalStreamName("ruby");
     //register physical stream
     PhysicalStreamConfigPtr confStreamRuby = PhysicalStreamConfig::create(sourceConfig);
 
-    sourceConfig->setPhysicalStreamName("physical_diamond");
-    sourceConfig->setLogicalStreamName("diamond");
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_diamond");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("diamond");
 
     PhysicalStreamConfigPtr confStreamDiamond = PhysicalStreamConfig::create(sourceConfig);
 

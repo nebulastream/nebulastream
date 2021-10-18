@@ -16,13 +16,14 @@
 
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/KafkaSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <string>
-#include <filesystem>
 
 namespace NES {
 
@@ -237,15 +238,13 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
               sourceConfigPtr1->as<MQTTSourceConfig>()->getCleanSession()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getUserName()->getValue(),
               sourceConfigPtr1->as<MQTTSourceConfig>()->getUserName()->getDefaultValue());
-
 }
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
-    /*SourceConfigPtr sourceConfigPtr = SourceConfig::create();
-    std::string argv[] = {"--sourceType=YSBSource",
-                          "--sourceConfig=",
-                          "--skipHeader=true",
+    std::string argv[] = {"--sourceType=NoSource",
+                          "--numberOfBuffersToProduce=5",
+                          "--rowLayout=false",
                           "--physicalStreamName=",
                           "--logicalStreamName=default"};
     int argc = 5;
@@ -258,18 +257,58 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                       string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
     }
 
-    sourceConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
+    SourceConfigPtr sourceConfigPtr = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 
-    EXPECT_NE(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getFilePath()->getValue(), sourceConfigPtr->getFilePath()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(),
+    EXPECT_NE(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(),
               sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue(),
               sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getPhysicalStreamName()->getValue(), sourceConfigPtr->getPhysicalStreamName()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr->getLogicalStreamName()->getValue(), sourceConfigPtr->getLogicalStreamName()->getDefaultValue());
-    EXPECT_NE(sourceConfigPtr->getSkipHeader()->getValue(), sourceConfigPtr->getSkipHeader()->getDefaultValue());*/
+    EXPECT_NE(sourceConfigPtr->getRowLayout()->getValue(), sourceConfigPtr->getRowLayout()->getDefaultValue());
+
+    std::string argv1[] = {"--sourceType=KafkaSource",
+                           "--physicalStreamName=",
+                           "--logicalStreamName=default",
+                           "--KafkaSourceTopic=newTopic",
+                           "--KafkaSourceConnectionTimeout=100"};
+
+    std::map<string, string> commandLineParams1;
+
+    for (int i = 0; i < argc; ++i) {
+        commandLineParams1.insert(
+            std::pair<string, string>(string(argv1[i]).substr(0, string(argv1[i]).find('=')),
+                                      string(argv1[i]).substr(string(argv1[i]).find('=') + 1, string(argv1[i]).length() - 1)));
+    }
+
+    SourceConfigPtr sourceConfigPtr1 = SourceConfigFactory::createSourceConfig(commandLineParams1, commandLineParams1.size());
+
+    EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceType()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceType()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceFrequency()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceFrequency()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getNumberOfBuffersToProduce()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getNumberOfBuffersToProduce()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getNumberOfTuplesToProducePerBuffer()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getPhysicalStreamName()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getPhysicalStreamName()->getDefaultValue());
+    EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getLogicalStreamName()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getLogicalStreamName()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getRowLayout()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getRowLayout()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getBrokers()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getBrokers()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getAutoCommit()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getAutoCommit()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getGroupId()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getGroupId()->getDefaultValue());
+    EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getTopic()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getTopic()->getDefaultValue());
+    EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getConnectionTimeout()->getValue(),
+              sourceConfigPtr1->as<KafkaSourceConfig>()->getConnectionTimeout()->getDefaultValue());
 }
 
 }// namespace NES

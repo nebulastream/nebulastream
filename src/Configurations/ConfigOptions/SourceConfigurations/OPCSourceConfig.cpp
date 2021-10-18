@@ -30,7 +30,7 @@ std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create() {
 }
 
 OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(std::move(sourceConfigMap)),
+    : SourceConfig(sourceConfigMap),
       namespaceIndex(ConfigOption<uint32_t>::create("namespaceIndex", 1, "namespaceIndex for node, needed for: OPCSource")),
       nodeIdentifier(ConfigOption<std::string>::create("nodeIdentifier", "the.answer", "node identifier, needed for: OPCSource")),
       userName(ConfigOption<std::string>::create("userName",
@@ -38,17 +38,17 @@ OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfig
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
       password(ConfigOption<std::string>::create("password", "", "password, needed for: OPCSource")) {
     NES_INFO("OPCSourceConfig: Init source config object with values from sourceConfigMap.");
-    if (sourceConfigMap.find("namespaceIndex") != sourceConfigMap.end()) {
-        namespaceIndex->setValue(std::stoi(sourceConfigMap.find("namespaceIndex")->second));
+    if (sourceConfigMap.find("OPCSourceNamespaceIndex") != sourceConfigMap.end()) {
+        namespaceIndex->setValue(std::stoi(sourceConfigMap.find("OPCSourceNamespaceIndex")->second));
     }
-    if (sourceConfigMap.find("nodeIdentifier") != sourceConfigMap.end()) {
-        nodeIdentifier->setValue(sourceConfigMap.find("nodeIdentifier")->second);
+    if (sourceConfigMap.find("OPCSourceNodeIdentifier") != sourceConfigMap.end()) {
+        nodeIdentifier->setValue(sourceConfigMap.find("OPCSourceNodeIdentifier")->second);
     }
-    if (sourceConfigMap.find("userName") != sourceConfigMap.end()) {
-        userName->setValue(sourceConfigMap.find("userName")->second);
+    if (sourceConfigMap.find("OPCSourceUserName") != sourceConfigMap.end()) {
+        userName->setValue(sourceConfigMap.find("OPCSourceUserName")->second);
     }
-    if (sourceConfigMap.find("password") != sourceConfigMap.end()) {
-        password->setValue(sourceConfigMap.find("password")->second);
+    if (sourceConfigMap.find("OPCSourcePassword") != sourceConfigMap.end()) {
+        password->setValue(sourceConfigMap.find("OPCSourcePassword")->second);
     }
 }
 

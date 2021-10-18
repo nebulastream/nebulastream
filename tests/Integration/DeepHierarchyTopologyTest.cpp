@@ -20,7 +20,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -418,7 +418,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     std::string query = R"(Query::from("testStream").filter(Attribute("val1") < 3).project(Attribute("val3")))";
     TestHarness testHarness = TestHarness(query);
 
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
     srcConf->resetSourceOptions();
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/testCSV.csv");
@@ -498,7 +498,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query);
 
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
     srcConf->resetSourceOptions();
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/window.csv");
@@ -662,7 +662,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
         .filter(Attribute("id") < 10).window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query);
 
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
     srcConf->resetSourceOptions();
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/window.csv");
