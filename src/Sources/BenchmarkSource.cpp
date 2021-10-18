@@ -93,7 +93,6 @@ void BenchmarkSource::open() {
     auto buffer = localBufferManager->getUnpooledBuffer(memoryAreaSize);
     numaLocalMemoryArea = *buffer;
     std::memcpy(numaLocalMemoryArea.getBuffer(), memoryArea.get(), memoryAreaSize);
-    NES_ASSERT2_FMT(reinterpret_cast<uintptr_t>(buffer->getBuffer()) % 64 == 0, "invalid alignment");
     memoryArea.reset();
 }
 
