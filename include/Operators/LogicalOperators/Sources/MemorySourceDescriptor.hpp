@@ -17,7 +17,6 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_MEMORYSOURCEDESCRIPTOR_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_MEMORYSOURCEDESCRIPTOR_HPP_
 
-
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/MemorySource.hpp>
@@ -106,4 +105,4 @@ class MemorySourceDescriptor : public SourceDescriptor {
     DataSource::GatheringMode gatheringMode;
 };
 }// namespace NES
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_MEMORYSOURCEDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_MEMORYSOURCEDESCRIPTOR_HPP_

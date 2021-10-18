@@ -202,18 +202,18 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();
         return createBenchmarkSource(benchmarkSourceDescriptor->getSchema(),
-                       bufferManager,
-                       queryManager,
-                       benchmarkSourceDescriptor->getMemoryArea(),
-                       benchmarkSourceDescriptor->getMemoryAreaSize(),
-                       benchmarkSourceDescriptor->getNumBuffersToProcess(),
-                       benchmarkSourceDescriptor->getGatheringValue(),
-                       operatorId,
-                       numSourceLocalBuffers,
-                       benchmarkSourceDescriptor->getGatheringMode(),
-                       benchmarkSourceDescriptor->getSourceMode(),
-                       successors,
-                       benchmarkSourceDescriptor->getSourceAffinity());
+                                     bufferManager,
+                                     queryManager,
+                                     benchmarkSourceDescriptor->getMemoryArea(),
+                                     benchmarkSourceDescriptor->getMemoryAreaSize(),
+                                     benchmarkSourceDescriptor->getNumBuffersToProcess(),
+                                     benchmarkSourceDescriptor->getGatheringValue(),
+                                     operatorId,
+                                     numSourceLocalBuffers,
+                                     benchmarkSourceDescriptor->getGatheringMode(),
+                                     benchmarkSourceDescriptor->getSourceMode(),
+                                     successors,
+                                     benchmarkSourceDescriptor->getSourceAffinity());
     } else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating lambda source");
         auto lambdaSourceDescriptor = sourceDescriptor->as<LambdaSourceDescriptor>();

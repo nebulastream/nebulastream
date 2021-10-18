@@ -34,7 +34,6 @@ class MemorySegment;
  */
 class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
-
     /**
      * @brief The constructor of a MemorySource
      * @param schema the schema of the source

@@ -21,13 +21,13 @@
 namespace NES {
 
 BenchmarkSourceDescriptor::BenchmarkSourceDescriptor(SchemaPtr schema,
-                                               std::shared_ptr<uint8_t> memoryArea,
-                                               size_t memoryAreaSize,
-                                               uint64_t numBuffersToProcess,
-                                               uint64_t gatheringValue,
-                                               DataSource::GatheringMode gatheringMode,
-                                               BenchmarkSource::SourceMode sourceMode,
-                                               uint64_t sourceAffinity)
+                                                     std::shared_ptr<uint8_t> memoryArea,
+                                                     size_t memoryAreaSize,
+                                                     uint64_t numBuffersToProcess,
+                                                     uint64_t gatheringValue,
+                                                     DataSource::GatheringMode gatheringMode,
+                                                     BenchmarkSource::SourceMode sourceMode,
+                                                     uint64_t sourceAffinity)
     : SourceDescriptor(std::move(schema)), memoryArea(std::move(memoryArea)), memoryAreaSize(memoryAreaSize),
       numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
       sourceMode(sourceMode), sourceAffinity(sourceAffinity) {
@@ -35,23 +35,23 @@ BenchmarkSourceDescriptor::BenchmarkSourceDescriptor(SchemaPtr schema,
 }
 
 std::shared_ptr<BenchmarkSourceDescriptor> BenchmarkSourceDescriptor::create(const SchemaPtr& schema,
-                                                                       const std::shared_ptr<uint8_t>& memoryArea,
-                                                                       size_t memoryAreaSize,
-                                                                       uint64_t numBuffersToProcess,
-                                                                       uint64_t gatheringValue,
-                                                                       DataSource::GatheringMode gatheringMode,
-                                                                       BenchmarkSource::SourceMode sourceMode,
-                                                                       uint64_t sourceAffinity) {
+                                                                             const std::shared_ptr<uint8_t>& memoryArea,
+                                                                             size_t memoryAreaSize,
+                                                                             uint64_t numBuffersToProcess,
+                                                                             uint64_t gatheringValue,
+                                                                             DataSource::GatheringMode gatheringMode,
+                                                                             BenchmarkSource::SourceMode sourceMode,
+                                                                             uint64_t sourceAffinity) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<BenchmarkSourceDescriptor>(schema,
-                                                    memoryArea,
-                                                    memoryAreaSize,
-                                                    numBuffersToProcess,
-                                                    gatheringValue,
-                                                    gatheringMode,
-                                                    sourceMode,
-                                                    sourceAffinity);
+                                                       memoryArea,
+                                                       memoryAreaSize,
+                                                       numBuffersToProcess,
+                                                       gatheringValue,
+                                                       gatheringMode,
+                                                       sourceMode,
+                                                       sourceAffinity);
 }
 std::string BenchmarkSourceDescriptor::toString() { return "BenchmarkSourceDescriptor"; }
 
