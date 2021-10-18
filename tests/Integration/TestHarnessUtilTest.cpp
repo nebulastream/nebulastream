@@ -19,6 +19,7 @@
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #pragma clang diagnostic pop
 #include <Common/DataTypes/DataTypeFactory.hpp>
 namespace NES {
@@ -523,7 +524,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     // 4,3,6
     //register physical stream
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
@@ -578,7 +579,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     // 4,3,6
     //register physical stream
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");

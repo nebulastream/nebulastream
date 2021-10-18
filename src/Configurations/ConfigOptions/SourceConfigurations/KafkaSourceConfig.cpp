@@ -30,7 +30,7 @@ KafkaSourceConfigPtr KafkaSourceConfig::create() {
 }
 
 KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(std::move(sourceConfigMap)), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
+    : SourceConfig(sourceConfigMap), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
           "autoCommit",
           1,

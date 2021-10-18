@@ -19,7 +19,8 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -53,7 +54,7 @@ class RenameTest : public testing::Test {
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -131,7 +132,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
 TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -212,7 +213,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
 TEST_F(RenameTest, testAttributeRenameAndFilter) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -280,7 +281,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
 TEST_F(RenameTest, testCentralWindowEventTime) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -313,12 +314,12 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/window.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->setNumberOfBuffersToProduce(3);
-    srcConf->setPhysicalStreamName("test_stream");
-    srcConf->setLogicalStreamName("window");
+    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(srcConf);
 
@@ -372,7 +373,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -423,19 +424,19 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/window.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->setPhysicalStreamName("test_stream");
-    srcConf->setLogicalStreamName("window1");
-    srcConf->setNumberOfBuffersToProduce(2);
-    srcConf->setSkipHeader(true);
+    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
+    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->setFilePath("../tests/test_data/window2.csv");
-    srcConf->setLogicalStreamName("window2");
+    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
 
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
 

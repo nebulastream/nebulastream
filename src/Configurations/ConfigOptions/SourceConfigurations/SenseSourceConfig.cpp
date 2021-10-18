@@ -31,11 +31,11 @@ std::shared_ptr<SenseSourceConfig> SenseSourceConfig::create() {
 }
 
 SenseSourceConfig::SenseSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(std::move(sourceConfigMap)),
+    : SourceConfig(sourceConfigMap),
       udsf(ConfigOption<std::string>::create("udsf", "", "udsf, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
-    if (sourceConfigMap.find("udsf") != sourceConfigMap.end()) {
-        udsf->setValue(sourceConfigMap.find("udsf")->second);
+    if (sourceConfigMap.find("SenseSourceUdsf") != sourceConfigMap.end()) {
+        udsf->setValue(sourceConfigMap.find("SenseSourceUdsf")->second);
     }
 }
 

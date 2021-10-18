@@ -26,6 +26,7 @@
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 
 #include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
@@ -74,7 +75,7 @@ class MonitoringIntegrationTest : public testing::Test {
 TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);

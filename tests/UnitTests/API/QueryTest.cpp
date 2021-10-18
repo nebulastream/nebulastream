@@ -18,7 +18,8 @@
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -61,12 +62,12 @@ class QueryTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
 
-        sourceConfig = SourceConfig::create();
-        sourceConfig->setFilePath("");
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->setNumberOfBuffersToProduce(3);
-        sourceConfig->setPhysicalStreamName("test2");
-        sourceConfig->setLogicalStreamName("test_stream");
+        sourceConfig = SourceConfigFactory::createSourceConfig();
+        sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+        sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+        sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test2");
+        sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("test_stream");
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down QueryTest test class."); }

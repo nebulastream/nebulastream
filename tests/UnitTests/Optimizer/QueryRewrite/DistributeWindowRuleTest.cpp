@@ -19,7 +19,8 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -65,12 +66,12 @@ void setupSensorNodeAndStreamCatalogTwoNodes(const StreamCatalogPtr& streamCatal
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test2");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("test_stream");
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceConfig);
 
@@ -92,12 +93,12 @@ void setupSensorNodeAndStreamCatalogFiveNodes(const StreamCatalogPtr& streamCata
 
     std::cout << "topo=" << topology->toString() << std::endl;
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test2");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("test_stream");
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceConfig);
 

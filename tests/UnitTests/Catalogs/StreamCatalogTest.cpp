@@ -19,7 +19,8 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <iostream>
 
@@ -49,7 +50,7 @@ class StreamCatalogTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        sourceConfig = SourceConfig::create();
+        sourceConfig = SourceConfigFactory::createSourceConfig();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
@@ -141,12 +142,12 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    sourceConfig->resetSourceOptions();
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->resetSourceOptions();
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test2");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("test_stream");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
@@ -200,13 +201,13 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    sourceConfig->resetSourceOptions();
-    sourceConfig->setSourceType("Sensor");
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->resetSourceOptions();
+    sourceConfig->as<CSVSourceConfig>()->setSourceType("Sensor");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test2");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("test_stream");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 

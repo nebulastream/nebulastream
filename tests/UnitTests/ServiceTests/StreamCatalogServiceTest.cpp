@@ -18,8 +18,8 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>
@@ -97,13 +97,13 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
 
     std::string physicalStreamName = "testStream";
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("testCSV.csv");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
+    sourceConfig->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("testCSV.csv");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_test");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("testStream");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 

@@ -20,7 +20,7 @@
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -89,7 +89,7 @@ class QueryPlacementTest : public testing::Test {
         streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
         streamCatalog->addLogicalStream(streamName, schema);
 
-        SourceConfigPtr sourceConfig = SourceConfig::create();
+        CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
         sourceConfig->setSourceFrequency(0);
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setPhysicalStreamName("test2");
@@ -594,7 +594,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setPhysicalStreamName("test2");
@@ -698,7 +698,7 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
     streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setPhysicalStreamName("test2");
@@ -808,7 +808,7 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
     streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setPhysicalStreamName("test2");
@@ -936,7 +936,7 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
     streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setPhysicalStreamName("test2");
