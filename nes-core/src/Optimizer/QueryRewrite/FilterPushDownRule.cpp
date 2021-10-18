@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <queue>
@@ -74,7 +75,7 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
         nodesToProcess.pop_front();
         if (node->instanceOf<SourceLogicalOperatorNode>() || node->instanceOf<WindowLogicalOperatorNode>()
             || node->instanceOf<FilterLogicalOperatorNode>() || node->instanceOf<ProjectionLogicalOperatorNode>()
-            || node->instanceOf<JoinLogicalOperatorNode>()) {
+            || node->instanceOf<JoinLogicalOperatorNode>() || node->instanceOf<InferModelLogicalOperatorNode>()) {
 
             NES_TRACE("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
             if (node->as<OperatorNode>()->getId() != filterOperator->getId()) {

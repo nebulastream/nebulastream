@@ -973,17 +973,17 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, context);
 
     /* compile code to pipeline stage */
-    auto stage = codeGenerator->compile(jitCompiler, context);
+    auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::DEBUG);
 
     /* prepare input tuple buffer */
     source->open();
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager()};
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 46};
 
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
+                                                                       inferModelOperatorHandler);
 
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());
