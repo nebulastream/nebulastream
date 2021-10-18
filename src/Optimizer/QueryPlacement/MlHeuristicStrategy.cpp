@@ -223,7 +223,7 @@ bool MlHeuristicStrategy::placeOperatorOnTopologyNode(QueryId queryId,
         }
     }
 
-    candidateTopologyNode->getNodeStats();
+//    candidateTopologyNode->getNodeProperty();
     candidateTopologyNode->getAvailableResources();
 
     bool cpu_saver_mode = true;
