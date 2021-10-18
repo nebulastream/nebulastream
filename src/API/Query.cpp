@@ -121,7 +121,7 @@ Query& Query::unionWith(const Query& subQuery) {
     return *this;
 }
 
-Query& Query::joinFinalCall(const Query& subQueryRhs,
+Query& Query::joinWithInternal(const Query& subQueryRhs,
                             ExpressionItem onLeftKey,
                             ExpressionItem onRightKey,
                             const Windowing::WindowTypePtr& windowType,
@@ -214,7 +214,7 @@ Query& Query::joinWith(const Query& subQueryRhs,
 
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
 
-    return Query::joinFinalCall(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
+    return Query::joinWithInternal(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
 }
 
 Query& Query::andWith(const Query& subQueryRhs,
@@ -247,7 +247,7 @@ Query& Query::andWith(const Query& subQueryRhs,
     std::sort(sourceNames.begin(), sourceNames.end());
     auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
     queryPlan->setSourceConsumed(updatedSourceName);
-    return Query::joinFinalCall(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
+    return Query::joinWithInternal(subQueryRhs,onLeftKey,onRightKey,windowType,joinType);
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
