@@ -17,18 +17,42 @@
 #ifndef NES_BUFFERSTORAGEUNIT_H
 #define NES_BUFFERSTORAGEUNIT_H
 
+namespace NES::Runtime {
+/**
+ * @brief The Buffer Storage Unit class encapsulates a pair<tuple id, pointer to the tuple>
+ */
 class BufferStorageUnit {
   public:
+    /**
+     * @brief Constructor, which creates new buffer storage unit out of pair buffer sequnce number and a tiple buffer pointer
+     * @param sequenceNumber pair <sequence number, origin id>
+     * @param tupleBuffer pointer to the tuple buffer with a given sequence number
+     * @return buffer storage unit
+     */
     BufferStorageUnit(const NES::BufferSequenceNumber& sequenceNumber, const NES::Runtime::TupleBuffer& tupleBuffer)
-        : sequenceNumber(sequenceNumber), tupleBuffer(tupleBuffer) {};
+        : sequenceNumber(sequenceNumber), tupleBuffer(tupleBuffer){};
+
+    /**
+     * @brief Getter for a sequence number of a buffer storage unit
+     * @return sequence number
+     */
     const NES::BufferSequenceNumber& getSequenceNumber() const { return sequenceNumber; }
+
+    /**
+     * @brief Getter for a tuple buffer pointer
+     * @return tuple buffer pointer
+     */
     const NES::Runtime::TupleBuffer& getTupleBuffer() const { return tupleBuffer; }
 
   private:
     NES::BufferSequenceNumber sequenceNumber;
     NES::Runtime::TupleBuffer tupleBuffer;
-    friend bool operator<(const BufferStorageUnit& lhs, const BufferStorageUnit& rhs) { return lhs.sequenceNumber < rhs.sequenceNumber; }
-    friend bool operator>(const BufferStorageUnit& lhs, const BufferStorageUnit& rhs) { return lhs.sequenceNumber > rhs.sequenceNumber; }
+    friend bool operator<(const std::shared_ptr<BufferStorageUnit>& lhs, const std::shared_ptr<BufferStorageUnit>& rhs) {
+        return lhs->sequenceNumber < rhs->sequenceNumber;
+    }
+    friend bool operator>(const std::shared_ptr<BufferStorageUnit>& lhs, const std::shared_ptr<BufferStorageUnit>& rhs) {
+        return lhs->sequenceNumber > rhs->sequenceNumber;
+    }
 };
-
+}// namespace NES::Runtime
 #endif//NES_BUFFERSTORAGEUNIT_H

@@ -24,6 +24,7 @@
 
 namespace NES::Runtime {
 
+using BufferStorageUnitPtr = std::shared_ptr<BufferStorageUnit>;
 /**
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
  */
@@ -32,44 +33,46 @@ class BufferStorage {
   public:
     /**
      * @brief Inserts a pair id, buffer link to the buffer storage queue
-     * @param mutex mutex to make the method thread safe
      * @param id id of the buffer
      * @param bufferPtr pointer to the buffer that will be stored
      */
     void insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr);
+
     /**
-     * @brief Deletes all pairs id, buffer link which sequence number smaller than passed
+     * @brief Deletes all pair<id,buffer> link which sequence number smaller than passed
      * sequence number from the buffer storage queue with the same origin id
-     * @param mutex mutex to make the method thread safe
      * @param id id of the buffer
+     * @return true in case of a success trimming
      */
     bool trimBuffer(BufferSequenceNumber id);
+
     /**
      * @brief Return current storage size
-     * @param mutex mutex to make the method thread safe
      * @return Current storage size
      */
-    size_t getStorageSize() const;
+    size_t getBufferStoreSizeForAllQueues() const;
+
     /**
-     * @brief Return given origin Id queue size
-     * @param mutex mutex to make the method thread safe
+     * @brief Return the size of queue with a given origin Id
+     * @param queueId the id of the queue
      * @return Given queue size
      */
-    size_t getQueueSize(uint64_t originId) const;
+    size_t getStoreSizeForQueue(uint64_t queueId) const;
+
     /**
      * @brief Return top element of the queue
-     * @param mutex mutex to make the method thread safe
+     * @param queueId the id of the queue
      * @return buffer storage unit
      */
-    BufferStorageUnit getTopElementFromQueue(uint64_t originId) const;
+    BufferStorageUnitPtr getTopElementFromQueue(uint64_t queueId) const;
 
   private:
-    std::map<uint64_t , std::priority_queue<BufferStorageUnit, std::vector<BufferStorageUnit>, std::greater<BufferStorageUnit>>> buffers;
+    std::map<uint64_t,
+             std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>>
+        buffers;
     mutable std::mutex mutex;
 };
 
-}// namespace NES
+}// namespace NES::Runtime
 
 #endif//NES_BUFFERSTORAGE_H
-
-
