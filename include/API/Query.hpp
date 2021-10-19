@@ -148,7 +148,7 @@ class JoinCondition {
 
 }//namespace JoinOperatorBuilder
 
-namespace ANDOperatorBuilder {
+namespace AndOperatorBuilder {
 
 class And {
   public:
@@ -162,15 +162,15 @@ class And {
     /**
      * @brief: calls internal the original andWith function with all the gathered parameters.
      * @param windowType
-     * @return the query with the result of the original joinWith function is returned.
+     * @return the query with the result of the original andWith function is returned.
      */
     [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
    private:
     const Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionItem onLeftKey = ExpressionItem(1);
-    ExpressionItem onRightKey;
+    ExpressionNodePtr onLeftKey;
+    ExpressionNodePtr onRightKey;
 };
 
 }//namespace AndOperatorBuilder
@@ -186,6 +186,7 @@ class Query {
     virtual ~Query() = default;
 
     friend class JoinOperatorBuilder::JoinCondition;// we need that because we make the original joinWith() private
+    friend class AndOperatorBuilder::And;// we need that because we make the original joinWith() private
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
@@ -199,11 +200,11 @@ class Query {
     JoinOperatorBuilder::Join joinWith(const Query& subQueryRhs);
 
     /**
-     * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
+     * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
      * @param subQueryRhs
      * @return object where where() function is defined and can be called by user
      */
-    JoinOperatorBuilder::Join andWith(const Query& subQueryRhs);
+    AndOperatorBuilder::And andWith(const Query& subQueryRhs);
 
     /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.
