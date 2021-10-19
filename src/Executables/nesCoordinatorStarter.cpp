@@ -77,10 +77,10 @@ int main(int argc, const char* argv[]) {
     }
     catch(std::exception& e){
         if(e.what() != nullptr){
-            NES_INFO(e.what());
+            NES_ERROR("Coordinator: Unable to start  << " << e.what());
         }
         else{
-            NES_INFO("Coordinator failed to start.");
+            NES_ERROR("Coordinator failed to start.");
         }
     }
     NES_INFO("coordinator started");
@@ -90,10 +90,10 @@ int main(int argc, const char* argv[]) {
     }
     catch(std::exception& e){
         if(e.what() != nullptr){
-            NES_INFO(e.what());
+            NES_ERROR("Coordinator: Unable to stop  << " << e.what());
         }
         else{
-            NES_INFO("Coordinator failed to stop.");
+            NES_ERROR("Coordinator failed to stop.");
         }
     }
 }
