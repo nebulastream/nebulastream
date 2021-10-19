@@ -53,8 +53,9 @@ BufferManagerType FixedSizeBufferPool::getBufferManagerType() const { return Buf
 
 void FixedSizeBufferPool::destroy() {
     NES_DEBUG("Destroying LocalBufferPool");
-    std::unique_lock lock(mutex);
-    if (isDestroyed) {
+//    std::unique_lock lock(mutex);
+    bool expected = false;
+    if (!isDestroyed.compare_exchange_strong(expected, true)) {
         return;
     }
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
@@ -74,7 +75,7 @@ void FixedSizeBufferPool::destroy() {
         bufferManager->recyclePooledBuffer(memSegment);
     }
 #endif
-    isDestroyed = true;
+//    isDestroyed = true;
 }
 
 size_t FixedSizeBufferPool::getAvailableBuffers() const {
@@ -145,9 +146,9 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
 }
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
-    std::unique_lock lock(mutex);
+//    std::unique_lock lock(mutex);
     NES_VERIFY(memSegment, "null memory segment");
-    if (isDestroyed) {
+    if (isDestroyed) {//make it atomic
         // return recycled buffer to the global pool
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
