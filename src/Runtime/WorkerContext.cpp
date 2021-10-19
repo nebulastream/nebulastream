@@ -27,6 +27,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
                              uint32_t numaNode)
     : workerId(workerId), numaNode(numaNode) {
     localBufferPool = bufferManager->createFixedSizeBufferPool(numberOfBuffersPerWorker);
+    std::cout << "create fix size pool of =" << numberOfBuffersPerWorker << " size=" << localBufferPool->getAvailableBuffers() << std::endl;
     NES_ASSERT(localBufferPool != NULL, "Local buffer is not allowed to be null");
 }
 
