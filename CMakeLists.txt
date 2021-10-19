@@ -14,7 +14,7 @@
 cmake_minimum_required(VERSION 3.20.0)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v5)
+set(VCPKG_BINARY_VERSION v6)
 
 # for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
 # The system architecture is normally set in CMAKE_HOST_PROCESSOR,
