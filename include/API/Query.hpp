@@ -148,6 +148,31 @@ class JoinCondition {
 
 }//namespace JoinOperatorBuilder
 
+namespace ANDOperatorBuilder {
+
+class And {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @param subQueryRhs
+     * @param originalQuery
+     */
+    And(const Query& subQueryRhs, Query& originalQuery);
+
+    /**
+     * @brief: calls internal the original andWith function with all the gathered parameters.
+     * @param windowType
+     * @return the query with the result of the original joinWith function is returned.
+     */
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+
+   private:
+    const Query& subQueryRhs;
+    Query& originalQuery;
+};
+
+}//namespace AndOperatorBuilder
+
 /**
  * User interface to create stream processing queries.
  * The current api exposes method to create queries using all currently supported operators.
