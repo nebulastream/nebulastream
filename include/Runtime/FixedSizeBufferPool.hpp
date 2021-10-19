@@ -112,7 +112,7 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
     [[maybe_unused]] size_t numberOfReservedBuffers;
     mutable std::mutex mutex;
     std::condition_variable cvar;
-    bool isDestroyed;
+    std::atomic<bool> isDestroyed;
 };
 
 }// namespace Runtime
