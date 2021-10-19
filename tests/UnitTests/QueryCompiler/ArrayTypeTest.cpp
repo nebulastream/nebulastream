@@ -277,9 +277,7 @@ TEST_F(ArrayTypeTest, testInitialization) {
         EXPECT_TRUE(cdbili.size == 3);
         EXPECT_TRUE(eq(cdbili, "1"));
     }
-    {
-
-    }
+    {}
 
     // From vector
     {

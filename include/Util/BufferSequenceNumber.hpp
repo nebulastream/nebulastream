@@ -31,29 +31,42 @@ class BufferSequenceNumber {
      * @param originId origin id
      * @return buffer sequence number
      */
-    BufferSequenceNumber(uint64_t sequenceNumber, uint64_t originId) : sequenceNumber(sequenceNumber), originId(originId) {};
+    BufferSequenceNumber(uint64_t sequenceNumber, uint64_t originId) : sequenceNumber(sequenceNumber), originId(originId){};
+
     /**
      * @brief Getter for a sequence number of a buffer sequence number
      * @return sequence number
      */
     uint64_t getSequenceNumber() const { return sequenceNumber; }
+
     /**
      * @brief Getter for an origin id of a buffer sequence number
-     * @return origin id 
+     * @return origin id
      */
     uint64_t getOriginId() const { return originId; }
 
   private:
     uint64_t sequenceNumber;
     uint64_t originId;
-    friend bool operator<(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber < rhs.sequenceNumber; }
-    friend bool operator<=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber <= rhs.sequenceNumber; }
-    friend bool operator>(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber > rhs.sequenceNumber; }
-    friend bool operator>=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber >= rhs.sequenceNumber; }
-    friend bool operator==(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber == rhs.sequenceNumber; }
-    friend bool operator!=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) { return lhs.sequenceNumber != rhs.sequenceNumber; }
+    friend bool operator<(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
+        return lhs.sequenceNumber < rhs.sequenceNumber;
+    }
+    friend bool operator<=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
+        return lhs.sequenceNumber <= rhs.sequenceNumber;
+    }
+    friend bool operator>(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
+        return lhs.sequenceNumber > rhs.sequenceNumber;
+    }
+    friend bool operator>=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
+        return lhs.sequenceNumber >= rhs.sequenceNumber;
+    }
+    friend bool operator==(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
+        return lhs.sequenceNumber == rhs.sequenceNumber;
+    }
+    friend bool operator!=(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
+        return lhs.sequenceNumber != rhs.sequenceNumber;
+    }
 };
 
-
-} // namespace NES
+}// namespace NES
 #endif//NES_BUFFERSEQUENCENUMBER_HPP

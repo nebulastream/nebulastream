@@ -20,9 +20,9 @@
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
-#include <Runtime/BufferStorage.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Runtime/BufferStorage.hpp>
 #include <Runtime/ErrorListener.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/QueryManager.hpp>

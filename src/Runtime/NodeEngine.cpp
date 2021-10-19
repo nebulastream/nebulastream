@@ -325,7 +325,6 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
     return bufferManagers[bufferManagerIndex];
 }
 
-
 StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
 
 BufferStoragePtr NodeEngine::getBufferStorage() { return bufferStorage; }

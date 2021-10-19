@@ -45,10 +45,10 @@ TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     for (size_t i = 0; i < buffersInserted; i++) {
         bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
-        ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
-        ASSERT_EQ(bufferStorage->getQueueSize(i), oneBuffer);
+        ASSERT_EQ(bufferStorage->getBufferStoreSizeForAllQueues(), i + 1);
+        ASSERT_EQ(bufferStorage->getStoreSizeForQueue(i), oneBuffer);
     }
-    ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
+    ASSERT_EQ(bufferStorage->getBufferStoreSizeForAllQueues(), buffersInserted);
 }
 
 /**
@@ -61,10 +61,10 @@ TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
     for (int i = buffersInserted - 1; i >= 0; i--) {
         bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
     }
-    ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
+    ASSERT_EQ(bufferStorage->getBufferStoreSizeForAllQueues(), buffersInserted);
     for (uint64_t i = 0; i < buffersInserted - 1; i++) {
         bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, 0));
-        ASSERT_EQ(bufferStorage->getTopElementFromQueue(0).getSequenceNumber().getSequenceNumber(), i + 1);
+        ASSERT_EQ(bufferStorage->getTopElementFromQueue(0)->getSequenceNumber().getSequenceNumber(), i + 1);
     }
 }
 
@@ -77,16 +77,28 @@ TEST_F(BufferStorageTest, emptyBufferCheck) {
 }
 
 /**
+     * @brief test tries to delete non existing element
+*/
+TEST_F(BufferStorageTest, trimmingOfNonExistingElement) {
+    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
+    auto buffer = bufferManager->getUnpooledBuffer(16384);
+    for (int i = buffersInserted - 1; i >= 0; i--) {
+        bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
+    }
+    ASSERT_EQ(bufferStorage->trimBuffer(BufferSequenceNumber(0, 6)), false);
+}
+
+/**
      * @brief test inserts one buffer and deletes it
 */
 TEST_F(BufferStorageTest, oneBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     bufferStorage->insertBuffer(BufferSequenceNumber(0, 0), buffer.value());
-    ASSERT_EQ(bufferStorage->getStorageSize(), oneBuffer);
-    ASSERT_EQ(bufferStorage->getQueueSize(0), oneBuffer);
+    ASSERT_EQ(bufferStorage->getBufferStoreSizeForAllQueues(), oneBuffer);
+    ASSERT_EQ(bufferStorage->getStoreSizeForQueue(0), oneBuffer);
     bufferStorage->trimBuffer(BufferSequenceNumber(1, 0));
-    ASSERT_EQ(bufferStorage->getQueueSize(0), emptyBuffer);
+    ASSERT_EQ(bufferStorage->getStoreSizeForQueue(0), emptyBuffer);
 }
 
 /**
@@ -97,12 +109,12 @@ TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
     for (size_t i = 0; i < buffersInserted; i++) {
         auto buffer = bufferManager->getUnpooledBuffer(16384);
         bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
-        ASSERT_EQ(bufferStorage->getQueueSize(i), oneBuffer);
+        ASSERT_EQ(bufferStorage->getStoreSizeForQueue(i), oneBuffer);
     }
-    ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
+    ASSERT_EQ(bufferStorage->getBufferStoreSizeForAllQueues(), buffersInserted);
     for (size_t i = 0; i < buffersInserted; i++) {
         bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, i));
-        ASSERT_EQ(bufferStorage->getQueueSize(i), emptyBuffer);
+        ASSERT_EQ(bufferStorage->getStoreSizeForQueue(i), emptyBuffer);
     }
 }
 
@@ -115,10 +127,10 @@ TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     for (size_t i = 0; i < buffersInserted; i++) {
         bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
-        ASSERT_EQ(bufferStorage->getQueueSize(0), i + 1);
+        ASSERT_EQ(bufferStorage->getStoreSizeForQueue(0), i + 1);
     }
     bufferStorage->trimBuffer(BufferSequenceNumber(3, 0));
-    ASSERT_EQ(bufferStorage->getQueueSize(0), expectedStorageSize);
+    ASSERT_EQ(bufferStorage->getStoreSizeForQueue(0), expectedStorageSize);
 }
 
 /**
@@ -129,15 +141,15 @@ TEST_F(BufferStorageTest, multithreadInsertionInBufferStorage) {
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     std::vector<std::thread> t;
     for (uint32_t i = 0; i < numberOfThreads; i++) {
-        t.emplace_back([bufferStorage, buffer, i](){
+        t.emplace_back([bufferStorage, buffer, i]() {
             bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
-            ASSERT_EQ(bufferStorage->getQueueSize(i), oneBuffer);
+            ASSERT_EQ(bufferStorage->getStoreSizeForQueue(i), oneBuffer);
         });
     }
     for (auto& thread : t) {
         thread.join();
     }
-    ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
+    ASSERT_EQ(bufferStorage->getBufferStoreSizeForAllQueues(), buffersInserted);
 }
 
 /**
@@ -146,21 +158,24 @@ TEST_F(BufferStorageTest, multithreadInsertionInBufferStorage) {
 TEST_F(BufferStorageTest, multithreadTrimmingInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
-    std::vector<std::thread> t;
+    std::vector<std::thread> in;
     for (uint32_t i = 0; i < numberOfThreads; i++) {
-        t.emplace_back([bufferStorage, buffer, i](){
+        in.emplace_back([bufferStorage, buffer, i]() {
             bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
-            ASSERT_EQ(bufferStorage->getQueueSize(i), oneBuffer);
         });
     }
+    for (auto& thread : in) {
+        thread.join();
+    }
+    std::vector<std::thread> del;
     for (uint32_t i = 0; i < numberOfThreads - 1; i++) {
-        t.emplace_back([bufferStorage, buffer, i](){
+        del.emplace_back([bufferStorage, buffer, i]() {
             bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, i));
         });
     }
-    for (auto& thread : t) {
+    for (auto& thread : del) {
         thread.join();
     }
-    ASSERT_EQ(bufferStorage->getStorageSize(), oneBuffer);
+    ASSERT_EQ(bufferStorage->getBufferStoreSizeForAllQueues(), oneBuffer);
 }
 }// namespace NES
