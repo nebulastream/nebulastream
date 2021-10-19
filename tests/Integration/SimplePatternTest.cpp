@@ -293,7 +293,7 @@ TEST_F(SimplePatternTest, testAndPattern) {
     NES_INFO("SimplePatternTest: Submit andWith pattern");
 
     std::string query =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 80).andWith(Query::from("QnV1").filter(Attribute("velocity") > 80)).where(Attribute("sensor_id")).equalsTo(Attribute("sensor_id"))
+        R"(Query::from("QnV").filter(Attribute("velocity") > 80).andWith(Query::from("QnV1").filter(Attribute("velocity") > 80))
             .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
@@ -313,10 +313,11 @@ TEST_F(SimplePatternTest, testAndPattern) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$key:CHAR[8]|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:"
-        "FLOAT32|QnV$quantity:UINT64|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|\n"
+        "|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:"
+        "FLOAT32|QnV$quantity:UINT64|QnV$cep_leftkey:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32"
+        "|QnV1$quantity:UINT64|QnV1$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1543624800000|1543625100000|R2000070|R2000070|1543624980000|90.000000|9|R2000070|1543624980000|90.000000|9|\n"
+        "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000070|1543624980000|90.000000|9|1|\n"
         "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
