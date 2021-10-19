@@ -26,7 +26,7 @@
 #include <Util/Logger.hpp>
 
 #include <iostream>
-#include "../../include/REST/RestEngine.hpp"
+#include <REST/RestEngine.hpp>
 
 
 namespace NES {
