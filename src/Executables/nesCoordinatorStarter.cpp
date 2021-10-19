@@ -72,7 +72,28 @@ int main(int argc, const char* argv[]) {
     NES_INFO("creating coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
 
-    crd->startCoordinator(/**blocking**/ true);//blocking call
-    crd->stopCoordinator(true);
+    try{
+        crd->startCoordinator(/**blocking**/ true);//blocking call
+    }
+    catch(std::exception& e){
+        if(e.what() != nullptr){
+            NES_INFO(e.what());
+        }
+        else{
+            NES_INFO("Coordinator failed to start.");
+        }
+    }
     NES_INFO("coordinator started");
+
+    try{
+        crd->stopCoordinator(true);
+    }
+    catch(std::exception& e){
+        if(e.what() != nullptr){
+            NES_INFO(e.what());
+        }
+        else{
+            NES_INFO("Coordinator failed to stop.");
+        }
+    }
 }
