@@ -54,7 +54,7 @@ class MQTTSource : public DataSource {
    * @param cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
    * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
    */
-    explicit MQTTSource(const SchemaPtr& schema,
+    explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
                         std::string const& serverAddress,
