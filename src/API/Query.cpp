@@ -81,6 +81,38 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
 
 }// namespace JoinOperatorBuilder
 
+namespace ANDOperatorBuilder {
+
+//JoinWhere Join::where(const ExpressionItem& onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
+
+And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
+    NES_DEBUG("Query: add map operator to and with to add virtual key");
+
+    OperatorNodePtr op = LogicalOperatorFactory::createMapOperator(Attribute('cep_id') =1);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+
+}
+
+JoinCondition JoinWhere::equalsTo(const ExpressionItem& onRightKey) const {
+    return JoinCondition(subQueryRhs, originalQuery, onLeftKey, onRightKey);
+}
+
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey) {}
+
+Query& JoinCondition::window(const Windowing::WindowTypePtr& windowType) const {
+    return originalQuery.joinWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original joinWith() function
+}
+
+JoinCondition::JoinCondition(const Query& subQueryRhs,
+                             Query& originalQuery,
+                             const ExpressionItem& onLeftKey,
+                             const ExpressionItem& onRightKey)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey), onRightKey(onRightKey) {}
+
+}// namespace JoinOperatorBuilder
+
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
 
 Query::Query(const Query& query) = default;
