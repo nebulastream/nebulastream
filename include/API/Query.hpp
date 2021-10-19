@@ -169,6 +169,8 @@ class And {
    private:
     const Query& subQueryRhs;
     Query& originalQuery;
+    ExpressionItem onLeftKey = ExpressionItem(1);
+    ExpressionItem onRightKey;
 };
 
 }//namespace AndOperatorBuilder
