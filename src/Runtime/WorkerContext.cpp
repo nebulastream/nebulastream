@@ -26,8 +26,6 @@ WorkerContext::WorkerContext(uint32_t workerId,
                              uint64_t numberOfBuffersPerWorker,
                              uint32_t numaNode)
     : workerId(workerId), numaNode(numaNode) {
-    //    localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
-    numberOfBuffersPerWorker = 5;
     localBufferPool = bufferManager->createFixedSizeBufferPool(numberOfBuffersPerWorker);
     NES_ASSERT(localBufferPool != NULL, "Local buffer is not allowed to be null");
 }
