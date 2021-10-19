@@ -39,7 +39,8 @@ class WorkerContext {
 
     std::unordered_map<Network::OperatorId, Network::OutputChannelPtr> channels;
 
-    LocalBufferPoolPtr localBufferPool;
+//    LocalBufferPoolPtr localBufferPool;
+    FixedSizeBufferPoolPtr localBufferPool;
 
     uint32_t numaNode = 0;
 
