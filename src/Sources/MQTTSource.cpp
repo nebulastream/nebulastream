@@ -45,7 +45,7 @@ namespace NES {
  the duration is treated as nanoseconds and then multiplied to 'convert' to milliseconds or seconds accordingly
 */
 
-MQTTSource::MQTTSource(const SchemaPtr& schema,
+MQTTSource::MQTTSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
                        std::string const& serverAddress,
