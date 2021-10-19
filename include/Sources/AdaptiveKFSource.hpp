@@ -14,12 +14,13 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_ADAPTIVEKFESTIMATIONSOURCE_HPP_
-#define INCLUDE_ADAPTIVEKFESTIMATIONSOURCE_HPP_
+#ifndef INCLUDE_ADAPTIVEKFSOURCE_HPP_
+#define INCLUDE_ADAPTIVEKFSOURCE_HPP_
 
 #include <Sources/AdaptiveSource.hpp>
 #include <Util/CircularBuffer.hpp>
 #include <Util/KalmanFilter.hpp>
+#include <cmath>
 
 namespace NES {
 
@@ -50,12 +51,12 @@ class AdaptiveKFSource : public AdaptiveSource {
 
   private:
     void sampleSourceAndFillBuffer(Runtime::TupleBuffer&) override;
-    void decideNewGatheringInterval() override;
+    void decideNewGatheringInterval() override;// eq. 10 in the paper
 
     // paper equations as methods
-    bool desiredFreqInRange();                          // eq. 7
-    long calculateCurrentEstimationError();             // eq. 8 (after insertion to kf)
-    long calculateTotalEstimationError();               // eq. 9
+    bool desiredFreqInRange(); // eq. 7
+    long updateCurrentEstimationError(); // eq. 8 (after insertion to kf)
+    long calculateTotalEstimationError(); // eq. 9
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calculated at init)
 
     uint64_t numberOfTuplesToProducePerBuffer;
@@ -69,6 +70,31 @@ class AdaptiveKFSource : public AdaptiveSource {
     uint64_t frequency;       // currently in use
     uint64_t freqLastReceived;// from coordinator
     uint64_t freqDesired;     // from KF prediction
+
+    /**
+     * @brief control units for changing the new
+     * frequency. Theta (θ) is static according
+     * to the paper. Lambda (λ) is parameterizable.
+     */
+    uint64_t theta = 2; // θ = 2 in all experiments
+    float lambda = 0.6; // λ = 0.6 in most experiments
+
+    /**
+     * @brief control lambda and theta
+     * after initialization. These help
+     * test the source the same way as
+     * the paper. _Not_ intended to
+     * control change _during_ an experiment.
+     */
+    [[maybe_unused]] void setTheta(uint64_t newTheta);
+    [[maybe_unused]] void setLambda(float newLambda);
+
+    /**
+     * @brief _e_ constant, used to calculate
+     * magnitude of change for the new
+     * frequency estimation.
+     */
+    const double eulerConstant = std::exp(1.0);
 
     /**
      * @brief buffer of residual error from KF
@@ -94,4 +120,4 @@ class AdaptiveKFSource : public AdaptiveSource {
 using AdaptiveKFSourcePtr = std::shared_ptr<AdaptiveKFSource>;
 
 }// namespace NES
-#endif /* INCLUDE_ADAPTIVEKFESTIMATIONSOURCE_HPP_ */
+#endif /* INCLUDE_ADAPTIVEKFSOURCE_HPP_ */
