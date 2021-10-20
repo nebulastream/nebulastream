@@ -20,7 +20,6 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
@@ -52,7 +51,6 @@ class MemorySourceIntegrationTest : public testing::Test {
 TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -162,7 +160,6 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -274,7 +271,6 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);

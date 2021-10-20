@@ -38,7 +38,8 @@ static std::map<std::string, ConfigSourceType> stringToConfigSourceType{{"SenseS
                                                                         {"MQTTSource", MQTTSource},
                                                                         {"KafkaSource", KafkaSource},
                                                                         {"OPCSource", OPCSource},
-                                                                        {"DefaultSource", DefaultSource}};
+                                                                        {"DefaultSource", DefaultSource},
+                                                                        {"NoSource", DefaultSource}};
 
 class SourceConfig;
 using SourceConfigPtr = std::shared_ptr<SourceConfig>;

@@ -420,7 +420,6 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
 
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
     srcConf->resetSourceOptions();
-    srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/testCSV.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setPhysicalStreamName("test_stream");
@@ -500,7 +499,6 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
 
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
     srcConf->resetSourceOptions();
-    srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(3);
@@ -664,7 +662,6 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
     srcConf->resetSourceOptions();
-    srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(5);
     srcConf->setNumberOfBuffersToProduce(3);

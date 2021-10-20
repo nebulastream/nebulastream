@@ -53,7 +53,7 @@ class MultiThreadedTest : public testing::Test {
 TEST_F(MultiThreadedTest, testFilterQuery) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -86,7 +86,6 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     out.close();
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(210);
@@ -138,7 +137,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 TEST_F(MultiThreadedTest, testProjectQuery) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -171,7 +170,6 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     out.close();
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(210);
@@ -224,7 +222,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
 TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -260,7 +258,6 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->setSourceType("CSVSource");
     sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
@@ -317,7 +314,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
 TEST_F(MultiThreadedTest, testMultipleWindows) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -356,7 +353,6 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -409,7 +405,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -448,7 +444,6 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     //    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1000);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
@@ -501,7 +496,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
 TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -548,7 +543,6 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -609,7 +603,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -663,7 +657,6 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     wrk1->registerLogicalStream("window3", testSchemaFileName3);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
@@ -733,7 +726,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
 TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -795,7 +788,6 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     wrk1->registerLogicalStream("window4", testSchemaFileName4);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
@@ -907,7 +899,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
 TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -954,7 +946,6 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     //    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1000);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);

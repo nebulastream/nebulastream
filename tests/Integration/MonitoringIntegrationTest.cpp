@@ -17,8 +17,6 @@
 #include <gtest/gtest.h>
 
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
@@ -75,7 +73,6 @@ class MonitoringIntegrationTest : public testing::Test {
 TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);

@@ -259,7 +259,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
     SourceConfigPtr sourceConfigPtr = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 
-    EXPECT_EQ(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
+    EXPECT_NE(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(),
               sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
@@ -285,7 +285,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
     SourceConfigPtr sourceConfigPtr1 = SourceConfigFactory::createSourceConfig(commandLineParams1, commandLineParams1.size());
 
-    EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceType()->getValue(),
+    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceType()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceFrequency()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceFrequency()->getDefaultValue());

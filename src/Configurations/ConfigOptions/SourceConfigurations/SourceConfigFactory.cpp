@@ -54,7 +54,7 @@ std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(const std:
     }
 }
 
-static std::shared_ptr<SourceConfig> createSourceConfig(std::string _sourceType){
+std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(std::string _sourceType){
 
     switch (stringToConfigSourceType[_sourceType]) {
         case CSVSource: return CSVSourceConfig::create();
@@ -374,5 +374,6 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
 
     return configurationMap;
 }
+
 
 }// namespace NES
