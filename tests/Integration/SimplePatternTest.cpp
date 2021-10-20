@@ -192,7 +192,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
 
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/QnV_short_intID.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("QnV");
     //register physical stream

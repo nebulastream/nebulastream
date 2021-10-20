@@ -31,7 +31,7 @@ std::shared_ptr<SenseSourceConfig> SenseSourceConfig::create() {
 }
 
 SenseSourceConfig::SenseSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap), udsf(ConfigOption<std::string>::create("udsf", "", "udsf, needed for: SenseSource")) {
+    : SourceConfig(sourceConfigMap, "SenseSource"), udsf(ConfigOption<std::string>::create("udsf", "", "udsf, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
     if (sourceConfigMap.find("SenseSourceUdsf") != sourceConfigMap.end()) {
         udsf->setValue(sourceConfigMap.find("SenseSourceUdsf")->second);
@@ -39,13 +39,13 @@ SenseSourceConfig::SenseSourceConfig(std::map<std::string, std::string> sourceCo
 }
 
 SenseSourceConfig::SenseSourceConfig()
-    : SourceConfig(), udsf(ConfigOption<std::string>::create("udsf", "", "udsf, needed for: SenseSource")) {
+    : SourceConfig("SenseSource"), udsf(ConfigOption<std::string>::create("udsf", "", "udsf, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with default values.");
 }
 
 void SenseSourceConfig::resetSourceOptions() {
     setUdsf(udsf->getDefaultValue());
-    SourceConfig::resetSourceOptions();
+    SourceConfig::resetSourceOptions("SenseSource");
 }
 
 std::string SenseSourceConfig::toString() {

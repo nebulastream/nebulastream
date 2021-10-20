@@ -203,7 +203,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
 
     SourceConfigPtr sourceConfigPtr = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 
-    EXPECT_NE(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(),
               sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
@@ -216,7 +216,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
 
     SourceConfigPtr sourceConfigPtr1 = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 
-    EXPECT_NE(sourceConfigPtr1->getSourceType()->getValue(), sourceConfigPtr1->getSourceType()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr1->getSourceType()->getValue(), sourceConfigPtr1->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->getSourceFrequency()->getValue(), sourceConfigPtr1->getSourceFrequency()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->getNumberOfBuffersToProduce()->getValue(),
               sourceConfigPtr1->getNumberOfBuffersToProduce()->getDefaultValue());

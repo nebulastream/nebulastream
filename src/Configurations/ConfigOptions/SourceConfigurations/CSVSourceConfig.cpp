@@ -28,7 +28,7 @@ CSVSourceConfigPtr CSVSourceConfig::create(std::map<std::string, std::string> so
 CSVSourceConfigPtr CSVSourceConfig::create() { return std::make_shared<CSVSourceConfig>(CSVSourceConfig()); }
 
 CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap),
+    : SourceConfig(sourceConfigMap, "CSVSource"),
       filePath(ConfigOption<std::string>::create("filePath",
                                                  "../tests/test_data/QnV_short.csv",
                                                  "file path, needed for: CSVSource, BinarySource")),
@@ -43,7 +43,7 @@ CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfig
 }
 
 CSVSourceConfig::CSVSourceConfig()
-    : SourceConfig(), filePath(ConfigOption<std::string>::create("filePath",
+    : SourceConfig("CSVSource"), filePath(ConfigOption<std::string>::create("filePath",
                                                                  "../tests/test_data/QnV_short.csv",
                                                                  "file path, needed for: CSVSource, BinarySource")),
       skipHeader(ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.")) {
@@ -53,7 +53,7 @@ CSVSourceConfig::CSVSourceConfig()
 void CSVSourceConfig::resetSourceOptions() {
     setFilePath(filePath->getDefaultValue());
     setSkipHeader(skipHeader->getDefaultValue());
-    SourceConfig::resetSourceOptions();
+    SourceConfig::resetSourceOptions("CSVSource");
 }
 
 std::string CSVSourceConfig::toString() {

@@ -63,11 +63,10 @@ class QueryTest : public testing::Test {
     void SetUp() override {
 
         sourceConfig = SourceConfigFactory::createSourceConfig();
-        sourceConfig->as<CSVSourceConfig>()->setFilePath("");
-        sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-        sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test2");
-        sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("test_stream");
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->setNumberOfBuffersToProduce(3);
+        sourceConfig->setPhysicalStreamName("test2");
+        sourceConfig->setLogicalStreamName("test_stream");
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down QueryTest test class."); }
