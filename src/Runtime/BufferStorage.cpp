@@ -55,7 +55,7 @@ bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
     return false;
 }
 
-size_t BufferStorage::getBufferStoreSizeForAllQueues() const {
+size_t BufferStorage::getStorageSize() const {
     std::unique_lock<std::mutex> lck(mutex);
     size_t size = 0;
     for (size_t i = 0; i < this->buffers.size(); i++) {
@@ -64,7 +64,7 @@ size_t BufferStorage::getBufferStoreSizeForAllQueues() const {
     return size;
 }
 
-size_t BufferStorage::getStoreSizeForQueue(uint64_t queueId) const {
+size_t BufferStorage::getStorageSizeForQueue(uint64_t queueId) const {
     std::unique_lock<std::mutex> lck(mutex);
     return this->buffers.at(queueId).size();
 }
