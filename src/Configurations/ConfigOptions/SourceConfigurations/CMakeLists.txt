@@ -22,6 +22,5 @@ add_source_nes(
         KafkaSourceConfig.cpp
         OPCSourceConfig.cpp
         DefaultSourceConfig.cpp
-        NoSourceConfig.cpp
 )
 

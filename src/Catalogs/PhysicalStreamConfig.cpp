@@ -17,6 +17,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/SenseSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
@@ -36,10 +37,15 @@ PhysicalStreamConfigPtr PhysicalStreamConfig::create(const SourceConfigPtr& sour
 }
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::createEmpty() {
-    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(SourceConfigFactory::createSourceConfig()));
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(DefaultSourceConfig::create()));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(const SourceConfigPtr& sourceConfig) : sourceConfig(sourceConfig) {
+PhysicalStreamConfig::PhysicalStreamConfig(const SourceConfigPtr& sourceConfig)
+    : sourceConfig(sourceConfig),
+      numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()),
+      numberOfBuffersToProduce(sourceConfig->getNumberOfBuffersToProduce()->getValue()),
+      physicalStreamName(sourceConfig->getPhysicalStreamName()->getValue()),
+      logicalStreamName(sourceConfig->getLogicalStreamName()->getValue()), sourceType(sourceConfig->getSourceType()->getValue()) {
     NES_INFO("PhysicalStreamConfig: Created source with config: " << sourceConfig->toString());
 };
 
@@ -50,6 +56,11 @@ std::string PhysicalStreamConfig::toString() {
 }
 
 SourceConfigPtr PhysicalStreamConfig::getSourceConfig() const { return sourceConfig; }
+std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+std::string PhysicalStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
+uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
+uint32_t PhysicalStreamConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+std::string PhysicalStreamConfig::getSourceType() { return sourceType; }
 
 SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     // todo add handling for support of multiple physical streams.
@@ -97,10 +108,5 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         return nullptr;
     }
 }
-std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
-std::string PhysicalStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
-uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
-uint32_t PhysicalStreamConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
-std::string PhysicalStreamConfig::getSourceType() { return sourceType; }
 
 }// namespace NES

@@ -28,7 +28,7 @@ BinarySourceConfigPtr BinarySourceConfig::create(std::map<std::string, std::stri
 BinarySourceConfigPtr BinarySourceConfig::create() { return std::make_shared<BinarySourceConfig>(BinarySourceConfig()); }
 
 BinarySourceConfig::BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(std::move(sourceConfigMap)),
+    : SourceConfig(sourceConfigMap, "BinarySource"),
       filePath(ConfigOption<std::string>::create("filePath",
                                                  "../tests/test_data/QnV_short.csv",
                                                  "file path, needed for: CSVSource, BinarySource")) {
@@ -39,7 +39,7 @@ BinarySourceConfig::BinarySourceConfig(std::map<std::string, std::string> source
 }
 
 BinarySourceConfig::BinarySourceConfig()
-    : SourceConfig(), filePath(ConfigOption<std::string>::create("filePath",
+    : SourceConfig("BinarySource"), filePath(ConfigOption<std::string>::create("filePath",
                                                                  "../tests/test_data/QnV_short.csv",
                                                                  "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceConfig: Init source config object with default params.");
@@ -47,7 +47,7 @@ BinarySourceConfig::BinarySourceConfig()
 
 void BinarySourceConfig::resetSourceOptions() {
     setFilePath(filePath->getDefaultValue());
-    SourceConfig::resetSourceOptions();
+    SourceConfig::resetSourceOptions("BinarySource");
 }
 
 std::string BinarySourceConfig::toString() {

@@ -19,7 +19,6 @@
 #include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/KafkaSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/NoSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/OPCSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/SenseSourceConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
@@ -51,7 +50,20 @@ std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(const std:
         case BinarySource: return BinarySourceConfig::create(configurationMap);
         case SenseSource: return SenseSourceConfig::create(configurationMap);
         case DefaultSource: return DefaultSourceConfig::create(configurationMap);
-        case NoSource: return NoSourceConfig::create(configurationMap);
+        default: return nullptr;
+    }
+}
+
+static std::shared_ptr<SourceConfig> createSourceConfig(std::string _sourceType){
+
+    switch (stringToConfigSourceType[_sourceType]) {
+        case CSVSource: return CSVSourceConfig::create();
+        case MQTTSource: return MQTTSourceConfig::create();
+        case KafkaSource: return KafkaSourceConfig::create();
+        case OPCSource: return OPCSourceConfig::create();
+        case BinarySource: return BinarySourceConfig::create();
+        case SenseSource: return SenseSourceConfig::create();
+        case DefaultSource: return DefaultSourceConfig::create();
         default: return nullptr;
     }
 }

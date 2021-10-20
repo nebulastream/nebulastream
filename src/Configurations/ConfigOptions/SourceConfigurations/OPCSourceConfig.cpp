@@ -28,7 +28,7 @@ std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create(std::map<std::string, s
 std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create() { return std::make_shared<OPCSourceConfig>(OPCSourceConfig()); }
 
 OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap),
+    : SourceConfig(sourceConfigMap, "OPCSource"),
       namespaceIndex(ConfigOption<uint32_t>::create("namespaceIndex", 1, "namespaceIndex for node, needed for: OPCSource")),
       nodeIdentifier(ConfigOption<std::string>::create("nodeIdentifier", "the.answer", "node identifier, needed for: OPCSource")),
       userName(ConfigOption<std::string>::create("userName",
@@ -51,7 +51,7 @@ OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfig
 }
 
 OPCSourceConfig::OPCSourceConfig()
-    : SourceConfig(),
+    : SourceConfig("OPCSource"),
       namespaceIndex(ConfigOption<uint32_t>::create("namespaceIndex", 1, "namespaceIndex for node, needed for: OPCSource")),
       nodeIdentifier(ConfigOption<std::string>::create("nodeIdentifier", "the.answer", "node identifier, needed for: OPCSource")),
       userName(ConfigOption<std::string>::create("userName",
@@ -66,7 +66,7 @@ void OPCSourceConfig::resetSourceOptions() {
     setNodeIdentifier(nodeIdentifier->getDefaultValue());
     setUserName(userName->getDefaultValue());
     setPassword(password->getDefaultValue());
-    SourceConfig::resetSourceOptions();
+    SourceConfig::resetSourceOptions("OPCSource");
 }
 
 std::string OPCSourceConfig::toString() {

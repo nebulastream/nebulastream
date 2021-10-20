@@ -27,7 +27,7 @@ namespace NES {
 /**
  * enum with config objects
  */
-enum ConfigSourceType { SenseSource, CSVSource, BinarySource, MQTTSource, KafkaSource, OPCSource, DefaultSource, NoSource };
+enum ConfigSourceType { SenseSource, CSVSource, BinarySource, MQTTSource, KafkaSource, OPCSource, DefaultSource };
 
 /**
  * enum string mapping for source config factory
@@ -38,8 +38,7 @@ static std::map<std::string, ConfigSourceType> stringToConfigSourceType{{"SenseS
                                                                         {"MQTTSource", MQTTSource},
                                                                         {"KafkaSource", KafkaSource},
                                                                         {"OPCSource", OPCSource},
-                                                                        {"DefaultSource", DefaultSource},
-                                                                        {"NoSource", NoSource}};
+                                                                        {"DefaultSource", DefaultSource}};
 
 class SourceConfig;
 using SourceConfigPtr = std::shared_ptr<SourceConfig>;
@@ -56,8 +55,15 @@ class SourceConfigFactory {
                                                             int argc);
 
     /**
-     * @brief create empty source config
-     * @return source config object with default values
+     * @brief create default source config with default values of type sourceType
+     * @param sourceType source type of source config object
+     * @return source config object of type sourceType
+     */
+    static std::shared_ptr<SourceConfig> createSourceConfig(std::string _sourceType);
+
+    /**
+     * @brief create default source config
+     * @return default source config object
      */
     static std::shared_ptr<SourceConfig> createSourceConfig();
 

@@ -62,11 +62,10 @@ void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("");
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test2");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("test_stream");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("test_stream");
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceConfig);
 

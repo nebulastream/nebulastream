@@ -28,7 +28,7 @@ KafkaSourceConfigPtr KafkaSourceConfig::create(std::map<std::string, std::string
 KafkaSourceConfigPtr KafkaSourceConfig::create() { return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig()); }
 
 KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
+    : SourceConfig(sourceConfigMap, "KafkaSource"), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
           "autoCommit",
           1,
@@ -59,7 +59,7 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
 }
 
 KafkaSourceConfig::KafkaSourceConfig()
-    : SourceConfig(), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
+    : SourceConfig("KafkaSource"), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
           "autoCommit",
           1,
@@ -79,7 +79,7 @@ void KafkaSourceConfig::resetSourceOptions() {
     setGroupId(groupId->getDefaultValue());
     setTopic(topic->getDefaultValue());
     setConnectionTimeout(connectionTimeout->getDefaultValue());
-    SourceConfig::resetSourceOptions();
+    SourceConfig::resetSourceOptions("KafkaSource");
 }
 
 std::string KafkaSourceConfig::toString() {

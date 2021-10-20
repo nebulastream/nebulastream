@@ -21,21 +21,22 @@
 
 namespace NES {
 DefaultSourceConfigPtr DefaultSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<DefaultSourceConfig>(DefaultSourceConfig(sourceConfigMap));
+    return std::make_shared<DefaultSourceConfig>(DefaultSourceConfig(std::move(sourceConfigMap)));
 }
 
 DefaultSourceConfigPtr DefaultSourceConfig::create() { return std::make_shared<DefaultSourceConfig>(DefaultSourceConfig()); }
 
 DefaultSourceConfig::DefaultSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(std::move(sourceConfigMap)) {
+    : SourceConfig(std::move(sourceConfigMap), "DefaultSource") {
+    NES_INFO("NesSourceConfig: Init source config object with default values.");
+
+}
+
+DefaultSourceConfig::DefaultSourceConfig() : SourceConfig("DefaultSource") {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
-DefaultSourceConfig::DefaultSourceConfig() : SourceConfig() {
-    NES_INFO("NesSourceConfig: Init source config object with default values.");
-}
-
-void DefaultSourceConfig::resetSourceOptions() { SourceConfig::resetSourceOptions(); }
+void DefaultSourceConfig::resetSourceOptions() { SourceConfig::resetSourceOptions("DefaultSource"); }
 
 std::string DefaultSourceConfig::toString() {
     std::stringstream ss;

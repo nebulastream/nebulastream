@@ -28,7 +28,7 @@ MQTTSourceConfigPtr MQTTSourceConfig::create(std::map<std::string, std::string> 
 MQTTSourceConfigPtr MQTTSourceConfig::create() { return std::make_shared<MQTTSourceConfig>(MQTTSourceConfig()); }
 
 MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap),
+    : SourceConfig(sourceConfigMap, "MQTTSource"),
       url(ConfigOption<std::string>::create("url",
                                             "tcp://127.0.0.1:1885",
                                             "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
@@ -71,7 +71,7 @@ MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConf
 }
 
 MQTTSourceConfig::MQTTSourceConfig()
-    : SourceConfig(),
+    : SourceConfig("MQTTSource"),
       url(ConfigOption<std::string>::create("url",
                                             "ws://127.0.0.1:9001",
                                             "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
@@ -101,7 +101,7 @@ void MQTTSourceConfig::resetSourceOptions() {
     setTopic(topic->getDefaultValue());
     setQos(qos->getDefaultValue());
     setCleanSession(cleanSession->getDefaultValue());
-    SourceConfig::resetSourceOptions();
+    SourceConfig::resetSourceOptions("MQTTSource");
 }
 
 std::string MQTTSourceConfig::toString() {

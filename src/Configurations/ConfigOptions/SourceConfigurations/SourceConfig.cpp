@@ -22,7 +22,7 @@
 
 namespace NES {
 
-SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap)
+SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType)
     : numberOfBuffersToProduce(ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 1, "Number of buffers to produce.")),
       numberOfTuplesToProducePerBuffer(
           ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.")),
@@ -34,7 +34,7 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap)
       flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
       inputFormat(ConfigOption<std::string>::create("inputFormat", "JSON", "input data format")),
       sourceType(ConfigOption<std::string>::create("sourceType",
-                                                   "NoSource",
+                                                   std::move(_sourceType),
                                                    "Type of the Source (available options: NoSource, DefaultSource, CSVSource, "
                                                    "BinarySource, MQTTSource, KafkaSource, OPCSource).")) {
     NES_INFO("NesSourceConfig: Init source config object with new values.");
@@ -68,7 +68,7 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap)
     }
 }
 
-SourceConfig::SourceConfig()
+SourceConfig::SourceConfig(std::string _sourceType)
     : numberOfBuffersToProduce(ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 0, "Number of buffers to produce.")),
       numberOfTuplesToProducePerBuffer(
           ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.")),
@@ -81,13 +81,13 @@ SourceConfig::SourceConfig()
       inputFormat(ConfigOption<std::string>::create("inputFormat", "JSON", "input data format")),
       sourceType(
           ConfigOption<std::string>::create("sourceType",
-                                            "NoSource",
+                                            std::move(_sourceType),
                                             "Type of the Source (available options: DefaultSource, CSVSource, BinarySource).")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
-void SourceConfig::resetSourceOptions() {
-    setSourceType(sourceType->getDefaultValue());
+void SourceConfig::resetSourceOptions(std::string _sourceType) {
+    setSourceType(std::move(_sourceType));
     setInputFormat(inputFormat->getDefaultValue());
     setFlushIntervalMS(flushIntervalMS->getDefaultValue());
     setRowLayout(rowLayout->getDefaultValue());

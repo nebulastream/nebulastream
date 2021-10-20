@@ -41,20 +41,29 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
   public:
     /**
      * @brief constructor to create a new source option object initialized with values from sourceConfigMap
+     * @param sourceConfigMap with input params
+     * @param sourceType type of source from where object was initialized
      */
-    explicit SourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit SourceConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType);
 
     /**
      * @brief constructor to create a new source option object initialized with default values as set below
+     * @param sourceType type of source from where object was initialized
      */
-    SourceConfig();
+    explicit SourceConfig(std::string _sourceType);
 
     virtual ~SourceConfig() = default;
 
     /**
      * @brief resets all options to default values
      */
-    virtual void resetSourceOptions();
+    virtual void resetSourceOptions() = 0;
+
+    /**
+     * @brief resets all options to default values
+     * @param sourceType also reset source type to current source type object
+     */
+    virtual void resetSourceOptions(std::string _sourceType);
 
     /**
      * @brief prints the current source configuration (name: current value)
