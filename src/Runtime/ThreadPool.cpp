@@ -164,7 +164,7 @@ bool ThreadPool::start() {
             barrier->wait();
             NES_ASSERT(localBufferManager != NULL, "localBufferManager is null");
 #ifdef ENABLE_PAPI_PROFILER
-            auto path = std::filesystem::path("worker_" + std::to_string(NesThread::getId()));
+            auto path = std::filesystem::path("worker_" + std::to_string(NesThread::getId()) + ".csv");
             auto profiler = std::make_shared<Profiler::PapiCpuProfiler>(Profiler::PapiCpuProfiler::Presets::CachePresets, std::ofstream(path, std::ofstream::out), NesThread::getId(), NesThread::getId());
             queryManager->cpuProfilers[NesThread::getId() % queryManager->cpuProfilers.size()] = profiler;
 #endif

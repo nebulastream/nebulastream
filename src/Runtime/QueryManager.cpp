@@ -806,7 +806,7 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
         NES_DEBUG("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         auto result = task(workerContext);
 #ifdef ENABLE_PAPI_PROFILER
-        profiler->stopSampling(1);
+        profiler->stopSampling(task.getNumberOfInputTuples());
 #endif
         switch (result) {
             case ExecutionResult::Ok: {
