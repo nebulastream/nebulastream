@@ -67,9 +67,10 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(executableSuccessors)),
-      connected(false), serverAddress(serverAddress), clientId(clientId), user(std::move(user)), topic(std::move(topic)), inputFormat(inputFormat),
-      tupleSize(schema->getSchemaSizeInBytes()), qualityOfService(qualityOfService), cleanSession(cleanSession),
-      bufferFlushIntervalMs(bufferFlushIntervalMs), readTimeoutInMs((bufferFlushIntervalMs > 0) ? bufferFlushIntervalMs : 100){
+      connected(false), serverAddress(serverAddress), clientId(clientId), user(std::move(user)), topic(std::move(topic)),
+      inputFormat(inputFormat), tupleSize(schema->getSchemaSizeInBytes()), qualityOfService(qualityOfService),
+      cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs),
+      readTimeoutInMs((bufferFlushIntervalMs > 0) ? bufferFlushIntervalMs : 100) {
 
     if (cleanSession) {
         uint32_t randomizeClientId = random();
@@ -169,23 +170,24 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
             // Try to consume a message if the connected flag is set.
             // If no message is received (nullptr) and if the client is not connected anymore, set connected to false.
             // If connected is false, constantly check if we are reconnected again and if so, resubscribe.
-            if(connected) {
+            if (connected) {
                 // Using try_consume_message_for(), because it is non-blocking.
                 auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
-                if(message) { // Check if message was received correctly (not nullptr)
+                if (message) {// Check if message was received correctly (not nullptr)
                     NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
                     receivedMessageString = message->get_payload_str();
-                    if(!inputParser->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer)) {
+                    if (!inputParser->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer)) {
                         NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
-                    NES_TRACE("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/' << tuplesThisPass);
+                    NES_TRACE("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/'
+                                                                                              << tuplesThisPass);
                     tupleCount++;
-                } else if (!client->is_connected()){ // message is a nullptr. Check if still connected to broker.
+                } else if (!client->is_connected()) {// message is a nullptr. Check if still connected to broker.
                     NES_WARNING("MQTTSource::fillBuffer: Not connected anymore!");
                     connected = false;
                 }
-            } else if(client->is_connected()) { // We lost connection (connection=false), check if we are connected again.
+            } else if (client->is_connected()) {// We lost connection (connection=false), check if we are connected again.
                 NES_DEBUG("MQTTSource::fillBuffer: Reconnected, subscribing again!");
                 client->subscribe(topic, qualityOfService)->wait_for(readTimeoutInMs);
                 connected = true;
@@ -199,9 +201,10 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
         // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
-        if ((bufferFlushIntervalMs > 0 && tupleCount > 0 &&
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
-            - flushIntervalTimerStart).count() >= bufferFlushIntervalMs)) {
+        if ((bufferFlushIntervalMs > 0 && tupleCount > 0
+             && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
+                     .count()
+                 >= bufferFlushIntervalMs)) {
             NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
@@ -218,7 +221,8 @@ bool MQTTSource::connect() {
         // connect with user name and password
         try {
             //automatic reconnect = true enables establishing a connection with a broker again, after a disconnect
-            auto connOpts = mqtt::connect_options_builder().user_name(user).automatic_reconnect(true).clean_session(cleanSession).finalize();
+            auto connOpts =
+                mqtt::connect_options_builder().user_name(user).automatic_reconnect(true).clean_session(cleanSession).finalize();
 
             // Start consumer before connecting to make sure to not miss messages
             client->start_consuming();
