@@ -200,8 +200,9 @@ NodeEngineFactory::createQueryCompilationOptions(const std::string& queryCompile
 }
 
 uint64_t NodeEngineFactory::getNextNodeEngineId() {
-    static std::atomic_uint64_t id = time(nullptr) ^ getpid();
-    return ++id;
+    const uint64_t max = -1;
+    std::atomic<uint64_t> id = time(nullptr) ^ getpid();
+    return (++id % max);
 }
 
 }// namespace NES::Runtime

@@ -477,13 +477,13 @@ void QueryManager::poisonWorkers() {
     for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
         for (auto i{0ul}; i < threadPool->getNumberOfThreads() / numberOfNumaRegions; ++i) {
             NES_DEBUG("Add poision for queue no=" << u);
-            taskQueues[u].write(Task(pipeline, buffer));
+            taskQueues[u].write(Task(pipeline, buffer, getNextTaskId()));
         }
     }
 #else
     std::unique_lock lock(workMutex);
     for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
-        taskQueue.emplace_back(pipeline, buffer);
+        taskQueue.emplace_back(pipeline, buffer, getNextTaskId());
     }
     NES_WARNING("QueryManager: Poisoning Task Queue " << taskQueue.size());
     cv.notify_all();
@@ -612,14 +612,14 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     auto numberOfNumaRegions = numberOfQueues;
     for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
         for (auto i{0ul}; i < threadPool->getNumberOfThreads() / numberOfNumaRegions; ++i) {
-            taskQueues[u].write(Task(pipeline, buffer));
+            taskQueues[u].write(Task(pipeline, buffer, getNextTaskId()));
         }
     }
 #else
     {
         std::unique_lock lock(workMutex);
         for (auto i{0ull}; i < threadPool->getNumberOfThreads(); ++i) {
-            taskQueue.emplace_back(pipeline, buffer);
+            taskQueue.emplace_back(pipeline, buffer, getNextTaskId());
         }
         cv.notify_all();
     }
@@ -681,12 +681,12 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         auto numberOfNumaRegions = numberOfQueues;
         for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
             for (auto i{0ul}; i < threadPool->getNumberOfThreads() / numberOfNumaRegions; ++i) {
-                taskQueues[u].write(Task(pipeline, buffer));
+                taskQueues[u].write(Task(pipeline, buffer, getNextTaskId()));
             }
         }
 #else
         for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
-            taskQueue.emplace_back(pipeline, buffer);
+            taskQueue.emplace_back(pipeline, buffer, getNextTaskId());
         }
 #endif
     }
@@ -742,7 +742,7 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
         }
     }
     for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
-        taskQueue.emplace_front(pipeline, buffer);
+        taskQueue.emplace_front(pipeline, buffer, getNextTaskId());
     }
     while (!temp.empty()) {
         taskQueue.emplace_front(temp.top());
@@ -929,7 +929,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 
 #else
-            taskQueues[numaNode].write(Task(executable, buffer));
+            taskQueues[numaNode].write(Task(executable, buffer, getNextTaskId()));
 #endif
         } else {
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
@@ -938,7 +938,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 #else
-        taskQueues[numaNode].write(Task(executable, buffer));
+        taskQueues[numaNode].write(Task(executable, buffer, getNextTaskId()));
 #endif
     }
 #else
@@ -950,7 +950,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             NES_DEBUG("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer.getOriginId()
                                                                     << " sequence:" << buffer.getSequenceNumber());
-            taskQueue.emplace_back(executable, buffer);
+            taskQueue.emplace_back(executable, buffer, getNextTaskId());
         } else {
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
         }
@@ -958,7 +958,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
         NES_DEBUG("QueryManager: added Task for next a data sink " << (*dataSink)->toString() << " inputBuffer "
                                                                    << buffer.getOriginId()
                                                                    << " sequence:" << buffer.getSequenceNumber());
-        taskQueue.emplace_back(executable, buffer);
+        taskQueue.emplace_back(executable, buffer, getNextTaskId());
     }
     cv.notify_all();
 #endif
