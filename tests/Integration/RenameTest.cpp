@@ -54,7 +54,6 @@ class RenameTest : public testing::Test {
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -132,7 +131,6 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
 TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -213,7 +211,6 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
 TEST_F(RenameTest, testAttributeRenameAndFilter) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -281,7 +278,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
 TEST_F(RenameTest, testCentralWindowEventTime) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -314,7 +311,6 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -373,7 +369,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -424,7 +420,6 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     out2.close();
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");

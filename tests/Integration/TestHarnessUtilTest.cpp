@@ -525,7 +525,6 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     //register physical stream
 
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
     sourceConfig->setFilePath("../tests/test_data/testCSV.csv");
@@ -580,7 +579,6 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     //register physical stream
 
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
     sourceConfig->setFilePath("../tests/test_data/testCSV.csv");

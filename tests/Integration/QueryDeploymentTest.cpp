@@ -102,22 +102,20 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("physical_car");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("car");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("physical_car");
+    srcConf->setLogicalStreamName("car");
     //register physical stream
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("physical_truck");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("truck");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("physical_truck");
+    srcConf->setLogicalStreamName("truck");
     //register physical stream
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(confTruck);
@@ -261,22 +259,20 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("physical_car");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("car");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("physical_car");
+    srcConf->setLogicalStreamName("car");
     //register physical stream
     PhysicalStreamConfigPtr confCar = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("physical_truck");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("truck");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setPhysicalStreamName("physical_truck");
+    srcConf->setLogicalStreamName("truck");
     //register physical stream
     PhysicalStreamConfigPtr confTruck = PhysicalStreamConfig::create(srcConf);
     wrk2->registerPhysicalStream(confTruck);
@@ -571,7 +567,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenTwoSourcesRunning) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -605,7 +601,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     out.close();
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(10000);
@@ -648,7 +643,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenOneSourceRunning) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -682,7 +677,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     out.close();
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(10000);
@@ -728,7 +722,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenNoSourceRunning) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -762,7 +756,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     out.close();
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
@@ -843,7 +836,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -899,7 +891,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -1006,7 +997,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -1133,8 +1123,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);

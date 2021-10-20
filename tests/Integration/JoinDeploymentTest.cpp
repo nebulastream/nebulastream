@@ -189,8 +189,7 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -270,8 +269,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -351,8 +349,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -431,8 +428,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -512,8 +508,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -598,8 +593,7 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -686,8 +680,7 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -775,8 +768,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
         SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -860,8 +852,7 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
         SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
-    srcConf->as<CSVSourceConfig>()->setSourceType("CSVSource");
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);

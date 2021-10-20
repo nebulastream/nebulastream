@@ -70,7 +70,6 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     wrkConf = WorkerConfig::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
-    srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
@@ -166,7 +165,6 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     wrkConf = WorkerConfig::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
-    srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
@@ -284,7 +282,6 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     wrkConf = WorkerConfig::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
-    srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
@@ -383,7 +380,6 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     wrkConf = WorkerConfig::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
-    srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);

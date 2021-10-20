@@ -42,8 +42,7 @@ class AllowedLatenessTest : public testing::Test {
 
     void SetUp() override {
         // window-out-of-order.csv contains 12 rows
-        SourceConfigPtr outOfOrderSourceConfig = SourceConfigFactory::createSourceConfig();
-        outOfOrderSourceConfig->as<CSVSourceConfig>()->setSourceType("CSVSource");
+        SourceConfigPtr outOfOrderSourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
         outOfOrderSourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window-out-of-order.csv");
         outOfOrderSourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
         outOfOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
@@ -54,9 +53,8 @@ class AllowedLatenessTest : public testing::Test {
 
         outOfOrderConf = PhysicalStreamConfig::create(outOfOrderSourceConfig);
 
-        SourceConfigPtr inOrderSourceConfig = SourceConfigFactory::createSourceConfig();
+        SourceConfigPtr inOrderSourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
         // window-out-of-order.csv contains 12 rows
-        inOrderSourceConfig->as<CSVSourceConfig>()->setSourceType("CSVSource");
         inOrderSourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window-in-order.csv");
         inOrderSourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
         inOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
