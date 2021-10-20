@@ -196,7 +196,7 @@ void ILPStrategy::computeDistanceRecursive(TopologyNodePtr node, std::map<std::s
     }
 
     // if the current node is not a root node, recursively compute the mileage of its first parent
-    // FIXME: assuming a node only has a single parent
+    // assuming a node only has a single parent
     TopologyNodePtr parent = parents[0]->as<TopologyNode>();
     std::string parentID = std::to_string(parent->getId());
     if (mileages.find(parentID) == mileages.end()) {
@@ -268,9 +268,8 @@ bool ILPStrategy::addPath(z3::ContextPtr z3Context,
             if ((i == 0 && j == 0) || (i == operatorNodePath.size() - 1 && j == topologyNodePath.size() - 1)) {
                 opt.add(P_IJ == 1);// Fix the placement of source and sink
             } else {
-                opt.add(P_IJ == 0
-                        || P_IJ
-                            == 1);// The binary decision on whether to place or not, hence we constraint it to be iether 0 or 1
+                // The binary decision on whether to place or not, hence we constrain it to be either 0 or 1
+                opt.add(P_IJ == 0 || P_IJ == 1);
             }
             placementVariable.insert(std::make_pair(variableID, P_IJ));
             sum_i = sum_i + P_IJ;
