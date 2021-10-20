@@ -185,7 +185,9 @@ bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     auto expected = Created;
     if (queryManagerStatus.compare_exchange_strong(expected, Running)) {
+#ifdef ENABLE_PAPI_PROFILER
         cpuProfilers.resize(numThreads);
+#endif
         threadPool = std::make_shared<ThreadPool>(nodeEngineId,
                                                   inherited0::shared_from_this(),
                                                   numThreads,
