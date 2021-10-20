@@ -86,6 +86,7 @@ class PlacementStrategyFactory {
      * @param globalExecutionPlan : global execution plan to be updated
      * @param typeInferencePhase : type inference phase instance
      * @param streamCatalog : stream catalog
+     * @param z3Context : context from the z3 library used for optimization
      * @return instance of type BaseOptimizer
      */
     static std::unique_ptr<BasePlacementStrategy> getStrategy(const std::string& strategyName,
@@ -94,6 +95,21 @@ class PlacementStrategyFactory {
                                                               const TypeInferencePhasePtr& typeInferencePhase,
                                                               const StreamCatalogPtr& streamCatalog,
                                                               const z3::ContextPtr& z3Context);
+
+    /**
+     * @brief Factory method returning different kind of optimizer (without the z3 optimizer).
+     * @param strategyName : name of the strategy
+     * @param topology : topology information
+     * @param globalExecutionPlan : global execution plan to be updated
+     * @param typeInferencePhase : type inference phase instance
+     * @param streamCatalog : stream catalog
+     * @return instance of type BaseOptimizer
+     */
+    static std::unique_ptr<BasePlacementStrategy> getStrategy(const std::string& strategyName,
+                                                              const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                              const TopologyPtr& topology,
+                                                              const TypeInferencePhasePtr& typeInferencePhase,
+                                                              const StreamCatalogPtr& streamCatalog);
 };
 }// namespace NES::Optimizer
 #endif//NES_PLACEMENTSTRATEGYFACTORY_HPP

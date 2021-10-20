@@ -30,16 +30,25 @@ std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(con
                                                                              const StreamCatalogPtr& streamCatalog,
                                                                              const z3::ContextPtr& z3Context) {
     switch (stringToPlacementStrategyType[strategyName]) {
+        case ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
+        default: return getStrategy(strategyName, globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    }
+}
+
+std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(const std::string& strategyName,
+                                                                             const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                                             const TopologyPtr& topology,
+                                                                             const TypeInferencePhasePtr& typeInferencePhase,
+                                                                             const StreamCatalogPtr& streamCatalog) {
+    switch (stringToPlacementStrategyType[strategyName]) {
         case BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
         case TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-        case IFCOP: return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-        case ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
-            // FIXME: enable them with issue #755
-            //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
-            //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
-            //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
-            //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
-            //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
+        // FIXME: enable them with issue #755
+        //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
+        //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
+        //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
+        //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
+        //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
         default: return nullptr;
     }
 }
