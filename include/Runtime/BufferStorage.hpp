@@ -18,6 +18,7 @@
 #define NES_BUFFERSTORAGE_H
 
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/AbstractBufferStorage.hpp>
 #include <Util/BufferSequenceNumber.hpp>
 #include <Util/BufferStorageUnit.hpp>
 #include <queue>
@@ -28,7 +29,7 @@ using BufferStorageUnitPtr = std::shared_ptr<BufferStorageUnit>;
 /**
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
  */
-class BufferStorage {
+class BufferStorage : public AbstractBufferStorage {
 
   public:
     /**
@@ -50,14 +51,14 @@ class BufferStorage {
      * @brief Return current storage size
      * @return Current storage size
      */
-    size_t getBufferStoreSizeForAllQueues() const;
+    size_t getStorageSize() const;
 
     /**
      * @brief Return the size of queue with a given origin Id
      * @param queueId the id of the queue
      * @return Given queue size
      */
-    size_t getStoreSizeForQueue(uint64_t queueId) const;
+    size_t getStorageSizeForQueue(uint64_t queueId) const;
 
     /**
      * @brief Return top element of the queue
