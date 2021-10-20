@@ -82,6 +82,15 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
     err = PAPI_create_eventset(&eventSet);
     NES_ASSERT2_FMT(err == PAPI_OK, "Cannot create PAPI event err=" << err);
     switch (preset) {
+        case Presets::BranchPresets: {
+            currEvents = {PAPI_BR_MSP, PAPI_BR_INS, PAPI_BR_TKN, PAPI_BR_NTK};
+            currSamples.resize(currEvents.size(), 0);
+            this->csvWriter << "core_id,num_records,worker_id,ts,PAPI_BR_MSP,PAPI_BR_INS,PAPI_BR_TKN,PAPI_BR_NTK,"
+                          "mispred_per_record\n";
+            err = PAPI_add_events(eventSet, currEvents.data(), currEvents.size());
+            NES_ASSERT2_FMT(err == PAPI_OK, "Cannot register events on PAPI reason: " << err);
+            break;
+        }
         case Presets::CachePresets: {
             currEvents = {PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM, PAPI_L3_TCA,
                            PAPI_L1_DCM, PAPI_L1_ICM};
@@ -134,6 +143,11 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords) {
         csvWriter << "," << value;
     }
     switch (preset) {
+        case Presets::BranchPresets: {
+            double mispredPerRecord = numRecords == 0 ? 0 : currSamples[0] / double(numRecords);
+            csvWriter << "," << mispredPerRecord;
+            break;
+        }
         case Presets::CachePresets: {
             double l1MissesPerRecord = numRecords == 0 ? 0 : currSamples[4] / double(numRecords);
             double l2MissesPerRecord = numRecords == 0 ? 0 : currSamples[1] / double(numRecords);
