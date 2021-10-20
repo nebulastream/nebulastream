@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -24,11 +24,11 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -53,6 +53,10 @@ using namespace web;
 using namespace z3;
 
 class ILPPlacementTest : public testing::Test {
+
+  protected:
+    z3::ContextPtr z3Context;
+
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     /* Will be called before any test in this class are executed. */
@@ -65,6 +69,12 @@ class ILPPlacementTest : public testing::Test {
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
+
+        z3::config cfg;
+        cfg.set("timeout", 50000);
+        cfg.set("model", false);
+        cfg.set("type_check", false);
+        z3Context = std::make_shared<z3::context>(cfg);
     }
 
     /* Will be called before a test is executed. */
@@ -240,7 +250,6 @@ TEST_F(ILPPlacementTest, Z3Test) {
 
 /* Test query placement with ILP strategy - simple filter query */
 TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
-
     setupTopologyAndStreamCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -249,7 +258,8 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
                                                                               typeInferencePhase,
-                                                                              streamCatalogForILP);
+                                                                              streamCatalogForILP,
+                                                                              z3Context);
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
@@ -309,7 +319,8 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
                                                                               typeInferencePhase,
-                                                                              streamCatalogForILP);
+                                                                              streamCatalogForILP,
+                                                                              z3Context);
 
     Query query = Query::from("car")
                         .map(Attribute("c") = Attribute("value") + 2)
@@ -324,10 +335,6 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
     for (const auto& sink : queryPlan->getSinkOperators()) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
-
-    //auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    //queryPlan = queryReWritePhase->execute(queryPlan);
-    //typeInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
     topologySpecificQueryRewrite->execute(queryPlan);
@@ -375,7 +382,8 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
                                                                               typeInferencePhase,
-                                                                              streamCatalogForILP);
+                                                                              streamCatalogForILP,
+                                                                              z3Context);
 
     Query query = Query::from("car")
                       .filter(Attribute("id") < 45)
