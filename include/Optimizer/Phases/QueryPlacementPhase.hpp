@@ -62,6 +62,7 @@ class QueryPlacementPhase {
      * selected query placement strategy
      * @param placementStrategy : name of the placement strategy
      * @param queryPlan : the query plan
+     * @param z3Contex : context from the z3 library used for optimization
      * @return true is placement successful.
      * @throws QueryPlacementException
      */
