@@ -1990,7 +1990,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
 }
 
 /*
- * @brief Test if the Count aggregation can be deployed
+ * @brief Test if the Median aggregation can be deployed
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMedianAggregation) {
     struct Car {
@@ -2034,6 +2034,57 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMedianAggregation) {
     };
 
     std::vector<Output> expectedOutput = {{1000ULL, 2000ULL, 1ULL, 30}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
+ * @brief Test aggregation with field rename
+ */
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
+    struct Car {
+        uint64_t key;
+        uint64_t value;
+        uint64_t value2;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+                         ->addField("key", DataTypeFactory::createUInt64())
+                         ->addField("value", DataTypeFactory::createUInt64())
+                         ->addField("value2", DataTypeFactory::createUInt64())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Count()->as(Attribute("Frequency"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
+
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, 0);
+    testHarness.pushElement<Car>({1ULL, 99ULL, 88ULL, 1500ULL}, 0);
+    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 2000ULL}, 0);
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        uint64_t key;
+        uint64_t count;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && count == rhs.count && start == rhs.start && end == rhs.end);
+        }
+    };
+    auto outputsize = sizeof(Output);
+    NES_DEBUG(outputsize);
+    std::vector<Output> expectedOutput = {{1000, 2000, 1, 2}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());

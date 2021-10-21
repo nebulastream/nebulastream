@@ -32,6 +32,7 @@
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
 /**
  * @brief This header includes all headers that are necessary to formulate queries in CPP.
