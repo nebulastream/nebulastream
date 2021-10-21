@@ -510,10 +510,14 @@ namespace NES {
                                                TestUtils::coordinatorPort(rpcPort),
                                                TestUtils::numberOfSlots(1),
                                                TestUtils::sourceType("MQTTSource"),
-                                               TestUtils::sourceConfig("tcp://127.0.0.1:1883;nes;nes;test;JSON;1;true;"),
+                                               TestUtils::sourceConfig("tcp://127.0.0.1:1883;nes;nes;test;JSON;1;true;1"),
                                                TestUtils::physicalStreamName("mqttP"),
                                                TestUtils::logicalStreamName("mqtt"),
                                                TestUtils::logLevel("LOG_ERROR"),
+                                               TestUtils::numberOfBuffersInGlobalBufferManager(20000),
+                                               TestUtils::numberOfBuffersPerWorker(6000),
+                                               TestUtils::numberOfBuffersInSourceLocalBufferPool(8000),
+                                               TestUtils::bufferSizeInBytes(1024),
                                                });
 
         sleep(1);
@@ -584,7 +588,8 @@ namespace NES {
 
         std::stringstream ss;
         ss << "{\"userQuery\" : ";
-        ss << "\"Query::from(\\\"mqtt\\\").map(Attribute(\\\"data\\\") = Attribute(\\\"data\\\")*Attribute(\\\"id\\\"))"
+        ss << "\"Query::from(\\\"mqtt\\\")"
+              ".map(Attribute(\\\"data\\\") = Attribute(\\\"data\\\")*Attribute(\\\"id\\\"))"
               ".sink(FileSinkDescriptor::create(\\\"";
         ss << outputFilePath;
         ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
@@ -593,6 +598,7 @@ namespace NES {
         NES_INFO("query string submit=" << ss.str());
 
         //".map(Attribute(\\\"newField\\\") = Attribute(\\\"data\\\")%5)"
+        //.map(Attribute(\"data\") = Attribute(\"data\")*Attribute(\"id\"))
 
 //        std::stringstream ss;
 //        ss << "{\"userQuery\" : ";

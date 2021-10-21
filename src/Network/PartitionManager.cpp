@@ -80,7 +80,7 @@ bool PartitionManager::unregisterSubpartition(NesPartition partition) {
     NES_DEBUG("Unregistering SubPartition");
     if (it->second.count() == 0) {
         NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
-        //partitions.erase(it);
+        partitions.erase(it);
         return true;
     }
 
@@ -89,7 +89,7 @@ bool PartitionManager::unregisterSubpartition(NesPartition partition) {
     if (it->second.count() == 0) {
         //if counter reaches 0, log error
         NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
-        //partitions.erase(it);
+        partitions.erase(it);
         return true;
     }
     return false;

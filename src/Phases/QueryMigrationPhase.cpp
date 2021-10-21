@@ -71,6 +71,7 @@ bool QueryMigrationPhase::execute(const MigrateQueryRequestPtr& req) {
 }
 
 bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& queryPlans, const ExecutionNodePtr& markedNode) {
+    NES_ERROR("With Buffer");
 
     auto queryId = queryPlans[0]->getQueryId();
 
@@ -79,6 +80,10 @@ bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& 
         std::map<OperatorId, QueryMigrationPhase::InformationForFindingSink>  mapOfNetworkSourceIdToInfoForFindingNetworkSink = getInfoForAllSinks(sourceOperators, queryId);
         NES_DEBUG("QueryMigrationPhase: Sending buffer requests");
         sendBufferRequests(mapOfNetworkSourceIdToInfoForFindingNetworkSink);
+
+        auto ts = std::chrono::system_clock::now();
+        auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
+        NES_ERROR("QueryMigrationPhase: Beginning Migration : " << time);
         std::vector<ExecutionNodePtr> exeNodes = executePartialPlacement(queryPlan);
         if(exeNodes.size() == 0){
             NES_ERROR("QueryMigrationPhase: No execution nodes made");
@@ -87,21 +92,24 @@ bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& 
         for(auto& exeNode: exeNodes){
             NES_ERROR("QueryMigrationPhase: Occupied Resources on new Nodes: " <<exeNode->getOccupiedResources(1));
         }
+        NES_ERROR("PartialP Placement successul");
         bool deploySuccess = deployQuery(queryId,exeNodes);
         if(!deploySuccess){
-            NES_DEBUG("QueryMigrationPhase: Issues while deploying execution nodes. Triggering unbuffering of data");
+            NES_ERROR("QueryMigrationPhase: Issues while deploying execution nodes. Triggering unbuffering of data");
             //TODO:
             //workerRPCClient->unbufferData(rpcAddress, helperMap);
             return false;
         }
+        NES_ERROR("Deplyoment successul");
         bool startSuccess = startQuery(queryId,exeNodes);
         if(!startSuccess){
-            NES_DEBUG("QueryMigrationPhase: Issues while starting execution nodes. Triggering unbuffering of data");
+            NES_ERROR("QueryMigrationPhase: Issues while starting execution nodes. Triggering unbuffering of data");
             //TODO:
             //workerRPCClient->unbufferData(rpcAddress, helperMap);
             return false;
         }
         //sleep(30);
+        NES_ERROR("Starting successul");
         sendReconfigurationRequests(mapOfNetworkSourceIdToInfoForFindingNetworkSink, queryId,exeNodes);
         bool success = markedNode->removeSingleQuerySubPlan(queryId,queryPlan->getQuerySubPlanId());
         if(!success){
@@ -109,19 +117,21 @@ bool QueryMigrationPhase::executeMigrationWithBuffer(std::vector<QueryPlanPtr>& 
         }
     }
     globalExecutionPlan->removeExecutionNodeFromQueryIdIndex(queryId,markedNode->getId());
-    NES_DEBUG("QueryMigrationPhase: complete");
+    NES_ERROR("QueryMigrationPhase: complete");
     return true;
 }
 
 bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryPlanPtr>& queryPlans,const ExecutionNodePtr& markedNode) {
-
+    NES_ERROR("WithOUT Buffer");
     auto queryId = queryPlans[0]->getQueryId();
 
     for (const auto& queryPlan : queryPlans) {
         auto sourceOperators = queryPlan->getSourceOperators();
         std::map<OperatorId, QueryMigrationPhase::InformationForFindingSink>  mapOfNetworkSourceIdToInfoForFindingNetworkSink = getInfoForAllSinks(sourceOperators, queryId);
+        auto ts = std::chrono::system_clock::now();
+        auto time = std::chrono::duration_cast<std::chrono::nanoseconds>(ts.time_since_epoch()).count();
+        NES_ERROR("QueryMigrationPhase: Beginning Migration : " << time);
         std::vector<ExecutionNodePtr> exeNodes = executePartialPlacement(queryPlan);
-        sleep(1);
         if(exeNodes.size() == 0){
             NES_ERROR("QueryMigrationPhase: No execution nodes made");
             throw Exception("QueryMigrationPhase: No execution nodes created during partial placement");
@@ -129,7 +139,7 @@ bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryP
         for(auto& exeNode: exeNodes){
             NES_ERROR("QueryMigrationPhase: Occupied Resources on new Nodes: " <<exeNode->getOccupiedResources(1));
         }
-        NES_DEBUG("QueryMigrationPhase: partial placement successful!");
+        NES_ERROR("QueryMigrationPhase: partial placement successful!");
         bool deploySuccess = deployQuery(queryId,exeNodes);
         if(!deploySuccess){
             NES_DEBUG("QueryMigrationPhase: Issues while deploying execution nodes. Triggering unbuffering of data");
@@ -137,7 +147,7 @@ bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryP
             //workerRPCClient->unbufferData(rpcAddress, helperMap);
             return false;
         }
-        NES_DEBUG("QueryMigrationPhase: deployed migrated queries succesfully");
+        NES_ERROR("QueryMigrationPhase: deployed migrated queries succesfully");
         bool startSuccess = startQuery(queryId,exeNodes);
 
         if(!startSuccess){
@@ -146,7 +156,7 @@ bool QueryMigrationPhase::executeMigrationWithoutBuffer(const std::vector<QueryP
             //workerRPCClient->unbufferData(rpcAddress, helperMap);
             return false;
         }
-        NES_DEBUG("QueryMigrationPhase: started migrated queries succesfully");
+        NES_ERROR("QueryMigrationPhase: started migrated queries succesfully");
         //sleep(30);
         sendReconfigurationRequests(mapOfNetworkSourceIdToInfoForFindingNetworkSink, queryId,exeNodes);
         bool success = markedNode->removeSingleQuerySubPlan(queryId,queryPlan->getQuerySubPlanId());
@@ -295,7 +305,7 @@ bool QueryMigrationPhase::sendReconfigurationRequests(std::map<OperatorId,QueryM
 }
 bool QueryMigrationPhase::deployQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryDeploymentPhase::deployQuery queryId=" << queryId);
-    //std::map<CompletionQueuePtr, uint64_t> completionQueues;
+    std::map<CompletionQueuePtr, uint64_t> completionQueues;
     for (const ExecutionNodePtr& executionNode : executionNodes) {
         NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id=" << executionNode->getId());
         std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
@@ -304,7 +314,7 @@ bool QueryMigrationPhase::deployQuery(QueryId queryId, const std::vector<Executi
             return false;
         }
 
-        //CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
         const auto& nesNode = executionNode->getTopologyNode();
         auto ipAddress = nesNode->getIpAddress();
@@ -314,8 +324,8 @@ bool QueryMigrationPhase::deployQuery(QueryId queryId, const std::vector<Executi
 
         for (auto& querySubPlan : querySubPlans) {
             //enable this for sync calls
-            bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
-            //bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
+            //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
+            bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
             if (success) {
                 NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
             } else {
@@ -323,9 +333,9 @@ bool QueryMigrationPhase::deployQuery(QueryId queryId, const std::vector<Executi
                 return false;
             }
         }
-        //completionQueues[queueForExecutionNode] = querySubPlans.size();
+        completionQueues[queueForExecutionNode] = querySubPlans.size();
     }
-    bool result = true;//workerRPCClient->checkAsyncResult(completionQueues, Register);
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, Register);
     //NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id " << queryId << " success=" << result);
     return result;
 }
@@ -333,10 +343,10 @@ bool QueryMigrationPhase::deployQuery(QueryId queryId, const std::vector<Executi
 bool QueryMigrationPhase::startQuery(QueryId queryId, const std::vector<ExecutionNodePtr>& executionNodes) {
     NES_DEBUG("QueryDeploymentPhase::startQuery queryId=" << queryId);
     //TODO: check if one queue can be used among multiple connections
-    //std::map<CompletionQueuePtr, uint64_t> completionQueues;
+    std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
     for (const ExecutionNodePtr& executionNode : executionNodes) {
-        //CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
 
         const auto& nesNode = executionNode->getTopologyNode();
         auto ipAddress = nesNode->getIpAddress();
@@ -346,18 +356,18 @@ bool QueryMigrationPhase::startQuery(QueryId queryId, const std::vector<Executio
 
         << " and IP=" << ipAddress);
         //enable this for sync calls
-        bool success = workerRPCClient->startQuery(rpcAddress, queryId);
-        //bool success = workerRPCClient->startQueryAsyn(rpcAddress, queryId, queueForExecutionNode);
+        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
+        bool success = workerRPCClient->startQueryAsyn(rpcAddress, queryId, queueForExecutionNode);
         if (success) {
             NES_DEBUG("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << " successful");
         } else {
             NES_ERROR("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << "  failed");
             return false;
         }
-        //completionQueues[queueForExecutionNode] = 1;
+        completionQueues[queueForExecutionNode] = 1;
     }
 
-    bool result = true;//workerRPCClient->checkAsyncResult(completionQueues, Start);
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, Start);
     //NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id " << queryId << " success=" << result);
     return result;
 }

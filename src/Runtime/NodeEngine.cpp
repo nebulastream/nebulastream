@@ -466,7 +466,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string& newHos
                                     QuerySubPlanId querySubPlanId, uint64_t globalSinkId) {
 
     //TODO: add error handling/return false in some cases
-    NES_DEBUG("NodeEngine: Recieved request to update Network Sinks");
+    NES_ERROR("NodeEngine: Recieved request to update Network Sinks");
     //NodeEnginePtr self = this->inherited1::shared_from_this();
     NodeLocationPOD pod{newNodeId, newHostname, newPort};
     std::unique_lock lock(engineMutex);

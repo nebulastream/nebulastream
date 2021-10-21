@@ -218,7 +218,7 @@ std::queue<std::pair<Runtime::TupleBuffer, uint64_t>>&& OutputChannel::moveBuffe
     return std::move(buffer);
 }
 bool OutputChannel::emptyBuffer() {
-    NES_ERROR("OutputChannel: Emptying store intended for: " << socketAddr);
+    NES_DEBUG("OutputChannel: Emptying store intended for: " << socketAddr);
     if(buffer.empty()){
         NES_ERROR("OutputChannel: Store is empty!");
         buffering = false;
@@ -229,7 +229,7 @@ bool OutputChannel::emptyBuffer() {
         auto data = buffer.front();
         if(sendBuffer( data.first, data.second)){
             buffer.pop();
-            NES_ERROR("OutputChannel: Successfully sent a stored TupleBuffer");
+            NES_DEBUG("OutputChannel: Successfully sent a stored TupleBuffer");
             continue;
         }
         NES_ERROR("OutputChannel: Error while senidng stored TupleBuffer");
