@@ -22,10 +22,12 @@
 #include <Util/BufferSequenceNumber.hpp>
 #include <Util/BufferStorageUnit.hpp>
 #include <queue>
+#include <unordered_map>
 
 namespace NES::Runtime {
 
-using BufferStorageUnitPtr = std::shared_ptr<BufferStorageUnit>;
+using BufferStoragePriorityQueue = std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>;
+
 /**
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
  */
@@ -37,7 +39,7 @@ class BufferStorage : public AbstractBufferStorage {
      * @param id id of the buffer
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    void insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr);
+    void insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) override;
 
     /**
      * @brief Deletes all pair<id,buffer> link which sequence number smaller than passed
@@ -45,13 +47,13 @@ class BufferStorage : public AbstractBufferStorage {
      * @param id id of the buffer
      * @return true in case of a success trimming
      */
-    bool trimBuffer(BufferSequenceNumber id);
+    bool trimBuffer(BufferSequenceNumber id) override;
 
     /**
      * @brief Return current storage size
      * @return Current storage size
      */
-    size_t getStorageSize() const;
+    size_t getStorageSize() const override;
 
     /**
      * @brief Return the size of queue with a given origin Id
@@ -68,11 +70,13 @@ class BufferStorage : public AbstractBufferStorage {
     BufferStorageUnitPtr getTopElementFromQueue(uint64_t queueId) const;
 
   private:
-    std::map<uint64_t,
-             std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>>
+    std::unordered_map<uint64_t,
+             BufferStoragePriorityQueue>
         buffers;
     mutable std::mutex mutex;
 };
+
+using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
 }// namespace NES::Runtime
 

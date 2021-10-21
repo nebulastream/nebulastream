@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 #include <thread>
 namespace NES {
-const size_t buffersInserted = 5;
+const size_t buffersInserted = 20;
 const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
 const size_t expectedStorageSize = 2;
@@ -42,8 +42,8 @@ class BufferStorageTest : public testing::Test {
 */
 TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
     for (size_t i = 0; i < buffersInserted; i++) {
+        auto buffer = bufferManager->getUnpooledBuffer(16384);
         bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
         ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
         ASSERT_EQ(bufferStorage->getStorageSizeForQueue(i), oneBuffer);
@@ -129,7 +129,7 @@ TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
         bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
         ASSERT_EQ(bufferStorage->getStorageSizeForQueue(0), i + 1);
     }
-    bufferStorage->trimBuffer(BufferSequenceNumber(3, 0));
+    bufferStorage->trimBuffer(BufferSequenceNumber(buffersInserted - 2, 0));
     ASSERT_EQ(bufferStorage->getStorageSizeForQueue(0), expectedStorageSize);
 }
 
@@ -140,7 +140,7 @@ TEST_F(BufferStorageTest, multithreadInsertionInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     std::vector<std::thread> t;
-    for (uint32_t i = 0; i < numberOfThreads; i++) {
+    for (uint32_t i = 0; i < buffersInserted; i++) {
         t.emplace_back([bufferStorage, buffer, i]() {
             bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
             ASSERT_EQ(bufferStorage->getStorageSizeForQueue(i), oneBuffer);
@@ -158,24 +158,21 @@ TEST_F(BufferStorageTest, multithreadInsertionInBufferStorage) {
 TEST_F(BufferStorageTest, multithreadTrimmingInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
-    std::vector<std::thread> in;
-    for (uint32_t i = 0; i < numberOfThreads; i++) {
-        in.emplace_back([bufferStorage, buffer, i]() {
-            bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
+    std::vector<std::thread> t;
+    for (uint64_t i = 0; i < numberOfThreads; i++) {
+        t.emplace_back([bufferStorage, buffer, i]() {
+            for (int j = buffersInserted; j >= 0; j--) {
+                if (i % 2 == 0) {
+                    bufferStorage->insertBuffer(BufferSequenceNumber(j, i), buffer.value());
+                } else {
+                    bufferStorage->trimBuffer(BufferSequenceNumber(buffersInserted + 1, j));
+                }
+            }
         });
     }
-    for (auto& thread : in) {
+    for (auto& thread : t) {
         thread.join();
     }
-    std::vector<std::thread> del;
-    for (uint32_t i = 0; i < numberOfThreads - 1; i++) {
-        del.emplace_back([bufferStorage, buffer, i]() {
-            bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, i));
-        });
-    }
-    for (auto& thread : del) {
-        thread.join();
-    }
-    ASSERT_EQ(bufferStorage->getStorageSize(), oneBuffer);
+    ASSERT_EQ(bufferStorage->getStorageSize(), emptyBuffer);
 }
 }// namespace NES

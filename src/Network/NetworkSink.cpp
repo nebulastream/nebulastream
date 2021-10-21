@@ -28,7 +28,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          NesPartition nesPartition,
                          const Runtime::BufferManagerPtr& bufferManager,
                          Runtime::QueryManagerPtr queryManager,
-                         BufferStoragePtr bufferStorage,
+                         Runtime::BufferStoragePtr bufferStorage,
                          std::chrono::seconds waitTime,
                          uint8_t retryTimes)
     : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),

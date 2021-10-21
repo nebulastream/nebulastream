@@ -38,7 +38,6 @@ namespace NES {
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 class PhysicalStreamConfig;
 using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
