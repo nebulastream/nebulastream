@@ -360,10 +360,15 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     testHarness.addCSVSource(conf, windowSchema);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
 
-    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf1);
     testHarness.addCSVSource(conf2, window2Schema);
 
     struct Output {
@@ -439,10 +444,15 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     testHarness.addCSVSource(conf, windowSchema);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window3.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window3.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
 
-    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf1);
     testHarness.addCSVSource(conf2, window2Schema);
 
     struct Output {
@@ -520,13 +530,15 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     testHarness.addCSVSource(conf, windowSchema);
 
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setSourceFrequency(1);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
 
-    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf1);
     testHarness.addCSVSource(conf2, window2Schema);
 
     struct Output {
@@ -605,10 +617,15 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     testHarness.addCSVSource(conf, windowSchema);
     testHarness.addCSVSource(conf, windowSchema);
 
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
 
-    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf1);
     testHarness.addCSVSource(conf2, window2Schema);
 
     struct Output {
@@ -692,10 +709,15 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     testHarness.addCSVSource(conf, windowSchema);
     testHarness.addCSVSource(conf, windowSchema);
 
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
 
-    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf1);
     testHarness.addCSVSource(conf2, window2Schema);
     testHarness.addCSVSource(conf2, window2Schema);
 
@@ -779,10 +801,16 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     testHarness.addCSVSource(conf, windowSchema);
 
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
 
-    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
+
+    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf1);
     testHarness.addCSVSource(conf2, window2Schema);
 
     struct Output {
@@ -863,10 +891,15 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     testHarness.addCSVSource(conf, windowSchema);
 
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window3.csv");
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window3.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
 
-    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf1);
     testHarness.addCSVSource(conf2, window2Schema);
 
     struct Output {

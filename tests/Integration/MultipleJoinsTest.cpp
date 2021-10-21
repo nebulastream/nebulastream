@@ -129,16 +129,27 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setSourceFrequency(1);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
+
+    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
+
+    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setSourceFrequency(1);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -296,16 +307,23 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
     wrk2->registerPhysicalStream(windowStream);
     wrk3->registerPhysicalStream(windowStream2);
@@ -460,24 +478,35 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
 
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window4");
-    PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf3 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf3->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf3->as<CSVSourceConfig>()->setLogicalStreamName("window4");
+    srcConf3->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf3->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf3->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf3);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -635,24 +664,35 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
 
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window4");
-    PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf3 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf3->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf3->as<CSVSourceConfig>()->setLogicalStreamName("window4");
+    srcConf3->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf3->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf3->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf3);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -799,21 +839,27 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
 
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -975,21 +1021,27 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
 
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
     wrk2->registerPhysicalStream(windowStream);
     wrk3->registerPhysicalStream(windowStream2);
@@ -1153,24 +1205,35 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
 
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window4");
-    PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf3 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf3->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf3->as<CSVSourceConfig>()->setLogicalStreamName("window4");
+    srcConf3->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf3->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf3->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf3);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);
@@ -1349,24 +1412,38 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
 
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
 
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window4");
-    PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf);
+    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
+
+    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
+    PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
+
+    SourceConfigPtr srcConf3 = SourceConfigFactory::createSourceConfig("CSVSource");
+
+    srcConf3->as<CSVSourceConfig>()->setLogicalStreamName("window4");
+    srcConf3->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf3->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf3->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf3->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    PhysicalStreamConfigPtr windowStream4 = PhysicalStreamConfig::create(srcConf3);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);

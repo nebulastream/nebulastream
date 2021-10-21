@@ -27,6 +27,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
+#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
@@ -83,7 +84,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    sourceConfig->setSourceType("CSVSource");
     sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -175,7 +175,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -204,7 +204,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
-    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");
@@ -242,7 +241,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -271,7 +270,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
-    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setSourceFrequency(3);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -309,7 +307,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -338,7 +336,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
-    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -435,7 +432,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -464,7 +461,6 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
-    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
     sourceConfig->setSourceFrequency(3);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setNumberOfBuffersToProduce(3);
