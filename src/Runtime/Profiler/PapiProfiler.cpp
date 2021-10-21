@@ -204,10 +204,10 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
         }
         case Presets::L1Detail: {
             // EXE_ACTIVITY:BOUND_ON_STORES L1D_PEND_MISS:FB_FULL:c=1 CPU_CLK_THREAD_UNHALTED  MEM_LOAD_RETIRED.L1_MISS MEM_LOAD_RETIRED.L2_HIT MEM_LOAD_RETIRED.FB_HIT CYCLE_ACTIVITY.STALLS_L1D_MISS CYCLE_ACTIVITY.STALLS_L2_MISS CYCLE_ACTIVITY.STALLS_L3_MISS
-            err = PAPI_assign_eventset_component(eventSet, 0);// 0 is cpu component
-            NES_ASSERT2_FMT(err == PAPI_OK, "Cannot assign PAPI event set to component 0 worker={} with err {}" << err);
-            err = PAPI_set_multiplex(eventSet);
-            NES_ASSERT2_FMT(err == PAPI_OK, "Cannot promote PAPI event set to multiplex worker={} with err {}" << err);
+//            err = PAPI_assign_eventset_component(eventSet, 0);// 0 is cpu component
+//            NES_ASSERT2_FMT(err == PAPI_OK, "Cannot assign PAPI event set to component 0 worker={} with err {}" << err);
+//            err = PAPI_set_multiplex(eventSet);
+//            NES_ASSERT2_FMT(err == PAPI_OK, "Cannot promote PAPI event set to multiplex worker={} with err {}" << err);
             std::array events = {
                 //
                 //                "perf::PERF_COUNT_HW_CACHE_L1D.READ"
