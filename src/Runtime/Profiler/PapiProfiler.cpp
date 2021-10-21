@@ -18,6 +18,20 @@
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #include <Util/Logger.hpp>
 #include <papi.h>
+static constexpr size_t to_kb(const size_t x) { return x << 10L; }
+static constexpr size_t to_mb(const size_t x) { return x << 20L; }
+static constexpr size_t to_gb(const size_t x) { return x << 30L; }
+static constexpr size_t to_ki(const size_t x) { return x * 1000UL; }
+static constexpr size_t to_mi(const size_t x) { return x * 1000000UL; }
+static constexpr size_t to_gi(const size_t x) { return x * 1000000000UL; }
+
+#define KB(x) (to_kb(x))
+#define MB(x) (to_mb(x))
+#define GB(x) (to_gb(x))
+
+#define Ki(x) (to_ki(x))
+#define Mi(x) (to_mi(x))
+#define Gi(x) (to_gi(x))
 #endif
 #ifndef __x86_64__
 #error "Unsupported Architecture"
@@ -387,9 +401,38 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords) {
         csvWriter << "," << value;
     }
     switch (preset) {
+        case Presets::IPC: {
+            double instr = currSamples[0];
+            double cycles = currSamples[1];
+            double ipc = instr / cycles;
+            double cpi = cycles / instr;
+            double instr_per_record = numRecords == 0 ? 0 : instr / double(numRecords);
+            double cycles_per_record = numRecords == 0 ? 0 : cycles / double(numRecords);
+            // double l1_misses_per_record = numRecords == 0 ? 0 : currSamples[0] / double(numRecords);
+            // double l2_misses_per_record = numRecords == 0 ? 0 : currSamples[1] / double(numRecords);
+            // double l3_misses_per_record = numRecords == 0 ? 0 : currSamples[2] / double(numRecords);
+            this->csvWriter << "," << ipc << "," << cpi << "," << instr_per_record << "," << cycles_per_record;
+            break;
+        }
         case Presets::BranchPresets: {
-            double mispredPerRecord = numRecords == 0 ? 0 : currSamples[0] / double(numRecords);
-            csvWriter << "," << mispredPerRecord;
+            double mispred_per_record = numRecords == 0 ? 0 : currSamples[0] / double(numRecords);
+            this->csvWriter << "," << mispred_per_record;
+            break;
+        }
+        case Presets::ResourceUsage: {
+            break;
+        }
+        case Presets::ICacheMisses: {
+            //            double instr = currSamples[3];
+            //            double cycles = currSamples[4];
+            //            double ipc = instr / cycles;
+            //            double cpi = cycles / instr;
+            //            double instr_per_record = numRecords == 0 ? 0 : instr / double(numRecords);
+            //            double cycles_per_record = numRecords == 0 ? 0 : cycles / double(numRecords);
+            double l1i_misses_per_record = numRecords == 0 ? 0 : currSamples[0] / double(numRecords);
+            double l2i_misses_per_record = numRecords == 0 ? 0 : currSamples[1] / double(numRecords);
+            double itlb_misses_per_record = numRecords == 0 ? 0 : currSamples[2] / double(numRecords);
+            this->csvWriter << "," << l1i_misses_per_record << "," << l2i_misses_per_record << "," << itlb_misses_per_record;
             break;
         }
         case Presets::CachePresets: {
@@ -403,7 +446,7 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords) {
             break;
         }
         default: {
-//            NES_ASSERT2_FMT(false, "Not supported");
+            //            NES_ASSERT2_FMT(false, "Not supported");
             break;
         }
     }
