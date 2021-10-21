@@ -26,7 +26,6 @@ namespace NES::Runtime {
  */
 class AbstractBufferStorage {
   public:
-
     virtual ~AbstractBufferStorage() noexcept = default;
 
     /**
@@ -34,20 +33,20 @@ class AbstractBufferStorage {
      * @param id id of the buffer
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    virtual void insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr);
+    virtual void insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) = 0;
 
     /**
      * @brief Deletes q pair<id,buffer> from buffer storage
      * @param id id of the buffer
      * @return true in case of a success trimming
      */
-    virtual bool trimBuffer(BufferSequenceNumber id);
+    virtual bool trimBuffer(BufferSequenceNumber id) = 0;
 
     /**
      * @brief Return current storage size
      * @return Current storage size
      */
-    virtual size_t getStorageSize() const;
+    virtual size_t getStorageSize() const = 0;
 };
 }
 #endif//NES_ABSTRACTBUFFERSTORAGE_H

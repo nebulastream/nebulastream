@@ -54,5 +54,7 @@ class BufferStorageUnit {
         return lhs->sequenceNumber > rhs->sequenceNumber;
     }
 };
+
+using BufferStorageUnitPtr = std::shared_ptr<BufferStorageUnit>;
 }// namespace NES::Runtime
 #endif//NES_BUFFERSTORAGEUNIT_H
