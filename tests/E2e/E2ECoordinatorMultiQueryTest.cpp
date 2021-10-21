@@ -265,6 +265,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath("../tests/test_data/QnV_short.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
+                                          TestUtils::numberOfTuplesToProducePerBuffer(0),
                                           TestUtils::sourceFrequency(1000),
                                           TestUtils::physicalStreamName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
