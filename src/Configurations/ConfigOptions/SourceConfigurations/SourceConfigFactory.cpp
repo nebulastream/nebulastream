@@ -42,6 +42,12 @@ std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(const std:
         configurationMap = overwriteConfigWithCommandLineInput(commandLineParams, configurationMap);
     }
 
+    if (!configurationMap.contains("sourceType")){
+        DefaultSourceConfigPtr noSource = DefaultSourceConfig::create();
+        noSource->setSourceType("NoSource");
+        return noSource;
+    }
+
     switch (stringToConfigSourceType[configurationMap.at("sourceType")]) {
         case CSVSource: return CSVSourceConfig::create(configurationMap);
         case MQTTSource: return MQTTSourceConfig::create(configurationMap);
