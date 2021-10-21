@@ -44,6 +44,10 @@ add_executable(udf-test "UnitTests/Catalogs/UdfCatalogTest.cpp" "UnitTests/Catal
 target_link_libraries(udf-test nes ${GTEST_LIBRARIES})
 add_test(NAME udf-test COMMAND udf-test)
 
+add_executable(cppclient-test "UnitTests/Client/CPPClientTest.cpp")
+target_link_libraries(cppclient-test nes ${GTEST_LIBRARIES})
+add_test(NAME cppclient-test COMMAND cppclient-test)
+
 add_executable(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
 target_link_libraries(compiler-test nes ${GTEST_LIBRARIES})
 add_test(NAME compiler-test COMMAND compiler-test)
