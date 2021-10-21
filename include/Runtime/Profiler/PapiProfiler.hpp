@@ -42,6 +42,7 @@ class PapiCpuProfiler : public BaseProfiler {
         CachePrefetcherPresetsExt,
         CoreBound,
         InvalidPreset,
+        L1Detail
     };
 
     explicit PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint32_t threadId, uint32_t coreId);
