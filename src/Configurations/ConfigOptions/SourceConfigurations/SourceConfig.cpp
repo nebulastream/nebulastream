@@ -69,7 +69,7 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, s
 }
 
 SourceConfig::SourceConfig(std::string _sourceType)
-    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 0, "Number of buffers to produce.")),
+    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 1, "Number of buffers to produce.")),
       numberOfTuplesToProducePerBuffer(
           ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.")),
       physicalStreamName(

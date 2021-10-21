@@ -63,8 +63,11 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  std::move(executableSuccessors)),
       connected(false), serverAddress(sourceConfig->getUrl()->getValue()), clientId(sourceConfig->getClientId()->getValue()),
       user(sourceConfig->getUserName()->getValue()), topic(sourceConfig->getTopic()->getValue()), inputFormat(inputFormat),
-      tupleSize(schema->getSchemaSizeInBytes()), qualityOfService(MQTTSourceDescriptor::ServiceQualities(sourceConfig->getQos()->getValue())), cleanSession(sourceConfig->getCleanSession()->getValue()),
-      bufferFlushIntervalMs(sourceConfig->getFlushIntervalMS()->getValue() > 0 ? sourceConfig->getFlushIntervalMS()->getValue() : 100) {
+      tupleSize(schema->getSchemaSizeInBytes()),
+      qualityOfService(MQTTSourceDescriptor::ServiceQualities(sourceConfig->getQos()->getValue())),
+      cleanSession(sourceConfig->getCleanSession()->getValue()),
+      bufferFlushIntervalMs(sourceConfig->getFlushIntervalMS()->getValue()),
+      readTimeoutInMs(sourceConfig->getFlushIntervalMS()->getValue() > 0 ? sourceConfig->getFlushIntervalMS()->getValue() : 100) {
 
     if (cleanSession) {
         uint32_t randomizeClientId = random();

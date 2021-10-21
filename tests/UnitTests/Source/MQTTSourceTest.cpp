@@ -218,6 +218,13 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
     srcConf->setSourceType("MQTTSource");
+    srcConf->setUrl("ws://127.0.0.1:9001");
+    srcConf->setClientId("testClients");
+    srcConf->setUserName("testUser");
+    srcConf->setTopic("demoTownSensorData");
+    srcConf->setQos(2);
+    srcConf->setCleanSession(false);
+    srcConf->setFlushIntervalMS(2000);
     srcConf->setNumberOfBuffersToProduce(10000);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("stream");

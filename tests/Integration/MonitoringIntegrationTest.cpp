@@ -157,7 +157,6 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
 TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJson) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);

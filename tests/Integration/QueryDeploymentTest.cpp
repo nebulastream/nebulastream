@@ -102,7 +102,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("physical_car");
     srcConf->setLogicalStreamName("car");
@@ -112,7 +112,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("physical_truck");
     srcConf->setLogicalStreamName("truck");
@@ -259,7 +259,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     out.close();
     wrk1->registerLogicalStream("car", testSchemaFileName);
 
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("physical_car");
     srcConf->setLogicalStreamName("car");
@@ -269,7 +269,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("physical_truck");
     srcConf->setLogicalStreamName("truck");
@@ -602,7 +602,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(10000);
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);//TODO: change this to 0 if we have the the end of stream
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -678,7 +678,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(10000);
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
