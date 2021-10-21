@@ -803,7 +803,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   NES::Runtime::QueryManagerPtr&& queryManager,
-                                  BufferStoragePtr&& bufferStorage,
+                                  Runtime::BufferStoragePtr&& bufferStorage,
                                   std::function<Network::NetworkManagerPtr(NES::Runtime::NodeEnginePtr)>&& networkManagerCreator,
                                   Network::PartitionManagerPtr&& partitionManager,
                                   QueryCompilation::QueryCompilerPtr&& queryCompiler,
