@@ -403,7 +403,7 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords) {
             break;
         }
         default: {
-            NES_ASSERT2_FMT(false, "Not supported");
+//            NES_ASSERT2_FMT(false, "Not supported");
             break;
         }
     }
