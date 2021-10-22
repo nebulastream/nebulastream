@@ -35,6 +35,11 @@ class BufferStorage : public AbstractBufferStorage {
 
   public:
     /**
+     * @brief Constructor, which creates a buffer storage
+     */
+    BufferStorage() = default;
+
+    /**
      * @brief Inserts a pair id, buffer link to the buffer storage queue
      * @param id id of the buffer
      * @param bufferPtr pointer to the buffer that will be stored
