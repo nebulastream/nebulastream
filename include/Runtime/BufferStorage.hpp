@@ -17,8 +17,8 @@
 #ifndef NES_BUFFERSTORAGE_H
 #define NES_BUFFERSTORAGE_H
 
-#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/AbstractBufferStorage.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/BufferSequenceNumber.hpp>
 #include <Util/BufferStorageUnit.hpp>
 #include <queue>
@@ -26,7 +26,8 @@
 
 namespace NES::Runtime {
 
-using BufferStoragePriorityQueue = std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>;
+using BufferStoragePriorityQueue =
+    std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>;
 
 /**
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
@@ -75,9 +76,7 @@ class BufferStorage : public AbstractBufferStorage {
     BufferStorageUnitPtr getTopElementFromQueue(uint64_t queueId) const;
 
   private:
-    std::unordered_map<uint64_t,
-             BufferStoragePriorityQueue>
-        buffers;
+    std::unordered_map<uint64_t, BufferStoragePriorityQueue> buffers;
     mutable std::mutex mutex;
 };
 
