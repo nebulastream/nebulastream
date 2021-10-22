@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_ADAPTIVEKFSOURCE_HPP_
-#define INCLUDE_ADAPTIVEKFSOURCE_HPP_
+#ifndef NES_INCLUDE_SOURCES_ADAPTIVEKFSOURCE_HPP_
+#define NES_INCLUDE_SOURCES_ADAPTIVEKFSOURCE_HPP_
 
 #include <Sources/AdaptiveSource.hpp>
 #include <Util/CircularBuffer.hpp>
@@ -112,7 +112,6 @@ class AdaptiveKFSource : public AdaptiveSource {
     /**
      * @brief the KF associated with a source.
      * We use default values for initialization.
-     * TODO: allow tuning to the measurement domain
      */
     KalmanFilter kFilter;
 };
@@ -120,4 +119,4 @@ class AdaptiveKFSource : public AdaptiveSource {
 using AdaptiveKFSourcePtr = std::shared_ptr<AdaptiveKFSource>;
 
 }// namespace NES
-#endif /* INCLUDE_ADAPTIVEKFSOURCE_HPP_ */
+#endif /* NES_INCLUDE_SOURCES_ADAPTIVEKFSOURCE_HPP_ */

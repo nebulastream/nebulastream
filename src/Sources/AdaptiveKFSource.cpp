@@ -43,17 +43,18 @@ uint64_t AdaptiveKFSource::getFrequency() const { return frequency; }
 SourceType AdaptiveKFSource::getType() const { return ADAPTIVE_KF_SOURCE; }
 
 void AdaptiveKFSource::sampleSourceAndFillBuffer(Runtime::TupleBuffer& buf) {
+    NES_DEBUG("AdaptiveKFSource::sampleSourceAndFillBuffer called on " << operatorId);
     buf.setNumberOfTuples(0);
     return;
 }
 
 void AdaptiveKFSource::decideNewGatheringInterval() {
-    auto powerToEuler = (this->calculateTotalEstimationError() + lambda) / lambda;
-    freqDesired = frequency + theta * (1 - std::pow(eulerConstant, powerToEuler));
+    auto powerOfEuler = (this->calculateTotalEstimationError() + lambda) / lambda;
+    freqDesired = frequency + theta * (1 - std::pow(eulerConstant, powerOfEuler));
     if (desiredFreqInRange()) {
+        NES_DEBUG("AdaptiveKFSource::decideNewGatheringInterval old: " << frequency << ", new: " << freqDesired);
         frequency = freqDesired;
     }
-    // TODO: else request from remote
 }
 
 bool AdaptiveKFSource::desiredFreqInRange() {
@@ -64,6 +65,7 @@ bool AdaptiveKFSource::desiredFreqInRange() {
 long AdaptiveKFSource::updateCurrentEstimationError() {
     auto currentEstimationError = this->kFilter.getEstimationError();
     this->kfErrorWindow.emplace(currentEstimationError);
+    NES_DEBUG("AdaptiveKFSource::updateCurrentEstimationError: " << currentEstimationError);
     return currentEstimationError;
 }
 
@@ -85,10 +87,12 @@ void AdaptiveKFSource::calculateTotalEstimationErrorDivider(int size) {
 }
 
 [[maybe_unused]] void AdaptiveKFSource::setTheta(uint64_t newTheta) {
+    NES_DEBUG("AdaptiveKFSource::setTheta old: " << this->theta << ", new: " << newTheta);
     this->theta = newTheta;
 }
 
 [[maybe_unused]] void AdaptiveKFSource::setLambda(float newLambda) {
+    NES_DEBUG("AdaptiveKFSource::setLambda old: " << this->lambda << ", new: " << newLambda);
     this->lambda = newLambda;
 }
 
