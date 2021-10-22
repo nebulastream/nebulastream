@@ -241,7 +241,7 @@ NetworkMetrics SystemResourcesReader::readNetworkStats() {
         uint64_t i = 0;
         while (fgets(buf, 200, fp)) {
             sscanf(buf,
-#if defined(__aarch64__) && defined(__APPLE__)
+#ifdef __aarch64__
                    "%[^:]: %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
 #else
                    "%[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
