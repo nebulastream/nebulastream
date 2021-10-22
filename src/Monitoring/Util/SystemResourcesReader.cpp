@@ -209,6 +209,7 @@ CpuMetrics SystemResourcesReader::readCpuStats() {
 NetworkMetrics SystemResourcesReader::readNetworkStats() {
     auto output = NetworkMetrics();
 
+#ifdef __linux__
     try {
         NES_DEBUG("SystemResourcesReader: Reading network stats.");
 
@@ -292,15 +293,20 @@ NetworkMetrics SystemResourcesReader::readNetworkStats() {
     } catch (const RuntimeException& e) {
         NES_ERROR("SystemResourcesReader: Error reading network stats " << e.what());
     }
+#else
+    // TODO #2269 Set metrics on macOS
+    // /proc/net/dev only exists on Linux
+    NES_WARNING("Could not set NetworkMetrics because the platform is not supported.");
+#endif
     return output;
 }
 
 MemoryMetrics SystemResourcesReader::readMemoryStats() {
     auto output = MemoryMetrics();
+#ifdef __linux__
     try {
         NES_DEBUG("SystemResourcesReader: Reading memory stats.");
 
-#ifdef __linux__
         auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
 
         int ret = sysinfo(sinfo);
@@ -322,13 +328,14 @@ MemoryMetrics SystemResourcesReader::readMemoryStats() {
         output.LOADS_5MIN = sinfo->loads[1];
         output.LOADS_15MIN = sinfo->loads[2];
         delete[] sinfo;
-#else
-        // TODO #2269 Set memory metrics on macOS
-        NES_WARNING("Could not set MemoryMetrics because <sys/sysinfo.h> does not exist.");
-#endif
     } catch (const RuntimeException& e) {
         NES_ERROR("SystemResourcesReader: Error reading memory stats " << e.what());
     }
+#else
+    // TODO #2269 Set metrics on macOS
+    // <sys/sysinfo.h> only exists on Linux?
+    NES_WARNING("Could not set MemoryMetrics because the platform is not supported.");
+#endif
     return output;
 }
 
