@@ -30,7 +30,6 @@ void BufferStorage::insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuf
     } else {
         NES_DEBUG("Insert tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> into buffer storage");
         this->buffers[id.getOriginId()].push(std::make_shared<BufferStorageUnit>(id, bufferPtr));
-        ;
     }
 }
 
