@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 #include <thread>
 namespace NES {
-const size_t buffersInserted = 20;
+const size_t buffersInserted = 21;
 const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
 const size_t expectedStorageSize = 2;
@@ -161,11 +161,11 @@ TEST_F(BufferStorageTest, multithreadTrimmingInBufferStorage) {
     std::vector<std::thread> t;
     for (uint64_t i = 0; i < numberOfThreads; i++) {
         t.emplace_back([bufferStorage, buffer, i]() {
-            for (int j = buffersInserted; j >= 0; j--) {
-                if (i % 2 == 0) {
-                    bufferStorage->insertBuffer(BufferSequenceNumber(j, i), buffer.value());
+            for (uint64_t j = 0; j < buffersInserted; j++) {
+                if (j && j % 4 == 0) {
+                    bufferStorage->trimBuffer(BufferSequenceNumber(j, i));
                 } else {
-                    bufferStorage->trimBuffer(BufferSequenceNumber(buffersInserted + 1, j));
+                    bufferStorage->insertBuffer(BufferSequenceNumber(j, i), buffer.value());
                 }
             }
         });
