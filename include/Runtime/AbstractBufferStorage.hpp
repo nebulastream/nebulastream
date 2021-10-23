@@ -17,8 +17,8 @@
 #ifndef NES_ABSTRACTBUFFERSTORAGE_H
 #define NES_ABSTRACTBUFFERSTORAGE_H
 
-#include <Util/BufferSequenceNumber.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/BufferSequenceNumber.hpp>
 #include <cstddef>
 
 namespace NES::Runtime {
