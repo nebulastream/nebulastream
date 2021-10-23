@@ -16,6 +16,9 @@
 
 #ifndef NES_BUFFERSEQUENCENUMBER_HPP
 #define NES_BUFFERSEQUENCENUMBER_HPP
+
+#include <cstdint>
+
 namespace NES {
 
 /**
