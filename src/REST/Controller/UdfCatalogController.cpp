@@ -29,7 +29,7 @@ using namespace Catalogs;
 
 const std::string UdfCatalogController::path_prefix = "udf-catalog"s;
 
-bool UdfCatalogController::verifyCorrectPathPrefix(const std::string& path_prefix, http_request& request) {
+bool UdfCatalogController::verifyCorrectPathPrefix(const std::string& path_prefix, web::http::http_request& request) {
     if (path_prefix != UdfCatalogController::path_prefix) {
         NES_ERROR("The RestEngine delegated an HTTP request with an unknown path prefix to the UdfCatalogController: path[0] = "
                   << path_prefix);

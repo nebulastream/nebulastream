@@ -24,7 +24,6 @@
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
-
 #include <iostream>
 #include <REST/RestEngine.hpp>
 

@@ -80,10 +80,6 @@ void BaseController::noContentImpl(const http_request& message) {
     message.reply(response);
 }
 
-template void BaseController::badRequestImpl<std::string>(const web::http::http_request& request, const std::string& detail);
-template void BaseController::badRequestImpl<web::json::value>(const web::http::http_request& request,
-                                                               const web::json::value& detail);
-
 std::map<utility::string_t, utility::string_t> BaseController::getParameters(http_request& request) {
     return uri::split_query(request.request_uri().query());
 }

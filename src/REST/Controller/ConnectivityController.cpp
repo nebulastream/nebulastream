@@ -20,14 +20,11 @@
 #include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
 
-using namespace web;
-using namespace http;
-
 namespace NES {
 
 ConnectivityController::ConnectivityController() = default;
 
-void ConnectivityController::handleGet(const std::vector<utility::string_t>& path, http_request& message) {
+void ConnectivityController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
     if (path[1] == "check") {
         json::value result{};
         result["success"] = json::value::boolean(true);
