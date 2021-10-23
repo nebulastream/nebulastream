@@ -15,7 +15,6 @@
 */
 
 #include <REST/Controller/MonitoringController.hpp>
-
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/MonitoringService.hpp>
