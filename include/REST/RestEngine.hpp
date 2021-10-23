@@ -20,9 +20,8 @@
 #if defined(__APPLE__) || defined(__MACH__)
 #include <xlocale.h>
 #endif
-#include "REST/Controller/BaseController.hpp"
+#include <REST/Controller/BaseController.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
-
 #include <cpprest/details/http_server.h>
 #include <cpprest/http_listener.h>
 #include <pplx/pplxtasks.h>
@@ -128,6 +127,11 @@ class RestEngine {
         * @return the path from the request
     */
     static utility::string_t getPath(http_request& request);
+
+    /**
+    * @brief creates a UnknownEndpointResponse using BadRequestImpl
+    */
+    static void returnDefaultUnknownEndpointResponse(http_request request);
 
   protected:
     web::http::experimental::listener::http_listener _listener;// main micro service network endpoint
