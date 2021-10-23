@@ -25,7 +25,6 @@
 #include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-#include <REST/RestEngine.hpp>
 
 
 namespace NES {
@@ -123,9 +122,7 @@ void RestEngine::handleGet(http_request request) {
             return;
         }
     }
-    web::json::value response{};
-    response["detail"] = json::value::string("Unknown endpoint");
-    BaseController::badRequestImpl(request, response);
+    returnDefaultUnknownEndpointResponse(request);
 }
 
 void RestEngine::handlePost(http_request request) {
@@ -151,9 +148,7 @@ void RestEngine::handlePost(http_request request) {
             return;
         }
     }
-    web::json::value response{};
-    response["detail"] = json::value::string("Unknown endpoint");
-    BaseController::badRequestImpl(request, response);
+    returnDefaultUnknownEndpointResponse(request);
 }
 
 void RestEngine::handleDelete(http_request request) {
@@ -175,9 +170,7 @@ void RestEngine::handleDelete(http_request request) {
             return;
         }
     }
-    web::json::value response{};
-    response["detail"] = json::value::string("Unknown endpoint");
-    BaseController::badRequestImpl(request, response);
+    returnDefaultUnknownEndpointResponse(request);
 }
 
 utility::string_t RestEngine::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
@@ -239,5 +232,12 @@ json::value RestEngine::responseNotImpl(const http::method& method, utility::str
     response["http_method"] = json::value::string(method);
     return response;
 }
+
+void RestEngine::returnDefaultUnknownEndpointResponse(http_request request){
+    web::json::value response{};
+    response["detail"] = json::value::string("Unknown endpoint");
+    BaseController::badRequestImpl(request, response);
+}
+
 
 }// namespace NES
