@@ -22,9 +22,6 @@
 #include <Util/Logger.hpp>
 #include <utility>
 
-using namespace web;
-using namespace http;
-
 namespace NES {
 StreamCatalogController::StreamCatalogController(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("StreamCatalogController()");

@@ -30,10 +30,6 @@
 #include <Util/Logger.hpp>
 #include <utility>
 
-using namespace web;
-using namespace http;
-using namespace std;
-
 namespace NES {
 
 QueryController::QueryController(QueryServicePtr queryService,
@@ -43,7 +39,7 @@ QueryController::QueryController(QueryServicePtr queryService,
     : topology(std::move(topology)), queryService(std::move(queryService)), queryCatalog(std::move(queryCatalog)),
       globalExecutionPlan(std::move(globalExecutionPlan)) {}
 
-void QueryController::handleGet(const vector<utility::string_t>& path, http_request& request) {
+void QueryController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     auto parameters = getParameters(request);
 
@@ -116,7 +112,7 @@ void QueryController::handleGet(const vector<utility::string_t>& path, http_requ
     }
 }
 
-void QueryController::handlePost(const vector<utility::string_t>& path, http_request& message) {
+void QueryController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) {
 
     if (path[1] == "execute-query") {
 
@@ -126,19 +122,19 @@ void QueryController::handlePost(const vector<utility::string_t>& path, http_req
             .then([this, message](utility::string_t body) {
                 try {
                     //Prepare Input query from user string
-                    string userRequest(body.begin(), body.end());
+                    std::string userRequest(body.begin(), body.end());
                     NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << userRequest
                                                                                            << "try to parse query");
                     json::value req = json::value::parse(userRequest);
                     NES_DEBUG("QueryController: handlePost -execute-query: get user query");
-                    string userQuery;
+                    std::string userQuery;
                     if (req.has_field("userQuery")) {
                         userQuery = req.at("userQuery").as_string();
                     } else {
                         NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query, use 'userQuery'.");
                     }
 
-                    string optimizationStrategyName = req.at("strategyName").as_string();
+                    std::string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
                     QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
@@ -203,7 +199,7 @@ void QueryController::handlePost(const vector<utility::string_t>& path, http_req
     }
 }// namespace NES
 
-void QueryController::handleDelete(const vector<utility::string_t>& path, http_request& request) {
+void QueryController::handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
     //Extract parameters if any
     auto parameters = getParameters(request);
