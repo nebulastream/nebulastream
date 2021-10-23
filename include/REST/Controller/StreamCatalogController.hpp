@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_REST_CONTROLLER_STREAM_CATALOG_CONTROLLER_HPP_
 #define NES_INCLUDE_REST_CONTROLLER_STREAM_CATALOG_CONTROLLER_HPP_
 
-#include "BaseController.hpp"
+#include <REST/Controller/BaseController.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_msg.h>
 #include <cpprest/json.h>
