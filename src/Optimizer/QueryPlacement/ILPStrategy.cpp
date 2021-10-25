@@ -221,15 +221,15 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
 }
 
 bool ILPStrategy::addConstraints(z3::ContextPtr z3Context,
-                          z3::optimize& opt,
-                          std::vector<NodePtr>& operatorNodePath,
-                          std::vector<NodePtr>& topologyNodePath,
-                          std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
-                          std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
-                          std::map<std::string, z3::expr>& placementVariable,
-                          std::map<std::string, z3::expr>& operatorIdDistancesMap,
-                          std::map<std::string, z3::expr>& operatorIdUtilizationsMap,
-                          std::map<std::string, double>& mileages) {
+                                 z3::optimize& opt,
+                                 std::vector<NodePtr>& operatorNodePath,
+                                 std::vector<NodePtr>& topologyNodePath,
+                                 std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
+                                 std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
+                                 std::map<std::string, z3::expr>& placementVariable,
+                                 std::map<std::string, z3::expr>& operatorIdDistancesMap,
+                                 std::map<std::string, z3::expr>& operatorIdUtilizationsMap,
+                                 std::map<std::string, double>& mileages) {
 
     for (uint64_t i = 0; i < operatorNodePath.size(); i++) {
         OperatorNodePtr operatorNode = operatorNodePath[i]->as<OperatorNode>();

@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include "z3++.h"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
@@ -21,14 +22,14 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -46,7 +47,6 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <utility>
-#include "z3++.h"
 
 using namespace NES;
 using namespace web;
@@ -263,7 +263,6 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
-
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
@@ -295,7 +294,7 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3){
+        } else if (executionNode->getId() == 3) {
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1U);
             auto querySubPlan = querySubPlans[0U];
@@ -323,10 +322,9 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
                                                                               z3Context);
 
     Query query = Query::from("car")
-                        .map(Attribute("c") = Attribute("value") + 2)
-                        .map(Attribute("d") = Attribute("value") * 2)
-                        .sink(PrintSinkDescriptor::create());
-
+                      .map(Attribute("c") = Attribute("value") + 2)
+                      .map(Attribute("d") = Attribute("value") * 2)
+                      .sink(PrintSinkDescriptor::create());
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -355,7 +353,7 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3){
+        } else if (executionNode->getId() == 3) {
             // both map operators should be placed on cloud node
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1U);
@@ -419,7 +417,7 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
-        } else if (executionNode->getId() == 3){
+        } else if (executionNode->getId() == 3) {
             // map should be placed on cloud node
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1U);
