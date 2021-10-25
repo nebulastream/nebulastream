@@ -91,7 +91,6 @@ class BasePlacementStrategy {
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
      * @param queryPlan: the query plan
-     * @param z3Context: context of z3 library used for optimization
      * @return true if successful
      */
     virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) = 0;

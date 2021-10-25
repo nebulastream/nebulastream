@@ -51,6 +51,15 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
  */
 class QueryPlacementPhase {
   public:
+    /**
+     *
+     * @param globalExecutionPlan : an instance of global execution plan
+     * @param topology : topology in which the placement is to be performed
+     * @param typeInferencePhase  : a type inference phase instance
+     * @param streamCatalog : a stream catalog
+     * @param z3Context : context from the z3 library used for optimization
+     * @return
+     */
     static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
@@ -62,7 +71,6 @@ class QueryPlacementPhase {
      * selected query placement strategy
      * @param placementStrategy : name of the placement strategy
      * @param queryPlan : the query plan
-     * @param z3Contex : context from the z3 library used for optimization
      * @return true is placement successful.
      * @throws QueryPlacementException
      */

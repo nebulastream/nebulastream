@@ -79,16 +79,16 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         TopologyNodePtr sourceToplogyNode = streamCatalog->getSourceNodesForLogicalStream(streamName)[0];
         std::vector<NodePtr> operatorPath = findPathToRoot(sourceNode);
         std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
-        auto success = addPath(z3Context,
-                               opt,
-                               operatorPath,
-                               topologyPath,
-                               operatorNodes,
-                               topologyNodes,
-                               placementVariables,
-                               distances,
-                               utilizations,
-                               milages);
+        auto success = addConstraints(z3Context,
+                                      opt,
+                                      operatorPath,
+                                      topologyPath,
+                                      operatorNodes,
+                                      topologyNodes,
+                                      placementVariables,
+                                      distances,
+                                      utilizations,
+                                      milages);
         if (!success) {
             NES_ERROR("ILPStrategy: an error occurred when adding path.");
         }
@@ -180,7 +180,7 @@ std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode) {
     std::vector<NodePtr> path;
     path.push_back(sourceNode);
     while (!path.back()->getParents().empty()) {
-        // FIXME: Assuming a tree structure, hence a node can only has a single parent
+        // FIXME: Assuming a tree structure, hence a node can only has a single parent (issue #2290)
         path.push_back(path.back()->getParents()[0]);
     }
     return path;
@@ -220,7 +220,7 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
     return mileageMap;
 }
 
-bool ILPStrategy::addPath(z3::ContextPtr z3Context,
+bool ILPStrategy::addConstraints(z3::ContextPtr z3Context,
                           z3::optimize& opt,
                           std::vector<NodePtr>& operatorNodePath,
                           std::vector<NodePtr>& topologyNodePath,
