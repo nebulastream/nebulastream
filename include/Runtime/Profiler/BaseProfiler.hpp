@@ -24,16 +24,12 @@ namespace Runtime {
 namespace Profiler {
 class BaseProfiler {
   public:
-
     virtual uint64_t startSampling() = 0;
 
     virtual uint64_t stopSampling(std::size_t numItems) = 0;
 };
-}
-}
-}
-
-
-
+}// namespace Profiler
+}// namespace Runtime
+}// namespace NES
 
 #endif//NES_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_

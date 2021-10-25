@@ -81,7 +81,7 @@ class StringQueryTest : public testing::Test {
         /// Constexpr loop which compares all the values making use of short-circuit evaluation.
         template<std::size_t i = s - 1,
                  typename =
-                     std::enable_if_t<i<s>>[[nodiscard]] constexpr auto compare(SchemaClass<s> const& rhs) const noexcept->bool {
+                     std::enable_if_t<i<s>> [[nodiscard]] constexpr auto compare(SchemaClass<s> const& rhs) const noexcept->bool {
             if constexpr (i > 0) {
                 return (value[i] == rhs.value[i]) && this->template compare<i - 1>(rhs);
             } else {

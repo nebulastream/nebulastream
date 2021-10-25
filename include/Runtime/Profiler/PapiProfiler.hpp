@@ -18,8 +18,8 @@
 #define NES_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_
 #include <Runtime/Profiler/BaseProfiler.hpp>
 #include <fstream>
-#include <vector>
 #include <memory>
+#include <vector>
 namespace NES {
 namespace Runtime {
 namespace Profiler {
@@ -37,7 +37,7 @@ class PapiCpuProfiler : public BaseProfiler {
         CachePresets,
         CachePrefetcherPresets,
         CachePresetsEx,
-        BranchPresets, 
+        BranchPresets,
         FrontendLatency,
         CachePrefetcherPresetsExt,
         CoreBound,
@@ -65,12 +65,11 @@ class PapiCpuProfiler : public BaseProfiler {
     int eventSet;
 
     bool isStarted;
-
 };
 
 using PapiCpuProfilerPtr = std::shared_ptr<PapiCpuProfiler>;
 #endif
-}
-}
-}
+}// namespace Profiler
+}// namespace Runtime
+}// namespace NES
 #endif//NES_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_
