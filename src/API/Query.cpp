@@ -53,7 +53,7 @@ ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem) { return 
 
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
 
-AndOperatorBuilder::And Query::andWith(const Query& subQueryRhs) { return AndOperatorBuilder::And(subQueryRhs, *this); }
+AndOperatorBuilder::And Query::andWith(Query& subQueryRhs) { return AndOperatorBuilder::And(subQueryRhs, *this); }
 
 namespace JoinOperatorBuilder {
 
@@ -83,16 +83,16 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
 
 namespace AndOperatorBuilder {
 
-And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
+And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to and with to add virtual key to originalQuery");
     originalQuery.map(Attribute("cep_leftkey") = 1);
+    subQueryRhs.map(Attribute("cep_rightkey") = 1);
     onLeftKey = ExpressionItem(Attribute("cep_leftkey")).getExpressionNode();
     onRightKey = ExpressionItem(Attribute("cep_rightkey")).getExpressionNode();
 }
 
 Query& And::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType); //call original andWith() function
-
 }
 }// namespace AndOperatorBuilder
 
@@ -144,11 +144,6 @@ Query& Query::join(const Query& subQueryRhs,
     NES_DEBUG("Query: joinWith the subQuery to current query");
 
     auto subQuery = const_cast<Query&>(subQueryRhs);
-
-    if(joinType == Join::LogicalJoinDefinition::CARTESIAN_PRODUCT){
-        NES_DEBUG("Query: add map operator to and with to add virtual key to subQuery");
-        subQuery.map(Attribute("cep_rightkey") = 1);
-    }
 
     auto leftKeyExpression = onLeftKey.getExpressionNode();
     if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
