@@ -23,12 +23,9 @@
 
 namespace z3 {
 class expr;
-
 class model;
-
 class context;
 using ContextPtr = std::shared_ptr<context>;
-
 }// namespace z3
 
 namespace NES {
@@ -99,6 +96,7 @@ class ILPStrategy : public BasePlacementStrategy {
     * @brief Find a path between a source node and a destination node
     * @param sourceNode source operator or source topology node
     * @returns array containing all nodes on path from source to sink or parent topology node
+     * TODO: #2290: try to extend existing function in the Topology class and use it instead
     */
     std::vector<NodePtr> findPathToRoot(NodePtr sourceNode);
 
@@ -115,7 +113,7 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param operatorIdUtilizationsMap a mapping of topology nodes and their node utilization
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
-    bool addPath(z3::ContextPtr z3Context,
+    bool addConstraints(z3::ContextPtr z3Context,
                  z3::optimize& opt,
                  std::vector<NodePtr>& operatorNodePath,
                  std::vector<NodePtr>& topologyNodePath,
@@ -128,7 +126,6 @@ class ILPStrategy : public BasePlacementStrategy {
 
     /**
     * @brief calculates the mileage property for a node
-    * @param mileage distance to the root node, takes into account the bandwidth of the links
     * @param node topology node for which mileage is calculated
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
