@@ -85,10 +85,15 @@ namespace AndOperatorBuilder {
 
 And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to and with to add virtual key to originalQuery");
-    originalQuery.map(Attribute("cep_leftkey") = 1);
-    subQueryRhs.map(Attribute("cep_rightkey") = 1);
-    onLeftKey = ExpressionItem(Attribute("cep_leftkey")).getExpressionNode();
-    onRightKey = ExpressionItem(Attribute("cep_rightkey")).getExpressionNode();
+    //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product
+    auto cepLeftId = Util::getNextOperatorId();
+    auto cepRightId = Util::getNextOperatorId();
+    std::string cepLeftKey = "cep_leftkey" + std::to_string(cepLeftId);
+    std::string cepRightKey = "cep_rightkey" + std::to_string(cepRightId);
+    originalQuery.map(Attribute(cepLeftKey) = 1);
+    subQueryRhs.map(Attribute(cepRightKey) = 1);
+    onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
+    onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
 }
 
 Query& And::window(const Windowing::WindowTypePtr& windowType) const {
