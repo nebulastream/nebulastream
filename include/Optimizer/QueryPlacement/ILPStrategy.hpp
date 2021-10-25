@@ -114,15 +114,15 @@ class ILPStrategy : public BasePlacementStrategy {
     * @param mileages a mapping of topology node (represented by string id) and their distance to the root node
     */
     bool addConstraints(z3::ContextPtr z3Context,
-                 z3::optimize& opt,
-                 std::vector<NodePtr>& operatorNodePath,
-                 std::vector<NodePtr>& topologyNodePath,
-                 std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
-                 std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
-                 std::map<std::string, z3::expr>& placementVariable,
-                 std::map<std::string, z3::expr>& operatorIdDistancesMap,
-                 std::map<std::string, z3::expr>& operatorIdUtilizationsMap,
-                 std::map<std::string, double>& mileages);
+                        z3::optimize& opt,
+                        std::vector<NodePtr>& operatorNodePath,
+                        std::vector<NodePtr>& topologyNodePath,
+                        std::map<std::string, OperatorNodePtr>& operatorIdToNodeMap,
+                        std::map<std::string, TopologyNodePtr>& topologyNodeIdToNodeMap,
+                        std::map<std::string, z3::expr>& placementVariable,
+                        std::map<std::string, z3::expr>& operatorIdDistancesMap,
+                        std::map<std::string, z3::expr>& operatorIdUtilizationsMap,
+                        std::map<std::string, double>& mileages);
 
     /**
     * @brief calculates the mileage property for a node

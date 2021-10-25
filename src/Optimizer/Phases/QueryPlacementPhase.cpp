@@ -29,7 +29,8 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
                                          StreamCatalogPtr streamCatalog,
                                          z3::ContextPtr z3Context)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)), z3Context(std::move(z3Context)) {
+      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)),
+      z3Context(std::move(z3Context)) {
     NES_DEBUG("QueryPlacementPhase()");
 }
 

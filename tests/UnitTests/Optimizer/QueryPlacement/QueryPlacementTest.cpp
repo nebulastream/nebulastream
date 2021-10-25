@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include "z3++.h"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
@@ -43,7 +44,6 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <utility>
-#include "z3++.h"
 
 using namespace NES;
 using namespace web;

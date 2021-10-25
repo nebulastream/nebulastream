@@ -113,7 +113,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
             auto found = std::find_if(mergedGraphSourceNodes.begin(),
                                       mergedGraphSourceNodes.end(),
                                       [&](const TopologyNodePtr& sourceNodeToUse) {
-                                        return sourceNode->getId() == sourceNodeToUse->getId();
+                                          return sourceNode->getId() == sourceNodeToUse->getId();
                                       });
             if (found == mergedGraphSourceNodes.end()) {
                 NES_ERROR("BasePlacementStrategy: unable to locate the initial source node in the merged sub graph.");
