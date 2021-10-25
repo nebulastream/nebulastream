@@ -157,7 +157,7 @@ class And {
      * @param subQueryRhs
      * @param originalQuery
      */
-    And(const Query& subQueryRhs, Query& originalQuery);
+    And(Query& subQueryRhs, Query& originalQuery);
 
     /**
      * @brief: calls internal the original andWith function with all the gathered parameters.
@@ -167,7 +167,7 @@ class And {
     [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
    private:
-    const Query& subQueryRhs;
+    Query& subQueryRhs;
     Query& originalQuery;
     ExpressionNodePtr onLeftKey;
     ExpressionNodePtr onRightKey;
@@ -185,8 +185,9 @@ class Query {
 
     virtual ~Query() = default;
 
-    friend class JoinOperatorBuilder::JoinCondition;// we need that because we make the original joinWith() private
-    friend class AndOperatorBuilder::And;// we need that because we make the original joinWith() private
+    //both, Join and AndOperatorBuilder friend classes, are required as they use the private joinWith method.
+    friend class JoinOperatorBuilder::JoinCondition;
+    friend class AndOperatorBuilder::And;
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
@@ -204,7 +205,7 @@ class Query {
      * @param subQueryRhs
      * @return object where where() function is defined and can be called by user
      */
-    AndOperatorBuilder::And andWith(const Query& subQueryRhs);
+    AndOperatorBuilder::And andWith(Query& subQueryRhs);
 
     /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.
