@@ -23,10 +23,10 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <filesystem>
-#include <string>
 #include <cstring>
+#include <filesystem>
 #include <functional>
+#include <string>
 #include <thread>
 #include <utility>
 
@@ -165,7 +165,10 @@ bool ThreadPool::start() {
             NES_ASSERT(localBufferManager != NULL, "localBufferManager is null");
 #ifdef ENABLE_PAPI_PROFILER
             auto path = std::filesystem::path("worker_" + std::to_string(NesThread::getId()) + ".csv");
-            auto profiler = std::make_shared<Profiler::PapiCpuProfiler>(Profiler::PapiCpuProfiler::Presets::CachePresets, std::ofstream(path, std::ofstream::out), NesThread::getId(), NesThread::getId());
+            auto profiler = std::make_shared<Profiler::PapiCpuProfiler>(Profiler::PapiCpuProfiler::Presets::CachePresets,
+                                                                        std::ofstream(path, std::ofstream::out),
+                                                                        NesThread::getId(),
+                                                                        NesThread::getId());
             queryManager->cpuProfilers[NesThread::getId() % queryManager->cpuProfilers.size()] = profiler;
 #endif
             // TODO properly initialize the profiler with a file, thread, and core id

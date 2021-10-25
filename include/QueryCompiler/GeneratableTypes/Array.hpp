@@ -373,7 +373,7 @@ Array(T, Ts...) -> Array<T, sizeof...(Ts) + 1>;
 
 /// std::array
 template<typename J, std::size_t size>
-Array(std::array<J, size> &&) -> Array<J, size>;
+Array(std::array<J, size>&&) -> Array<J, size>;
 
 /// c-style array
 template<typename J>

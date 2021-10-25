@@ -78,7 +78,7 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
     : csvWriter(std::move(csvWriter)), threadId(threadId), coreId(coreId), freqGhz(detail::measureRdtscFreq()),
       startTsc(detail::rdtsc()), preset(preset), eventSet(PAPI_NULL), isStarted(false) {
     auto err = PAPI_register_thread();
-    NES_ASSERT2_FMT(err == PAPI_OK, "Cannot register thread on PAPI worker err=" <<  err);
+    NES_ASSERT2_FMT(err == PAPI_OK, "Cannot register thread on PAPI worker err=" << err);
     err = PAPI_create_eventset(&eventSet);
     NES_ASSERT2_FMT(err == PAPI_OK, "Cannot create PAPI event err=" << err);
     switch (preset) {
@@ -86,20 +86,19 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             currEvents = {PAPI_BR_MSP, PAPI_BR_INS, PAPI_BR_TKN, PAPI_BR_NTK};
             currSamples.resize(currEvents.size(), 0);
             this->csvWriter << "core_id,num_records,worker_id,ts,PAPI_BR_MSP,PAPI_BR_INS,PAPI_BR_TKN,PAPI_BR_NTK,"
-                          "mispred_per_record\n";
+                               "mispred_per_record\n";
             err = PAPI_add_events(eventSet, currEvents.data(), currEvents.size());
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot register events on PAPI reason: " << err);
             break;
         }
         case Presets::CachePresets: {
-            currEvents = {PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM, PAPI_L3_TCA,
-                           PAPI_L1_DCM, PAPI_L1_ICM};
+            currEvents = {PAPI_L1_TCM, PAPI_L2_TCM, PAPI_L3_TCM, PAPI_L3_TCA, PAPI_L1_DCM, PAPI_L1_ICM};
             currSamples.resize(currEvents.size(), 0);
             this->csvWriter << "core_id,num_records,worker_id,ts,PAPI_L1_TCM,PAPI_L2_TCM,"
-                          "PAPI_L3_TCM,PAPI_L3_TCA,PAPI_L1_DCM,PAPI_L1_ICM,"
-                          "l1_misses_per_record,l2_misses_per_record,l3_misses_per_record,"
-                          "records_per_l1_miss,records_per_l2_miss,records_per_l3_miss,"
-                          "l1i_misses_per_record";
+                               "PAPI_L3_TCM,PAPI_L3_TCA,PAPI_L1_DCM,PAPI_L1_ICM,"
+                               "l1_misses_per_record,l2_misses_per_record,l3_misses_per_record,"
+                               "records_per_l1_miss,records_per_l2_miss,records_per_l3_miss,"
+                               "l1i_misses_per_record";
             err = PAPI_add_events(eventSet, currEvents.data(), currEvents.size());
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot register events on PAPI reason: " << err);
             break;
@@ -154,8 +153,8 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords) {
             double l3MissesPerRecord = numRecords == 0 ? 0 : currSamples[2] / double(numRecords);
             double l1iMissesPerRecord = numRecords == 0 ? 0 : currSamples[5] / double(numRecords);
             csvWriter << "," << l1MissesPerRecord << "," << l2MissesPerRecord << "," << l3MissesPerRecord;
-            csvWriter << "," << (1. / l1MissesPerRecord) << "," << (1. / l2MissesPerRecord) << ","
-                       << (1. / l3MissesPerRecord) << "," << l1iMissesPerRecord;
+            csvWriter << "," << (1. / l1MissesPerRecord) << "," << (1. / l2MissesPerRecord) << "," << (1. / l3MissesPerRecord)
+                      << "," << l1iMissesPerRecord;
             break;
         }
         default: {
