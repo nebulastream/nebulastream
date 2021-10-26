@@ -74,7 +74,7 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     double getCost(Placement placement);
 
-    Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t numOfIterations, uint32_t patience, uint32_t numOfGenesToMutate, double mutationProbability, QueryPlanPtr queryPlan);
+    Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t numOfIterations, uint32_t patience, double threshold, uint32_t numOfGenesToMutate, double mutationProbability, QueryPlanPtr queryPlan);
 
     Placement mutate(Placement placement, QueryPlanPtr queryPlan, uint32_t numOfGenesToMutate,  double mutationProbability);
 
@@ -85,7 +85,8 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
     std::vector<uint32_t> breadthFirstNodeIterator(TopologyPtr topology);
     //void eliminateReachableNodes(std::vector<int>* topologyIndices);
     Placement crossOver(GeneticAlgorithmStrategy::Placement placement, GeneticAlgorithmStrategy::Placement other,uint32_t crossOverIndex);
-    bool placementAlreadyExists(std::vector<GeneticAlgorithmStrategy::Placement> population, GeneticAlgorithmStrategy::Placement offpring);
+    bool placementAlreadyExists(std::vector<GeneticAlgorithmStrategy::Placement> population, GeneticAlgorithmStrategy::Placement offspring);
+    double getAverageRelativeChangeOfCostOverIterations(std::vector<double>optimizedCostOfEachIteration, double initialCost);
 };
 }// namespace NES::Optimizer
 

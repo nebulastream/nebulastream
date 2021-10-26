@@ -109,9 +109,10 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
         operatorLoad.push_back(std::any_cast<int>(currentOperator->as<LogicalOperatorNode>()->getProperty("load")));
     }
 
-    uint32_t populationSize = 100;
-    uint32_t numOfIterations = 1;
+    uint32_t populationSize = 1000;
+    uint32_t numOfIterations = 10;
     uint32_t patience = 3;
+    double threshold = 0.0001;
     uint32_t numOfGenesToMutate = 1;
     double mutationProbability = 0.5;
     const std::string filePath = "../tests/test_data/GeneticAlgorithmParameters.yaml";
@@ -127,6 +128,12 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
             }
             if (!config["numOfIterations"].As<std::string>().empty() && config["numOfIterations"].As<std::string>() != "\n") {
                 numOfIterations = config["numOfIterations"].As<uint32_t>();
+            }
+            if (!config["patience"].As<std::string>().empty() && config["patience"].As<std::string>() != "\n") {
+                patience = config["patience"].As<uint32_t>();
+            }
+            if (!config["threshold"].As<std::string>().empty() && config["threshold"].As<std::string>() != "\n") {
+                threshold = config["threshold"].As<double>();
             }
             if (!config["numOfGenesToMutate"].As<std::string>().empty() && config["numOfGenesToMutate"].As<std::string>() != "\n") {
                 numOfGenesToMutate = config["numOfGenesToMutate"].As<uint32_t>();
@@ -150,7 +157,7 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
     Placement optimizedPlacement  = initialPlacement;
     // check if the query has at least 2 other operators than source and sink operators
     if(queryOperators.size() > 2 + sourceNodesIndices.size()){
-        optimizedPlacement  = getOptimizedPlacement(population, numOfIterations , patience, numOfGenesToMutate, mutationProbability, queryPlan);
+        optimizedPlacement  = getOptimizedPlacement(population, numOfIterations , patience, threshold, numOfGenesToMutate, mutationProbability, queryPlan);
     }
     NES_DEBUG("Best Initial Placement: ");
     // print the placement
@@ -307,11 +314,13 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::generatePlacement(
 }
 
 GeneticAlgorithmStrategy::Placement
-GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> population, uint32_t numOfIterations, uint32_t patience, uint32_t numOfGenesToMutate, double mutationProbability,QueryPlanPtr queryPlan) {
+GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> population, uint32_t numOfIterations, uint32_t patience, double threshold, uint32_t numOfGenesToMutate, double mutationProbability,QueryPlanPtr queryPlan) {
 
     Placement optimizedPlacement = population[0];   //keep track of the best placement so far.
     std::vector<GeneticAlgorithmStrategy::Placement> offspringPopulation;
     uint32_t populationSize = population.size();
+    std::vector<double> optimizedCostOfEachIteration;
+    double initialCost = population[0].cost;
     /*std::map<uint32_t, uint32_t> populationSizes;
     std::map<uint32_t, double> costsAfterGA;
     std::map<uint32_t, int> counts;
@@ -392,12 +401,13 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
         /*populationSizes.insert(std::make_pair(i, selectedPortion));
         counts.insert(std::make_pair(i, numOfInvalidOffsprings));
         costsAfterGA.insert(std::make_pair(i + 1, offspringPopulation[0].cost));  */
-
+        optimizedCostOfEachIteration.push_back(offspringPopulation[0].cost);
+        double change = getAverageRelativeChangeOfCostOverIterations(optimizedCostOfEachIteration, initialCost);
         if (offspringPopulation.size() && optimizedPlacement.cost > offspringPopulation[0].cost) {
             optimizedPlacement = offspringPopulation[0];
             numOfIterationsWithoutImprovement = 0;
         }
-        if(numOfIterationsWithoutImprovement >= patience){
+        if(numOfIterationsWithoutImprovement >= patience && change < threshold){
             return optimizedPlacement;
         }
         //i += 1;
@@ -743,6 +753,15 @@ std::vector<uint32_t> GeneticAlgorithmStrategy::breadthFirstNodeIterator(Topolog
         }
     }
     return mapOfBreadthFirstToDeepFirst;
+}
+double GeneticAlgorithmStrategy::getAverageRelativeChangeOfCostOverIterations(std::vector<double>optimizedCostOfEachIteration, double initialCost){
+    double result = 0.0;
+    for(auto cost : optimizedCostOfEachIteration){
+        result += cost;
+    }
+    result = result/optimizedCostOfEachIteration.size();
+    result = 100.0*(result - initialCost)/initialCost;
+    return result;
 }
 }// namespace NES::Optimizer
 
