@@ -29,6 +29,8 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <Util/yaml/Yaml.hpp>
+#include <filesystem>
 
 namespace NES::Optimizer {
 
@@ -106,15 +108,50 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
         operatorDMF.push_back(std::any_cast<double>(currentOperator->as<LogicalOperatorNode>()->getProperty("dmf")));
         operatorLoad.push_back(std::any_cast<int>(currentOperator->as<LogicalOperatorNode>()->getProperty("load")));
     }
-    
+
+    uint32_t populationSize = 100;
     uint32_t numOfIterations = 1;
     uint32_t patience = 3;
     uint32_t numOfGenesToMutate = 1;
     double mutationProbability = 0.5;
+    const std::string filePath = "../tests/test_data/GeneticAlgorithmParameters.yaml";
+    if (!filePath.empty() && std::filesystem::exists(filePath)) {
+
+        NES_INFO("GeneticAlgorithmConfig: Using config file with path: " << filePath << " .");
+
+        Yaml::Node config = *(new Yaml::Node());
+        Yaml::Parse(config, filePath.c_str());
+        try {
+            if (!config["populationSize"].As<std::string>().empty() && config["populationSize"].As<std::string>() != "\n") {
+                populationSize = config["populationSize"].As<uint32_t>();
+            }
+            if (!config["numOfIterations"].As<std::string>().empty() && config["numOfIterations"].As<std::string>() != "\n") {
+                numOfIterations = config["numOfIterations"].As<uint32_t>();
+            }
+            if (!config["numOfGenesToMutate"].As<std::string>().empty() && config["numOfGenesToMutate"].As<std::string>() != "\n") {
+                numOfGenesToMutate = config["numOfGenesToMutate"].As<uint32_t>();
+            }
+            if (!config["mutationProbability"].As<std::string>().empty() && config["mutationProbability"].As<std::string>() != "\n") {
+                mutationProbability = config["mutationProbability"].As<double>();
+            }
+        } catch (std::exception& e) {
+            NES_ERROR("Genetic Algorithm Configuration: Error while initializing configuration parameters from YAML file. Keeping default "
+                      "values. "
+                      << e.what());
+        }
+    }
+    else{
+        NES_ERROR("Genetic Algorithm Configuration: No file path was provided or file could not be found at " << filePath << ".");
+        NES_WARNING("Keeping default values for Genetic Algorithm Configuration.");
+    }
     population.clear();
-    initializePopulation(queryPlan);
+    initializePopulation(queryPlan, populationSize);
     Placement initialPlacement = population[0];
-    Placement optimizedPlacement = getOptimizedPlacement(population, numOfIterations , patience,numOfGenesToMutate,mutationProbability, queryPlan);
+    Placement optimizedPlacement  = initialPlacement;
+    // check if the query has at least 2 other operators than source and sink operators
+    if(queryOperators.size() > 2 + sourceNodesIndices.size()){
+        optimizedPlacement  = getOptimizedPlacement(population, numOfIterations , patience, numOfGenesToMutate, mutationProbability, queryPlan);
+    }
     NES_DEBUG("Best Initial Placement: ");
     // print the placement
     for(uint32_t f = 0 ; f < topologyNodes.size();f++){
@@ -154,9 +191,9 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
     assignMappingToTopology(topology, queryPlan, mapping);
 }
 
-void GeneticAlgorithmStrategy::initializePopulation(QueryPlanPtr queryPlan) {
+void GeneticAlgorithmStrategy::initializePopulation(QueryPlanPtr queryPlan, uint32_t populationSize) {
 
-    for (int i = 0; i < 500; i++) {
+    for (uint32_t i = 0; i < populationSize; i++) {
         Placement placement = generatePlacement(queryPlan);
         // check if an identical placement already exists to avoid duplicate placements.
         if(placementAlreadyExists(population,placement))

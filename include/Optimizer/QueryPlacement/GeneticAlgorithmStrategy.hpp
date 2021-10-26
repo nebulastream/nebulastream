@@ -68,7 +68,7 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     std::vector<bool> getTransitiveClosure();
 
-    void initializePopulation(QueryPlanPtr queryPlan);
+    void initializePopulation(QueryPlanPtr queryPlan, uint32_t populationSize);
 
     Placement generatePlacement(QueryPlanPtr queryPlan);
 
