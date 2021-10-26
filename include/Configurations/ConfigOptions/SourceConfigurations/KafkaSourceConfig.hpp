@@ -34,9 +34,9 @@ using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
-* @brief Configuration object for source config
-*/
-
+ * @brief Configuration object for Kafka source config
+ * Connect to a kafka broker and read data form there
+ */
 class KafkaSourceConfig : public SourceConfig {
 
   public:

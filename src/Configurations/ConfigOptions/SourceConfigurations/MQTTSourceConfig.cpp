@@ -47,7 +47,8 @@ MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConf
           ConfigOption<bool>::create("cleanSession",
                                      true,
                                      "cleanSession true = clean up session after client loses connection, false = keep data for "
-                                     "client after connection loss (persistent session), needed for: MQTTSource")) {
+                                     "client after connection loss (persistent session), needed for: MQTTSource")),
+      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")){
     NES_INFO("NesSourceConfig: Init source config object with new values.");
 
     if (sourceConfigMap.find("MQTTSourceUrl") != sourceConfigMap.end()) {
@@ -67,6 +68,9 @@ MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConf
     }
     if (sourceConfigMap.find("MQTTSourceCleanSession") != sourceConfigMap.end()) {
         cleanSession->setValue((sourceConfigMap.find("MQTTSourceCleanSession")->second == "true"));
+    }
+    if (sourceConfigMap.find("MQTTSourceFlushIntervalMS") != sourceConfigMap.end()) {
+        flushIntervalMS->setValue(std::stof(sourceConfigMap.find("MQTTSourceFlushIntervalMS")->second));
     }
 }
 
@@ -90,7 +94,8 @@ MQTTSourceConfig::MQTTSourceConfig()
           ConfigOption<bool>::create("cleanSession",
                                      true,
                                      "cleanSession true = clean up session after client loses connection, false = keep data for "
-                                     "client after connection loss (persistent session), needed for: MQTTSource")) {
+                                     "client after connection loss (persistent session), needed for: MQTTSource")),
+      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")){
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -101,6 +106,7 @@ void MQTTSourceConfig::resetSourceOptions() {
     setTopic(topic->getDefaultValue());
     setQos(qos->getDefaultValue());
     setCleanSession(cleanSession->getDefaultValue());
+    setFlushIntervalMS(flushIntervalMS->getDefaultValue());
     SourceConfig::resetSourceOptions("MQTTSource");
 }
 
@@ -111,6 +117,7 @@ std::string MQTTSourceConfig::toString() {
     ss << topic->toStringNameCurrentValue();
     ss << qos->toStringNameCurrentValue();
     ss << cleanSession->toStringNameCurrentValue();
+    ss << flushIntervalMS->toStringNameCurrentValue();
     ss << SourceConfig::toString();
     return ss.str();
 }
@@ -127,6 +134,8 @@ IntConfigOption MQTTSourceConfig::getQos() const { return qos; }
 
 BoolConfigOption MQTTSourceConfig::getCleanSession() const { return cleanSession; }
 
+FloatConfigOption MQTTSourceConfig::getFlushIntervalMS() const { return flushIntervalMS; }
+
 void MQTTSourceConfig::setUrl(std::string urlValue) { url->setValue(std::move(urlValue)); }
 
 void MQTTSourceConfig::setClientId(std::string clientIdValue) { clientId->setValue(std::move(clientIdValue)); }
@@ -138,5 +147,7 @@ void MQTTSourceConfig::setTopic(std::string topicValue) { topic->setValue(std::m
 void MQTTSourceConfig::setQos(uint32_t qosValue) { qos->setValue(qosValue); }
 
 void MQTTSourceConfig::setCleanSession(bool cleanSessionValue) { cleanSession->setValue(cleanSessionValue); }
+
+void MQTTSourceConfig::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS->setValue(flushIntervalMs); }
 
 }// namespace NES

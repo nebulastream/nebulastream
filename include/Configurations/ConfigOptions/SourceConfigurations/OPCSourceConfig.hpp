@@ -34,8 +34,9 @@ using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
-* @brief Configuration object for source config
-*/
+ * @brief Configuration object for OPC source config
+ * connect to an OPC server and read data from there
+ */
 class OPCSourceConfig : public SourceConfig {
 
   public:

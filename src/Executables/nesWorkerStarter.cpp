@@ -85,11 +85,11 @@ int main(int argc, char** argv) {
     //register phy stream if necessary
     if (sourceConfig->getSourceType()->getValue() != "NoSource") {
         NES_INFO("start with dedicated source=" << sourceConfig->getSourceType()->getValue() << "\n");
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+        PhysicalStreamConfigPtr physicalStreamConfig = PhysicalStreamConfig::create(sourceConfig);
 
         NES_INFO("NESWORKERSTARTER: Source Config: " << sourceConfig->toString());
 
-        wrk->setWithRegister(conf);
+        wrk->setWithRegister(physicalStreamConfig);
     } else if (workerConfig->getParentId()->getValue() != "-1") {
         NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());
         wrk->setWithParent(workerConfig->getParentId()->getValue());
