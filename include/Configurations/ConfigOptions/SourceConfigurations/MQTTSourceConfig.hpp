@@ -34,8 +34,9 @@ using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
-* @brief Configuration object for source config
-*/
+ * @brief Configuration object for MQTT source config
+ * Connect to an MQTT broker and read data from there
+ */
 class MQTTSourceConfig : public SourceConfig {
 
   public:
@@ -122,6 +123,16 @@ class MQTTSourceConfig : public SourceConfig {
      */
     void setCleanSession(bool cleanSession);
 
+    /**
+     * @brief Get tupleBuffer flush interval in milliseconds
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<float>> getFlushIntervalMS() const;
+
+    /**
+     * @brief Set tupleBuffer flush interval in milliseconds
+     */
+    void setFlushIntervalMS(float flushIntervalMs);
+
   private:
     /**
      * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
@@ -139,6 +150,7 @@ class MQTTSourceConfig : public SourceConfig {
     StringConfigOption topic;
     IntConfigOption qos;
     BoolConfigOption cleanSession;
+    FloatConfigOption flushIntervalMS;
 };
 }// namespace NES
 #endif

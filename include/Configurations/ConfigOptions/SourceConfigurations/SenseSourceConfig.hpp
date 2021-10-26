@@ -67,12 +67,12 @@ class SenseSourceConfig : public SourceConfig {
     /**
      * @brief Get udsf
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUdsf() const;
+    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUdfs() const;
 
     /**
      * @brief Set udsf
      */
-    void setUdsf(std::string udsf);
+    void setUdfs(std::string udfs);
 
   private:
     /**
@@ -85,7 +85,7 @@ class SenseSourceConfig : public SourceConfig {
      */
     SenseSourceConfig();
 
-    StringConfigOption udsf;
+    StringConfigOption udfs;
 };
 }// namespace NES
 #endif

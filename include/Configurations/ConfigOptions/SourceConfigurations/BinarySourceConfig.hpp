@@ -34,8 +34,9 @@ using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
-* @brief Configuration object for source config
-*/
+ * @brief Configuration object for binary source
+ * A binary source reads data from a binary file
+ */
 class BinarySourceConfig : public SourceConfig {
 
   public:

@@ -52,7 +52,7 @@ class SourceConfigFactory {
      * @param argc number of command line params
      * @return source config object
      */
-    static std::shared_ptr<SourceConfig> createSourceConfig(const std::map<std::string, std::string>& commandLineParams,
+    static SourceConfigPtr createSourceConfig(const std::map<std::string, std::string>& commandLineParams,
                                                             int argc);
 
     /**
@@ -60,14 +60,15 @@ class SourceConfigFactory {
      * @param sourceType source type of source config object
      * @return source config object of type sourceType
      */
-    static std::shared_ptr<SourceConfig> createSourceConfig(std::string _sourceType);
+    static SourceConfigPtr createSourceConfig(std::string _sourceType);
 
     /**
      * @brief create default source config
      * @return default source config object
      */
-    static std::shared_ptr<SourceConfig> createSourceConfig();
+    static SourceConfigPtr createSourceConfig();
 
+  private:
     /**
      * @brief read YAML file for configurations
      * @param filePath path to yaml configuration file

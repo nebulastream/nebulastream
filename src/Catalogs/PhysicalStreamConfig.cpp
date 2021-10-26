@@ -84,10 +84,10 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
                                            sourceConfig->as<CSVSourceConfig>()->getSkipHeader()->getValue());
     } else if (sourceConfig->getSourceType()->getValue() == "SenseSource") {
         NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs "
-                  << sourceConfig->as<SenseSourceConfig>()->getUdsf()->getValue());
+                  << sourceConfig->as<SenseSourceConfig>()->getUdfs()->getValue());
         return SenseSourceDescriptor::create(schema,
                                              sourceConfig->getLogicalStreamName()->getValue(),
-                                             /**udfs*/ sourceConfig->as<SenseSourceConfig>()->getUdsf()->getValue());
+                                             /**udfs*/ sourceConfig->as<SenseSourceConfig>()->getUdfs()->getValue());
 #ifdef ENABLE_MQTT_BUILD
     } else if (sourceConfig->getSourceType()->getValue() == "MQTTSource") {
         NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: " << sourceConfig->toString());

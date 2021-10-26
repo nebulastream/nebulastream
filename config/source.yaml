@@ -2,7 +2,7 @@
 
 # ~~ Source Handling ~~
 
-# Set number of buffers to produce
+# Set number of buffers to produce, i.e. how often the read csv file is repeated
 numberOfBuffersToProduce: 1
 
 # Set number of tuples to produce per buffer
@@ -20,32 +20,39 @@ sourceFrequency: 1
 # Set storage layout, true = row layout, false = column layout
 rowLayout: true
 
-# set tupleBuffer flush interval in milliseconds
-flushIntervalMS: -1
-
 # Set input data format
 inputFormat: JSON
 
 # Set the source type (available options: NoSource, DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
 #                                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
 #                                         BinarySource (ToDo: Make source available))
+# NoSource: The worker will create a default source but no physical stream will be associated with it
 sourceType: NoSource
 
-# SenseSource and its needed configuration params
-SenseSource:
-  # Set udsf
-  - udsf:
+# DefaultSource: A simple source with default data created inside NES, useful for testing
+# numberOfBuffersToProduce defines how often the default data is repeated for this source
+DefaultSource:
 
+# SenseSource: Creates a Sense source
+SenseSource:
+  # Set user defined function
+  - udfs:
+
+# CSVSource and its needed configuration params
+# This source reads data from a csv file
+# numberOfBuffersToProduce defines how often the csv file is repeated
 CSVSource:
   # Set file path
   - filePath: ../tests/test_data/QnV_short.csv
   # Skip first line of the file
     skipHeader: false
 
+# BinarySource: read from a binary source file
 BinarySource:
   # Set file path
   - filePath: ../tests/test_data/QnV_short.csv
 
+# MQTTSource: Connect to an MQTT broker and read data from there
 MQTTSource:
   # Set url to connect to
   - url: tcp://127.0.0.1:1885
@@ -59,7 +66,10 @@ MQTTSource:
     qos: 2
   # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
     cleanSession: true
+  # set tupleBuffer flush interval in milliseconds
+    flushIntervalMS: -1
 
+# KafkaSource: Connect to a kafka broker and read data form there
 KafkaSource:
   # Set kafka broker string
   - brokers:
@@ -72,6 +82,7 @@ KafkaSource:
   # Set connection time out for source
     connectionTimeout: 10
 
+# OPCSource: connect to an OPC server and read data from there
 OPCSource:
   # Set namespaceIndex for node, needed for: OPCSource
   - namespaceIndex: 1

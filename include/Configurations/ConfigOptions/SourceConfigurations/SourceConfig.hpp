@@ -141,16 +141,6 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
     void setInputFormat(std::string inputFormat);
 
     /**
-     * @brief Get tupleBuffer flush interval in milliseconds
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<float>> getFlushIntervalMS() const;
-
-    /**
-     * @brief Set tupleBuffer flush interval in milliseconds
-     */
-    void setFlushIntervalMS(float flushIntervalMs);
-
-    /**
      * @brief Get storage layout, true = row layout, false = column layout
      */
     [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getRowLayout() const;
@@ -195,7 +185,6 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
     StringConfigOption logicalStreamName;
     IntConfigOption sourceFrequency;
     BoolConfigOption rowLayout;
-    FloatConfigOption flushIntervalMS;
     StringConfigOption inputFormat;
     StringConfigOption sourceType;
 };

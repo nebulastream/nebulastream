@@ -34,8 +34,9 @@ using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
-* @brief Configuration object for source config
-*/
+ * @brief Configuration object for default source config
+ * A simple source with default data created inside NES, useful for testing
+ */
 class DefaultSourceConfig : public SourceConfig {
 
   public:

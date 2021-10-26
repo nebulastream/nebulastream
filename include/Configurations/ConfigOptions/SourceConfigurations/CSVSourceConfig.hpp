@@ -34,8 +34,9 @@ using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
-* @brief Configuration object for source config
-*/
+ * @brief Configuration object for csv source config
+ * define configurations for a csv source, i.e. this source reads from data from a csv file
+ */
 class CSVSourceConfig : public SourceConfig {
 
   public:

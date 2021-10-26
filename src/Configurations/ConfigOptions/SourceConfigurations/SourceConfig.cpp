@@ -31,7 +31,6 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, s
       logicalStreamName(ConfigOption<std::string>::create("logicalStreamName", "default_logical", "Logical name of the stream.")),
       sourceFrequency(ConfigOption<uint32_t>::create("sourceFrequency", 1, "Sampling frequency of the source.")),
       rowLayout(ConfigOption<bool>::create("rowLayout", true, "storage layout, true = row layout, false = column layout")),
-      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
       inputFormat(ConfigOption<std::string>::create("inputFormat", "JSON", "input data format")),
       sourceType(ConfigOption<std::string>::create("sourceType",
                                                    std::move(_sourceType),
@@ -57,9 +56,6 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, s
     if (sourceConfigMap.find("rowLayout") != sourceConfigMap.end()) {
         rowLayout->setValue((sourceConfigMap.find("rowLayout")->second == "true"));
     }
-    if (sourceConfigMap.find("flushIntervalMS") != sourceConfigMap.end()) {
-        flushIntervalMS->setValue(std::stof(sourceConfigMap.find("flushIntervalMS")->second));
-    }
     if (sourceConfigMap.find("inputFormat") != sourceConfigMap.end()) {
         inputFormat->setValue(sourceConfigMap.find("inputFormat")->second);
     }
@@ -77,7 +73,6 @@ SourceConfig::SourceConfig(std::string _sourceType)
       logicalStreamName(ConfigOption<std::string>::create("logicalStreamName", "default_logical", "Logical name of the stream.")),
       sourceFrequency(ConfigOption<uint32_t>::create("sourceFrequency", 1, "Sampling frequency of the source.")),
       rowLayout(ConfigOption<bool>::create("rowLayout", true, "storage layout, true = row layout, false = column layout")),
-      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
       inputFormat(ConfigOption<std::string>::create("inputFormat", "JSON", "input data format")),
       sourceType(
           ConfigOption<std::string>::create("sourceType",
@@ -89,7 +84,6 @@ SourceConfig::SourceConfig(std::string _sourceType)
 void SourceConfig::resetSourceOptions(std::string _sourceType) {
     setSourceType(std::move(_sourceType));
     setInputFormat(inputFormat->getDefaultValue());
-    setFlushIntervalMS(flushIntervalMS->getDefaultValue());
     setRowLayout(rowLayout->getDefaultValue());
     setSourceFrequency(sourceFrequency->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
@@ -102,7 +96,6 @@ std::string SourceConfig::toString() {
     std::stringstream ss;
     ss << sourceType->toStringNameCurrentValue();
     ss << inputFormat->toStringNameCurrentValue();
-    ss << flushIntervalMS->toStringNameCurrentValue();
     ss << rowLayout->toStringNameCurrentValue();
     ss << sourceFrequency->toStringNameCurrentValue();
     ss << numberOfBuffersToProduce->toStringNameCurrentValue();
@@ -115,8 +108,6 @@ std::string SourceConfig::toString() {
 StringConfigOption SourceConfig::getSourceType() const { return sourceType; }
 
 StringConfigOption SourceConfig::getInputFormat() const { return inputFormat; }
-
-FloatConfigOption SourceConfig::getFlushIntervalMS() const { return flushIntervalMS; }
 
 BoolConfigOption SourceConfig::getRowLayout() const { return rowLayout; }
 
@@ -151,8 +142,6 @@ void SourceConfig::setLogicalStreamName(std::string logicalStreamNameValue) {
 }
 
 void SourceConfig::setInputFormat(std::string inputFormatValue) { inputFormat->setValue(std::move(inputFormatValue)); }
-
-void SourceConfig::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS->setValue(flushIntervalMs); }
 
 void SourceConfig::setRowLayout(bool rowLayoutValue) { rowLayout->setValue(rowLayoutValue); }
 

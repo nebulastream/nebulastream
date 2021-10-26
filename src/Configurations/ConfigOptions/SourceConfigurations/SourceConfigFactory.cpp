@@ -28,8 +28,8 @@
 
 namespace NES {
 
-std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(const std::map<std::string, std::string>& commandLineParams,
-                                                                      const int argc) {
+SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::string, std::string>& commandLineParams,
+                                                                      int argc) {
 
     auto sourceConfigPath = commandLineParams.find("--sourceConfigPath");
     std::map<std::string, std::string> configurationMap;
@@ -56,11 +56,12 @@ std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(const std:
         case BinarySource: return BinarySourceConfig::create(configurationMap);
         case SenseSource: return SenseSourceConfig::create(configurationMap);
         case DefaultSource: return DefaultSourceConfig::create(configurationMap);
-        default: return nullptr;
+        default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " + configurationMap.at("sourceType")
+                                         + " not supported");
     }
 }
 
-std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(std::string _sourceType){
+SourceConfigPtr SourceConfigFactory::createSourceConfig(std::string _sourceType){
 
     switch (stringToConfigSourceType[_sourceType]) {
         case CSVSource: return CSVSourceConfig::create();
@@ -74,7 +75,7 @@ std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig(std::strin
     }
 }
 
-std::shared_ptr<SourceConfig> SourceConfigFactory::createSourceConfig() { return DefaultSourceConfig::create(); }
+SourceConfigPtr SourceConfigFactory::createSourceConfig() { return DefaultSourceConfig::create(); }
 
 std::map<std::string, std::string> SourceConfigFactory::readYAMLFile(const std::string& filePath) {
 
@@ -113,10 +114,6 @@ std::map<std::string, std::string> SourceConfigFactory::readYAMLFile(const std::
             if (!config["rowLayout"].As<std::string>().empty() && config["rowLayout"].As<std::string>() != "\n") {
                 configurationMap.insert(std::pair<std::string, std::string>("rowLayout", config["rowLayout"].As<std::string>()));
             }
-            if (!config["flushIntervalMS"].As<std::string>().empty() && config["flushIntervalMS"].As<std::string>() != "\n") {
-                configurationMap.insert(
-                    std::pair<std::string, std::string>("flushIntervalMS", config["flushIntervalMS"].As<std::string>()));
-            }
             if (!config["inputFormat"].As<std::string>().empty() && config["inputFormat"].As<std::string>() != "\n") {
                 configurationMap.insert(
                     std::pair<std::string, std::string>("inputFormat", config["inputFormat"].As<std::string>()));
@@ -125,10 +122,10 @@ std::map<std::string, std::string> SourceConfigFactory::readYAMLFile(const std::
                 configurationMap.insert(
                     std::pair<std::string, std::string>("sourceType", config["sourceType"].As<std::string>()));
             }
-            if (!config["SenseSource"][0]["udsf"].As<std::string>().empty()
-                && config["SenseSource"][0]["udsf"].As<std::string>() != "\n") {
+            if (!config["SenseSource"][0]["udfs"].As<std::string>().empty()
+                && config["SenseSource"][0]["udfs"].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("SenseSourceUdsf", config["SenseSource"][0]["udsf"].As<std::string>()));
+                    std::pair<std::string, std::string>("SenseSourceUdfs", config["SenseSource"][0]["udfs"].As<std::string>()));
             }
             if (!config["CSVSource"][0]["filePath"].As<std::string>().empty()
                 && config["CSVSource"][0]["filePath"].As<std::string>() != "\n") {
@@ -180,6 +177,10 @@ std::map<std::string, std::string> SourceConfigFactory::readYAMLFile(const std::
                 configurationMap.insert(
                     std::pair<std::string, std::string>("MQTTSourceCleanSession",
                                                         config["MQTTSource"][0]["cleanSession"].As<std::string>()));
+            }
+            if (!config["MQTTSource"][0]["flushIntervalMS"].As<std::string>().empty() && config["MQTTSource"][0]["flushIntervalMS"].As<std::string>() != "\n") {
+                configurationMap.insert(
+                    std::pair<std::string, std::string>("MQTTSourceFlushIntervalMS", config["MQTTSource"][0]["flushIntervalMS"].As<std::string>()));
             }
             if (!config["KafkaSource"][0]["brokers"].As<std::string>().empty()
                 && config["KafkaSource"][0]["brokers"].As<std::string>() != "\n") {
@@ -280,17 +281,13 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
             && !commandLineParams.find("--rowLayout")->second.empty()) {
             configurationMap.insert_or_assign("rowLayout", commandLineParams.find("--rowLayout")->second);
         }
-        if (commandLineParams.find("--flushIntervalMS") != commandLineParams.end()
-            && !commandLineParams.find("--flushIntervalMS")->second.empty()) {
-            configurationMap.insert_or_assign("flushIntervalMS", commandLineParams.find("--flushIntervalMS")->second);
-        }
         if (commandLineParams.find("--inputFormat") != commandLineParams.end()
             && !commandLineParams.find("--inputFormat")->second.empty()) {
             configurationMap.insert_or_assign("inputFormat", commandLineParams.find("--inputFormat")->second);
         }
-        if (commandLineParams.find("--SenseSourceUdsf") != commandLineParams.end()
-            && !commandLineParams.find("--SenseSourceUdsf")->second.empty()) {
-            configurationMap.insert_or_assign("SenseSourceUdsf", commandLineParams.find("--SenseSourceUdsf")->second);
+        if (commandLineParams.find("--SenseSourceUdfs") != commandLineParams.end()
+            && !commandLineParams.find("--SenseSourceUdfs")->second.empty()) {
+            configurationMap.insert_or_assign("SenseSourceUdfs", commandLineParams.find("--SenseSourceUdfs")->second);
         }
         if (commandLineParams.find("--CSVSourceFilePath") != commandLineParams.end()
             && !commandLineParams.find("--CSVSourceFilePath")->second.empty()) {
@@ -325,9 +322,9 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
             configurationMap.insert_or_assign("MQTTSourceCleanSession",
                                               commandLineParams.find("--MQTTSourceCleanSession")->second);
         }
-        if (commandLineParams.find("--inputFormat") != commandLineParams.end()
-            && !commandLineParams.find("--inputFormat")->second.empty()) {
-            configurationMap.insert_or_assign("inputFormat", commandLineParams.find("--inputFormat")->second);
+        if (commandLineParams.find("--MQTTSourceFlushIntervalMS") != commandLineParams.end()
+            && !commandLineParams.find("--MQTTSourceFlushIntervalMS")->second.empty()) {
+            configurationMap.insert_or_assign("MQTTSourceFlushIntervalMS", commandLineParams.find("--MQTTSourceFlushIntervalMS")->second);
         }
         if (commandLineParams.find("--KafkaSourceBrokers") != commandLineParams.end()
             && !commandLineParams.find("--KafkaSourceBrokers")->second.empty()) {
