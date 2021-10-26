@@ -74,9 +74,9 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     double getCost(Placement placement);
 
-    Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t numOfIterations, QueryPlanPtr queryPlan);
+    Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t numOfIterations, uint32_t patience, uint32_t numOfGenesToMutate, double mutationProbability, QueryPlanPtr queryPlan);
 
-    Placement mutate(Placement placement, QueryPlanPtr queryPlan);
+    Placement mutate(Placement placement, QueryPlanPtr queryPlan, uint32_t numOfGenesToMutate,  double mutationProbability);
 
     void DFS(int s, int v, std::list<int>* adj, std::vector<bool>& tc, int numOfTopologyNodes);
 

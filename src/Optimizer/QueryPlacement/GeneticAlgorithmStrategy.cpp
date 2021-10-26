@@ -106,10 +106,15 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
         operatorDMF.push_back(std::any_cast<double>(currentOperator->as<LogicalOperatorNode>()->getProperty("dmf")));
         operatorLoad.push_back(std::any_cast<int>(currentOperator->as<LogicalOperatorNode>()->getProperty("load")));
     }
+    
+    uint32_t numOfIterations = 1;
+    uint32_t patience = 3;
+    uint32_t numOfGenesToMutate = 1;
+    double mutationProbability = 0.5;
     population.clear();
     initializePopulation(queryPlan);
     Placement initialPlacement = population[0];
-    Placement optimizedPlacement = getOptimizedPlacement(population, 100, queryPlan);
+    Placement optimizedPlacement = getOptimizedPlacement(population, numOfIterations , patience,numOfGenesToMutate,mutationProbability, queryPlan);
     NES_DEBUG("Best Initial Placement: ");
     // print the placement
     for(uint32_t f = 0 ; f < topologyNodes.size();f++){
@@ -265,7 +270,7 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::generatePlacement(
 }
 
 GeneticAlgorithmStrategy::Placement
-GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> population, uint32_t numOfIterations, QueryPlanPtr queryPlan) {
+GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> population, uint32_t numOfIterations, uint32_t patience, uint32_t numOfGenesToMutate, double mutationProbability,QueryPlanPtr queryPlan) {
 
     Placement optimizedPlacement = population[0];   //keep track of the best placement so far.
     std::vector<GeneticAlgorithmStrategy::Placement> offspringPopulation;
@@ -275,6 +280,7 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
     std::map<uint32_t, int> counts;
     NES_DEBUG("Cost before Optimization:  " << population[0].cost);
     costsAfterGA.insert(std::make_pair(0, optimizedPlacement.cost));    */
+    uint32_t  numOfIterationsWithoutImprovement = 0;
     for (uint32_t i = 0; i < numOfIterations; i++) {
         /* int i = 0;
     for (auto start = std::chrono::steady_clock::now(), now = start; now < start + std::chrono::seconds{time};
@@ -310,8 +316,8 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
                 else{
                     //numOfInvalidOffsprings += 1;
                 }
-                offspring1 = mutate(offspring1, queryPlan);
-                offspring2 = mutate(offspring2, queryPlan);
+                offspring1 = mutate(offspring1, queryPlan, numOfGenesToMutate, mutationProbability);
+                offspring2 = mutate(offspring2, queryPlan, numOfGenesToMutate, mutationProbability);
                 offspring1.cost = (double) RAND_MAX;
                 offspring2.cost = (double) RAND_MAX;
                 if (checkPlacementValidation(offspring1, queryPlan)) {
@@ -345,13 +351,17 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
             }
             j += 1;
         }
-
+        numOfIterationsWithoutImprovement += 1;
         /*populationSizes.insert(std::make_pair(i, selectedPortion));
         counts.insert(std::make_pair(i, numOfInvalidOffsprings));
         costsAfterGA.insert(std::make_pair(i + 1, offspringPopulation[0].cost));  */
 
         if (offspringPopulation.size() && optimizedPlacement.cost > offspringPopulation[0].cost) {
             optimizedPlacement = offspringPopulation[0];
+            numOfIterationsWithoutImprovement = 0;
+        }
+        if(numOfIterationsWithoutImprovement >= patience){
+            return optimizedPlacement;
         }
         //i += 1;
         population.clear();
@@ -373,37 +383,41 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
 }
 
 GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::mutate(GeneticAlgorithmStrategy::Placement placement,
-                                                                     QueryPlanPtr queryPlan) {
+                                                                     QueryPlanPtr queryPlan, uint32_t numOfGenesToMutate,  double mutationProbability) {
     Placement mutatedPlacement = placement;
-    double mutationProbability = 1;
     auto sourceOperators = queryPlan->getSourceOperators();
     // select random index of gen to mutate
     std::vector<uint32_t> randomMutationIndex;
     srand(time(0));
-    double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-    uint32_t mutationOperatorIdx ;
-    if (r < mutationProbability) {
-        mutationOperatorIdx = rand() % queryOperators.size();
-        while (!mutationOperatorIdx
-               || (find(sourceOperators.begin(), sourceOperators.end(), queryOperators.at(mutationOperatorIdx))
-                   != sourceOperators.end())) {
+    for(uint32_t i = 0; i < numOfGenesToMutate; i++) {
+        double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
+        uint32_t mutationOperatorIdx = (uint32_t) RAND_MAX;
+        if (r < mutationProbability) {
             mutationOperatorIdx = rand() % queryOperators.size();
-        }
-        //find the node where the operator to mutate is placed in
-        uint32_t mutationNodeIdx = (uint32_t)RAND_MAX;
-        for (uint32_t i = 0; i < topologyNodes.size(); i++) {
-            if (placement.chromosome.at(i * queryOperators.size() + mutationOperatorIdx)){
-                mutationNodeIdx = i;
-                break;
+            uint32_t attempt = 0;  // We try 3 times to get an operator other than a source operator
+            while (attempt < 3 && (mutationOperatorIdx >= (uint32_t) RAND_MAX
+                   || (find(sourceOperators.begin(), sourceOperators.end(), queryOperators.at(mutationOperatorIdx))
+                       != sourceOperators.end()))) {
+                mutationOperatorIdx = rand() % queryOperators.size();
             }
+            if(mutationOperatorIdx >= (uint32_t) RAND_MAX)
+                return placement;
+            //find the node where the operator to mutate is placed in
+            uint32_t mutationNodeIdx = (uint32_t) RAND_MAX;
+            for (uint32_t i = 0; i < topologyNodes.size(); i++) {
+                if (placement.chromosome.at(i * queryOperators.size() + mutationOperatorIdx)) {
+                    mutationNodeIdx = i;
+                    break;
+                }
+            }
+            if (mutationNodeIdx == RAND_MAX)
+                return placement;
+            //move the operator from the old node to the new one
+            uint32_t newMutationNodeIdx = rand() % topologyNodes.size();
+            uint32_t temp = mutationNodeIdx * queryOperators.size() + mutationOperatorIdx;
+            mutatedPlacement.chromosome.at(temp) = false;
+            mutatedPlacement.chromosome.at(newMutationNodeIdx * queryOperators.size() + mutationOperatorIdx) = true;
         }
-        if(mutationNodeIdx == RAND_MAX)
-            return placement;
-        //move the operator from the old node to the new one
-        uint32_t newMutationNodeIdx = rand() % topologyNodes.size();
-        uint32_t temp = mutationNodeIdx*queryOperators.size() + mutationOperatorIdx;
-        mutatedPlacement.chromosome.at(temp) = false;
-        mutatedPlacement.chromosome.at(newMutationNodeIdx*queryOperators.size() + mutationOperatorIdx) = true;
     }
 
     return mutatedPlacement;
