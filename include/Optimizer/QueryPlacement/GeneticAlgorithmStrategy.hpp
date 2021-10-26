@@ -83,10 +83,10 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
     bool checkPlacementValidation(Placement placement, QueryPlanPtr queryPlan);
     std::vector<TopologyNodePtr> topologySnapshot(TopologyPtr topology);
     std::vector<uint32_t> breadthFirstNodeIterator(TopologyPtr topology);
-    //void eliminateReachableNodes(std::vector<int>* topologyIndices);
     Placement crossOver(GeneticAlgorithmStrategy::Placement placement, GeneticAlgorithmStrategy::Placement other,uint32_t crossOverIndex);
     bool placementAlreadyExists(std::vector<GeneticAlgorithmStrategy::Placement> population, GeneticAlgorithmStrategy::Placement offspring);
     double getAverageRelativeChangeOfCostOverIterations(std::vector<double>optimizedCostOfEachIteration, double initialCost);
+    void assignDataModificationFactor(QueryPlanPtr queryPlan);
 };
 }// namespace NES::Optimizer
 

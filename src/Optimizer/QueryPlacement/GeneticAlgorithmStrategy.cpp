@@ -31,6 +31,8 @@
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 
 namespace NES::Optimizer {
 
@@ -80,7 +82,7 @@ bool GeneticAlgorithmStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan)
             throw Exception("GeneticAlgorithmStrategy: No sink operators found in the query plan wih id: "
                             + std::to_string(queryId));
         }
-
+        assignDataModificationFactor(queryPlan);
         NES_DEBUG("GeneticAlgorithmStrategy: place query plan with id : " << queryId);
         placeQueryPlan(queryPlan);
         NES_DEBUG("GeneticAlgorithmStrategy: Add system generated operators for query with id : " << queryId);
@@ -103,11 +105,6 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
     //topology->print();
     //NES_DEBUG(queryPlan->toString());
     transitiveClosureOfTopology = getTransitiveClosure();
-    //Get the DMF and load of each query operator and save it in the corresponding vector
-    for (auto currentOperator : queryOperators) {
-        operatorDMF.push_back(std::any_cast<double>(currentOperator->as<LogicalOperatorNode>()->getProperty("dmf")));
-        operatorLoad.push_back(std::any_cast<int>(currentOperator->as<LogicalOperatorNode>()->getProperty("load")));
-    }
 
     uint32_t populationSize = 1000;
     uint32_t numOfIterations = 10;
@@ -762,6 +759,31 @@ double GeneticAlgorithmStrategy::getAverageRelativeChangeOfCostOverIterations(st
     result = result/optimizedCostOfEachIteration.size();
     result = 100.0*(result - initialCost)/initialCost;
     return result;
+}
+void GeneticAlgorithmStrategy::assignDataModificationFactor(QueryPlanPtr queryPlan) {
+    // NES_DEBUG(queryPlan->toString());
+    QueryPlanIterator queryPlanIterator = QueryPlanIterator(std::move(queryPlan));
+
+    for (auto qPlanItr = queryPlanIterator.begin(); qPlanItr != QueryPlanIterator::end(); ++qPlanItr) {
+        // set data modification factor for map operator
+        if ((*qPlanItr)->instanceOf<MapLogicalOperatorNode>()) {
+            auto op = (*qPlanItr)->as<MapLogicalOperatorNode>();
+            NES_DEBUG("input schema in bytes: " << op->getInputSchema()->getSchemaSizeInBytes());
+            NES_DEBUG("output schema in bytes: " << op->getOutputSchema()->getSchemaSizeInBytes());
+            double schemaSizeComparison =
+                1.0 * op->getOutputSchema()->getSchemaSizeInBytes() / op->getInputSchema()->getSchemaSizeInBytes();
+
+            op->addProperty("DMF", schemaSizeComparison);
+            op->addProperty("Load", 3);
+            continue;
+        }
+        if ((*qPlanItr)->instanceOf<FilterLogicalOperatorNode>()) {
+            auto op = (*qPlanItr)->as<FilterLogicalOperatorNode>();
+            op->addProperty("DMF", 0.5);
+            op->addProperty("Load", 2);
+            continue;
+        }
+    }
 }
 }// namespace NES::Optimizer
 
