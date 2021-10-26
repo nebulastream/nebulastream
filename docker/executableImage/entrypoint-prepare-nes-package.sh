@@ -17,6 +17,7 @@
 
 if [ $# -eq 0 ]
 then
+    set -e
     mkdir -p /nebulastream/build
     cd /nebulastream/build
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..

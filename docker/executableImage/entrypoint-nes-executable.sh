@@ -14,6 +14,7 @@
 # limitations under the License.
 
 
+set -e
 
 if [ $# -eq 0 ]
 then

@@ -17,6 +17,7 @@
 
 if [ $# -eq 0 ]
 then
+    set -e
     mkdir -p /nebulastream/build
     cd /nebulastream/build
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
@@ -31,7 +32,7 @@ then
       make test_debug
     fi
     result=$?
-    rm -rf /nebulastream/build
+    #rm -rf /nebulastream/build
     exit $result
 else
     exec $@

@@ -17,6 +17,7 @@
 
 if [ $# -eq 0 ]
 then
+    set -e
     mkdir -p /nebulastream/build
     cd /nebulastream/build
 
