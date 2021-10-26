@@ -151,7 +151,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   queryCompilerPipeliningStrategy,
                                                                   queryCompilerOutputBufferOptimizationLevel);
         NES_DEBUG("NesWorker: Node engine started successfully");
-        ankit
         monitoringAgent = MonitoringAgent::create();
         NES_DEBUG("NesWorker: MonitoringAgent configured with default values");
     } catch (std::exception& err) {
