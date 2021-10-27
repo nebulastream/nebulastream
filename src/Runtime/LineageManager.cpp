@@ -21,12 +21,14 @@ namespace NES::Runtime {
 
 void LineageManager::insertIntoLineage(BufferSequenceNumber newId, BufferSequenceNumber oldId) {
     std::unique_lock<std::mutex> lck(mutex);
+    NES_DEBUG("Insert tuple<" << newId.getSequenceNumber() << "," << newId.getOriginId() << "> into lineage manager");
     this->lineage[newId] = oldId;
 }
 
 bool LineageManager::trimLineage(BufferSequenceNumber id) {
     std::unique_lock<std::mutex> lck(mutex);
     if (this->lineage.find(id) != this->lineage.end() && this->lineage.size()) {
+        NES_DEBUG("Trim tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> from lineage manager");
         this->lineage.erase(id);
         return true;
     }
