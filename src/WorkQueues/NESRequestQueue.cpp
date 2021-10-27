@@ -23,7 +23,7 @@ namespace NES {
 NESRequestQueue::NESRequestQueue(uint64_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {
     NES_DEBUG("QueryRequestQueue()");
 }
-
+ankit
 NESRequestQueue::~NESRequestQueue() { NES_DEBUG("~QueryRequestQueue()"); }
 
 bool NESRequestQueue::add(const NESRequestPtr& request) {
