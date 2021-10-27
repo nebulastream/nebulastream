@@ -26,8 +26,8 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
 #include <iostream>

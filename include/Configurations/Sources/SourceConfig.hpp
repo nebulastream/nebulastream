@@ -23,6 +23,8 @@
 
 namespace NES {
 
+namespace Configurations {
+
 class SourceConfig;
 using SourceConfigPtr = std::shared_ptr<SourceConfig>;
 
@@ -188,5 +190,6 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
     StringConfigOption inputFormat;
     StringConfigOption sourceType;
 };
+}// namespace Configurations
 }// namespace NES
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_

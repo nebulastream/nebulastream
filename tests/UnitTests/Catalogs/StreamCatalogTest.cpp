@@ -19,8 +19,8 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <iostream>
 
@@ -32,6 +32,7 @@
 
 using namespace std;
 using namespace NES;
+using namespace Configurations;
 std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64);";
 const std::string defaultLogicalStreamName = "default_logical";

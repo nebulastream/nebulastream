@@ -14,12 +14,15 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
+#include <Configurations/Sources/DefaultSourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 #include <utility>
 
 namespace NES {
+
+namespace Configurations {
+
 DefaultSourceConfigPtr DefaultSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<DefaultSourceConfig>(DefaultSourceConfig(std::move(sourceConfigMap)));
 }
@@ -29,7 +32,6 @@ DefaultSourceConfigPtr DefaultSourceConfig::create() { return std::make_shared<D
 DefaultSourceConfig::DefaultSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(std::move(sourceConfigMap), "DefaultSource") {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
-
 }
 
 DefaultSourceConfig::DefaultSourceConfig() : SourceConfig("DefaultSource") {
@@ -43,5 +45,5 @@ std::string DefaultSourceConfig::toString() {
     ss << SourceConfig::toString();
     return ss.str();
 }
-
+}
 }// namespace NES

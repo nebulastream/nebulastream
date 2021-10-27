@@ -18,7 +18,7 @@
 #define NES_INCLUDE_CATALOGS_PHYSICAL_STREAM_CONFIG_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/Sources/SourceConfig.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <memory>
 #include <string>
@@ -36,7 +36,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
     static PhysicalStreamConfigPtr createEmpty();
-    static PhysicalStreamConfigPtr create(const SourceConfigPtr& sourceConfig);
+    static PhysicalStreamConfigPtr create(const Configurations::SourceConfigPtr& sourceConfig);
 
     ~PhysicalStreamConfig() noexcept override = default;
 
@@ -44,7 +44,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @brief get sourceConfig
      * @return returns the source configuration
      */
-    [[nodiscard]] SourceConfigPtr getSourceConfig() const;
+    [[nodiscard]] Configurations::SourceConfigPtr getSourceConfig() const;
 
     /**
      * @brief get the number of tuples to produce in a buffer
@@ -81,9 +81,9 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     SourceDescriptorPtr build(SchemaPtr) override;
 
   protected:
-    explicit PhysicalStreamConfig(const SourceConfigPtr& sourceConfig);
+    explicit PhysicalStreamConfig(const Configurations::SourceConfigPtr& sourceConfig);
 
-    SourceConfigPtr sourceConfig;
+    Configurations::SourceConfigPtr sourceConfig;
     uint32_t numberOfTuplesToProducePerBuffer;
     uint32_t numberOfBuffersToProduce;
     std::string physicalStreamName;

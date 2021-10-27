@@ -15,12 +15,14 @@
 */
 
 #include <Catalogs/MemorySourceStreamConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
+#include <Configurations/Sources/DefaultSourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {
+
+using namespace Configurations;
 
 namespace detail {
 

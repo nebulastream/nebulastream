@@ -15,11 +15,13 @@
 */
 
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
+#include <Configurations/Sources/DefaultSourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <utility>
 
 namespace NES {
+
+using namespace Configurations;
 
 namespace detail {}// namespace detail
 

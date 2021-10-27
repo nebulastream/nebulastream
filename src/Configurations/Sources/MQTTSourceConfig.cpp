@@ -15,12 +15,16 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
+#include <Configurations/Sources/MQTTSourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 #include <utility>
 
 namespace NES {
+
+namespace Configurations {
+
+
 MQTTSourceConfigPtr MQTTSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<MQTTSourceConfig>(MQTTSourceConfig(std::move(sourceConfigMap)));
 }
@@ -30,38 +34,44 @@ MQTTSourceConfigPtr MQTTSourceConfig::create() { return std::make_shared<MQTTSou
 MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(sourceConfigMap, "MQTTSource"),
       url(ConfigOption<std::string>::create("url",
-                                            "tcp://127.0.0.1:1885",
+                                            "",
                                             "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
       clientId(ConfigOption<std::string>::create("clientId",
-                                                 "testClient",
+                                                 "",
                                                  "clientId, needed for: MQTTSource (needs to be unique for each connected "
                                                  "MQTTSource), KafkaSource (use this for groupId)")),
       userName(ConfigOption<std::string>::create("userName",
-                                                 "testUser",
+                                                 "",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create("topic",
-                                              "demoTownSensorData",
-                                              "topic to listen to, needed for: MQTTSource, KafkaSource")),
+      topic(ConfigOption<std::string>::create("topic", "", "topic to listen to, needed for: MQTTSource, KafkaSource")),
       qos(ConfigOption<uint32_t>::create("qos", 2, "quality of service, needed for: MQTTSource")),
       cleanSession(
           ConfigOption<bool>::create("cleanSession",
                                      true,
                                      "cleanSession true = clean up session after client loses connection, false = keep data for "
                                      "client after connection loss (persistent session), needed for: MQTTSource")),
-      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")){
+      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")) {
     NES_INFO("NesSourceConfig: Init source config object with new values.");
 
     if (sourceConfigMap.find("MQTTSourceUrl") != sourceConfigMap.end()) {
         url->setValue(sourceConfigMap.find("MQTTSourceUrl")->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no Url defined! Please define a Url.");
     }
     if (sourceConfigMap.find("MQTTSourceClientId") != sourceConfigMap.end()) {
         clientId->setValue(sourceConfigMap.find("MQTTSourceClientId")->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no ClientId defined! Please define a ClientId.");
     }
     if (sourceConfigMap.find("MQTTSourceUserName") != sourceConfigMap.end()) {
         userName->setValue(sourceConfigMap.find("MQTTSourceUserName")->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no UserName defined! Please define a UserName.");
     }
     if (sourceConfigMap.find("MQTTSourceTopic") != sourceConfigMap.end()) {
         topic->setValue(sourceConfigMap.find("MQTTSourceTopic")->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no topic defined! Please define a topic.");
     }
     if (sourceConfigMap.find("MQTTSourceQos") != sourceConfigMap.end()) {
         qos->setValue(std::stoi(sourceConfigMap.find("MQTTSourceQos")->second));
@@ -150,4 +160,5 @@ void MQTTSourceConfig::setCleanSession(bool cleanSessionValue) { cleanSession->s
 
 void MQTTSourceConfig::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS->setValue(flushIntervalMs); }
 
+}
 }// namespace NES

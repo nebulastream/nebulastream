@@ -17,21 +17,16 @@
 #ifndef NES_SENSESOURCECONFIG_HPP
 #define NES_SENSESOURCECONFIG_HPP
 
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/Sources/SourceConfig.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
+namespace Configurations {
+
 class SenseSourceConfig;
 using SenseSourceConfigPtr = std::shared_ptr<SenseSourceConfig>;
-
-template<class T>
-class ConfigOption;
-using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
-using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
-using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
-using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
 * @brief Configuration object for source config
@@ -87,5 +82,6 @@ class SenseSourceConfig : public SourceConfig {
 
     StringConfigOption udfs;
 };
+}
 }// namespace NES
 #endif

@@ -17,21 +17,16 @@
 #ifndef NES_OPCSOURCECONFIG_HPP
 #define NES_OPCSOURCECONFIG_HPP
 
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/Sources/SourceConfig.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
+namespace Configurations {
+
 class OPCSourceConfig;
 using OPCSourceConfigPtr = std::shared_ptr<OPCSourceConfig>;
-
-template<class T>
-class ConfigOption;
-using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
-using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
-using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
-using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
  * @brief Configuration object for OPC source config
@@ -118,5 +113,6 @@ class OPCSourceConfig : public SourceConfig {
     StringConfigOption userName;
     StringConfigOption password;
 };
+}
 }// namespace NES
 #endif

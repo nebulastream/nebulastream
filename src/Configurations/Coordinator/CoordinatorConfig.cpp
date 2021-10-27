@@ -15,7 +15,7 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
@@ -23,6 +23,8 @@
 #include <utility>
 
 namespace NES {
+
+namespace Configurations {
 
 CoordinatorConfigPtr CoordinatorConfig::create() { return std::make_shared<CoordinatorConfig>(CoordinatorConfig()); }
 
@@ -274,4 +276,5 @@ void CoordinatorConfig::setEnableSemanticQueryValidation(bool enableSemanticQuer
     CoordinatorConfig::enableSemanticQueryValidation->setValue(enableSemanticQueryValidation);
 }
 
+}
 }// namespace NES

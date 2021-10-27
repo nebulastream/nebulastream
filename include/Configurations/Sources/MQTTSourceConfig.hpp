@@ -17,21 +17,16 @@
 #ifndef NES_MQTTSOURCECONFIG_HPP
 #define NES_MQTTSOURCECONFIG_HPP
 
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/Sources/SourceConfig.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
+namespace Configurations {
+
 class MQTTSourceConfig;
 using MQTTSourceConfigPtr = std::shared_ptr<MQTTSourceConfig>;
-
-template<class T>
-class ConfigOption;
-using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
-using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
-using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
-using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
  * @brief Configuration object for MQTT source config
@@ -152,5 +147,6 @@ class MQTTSourceConfig : public SourceConfig {
     BoolConfigOption cleanSession;
     FloatConfigOption flushIntervalMS;
 };
+}
 }// namespace NES
 #endif

@@ -43,25 +43,25 @@ SenseSource:
 # numberOfBuffersToProduce defines how often the csv file is repeated
 CSVSource:
   # Set file path
-  - filePath: ../tests/test_data/QnV_short.csv
+  - filePath:
   # Skip first line of the file
     skipHeader: false
 
 # BinarySource: read from a binary source file
 BinarySource:
   # Set file path
-  - filePath: ../tests/test_data/QnV_short.csv
+  - filePath:
 
 # MQTTSource: Connect to an MQTT broker and read data from there
 MQTTSource:
   # Set url to connect to
-  - url: tcp://127.0.0.1:1885
+  - url:
   # Set clientId
-    clientId: testClient
+    clientId:
   # Set userName
-    userName: testUser
+    userName:
   # Set topic to listen to
-    topic: demoTownSensorData
+    topic:
   # set quality of service
     qos: 2
   # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
@@ -76,19 +76,19 @@ KafkaSource:
   # Set auto commit, boolean value where 1 equals true, and 0 equals false
     autoCommit: 1
   # Set groupId
-    groupId: testGroup
+    groupId:
   # Set topic to listen to
-    topic: testTopic
+    topic:
   # Set connection time out for source
     connectionTimeout: 10
 
 # OPCSource: connect to an OPC server and read data from there
 OPCSource:
   # Set namespaceIndex for node, needed for: OPCSource
-  - namespaceIndex: 1
+  - namespaceIndex:
   # Set node identifier, needed for: OPCSource
-    nodeIdentifier: the.answer
+    nodeIdentifier:
   # Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
-    userName: testUser
+    userName:
   # Set password, needed for: OPCSource
     password:

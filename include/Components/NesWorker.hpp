@@ -18,7 +18,7 @@
 #define NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
@@ -30,6 +30,7 @@ class ServerCompletionQueue;
 
 class NodeEngine;
 namespace NES {
+
 class WorkerRPCServer;
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
@@ -44,7 +45,7 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type);
+    explicit NesWorker(const Configurations::WorkerConfigPtr& workerConfig, NesNodeType type);
 
     /**
      * @brief default dtor
@@ -183,7 +184,7 @@ class NesWorker {
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
-    const WorkerConfigPtr workerConfig;
+    const Configurations::WorkerConfigPtr workerConfig;
     PhysicalStreamConfigPtr conf;
     bool connected{false};
     bool withRegisterStream{false};

@@ -15,10 +15,10 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/KafkaSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Sources/KafkaSourceConfig.hpp>
+#include <Configurations/Sources/MQTTSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
@@ -26,6 +26,8 @@
 #include <string>
 
 namespace NES {
+
+using namespace Configurations;
 
 class ConfigTest : public testing::Test {
   public:

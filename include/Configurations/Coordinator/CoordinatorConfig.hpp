@@ -23,6 +23,8 @@
 
 namespace NES {
 
+namespace Configurations {
+
 class CoordinatorConfig;
 using CoordinatorConfigPtr = std::shared_ptr<CoordinatorConfig>;
 
@@ -256,6 +258,7 @@ class CoordinatorConfig {
     BoolConfigOption enableSemanticQueryValidation;
 };
 
+}
 }// namespace NES
 
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_COORDINATOR_CONFIG_HPP_

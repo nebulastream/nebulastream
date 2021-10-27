@@ -15,12 +15,15 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/KafkaSourceConfig.hpp>
+#include <Configurations/Sources/KafkaSourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 #include <utility>
 
 namespace NES {
+
+namespace Configurations {
+
 KafkaSourceConfigPtr KafkaSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig(std::move(sourceConfigMap)));
 }
@@ -34,24 +37,30 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
           1,
           "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
       groupId(ConfigOption<std::string>::create("groupId",
-                                                "testGroup",
+                                                "",
                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create("topic", "testTopic", "topic to listen to")),
+      topic(ConfigOption<std::string>::create("topic", "", "topic to listen to")),
       connectionTimeout(
           ConfigOption<uint32_t>::create("connectionTimeout", 10, "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceConfig: Init source config object with values from sourceConfigMap.");
 
     if (sourceConfigMap.find("KafkaSourceBrokers") != sourceConfigMap.end()) {
         brokers->setValue(sourceConfigMap.find("KafkaSourceBrokers")->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no brokers defined! Please define brokers.");
     }
     if (sourceConfigMap.find("KafkaSourceAutoCommit") != sourceConfigMap.end()) {
         autoCommit->setValue(std::stoi(sourceConfigMap.find("KafkaSourceAutoCommit")->second));
     }
     if (sourceConfigMap.find("KafkaSourceGroupId") != sourceConfigMap.end()) {
         groupId->setValue(sourceConfigMap.find("KafkaSourceGroupId")->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no groupId defined! Please define groupId.");
     }
     if (sourceConfigMap.find("KafkaSourceTopic") != sourceConfigMap.end()) {
         topic->setValue(sourceConfigMap.find("KafkaSourceTopic")->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no topic defined! Please define topic.");
     }
     if (sourceConfigMap.find("KafkaSourceConnectionTimeout") != sourceConfigMap.end()) {
         connectionTimeout->setValue(std::stoi(sourceConfigMap.find("KafkaSourceConnectionTimeout")->second));
@@ -114,5 +123,5 @@ void KafkaSourceConfig::setTopic(std::string topicValue) { topic->setValue(std::
 void KafkaSourceConfig::setConnectionTimeout(uint32_t connectionTimeoutValue) {
     connectionTimeout->setValue(connectionTimeoutValue);
 }
-
+}
 }// namespace NES

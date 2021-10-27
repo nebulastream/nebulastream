@@ -17,12 +17,14 @@
 #ifndef NES_SOURCECONFIGFACTORY_HPP
 #define NES_SOURCECONFIGFACTORY_HPP
 
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/Sources/SourceConfig.hpp>
 #include <map>
 #include <memory>
 #include <string>
 
 namespace NES {
+
+namespace Configurations {
 
 /**
  * enum with config objects
@@ -52,8 +54,7 @@ class SourceConfigFactory {
      * @param argc number of command line params
      * @return source config object
      */
-    static SourceConfigPtr createSourceConfig(const std::map<std::string, std::string>& commandLineParams,
-                                                            int argc);
+    static SourceConfigPtr createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc);
 
     /**
      * @brief create default source config with default values of type sourceType
@@ -86,7 +87,7 @@ class SourceConfigFactory {
     overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams,
                                         std::map<std::string, std::string> configurationMap);
 };
-
+}
 }// namespace NES
 
 #endif//NES_SOURCECONFIGFACTORY_HPP
