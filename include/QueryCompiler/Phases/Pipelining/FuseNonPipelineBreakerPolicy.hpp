@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSENONPIPELINEBREAKERPOLICY_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSENONPIPELINEBREAKERPOLICY_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_FUSE_NON_PIPELINE_BREAKER_POLICY_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_FUSE_NON_PIPELINE_BREAKER_POLICY_HPP_
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 namespace NES {
 namespace QueryCompilation {
@@ -34,4 +34,4 @@ class FuseNonPipelineBreakerPolicy : public OperatorFusionPolicy {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSENONPIPELINEBREAKERPOLICY_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_FUSE_NON_PIPELINE_BREAKER_POLICY_HPP_

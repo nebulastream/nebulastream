@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_
-#define NES_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_
+#ifndef NES_INCLUDE_WINDOWING_TIME_CHARACTERISTIC_HPP_
+#define NES_INCLUDE_WINDOWING_TIME_CHARACTERISTIC_HPP_
 
 #include <API/Windowing.hpp>
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
@@ -67,4 +67,4 @@ class TimeCharacteristic {
 };
 }// namespace NES::Windowing
 
-#endif//NES_INCLUDE_WINDOWING_TIMECHARACTERISTIC_HPP_
+#endif  // NES_INCLUDE_WINDOWING_TIME_CHARACTERISTIC_HPP_

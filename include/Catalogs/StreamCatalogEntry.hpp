@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_CATALOGS_STREAMCATALOGENTRY_HPP_
-#define INCLUDE_CATALOGS_STREAMCATALOGENTRY_HPP_
+#ifndef NES_INCLUDE_CATALOGS_STREAM_CATALOG_ENTRY_HPP_
+#define NES_INCLUDE_CATALOGS_STREAM_CATALOG_ENTRY_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <memory>
@@ -105,4 +105,4 @@ class StreamCatalogEntry {
 
 }// namespace NES
 
-#endif /* INCLUDE_CATALOGS_STREAMCATALOGENTRY_HPP_ */
+#endif  // NES_INCLUDE_CATALOGS_STREAM_CATALOG_ENTRY_HPP_

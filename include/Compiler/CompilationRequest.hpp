@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_COMPILATIONREQUEST_HPP_
-#define NES_INCLUDE_COMPILER_COMPILATIONREQUEST_HPP_
+#ifndef NES_INCLUDE_COMPILER_COMPILATION_REQUEST_HPP_
+#define NES_INCLUDE_COMPILER_COMPILATION_REQUEST_HPP_
 
 #include <Compiler/CompilerForwardDeclarations.hpp>
 
@@ -103,4 +103,4 @@ class CompilationRequest {
 
 }// namespace NES::Compiler
 
-#endif//NES_INCLUDE_COMPILER_COMPILATIONREQUEST_HPP_
+#endif  // NES_INCLUDE_COMPILER_COMPILATION_REQUEST_HPP_

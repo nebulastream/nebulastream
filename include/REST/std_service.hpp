@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_REST_STD_SERVICE_HPP_
+#define NES_INCLUDE_REST_STD_SERVICE_HPP_
 
 #define BOOST_SPIRIT_THREADSAFE// enable thread safety to json read on property tree!
 
@@ -23,3 +24,4 @@
 #include <regex>
 #include <string>
 #include <vector>
+#endif  // NES_INCLUDE_REST_STD_SERVICE_HPP_

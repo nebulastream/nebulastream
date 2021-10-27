@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_LINKPROPERTY_HPP
-#define NES_LINKPROPERTY_HPP
+#ifndef NES_INCLUDE_TOPOLOGY_LINK_PROPERTY_HPP_
+#define NES_INCLUDE_TOPOLOGY_LINK_PROPERTY_HPP_
 
 #include <cstdint>
 
@@ -39,4 +39,4 @@ class LinkProperty {
 
 using LinkPropertyPtr = std::shared_ptr<LinkProperty>;
 
-#endif//NES_LINKPROPERTY_HPP
+#endif  // NES_INCLUDE_TOPOLOGY_LINK_PROPERTY_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
-#define NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
+#ifndef NES_INCLUDE_WINDOWING_WATERMARK_EVENT_TIME_WATERMARK_STRATEGY_DESCRIPTOR_HPP_
+#define NES_INCLUDE_WINDOWING_WATERMARK_EVENT_TIME_WATERMARK_STRATEGY_DESCRIPTOR_HPP_
 
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
@@ -52,4 +52,4 @@ class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor 
 
 }// namespace NES::Windowing
 
-#endif//NES_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP
+#endif  // NES_INCLUDE_WINDOWING_WATERMARK_EVENT_TIME_WATERMARK_STRATEGY_DESCRIPTOR_HPP_

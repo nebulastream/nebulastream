@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_SOURCESINK_SINKCREATOR_HPP_
-#define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
+#ifndef NES_INCLUDE_SINKS_SINK_CREATOR_HPP_
+#define NES_INCLUDE_SINKS_SINK_CREATOR_HPP_
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
@@ -254,4 +254,4 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
 #endif
 
 }// namespace NES
-#endif /* INCLUDE_SOURCESINK_SINKCREATOR_HPP_ */
+#endif  // NES_INCLUDE_SINKS_SINK_CREATOR_HPP_

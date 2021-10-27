@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_WORKERCONTEXT_HPP_
-#define NES_WORKERCONTEXT_HPP_
+#ifndef NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_
+#define NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_
 
 #include <Network/NesPartition.hpp>
 #include <Network/OutputChannel.hpp>
@@ -88,4 +88,4 @@ class WorkerContext {
     Network::OutputChannel* getChannel(Network::OperatorId ownerId);
 };
 }// namespace NES::Runtime
-#endif//NES_WORKERCONTEXT_HPP_
+#endif  // NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_

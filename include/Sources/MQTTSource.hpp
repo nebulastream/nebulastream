@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MQTTSOURCE_HPP
-#define NES_MQTTSOURCE_HPP
+#ifndef NES_INCLUDE_SOURCES_MQTT_SOURCE_HPP_
+#define NES_INCLUDE_SOURCES_MQTT_SOURCE_HPP_
 #ifdef ENABLE_MQTT_BUILD
 
 #include <cstdint>
@@ -195,4 +195,4 @@ class MQTTSource : public DataSource {
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;
 }// namespace NES
 #endif//NES_MQTTSOURCE_HPP
-#endif
+#endif  // NES_INCLUDE_SOURCES_MQTT_SOURCE_HPP_

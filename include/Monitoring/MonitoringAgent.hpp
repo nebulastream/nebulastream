@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
-#define NES_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
+#ifndef NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_
+#define NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_
 
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
@@ -90,4 +90,4 @@ class MonitoringAgent {
 
 }// namespace NES
 
-#endif//NES_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
+#endif  // NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_

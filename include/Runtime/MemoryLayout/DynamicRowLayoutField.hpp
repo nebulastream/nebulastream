@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DYNAMICROWLAYOUTFIELD_HPP
-#define NES_DYNAMICROWLAYOUTFIELD_HPP
+#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_FIELD_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_FIELD_HPP_
 
 #include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
@@ -118,4 +118,4 @@ inline T& DynamicRowLayoutField<T, boundaryChecks>::operator[](size_t recordInde
 
 }// namespace NES::Runtime::DynamicMemoryLayout
 
-#endif//NES_DYNAMICROWLAYOUTFIELD_HPP
+#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_FIELD_HPP_

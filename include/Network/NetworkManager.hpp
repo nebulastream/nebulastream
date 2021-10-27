@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NETWORKDISPATCHER_HPP
-#define NES_NETWORKDISPATCHER_HPP
+#ifndef NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_
+#define NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_
 
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NesPartition.hpp>
@@ -123,4 +123,4 @@ using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
 }// namespace Network
 }// namespace NES
 
-#endif//NES_NETWORKDISPATCHER_HPP
+#endif  // NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_
-#define NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_
+#ifndef NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_PIPELINE_HPP_
+#define NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_PIPELINE_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -169,4 +169,4 @@ class ExecutablePipeline : public Reconfigurable {
 
 }// namespace NES::Runtime::Execution
 
-#endif /* NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_ */
+#endif  // NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_PIPELINE_HPP_

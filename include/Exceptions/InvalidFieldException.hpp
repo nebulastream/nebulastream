@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INVALIDFIELDEXCEPTION_HPP
-#define NES_INVALIDFIELDEXCEPTION_HPP
+#ifndef NES_INCLUDE_EXCEPTIONS_INVALID_FIELD_EXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_INVALID_FIELD_EXCEPTION_HPP_
 
 #include <stdexcept>
 
@@ -31,4 +31,4 @@ class InvalidFieldException : public std::runtime_error {
 };
 }// namespace NES
 
-#endif//NES_INVALIDFIELDEXCEPTION_HPP
+#endif  // NES_INCLUDE_EXCEPTIONS_INVALID_FIELD_EXCEPTION_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef PROJECTION_LOGICAL_OPERATOR_NODE_HPP
-#define PROJECTION_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_PROJECTION_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_PROJECTION_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -58,4 +58,4 @@ class ProjectionLogicalOperatorNode : public LogicalUnaryOperatorNode {
 };
 
 }// namespace NES
-#endif// PROJECTION_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_PROJECTION_LOGICAL_OPERATOR_NODE_HPP_

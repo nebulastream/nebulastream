@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef SINK_LOGICAL_OPERATOR_NODE_HPP
-#define SINK_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_SINK_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_SINK_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
@@ -47,4 +47,4 @@ class SinkLogicalOperatorNode : public LogicalUnaryOperatorNode {
     SinkDescriptorPtr sinkDescriptor;
 };
 }// namespace NES
-#endif// SINK_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_SINK_LOGICAL_OPERATOR_NODE_HPP_

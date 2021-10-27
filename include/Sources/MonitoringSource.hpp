@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
-#define NES_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
+#ifndef NES_INCLUDE_SOURCES_MONITORING_SOURCE_HPP_
+#define NES_INCLUDE_SOURCES_MONITORING_SOURCE_HPP_
 
 #include <Sources/DefaultSource.hpp>
 #include <chrono>
@@ -62,4 +62,4 @@ class MonitoringSource : public DefaultSource {
 using MonitoringSourcePtr = std::shared_ptr<MonitoringSource>;
 };// namespace NES
 
-#endif//NES_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_
+#endif  // NES_INCLUDE_SOURCES_MONITORING_SOURCE_HPP_

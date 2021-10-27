@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_GLOBALQUERYPLANUPDATEPHASE_HPP
-#define NES_GLOBALQUERYPLANUPDATEPHASE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_PHASES_GLOBAL_QUERY_PLAN_UPDATE_PHASE_HPP_
+#define NES_INCLUDE_OPTIMIZER_PHASES_GLOBAL_QUERY_PLAN_UPDATE_PHASE_HPP_
 
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <memory>
@@ -107,4 +107,4 @@ class GlobalQueryPlanUpdatePhase {
 };
 }// namespace NES::Optimizer
 
-#endif//NES_GLOBALQUERYPLANUPDATEPHASE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_PHASES_GLOBAL_QUERY_PLAN_UPDATE_PHASE_HPP_

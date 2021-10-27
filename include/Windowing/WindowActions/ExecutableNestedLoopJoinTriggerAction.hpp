@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
-#define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_EXECUTABLE_NESTED_LOOP_JOIN_TRIGGER_ACTION_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_EXECUTABLE_NESTED_LOOP_JOIN_TRIGGER_ACTION_HPP_
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
@@ -310,4 +310,4 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     uint64_t id;
 };
 }// namespace NES::Join
-#endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_EXECUTABLE_NESTED_LOOP_JOIN_TRIGGER_ACTION_HPP_

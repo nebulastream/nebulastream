@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOWPOLICIES_TIMETRIGGERDESCRIPTION_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOWPOLICIES_TIMETRIGGERDESCRIPTION_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_POLICIES_ON_TIME_TRIGGER_POLICY_DESCRIPTION_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_POLICIES_ON_TIME_TRIGGER_POLICY_DESCRIPTION_HPP_
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 
 namespace NES::Windowing {
@@ -47,4 +47,4 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
 
 using OnTimeTriggerDescriptionPtr = std::shared_ptr<OnTimeTriggerPolicyDescription>;
 }// namespace NES::Windowing
-#endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_TIMETRIGGERDESCRIPTION_HPP_
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_POLICIES_ON_TIME_TRIGGER_POLICY_DESCRIPTION_HPP_

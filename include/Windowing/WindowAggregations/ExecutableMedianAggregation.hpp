@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTABLEMEDIANAGGREGATION_HPP
-#define NES_EXECUTABLEMEDIANAGGREGATION_HPP
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_EXECUTABLE_MEDIAN_AGGREGATION_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_EXECUTABLE_MEDIAN_AGGREGATION_HPP_
 
 #include <Windowing/WindowAggregations/ExecutableWindowAggregation.hpp>
 
@@ -85,4 +85,4 @@ class ExecutableMedianAggregation : public ExecutableWindowAggregation<InputType
 };
 }// namespace NES::Windowing
 
-#endif//NES_EXECUTABLEMEDIANAGGREGATION_HPP
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_EXECUTABLE_MEDIAN_AGGREGATION_HPP_

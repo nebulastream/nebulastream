@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef LOGICAL_OPERATOR_NODE_HPP
-#define LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
@@ -94,4 +94,4 @@ class LogicalOperatorNode : public virtual OperatorNode {
 
 }// namespace NES
 
-#endif// LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_OPERATOR_NODE_HPP_

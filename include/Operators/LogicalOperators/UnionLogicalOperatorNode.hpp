@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef UNION_LOGICAL_OPERATOR_NODE_HPP
-#define UNION_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_UNION_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_UNION_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -39,4 +39,4 @@ class UnionLogicalOperatorNode : public LogicalBinaryOperatorNode {
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 };
 }// namespace NES
-#endif// UNION_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_UNION_LOGICAL_OPERATOR_NODE_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef STREAM_HPP
-#define STREAM_HPP
+#ifndef NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_
+#define NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_
 
 #include <iostream>
 #include <memory>
@@ -51,4 +51,4 @@ class LogicalStream {
 using LogicalStreamPtr = std::shared_ptr<LogicalStream>;
 
 }// namespace NES
-#endif//STREAM_HPP
+#endif  // NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_

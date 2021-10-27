@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_UTIL_DISABLEWARNINGSPRAGMA_HPP_
-#define NES_INCLUDE_UTIL_DISABLEWARNINGSPRAGMA_HPP_
+#ifndef NES_INCLUDE_UTIL_DISABLE_WARNINGS_PRAGMA_HPP_
+#define NES_INCLUDE_UTIL_DISABLE_WARNINGS_PRAGMA_HPP_
 
 /**
  * @brief The following pragma disables particular compiler warnings for a particular code fragment.
@@ -63,4 +63,4 @@
 
 #endif
 // clang-format on
-#endif//NES_INCLUDE_UTIL_DISABLEWARNINGSPRAGMA_HPP_
+#endif  // NES_INCLUDE_UTIL_DISABLE_WARNINGS_PRAGMA_HPP_

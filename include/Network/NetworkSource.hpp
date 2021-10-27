@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
-#define NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
+#ifndef NES_INCLUDE_NETWORK_NETWORK_SOURCE_HPP_
+#define NES_INCLUDE_NETWORK_NETWORK_SOURCE_HPP_
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
@@ -94,4 +94,4 @@ using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
 
 }// namespace NES::Network
 
-#endif//NES_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
+#endif  // NES_INCLUDE_NETWORK_NETWORK_SOURCE_HPP_

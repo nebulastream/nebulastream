@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLAN_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLAN_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_OPERATORS_PIPELINE_QUERY_PLAN_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_OPERATORS_PIPELINE_QUERY_PLAN_HPP_
 
 #include <Nodes/Node.hpp>
 #include <Operators/OperatorId.hpp>
@@ -91,4 +91,4 @@ class PipelineQueryPlan {
 
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLAN_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_PIPELINE_QUERY_PLAN_HPP_

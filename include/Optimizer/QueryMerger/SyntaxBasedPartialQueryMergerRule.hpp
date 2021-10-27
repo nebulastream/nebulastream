@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP
-#define NES_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_MERGER_SYNTAX_BASED_PARTIAL_QUERY_MERGER_RULE_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_MERGER_SYNTAX_BASED_PARTIAL_QUERY_MERGER_RULE_HPP_
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <map>
@@ -104,4 +104,4 @@ class SyntaxBasedPartialQueryMergerRule : public BaseQueryMergerRule {
                                                                 const OperatorNodePtr& hostOperator);
 };
 }// namespace NES::Optimizer
-#endif//NES_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_MERGER_SYNTAX_BASED_PARTIAL_QUERY_MERGER_RULE_HPP_

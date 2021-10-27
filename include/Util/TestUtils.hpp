@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
-#define NES_INCLUDE_UTIL_TESTUTILS_HPP_
+#ifndef NES_INCLUDE_UTIL_TEST_UTILS_HPP_
+#define NES_INCLUDE_UTIL_TEST_UTILS_HPP_
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -672,4 +672,4 @@ class TestUtils {
     }
 };
 }// namespace NES
-#endif//NES_INCLUDE_UTIL_TESTUTILS_HPP_
+#endif  // NES_INCLUDE_UTIL_TEST_UTILS_HPP_

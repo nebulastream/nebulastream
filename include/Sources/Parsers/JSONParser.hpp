@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
-#define NES_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+#ifndef NES_INCLUDE_SOURCES_PARSERS_JSON_PARSER_HPP_
+#define NES_INCLUDE_SOURCES_PARSERS_JSON_PARSER_HPP_
 
 #include <Sources/Parsers/Parser.hpp>
 
@@ -46,5 +46,5 @@ class JSONParser : public Parser {
     std::vector<std::string> schemaKeys;
     std::vector<NES::PhysicalTypePtr> physicalTypes;
 };
-#endif//NES_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
 }// namespace NES
+#endif  // NES_INCLUDE_SOURCES_PARSERS_JSON_PARSER_HPP_

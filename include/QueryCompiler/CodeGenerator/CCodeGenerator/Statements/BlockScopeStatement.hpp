@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STATEMENTS_BLOCKSCOPESTATEMENT_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STATEMENTS_BLOCKSCOPESTATEMENT_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_STATEMENTS_BLOCK_SCOPE_STATEMENT_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_STATEMENTS_BLOCK_SCOPE_STATEMENT_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
@@ -36,4 +36,4 @@ class BlockScopeStatement : public CompoundStatement {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STATEMENTS_BLOCKSCOPESTATEMENT_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_STATEMENTS_BLOCK_SCOPE_STATEMENT_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_DATATYPES_FIXEDCHAR_HPP_
-#define NES_INCLUDE_DATATYPES_FIXEDCHAR_HPP_
+#ifndef NES_INCLUDE_COMMON_DATA_TYPES_FIXED_CHAR_HPP_
+#define NES_INCLUDE_COMMON_DATA_TYPES_FIXED_CHAR_HPP_
 
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -40,4 +40,4 @@ class FixedChar final : public ArrayType {
 
 }// namespace NES
 
-#endif//NES_INCLUDE_DATATYPES_FIXEDCHAR_HPP_
+#endif  // NES_INCLUDE_COMMON_DATA_TYPES_FIXED_CHAR_HPP_

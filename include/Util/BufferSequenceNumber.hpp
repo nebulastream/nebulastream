@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BUFFERSEQUENCENUMBER_HPP
-#define NES_BUFFERSEQUENCENUMBER_HPP
+#ifndef NES_INCLUDE_UTIL_BUFFER_SEQUENCE_NUMBER_HPP_
+#define NES_INCLUDE_UTIL_BUFFER_SEQUENCE_NUMBER_HPP_
 
 #include <cstdint>
 
@@ -72,4 +72,4 @@ class BufferSequenceNumber {
 };
 
 }// namespace NES
-#endif//NES_BUFFERSEQUENCENUMBER_HPP
+#endif  // NES_INCLUDE_UTIL_BUFFER_SEQUENCE_NUMBER_HPP_

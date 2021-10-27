@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_THREADBARRIER_HPP
-#define NES_THREADBARRIER_HPP
+#ifndef NES_INCLUDE_UTIL_THREAD_BARRIER_HPP_
+#define NES_INCLUDE_UTIL_THREAD_BARRIER_HPP_
 
 #include <Runtime/NesThread.hpp>
 #include <condition_variable>
@@ -71,4 +71,4 @@ class ThreadBarrier {
     std::condition_variable cvar;
 };
 }// namespace NES
-#endif//NES_THREADBARRIER_HPP
+#endif  // NES_INCLUDE_UTIL_THREAD_BARRIER_HPP_

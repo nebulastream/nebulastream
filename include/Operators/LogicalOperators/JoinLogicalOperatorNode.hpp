@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef Join_LOGICAL_OPERATOR_NODE_HPP
-#define Join_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_JOIN_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_JOIN_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 
@@ -50,4 +50,4 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     Join::LogicalJoinDefinitionPtr joinDefinition;
 };
 }// namespace NES
-#endif// Join_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_JOIN_LOGICAL_OPERATOR_NODE_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CATALOGS_ABSTRACTPHYSICALSTREAMCONFIG_HPP_
-#define NES_INCLUDE_CATALOGS_ABSTRACTPHYSICALSTREAMCONFIG_HPP_
+#ifndef NES_INCLUDE_CATALOGS_ABSTRACT_PHYSICAL_STREAM_CONFIG_HPP_
+#define NES_INCLUDE_CATALOGS_ABSTRACT_PHYSICAL_STREAM_CONFIG_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
@@ -62,4 +62,4 @@ class AbstractPhysicalStreamConfig {
 using AbstractPhysicalStreamConfigPtr = std::shared_ptr<AbstractPhysicalStreamConfig>;
 
 }// namespace NES
-#endif//NES_INCLUDE_CATALOGS_ABSTRACTPHYSICALSTREAMCONFIG_HPP_
+#endif  // NES_INCLUDE_CATALOGS_ABSTRACT_PHYSICAL_STREAM_CONFIG_HPP_

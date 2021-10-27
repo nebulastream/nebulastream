@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
-#define NES_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_
+#define NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_
 
 namespace NES {
 
@@ -31,4 +31,4 @@ enum MetricType { CounterType, GaugeType, HistogramType, MeterType, UnknownType 
 
 }// namespace NES
 
-#endif//NES_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_

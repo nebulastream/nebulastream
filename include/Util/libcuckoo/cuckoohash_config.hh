@@ -1,7 +1,7 @@
 /** \file */
 
-#ifndef CUCKOOHASH_CONFIG_HH
-#define CUCKOOHASH_CONFIG_HH
+#ifndef NES_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_CONFIG_HH_
+#define NES_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_CONFIG_HH_
 
 #include <cstddef>
 #include <limits>
@@ -28,4 +28,4 @@ constexpr size_t LIBCUCKOO_NO_MAXIMUM_HASHPOWER =
 //! set LIBCUCKOO_DEBUG to 1 to enable debug output
 #define LIBCUCKOO_DEBUG 0
 
-#endif // CUCKOOHASH_CONFIG_HH
+#endif  // NES_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_CONFIG_HH_

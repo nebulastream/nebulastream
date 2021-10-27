@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTIONNODE_H
-#define NES_EXECUTIONNODE_H
+#ifndef NES_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTION_NODE_HPP_
+#define NES_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTION_NODE_HPP_
 
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -140,4 +140,4 @@ class ExecutionNode : public Node {
 };
 }// namespace NES
 
-#endif//NES_EXECUTIONNODE_H
+#endif  // NES_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTION_NODE_HPP_

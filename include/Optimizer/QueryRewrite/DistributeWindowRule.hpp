@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DistributeWindowRule_HPP
-#define NES_DistributeWindowRule_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_DISTRIBUTE_WINDOW_RULE_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_DISTRIBUTE_WINDOW_RULE_HPP_
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
@@ -112,4 +112,4 @@ class DistributeWindowRule : public BaseRewriteRule {
                                                 const QueryPlanPtr& queryPlan);
 };
 }// namespace NES::Optimizer
-#endif//NES_DistributeWindowRule_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_DISTRIBUTE_WINDOW_RULE_HPP_

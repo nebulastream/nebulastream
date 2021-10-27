@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SHAREDQUERYPLAN_HPP
-#define NES_SHAREDQUERYPLAN_HPP
+#ifndef NES_INCLUDE_PLANS_GLOBAL_QUERY_SHARED_QUERY_PLAN_HPP_
+#define NES_INCLUDE_PLANS_GLOBAL_QUERY_SHARED_QUERY_PLAN_HPP_
 
 #include <Plans/Global/Query/SharedQueryId.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -231,4 +231,4 @@ class SharedQueryPlan {
 };
 }// namespace NES
 
-#endif//NES_SHAREDQUERYPLAN_HPP
+#endif  // NES_INCLUDE_PLANS_GLOBAL_QUERY_SHARED_QUERY_PLAN_HPP_

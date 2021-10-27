@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DYNAMICCOLUMNLAYOUTBUFFER_HPP
-#define NES_DYNAMICCOLUMNLAYOUTBUFFER_HPP
+#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_BUFFER_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_BUFFER_HPP_
 
 #include <Runtime/MemoryLayout/DynamicColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
@@ -244,4 +244,4 @@ std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex)
 
 }// namespace NES::Runtime::DynamicMemoryLayout
 
-#endif//NES_DYNAMICCOLUMNLAYOUTBUFFER_HPP
+#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_BUFFER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SIGNATUREINFERENCEPHASE_HPP
-#define NES_SIGNATUREINFERENCEPHASE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_PHASES_SIGNATURE_INFERENCE_PHASE_HPP_
+#define NES_INCLUDE_OPTIMIZER_PHASES_SIGNATURE_INFERENCE_PHASE_HPP_
 
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <memory>
@@ -73,4 +73,4 @@ class SignatureInferencePhase {
 };
 }// namespace NES::Optimizer
 
-#endif//NES_SIGNATUREINFERENCEPHASE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_PHASES_SIGNATURE_INFERENCE_PHASE_HPP_

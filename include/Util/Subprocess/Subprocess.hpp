@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_UTIL_NESSUBPROCESS_HPP
-#define NES_UTIL_NESSUBPROCESS_HPP
+#ifndef NES_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
+#define NES_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
 #include <atomic>
 #include <cstdio>
 #include <iostream>
@@ -61,4 +61,4 @@ class Subprocess {
 
 }// namespace NES::Util
 
-#endif//NES_UTIL_NESSUBPROCESS_HPP
+#endif  // NES_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_

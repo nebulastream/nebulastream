@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_
-#define INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_
+#ifndef NES_INCLUDE_CATALOGS_PHYSICAL_STREAM_CONFIG_HPP_
+#define NES_INCLUDE_CATALOGS_PHYSICAL_STREAM_CONFIG_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
@@ -113,4 +113,4 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 };
 
 }// namespace NES
-#endif /* INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_ */
+#endif  // NES_INCLUDE_CATALOGS_PHYSICAL_STREAM_CONFIG_HPP_

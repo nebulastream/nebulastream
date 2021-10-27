@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_CATALOGS_STREAMCATALOG_HPP_
-#define INCLUDE_CATALOGS_STREAMCATALOG_HPP_
+#ifndef NES_INCLUDE_CATALOGS_STREAM_CATALOG_HPP_
+#define NES_INCLUDE_CATALOGS_STREAM_CATALOG_HPP_
 
 #include <API/Schema.hpp>
 #include <Sources/DataSource.hpp>
@@ -198,4 +198,4 @@ class StreamCatalog {
 };
 using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 }// namespace NES
-#endif /* INCLUDE_CATALOGS_STREAMCATALOG_HPP_ */
+#endif  // NES_INCLUDE_CATALOGS_STREAM_CATALOG_HPP_

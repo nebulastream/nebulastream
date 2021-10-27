@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ATTRIBUTESORTRULE_HPP
-#define NES_ATTRIBUTESORTRULE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_ATTRIBUTE_SORT_RULE_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_ATTRIBUTE_SORT_RULE_HPP_
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
@@ -126,4 +126,4 @@ class AttributeSortRule : public BaseRewriteRule {
     static std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression);
 };
 }// namespace NES::Optimizer
-#endif//NES_ATTRIBUTESORTRULE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_ATTRIBUTE_SORT_RULE_HPP_

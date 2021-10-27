@@ -1,7 +1,7 @@
 /** \file */
 
-#ifndef CUCKOOHASH_MAP_HH
-#define CUCKOOHASH_MAP_HH
+#ifndef NES_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_MAP_HH_
+#define NES_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_MAP_HH_
 
 #include <algorithm>
 #include <array>
@@ -2749,4 +2749,4 @@ namespace std {
 
 } // namespace std
 
-#endif // CUCKOOHASH_MAP_HH
+#endif  // NES_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_MAP_HH_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MIN_HPP
-#define NES_MIN_HPP
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_MIN_AGGREGATION_DESCRIPTOR_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_MIN_AGGREGATION_DESCRIPTOR_HPP_
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 namespace NES::Windowing {
@@ -50,4 +50,4 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
     MinAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing
-#endif//NES_MIN_HPP
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_MIN_AGGREGATION_DESCRIPTOR_HPP_

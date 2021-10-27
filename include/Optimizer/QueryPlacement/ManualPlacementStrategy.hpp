@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MANUALPLACEMENTSTRATEGY_HPP
-#define NES_MANUALPLACEMENTSTRATEGY_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_MANUAL_PLACEMENT_STRATEGY_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_MANUAL_PLACEMENT_STRATEGY_HPP_
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 
@@ -54,4 +54,4 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
 
 }// namespace NES::Optimizer
 
-#endif//NES_MANUALPLACEMENTSTRATEGY_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_MANUAL_PLACEMENT_STRATEGY_HPP_

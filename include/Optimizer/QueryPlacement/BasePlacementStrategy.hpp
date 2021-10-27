@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NESPLACEMENTOPTIMIZER_HPP
-#define NESPLACEMENTOPTIMIZER_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BASE_PLACEMENT_STRATEGY_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BASE_PLACEMENT_STRATEGY_HPP_
 
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
@@ -180,4 +180,4 @@ class BasePlacementStrategy {
     void addExecutionNodeAsRoot(ExecutionNodePtr& executionNode);
 };
 }// namespace NES::Optimizer
-#endif//NESPLACEMENTOPTIMIZER_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BASE_PLACEMENT_STRATEGY_HPP_

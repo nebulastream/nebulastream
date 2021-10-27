@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_SAMPLINGPROTOCOL_HPP_
-#define NES_INCLUDE_MONITORING_SAMPLINGPROTOCOL_HPP_
+#ifndef NES_INCLUDE_MONITORING_PROTOCOLS_SAMPLING_PROTOCOL_HPP_
+#define NES_INCLUDE_MONITORING_PROTOCOLS_SAMPLING_PROTOCOL_HPP_
 
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <functional>
@@ -41,4 +41,4 @@ using SamplingProtocolPtr = std::shared_ptr<SamplingProtocol>;
 
 }// namespace NES
 
-#endif//NES_INCLUDE_MONITORING_SAMPLINGPROTOCOL_HPP_
+#endif  // NES_INCLUDE_MONITORING_PROTOCOLS_SAMPLING_PROTOCOL_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_NODEENGINE_TASK_H_
-#define INCLUDE_NODEENGINE_TASK_H_
+#ifndef NES_INCLUDE_RUNTIME_TASK_HPP_
+#define NES_INCLUDE_RUNTIME_TASK_HPP_
 
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -99,4 +99,4 @@ class alignas(64) Task {
 static_assert(sizeof(Task) == 64);
 }// namespace NES::Runtime
 
-#endif /* INCLUDE_NODEENGINE_TASK_H_ */
+#endif  // NES_INCLUDE_RUNTIME_TASK_HPP_

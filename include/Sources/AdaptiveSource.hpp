@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_ADAPTIVESOURCE_H_
-#define INCLUDE_ADAPTIVESOURCE_H_
+#ifndef NES_INCLUDE_SOURCES_ADAPTIVE_SOURCE_HPP_
+#define NES_INCLUDE_SOURCES_ADAPTIVE_SOURCE_HPP_
 
 #include <Sources/DataSource.hpp>
 #include <chrono>
@@ -77,4 +77,4 @@ using AdaptiveSourcePtr = std::shared_ptr<AdaptiveSource>;
 
 }// namespace NES
 
-#endif /* INCLUDE_ADAPTIVESOURCE_H_ */
+#endif  // NES_INCLUDE_SOURCES_ADAPTIVE_SOURCE_HPP_

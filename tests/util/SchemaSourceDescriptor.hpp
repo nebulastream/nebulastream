@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TESTS_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_
-#define NES_TESTS_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_
+#ifndef NES_TESTS_UTIL_SCHEMA_SOURCE_DESCRIPTOR_HPP_
+#define NES_TESTS_UTIL_SCHEMA_SOURCE_DESCRIPTOR_HPP_
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -33,4 +33,4 @@ class SchemaSourceDescriptor : public SourceDescriptor {
 
 }// namespace NES
 
-#endif//NES_TESTS_UTIL_SCHEMASOURCEDESCRIPTOR_HPP_
+#endif  // NES_TESTS_UTIL_SCHEMA_SOURCE_DESCRIPTOR_HPP_

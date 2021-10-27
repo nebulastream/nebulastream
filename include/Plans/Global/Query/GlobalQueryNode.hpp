@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_GLOBALQUERYNODE_HPP
-#define NES_GLOBALQUERYNODE_HPP
+#ifndef NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_NODE_HPP_
+#define NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_NODE_HPP_
 
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -101,4 +101,4 @@ class GlobalQueryNode : public Node {
     OperatorNodePtr operatorNode;
 };
 }// namespace NES
-#endif//NES_GLOBALQUERYNODE_HPP
+#endif  // NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_NODE_HPP_

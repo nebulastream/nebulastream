@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_DATATYPES_BASICVALUETYPE_HPP_
-#define NES_INCLUDE_DATATYPES_BASICVALUETYPE_HPP_
+#ifndef NES_INCLUDE_COMMON_VALUE_TYPES_BASIC_VALUE_HPP_
+#define NES_INCLUDE_COMMON_VALUE_TYPES_BASIC_VALUE_HPP_
 
 #include <Common/ValueTypes/ValueType.hpp>
 
@@ -40,4 +40,4 @@ class [[nodiscard]] BasicValue final : public ValueType {
 
 }// namespace NES
 
-#endif//NES_INCLUDE_DATATYPES_BASICVALUETYPE_HPP_
+#endif  // NES_INCLUDE_COMMON_VALUE_TYPES_BASIC_VALUE_HPP_

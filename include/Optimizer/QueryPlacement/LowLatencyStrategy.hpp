@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
-#define NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_LOW_LATENCY_STRATEGY_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_LOW_LATENCY_STRATEGY_HPP_
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 
@@ -64,4 +64,4 @@ class LowLatencyStrategy : public BasePlacementStrategy {
 };
 }// namespace NES
 
-#endif//NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_LOW_LATENCY_STRATEGY_HPP_

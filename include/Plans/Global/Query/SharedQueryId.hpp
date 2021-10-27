@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_API_SHAREDQUERYID_HPP_
-#define NES_INCLUDE_API_SHAREDQUERYID_HPP_
+#ifndef NES_INCLUDE_PLANS_GLOBAL_QUERY_SHARED_QUERY_ID_HPP_
+#define NES_INCLUDE_PLANS_GLOBAL_QUERY_SHARED_QUERY_ID_HPP_
 
 #include <cstdint>
 
@@ -25,4 +25,4 @@
 using SharedQueryId = uint64_t;
 static constexpr uint64_t INVALID_SHARED_QUERY_ID = 0;
 
-#endif//NES_INCLUDE_API_SHAREDQUERYID_HPP_
+#endif  // NES_INCLUDE_PLANS_GLOBAL_QUERY_SHARED_QUERY_ID_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
-#define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_VALUES_HPP_
+#define NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_VALUES_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -87,4 +87,4 @@ void writeToBuffer(const NetworkValues& metrics, Runtime::TupleBuffer& buf, uint
 
 }// namespace NES
 
-#endif//NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_VALUES_HPP_

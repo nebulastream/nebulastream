@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
-#define NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
+#ifndef NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_UTILS_HPP_
+#define NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_UTILS_HPP_
 
 //#include "SimpleBenchmarkSink.hpp"
 #include <API/Query.hpp>
@@ -241,4 +241,4 @@ class BenchmarkUtils {
 
 }// namespace NES::Benchmarking
 
-#endif//NES_BENCHMARK_UTIL_BENCHMARKUTILS_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_UTILS_HPP_

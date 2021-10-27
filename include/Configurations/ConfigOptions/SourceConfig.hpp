@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SOURCECONFIG_HPP
-#define NES_SOURCECONFIG_HPP
+#ifndef NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_
+#define NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_
 
 #include <map>
 #include <string>
@@ -151,4 +151,4 @@ class SourceConfig {
     BoolConfigOption skipHeader;
 };
 }// namespace NES
-#endif//NES_SOURCECONFIG_HPP
+#endif  // NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_

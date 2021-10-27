@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef MQTTSINK_HPP
-#define MQTTSINK_HPP
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_MQTT_SINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_MQTT_SINK_HPP_
 
 #ifdef ENABLE_MQTT_BUILD
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
@@ -159,4 +159,4 @@ using MQTTSinkPtr = std::shared_ptr<MQTTSink>;
 
 }// namespace NES
 #endif
-#endif//MQTTSINK
+#endif  // NES_INCLUDE_SINKS_MEDIUMS_MQTT_SINK_HPP_

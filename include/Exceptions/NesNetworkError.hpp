@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
-#define NES_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
+#ifndef NES_INCLUDE_EXCEPTIONS_NES_NETWORK_ERROR_HPP_
+#define NES_INCLUDE_EXCEPTIONS_NES_NETWORK_ERROR_HPP_
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <stdexcept>
@@ -36,4 +36,4 @@ class NesNetworkError : public std::runtime_error {
 };
 
 }// namespace NES
-#endif//NES_INCLUDE_EXCEPTIONS_NESNETWORKERROR_HPP_
+#endif  // NES_INCLUDE_EXCEPTIONS_NES_NETWORK_ERROR_HPP_

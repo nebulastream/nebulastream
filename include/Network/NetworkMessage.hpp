@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NETWORKMESSAGE_HPP
-#define NES_NETWORKMESSAGE_HPP
+#ifndef NES_INCLUDE_NETWORK_NETWORK_MESSAGE_HPP_
+#define NES_INCLUDE_NETWORK_NETWORK_MESSAGE_HPP_
 
 #include <Network/ChannelId.hpp>
 #include <cstdint>
@@ -180,4 +180,4 @@ class NesNetworkError : public std::runtime_error {
 }// namespace Network
 }// namespace NES
 
-#endif//NES_NETWORKMESSAGE_HPP
+#endif  // NES_INCLUDE_NETWORK_NETWORK_MESSAGE_HPP_

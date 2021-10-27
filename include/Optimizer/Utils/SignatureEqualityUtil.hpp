@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SIGNATUREEQUALITYUTIL_HPP
-#define NES_SIGNATUREEQUALITYUTIL_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_UTILS_SIGNATURE_EQUALITY_UTIL_HPP_
+#define NES_INCLUDE_OPTIMIZER_UTILS_SIGNATURE_EQUALITY_UTIL_HPP_
 
 #include <memory>
 
@@ -65,4 +65,4 @@ class SignatureEqualityUtil {
     uint64_t counter;
 };
 }// namespace NES::Optimizer
-#endif//NES_SIGNATUREEQUALITYUTIL_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_UTILS_SIGNATURE_EQUALITY_UTIL_HPP_

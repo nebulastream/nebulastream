@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_NODEENGINE_AbstractBufferProvider_HPP_
-#define NES_INCLUDE_NODEENGINE_AbstractBufferProvider_HPP_
+#ifndef NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_PROVIDER_HPP_
+#define NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_PROVIDER_HPP_
 
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <chrono>
@@ -103,4 +103,4 @@ class AbstractPoolProvider {
 };
 
 }// namespace NES::Runtime
-#endif//NES_INCLUDE_NODEENGINE_AbstractBufferProvider_HPP_
+#endif  // NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_PROVIDER_HPP_

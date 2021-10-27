@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INVALIDQUERYEXCEPTION_HPP
-#define NES_INVALIDQUERYEXCEPTION_HPP
+#ifndef NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_EXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_EXCEPTION_HPP_
 
 #include <stdexcept>
 #include <string>
@@ -30,4 +30,4 @@ class InvalidQueryException : public std::runtime_error {
 };
 }// namespace NES
 
-#endif//NES_INVALIDQUERYEXCEPTION_HPP
+#endif  // NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_EXCEPTION_HPP_

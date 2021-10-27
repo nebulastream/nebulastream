@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PLACEMENTSTRATEGYFACTORY_HPP
-#define NES_PLACEMENTSTRATEGYFACTORY_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_PLACEMENT_STRATEGY_FACTORY_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_PLACEMENT_STRATEGY_FACTORY_HPP_
 
 #include <map>
 #include <memory>
@@ -112,4 +112,4 @@ class PlacementStrategyFactory {
                                                               const StreamCatalogPtr& streamCatalog);
 };
 }// namespace NES::Optimizer
-#endif//NES_PLACEMENTSTRATEGYFACTORY_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_PLACEMENT_STRATEGY_FACTORY_HPP_

@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_SOURCES_SENSE_SOURCE_HPP_
+#define NES_INCLUDE_SOURCES_SENSE_SOURCE_HPP_
 
 #include <Sources/DataSource.hpp>
 #include <fstream>
@@ -74,3 +75,4 @@ class SenseSource : public DataSource {
 using SenseSourcePtr = std::shared_ptr<SenseSource>;
 
 }// namespace NES
+#endif  // NES_INCLUDE_SOURCES_SENSE_SOURCE_HPP_

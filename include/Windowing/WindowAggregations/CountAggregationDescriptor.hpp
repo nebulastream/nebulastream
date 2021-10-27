@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_COUNT_HPP
-#define NES_COUNT_HPP
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_COUNT_AGGREGATION_DESCRIPTOR_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_COUNT_AGGREGATION_DESCRIPTOR_HPP_
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 namespace NES::Windowing {
@@ -51,4 +51,4 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
     CountAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing
-#endif//NES_COUNT_HPP
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_COUNT_AGGREGATION_DESCRIPTOR_HPP_

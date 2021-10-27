@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TYPEINFERENCEEXCEPTION_HPP
-#define NES_TYPEINFERENCEEXCEPTION_HPP
+#ifndef NES_INCLUDE_EXCEPTIONS_TYPE_INFERENCE_EXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_TYPE_INFERENCE_EXCEPTION_HPP_
 
 #include <Plans/Query/QueryId.hpp>
 #include <stdexcept>
@@ -37,4 +37,4 @@ class TypeInferenceException : public std::runtime_error {
 };
 }// namespace NES
 
-#endif//NES_TYPEINFERENCEEXCEPTION_HPP
+#endif  // NES_INCLUDE_EXCEPTIONS_TYPE_INFERENCE_EXCEPTION_HPP_

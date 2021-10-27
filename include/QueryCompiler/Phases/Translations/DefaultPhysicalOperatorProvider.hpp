@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_PHASES_TRANSLATIONS_DEFAULT_PHYSICAL_OPERATOR_PROVIDER_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_PHASES_TRANSLATIONS_DEFAULT_PHYSICAL_OPERATOR_PROVIDER_HPP_
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <vector>
 namespace NES {
@@ -123,4 +123,4 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_TRANSLATIONS_DEFAULT_PHYSICAL_OPERATOR_PROVIDER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_REFEREMCEDATATYPE_HPP_
-#define INCLUDE_REFEREMCEDATATYPE_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_REFERENCE_DATA_TYPE_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_REFERENCE_DATA_TYPE_HPP_
 
 #pragma once
 
@@ -56,4 +56,4 @@ class ReferenceDataType : public GeneratableDataType {
 };
 }// namespace QueryCompilation
 }// namespace NES
-#endif//INCLUDE_REFEREMCEDATATYPE_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_REFERENCE_DATA_TYPE_HPP_

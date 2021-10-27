@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NESREQUESTPROCESSORSERVICE_HPP
-#define NES_NESREQUESTPROCESSORSERVICE_HPP
+#ifndef NES_INCLUDE_SERVICES_NES_REQUEST_PROCESSOR_SERVICE_HPP_
+#define NES_INCLUDE_SERVICES_NES_REQUEST_PROCESSOR_SERVICE_HPP_
 
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <memory>
@@ -113,4 +113,4 @@ class NESRequestProcessorService {
     z3::ContextPtr z3Context;
 };
 }// namespace NES
-#endif//NES_NESREQUESTPROCESSORSERVICE_HPP
+#endif  // NES_INCLUDE_SERVICES_NES_REQUEST_PROCESSOR_SERVICE_HPP_

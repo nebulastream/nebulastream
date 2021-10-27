@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_CSVSOURCE_H_
-#define INCLUDE_CSVSOURCE_H_
+#ifndef NES_INCLUDE_SOURCES_CSV_SOURCE_HPP_
+#define NES_INCLUDE_SOURCES_CSV_SOURCE_HPP_
 
 #include <chrono>
 #include <fstream>
@@ -115,4 +115,4 @@ class CSVSource : public DataSource {
 using CSVSourcePtr = std::shared_ptr<CSVSource>;
 }// namespace NES
 
-#endif /* INCLUDE_CSVSOURCE_H_ */
+#endif  // NES_INCLUDE_SOURCES_CSV_SOURCE_HPP_

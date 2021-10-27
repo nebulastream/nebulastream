@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_DATASOURCE_H_
-#define INCLUDE_DATASOURCE_H_
+#ifndef NES_INCLUDE_SOURCES_DATA_SOURCE_HPP_
+#define NES_INCLUDE_SOURCES_DATA_SOURCE_HPP_
 
 #include <API/Schema.hpp>
 #include <Operators/OperatorId.hpp>
@@ -271,4 +271,4 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 
 }// namespace NES
 
-#endif /* INCLUDE_DATASOURCE_H_ */
+#endif  // NES_INCLUDE_SOURCES_DATA_SOURCE_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INVALIDARGUMENTEXCEPTION_HPP
-#define NES_INVALIDARGUMENTEXCEPTION_HPP
+#ifndef NES_INCLUDE_EXCEPTIONS_INVALID_ARGUMENT_EXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_INVALID_ARGUMENT_EXCEPTION_HPP_
 
 #include <stdexcept>
 #include <string>
@@ -34,4 +34,4 @@ class InvalidArgumentException : public std::exception {
     std::string message;
 };
 }// namespace NES
-#endif//NES_INVALIDARGUMENTEXCEPTION_HPP
+#endif  // NES_INCLUDE_EXCEPTIONS_INVALID_ARGUMENT_EXCEPTION_HPP_

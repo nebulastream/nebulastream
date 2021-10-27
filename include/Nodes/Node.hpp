@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NODES_NODE_HPP
-#define NODES_NODE_HPP
+#ifndef NES_INCLUDE_NODES_NODE_HPP_
+#define NES_INCLUDE_NODES_NODE_HPP_
 
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -407,4 +407,4 @@ class Node : public std::enable_shared_from_this<Node> {
 };
 }// namespace NES
 
-#endif// NODES_NODE_HPP
+#endif  // NES_INCLUDE_NODES_NODE_HPP_

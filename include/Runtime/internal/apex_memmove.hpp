@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef __APEX_MEMMOVE_H__
-#define __APEX_MEMMOVE_H__
+#ifndef NES_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
+#define NES_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_
 
 //	apex_memmove written by Trevor Herselman in 2014
 
@@ -50,4 +50,4 @@ extern void*(APEXCALL* apex_memmove)(void* dst, const void* src, size_t size);
 
 #endif// __cplusplus
 
-#endif// __APEX_MEMMOVE_H__
+#endif  // NES_INCLUDE_RUNTIME_INTERNAL_APEX_MEMMOVE_HPP_

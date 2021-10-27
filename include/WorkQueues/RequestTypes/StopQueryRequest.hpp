@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_STOPQUERYREQUEST_HPP
-#define NES_STOPQUERYREQUEST_HPP
+#ifndef NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_STOP_QUERY_REQUEST_HPP_
+#define NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_STOP_QUERY_REQUEST_HPP_
 
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 
@@ -44,4 +44,4 @@ class StopQueryRequest : public NESRequest {
 };
 }// namespace NES
 
-#endif//NES_STOPQUERYREQUEST_HPP
+#endif  // NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_STOP_QUERY_REQUEST_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef QUERYSERVICE_HPP
-#define QUERYSERVICE_HPP
+#ifndef NES_INCLUDE_SERVICES_QUERY_SERVICE_HPP_
+#define NES_INCLUDE_SERVICES_QUERY_SERVICE_HPP_
 
 #include <API/Query.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -114,4 +114,4 @@ class QueryService {
 
 };// namespace NES
 
-#endif//QUERYSERVICE_HPP
+#endif  // NES_INCLUDE_SERVICES_QUERY_SERVICE_HPP_

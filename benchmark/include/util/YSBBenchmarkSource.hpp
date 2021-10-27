@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCEYSB_HPP_
-#define NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCEYSB_HPP_
+#ifndef NES_BENCHMARK_INCLUDE_UTIL_YSB_BENCHMARK_SOURCE_HPP_
+#define NES_BENCHMARK_INCLUDE_UTIL_YSB_BENCHMARK_SOURCE_HPP_
 
 #include "SimpleBenchmarkSource.hpp"
 #include <Windowing/WindowingForwardRefs.hpp>
@@ -147,4 +147,4 @@ class YSBBenchmarkSource : public SimpleBenchmarkSource {
     }
 };
 }// namespace NES::Benchmarking
-#endif//NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_UTIL_YSB_BENCHMARK_SOURCE_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef BOTTOMUP_HPP
-#define BOTTOMUP_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BOTTOM_UP_STRATEGY_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BOTTOM_UP_STRATEGY_HPP_
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <iostream>
@@ -84,4 +84,4 @@ class BottomUpStrategy : public BasePlacementStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif//BOTTOMUP_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BOTTOM_UP_STRATEGY_HPP_

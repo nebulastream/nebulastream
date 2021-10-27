@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NESREQUEST_HPP
-#define NES_NESREQUEST_HPP
+#ifndef NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_NES_REQUEST_HPP_
+#define NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_NES_REQUEST_HPP_
 
 #include <Plans/Query/QueryId.hpp>
 #include <exception>
@@ -72,4 +72,4 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
 };
 }// namespace NES
 
-#endif//NES_NESREQUEST_HPP
+#endif  // NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_NES_REQUEST_HPP_

@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_FILE_BUILDER_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_FILE_BUILDER_HPP_
 
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <memory>
@@ -39,3 +40,4 @@ class FileBuilder {
 };
 
 }// namespace NES::QueryCompilation
+#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_FILE_BUILDER_HPP_

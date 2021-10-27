@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_
-#define NES_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_
+#ifndef NES_INCLUDE_NETWORK_EXCHANGE_PROTOCOL_LISTENER_HPP_
+#define NES_INCLUDE_NETWORK_EXCHANGE_PROTOCOL_LISTENER_HPP_
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
@@ -50,4 +50,4 @@ class ExchangeProtocolListener {
 };
 }// namespace Network
 }// namespace NES
-#endif//NES_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_
+#endif  // NES_INCLUDE_NETWORK_EXCHANGE_PROTOCOL_LISTENER_HPP_

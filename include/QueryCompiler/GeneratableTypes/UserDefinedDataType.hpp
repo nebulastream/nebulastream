@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_USERDEFINEDDATATYPE_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_DATATYPES_USERDEFINEDDATATYPE_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_USER_DEFINED_DATA_TYPE_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_USER_DEFINED_DATA_TYPE_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
@@ -59,4 +59,4 @@ class UserDefinedDataType final : public GeneratableDataType {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_USERDEFINEDDATATYPE_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_USER_DEFINED_DATA_TYPE_HPP_

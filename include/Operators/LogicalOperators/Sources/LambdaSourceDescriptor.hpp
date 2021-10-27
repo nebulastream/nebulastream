@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LambdaSourceDescriptor_HPP_
-#define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LambdaSourceDescriptor_HPP_
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_LAMBDA_SOURCE_DESCRIPTOR_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_LAMBDA_SOURCE_DESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -100,4 +100,4 @@ class LambdaSourceDescriptor : public SourceDescriptor {
 };
 }// namespace NES
 
-#endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LambdaSourceDescriptor_HPP_
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_LAMBDA_SOURCE_DESCRIPTOR_HPP_

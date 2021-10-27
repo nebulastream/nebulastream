@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef OPERATORTYPES_HPP
-#define OPERATORTYPES_HPP
+#ifndef NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_OPERATOR_TYPES_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_OPERATOR_TYPES_HPP_
 
 namespace NES {
 
@@ -71,4 +71,4 @@ enum BinaryOperatorType {
 const std::string toString(const BinaryOperatorType& type);
 }// namespace NES
 
-#endif//OPERATORTYPES_HPP
+#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_OPERATOR_TYPES_HPP_
