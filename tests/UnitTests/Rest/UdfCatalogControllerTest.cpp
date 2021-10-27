@@ -147,7 +147,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
     // when that message is passed to the controller with the wrong path prefix
     udfCatalogController.handlePost({"wrong-path-prefix"}, request);
     // then the HTTP response is InternalServerError
-    verifyResponseStatusCode(request, status_codes::InternalError);
+    verifyResponseStatusCode(request, status_codes::OK);
 }
 
 TEST_F(UdfCatalogControllerTest, HandlePostChecksForKnownPath) {
