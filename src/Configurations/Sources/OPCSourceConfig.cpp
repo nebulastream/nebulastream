@@ -15,12 +15,15 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/OPCSourceConfig.hpp>
+#include <Configurations/Sources/OPCSourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 #include <utility>
 
 namespace NES {
+
+namespace Configurations {
+
 std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<OPCSourceConfig>(OPCSourceConfig(std::move(sourceConfigMap)));
 }
@@ -30,9 +33,9 @@ std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create() { return std::make_sh
 OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(sourceConfigMap, "OPCSource"),
       namespaceIndex(ConfigOption<uint32_t>::create("namespaceIndex", 1, "namespaceIndex for node, needed for: OPCSource")),
-      nodeIdentifier(ConfigOption<std::string>::create("nodeIdentifier", "the.answer", "node identifier, needed for: OPCSource")),
+      nodeIdentifier(ConfigOption<std::string>::create("nodeIdentifier", "", "node identifier, needed for: OPCSource")),
       userName(ConfigOption<std::string>::create("userName",
-                                                 "testUser",
+                                                 "",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
       password(ConfigOption<std::string>::create("password", "", "password, needed for: OPCSource")) {
     NES_INFO("OPCSourceConfig: Init source config object with values from sourceConfigMap.");
@@ -41,9 +44,13 @@ OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfig
     }
     if (sourceConfigMap.find("OPCSourceNodeIdentifier") != sourceConfigMap.end()) {
         nodeIdentifier->setValue(sourceConfigMap.find("OPCSourceNodeIdentifier")->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no nodeIdentifier defined! Please define a nodeIdentifier.");
     }
     if (sourceConfigMap.find("OPCSourceUserName") != sourceConfigMap.end()) {
         userName->setValue(sourceConfigMap.find("OPCSourceUserName")->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no userName defined! Please define a userName.");
     }
     if (sourceConfigMap.find("OPCSourcePassword") != sourceConfigMap.end()) {
         password->setValue(sourceConfigMap.find("OPCSourcePassword")->second);
@@ -97,4 +104,5 @@ void OPCSourceConfig::setUserName(std::string userNameValue) { userName->setValu
 
 void OPCSourceConfig::setPassword(std::string passwordValue) { password->setValue(std::move(passwordValue)); }
 
+}
 }// namespace NES

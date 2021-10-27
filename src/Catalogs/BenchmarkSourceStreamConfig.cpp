@@ -16,11 +16,13 @@
 
 #include <Catalogs/BenchmarkSourceStreamConfig.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES {
+
+using namespace Configurations;
 
 namespace detail {
 

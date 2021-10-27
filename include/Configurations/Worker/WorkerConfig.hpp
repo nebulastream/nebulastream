@@ -22,6 +22,8 @@
 
 namespace NES {
 
+namespace Configurations {
+
 class WorkerConfig;
 using WorkerConfigPtr = std::shared_ptr<WorkerConfig>;
 
@@ -272,7 +274,7 @@ class WorkerConfig {
     StringConfigOption sourcePinList;
     StringConfigOption workerPinList;
 };
-
+}
 }// namespace NES
 
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_WORKER_CONFIG_HPP_

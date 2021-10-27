@@ -17,21 +17,16 @@
 #ifndef NES_BINARYSOURCECONFIG_HPP
 #define NES_BINARYSOURCECONFIG_HPP
 
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/Sources/SourceConfig.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
+namespace Configurations {
+
 class BinarySourceConfig;
 using BinarySourceConfigPtr = std::shared_ptr<BinarySourceConfig>;
-
-template<class T>
-class ConfigOption;
-using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
-using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
-using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
-using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
  * @brief Configuration object for binary source
@@ -81,6 +76,7 @@ class BinarySourceConfig : public SourceConfig {
      */
     explicit BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap);
 
+
     /**
      * @brief constructor to create a new Binary source config object initialized with default values as set below
      */
@@ -88,5 +84,6 @@ class BinarySourceConfig : public SourceConfig {
 
     StringConfigOption filePath;
 };
+}
 }// namespace NES
 #endif

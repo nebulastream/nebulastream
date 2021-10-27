@@ -15,7 +15,7 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
@@ -24,6 +24,8 @@
 #include <utility>
 
 namespace NES {
+
+namespace Configurations {
 
 WorkerConfigPtr WorkerConfig::create() { return std::make_shared<WorkerConfig>(); }
 
@@ -351,4 +353,5 @@ bool WorkerConfig::isNumaAware() const { return numaAwareness->getValue(); }
 
 void WorkerConfig::setNumaAware(bool status) { numaAwareness->setValue(status); }
 
+}
 }// namespace NES

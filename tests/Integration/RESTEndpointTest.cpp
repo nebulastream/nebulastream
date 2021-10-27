@@ -20,7 +20,7 @@
 #include "SerializableQueryPlan.pb.h"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -34,6 +34,8 @@
 using namespace std::string_literals;
 
 namespace NES {
+
+using namespace Configurations;
 
 class RESTEndpointTest : public testing::Test {
   protected:

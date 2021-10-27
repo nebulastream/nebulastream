@@ -19,15 +19,18 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
+
 using namespace std;
 
 namespace NES {
+
+using namespace Configurations;
 
 class AllowedLatenessTest : public testing::Test {
   public:

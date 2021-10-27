@@ -14,22 +14,23 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOptions/SourceConfigurations/BinarySourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/DefaultSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/KafkaSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/MQTTSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/OPCSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SenseSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/Sources/BinarySourceConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/DefaultSourceConfig.hpp>
+#include <Configurations/Sources/KafkaSourceConfig.hpp>
+#include <Configurations/Sources/MQTTSourceConfig.hpp>
+#include <Configurations/Sources/OPCSourceConfig.hpp>
+#include <Configurations/Sources/SenseSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
 
 namespace NES {
 
-SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::string, std::string>& commandLineParams,
-                                                                      int argc) {
+namespace Configurations {
+
+SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc) {
 
     auto sourceConfigPath = commandLineParams.find("--sourceConfigPath");
     std::map<std::string, std::string> configurationMap;
@@ -42,7 +43,7 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::stri
         configurationMap = overwriteConfigWithCommandLineInput(commandLineParams, configurationMap);
     }
 
-    if (!configurationMap.contains("sourceType")){
+    if (!configurationMap.contains("sourceType")) {
         DefaultSourceConfigPtr noSource = DefaultSourceConfig::create();
         noSource->setSourceType("NoSource");
         return noSource;
@@ -56,12 +57,12 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::stri
         case BinarySource: return BinarySourceConfig::create(configurationMap);
         case SenseSource: return SenseSourceConfig::create(configurationMap);
         case DefaultSource: return DefaultSourceConfig::create(configurationMap);
-        default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " + configurationMap.at("sourceType")
-                                         + " not supported");
+        default:
+            NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " + configurationMap.at("sourceType") + " not supported");
     }
 }
 
-SourceConfigPtr SourceConfigFactory::createSourceConfig(std::string _sourceType){
+SourceConfigPtr SourceConfigFactory::createSourceConfig(std::string _sourceType) {
 
     switch (stringToConfigSourceType[_sourceType]) {
         case CSVSource: return CSVSourceConfig::create();
@@ -178,9 +179,11 @@ std::map<std::string, std::string> SourceConfigFactory::readYAMLFile(const std::
                     std::pair<std::string, std::string>("MQTTSourceCleanSession",
                                                         config["MQTTSource"][0]["cleanSession"].As<std::string>()));
             }
-            if (!config["MQTTSource"][0]["flushIntervalMS"].As<std::string>().empty() && config["MQTTSource"][0]["flushIntervalMS"].As<std::string>() != "\n") {
+            if (!config["MQTTSource"][0]["flushIntervalMS"].As<std::string>().empty()
+                && config["MQTTSource"][0]["flushIntervalMS"].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("MQTTSourceFlushIntervalMS", config["MQTTSource"][0]["flushIntervalMS"].As<std::string>()));
+                    std::pair<std::string, std::string>("MQTTSourceFlushIntervalMS",
+                                                        config["MQTTSource"][0]["flushIntervalMS"].As<std::string>()));
             }
             if (!config["KafkaSource"][0]["brokers"].As<std::string>().empty()
                 && config["KafkaSource"][0]["brokers"].As<std::string>() != "\n") {
@@ -324,7 +327,8 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
         }
         if (commandLineParams.find("--MQTTSourceFlushIntervalMS") != commandLineParams.end()
             && !commandLineParams.find("--MQTTSourceFlushIntervalMS")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceFlushIntervalMS", commandLineParams.find("--MQTTSourceFlushIntervalMS")->second);
+            configurationMap.insert_or_assign("MQTTSourceFlushIntervalMS",
+                                              commandLineParams.find("--MQTTSourceFlushIntervalMS")->second);
         }
         if (commandLineParams.find("--KafkaSourceBrokers") != commandLineParams.end()
             && !commandLineParams.find("--KafkaSourceBrokers")->second.empty()) {
@@ -378,5 +382,5 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
     return configurationMap;
 }
 
-
+}
 }// namespace NES

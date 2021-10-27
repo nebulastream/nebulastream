@@ -16,7 +16,7 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -45,7 +45,7 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
+NesWorker::NesWorker(const Configurations::WorkerConfigPtr& workerConfig, NesNodeType type)
     : conf(PhysicalStreamConfig::createEmpty()), coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
       localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
       workerToCoreMapping(workerConfig->getWorkerPinList()->getValue()),

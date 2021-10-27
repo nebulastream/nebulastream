@@ -18,9 +18,8 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -53,7 +52,6 @@ class MQTTSinkDeploymentTest : public testing::Test {
         restPort = restPort + 2;
         coConf = CoordinatorConfig::create();
         wrkConf = WorkerConfig::create();
-        srcConf = SourceConfigFactory::createSourceConfig();
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);
         wrkConf->setCoordinatorPort(rpcPort);
@@ -70,7 +68,6 @@ class MQTTSinkDeploymentTest : public testing::Test {
 TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
     NES_INFO("MQTTSinkDeploymentTest: Start coordinator");
     // Here the default schema (default_logical) is already initialized (NesCoordinator calls 'StreamCatalog'
     // it is later used in TypeInferencePhase.cpp via 'streamCatalog->getSchemaForLogicalStream(streamName);' to set

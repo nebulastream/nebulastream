@@ -1104,7 +1104,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->release_sourceschema());
         auto ret = MQTTSourceDescriptor::create(schema,
-                                                (const MQTTSourceConfigPtr&) mqttSerializedSourceDescriptor->sourceconfig(),
+                                                (const Configurations::MQTTSourceConfigPtr&) mqttSerializedSourceDescriptor->sourceconfig(),
                                                 (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor->inputformat());
         return ret;
     }

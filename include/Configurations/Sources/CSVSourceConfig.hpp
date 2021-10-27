@@ -17,21 +17,16 @@
 #ifndef NES_CSVSOURCECONFIG_HPP
 #define NES_CSVSOURCECONFIG_HPP
 
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfig.hpp>
+#include <Configurations/Sources/SourceConfig.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
+namespace Configurations {
+
 class CSVSourceConfig;
 using CSVSourceConfigPtr = std::shared_ptr<CSVSourceConfig>;
-
-template<class T>
-class ConfigOption;
-using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
-using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
-using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
-using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
  * @brief Configuration object for csv source config
@@ -98,5 +93,6 @@ class CSVSourceConfig : public SourceConfig {
     StringConfigOption filePath;
     BoolConfigOption skipHeader;
 };
+}
 }// namespace NES
 #endif
