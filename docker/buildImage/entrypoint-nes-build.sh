@@ -34,7 +34,7 @@ then
       make test_debug
     fi
     result=$?
-    #rm -rf /nebulastream/build
+    rm -rf /nebulastream/build
     exit $result
 else
     exec $@
