@@ -59,7 +59,6 @@ class PapiCpuProfiler : public BaseProfiler {
         L1Detail
     };
 
-
     /**
      * @brief Creates a PapiCpuProfiler with a given preset (@see Presets)
      * @param preset the preset of events to check

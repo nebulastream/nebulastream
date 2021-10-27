@@ -269,6 +269,12 @@ add_executable(tuple-buffer-test "UnitTests/Runtime/TupleBufferTest.cpp")
 target_link_libraries(tuple-buffer-test nes ${GTEST_LIBRARIES})
 add_test(NAME tuple-buffer-test COMMAND tuple-buffer-test)
 
+if (CMAKE_USE_PAPI_PROFILER)
+add_executable(papi-profiler-test "UnitTests/Runtime/PAPIProfilerTest.cpp")
+target_link_libraries(papi-profiler-test nes ${GTEST_LIBRARIES})
+add_test(NAME papi-profiler-test COMMAND papi-profiler-test)
+endif()
+
 # LogicalOperatorPlanNodeTest
 add_executable(logical-operator-node-tests "UnitTests/Operators/LogicalOperatorNodeTest.cpp")
 target_link_libraries(logical-operator-node-tests nes ${GTEST_LIBRARIES})

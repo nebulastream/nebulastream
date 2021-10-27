@@ -47,7 +47,7 @@
 #include <unordered_set>
 
 #ifdef ENABLE_PAPI_PROFILER
-#include <Runtime/Profiler/PapiProfiler.hpp>
+#include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
 
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || NES_USE_ONE_QUEUE_PER_NUMA_NODE

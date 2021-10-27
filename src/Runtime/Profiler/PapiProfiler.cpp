@@ -15,7 +15,7 @@
 */
 
 #ifdef ENABLE_PAPI_PROFILER
-#include <Runtime/Profiler/PapiProfiler.hpp>
+#include <Runtime/Profiler/PAPIProfiler.hpp>
 #include <Util/Logger.hpp>
 #include <papi.h>
 #endif
