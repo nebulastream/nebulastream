@@ -249,18 +249,6 @@ if(UNIX AND NOT APPLE)
     set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 endif()
 
-# folly
-if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
-endif ()
-
-if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
-    find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
-endif ()
-
-
 # Numa awareness
 find_package(NUMA)
 if(NUMA_FOUND)
@@ -409,6 +397,12 @@ endif (NES_USE_ADAPTIVE)
 
 # folly
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+    find_dependency(gflags CONFIG REQUIRED) # required on macos
+    find_package(folly CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+endif ()
+
+if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
     find_dependency(gflags CONFIG REQUIRED) # required on macos
     find_package(folly CONFIG REQUIRED)
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
