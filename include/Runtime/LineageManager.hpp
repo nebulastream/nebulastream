@@ -19,9 +19,9 @@
 
 #include "AbstractLineageManager.hpp"
 #include <Util/BufferSequenceNumber.hpp>
+#include <memory>
 #include <mutex>
 #include <unordered_map>
-#include <memory>
 
 namespace NES::Runtime {
 
