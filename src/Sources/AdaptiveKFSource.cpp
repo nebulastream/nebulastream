@@ -24,9 +24,10 @@ namespace NES {
 AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
                                    Runtime::QueryManagerPtr queryManager, const uint64_t numberOfTuplesToProducePerBuffer,
                                    uint64_t numBuffersToProcess, uint64_t initialFrequency,
-                                   const uint64_t numSourceLocalBuffers, OperatorId operatorId)
+                                   const uint64_t numSourceLocalBuffers, OperatorId operatorId,
+                                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency,
-                     operatorId, numSourceLocalBuffers, GatheringMode::FREQUENCY_MODE),
+                     operatorId, numSourceLocalBuffers, GatheringMode::FREQUENCY_MODE, std::move(successors)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), freqRange(2),
       frequency(initialFrequency), freqLastReceived(initialFrequency), kfErrorWindow(20) {
     this->numBuffersToProcess = numBuffersToProcess;

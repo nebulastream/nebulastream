@@ -43,6 +43,8 @@
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
+// TODO: change order of includes and create issue for U from json.h
+#include <Sources/AdaptiveKFSource.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/BinarySource.hpp>
@@ -385,6 +387,24 @@ class MonitoringSourceProxy : public MonitoringSource {
                            operatorId,
                            numSourceLocalBuffers,
                            successors){};
+};
+
+class AdaptiveKFSourceProxy : public AdaptiveKFSource {
+  public:
+    AdaptiveKFSourceProxy(SchemaPtr schema,
+                          Runtime::BufferManagerPtr bufferManager,
+                          Runtime::QueryManagerPtr queryManager,
+                          const uint64_t numBuffersToProcess,
+                          uint64_t numberOfTuplesToProducePerBuffer,
+                          uint64_t frequency,
+                          const uint64_t numSourceLocalBuffers,
+                          OperatorId operatorId,
+                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+        : AdaptiveKFSource(schema, bufferManager, queryManager, numBuffersToProcess,
+                           numberOfTuplesToProducePerBuffer, frequency, numSourceLocalBuffers,
+                           operatorId, successors){};
+  private:
+    FRIEND_TEST(SourceTest, testAdaptiveKFSourceGetType);
 };
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
@@ -1715,6 +1735,19 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
 
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
+}
+
+TEST_F(SourceTest, testAdaptiveKFSourceGetType) {
+    AdaptiveKFSourceProxy adaKFDataSource(this->schema,
+                                          this->nodeEngine->getBufferManager(),
+                                          this->nodeEngine->getQueryManager(),
+                                          0,
+                                          0,
+                                          1,
+                                          this->numSourceLocalBuffersDefault,
+                                          this->operatorId,
+                                          {});
+    ASSERT_EQ(adaKFDataSource.getType(), SourceType::ADAPTIVE_KF_SOURCE);
 }
 
 TEST_F(SourceTest, testMemorySource) {

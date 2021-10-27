@@ -35,13 +35,15 @@ AdaptiveSource::AdaptiveSource(SchemaPtr schema,
                                uint64_t initialGatheringInterval,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
-                               GatheringMode gatheringMode)
+                               GatheringMode gatheringMode,
+                               std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
                  operatorId,
                  numSourceLocalBuffers,
-                 gatheringMode) {
+                 gatheringMode,
+                 std::move(successors)) {
     NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval << "ms");
     this->gatheringInterval = std::chrono::milliseconds(initialGatheringInterval);
 }

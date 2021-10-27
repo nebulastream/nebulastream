@@ -263,10 +263,11 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
  * @param operatorId
  * @return
  */
-const DataSourcePtr createAdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
+DataSourcePtr createAdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
                                            Runtime::QueryManagerPtr queryManager, uint64_t numberOfTuplesToProducePerBuffer,
                                            uint64_t numBuffersToProcess, uint64_t frequency, uint64_t numSourceLocalBuffers,
-                                           OperatorId operatorId);
+                                           OperatorId operatorId,
+                                           const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

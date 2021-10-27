@@ -63,7 +63,8 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
                          initialGatheringInterval,
                          1,
                          12,
-                         DataSource::GatheringMode::FREQUENCY_MODE),
+                         DataSource::GatheringMode::FREQUENCY_MODE,
+                         {}),
           filePath(std::move(filePath)) {
         this->intervalIncrease = std::chrono::milliseconds(intervalIncrease);
     };
