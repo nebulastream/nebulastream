@@ -14,3 +14,11 @@ Before you open an issue, please check if a similar issue already exists or has 
 - [ ] A description of the problem you're trying to solve, including *why* you think this is a problem
 - [ ] An overview of the suggested solution (link design document, if available)
 - [ ] If the feature changes current behavior, reasons why your solution is better
+
+## Issue Description:
+
+< Write a well-defined description of the issue>
+
+## Acceptance Criteria:
+
+- [] <List of concrete tasks to be done as part of the issue>

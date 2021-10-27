@@ -76,3 +76,7 @@ This change added tests and can be verified as follows:
 
   - Does this pull request introduce a new feature? (yes / no)
   - If yes, how is the feature documented? (not applicable / docs / JavaDocs / not documented)
+
+## Issue Closed by this pull request:
+
+This PR will close #<issue number>
