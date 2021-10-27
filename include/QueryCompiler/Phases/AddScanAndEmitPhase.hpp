@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_PHASES_ADD_SCAN_AND_EMIT_PHASE_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_PHASES_ADD_SCAN_AND_EMIT_PHASE_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
@@ -34,4 +34,4 @@ class AddScanAndEmitPhase {
 }// namespace QueryCompilation
 };// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_ADD_SCAN_AND_EMIT_PHASE_HPP_

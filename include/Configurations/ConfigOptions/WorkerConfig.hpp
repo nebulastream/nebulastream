@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_WORKERCONFIG_HPP
-#define NES_WORKERCONFIG_HPP
+#ifndef NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_WORKER_CONFIG_HPP_
+#define NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_WORKER_CONFIG_HPP_
 
 #include <map>
 #include <string>
@@ -270,4 +270,4 @@ class WorkerConfig {
 
 }// namespace NES
 
-#endif//NES_WORKERCONFIG_HPP
+#endif  // NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_WORKER_CONFIG_HPP_

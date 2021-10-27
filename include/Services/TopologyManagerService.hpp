@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
-#define NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
+#ifndef NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_
+#define NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_
 
 #include <Services/StreamCatalogService.hpp>
 #include <atomic>
@@ -92,4 +92,4 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 }//namespace NES
 
-#endif//NES_SRC_SERVICES_TOPOLOGYMANAGERSERVICE_H_
+#endif  // NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_

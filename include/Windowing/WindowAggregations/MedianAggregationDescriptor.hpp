@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MEDIANAGGREGATIONDESCRIPTOR_HPP
-#define NES_MEDIANAGGREGATIONDESCRIPTOR_HPP
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_MEDIAN_AGGREGATION_DESCRIPTOR_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_MEDIAN_AGGREGATION_DESCRIPTOR_HPP_
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 
@@ -65,4 +65,4 @@ class MedianAggregationDescriptor : public WindowAggregationDescriptor {
 };
 }// namespace NES::Windowing
 
-#endif//NES_MEDIANAGGREGATIONDESCRIPTOR_HPP
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_MEDIAN_AGGREGATION_DESCRIPTOR_HPP_

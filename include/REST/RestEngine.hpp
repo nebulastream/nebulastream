@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_REST_REST_ENGINE_HPP_
+#define NES_INCLUDE_REST_REST_ENGINE_HPP_
 
 #if defined(__APPLE__) || defined(__MACH__)
 #include <xlocale.h>
@@ -132,3 +133,4 @@ class RestEngine : public BaseController {
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;
 }// namespace NES
+#endif  // NES_INCLUDE_REST_REST_ENGINE_HPP_

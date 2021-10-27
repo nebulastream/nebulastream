@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYUNDEPLOYMENTEXCEPTION_HPP
-#define NES_QUERYUNDEPLOYMENTEXCEPTION_HPP
+#ifndef NES_INCLUDE_EXCEPTIONS_QUERY_UNDEPLOYMENT_EXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_QUERY_UNDEPLOYMENT_EXCEPTION_HPP_
 
 #include <stdexcept>
 #include <string>
@@ -26,4 +26,4 @@ class QueryUndeploymentException : public std::runtime_error {
     explicit QueryUndeploymentException(const std::string& message);
 };
 }// namespace NES
-#endif//NES_QUERYUNDEPLOYMENTEXCEPTION_HPP
+#endif  // NES_INCLUDE_EXCEPTIONS_QUERY_UNDEPLOYMENT_EXCEPTION_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_REQUESTTYPENOTHANDLEDEXCEPTION_HPP
-#define NES_REQUESTTYPENOTHANDLEDEXCEPTION_HPP
+#ifndef NES_INCLUDE_EXCEPTIONS_REQUEST_TYPE_NOT_HANDLED_EXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_REQUEST_TYPE_NOT_HANDLED_EXCEPTION_HPP_
 
 #include <stdexcept>
 
@@ -25,4 +25,4 @@ class RequestTypeNotHandledException : public std::runtime_error {
     explicit RequestTypeNotHandledException(const std::string& message);
 };
 }// namespace NES
-#endif//NES_REQUESTTYPENOTHANDLEDEXCEPTION_HPP
+#endif  // NES_INCLUDE_EXCEPTIONS_REQUEST_TYPE_NOT_HANDLED_EXCEPTION_HPP_

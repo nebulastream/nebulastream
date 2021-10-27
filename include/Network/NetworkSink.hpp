@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NETWORKSINK_HPP
-#define NES_NETWORKSINK_HPP
+#ifndef NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_
+#define NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
@@ -99,4 +99,4 @@ class NetworkSink : public SinkMedium {
 
 }// namespace NES::Network
 
-#endif// NES_NETWORKSINK_HPP
+#endif  // NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_

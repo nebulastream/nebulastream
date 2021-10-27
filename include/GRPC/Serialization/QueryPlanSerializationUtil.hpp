@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYPLANSERIALIZATIONUTIL_HPP
-#define NES_QUERYPLANSERIALIZATIONUTIL_HPP
+#ifndef NES_INCLUDE_GRPC_SERIALIZATION_QUERY_PLAN_SERIALIZATION_UTIL_HPP_
+#define NES_INCLUDE_GRPC_SERIALIZATION_QUERY_PLAN_SERIALIZATION_UTIL_HPP_
 
 #include <memory>
 
@@ -44,4 +44,4 @@ class QueryPlanSerializationUtil {
     static QueryPlanPtr deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan);
 };
 }// namespace NES
-#endif//NES_QUERYPLANSERIALIZATIONUTIL_HPP
+#endif  // NES_INCLUDE_GRPC_SERIALIZATION_QUERY_PLAN_SERIALIZATION_UTIL_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_POINTERDATATYPE_HPP_
-#define INCLUDE_POINTERDATATYPE_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_POINTER_DATA_TYPE_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_POINTER_DATA_TYPE_HPP_
 
 #pragma once
 
@@ -59,4 +59,4 @@ class PointerDataType final : public GeneratableDataType {
 };
 }// namespace QueryCompilation
 }// namespace NES
-#endif//INCLUDE_POINTERDATATYPE_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_POINTER_DATA_TYPE_HPP_

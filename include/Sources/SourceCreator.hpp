@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_SOURCESINK_SOURCECREATOR_HPP_
-#define INCLUDE_SOURCESINK_SOURCECREATOR_HPP_
+#ifndef NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_
+#define NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_
 
 #include <Network/NetworkManager.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
@@ -334,4 +334,4 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
 #endif
 
 }// namespace NES
-#endif /* INCLUDE_SOURCESINK_SOURCECREATOR_HPP_ */
+#endif  // NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_

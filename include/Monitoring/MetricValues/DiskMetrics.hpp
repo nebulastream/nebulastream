@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICVALUES_DISKMETRICS_HPP_
-#define NES_INCLUDE_MONITORING_METRICVALUES_DISKMETRICS_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRIC_VALUES_DISK_METRICS_HPP_
+#define NES_INCLUDE_MONITORING_METRIC_VALUES_DISK_METRICS_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -80,4 +80,4 @@ SchemaPtr getSchema(const DiskMetrics& metric, const std::string& prefix);
 
 }// namespace NES
 
-#endif//NES_INCLUDE_MONITORING_METRICVALUES_DISKMETRICS_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_DISK_METRICS_HPP_

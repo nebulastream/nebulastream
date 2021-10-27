@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_API_EXPRESSIONS_HPP
-#define NES_INCLUDE_API_EXPRESSIONS_HPP
+#ifndef NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
+#define NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
 
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
@@ -98,4 +98,4 @@ ExpressionItem Attribute(std::string name);
 ExpressionItem Attribute(std::string name, BasicType type);
 
 }//end of namespace NES
-#endif
+#endif  // NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_

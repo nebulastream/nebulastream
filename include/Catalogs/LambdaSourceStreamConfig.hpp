@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_CATALOGS_LambdaSourceStreamConfig_HPP_
-#define NES_INCLUDE_CATALOGS_LambdaSourceStreamConfig_HPP_
+#ifndef NES_INCLUDE_CATALOGS_LAMBDA_SOURCE_STREAM_CONFIG_HPP_
+#define NES_INCLUDE_CATALOGS_LAMBDA_SOURCE_STREAM_CONFIG_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <functional>
@@ -105,4 +105,4 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
 
 }// namespace NES
 
-#endif//NES_INCLUDE_CATALOGS_LambdaSourceStreamConfig_HPP_
+#endif  // NES_INCLUDE_CATALOGS_LAMBDA_SOURCE_STREAM_CONFIG_HPP_

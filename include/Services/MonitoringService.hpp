@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
-#define NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
+#ifndef NES_INCLUDE_SERVICES_MONITORING_SERVICE_HPP_
+#define NES_INCLUDE_SERVICES_MONITORING_SERVICE_HPP_
 
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <cpprest/json.h>
@@ -107,4 +107,4 @@ using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
 }// namespace NES
 
-#endif//NES_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
+#endif  // NES_INCLUDE_SERVICES_MONITORING_SERVICE_HPP_

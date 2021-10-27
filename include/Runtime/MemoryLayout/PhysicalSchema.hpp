@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
-#define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
+#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_PHYSICAL_SCHEMA_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_PHYSICAL_SCHEMA_HPP_
 #include <Common/DataTypes/DataType.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
@@ -65,4 +65,4 @@ class PhysicalSchema {
 
 }// namespace NES::Runtime
 
-#endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
+#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_PHYSICAL_SCHEMA_HPP_

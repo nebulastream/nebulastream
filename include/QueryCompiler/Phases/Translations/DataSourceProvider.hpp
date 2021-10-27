@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_PHASES_TRANSLATIONS_DATA_SOURCE_PROVIDER_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_PHASES_TRANSLATIONS_DATA_SOURCE_PROVIDER_HPP_
 #include <Operators/OperatorId.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -49,4 +49,4 @@ class DataSourceProvider {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_TRANSLATIONS_DATA_SOURCE_PROVIDER_HPP_

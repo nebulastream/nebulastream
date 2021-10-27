@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
-#define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
+#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_PHYSICAL_FIELD_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_PHYSICAL_FIELD_HPP_
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -77,4 +77,4 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
 PhysicalFieldPtr createArrayPhysicalField(const PhysicalTypePtr& componentField, uint64_t bufferOffset);
 
 }// namespace NES::Runtime
-#endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
+#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_PHYSICAL_FIELD_HPP_

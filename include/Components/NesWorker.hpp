@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_COMPONENTS_NESWORKER_HPP_
-#define INCLUDE_COMPONENTS_NESWORKER_HPP_
+#ifndef NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
+#define NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
@@ -221,4 +221,4 @@ class NesWorker {
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 }// namespace NES
-#endif /* INCLUDE_COMPONENTS_NESWORKER_HPP_ */
+#endif  // NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_

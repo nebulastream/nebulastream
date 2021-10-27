@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_EXCEPTIONS_UDF_EXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_UDF_EXCEPTION_HPP_
 
 #include <Exceptions/NesRuntimeException.hpp>
 
@@ -47,3 +48,4 @@ class UdfException : public NesRuntimeException {
 };
 
 }// namespace NES
+#endif  // NES_INCLUDE_EXCEPTIONS_UDF_EXCEPTION_HPP_

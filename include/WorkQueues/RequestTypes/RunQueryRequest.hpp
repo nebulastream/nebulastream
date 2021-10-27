@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNQUERYREQUEST_HPP
-#define NES_RUNQUERYREQUEST_HPP
+#ifndef NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RUN_QUERY_REQUEST_HPP_
+#define NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RUN_QUERY_REQUEST_HPP_
 
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 
@@ -65,4 +65,4 @@ class RunQueryRequest : public NESRequest {
 };
 }// namespace NES
 
-#endif//NES_RUNQUERYREQUEST_HPP
+#endif  // NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RUN_QUERY_REQUEST_HPP_

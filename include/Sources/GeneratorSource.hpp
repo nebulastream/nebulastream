@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_GENERATORSOURCE_H_
-#define INCLUDE_GENERATORSOURCE_H_
+#ifndef NES_INCLUDE_SOURCES_GENERATOR_SOURCE_HPP_
+#define NES_INCLUDE_SOURCES_GENERATOR_SOURCE_HPP_
 
 #include <iostream>
 #include <sstream>
@@ -72,4 +72,4 @@ class GeneratorSource : public DataSource {
 };
 
 }// namespace NES
-#endif /* INCLUDE_GENERATORSOURCE_H_ */
+#endif  // NES_INCLUDE_SOURCES_GENERATOR_SOURCE_HPP_

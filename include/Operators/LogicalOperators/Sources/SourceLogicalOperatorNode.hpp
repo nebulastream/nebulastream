@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef SOURCE_LOGICAL_OPERATOR_NODE_HPP
-#define SOURCE_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_SOURCE_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_SOURCE_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 
@@ -62,4 +62,4 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 }// namespace NES
 
-#endif// SOURCE_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_SOURCE_LOGICAL_OPERATOR_NODE_HPP_

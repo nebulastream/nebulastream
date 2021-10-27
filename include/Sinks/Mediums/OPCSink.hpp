@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef OPCSINK_HPP
-#define OPCSINK_HPP
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_OPC_SINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_OPC_SINK_HPP_
 #ifdef ENABLE_OPC_BUILD
 
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -146,4 +146,4 @@ using OPCSinkPtr = std::shared_ptr<OPCSink>;
 }// namespace NES
 
 #endif
-#endif// OPCSINK_HPP
+#endif  // NES_INCLUDE_SINKS_MEDIUMS_OPC_SINK_HPP_

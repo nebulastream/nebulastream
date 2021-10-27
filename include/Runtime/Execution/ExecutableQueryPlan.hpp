@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLAN_H_
-#define INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLAN_H_
+#ifndef NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_QUERY_PLAN_HPP_
+#define NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_QUERY_PLAN_HPP_
 
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
@@ -194,4 +194,4 @@ class ExecutableQueryPlan : public Reconfigurable {
 
 }// namespace NES::Runtime::Execution
 
-#endif /* INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEQUERYPLAN_H_ */
+#endif  // NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_QUERY_PLAN_HPP_

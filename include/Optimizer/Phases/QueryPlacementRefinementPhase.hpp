@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QueryPlacementRefinementPhase_HPP
-#define NES_QueryPlacementRefinementPhase_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_PHASES_QUERY_PLACEMENT_REFINEMENT_PHASE_HPP_
+#define NES_INCLUDE_OPTIMIZER_PHASES_QUERY_PLACEMENT_REFINEMENT_PHASE_HPP_
 
 #include <Plans/Query/QueryId.hpp>
 #include <memory>
@@ -50,4 +50,4 @@ class QueryPlacementRefinementPhase {
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 }// namespace NES::Optimizer
-#endif//NES_QueryPlacementRefinementPhase_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_PHASES_QUERY_PLACEMENT_REFINEMENT_PHASE_HPP_

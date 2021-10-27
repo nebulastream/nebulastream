@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TESTHARNESS_HPP
-#define NES_TESTHARNESS_HPP
+#ifndef NES_INCLUDE_UTIL_TEST_HARNESS_TEST_HARNESS_HPP_
+#define NES_INCLUDE_UTIL_TEST_HARNESS_TEST_HARNESS_HPP_
 #include <API/QueryAPI.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
@@ -408,4 +408,4 @@ class TestHarness {
 };
 }// namespace NES
 
-#endif//NES_TESTHARNESS_HPP
+#endif  // NES_INCLUDE_UTIL_TEST_HARNESS_TEST_HARNESS_HPP_

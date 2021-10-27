@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIMENESMETRICS_HPP
-#define NES_RUNTIMENESMETRICS_HPP
+#ifndef NES_INCLUDE_MONITORING_METRIC_VALUES_RUNTIME_NES_METRICS_HPP_
+#define NES_INCLUDE_MONITORING_METRIC_VALUES_RUNTIME_NES_METRICS_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -86,4 +86,4 @@ SchemaPtr getSchema(const RuntimeNesMetrics& metrics, const std::string& prefix)
 
 }// namespace NES
 
-#endif//NES_RUNTIMENESMETRICS_HPP
+#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_RUNTIME_NES_METRICS_HPP_

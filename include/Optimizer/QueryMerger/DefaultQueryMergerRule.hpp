@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DEFAULTQUERYMERGERRULE_HPP
-#define NES_DEFAULTQUERYMERGERRULE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_MERGER_DEFAULT_QUERY_MERGER_RULE_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_MERGER_DEFAULT_QUERY_MERGER_RULE_HPP_
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
@@ -41,4 +41,4 @@ class DefaultQueryMergerRule final : public BaseQueryMergerRule {
 };
 }// namespace NES::Optimizer
 
-#endif//NES_DEFAULTQUERYMERGERRULE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_MERGER_DEFAULT_QUERY_MERGER_RULE_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_LOGICALSOURCEEXPANSIONRULE_HPP
-#define NES_LOGICALSOURCEEXPANSIONRULE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_LOGICAL_SOURCE_EXPANSION_RULE_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_LOGICAL_SOURCE_EXPANSION_RULE_HPP_
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
@@ -111,4 +111,4 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
     std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>> getLogicalGraphToDuplicate(const OperatorNodePtr& operatorNode);
 };
 }// namespace NES::Optimizer
-#endif//NES_LOGICALSOURCEEXPANSIONRULE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_LOGICAL_SOURCE_EXPANSION_RULE_HPP_

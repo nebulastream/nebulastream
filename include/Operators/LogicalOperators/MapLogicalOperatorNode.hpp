@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef MAP_LOGICAL_OPERATOR_NODE_HPP
-#define MAP_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_MAP_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_MAP_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -55,4 +55,4 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
 
 }// namespace NES
 
-#endif// MAP_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_MAP_LOGICAL_OPERATOR_NODE_HPP_

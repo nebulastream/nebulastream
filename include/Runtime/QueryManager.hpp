@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_QUERY_MANAGER_HPP_
-#define INCLUDE_QUERY_MANAGER_HPP_
+#ifndef NES_INCLUDE_RUNTIME_QUERY_MANAGER_HPP_
+#define NES_INCLUDE_RUNTIME_QUERY_MANAGER_HPP_
 
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
@@ -302,4 +302,4 @@ using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 }// namespace Runtime
 }// namespace NES
-#endif /* INCLUDE_query manager_H_ */
+#endif  // NES_INCLUDE_RUNTIME_QUERY_MANAGER_HPP_

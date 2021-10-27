@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BINARYOPERATORSORTRULE_HPP
-#define NES_BINARYOPERATORSORTRULE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_BINARY_OPERATOR_SORT_RULE_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_BINARY_OPERATOR_SORT_RULE_HPP_
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
@@ -60,4 +60,4 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
 };
 }// namespace NES::Optimizer
 
-#endif//NES_BINARYOPERATORSORTRULE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_BINARY_OPERATOR_SORT_RULE_HPP_

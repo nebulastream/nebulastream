@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGOPTION_HPP
-#define NES_CONFIGOPTION_HPP
+#ifndef NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTION_HPP_
+#define NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTION_HPP_
 
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -122,4 +122,4 @@ class ConfigOption {
 };
 }// namespace NES
 
-#endif//NES_CONFIGOPTION_HPP
+#endif  // NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTION_HPP_

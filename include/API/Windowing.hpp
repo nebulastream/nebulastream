@@ -160,4 +160,4 @@ Windowing::TimeMeasure Days(uint64_t days);
 
 }// namespace NES::API
 
-#endif//NES_INCLUDE_API_WINDOWING_HPP_
+#endif  // NES_INCLUDE_API_WINDOWING_HPP_

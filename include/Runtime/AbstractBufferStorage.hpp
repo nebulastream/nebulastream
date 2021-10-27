@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ABSTRACTBUFFERSTORAGE_H
-#define NES_ABSTRACTBUFFERSTORAGE_H
+#ifndef NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_STORAGE_HPP_
+#define NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_STORAGE_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BufferSequenceNumber.hpp>
@@ -51,4 +51,4 @@ class AbstractBufferStorage {
     virtual size_t getStorageSize() const = 0;
 };
 }// namespace NES::Runtime
-#endif//NES_ABSTRACTBUFFERSTORAGE_H
+#endif  // NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_STORAGE_HPP_

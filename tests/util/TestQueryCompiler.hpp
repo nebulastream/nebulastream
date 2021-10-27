@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_TESTS_UTIL_TESTQUERYCOMPILER_HPP_
-#define NES_TESTS_UTIL_TESTQUERYCOMPILER_HPP_
+#ifndef NES_TESTS_UTIL_TEST_QUERY_COMPILER_HPP_
+#define NES_TESTS_UTIL_TEST_QUERY_COMPILER_HPP_
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -139,4 +139,4 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(QueryCompilati
 }// namespace TestUtils
 }// namespace NES
 
-#endif//NES_TESTS_UTIL_TESTQUERYCOMPILER_HPP_
+#endif  // NES_TESTS_UTIL_TEST_QUERY_COMPILER_HPP_

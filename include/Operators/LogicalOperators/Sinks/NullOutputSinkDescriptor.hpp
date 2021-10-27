@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_NullOutputSinkDescriptor_HPP_
-#define NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_NullOutputSinkDescriptor_HPP_
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_NULL_OUTPUT_SINK_DESCRIPTOR_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_NULL_OUTPUT_SINK_DESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
@@ -43,4 +43,4 @@ using NullOutputSinkDescriptorPtr = std::shared_ptr<NullOutputSinkDescriptor>;
 
 }// namespace NES
 
-#endif//NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_NullOutputSinkDescriptor_HPP_
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_NULL_OUTPUT_SINK_DESCRIPTOR_HPP_

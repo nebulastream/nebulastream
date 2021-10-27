@@ -17,8 +17,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <string>
 
-#ifndef NES_INCLUDE_SOURCES_PARSERS_INPUTPARSER_HPP_
-#define NES_INCLUDE_SOURCES_PARSERS_INPUTPARSER_HPP_
+#ifndef NES_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
+#define NES_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
 
 namespace NES {
 
@@ -63,4 +63,4 @@ class Parser {//: public Runtime::Reconfigurable
     std::vector<PhysicalTypePtr> physicalTypes;
 };
 }//namespace NES
-#endif//NES_INCLUDE_SOURCES_PARSERS_INPUTPARSER_HPP_
+#endif  // NES_INCLUDE_SOURCES_PARSERS_PARSER_HPP_

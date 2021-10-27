@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
-#define INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
+#ifndef NES_INCLUDE_API_ATTRIBUTE_FIELD_HPP_
+#define NES_INCLUDE_API_ATTRIBUTE_FIELD_HPP_
 
 #include <memory>
 #include <string>
@@ -65,4 +65,4 @@ class AttributeField {
 };
 
 }// namespace NES
-#endif//INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
+#endif  // NES_INCLUDE_API_ATTRIBUTE_FIELD_HPP_

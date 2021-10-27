@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_FORMATTYPE_HPP
-#define NES_FORMATTYPE_HPP
+#ifndef NES_INCLUDE_SINKS_FORMATS_FORMAT_TYPE_HPP_
+#define NES_INCLUDE_SINKS_FORMATS_FORMAT_TYPE_HPP_
 
 namespace NES {
 /**
@@ -24,4 +24,4 @@ namespace NES {
 enum FormatTypes { CSV_FORMAT, JSON_FORMAT, NES_FORMAT, TEXT_FORMAT };
 }// namespace NES
 
-#endif//NES_FORMATTYPE_HPP
+#endif  // NES_INCLUDE_SINKS_FORMATS_FORMAT_TYPE_HPP_

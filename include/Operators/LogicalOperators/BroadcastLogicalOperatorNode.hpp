@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef SPLIT_LOGICAL_OPERATOR_NODE_HPP
-#define SPLIT_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_BROADCAST_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_BROADCAST_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -39,4 +39,4 @@ class BroadcastLogicalOperatorNode : public ExchangeOperatorNode, public Logical
 };
 }// namespace NES
 
-#endif// SPLIT_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_BROADCAST_LOGICAL_OPERATOR_NODE_HPP_

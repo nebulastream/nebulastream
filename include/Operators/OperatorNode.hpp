@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_OPERATORS_OPERATORNODE_HPP_
-#define NES_INCLUDE_NODES_OPERATORS_OPERATORNODE_HPP_
+#ifndef NES_INCLUDE_OPERATORS_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_OPERATOR_NODE_HPP_
 
 #include <Nodes/Node.hpp>
 #include <Operators/OperatorId.hpp>
@@ -186,4 +186,4 @@ class OperatorNode : public Node {
 
 }// namespace NES
 
-#endif//NES_INCLUDE_NODES_OPERATORS_OPERATORNODE_HPP_
+#endif  // NES_INCLUDE_OPERATORS_OPERATOR_NODE_HPP_

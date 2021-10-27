@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef TOPDOWN_HPP
-#define TOPDOWN_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_TOP_DOWN_STRATEGY_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_TOP_DOWN_STRATEGY_HPP_
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <stack>
@@ -82,4 +82,4 @@ class TopDownStrategy : public BasePlacementStrategy {
 };
 
 }// namespace NES::Optimizer
-#endif//TOPDOWN_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_TOP_DOWN_STRATEGY_HPP_

@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_REST_CONTROLLER_UDF_CATALOG_CONTROLLER_HPP_
+#define NES_INCLUDE_REST_CONTROLLER_UDF_CATALOG_CONTROLLER_HPP_
 #include <REST/Controller/BaseController.hpp>
 #include <unordered_set>
 
@@ -75,3 +76,4 @@ class UdfCatalogController : public BaseController {
 };
 
 }// namespace NES
+#endif  // NES_INCLUDE_REST_CONTROLLER_UDF_CATALOG_CONTROLLER_HPP_

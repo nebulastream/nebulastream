@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NODE_ENGINE_H
-#define NODE_ENGINE_H
+#ifndef NES_INCLUDE_RUNTIME_NODE_ENGINE_HPP_
+#define NES_INCLUDE_RUNTIME_NODE_ENGINE_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
@@ -283,4 +283,4 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
 }// namespace NES::Runtime
-#endif// NODE_ENGINE_H
+#endif  // NES_INCLUDE_RUNTIME_NODE_ENGINE_HPP_

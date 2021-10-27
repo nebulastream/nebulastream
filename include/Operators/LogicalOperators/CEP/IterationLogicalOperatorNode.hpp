@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef ITERATION_LOGICAL_OPERATOR_NODE_HPP
-#define ITERATION_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_CE_P_ITERATION_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_CE_P_ITERATION_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -66,4 +66,4 @@ class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
 };
 
 }// namespace NES
-#endif//ITERATION_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_CE_P_ITERATION_LOGICAL_OPERATOR_NODE_HPP_

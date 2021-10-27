@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef RENAMESTREAM_LOGICAL_OPERATOR_NODE_HPP
-#define RENAMESTREAM_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_RENAME_STREAM_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_RENAME_STREAM_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -53,4 +53,4 @@ class RenameStreamOperatorNode : public LogicalUnaryOperatorNode {
 };
 
 }// namespace NES
-#endif// RENAMESTREAM_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_RENAME_STREAM_OPERATOR_NODE_HPP_

@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_
-#define NES_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_
+#ifndef NES_INCLUDE_COMPILER_CPP_COMPILER_CPP_COMPILER_HPP_
+#define NES_INCLUDE_COMPILER_CPP_COMPILER_CPP_COMPILER_HPP_
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <filesystem>
@@ -68,4 +68,4 @@ class CPPCompiler : public LanguageCompiler {
 
 }// namespace NES::Compiler
 
-#endif//NES_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_
+#endif  // NES_INCLUDE_COMPILER_CPP_COMPILER_CPP_COMPILER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TOPOLOGY_HPP
-#define NES_TOPOLOGY_HPP
+#ifndef NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
+#define NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
 
 #include <any>
 #include <map>
@@ -206,4 +206,4 @@ class Topology {
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
 };
 }// namespace NES
-#endif//NES_TOPOLOGY_HPP
+#endif  // NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_

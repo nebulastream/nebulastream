@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_JOIN_WINDOW_HPP_
-#define INCLUDE_JOIN_WINDOW_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_HANDLER_ABSTRACT_JOIN_HANDLER_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_HANDLER_ABSTRACT_JOIN_HANDLER_HPP_
 
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -149,4 +149,4 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
 };
 
 }// namespace NES::Join
-#endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_HANDLER_ABSTRACT_JOIN_HANDLER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SRC_GRPC_CALLDATA_HPP_
-#define NES_SRC_GRPC_CALLDATA_HPP_
+#ifndef NES_INCLUDE_GRPC_CALL_DATA_HPP_
+#define NES_INCLUDE_GRPC_CALL_DATA_HPP_
 
 namespace grpc {
 class ServerCompletionQueue;
@@ -57,4 +57,4 @@ class CallData {
 };
 
 }// namespace NES
-#endif//NES_SRC_GRPC_CALLDATA_HPP_
+#endif  // NES_INCLUDE_GRPC_CALL_DATA_HPP_

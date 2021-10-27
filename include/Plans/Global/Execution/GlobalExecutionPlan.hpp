@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_GLOBALEXECUTIONPLAN_HPP
-#define NES_GLOBALEXECUTIONPLAN_HPP
+#ifndef NES_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBAL_EXECUTION_PLAN_HPP_
+#define NES_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBAL_EXECUTION_PLAN_HPP_
 
 #include <Plans/Query/QueryId.hpp>
 #include <cpprest/json.h>
@@ -172,4 +172,4 @@ class GlobalExecutionPlan {
 
 }// namespace NES
 
-#endif//NES_GLOBALEXECUTIONPLAN_HPP
+#endif  // NES_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBAL_EXECUTION_PLAN_HPP_

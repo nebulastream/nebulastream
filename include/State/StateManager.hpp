@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef STATEMANAGER_HPP
-#define STATEMANAGER_HPP
+#ifndef NES_INCLUDE_STATE_STATE_MANAGER_HPP_
+#define NES_INCLUDE_STATE_STATE_MANAGER_HPP_
 
 #include <State/StateId.hpp>
 #include <State/StateVariable.hpp>
@@ -130,4 +130,4 @@ class StateManager {
 };
 }// namespace Runtime
 }// namespace NES
-#endif//STATEMANAGER_HPP
+#endif  // NES_INCLUDE_STATE_STATE_MANAGER_HPP_

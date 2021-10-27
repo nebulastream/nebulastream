@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef IMPL_REST_RESTSERVER_H_
-#define IMPL_REST_RESTSERVER_H_
+#ifndef NES_INCLUDE_REST_REST_SERVER_HPP_
+#define NES_INCLUDE_REST_REST_SERVER_HPP_
 
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
@@ -101,4 +101,4 @@ class RestServer {
 };
 }// namespace NES
 
-#endif//IMPL_REST_RESTSERVER_H_
+#endif  // NES_INCLUDE_REST_REST_SERVER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DistributeJoinRule_HPP
-#define NES_DistributeJoinRule_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_DISTRIBUTE_JOIN_RULE_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_DISTRIBUTE_JOIN_RULE_HPP_
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
@@ -55,4 +55,4 @@ class DistributeJoinRule : public BaseRewriteRule {
     explicit DistributeJoinRule();
 };
 }// namespace NES::Optimizer
-#endif//NES_DistributeJoinRule_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_DISTRIBUTE_JOIN_RULE_HPP_

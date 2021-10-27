@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+#ifndef NES_INCLUDE_GRPC_COORDINATOR_RPC_SERVER_HPP_
+#define NES_INCLUDE_GRPC_COORDINATOR_RPC_SERVER_HPP_
+
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
@@ -134,3 +137,5 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     MonitoringManagerPtr monitoringManager;
 };
 }// namespace NES
+
+#endif  // NES_INCLUDE_GRPC_COORDINATOR_RPC_SERVER_HPP_

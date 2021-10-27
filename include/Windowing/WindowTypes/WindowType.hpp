@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWTYPE_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWTYPE_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_TYPES_WINDOW_TYPE_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_TYPES_WINDOW_TYPE_HPP_
 
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <vector>
@@ -91,4 +91,4 @@ class WindowType {
 
 }// namespace NES::Windowing
 
-#endif//NES_INCLUDE_WINDOWING_WINDOWTYPES_WINDOWTYPE_HPP_
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_TYPES_WINDOW_TYPE_HPP_

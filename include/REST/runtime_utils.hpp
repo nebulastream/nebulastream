@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_REST_RUNTIME_UTILS_HPP_
+#define NES_INCLUDE_REST_RUNTIME_UTILS_HPP_
 
 #include <execinfo.h>
 #include <unistd.h>
@@ -36,3 +37,4 @@ class RuntimeUtils {
     }
 };
 }// namespace NES
+#endif  // NES_INCLUDE_REST_RUNTIME_UTILS_HPP_

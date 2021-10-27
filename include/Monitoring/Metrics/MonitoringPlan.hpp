@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICS_MONITORINGPLAN_HPP_
-#define NES_INCLUDE_MONITORING_METRICS_MONITORINGPLAN_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_
+#define NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_
 
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -118,4 +118,4 @@ using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
 }// namespace NES
 
-#endif//NES_INCLUDE_MONITORING_METRICS_MONITORINGPLAN_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_

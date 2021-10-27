@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYMERGERPHASE_HPP
-#define NES_QUERYMERGERPHASE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_PHASES_QUERY_MERGER_PHASE_HPP_
+#define NES_INCLUDE_OPTIMIZER_PHASES_QUERY_MERGER_PHASE_HPP_
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <iostream>
@@ -76,4 +76,4 @@ class QueryMergerPhase {
     BaseQueryMergerRulePtr queryMergerRule;
 };
 }// namespace NES::Optimizer
-#endif//NES_QUERYMERGERPHASE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_PHASES_QUERY_MERGER_PHASE_HPP_

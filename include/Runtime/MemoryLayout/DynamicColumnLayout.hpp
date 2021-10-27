@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DYNAMICCOLUMNLAYOUT_HPP
-#define NES_DYNAMICCOLUMNLAYOUT_HPP
+#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_HPP_
 
 #include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -63,4 +63,4 @@ class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_share
 
 }// namespace NES::Runtime::DynamicMemoryLayout
 
-#endif//NES_DYNAMICCOLUMNLAYOUT_HPP
+#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_HPP_

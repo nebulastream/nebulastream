@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef SHARED_LIBRARY_HPP
-#define SHARED_LIBRARY_HPP
+#ifndef NES_INCLUDE_UTIL_SHARED_LIBRARY_HPP_
+#define NES_INCLUDE_UTIL_SHARED_LIBRARY_HPP_
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
@@ -50,4 +50,4 @@ class SharedLibrary {
 
 #pragma GCC diagnostic pop
 
-#endif /* SHARED_LIBRARY_HPP */
+#endif  // NES_INCLUDE_UTIL_SHARED_LIBRARY_HPP_

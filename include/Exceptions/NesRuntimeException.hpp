@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SRC_EXCEPTIONS_NESLOGICEXCEPTION_HPP_
-#define NES_SRC_EXCEPTIONS_NESLOGICEXCEPTION_HPP_
+#ifndef NES_INCLUDE_EXCEPTIONS_NES_RUNTIME_EXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_NES_RUNTIME_EXCEPTION_HPP_
 
 #include <exception>
 #include <stdexcept>
@@ -60,4 +60,4 @@ class NesRuntimeException : virtual public std::exception {
 
 }// namespace NES
 
-#endif//NES_SRC_EXCEPTIONS_NESLOGICEXCEPTION_HPP_
+#endif  // NES_INCLUDE_EXCEPTIONS_NES_RUNTIME_EXCEPTION_HPP_

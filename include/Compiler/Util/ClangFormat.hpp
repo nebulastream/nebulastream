@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_UTIL_FORMATER_HPP_
-#define NES_INCLUDE_COMPILER_UTIL_FORMATER_HPP_
+#ifndef NES_INCLUDE_COMPILER_UTIL_CLANG_FORMAT_HPP_
+#define NES_INCLUDE_COMPILER_UTIL_CLANG_FORMAT_HPP_
 #include <Compiler/Util/File.hpp>
 #include <mutex>
 
@@ -43,4 +43,4 @@ class ClangFormat {
 
 }// namespace NES::Compiler
 
-#endif//NES_INCLUDE_COMPILER_UTIL_FORMATER_HPP_
+#endif  // NES_INCLUDE_COMPILER_UTIL_CLANG_FORMAT_HPP_

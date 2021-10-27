@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DYNAMICROWLAYOUT_HPP
-#define NES_DYNAMICROWLAYOUT_HPP
+#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_HPP_
 
 #include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -69,4 +69,4 @@ class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_f
 
 }// namespace NES::Runtime::DynamicMemoryLayout
 
-#endif//NES_DYNAMICROWLAYOUT_HPP
+#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_HPP_

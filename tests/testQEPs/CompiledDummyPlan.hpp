@@ -21,8 +21,9 @@
  *      Author: zeuchste
  */
 
-#ifndef TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
-#define TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
+#ifndef NES_TESTS_TEST_QEPS_COMPILED_DUMMY_PLAN_HPP_
+#define NES_TESTS_TEST_QEPS_COMPILED_DUMMY_PLAN_HPP_
+
 #include <API/InputQuery.hpp>
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -44,4 +45,5 @@ class CompiledDummyPlan : public HandCodedQueryExecutionPlan {
 typedef std::shared_ptr<CompiledDummyPlan> CompiledDummyPlanPtr;
 
 };     // namespace NES
-#endif /* TESTS_TESTPLANS_COMPILEDTESTPLAN_HPP_ */
+
+#endif  // NES_TESTS_TEST_QEPS_COMPILED_DUMMY_PLAN_HPP_

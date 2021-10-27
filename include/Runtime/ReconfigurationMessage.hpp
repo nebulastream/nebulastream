@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_
-#define NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_
+#ifndef NES_INCLUDE_RUNTIME_RECONFIGURATION_MESSAGE_HPP_
+#define NES_INCLUDE_RUNTIME_RECONFIGURATION_MESSAGE_HPP_
 
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -183,4 +183,4 @@ class ReconfigurationMessage {
     std::any userdata;
 };
 }// namespace NES::Runtime
-#endif//NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_
+#endif  // NES_INCLUDE_RUNTIME_RECONFIGURATION_MESSAGE_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_TESTS_UTIL_TESTSINK_HPP_
-#define NES_TESTS_UTIL_TESTSINK_HPP_
+#ifndef NES_TESTS_UTIL_TEST_SINK_HPP_
+#define NES_TESTS_UTIL_TEST_SINK_HPP_
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
@@ -96,4 +96,4 @@ class TestSink : public SinkMedium {
 
 }// namespace NES
 
-#endif//NES_TESTS_UTIL_TESTSINK_HPP_
+#endif  // NES_TESTS_UTIL_TEST_SINK_HPP_

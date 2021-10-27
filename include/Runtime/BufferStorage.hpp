@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BUFFERSTORAGE_H
-#define NES_BUFFERSTORAGE_H
+#ifndef NES_INCLUDE_RUNTIME_BUFFER_STORAGE_HPP_
+#define NES_INCLUDE_RUNTIME_BUFFER_STORAGE_HPP_
 
 #include <Runtime/AbstractBufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -84,4 +84,4 @@ using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
 }// namespace NES::Runtime
 
-#endif//NES_BUFFERSTORAGE_H
+#endif  // NES_INCLUDE_RUNTIME_BUFFER_STORAGE_HPP_

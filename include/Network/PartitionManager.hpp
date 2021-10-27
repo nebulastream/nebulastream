@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PARTITIONMANAGER_HPP
-#define NES_PARTITIONMANAGER_HPP
+#ifndef NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_
+#define NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_
 
 #include <Network/NesPartition.hpp>
 #include <map>
@@ -134,4 +134,4 @@ using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
 }// namespace Network
 }// namespace NES
 
-#endif//NES_PARTITIONMANAGER_HPP
+#endif  // NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_

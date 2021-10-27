@@ -29,7 +29,8 @@ http://yaml.org/spec/1.0/index.html
 https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 */
 
-#pragma once
+#ifndef NES_INCLUDE_UTIL_YAML_YAML_HPP_
+#define NES_INCLUDE_UTIL_YAML_YAML_HPP_
 
 #include <algorithm>
 #include <exception>
@@ -572,3 +573,4 @@ void Serialize(Node const& root, std::iostream& stream, SerializeConfig const& c
 void Serialize(Node const& root, std::string& string, SerializeConfig const& config);
 
 }// namespace Yaml
+#endif  // NES_INCLUDE_UTIL_YAML_YAML_HPP_

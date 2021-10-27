@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_RESTARTQUERYREQUEST_HPP
-#define NES_RESTARTQUERYREQUEST_HPP
+#ifndef NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RESTART_QUERY_REQUEST_HPP_
+#define NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RESTART_QUERY_REQUEST_HPP_
 
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 
@@ -45,4 +45,4 @@ class RestartQueryRequest : public NESRequest {
     explicit RestartQueryRequest(QueryId queryId);
 };
 }// namespace NES
-#endif//NES_RESTARTQUERYREQUEST_HPP
+#endif  // NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RESTART_QUERY_REQUEST_HPP_

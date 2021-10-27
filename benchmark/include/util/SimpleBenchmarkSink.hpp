@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_
-#define NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_
+#ifndef NES_BENCHMARK_INCLUDE_UTIL_SIMPLE_BENCHMARK_SINK_HPP_
+#define NES_BENCHMARK_INCLUDE_UTIL_SIMPLE_BENCHMARK_SINK_HPP_
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -192,4 +192,4 @@ class SimpleBenchmarkSink : public SinkMedium {
 };
 }// namespace NES::Benchmarking
 
-#endif//NES_BENCHMARK_INCLUDE_UTIL_SIMPLEBENCHMARKSINK_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_UTIL_SIMPLE_BENCHMARK_SINK_HPP_

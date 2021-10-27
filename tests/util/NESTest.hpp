@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_TESTS_UTIL_NESTEST_HPP_
-#define NES_TESTS_UTIL_NESTEST_HPP_
+#ifndef NES_TESTS_UTIL_NES_TEST_HPP_
+#define NES_TESTS_UTIL_NES_TEST_HPP_
 #include <gtest/gtest.h>
 #include <typeinfo>
 #define ASSERT_INSTANCE_OF(node, instance)                                                                                       \
@@ -22,4 +22,4 @@
         auto message = (node)->toString() + " is not of instance " + std::string(typeid(instance).name());                       \
         GTEST_FATAL_FAILURE_(message.c_str());                                                                                   \
     }
-#endif//NES_TESTS_UTIL_NESTEST_HPP_
+#endif  // NES_TESTS_UTIL_NES_TEST_HPP_

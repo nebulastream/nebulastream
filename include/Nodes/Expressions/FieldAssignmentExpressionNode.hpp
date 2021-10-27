@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FIELDASSIGNMENTEXPRESSION_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_FIELDASSIGNMENTEXPRESSION_HPP_
+#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FIELD_ASSIGNMENT_EXPRESSION_NODE_HPP_
+#define NES_INCLUDE_NODES_EXPRESSIONS_FIELD_ASSIGNMENT_EXPRESSION_NODE_HPP_
 #include <Nodes/Expressions/BinaryExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
@@ -63,4 +63,4 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
 };
 }// namespace NES
 
-#endif// NES_INCLUDE_NODES_EXPRESSIONS_FIELDASSIGNMENTEXPRESSION_HPP_
+#endif  // NES_INCLUDE_NODES_EXPRESSIONS_FIELD_ASSIGNMENT_EXPRESSION_NODE_HPP_

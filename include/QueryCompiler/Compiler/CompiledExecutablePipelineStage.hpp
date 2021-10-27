@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
+#ifndef NES_INCLUDE_QUERY_COMPILER_COMPILER_COMPILED_EXECUTABLE_PIPELINE_STAGE_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_COMPILER_COMPILED_EXECUTABLE_PIPELINE_STAGE_HPP_
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/ExecutionResult.hpp>
@@ -74,4 +74,4 @@ class CompiledExecutablePipelineStage : public Runtime::Execution::ExecutablePip
 
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
+#endif  // NES_INCLUDE_QUERY_COMPILER_COMPILER_COMPILED_EXECUTABLE_PIPELINE_STAGE_HPP_

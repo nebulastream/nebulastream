@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OUTPUTCHANNEL_HPP
-#define NES_OUTPUTCHANNEL_HPP
+#ifndef NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_
+#define NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_
 
 #include <Network/NetworkMessage.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -95,4 +95,4 @@ class OutputChannel {
 }// namespace Network
 }// namespace NES
 
-#endif//NES_OUTPUTCHANNEL_HPP
+#endif  // NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_

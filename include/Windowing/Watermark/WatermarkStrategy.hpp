@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_WATERMARKSTRATEGY_HPP
-#define NES_WATERMARKSTRATEGY_HPP
+#ifndef NES_INCLUDE_WINDOWING_WATERMARK_WATERMARK_STRATEGY_HPP_
+#define NES_INCLUDE_WINDOWING_WATERMARK_WATERMARK_STRATEGY_HPP_
 
 #include <Windowing/WindowingForwardRefs.hpp>
 
@@ -40,4 +40,4 @@ class WatermarkStrategy : public std::enable_shared_from_this<WatermarkStrategy>
     }
 };
 }// namespace NES::Windowing
-#endif//NES_WATERMARKSTRATEGY_HPP
+#endif  // NES_INCLUDE_WINDOWING_WATERMARK_WATERMARK_STRATEGY_HPP_

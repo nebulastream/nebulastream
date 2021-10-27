@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
-#define NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_WATERMARK_ASSIGNER_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_WATERMARK_ASSIGNER_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
@@ -54,4 +54,4 @@ using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssigne
 
 }// namespace NES
 
-#endif//NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_WATERMARK_ASSIGNER_LOGICAL_OPERATOR_NODE_HPP_

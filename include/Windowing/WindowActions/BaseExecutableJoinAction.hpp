@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_BASE_EXECUTABLE_JOIN_ACTION_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_BASE_EXECUTABLE_JOIN_ACTION_HPP_
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <State/StateVariable.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
@@ -63,4 +63,4 @@ class BaseExecutableJoinAction {
 };
 }// namespace NES::Join
 
-#endif//NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEJOIN_HPP_
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_BASE_EXECUTABLE_JOIN_ACTION_HPP_

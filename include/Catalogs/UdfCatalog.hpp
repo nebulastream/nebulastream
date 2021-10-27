@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_CATALOGS_UDF_CATALOG_HPP_
+#define NES_INCLUDE_CATALOGS_UDF_CATALOG_HPP_
 
 #include <string>
 #include <unordered_map>
@@ -81,3 +82,4 @@ class UdfCatalog {
 };
 
 }// namespace NES::Catalogs
+#endif  // NES_INCLUDE_CATALOGS_UDF_CATALOG_HPP_

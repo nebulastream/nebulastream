@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_STATEMENTS_BINARY_OPERATOR_STATEMENT_HPP_
+#define NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_STATEMENTS_BINARY_OPERATOR_STATEMENT_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
@@ -99,3 +100,4 @@ BinaryOperatorStatement operator<<(const ExpressionStatement& lhs, const Express
 BinaryOperatorStatement operator>>(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
 }// namespace NES::QueryCompilation
+#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_STATEMENTS_BINARY_OPERATOR_STATEMENT_HPP_

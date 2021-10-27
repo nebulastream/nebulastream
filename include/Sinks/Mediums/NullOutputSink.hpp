@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NullOutputSink_HPP
-#define NullOutputSink_HPP
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_NULL_OUTPUT_SINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_NULL_OUTPUT_SINK_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -81,4 +81,4 @@ class NullOutputSink : public SinkMedium {
 using NullOutputSinkPtr = std::shared_ptr<NullOutputSink>;
 }// namespace NES
 
-#endif// NullOutputSink_HPP
+#endif  // NES_INCLUDE_SINKS_MEDIUMS_NULL_OUTPUT_SINK_HPP_

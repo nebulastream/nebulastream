@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SRC_API_WINDOWEDQUERY_H_
-#define NES_SRC_API_WINDOWEDQUERY_H_
+#ifndef NES_INCLUDE_API_WINDOWED_QUERY_HPP_
+#define NES_INCLUDE_API_WINDOWED_QUERY_HPP_
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -91,4 +91,4 @@ class KeyedWindowedQuery {
 }// namespace WindowOperatorBuilder
 }// namespace NES
 
-#endif//NES_SRC_API_WINDOWEDQUERY_H_
+#endif  // NES_INCLUDE_API_WINDOWED_QUERY_HPP_

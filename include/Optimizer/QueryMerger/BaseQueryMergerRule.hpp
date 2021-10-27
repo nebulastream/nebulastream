@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BASEQUERYMERGERRULE_HPP
-#define NES_BASEQUERYMERGERRULE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERY_MERGER_BASE_QUERY_MERGER_RULE_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERY_MERGER_BASE_QUERY_MERGER_RULE_HPP_
 
 #include <memory>
 
@@ -42,4 +42,4 @@ class BaseQueryMergerRule {
 };
 using BaseQueryMergerRulePtr = std::shared_ptr<BaseQueryMergerRule>;
 }// namespace NES::Optimizer
-#endif//NES_BASEQUERYMERGERRULE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_QUERY_MERGER_BASE_QUERY_MERGER_RULE_HPP_

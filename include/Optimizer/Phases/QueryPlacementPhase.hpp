@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYPLACEMENTPHASE_HPP
-#define NES_QUERYPLACEMENTPHASE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_PHASES_QUERY_PLACEMENT_PHASE_HPP_
+#define NES_INCLUDE_OPTIMIZER_PHASES_QUERY_PLACEMENT_PHASE_HPP_
 
 #include <memory>
 
@@ -89,4 +89,4 @@ class QueryPlacementPhase {
     z3::ContextPtr z3Context;
 };
 }// namespace NES::Optimizer
-#endif//NES_QUERYPLACEMENTPHASE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_PHASES_QUERY_PLACEMENT_PHASE_HPP_

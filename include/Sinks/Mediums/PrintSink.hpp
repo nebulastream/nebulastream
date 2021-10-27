@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef PRINTSINK_HPP
-#define PRINTSINK_HPP
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_PRINT_SINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_PRINT_SINK_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -82,4 +82,4 @@ class PrintSink : public SinkMedium {
 using PrintSinkPtr = std::shared_ptr<PrintSink>;
 }// namespace NES
 
-#endif// PRINTSINK_HPP
+#endif  // NES_INCLUDE_SINKS_MEDIUMS_PRINT_SINK_HPP_

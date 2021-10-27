@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_EXECUTION_DATAEMITTER_HPP_
-#define NES_INCLUDE_NODEENGINE_EXECUTION_DATAEMITTER_HPP_
+#ifndef NES_INCLUDE_RUNTIME_EXECUTION_DATA_EMITTER_HPP_
+#define NES_INCLUDE_RUNTIME_EXECUTION_DATA_EMITTER_HPP_
 #include <Util/VirtualEnableSharedFromThis.hpp>
 namespace NES {
 namespace Runtime {
@@ -36,4 +36,4 @@ class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter, 
     virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
 };
 }// namespace NES
-#endif//NES_INCLUDE_NODEENGINE_EXECUTION_DATAEMITTER_HPP_
+#endif  // NES_INCLUDE_RUNTIME_EXECUTION_DATA_EMITTER_HPP_

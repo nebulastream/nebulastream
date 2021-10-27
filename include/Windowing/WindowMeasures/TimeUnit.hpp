@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOWMEASURES_TIMEUNIT_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOWMEASURES_TIMEUNIT_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_MEASURES_TIME_UNIT_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_MEASURES_TIME_UNIT_HPP_
 #include <Windowing/WindowMeasures/WindowMeasure.hpp>
 #include <cstdint>
 namespace NES::Windowing {
@@ -41,4 +41,4 @@ class TimeUnit : public WindowMeasure {
 
 }// namespace NES::Windowing
 
-#endif//NES_INCLUDE_WINDOWING_WINDOWMEASURES_TIMEUNIT_HPP_
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_MEASURES_TIME_UNIT_HPP_

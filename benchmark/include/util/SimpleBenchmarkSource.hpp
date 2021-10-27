@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
-#define NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
+#ifndef NES_BENCHMARK_INCLUDE_UTIL_SIMPLE_BENCHMARK_SOURCE_HPP_
+#define NES_BENCHMARK_INCLUDE_UTIL_SIMPLE_BENCHMARK_SOURCE_HPP_
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -275,4 +275,4 @@ class SimpleBenchmarkSource : public DataSource {
 };
 }// namespace NES::Benchmarking
 
-#endif//NES_BENCHMARK_SRC_UTIL_BENCHMARKSOURCE_HPP_
+#endif  // NES_BENCHMARK_INCLUDE_UTIL_SIMPLE_BENCHMARK_SOURCE_HPP_

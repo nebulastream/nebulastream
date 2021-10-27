@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYPLACEMENTEXCEPTION_HPP
-#define NES_QUERYPLACEMENTEXCEPTION_HPP
+#ifndef NES_INCLUDE_EXCEPTIONS_QUERY_PLACEMENT_EXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_QUERY_PLACEMENT_EXCEPTION_HPP_
 
 #include <Plans/Global/Query/SharedQueryId.hpp>
 #include <stdexcept>
@@ -37,4 +37,4 @@ class QueryPlacementException : public std::runtime_error {
     SharedQueryId sharedQueryId;
 };
 }// namespace NES
-#endif//NES_QUERYPLACEMENTEXCEPTION_HPP
+#endif  // NES_INCLUDE_EXCEPTIONS_QUERY_PLACEMENT_EXCEPTION_HPP_

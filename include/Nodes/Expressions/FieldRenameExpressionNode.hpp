@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FieldRenameExpressionNode_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_FieldRenameExpressionNode_HPP_
+#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FIELD_RENAME_EXPRESSION_NODE_HPP_
+#define NES_INCLUDE_NODES_EXPRESSIONS_FIELD_RENAME_EXPRESSION_NODE_HPP_
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
@@ -67,4 +67,4 @@ using FieldRenameExpressionNodePtr = std::shared_ptr<FieldRenameExpressionNode>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_NODES_EXPRESSIONS_FieldRenameExpressionNode_HPP_
+#endif  // NES_INCLUDE_NODES_EXPRESSIONS_FIELD_RENAME_EXPRESSION_NODE_HPP_

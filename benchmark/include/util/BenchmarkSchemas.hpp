@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_BENCHMARKSCHEMAS_HPP
-#define NES_BENCHMARKSCHEMAS_HPP
+#ifndef NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_SCHEMAS_HPP_
+#define NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_SCHEMAS_HPP_
 
 #include <API/Schema.hpp>
 #include <vector>
@@ -75,4 +75,4 @@ class BenchmarkSchemas {
     }
 };
 }// namespace NES::Benchmarking
-#endif//NES_BENCHMARKSCHEMAS_HPP
+#endif  // NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_SCHEMAS_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_FORMATITERATORS_SINKFORMATITERATOR_HPP_
-#define NES_INCLUDE_NODEENGINE_FORMATITERATORS_SINKFORMATITERATOR_HPP_
+#ifndef NES_INCLUDE_SINKS_FORMATS_FORMAT_ITERATORS_FORMAT_ITERATOR_HPP_
+#define NES_INCLUDE_SINKS_FORMATS_FORMAT_ITERATORS_FORMAT_ITERATOR_HPP_
 #include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -167,4 +167,4 @@ class FormatIterator {
     FormatTypes sinkFormatType;
 };
 }// namespace NES
-#endif//NES_INCLUDE_NODEENGINE_FORMATITERATORS_SINKFORMATITERATOR_HPP_
+#endif  // NES_INCLUDE_SINKS_FORMATS_FORMAT_ITERATORS_FORMAT_ITERATOR_HPP_

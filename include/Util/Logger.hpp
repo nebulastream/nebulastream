@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_UTIL_LOGGER_HPP_
-#define INCLUDE_UTIL_LOGGER_HPP_
+#ifndef NES_INCLUDE_UTIL_LOGGER_HPP_
+#define NES_INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
 #include <Exceptions/NesRuntimeException.hpp>
 #include <Runtime/ErrorListener.hpp>
@@ -458,4 +458,4 @@ DISABLE_WARNING_UNREFERENCED_FUNCTION
 
 }// namespace NES
 
-#endif /* INCLUDE_UTIL_LOGGER_HPP_ */
+#endif  // NES_INCLUDE_UTIL_LOGGER_HPP_

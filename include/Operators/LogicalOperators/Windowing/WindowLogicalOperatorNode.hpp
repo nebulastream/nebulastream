@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef WINDOW_LOGICAL_OPERATOR_NODE_HPP
-#define WINDOW_LOGICAL_OPERATOR_NODE_HPP
+#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_WINDOWING_WINDOW_LOGICAL_OPERATOR_NODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_WINDOWING_WINDOW_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
@@ -34,4 +34,4 @@ class WindowLogicalOperatorNode : public WindowOperatorNode {
 };
 
 }// namespace NES
-#endif// WINDOW_LOGICAL_OPERATOR_NODE_HPP
+#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_WINDOWING_WINDOW_LOGICAL_OPERATOR_NODE_HPP_

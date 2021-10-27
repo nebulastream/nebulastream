@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DYNAMICMEMORYLAYOUT_HPP
-#define NES_DYNAMICMEMORYLAYOUT_HPP
+#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_
 
 #include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -76,4 +76,4 @@ class DynamicMemoryLayout {
 };
 
 }// namespace NES::Runtime::DynamicMemoryLayout
-#endif//NES_DYNAMICMEMORYLAYOUT_HPP
+#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PLANJSONGENERATOR_HPP
-#define NES_PLANJSONGENERATOR_HPP
+#ifndef NES_INCLUDE_PLANS_UTILS_PLAN_JSON_GENERATOR_HPP_
+#define NES_INCLUDE_PLANS_UTILS_PLAN_JSON_GENERATOR_HPP_
 
 #include <Plans/Query/QueryId.hpp>
 #include <cpprest/json.h>
@@ -71,4 +71,4 @@ class PlanJsonGenerator {
     static std::string getOperatorType(const OperatorNodePtr& operatorNode);
 };
 }// namespace NES
-#endif//NES_PLANJSONGENERATOR_HPP
+#endif  // NES_INCLUDE_PLANS_UTILS_PLAN_JSON_GENERATOR_HPP_

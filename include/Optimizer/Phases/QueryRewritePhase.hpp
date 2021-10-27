@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYREWRITEPHASE_HPP
-#define NES_QUERYREWRITEPHASE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_PHASES_QUERY_REWRITE_PHASE_HPP_
+#define NES_INCLUDE_OPTIMIZER_PHASES_QUERY_REWRITE_PHASE_HPP_
 
 #include <memory>
 
@@ -69,4 +69,4 @@ class QueryRewritePhase {
     BinaryOperatorSortRulePtr binaryOperatorSortRule;
 };
 }// namespace NES::Optimizer
-#endif//NES_QUERYREWRITEPHASE_HPP
+#endif  // NES_INCLUDE_OPTIMIZER_PHASES_QUERY_REWRITE_PHASE_HPP_

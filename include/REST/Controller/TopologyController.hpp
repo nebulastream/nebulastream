@@ -14,7 +14,8 @@
     limitations under the License.
 */
 
-#pragma once
+#ifndef NES_INCLUDE_REST_CONTROLLER_TOPOLOGY_CONTROLLER_HPP_
+#define NES_INCLUDE_REST_CONTROLLER_TOPOLOGY_CONTROLLER_HPP_
 
 #include <REST/Controller/BaseController.hpp>
 #include <REST/RestEngine.hpp>
@@ -56,3 +57,4 @@ class TopologyController : public BaseController {
 
 using TopologyControllerPtr = std::shared_ptr<TopologyController>;
 }// namespace NES
+#endif  // NES_INCLUDE_REST_CONTROLLER_TOPOLOGY_CONTROLLER_HPP_

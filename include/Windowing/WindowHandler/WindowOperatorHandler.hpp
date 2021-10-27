@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WINDOW_HANDLER_WINDOW_OPERATOR_HANDLER_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOW_HANDLER_WINDOW_OPERATOR_HANDLER_HPP_
 
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -111,4 +111,4 @@ class WindowOperatorHandler : public Runtime::Execution::OperatorHandler {
 
 }// namespace NES::Windowing
 
-#endif//NES_INCLUDE_WINDOWING_WINDOWHANDLER_WINDOWOPERATORHANDLER_HPP_
+#endif  // NES_INCLUDE_WINDOWING_WINDOW_HANDLER_WINDOW_OPERATOR_HANDLER_HPP_

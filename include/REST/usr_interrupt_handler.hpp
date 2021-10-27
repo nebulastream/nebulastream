@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+#ifndef NES_INCLUDE_REST_USR_INTERRUPT_HANDLER_HPP_
+#define NES_INCLUDE_REST_USR_INTERRUPT_HANDLER_HPP_
+
 #include <condition_variable>
 #include <csignal>
 #include <iostream>
@@ -46,3 +49,5 @@ class InterruptHandler {
     }
 };
 }// namespace NES
+
+#endif  // NES_INCLUDE_REST_USR_INTERRUPT_HANDLER_HPP_

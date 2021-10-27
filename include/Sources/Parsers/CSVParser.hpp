@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
-#define NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+#ifndef NES_INCLUDE_SOURCES_PARSERS_CSV_PARSER_HPP_
+#define NES_INCLUDE_SOURCES_PARSERS_CSV_PARSER_HPP_
 
 #include <Sources/Parsers/Parser.hpp>
 
@@ -46,5 +46,5 @@ class CSVParser : public Parser {
     std::vector<NES::PhysicalTypePtr> physicalTypes;
     std::string delimiter;
 };
-#endif//NES_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
 }// namespace NES
+#endif  // NES_INCLUDE_SOURCES_PARSERS_CSV_PARSER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SRC_SERVICES_STREAMCATALOGSERVICE_H_
-#define NES_SRC_SERVICES_STREAMCATALOGSERVICE_H_
+#ifndef NES_INCLUDE_SERVICES_STREAM_CATALOG_SERVICE_HPP_
+#define NES_INCLUDE_SERVICES_STREAM_CATALOG_SERVICE_HPP_
 
 #include <memory>
 #include <mutex>
@@ -84,4 +84,4 @@ class StreamCatalogService {
 };
 using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
 }// namespace NES
-#endif//NES_SRC_SERVICES_STREAMCATALOGSERVICE_H_
+#endif  // NES_INCLUDE_SERVICES_STREAM_CATALOG_SERVICE_HPP_
