@@ -21,6 +21,8 @@
 #include <Util/BufferSequenceNumber.hpp>
 #include <mutex>
 #include <unordered_map>
+#include <memory>
+
 namespace NES::Runtime {
 
 /**
