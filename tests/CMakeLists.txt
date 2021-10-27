@@ -171,6 +171,11 @@ add_executable(buffer-storage-tests "UnitTests/Runtime/BufferStorageTest.cpp")
 target_link_libraries(buffer-storage-tests nes ${GTEST_LIBRARIES})
 add_test(NAME buffer-storage-tests COMMAND buffer-storage-tests)
 
+### Lineage Manager Test ###
+add_executable(lineage-manager-tests "UnitTests/Runtime/LineageManagerTest.cpp")
+target_link_libraries(lineage-manager-tests nes ${GTEST_LIBRARIES})
+add_test(NAME lineage-manager-tests COMMAND lineage-manager-tests)
+
 ### Buffer Manager Test ###
 add_executable(buffer-manager-tests "UnitTests/Runtime/BufferManagerTest.cpp")
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})

@@ -37,7 +37,7 @@ class BufferStorageTest : public testing::Test {
 };
 
 /**
-     * @brief test inserts five buffers to different queues and checks after every insertion that queue
+     * @brief test inserts buffers to different queues and checks after every insertion that queue
      * size increased on one. After the insertion is fully done the site of the buffer storage is checked to be five
 */
 TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
@@ -134,7 +134,7 @@ TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
 }
 
 /**
-     * @brief test inserts five buffers in different queues concurrently.
+     * @brief test inserts buffers in different queues concurrently.
 */
 TEST_F(BufferStorageTest, multithreadInsertionInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();

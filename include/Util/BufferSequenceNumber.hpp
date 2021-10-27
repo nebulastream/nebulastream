@@ -14,10 +14,11 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_BUFFER_SEQUENCE_NUMBER_HPP_
-#define NES_INCLUDE_UTIL_BUFFER_SEQUENCE_NUMBER_HPP_
+#ifndef NES_BUFFERSEQUENCENUMBER_HPP
+#define NES_BUFFERSEQUENCENUMBER_HPP
 
 #include <cstdint>
+#include <functional>
 
 namespace NES {
 
@@ -28,6 +29,10 @@ namespace NES {
 class BufferSequenceNumber {
 
   public:
+    /**
+     * @brief Default constructor, which creates a buffer sequence number
+     */
+    BufferSequenceNumber() = default;
     /**
      * @brief Constructor, which creates new buffer sequence number out of pair sequnce number and origin id
      * @param sequenceNumber sequence number
@@ -48,9 +53,15 @@ class BufferSequenceNumber {
      */
     uint64_t getOriginId() const { return originId; }
 
+    /**
+     * @brief Methods to check if a buffer sequence number is a valid pair
+     * @return true if this sequence number is valid
+     */
+    bool isValid() { return sequenceNumber > 0 && originId > 0; }
+
   private:
-    uint64_t sequenceNumber;
-    uint64_t originId;
+    int sequenceNumber;
+    int originId;
     friend bool operator<(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
         return lhs.sequenceNumber < rhs.sequenceNumber;
     }
@@ -71,5 +82,16 @@ class BufferSequenceNumber {
     }
 };
 
+using BufferSequenceNumberPtr = std::shared_ptr<BufferSequenceNumber>;
 }// namespace NES
-#endif// NES_INCLUDE_UTIL_BUFFER_SEQUENCE_NUMBER_HPP_
+
+namespace std {
+template<>
+struct hash<NES::BufferSequenceNumber> {
+    uint64_t operator()(const NES::BufferSequenceNumber& sn) const {
+        typedef unsigned long ulong;
+        return ulong(sn.getOriginId() << 16) | ulong(sn.getSequenceNumber() << 8);
+    }
+};
+}// namespace std
+#endif//NES_BUFFERSEQUENCENUMBER_HPP
