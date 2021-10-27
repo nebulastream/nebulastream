@@ -48,8 +48,6 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
     std::vector<uint32_t> mapOfBreadthFirstToDepthFirst;
     std::vector<NodePtr> queryOperators;
     std::vector<bool> transitiveClosureOfTopology;//transitive closure of the topology (reachability matrix)
-    std::vector<double> operatorDMF;
-    std::vector<int> operatorLoad;
     struct Placement {
         std::vector<bool> chromosome;
         double cost;
@@ -74,7 +72,7 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     double getCost(Placement placement);
 
-    Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t numOfIterations, uint32_t patience, double threshold, uint32_t numOfGenesToMutate, double mutationProbability, QueryPlanPtr queryPlan);
+    Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t numOfIterations, uint32_t patience, uint32_t numOfGenesToMutate, double mutationProbability, QueryPlanPtr queryPlan);
 
     Placement mutate(Placement placement, QueryPlanPtr queryPlan, uint32_t numOfGenesToMutate,  double mutationProbability);
 
@@ -85,7 +83,6 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
     std::vector<uint32_t> breadthFirstNodeIterator(TopologyPtr topology);
     Placement crossOver(GeneticAlgorithmStrategy::Placement placement, GeneticAlgorithmStrategy::Placement other,uint32_t crossOverIndex);
     bool placementAlreadyExists(std::vector<GeneticAlgorithmStrategy::Placement> population, GeneticAlgorithmStrategy::Placement offspring);
-    double getAverageRelativeChangeOfCostOverIterations(std::vector<double>optimizedCostOfEachIteration, double initialCost);
     void assignDataModificationFactor(QueryPlanPtr queryPlan);
 };
 }// namespace NES::Optimizer

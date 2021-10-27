@@ -109,7 +109,6 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
     uint32_t populationSize = 1000;
     uint32_t numOfIterations = 10;
     uint32_t patience = 3;
-    double threshold = 0.0001;
     uint32_t numOfGenesToMutate = 1;
     double mutationProbability = 0.5;
     const std::string filePath = "../tests/test_data/GeneticAlgorithmParameters.yaml";
@@ -128,9 +127,6 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
             }
             if (!config["patience"].As<std::string>().empty() && config["patience"].As<std::string>() != "\n") {
                 patience = config["patience"].As<uint32_t>();
-            }
-            if (!config["threshold"].As<std::string>().empty() && config["threshold"].As<std::string>() != "\n") {
-                threshold = config["threshold"].As<double>();
             }
             if (!config["numOfGenesToMutate"].As<std::string>().empty() && config["numOfGenesToMutate"].As<std::string>() != "\n") {
                 numOfGenesToMutate = config["numOfGenesToMutate"].As<uint32_t>();
@@ -154,7 +150,7 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
     Placement optimizedPlacement  = initialPlacement;
     // check if the query has at least 2 other operators than source and sink operators
     if(queryOperators.size() > 2 + sourceNodesIndices.size()){
-        optimizedPlacement  = getOptimizedPlacement(population, numOfIterations , patience, threshold, numOfGenesToMutate, mutationProbability, queryPlan);
+        optimizedPlacement  = getOptimizedPlacement(population, numOfIterations , patience, numOfGenesToMutate, mutationProbability, queryPlan);
     }
     NES_DEBUG("Best Initial Placement: ");
     // print the placement
@@ -311,13 +307,13 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::generatePlacement(
 }
 
 GeneticAlgorithmStrategy::Placement
-GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> population, uint32_t numOfIterations, uint32_t patience, double threshold, uint32_t numOfGenesToMutate, double mutationProbability,QueryPlanPtr queryPlan) {
+GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> population, uint32_t numOfIterations, uint32_t patience, uint32_t numOfGenesToMutate, double mutationProbability,QueryPlanPtr queryPlan) {
 
     Placement optimizedPlacement = population[0];   //keep track of the best placement so far.
     std::vector<GeneticAlgorithmStrategy::Placement> offspringPopulation;
     uint32_t populationSize = population.size();
     std::vector<double> optimizedCostOfEachIteration;
-    double initialCost = population[0].cost;
+    //double initialCost = population[0].cost;
     /*std::map<uint32_t, uint32_t> populationSizes;
     std::map<uint32_t, double> costsAfterGA;
     std::map<uint32_t, int> counts;
@@ -399,12 +395,12 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
         counts.insert(std::make_pair(i, numOfInvalidOffsprings));
         costsAfterGA.insert(std::make_pair(i + 1, offspringPopulation[0].cost));  */
         optimizedCostOfEachIteration.push_back(offspringPopulation[0].cost);
-        double change = getAverageRelativeChangeOfCostOverIterations(optimizedCostOfEachIteration, initialCost);
+        //double change = getAverageRelativeChangeOfCostOverIterations(optimizedCostOfEachIteration, initialCost);
         if (offspringPopulation.size() && optimizedPlacement.cost > offspringPopulation[0].cost) {
             optimizedPlacement = offspringPopulation[0];
             numOfIterationsWithoutImprovement = 0;
         }
-        if(numOfIterationsWithoutImprovement >= patience && change < threshold){
+        if(numOfIterationsWithoutImprovement >= patience){
             return optimizedPlacement;
         }
         //i += 1;
@@ -661,11 +657,24 @@ double GeneticAlgorithmStrategy::getCost(Placement placement) {
         //check which operators are assigned to the current node and add the cost of these operators to the local cost of the current node
         for (int j = 0; j < numberOfOperators; j++) {
             if (placement.chromosome[assignment_begin+j]) {
+                auto currentOperator = queryOperators[j]->as<OperatorNode>();
                 auto sourcesNodesOfTheCurrentOperator = mapOfOperatorToSourceNodes[j];
                 for(auto sourcesNodeOfTheCurrentOperator : sourcesNodesOfTheCurrentOperator){
-                    mapOfSourceNodeToDMFs[sourcesNodeOfTheCurrentOperator].push_back(operatorDMF.at(j));
+                    double dmf = 1;// fallback if the DMF property does not exist in the current operator
+                    // check if the current operator has the data modification factor (DMF) property, otherwise fallback to 1
+                    if (currentOperator->checkIfPropertyExist("DMF")) {
+                        // obtain the dmf property
+                        dmf = std::any_cast<double>(currentOperator->getProperty("DMF"));
+                    }
+                    mapOfSourceNodeToDMFs[sourcesNodeOfTheCurrentOperator].push_back(dmf);
                 }
-                nodeLoad += operatorLoad.at(j);
+                int load = 1;// fallback if the Load property does not exist in the current operator
+                // check if the current operator has the Load property, otherwise fallback to 1
+                if (currentOperator->checkIfPropertyExist("Load")) {
+                    // obtain the dmf property
+                    load = std::any_cast<int>(currentOperator->getProperty("Load"));
+                }
+                nodeLoad += load;
             }
         }
         //For each physical stream, we multiply the DMFs of its operators then we sum up the results
@@ -751,15 +760,7 @@ std::vector<uint32_t> GeneticAlgorithmStrategy::breadthFirstNodeIterator(Topolog
     }
     return mapOfBreadthFirstToDeepFirst;
 }
-double GeneticAlgorithmStrategy::getAverageRelativeChangeOfCostOverIterations(std::vector<double>optimizedCostOfEachIteration, double initialCost){
-    double result = 0.0;
-    for(auto cost : optimizedCostOfEachIteration){
-        result += cost;
-    }
-    result = result/optimizedCostOfEachIteration.size();
-    result = 100.0*(result - initialCost)/initialCost;
-    return result;
-}
+
 void GeneticAlgorithmStrategy::assignDataModificationFactor(QueryPlanPtr queryPlan) {
     // NES_DEBUG(queryPlan->toString());
     QueryPlanIterator queryPlanIterator = QueryPlanIterator(std::move(queryPlan));
