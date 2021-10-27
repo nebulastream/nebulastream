@@ -61,7 +61,7 @@ class AdaptiveKFTest : public testing::Test {
         const DataSourcePtr source =
             createAdaptiveKFSource(schema, nodeEngine->getBufferManager(),
                                    nodeEngine->getQueryManager(), num_tuples_to_process,
-                                   num_of_buffers, 1, 12, 1);
+                                   num_of_buffers, 1, 12, 1, {});
 
         // Fake measurements for y with noise
         measurements = {

@@ -29,7 +29,8 @@ class AdaptiveKFSource : public AdaptiveSource {
     explicit AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
                               Runtime::QueryManagerPtr queryManager, const uint64_t numBuffersToProcess,
                               uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency,
-                              const uint64_t numSourceLocalBuffers, OperatorId operatorId);
+                              const uint64_t numSourceLocalBuffers, OperatorId operatorId,
+                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     std::string toString() const override;
 

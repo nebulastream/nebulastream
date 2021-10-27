@@ -39,7 +39,8 @@ class AdaptiveSource : public DataSource {
                    uint64_t initialGatheringInterval,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
-                   GatheringMode gatheringMode);
+                   GatheringMode gatheringMode,
+                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief Get type of source
