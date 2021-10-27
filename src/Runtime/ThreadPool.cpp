@@ -36,7 +36,7 @@
 #include <numa.h>
 #include <numaif.h>
 #ifdef ENABLE_PAPI_PROFILER
-#include <Runtime/Profiler/PapiProfiler.hpp>
+#include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
 #endif
 #endif

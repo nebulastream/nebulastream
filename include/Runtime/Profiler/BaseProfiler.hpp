@@ -34,7 +34,7 @@ class BaseProfiler {
     virtual uint64_t startSampling() = 0;
 
     /**
-     * @brief stop sampling 
+     * @brief stop sampling
      * @param numItems the number of items (records/buffers/...) processed from the moment we started
      * @return the tsc representing the moment we stop sampling
      */
