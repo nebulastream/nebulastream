@@ -85,7 +85,7 @@ TEST_F(LineageManagerTest, bufferDeletionFromLineageManager) {
 */
 TEST_F(LineageManagerTest, invertNonExistingId) {
     auto lineageManager = std::make_shared<Runtime::LineageManager>();
-    ASSERT_EQ(lineageManager->invertBuffer(BufferSequenceNumber(0, 0)).isValid(), false);
+    ASSERT_EQ(lineageManager->findTupleAncestor(BufferSequenceNumber(0, 0)).isValid(), false);
 }
 
 /**
@@ -98,7 +98,7 @@ TEST_F(LineageManagerTest, invertExistingId) {
         ASSERT_EQ(lineageManager->getLineageSize(), i + 1);
     }
     ASSERT_EQ(lineageManager->getLineageSize(), buffersInserted);
-    ASSERT_EQ(lineageManager->invertBuffer(BufferSequenceNumber(0, 0)), BufferSequenceNumber(1, 1));
+    ASSERT_EQ(lineageManager->findTupleAncestor(BufferSequenceNumber(0, 0)), BufferSequenceNumber(1, 1));
 }
 
 /**

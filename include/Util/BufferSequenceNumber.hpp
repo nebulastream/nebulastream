@@ -58,11 +58,11 @@ class BufferSequenceNumber {
      * @brief Methods to check if a buffer sequence number is a valid pair
      * @return true if this sequence number is valid
      */
-    bool isValid() { return sequenceNumber > 0 && originId > 0; }
+    bool isValid() { return sequenceNumber > -1 && originId > -1; }
 
   private:
-    int sequenceNumber;
-    int originId;
+    int64_t sequenceNumber;
+    int64_t originId;
     friend bool operator<(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
         return lhs.sequenceNumber < rhs.sequenceNumber;
     }

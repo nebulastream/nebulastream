@@ -17,7 +17,7 @@
 #ifndef NES_LINEAGEMANAGER_H
 #define NES_LINEAGEMANAGER_H
 
-#include "AbstractLineageManager.hpp"
+#include <Runtime/AbstractLineageManager.hpp>
 #include <Util/BufferSequenceNumber.hpp>
 #include <memory>
 #include <mutex>
@@ -55,7 +55,7 @@ class LineageManager : public AbstractLineageManager {
      * @param id new id of the tuple
      * @return old id of the tuple
      */
-    BufferSequenceNumber invertBuffer(BufferSequenceNumber id);
+    BufferSequenceNumber findTupleAncestor(BufferSequenceNumber id);
 
     /**
      * @brief Return current lineage size

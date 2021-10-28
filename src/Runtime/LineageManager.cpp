@@ -16,30 +16,34 @@
 
 #include <Runtime/LineageManager.hpp>
 #include <Util/BufferSequenceNumber.hpp>
+#include <string>
 
 namespace NES::Runtime {
 
 void LineageManager::insertIntoLineage(BufferSequenceNumber newId, BufferSequenceNumber oldId) {
     std::unique_lock<std::mutex> lck(mutex);
-    NES_DEBUG("Insert tuple<" << newId.getSequenceNumber() << "," << newId.getOriginId() << "> into lineage manager");
+    NES_TRACE("Insert tuple<" << newId.getSequenceNumber() << "," << newId.getOriginId() << "> into lineage manager");
     this->lineage[newId] = oldId;
 }
 
 bool LineageManager::trimLineage(BufferSequenceNumber id) {
     std::unique_lock<std::mutex> lck(mutex);
-    if (this->lineage.find(id) != this->lineage.end() && this->lineage.size()) {
-        NES_DEBUG("Trim tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> from lineage manager");
-        this->lineage.erase(id);
+    auto iterator = this->lineage.find(id);
+    if (iterator != this->lineage.end() && this->lineage.size()) {
+        NES_TRACE("Trim tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> from lineage manager");
+        this->lineage.erase(iterator);
         return true;
     }
     return false;
 }
 
-BufferSequenceNumber LineageManager::invertBuffer(BufferSequenceNumber id) {
+BufferSequenceNumber LineageManager::findTupleAncestor(BufferSequenceNumber id) {
     std::unique_lock<std::mutex> lck(mutex);
-    if (this->lineage.find(id) != this->lineage.end() && this->lineage.size()) {
-        return this->lineage[id];
+    auto iterator = this->lineage.find(id);
+    if (iterator != this->lineage.end() && this->lineage.size()) {
+        return iterator->second;
     } else {
+        //if a tuple buffer was not found return invalid tuple buffer
         return BufferSequenceNumber(-1, -1);
     }
 }
