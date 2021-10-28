@@ -18,8 +18,8 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>
@@ -31,6 +31,7 @@
 
 using namespace std;
 using namespace NES;
+using namespace Configurations;
 
 class StreamCatalogServiceTest : public testing::Test {
   public:

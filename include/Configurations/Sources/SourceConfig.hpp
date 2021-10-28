@@ -25,6 +25,64 @@ namespace NES {
 
 namespace Configurations {
 
+/*
+ * Constant config strings to read specific values from yaml or command line input
+ */
+const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
+const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
+const std::string PHYSICAL_STREAM_NAME_CONFIG = "physicalStreamName";
+const std::string SOURCE_FREQUENCY_CONFIG = "sourceFrequency";
+const std::string LOGICAL_STREAM_NAME_CONFIG = "logicalStreamName";
+const std::string ROW_LAYOUT_CONFIG = "rowLayout";
+const std::string INPUT_FORMAT_CONFIG = "inputFormat";
+const std::string SOURCE_TYPE_CONFIG = "sourceType";
+const std::string SENSE_SOURCE_UDFS_CONFIG = "SenseSourceUdfs";
+const std::string UDFS_CONFIG = "udfs";
+const std::string SENSE_SOURCE_CONFIG = "SenseSource";
+const std::string CSV_SOURCE_CONFIG = "CSVSource";
+const std::string FILE_PATH_CONFIG = "filePath";
+const std::string CSV_FILE_PATH_CONFIG = "CSVSourceFilePath";
+const std::string SKIP_HEADER_CONFIG = "skipHeader";
+const std::string CSV_SOURCE_SKIP_HEADER_CONFIG = "CSVSourceSkipHeader";
+const std::string BINARY_SOURCE_CONFIG = "BinarySource";
+const std::string BINARY_SOURCE_FILE_PATH_CONFIG = "BinarySourceFilePath";
+const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
+const std::string URL_CONFIG = "url";
+const std::string MQTT_SOURCE_URL_CONFIG = "MQTTSourceUrl";
+const std::string CLIENT_ID_CONFIG = "clientId";
+const std::string MQTT_SOURCE_CLIENT_ID_CONFIG = "MQTTSourceClientId";
+const std::string USER_NAME_CONFIG = "userName";
+const std::string MQTT_SOURCE_USER_NAME_CONFIG = "MQTTSourceUserName";
+const std::string TOPIC_CONFIG = "topic";
+const std::string QOS_CONFIG = "qos";
+const std::string MQTT_SOURCE_QOS_CONFIG = "MQTTSourceQos";
+const std::string CLEAN_SESSION_CONFIG = "cleanSession";
+const std::string MQTT_SOURCE_CLEAN_SESSION_CONFIG = "MQTTSourceCleanSession";
+const std::string MQTT_SOURCE_TOPIC_CONFIG = "MQTTSourceTopic";
+const std::string FLUSH_INTERVAL_MS_CONFIG = "flushIntervalMS";
+const std::string MQTT_SOURCE_FLUSH_INTERVAL_MS_CONFIG = "MQTTSourceFlushIntervalMS";
+const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
+const std::string BROKERS_CONFIG = "brokers";
+const std::string KAFKA_SOURCE_BROKERS_CONFIG = "KafkaSourceBrokers";
+const std::string AUTO_COMMIT = "autoCommit";
+const std::string KAFKA_SOURCE_AUTO_COMMIT_CONFIG = "KafkaSourceAutoCommit";
+const std::string GROUP_ID_CONFIG = "groupId";
+const std::string KAFKA_SOURCE_GROUP_ID_CONFIG = "KafkaSourceGroupId";
+const std::string KAFKA_SOURCE_TOPIC_CONFIG = "KafkaSourceTopic";
+const std::string CONNECTION_TIMEOUT_CONFIG = "connectionTimeout";
+const std::string KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG = "KafkaSourceConnectionTimeout";
+const std::string NAME_SPACE_INDEX_CONFIG = "namespaceIndex";
+const std::string OPC_SOURCE_NAME_SPACE_INDEX_CONFIG = "OPCSourceNamespaceIndex";
+const std::string OPC_SOURCE_CONFIG = "OPCSource";
+const std::string NODE_IDENTIFIER_CONFIG = "nodeIdentifier";
+const std::string OPC_SOURCE_NODE_IDENTIFIER_CONFIG = "OPCSourceNodeIdentifier";
+const std::string OPC_SOURCE_USERNAME_CONFIG = "OPCSourceUserName";
+const std::string PASSWORD_CONFIG = "password";
+const std::string OPC_SOURCE_PASSWORD_CONFIG = "OPCSourcePassword";
+const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
+const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
+const std::string NO_SOURCE_CONFIG = "NoSource";
+
 class SourceConfig;
 using SourceConfigPtr = std::shared_ptr<SourceConfig>;
 

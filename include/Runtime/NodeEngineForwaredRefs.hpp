@@ -22,8 +22,12 @@
 
 namespace NES {
 
+namespace Configurations {
+
 class WorkerConfig;
 using WorkerConfigPtr = std::shared_ptr<WorkerConfig>;
+
+}
 
 class PhysicalStreamConfig;
 using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;

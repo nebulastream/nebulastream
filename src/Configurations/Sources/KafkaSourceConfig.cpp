@@ -31,54 +31,54 @@ KafkaSourceConfigPtr KafkaSourceConfig::create(std::map<std::string, std::string
 KafkaSourceConfigPtr KafkaSourceConfig::create() { return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig()); }
 
 KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap, "KafkaSource"), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
+    : SourceConfig(sourceConfigMap, KAFKA_SOURCE_CONFIG), brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
-          "autoCommit",
+          AUTO_COMMIT,
           1,
           "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
-      groupId(ConfigOption<std::string>::create("groupId",
+      groupId(ConfigOption<std::string>::create(GROUP_ID_CONFIG,
                                                 "",
                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create("topic", "", "topic to listen to")),
+      topic(ConfigOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to")),
       connectionTimeout(
-          ConfigOption<uint32_t>::create("connectionTimeout", 10, "connection time out for source, needed for: KafkaSource")) {
+          ConfigOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG, 10, "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceConfig: Init source config object with values from sourceConfigMap.");
 
-    if (sourceConfigMap.find("KafkaSourceBrokers") != sourceConfigMap.end()) {
-        brokers->setValue(sourceConfigMap.find("KafkaSourceBrokers")->second);
+    if (sourceConfigMap.find(KAFKA_SOURCE_BROKERS_CONFIG) != sourceConfigMap.end()) {
+        brokers->setValue(sourceConfigMap.find(KAFKA_SOURCE_BROKERS_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no brokers defined! Please define brokers.");
     }
-    if (sourceConfigMap.find("KafkaSourceAutoCommit") != sourceConfigMap.end()) {
-        autoCommit->setValue(std::stoi(sourceConfigMap.find("KafkaSourceAutoCommit")->second));
+    if (sourceConfigMap.find(KAFKA_SOURCE_AUTO_COMMIT_CONFIG) != sourceConfigMap.end()) {
+        autoCommit->setValue(std::stoi(sourceConfigMap.find(KAFKA_SOURCE_AUTO_COMMIT_CONFIG)->second));
     }
-    if (sourceConfigMap.find("KafkaSourceGroupId") != sourceConfigMap.end()) {
-        groupId->setValue(sourceConfigMap.find("KafkaSourceGroupId")->second);
+    if (sourceConfigMap.find(KAFKA_SOURCE_GROUP_ID_CONFIG) != sourceConfigMap.end()) {
+        groupId->setValue(sourceConfigMap.find(KAFKA_SOURCE_GROUP_ID_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no groupId defined! Please define groupId.");
     }
-    if (sourceConfigMap.find("KafkaSourceTopic") != sourceConfigMap.end()) {
-        topic->setValue(sourceConfigMap.find("KafkaSourceTopic")->second);
+    if (sourceConfigMap.find(KAFKA_SOURCE_TOPIC_CONFIG) != sourceConfigMap.end()) {
+        topic->setValue(sourceConfigMap.find(KAFKA_SOURCE_TOPIC_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no topic defined! Please define topic.");
     }
-    if (sourceConfigMap.find("KafkaSourceConnectionTimeout") != sourceConfigMap.end()) {
-        connectionTimeout->setValue(std::stoi(sourceConfigMap.find("KafkaSourceConnectionTimeout")->second));
+    if (sourceConfigMap.find(KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
+        connectionTimeout->setValue(std::stoi(sourceConfigMap.find(KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG)->second));
     }
 }
 
 KafkaSourceConfig::KafkaSourceConfig()
-    : SourceConfig("KafkaSource"), brokers(ConfigOption<std::string>::create("brokers", "", "brokers")),
+    : SourceConfig(KAFKA_SOURCE_CONFIG), brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
-          "autoCommit",
+          AUTO_COMMIT,
           1,
           "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
-      groupId(ConfigOption<std::string>::create("groupId",
+      groupId(ConfigOption<std::string>::create(GROUP_ID_CONFIG,
                                                 "testGroup",
                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create("topic", "testTopic", "topic to listen to")),
+      topic(ConfigOption<std::string>::create(TOPIC_CONFIG, "testTopic", "topic to listen to")),
       connectionTimeout(
-          ConfigOption<uint32_t>::create("connectionTimeout", 10, "connection time out for source, needed for: KafkaSource")) {
+          ConfigOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG, 10, "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceConfig: Init source config object with default values.");
 }
 
@@ -88,7 +88,7 @@ void KafkaSourceConfig::resetSourceOptions() {
     setGroupId(groupId->getDefaultValue());
     setTopic(topic->getDefaultValue());
     setConnectionTimeout(connectionTimeout->getDefaultValue());
-    SourceConfig::resetSourceOptions("KafkaSource");
+    SourceConfig::resetSourceOptions(KAFKA_SOURCE_CONFIG);
 }
 
 std::string KafkaSourceConfig::toString() {

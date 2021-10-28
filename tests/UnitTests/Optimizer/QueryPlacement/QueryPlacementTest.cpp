@@ -20,7 +20,7 @@
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -47,6 +47,7 @@
 
 using namespace NES;
 using namespace z3;
+using namespace Configurations;
 
 class QueryPlacementTest : public testing::Test {
   public:

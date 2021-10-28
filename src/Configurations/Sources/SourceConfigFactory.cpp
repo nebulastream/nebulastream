@@ -32,7 +32,7 @@ namespace Configurations {
 
 SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc) {
 
-    auto sourceConfigPath = commandLineParams.find("--sourceConfigPath");
+    auto sourceConfigPath = commandLineParams.find("--" + SOURCE_CONFIG_PATH_CONFIG);
     std::map<std::string, std::string> configurationMap;
 
     if (sourceConfigPath != commandLineParams.end()) {
@@ -43,13 +43,13 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::stri
         configurationMap = overwriteConfigWithCommandLineInput(commandLineParams, configurationMap);
     }
 
-    if (!configurationMap.contains("sourceType")) {
+    if (!configurationMap.contains(SOURCE_TYPE_CONFIG)) {
         DefaultSourceConfigPtr noSource = DefaultSourceConfig::create();
-        noSource->setSourceType("NoSource");
+        noSource->setSourceType(NO_SOURCE_CONFIG);
         return noSource;
     }
 
-    switch (stringToConfigSourceType[configurationMap.at("sourceType")]) {
+    switch (stringToConfigSourceType[configurationMap.at(SOURCE_TYPE_CONFIG)]) {
         case CSVSource: return CSVSourceConfig::create(configurationMap);
         case MQTTSource: return MQTTSourceConfig::create(configurationMap);
         case KafkaSource: return KafkaSourceConfig::create(configurationMap);
@@ -58,7 +58,7 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::stri
         case SenseSource: return SenseSourceConfig::create(configurationMap);
         case DefaultSource: return DefaultSourceConfig::create(configurationMap);
         default:
-            NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " + configurationMap.at("sourceType") + " not supported");
+            NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " + configurationMap.at(SOURCE_TYPE_CONFIG) + " not supported");
     }
 }
 
@@ -87,156 +87,156 @@ std::map<std::string, std::string> SourceConfigFactory::readYAMLFile(const std::
         Yaml::Node config;
         Yaml::Parse(config, filePath.c_str());
         try {
-            if (!config["numberOfBuffersToProduce"].As<std::string>().empty()
-                && config["numberOfBuffersToProduce"].As<std::string>() != "\n") {
+            if (!config[NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>().empty()
+                && config[NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("numberOfBuffersToProduce",
-                                                        config["numberOfBuffersToProduce"].As<std::string>()));
+                    std::pair<std::string, std::string>(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
+                                                        config[NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>()));
             }
-            if (!config["numberOfTuplesToProducePerBuffer"].As<std::string>().empty()
-                && config["numberOfTuplesToProducePerBuffer"].As<std::string>() != "\n") {
+            if (!config[NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<std::string>().empty()
+                && config[NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("numberOfTuplesToProducePerBuffer",
-                                                        config["numberOfTuplesToProducePerBuffer"].As<std::string>()));
+                    std::pair<std::string, std::string>(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
+                                                        config[NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<std::string>()));
             }
-            if (!config["physicalStreamName"].As<std::string>().empty()
-                && config["physicalStreamName"].As<std::string>() != "\n") {
+            if (!config[PHYSICAL_STREAM_NAME_CONFIG].As<std::string>().empty()
+                && config[PHYSICAL_STREAM_NAME_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("physicalStreamName", config["physicalStreamName"].As<std::string>()));
+                    std::pair<std::string, std::string>(PHYSICAL_STREAM_NAME_CONFIG, config[PHYSICAL_STREAM_NAME_CONFIG].As<std::string>()));
             }
-            if (!config["sourceFrequency"].As<std::string>().empty() && config["sourceFrequency"].As<std::string>() != "\n") {
+            if (!config[SOURCE_FREQUENCY_CONFIG].As<std::string>().empty() && config[SOURCE_FREQUENCY_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("sourceFrequency", config["sourceFrequency"].As<std::string>()));
+                    std::pair<std::string, std::string>(SOURCE_FREQUENCY_CONFIG, config[SOURCE_FREQUENCY_CONFIG].As<std::string>()));
             }
-            if (!config["logicalStreamName"].As<std::string>().empty() && config["logicalStreamName"].As<std::string>() != "\n") {
+            if (!config[LOGICAL_STREAM_NAME_CONFIG].As<std::string>().empty() && config[LOGICAL_STREAM_NAME_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("logicalStreamName", config["logicalStreamName"].As<std::string>()));
+                    std::pair<std::string, std::string>(LOGICAL_STREAM_NAME_CONFIG, config[LOGICAL_STREAM_NAME_CONFIG].As<std::string>()));
             }
-            if (!config["rowLayout"].As<std::string>().empty() && config["rowLayout"].As<std::string>() != "\n") {
-                configurationMap.insert(std::pair<std::string, std::string>("rowLayout", config["rowLayout"].As<std::string>()));
+            if (!config[ROW_LAYOUT_CONFIG].As<std::string>().empty() && config[ROW_LAYOUT_CONFIG].As<std::string>() != "\n") {
+                configurationMap.insert(std::pair<std::string, std::string>(ROW_LAYOUT_CONFIG, config[ROW_LAYOUT_CONFIG].As<std::string>()));
             }
-            if (!config["inputFormat"].As<std::string>().empty() && config["inputFormat"].As<std::string>() != "\n") {
+            if (!config[INPUT_FORMAT_CONFIG].As<std::string>().empty() && config[INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("inputFormat", config["inputFormat"].As<std::string>()));
+                    std::pair<std::string, std::string>(INPUT_FORMAT_CONFIG, config[INPUT_FORMAT_CONFIG].As<std::string>()));
             }
-            if (!config["sourceType"].As<std::string>().empty() && config["sourceType"].As<std::string>() != "\n") {
+            if (!config[SOURCE_TYPE_CONFIG].As<std::string>().empty() && config[SOURCE_TYPE_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("sourceType", config["sourceType"].As<std::string>()));
+                    std::pair<std::string, std::string>(SOURCE_TYPE_CONFIG, config[SOURCE_TYPE_CONFIG].As<std::string>()));
             }
-            if (!config["SenseSource"][0]["udfs"].As<std::string>().empty()
-                && config["SenseSource"][0]["udfs"].As<std::string>() != "\n") {
+            if (!config[SENSE_SOURCE_CONFIG][0][UDFS_CONFIG].As<std::string>().empty()
+                && config[SENSE_SOURCE_CONFIG][0][UDFS_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("SenseSourceUdfs", config["SenseSource"][0]["udfs"].As<std::string>()));
+                    std::pair<std::string, std::string>(SENSE_SOURCE_UDFS_CONFIG, config[SENSE_SOURCE_CONFIG][0][UDFS_CONFIG].As<std::string>()));
             }
-            if (!config["CSVSource"][0]["filePath"].As<std::string>().empty()
-                && config["CSVSource"][0]["filePath"].As<std::string>() != "\n") {
+            if (!config[CSV_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>().empty()
+                && config[CSV_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("CSVSourceFilePath",
-                                                        config["CSVSource"][0]["filePath"].As<std::string>()));
+                    std::pair<std::string, std::string>(CSV_FILE_PATH_CONFIG,
+                                                        config[CSV_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>()));
             }
-            if (!config["CSVSource"][0]["skipHeader"].As<std::string>().empty()
-                && config["CSVSource"][0]["skipHeader"].As<std::string>() != "\n") {
+            if (!config[CSV_SOURCE_CONFIG][0][SKIP_HEADER_CONFIG].As<std::string>().empty()
+                && config[CSV_SOURCE_CONFIG][0][SKIP_HEADER_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("CSVSourceSkipHeader",
-                                                        config["CSVSource"][0]["skipHeader"].As<std::string>()));
+                    std::pair<std::string, std::string>(CSV_SOURCE_SKIP_HEADER_CONFIG,
+                                                        config[CSV_SOURCE_CONFIG][0][SKIP_HEADER_CONFIG].As<std::string>()));
             }
-            if (!config["BinarySource"][0]["filePath"].As<std::string>().empty()
-                && config["BinarySource"][0]["filePath"].As<std::string>() != "\n") {
+            if (!config[BINARY_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>().empty()
+                && config[BINARY_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("BinarySourceFilePath",
-                                                        config["BinarySource"][0]["filePath"].As<std::string>()));
+                    std::pair<std::string, std::string>(BINARY_SOURCE_FILE_PATH_CONFIG,
+                                                        config[BINARY_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>()));
             }
-            if (!config["MQTTSource"][0]["url"].As<std::string>().empty()
-                && config["MQTTSource"][0]["url"].As<std::string>() != "\n") {
+            if (!config[MQTT_SOURCE_CONFIG][0][URL_CONFIG].As<std::string>().empty()
+                && config[MQTT_SOURCE_CONFIG][0][URL_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("MQTTSourceUrl", config["MQTTSource"][0]["url"].As<std::string>()));
+                    std::pair<std::string, std::string>(MQTT_SOURCE_URL_CONFIG, config[MQTT_SOURCE_CONFIG][0][URL_CONFIG].As<std::string>()));
             }
-            if (!config["MQTTSource"][0]["clientId"].As<std::string>().empty()
-                && config["MQTTSource"][0]["clientId"].As<std::string>() != "\n") {
+            if (!config[MQTT_SOURCE_CONFIG][0][CLIENT_ID_CONFIG].As<std::string>().empty()
+                && config[MQTT_SOURCE_CONFIG][0][CLIENT_ID_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("MQTTSourceClientId",
-                                                        config["MQTTSource"][0]["clientId"].As<std::string>()));
+                    std::pair<std::string, std::string>(MQTT_SOURCE_CLIENT_ID_CONFIG,
+                                                        config[MQTT_SOURCE_CONFIG][0][CLIENT_ID_CONFIG].As<std::string>()));
             }
-            if (!config["MQTTSource"][0]["userName"].As<std::string>().empty()
-                && config["MQTTSource"][0]["userName"].As<std::string>() != "\n") {
+            if (!config[MQTT_SOURCE_CONFIG][0][USER_NAME_CONFIG].As<std::string>().empty()
+                && config[MQTT_SOURCE_CONFIG][0][USER_NAME_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("MQTTSourceUserName",
-                                                        config["MQTTSource"][0]["userName"].As<std::string>()));
+                    std::pair<std::string, std::string>(MQTT_SOURCE_USER_NAME_CONFIG,
+                                                        config[MQTT_SOURCE_CONFIG][0][USER_NAME_CONFIG].As<std::string>()));
             }
-            if (!config["MQTTSource"][0]["topic"].As<std::string>().empty()
-                && config["MQTTSource"][0]["topic"].As<std::string>() != "\n") {
+            if (!config[MQTT_SOURCE_CONFIG][0][TOPIC_CONFIG].As<std::string>().empty()
+                && config[MQTT_SOURCE_CONFIG][0][TOPIC_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("MQTTSourceTopic", config["MQTTSource"][0]["topic"].As<std::string>()));
+                    std::pair<std::string, std::string>(MQTT_SOURCE_TOPIC_CONFIG, config[MQTT_SOURCE_CONFIG][0][TOPIC_CONFIG].As<std::string>()));
             }
-            if (!config["MQTTSource"][0]["qos"].As<std::string>().empty()
-                && config["MQTTSource"][0]["qos"].As<std::string>() != "\n") {
+            if (!config[MQTT_SOURCE_CONFIG][0][QOS_CONFIG].As<std::string>().empty()
+                && config[MQTT_SOURCE_CONFIG][0][QOS_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("MQTTSourceQos", config["MQTTSource"][0]["qos"].As<std::string>()));
+                    std::pair<std::string, std::string>(MQTT_SOURCE_QOS_CONFIG, config[MQTT_SOURCE_CONFIG][0][QOS_CONFIG].As<std::string>()));
             }
-            if (!config["MQTTSource"][0]["cleanSession"].As<std::string>().empty()
-                && config["MQTTSource"][0]["cleanSession"].As<std::string>() != "\n") {
+            if (!config[MQTT_SOURCE_CONFIG][0][CLEAN_SESSION_CONFIG].As<std::string>().empty()
+                && config[MQTT_SOURCE_CONFIG][0][CLEAN_SESSION_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("MQTTSourceCleanSession",
-                                                        config["MQTTSource"][0]["cleanSession"].As<std::string>()));
+                    std::pair<std::string, std::string>(MQTT_SOURCE_CLEAN_SESSION_CONFIG,
+                                                        config[MQTT_SOURCE_CONFIG][0][CLEAN_SESSION_CONFIG].As<std::string>()));
             }
-            if (!config["MQTTSource"][0]["flushIntervalMS"].As<std::string>().empty()
-                && config["MQTTSource"][0]["flushIntervalMS"].As<std::string>() != "\n") {
+            if (!config[MQTT_SOURCE_CONFIG][0][FLUSH_INTERVAL_MS_CONFIG].As<std::string>().empty()
+                && config[MQTT_SOURCE_CONFIG][0][FLUSH_INTERVAL_MS_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("MQTTSourceFlushIntervalMS",
-                                                        config["MQTTSource"][0]["flushIntervalMS"].As<std::string>()));
+                    std::pair<std::string, std::string>(MQTT_SOURCE_FLUSH_INTERVAL_MS_CONFIG,
+                                                        config[MQTT_SOURCE_CONFIG][0][FLUSH_INTERVAL_MS_CONFIG].As<std::string>()));
             }
-            if (!config["KafkaSource"][0]["brokers"].As<std::string>().empty()
-                && config["KafkaSource"][0]["brokers"].As<std::string>() != "\n") {
+            if (!config[KAFKA_SOURCE_CONFIG][0][BROKERS_CONFIG].As<std::string>().empty()
+                && config[KAFKA_SOURCE_CONFIG][0][BROKERS_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("KafkaSourceBrokers",
-                                                        config["KafkaSource"][0]["brokers"].As<std::string>()));
+                    std::pair<std::string, std::string>(KAFKA_SOURCE_BROKERS_CONFIG,
+                                                        config[KAFKA_SOURCE_CONFIG][0][BROKERS_CONFIG].As<std::string>()));
             }
-            if (!config["KafkaSource"][0]["autoCommit"].As<std::string>().empty()
-                && config["KafkaSource"][0]["autoCommit"].As<std::string>() != "\n") {
+            if (!config[KAFKA_SOURCE_CONFIG][0][AUTO_COMMIT].As<std::string>().empty()
+                && config[KAFKA_SOURCE_CONFIG][0][AUTO_COMMIT].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("KafkaSourceAutoCommit",
-                                                        config["KafkaSource"][0]["autoCommit"].As<std::string>()));
+                    std::pair<std::string, std::string>(KAFKA_SOURCE_AUTO_COMMIT_CONFIG,
+                                                        config[KAFKA_SOURCE_CONFIG][0][AUTO_COMMIT].As<std::string>()));
             }
-            if (!config["KafkaSource"][0]["groupId"].As<std::string>().empty()
-                && config["KafkaSource"][0]["groupId"].As<std::string>() != "\n") {
+            if (!config[KAFKA_SOURCE_CONFIG][0][GROUP_ID_CONFIG].As<std::string>().empty()
+                && config[KAFKA_SOURCE_CONFIG][0][GROUP_ID_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("KafkaSourceGroupId",
-                                                        config["KafkaSource"][0]["groupId"].As<std::string>()));
+                    std::pair<std::string, std::string>(KAFKA_SOURCE_GROUP_ID_CONFIG,
+                                                        config[KAFKA_SOURCE_CONFIG][0][GROUP_ID_CONFIG].As<std::string>()));
             }
-            if (!config["KafkaSource"][0]["topic"].As<std::string>().empty()
-                && config["KafkaSource"][0]["topic"].As<std::string>() != "\n") {
+            if (!config[KAFKA_SOURCE_CONFIG][0][TOPIC_CONFIG].As<std::string>().empty()
+                && config[KAFKA_SOURCE_CONFIG][0][TOPIC_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("KafkaSourceTopic", config["KafkaSource"][0]["topic"].As<std::string>()));
+                    std::pair<std::string, std::string>(KAFKA_SOURCE_TOPIC_CONFIG, config[KAFKA_SOURCE_CONFIG][0][TOPIC_CONFIG].As<std::string>()));
             }
-            if (!config["KafkaSource"][0]["connectionTimeout"].As<std::string>().empty()
-                && config["KafkaSource"][0]["connectionTimeout"].As<std::string>() != "\n") {
+            if (!config[KAFKA_SOURCE_CONFIG][0][CONNECTION_TIMEOUT_CONFIG].As<std::string>().empty()
+                && config[KAFKA_SOURCE_CONFIG][0][CONNECTION_TIMEOUT_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("KafkaSourceConnectionTimeout",
-                                                        config["KafkaSource"][0]["connectionTimeout"].As<std::string>()));
+                    std::pair<std::string, std::string>(KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG,
+                                                        config[KAFKA_SOURCE_CONFIG][0][CONNECTION_TIMEOUT_CONFIG].As<std::string>()));
             }
-            if (!config["OPCSource"][0]["namespaceIndex"].As<std::string>().empty()
-                && config["OPCSource"][0]["namespaceIndex"].As<std::string>() != "\n") {
+            if (!config[OPC_SOURCE_CONFIG][0][NAME_SPACE_INDEX_CONFIG].As<std::string>().empty()
+                && config[OPC_SOURCE_CONFIG][0][NAME_SPACE_INDEX_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("OPCSourceNamespaceIndex",
-                                                        config["OPCSource"][0]["namespaceIndex"].As<std::string>()));
+                    std::pair<std::string, std::string>(OPC_SOURCE_NAME_SPACE_INDEX_CONFIG,
+                                                        config[OPC_SOURCE_CONFIG][0][NAME_SPACE_INDEX_CONFIG].As<std::string>()));
             }
-            if (!config["OPCSource"][0]["nodeIdentifier"].As<std::string>().empty()
-                && config["OPCSource"][0]["nodeIdentifier"].As<std::string>() != "\n") {
+            if (!config[OPC_SOURCE_CONFIG][0][NODE_IDENTIFIER_CONFIG].As<std::string>().empty()
+                && config[OPC_SOURCE_CONFIG][0][NODE_IDENTIFIER_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("OPCSourceNodeIdentifier",
-                                                        config["OPCSource"][0]["nodeIdentifier"].As<std::string>()));
+                    std::pair<std::string, std::string>(OPC_SOURCE_NODE_IDENTIFIER_CONFIG,
+                                                        config[OPC_SOURCE_CONFIG][0][NODE_IDENTIFIER_CONFIG].As<std::string>()));
             }
-            if (!config["OPCSource"][0]["userName"].As<std::string>().empty()
-                && config["OPCSource"][0]["userName"].As<std::string>() != "\n") {
+            if (!config[OPC_SOURCE_CONFIG][0][USER_NAME_CONFIG].As<std::string>().empty()
+                && config[OPC_SOURCE_CONFIG][0][USER_NAME_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("OPCSourceUserName",
-                                                        config["OPCSource"][0]["userName"].As<std::string>()));
+                    std::pair<std::string, std::string>(OPC_SOURCE_USERNAME_CONFIG,
+                                                        config[OPC_SOURCE_CONFIG][0][USER_NAME_CONFIG].As<std::string>()));
             }
-            if (!config["OPCSource"][0]["password"].As<std::string>().empty()
-                && config["OPCSource"][0]["password"].As<std::string>() != "\n") {
+            if (!config[OPC_SOURCE_CONFIG][0][PASSWORD_CONFIG].As<std::string>().empty()
+                && config[OPC_SOURCE_CONFIG][0][PASSWORD_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>("OPCSourcePassword",
-                                                        config["OPCSource"][0]["password"].As<std::string>()));
+                    std::pair<std::string, std::string>(OPC_SOURCE_PASSWORD_CONFIG,
+                                                        config[OPC_SOURCE_CONFIG][0][PASSWORD_CONFIG].As<std::string>()));
             }
         } catch (std::exception& e) {
             NES_ERROR("NesSourceConfigFactory: Error while initializing configuration parameters from XAML file.");
@@ -254,120 +254,120 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
                                                          std::map<std::string, std::string> configurationMap) {
 
     try {
-        if (commandLineParams.find("--sourceType") != commandLineParams.end()
-            && !commandLineParams.find("--sourceType")->second.empty()) {
-            configurationMap.insert_or_assign("sourceType", commandLineParams.find("--sourceType")->second);
+        if (commandLineParams.find("--" + SOURCE_FREQUENCY_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + SOURCE_FREQUENCY_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(SOURCE_FREQUENCY_CONFIG, commandLineParams.find("--" + SOURCE_FREQUENCY_CONFIG)->second);
         }
-        if (commandLineParams.find("--numberOfBuffersToProduce") != commandLineParams.end()
-            && !commandLineParams.find("--numberOfBuffersToProduce")->second.empty()) {
-            configurationMap.insert_or_assign("numberOfBuffersToProduce",
-                                              commandLineParams.find("--numberOfBuffersToProduce")->second);
+        if (commandLineParams.find("--" + NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
+                                              commandLineParams.find("--" + NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second);
         }
-        if (commandLineParams.find("--numberOfTuplesToProducePerBuffer") != commandLineParams.end()
-            && !commandLineParams.find("--numberOfTuplesToProducePerBuffer")->second.empty()) {
-            configurationMap.insert_or_assign("numberOfTuplesToProducePerBuffer",
-                                              commandLineParams.find("--numberOfTuplesToProducePerBuffer")->second);
+        if (commandLineParams.find("--" + NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
+                                              commandLineParams.find("--" + NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second);
         }
-        if (commandLineParams.find("--physicalStreamName") != commandLineParams.end()
-            && !commandLineParams.find("--physicalStreamName")->second.empty()) {
-            configurationMap.insert_or_assign("physicalStreamName", commandLineParams.find("--physicalStreamName")->second);
+        if (commandLineParams.find("--" + PHYSICAL_STREAM_NAME_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + PHYSICAL_STREAM_NAME_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(PHYSICAL_STREAM_NAME_CONFIG, commandLineParams.find("--" + PHYSICAL_STREAM_NAME_CONFIG)->second);
         }
-        if (commandLineParams.find("--logicalStreamName") != commandLineParams.end()
-            && !commandLineParams.find("--logicalStreamName")->second.empty()) {
-            configurationMap.insert_or_assign("logicalStreamName", commandLineParams.find("--logicalStreamName")->second);
+        if (commandLineParams.find("--" + LOGICAL_STREAM_NAME_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + LOGICAL_STREAM_NAME_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(LOGICAL_STREAM_NAME_CONFIG, commandLineParams.find("--" + LOGICAL_STREAM_NAME_CONFIG)->second);
         }
-        if (commandLineParams.find("--sourceFrequency") != commandLineParams.end()
-            && !commandLineParams.find("--sourceFrequency")->second.empty()) {
-            configurationMap.insert_or_assign("sourceFrequency", commandLineParams.find("--sourceFrequency")->second);
+        if (commandLineParams.find("--" + SOURCE_TYPE_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + SOURCE_TYPE_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(SOURCE_TYPE_CONFIG, commandLineParams.find("--" + SOURCE_TYPE_CONFIG)->second);
         }
-        if (commandLineParams.find("--rowLayout") != commandLineParams.end()
-            && !commandLineParams.find("--rowLayout")->second.empty()) {
-            configurationMap.insert_or_assign("rowLayout", commandLineParams.find("--rowLayout")->second);
+        if (commandLineParams.find("--" + ROW_LAYOUT_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + ROW_LAYOUT_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(ROW_LAYOUT_CONFIG, commandLineParams.find("--" + ROW_LAYOUT_CONFIG)->second);
         }
-        if (commandLineParams.find("--inputFormat") != commandLineParams.end()
-            && !commandLineParams.find("--inputFormat")->second.empty()) {
-            configurationMap.insert_or_assign("inputFormat", commandLineParams.find("--inputFormat")->second);
+        if (commandLineParams.find("--" + INPUT_FORMAT_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + INPUT_FORMAT_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(INPUT_FORMAT_CONFIG, commandLineParams.find("--" + INPUT_FORMAT_CONFIG)->second);
         }
-        if (commandLineParams.find("--SenseSourceUdfs") != commandLineParams.end()
-            && !commandLineParams.find("--SenseSourceUdfs")->second.empty()) {
-            configurationMap.insert_or_assign("SenseSourceUdfs", commandLineParams.find("--SenseSourceUdfs")->second);
+        if (commandLineParams.find("--" + SENSE_SOURCE_UDFS_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + SENSE_SOURCE_UDFS_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(SENSE_SOURCE_UDFS_CONFIG, commandLineParams.find("--" + SENSE_SOURCE_UDFS_CONFIG)->second);
         }
-        if (commandLineParams.find("--CSVSourceFilePath") != commandLineParams.end()
-            && !commandLineParams.find("--CSVSourceFilePath")->second.empty()) {
-            configurationMap.insert_or_assign("CSVSourceFilePath", commandLineParams.find("--CSVSourceFilePath")->second);
+        if (commandLineParams.find("--" + CSV_FILE_PATH_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + CSV_FILE_PATH_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(CSV_FILE_PATH_CONFIG, commandLineParams.find("--" + CSV_FILE_PATH_CONFIG)->second);
         }
-        if (commandLineParams.find("--CSVSourceSkipHeader") != commandLineParams.end()
-            && !commandLineParams.find("--CSVSourceSkipHeader")->second.empty()) {
-            configurationMap.insert_or_assign("CSVSourceSkipHeader", commandLineParams.find("--CSVSourceSkipHeader")->second);
+        if (commandLineParams.find("--" + CSV_SOURCE_SKIP_HEADER_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + CSV_SOURCE_SKIP_HEADER_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(CSV_SOURCE_SKIP_HEADER_CONFIG, commandLineParams.find("--" + CSV_SOURCE_SKIP_HEADER_CONFIG)->second);
         }
-        if (commandLineParams.find("--MQTTSourceUrl") != commandLineParams.end()
-            && !commandLineParams.find("--MQTTSourceUrl")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceUrl", commandLineParams.find("--MQTTSourceUrl")->second);
+        if (commandLineParams.find("--" + MQTT_SOURCE_URL_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + MQTT_SOURCE_URL_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(MQTT_SOURCE_URL_CONFIG, commandLineParams.find("--" + MQTT_SOURCE_URL_CONFIG)->second);
         }
-        if (commandLineParams.find("--MQTTSourceClientId") != commandLineParams.end()
-            && !commandLineParams.find("--MQTTSourceClientId")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceClientId", commandLineParams.find("--MQTTSourceClientId")->second);
+        if (commandLineParams.find("--" + MQTT_SOURCE_CLIENT_ID_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + MQTT_SOURCE_CLIENT_ID_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(MQTT_SOURCE_CLIENT_ID_CONFIG, commandLineParams.find("--" + MQTT_SOURCE_CLIENT_ID_CONFIG)->second);
         }
-        if (commandLineParams.find("--MQTTSourceUserName") != commandLineParams.end()
-            && !commandLineParams.find("--MQTTSourceUserName")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceUserName", commandLineParams.find("--MQTTSourceUserName")->second);
+        if (commandLineParams.find("--" + MQTT_SOURCE_USER_NAME_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + MQTT_SOURCE_USER_NAME_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(MQTT_SOURCE_USER_NAME_CONFIG, commandLineParams.find("--" + MQTT_SOURCE_USER_NAME_CONFIG)->second);
         }
-        if (commandLineParams.find("--MQTTSourceTopic") != commandLineParams.end()
-            && !commandLineParams.find("--MQTTSourceTopic")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceTopic", commandLineParams.find("--MQTTSourceTopic")->second);
+        if (commandLineParams.find("--" + MQTT_SOURCE_TOPIC_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + MQTT_SOURCE_TOPIC_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(MQTT_SOURCE_TOPIC_CONFIG, commandLineParams.find("--" + MQTT_SOURCE_TOPIC_CONFIG)->second);
         }
-        if (commandLineParams.find("--MQTTSourceQos") != commandLineParams.end()
-            && !commandLineParams.find("--MQTTSourceQos")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceQos", commandLineParams.find("--MQTTSourceQos")->second);
+        if (commandLineParams.find("--" + MQTT_SOURCE_QOS_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + MQTT_SOURCE_QOS_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(MQTT_SOURCE_QOS_CONFIG, commandLineParams.find("--" + MQTT_SOURCE_QOS_CONFIG)->second);
         }
-        if (commandLineParams.find("--MQTTSourceCleanSession") != commandLineParams.end()
-            && !commandLineParams.find("--MQTTSourceCleanSession")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceCleanSession",
-                                              commandLineParams.find("--MQTTSourceCleanSession")->second);
+        if (commandLineParams.find("--" + MQTT_SOURCE_CLEAN_SESSION_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + MQTT_SOURCE_CLEAN_SESSION_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(MQTT_SOURCE_CLEAN_SESSION_CONFIG,
+                                              commandLineParams.find("--" + MQTT_SOURCE_CLEAN_SESSION_CONFIG)->second);
         }
-        if (commandLineParams.find("--MQTTSourceFlushIntervalMS") != commandLineParams.end()
-            && !commandLineParams.find("--MQTTSourceFlushIntervalMS")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceFlushIntervalMS",
-                                              commandLineParams.find("--MQTTSourceFlushIntervalMS")->second);
+        if (commandLineParams.find("--" + MQTT_SOURCE_FLUSH_INTERVAL_MS_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + MQTT_SOURCE_FLUSH_INTERVAL_MS_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(MQTT_SOURCE_FLUSH_INTERVAL_MS_CONFIG,
+                                              commandLineParams.find("--" + MQTT_SOURCE_FLUSH_INTERVAL_MS_CONFIG)->second);
         }
-        if (commandLineParams.find("--KafkaSourceBrokers") != commandLineParams.end()
-            && !commandLineParams.find("--KafkaSourceBrokers")->second.empty()) {
-            configurationMap.insert_or_assign("KafkaSourceBrokers", commandLineParams.find("--KafkaSourceBrokers")->second);
+        if (commandLineParams.find("--" + KAFKA_SOURCE_BROKERS_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + KAFKA_SOURCE_BROKERS_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(KAFKA_SOURCE_BROKERS_CONFIG, commandLineParams.find("--" + KAFKA_SOURCE_BROKERS_CONFIG)->second);
         }
-        if (commandLineParams.find("--KafkaSourceAutoCommit") != commandLineParams.end()
-            && !commandLineParams.find("--KafkaSourceAutoCommit")->second.empty()) {
-            configurationMap.insert_or_assign("KafkaSourceAutoCommit", commandLineParams.find("--KafkaSourceAutoCommit")->second);
+        if (commandLineParams.find("--" + KAFKA_SOURCE_AUTO_COMMIT_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + KAFKA_SOURCE_AUTO_COMMIT_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(KAFKA_SOURCE_AUTO_COMMIT_CONFIG, commandLineParams.find("--" + KAFKA_SOURCE_AUTO_COMMIT_CONFIG)->second);
         }
-        if (commandLineParams.find("--KafkaSourceGroupId") != commandLineParams.end()
-            && !commandLineParams.find("--KafkaSourceGroupId")->second.empty()) {
-            configurationMap.insert_or_assign("KafkaSourceGroupId", commandLineParams.find("--KafkaSourceGroupId")->second);
+        if (commandLineParams.find("--" + KAFKA_SOURCE_GROUP_ID_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + KAFKA_SOURCE_GROUP_ID_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(KAFKA_SOURCE_GROUP_ID_CONFIG, commandLineParams.find("--" + KAFKA_SOURCE_GROUP_ID_CONFIG)->second);
         }
-        if (commandLineParams.find("--KafkaSourceTopic") != commandLineParams.end()
-            && !commandLineParams.find("--KafkaSourceTopic")->second.empty()) {
-            configurationMap.insert_or_assign("KafkaSourceTopic", commandLineParams.find("--KafkaSourceTopic")->second);
+        if (commandLineParams.find("--" + KAFKA_SOURCE_TOPIC_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + KAFKA_SOURCE_TOPIC_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(KAFKA_SOURCE_TOPIC_CONFIG, commandLineParams.find("--" + KAFKA_SOURCE_TOPIC_CONFIG)->second);
         }
-        if (commandLineParams.find("--KafkaSourceConnectionTimeout") != commandLineParams.end()
-            && !commandLineParams.find("--KafkaSourceConnectionTimeout")->second.empty()) {
-            configurationMap.insert_or_assign("KafkaSourceConnectionTimeout",
-                                              commandLineParams.find("--KafkaSourceConnectionTimeout")->second);
+        if (commandLineParams.find("--" + KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG,
+                                              commandLineParams.find("--" + KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG)->second);
         }
-        if (commandLineParams.find("--MQTTSourceNamespaceIndex") != commandLineParams.end()
-            && !commandLineParams.find("--MQTTSourceNamespaceIndex")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceNamespaceIndex",
-                                              commandLineParams.find("--MQTTSourceNamespaceIndex")->second);
+        if (commandLineParams.find("--" + OPC_SOURCE_NODE_IDENTIFIER_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + OPC_SOURCE_NODE_IDENTIFIER_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(OPC_SOURCE_NODE_IDENTIFIER_CONFIG,
+                                              commandLineParams.find("--" + OPC_SOURCE_NODE_IDENTIFIER_CONFIG)->second);
         }
-        if (commandLineParams.find("--OPCSourceNodeIdentifier") != commandLineParams.end()
-            && !commandLineParams.find("--OPCSourceNodeIdentifier")->second.empty()) {
-            configurationMap.insert_or_assign("OPCSourceNodeIdentifier",
-                                              commandLineParams.find("--OPCSourceNodeIdentifier")->second);
+        if (commandLineParams.find("--" + OPC_SOURCE_NAME_SPACE_INDEX_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + OPC_SOURCE_NAME_SPACE_INDEX_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(OPC_SOURCE_NAME_SPACE_INDEX_CONFIG,
+                                              commandLineParams.find("--" + OPC_SOURCE_NAME_SPACE_INDEX_CONFIG)->second);
         }
-        if (commandLineParams.find("--MQTTSourceUserName") != commandLineParams.end()
-            && !commandLineParams.find("--MQTTSourceUserName")->second.empty()) {
-            configurationMap.insert_or_assign("MQTTSourceUserName", commandLineParams.find("--MQTTSourceUserName")->second);
+        if (commandLineParams.find("--" + OPC_SOURCE_USERNAME_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + OPC_SOURCE_USERNAME_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(OPC_SOURCE_USERNAME_CONFIG, commandLineParams.find("--" + OPC_SOURCE_USERNAME_CONFIG)->second);
         }
-        if (commandLineParams.find("--OPCSourcePassword") != commandLineParams.end()
-            && !commandLineParams.find("--OPCSourcePassword")->second.empty()) {
-            configurationMap.insert_or_assign("OPCSourcePassword", commandLineParams.find("--OPCSourcePassword")->second);
+        if (commandLineParams.find("--" + OPC_SOURCE_PASSWORD_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + OPC_SOURCE_PASSWORD_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(OPC_SOURCE_PASSWORD_CONFIG, commandLineParams.find("--" + OPC_SOURCE_PASSWORD_CONFIG)->second);
         }
     } catch (std::exception& e) {
         NES_ERROR("NesWorkerConfig: Error "

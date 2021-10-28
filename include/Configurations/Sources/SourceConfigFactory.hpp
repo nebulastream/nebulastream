@@ -34,14 +34,14 @@ enum ConfigSourceType { SenseSource, CSVSource, BinarySource, MQTTSource, KafkaS
 /**
  * enum string mapping for source config factory
  */
-static std::map<std::string, ConfigSourceType> stringToConfigSourceType{{"SenseSource", SenseSource},
-                                                                        {"CSVSource", CSVSource},
-                                                                        {"BinarySource", BinarySource},
-                                                                        {"MQTTSource", MQTTSource},
-                                                                        {"KafkaSource", KafkaSource},
-                                                                        {"OPCSource", OPCSource},
-                                                                        {"DefaultSource", DefaultSource},
-                                                                        {"NoSource", DefaultSource}};
+static std::map<std::string, ConfigSourceType> stringToConfigSourceType{{SENSE_SOURCE_CONFIG, SenseSource},
+                                                                        {CSV_SOURCE_CONFIG, CSVSource},
+                                                                        {BINARY_SOURCE_CONFIG, BinarySource},
+                                                                        {MQTT_SOURCE_CONFIG, MQTTSource},
+                                                                        {KAFKA_SOURCE_CONFIG, KafkaSource},
+                                                                        {OPC_SOURCE_CONFIG, OPCSource},
+                                                                        {DEFAULT_SOURCE_CONFIG, DefaultSource},
+                                                                        {NO_SOURCE_CONFIG, DefaultSource}};
 
 class SourceConfig;
 using SourceConfigPtr = std::shared_ptr<SourceConfig>;

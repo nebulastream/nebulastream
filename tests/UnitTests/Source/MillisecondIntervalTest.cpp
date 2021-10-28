@@ -24,7 +24,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -37,6 +37,8 @@ using namespace NES::Runtime;
 using namespace NES::Runtime::Execution;
 
 namespace NES {
+
+using namespace Configurations;
 
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;

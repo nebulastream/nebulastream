@@ -24,8 +24,8 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/SourceConfigFactory.hpp>
-#include <Configurations/ConfigOptions/SourceConfigurations/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
@@ -36,6 +36,7 @@
 #include <iostream>
 
 using namespace NES;
+using namespace Configurations;
 
 class LogicalSourceExpansionRuleTest : public testing::Test {
 

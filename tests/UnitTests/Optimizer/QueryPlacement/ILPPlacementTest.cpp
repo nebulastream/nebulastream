@@ -20,7 +20,7 @@
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -50,6 +50,7 @@
 
 using namespace NES;
 using namespace z3;
+using namespace Configurations;
 
 class ILPPlacementTest : public testing::Test {
 
@@ -112,7 +113,7 @@ class ILPPlacementTest : public testing::Test {
         streamCatalogForILP = std::make_shared<StreamCatalog>(queryParsingService);
         streamCatalogForILP->addLogicalStream(streamName, schema);
 
-        SourceConfigPtr sourceConfig = SourceConfig::create();
+        SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
         sourceConfig->setSourceFrequency(0);
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setPhysicalStreamName("test3");

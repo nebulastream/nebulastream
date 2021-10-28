@@ -31,34 +31,34 @@ CSVSourceConfigPtr CSVSourceConfig::create(std::map<std::string, std::string> so
 CSVSourceConfigPtr CSVSourceConfig::create() { return std::make_shared<CSVSourceConfig>(CSVSourceConfig()); }
 
 CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap, "CSVSource"),
-      filePath(ConfigOption<std::string>::create("filePath",
+    : SourceConfig(sourceConfigMap, CSV_SOURCE_CONFIG),
+      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG,
                                                  "",
                                                  "file path, needed for: CSVSource, BinarySource")),
-      skipHeader(ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.")) {
+      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")) {
     NES_INFO("CSVSourceConfig: Init source config object.");
-    if (sourceConfigMap.find("CSVSourceFilePath") != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find("CSVSourceFilePath")->second);
+    if (sourceConfigMap.find(CSV_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find(CSV_FILE_PATH_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("CSVSourceConfig:: no filePath defined! Please define a filePath.");
     }
-    if (sourceConfigMap.find("CSVSourceSkipHeader") != sourceConfigMap.end()) {
-        skipHeader->setValue((sourceConfigMap.find("CSVSourceSkipHeader")->second == "true"));
+    if (sourceConfigMap.find(CSV_SOURCE_SKIP_HEADER_CONFIG) != sourceConfigMap.end()) {
+        skipHeader->setValue((sourceConfigMap.find(CSV_SOURCE_SKIP_HEADER_CONFIG)->second == "true"));
     }
 }
 
 CSVSourceConfig::CSVSourceConfig()
-    : SourceConfig("CSVSource"), filePath(ConfigOption<std::string>::create("filePath",
+    : SourceConfig(CSV_SOURCE_CONFIG), filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG,
                                                                             "",
                                                                             "file path, needed for: CSVSource, BinarySource")),
-      skipHeader(ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.")) {
+      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")) {
     NES_INFO("CSVSourceConfig: Init source config object with default values.");
 }
 
 void CSVSourceConfig::resetSourceOptions() {
     setFilePath(filePath->getDefaultValue());
     setSkipHeader(skipHeader->getDefaultValue());
-    SourceConfig::resetSourceOptions("CSVSource");
+    SourceConfig::resetSourceOptions(CSV_SOURCE_CONFIG);
 }
 
 std::string CSVSourceConfig::toString() {

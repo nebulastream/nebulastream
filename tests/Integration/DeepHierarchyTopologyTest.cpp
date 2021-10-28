@@ -17,18 +17,14 @@
 #include <gtest/gtest.h>
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <iostream>
 
 using namespace std;
 

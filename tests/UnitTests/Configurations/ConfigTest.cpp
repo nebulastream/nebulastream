@@ -232,13 +232,13 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
               sourceConfigPtr1->as<MQTTSourceConfig>()->getUrl()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr1->as<MQTTSourceConfig>()->getClientId()->getValue(),
               sourceConfigPtr1->as<MQTTSourceConfig>()->getClientId()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getTopic()->getValue(),
+    EXPECT_NE(sourceConfigPtr1->as<MQTTSourceConfig>()->getTopic()->getValue(),
               sourceConfigPtr1->as<MQTTSourceConfig>()->getTopic()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getQos()->getValue(),
               sourceConfigPtr1->as<MQTTSourceConfig>()->getQos()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getCleanSession()->getValue(),
               sourceConfigPtr1->as<MQTTSourceConfig>()->getCleanSession()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getUserName()->getValue(),
+    EXPECT_NE(sourceConfigPtr1->as<MQTTSourceConfig>()->getUserName()->getValue(),
               sourceConfigPtr1->as<MQTTSourceConfig>()->getUserName()->getDefaultValue());
 }
 
@@ -275,7 +275,11 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                            "--physicalStreamName=",
                            "--logicalStreamName=default",
                            "--KafkaSourceTopic=newTopic",
-                           "--KafkaSourceConnectionTimeout=100"};
+                           "--KafkaSourceConnectionTimeout=100",
+                           "--KafkaSourceBrokers=testBroker",
+                           "--KafkaSourceGroupId=testId"};
+
+    argc = 7;
 
     std::map<string, string> commandLineParams1;
 
@@ -301,11 +305,11 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
               sourceConfigPtr1->as<KafkaSourceConfig>()->getLogicalStreamName()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getRowLayout()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getRowLayout()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getBrokers()->getValue(),
+    EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getBrokers()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getBrokers()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getAutoCommit()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getAutoCommit()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getGroupId()->getValue(),
+    EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getGroupId()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getGroupId()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getTopic()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getTopic()->getDefaultValue());
