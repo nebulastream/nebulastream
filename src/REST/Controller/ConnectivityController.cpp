@@ -15,9 +15,9 @@
 */
 
 #include <REST/Controller/ConnectivityController.hpp>
+#include <REST/RestEngine.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
-#include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

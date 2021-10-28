@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include <REST/Controller/StreamCatalogController.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <REST/Controller/StreamCatalogController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>

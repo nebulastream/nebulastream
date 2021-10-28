@@ -178,7 +178,7 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
                 badRequestImpl(request, e.getMessage());
                 return;
             }
-            successMessageImpl(request, "Registered Java UDF");
+            successMessageImpl(request, "Registered Java UDF"s);
         })
         .wait();
 }
