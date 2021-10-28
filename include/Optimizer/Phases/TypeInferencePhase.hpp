@@ -72,4 +72,4 @@ class TypeInferencePhase {
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_PHASES_TYPE_INFERENCE_PHASE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_PHASES_TYPE_INFERENCE_PHASE_HPP_

@@ -56,4 +56,4 @@ class AnonymousUserDefinedDataType final : public GeneratableDataType {
 };
 }// namespace NES::QueryCompilation
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ANONYMOUS_USER_DEFINED_DATA_TYPE_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ANONYMOUS_USER_DEFINED_DATA_TYPE_HPP_

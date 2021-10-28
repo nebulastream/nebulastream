@@ -112,4 +112,4 @@ SchemaPtr getSchema(const StaticNesMetrics& metrics, const std::string& prefix);
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_STATIC_NES_METRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_STATIC_NES_METRICS_HPP_

@@ -95,4 +95,4 @@ SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix);
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_METRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_METRICS_HPP_

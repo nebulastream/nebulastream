@@ -81,4 +81,4 @@ class DumpContext {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_NODES_UTIL_DUMP_CONTEXT_HPP_
+#endif// NES_INCLUDE_NODES_UTIL_DUMP_CONTEXT_HPP_

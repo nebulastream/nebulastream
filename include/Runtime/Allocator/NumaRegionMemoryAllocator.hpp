@@ -58,4 +58,4 @@ class NumaRegionMemoryAllocator : public std::pmr::memory_resource {
 using NumaRegionMemoryAllocatorPtr = std::shared_ptr<NumaRegionMemoryAllocator>;
 }// namespace NES::Runtime
 #endif
-#endif  // NES_INCLUDE_RUNTIME_ALLOCATOR_NUMA_REGION_MEMORY_ALLOCATOR_HPP_
+#endif// NES_INCLUDE_RUNTIME_ALLOCATOR_NUMA_REGION_MEMORY_ALLOCATOR_HPP_

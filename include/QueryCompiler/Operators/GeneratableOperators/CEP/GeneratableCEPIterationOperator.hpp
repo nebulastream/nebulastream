@@ -68,4 +68,4 @@ class GeneratableCEPIterationOperator : public GeneratableOperator {
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_CE_P_GENERATABLE_CEP_ITERATION_OPERATOR_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_CE_P_GENERATABLE_CEP_ITERATION_OPERATOR_HPP_

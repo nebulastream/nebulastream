@@ -71,4 +71,4 @@ class ThreadBarrier {
     std::condition_variable cvar;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_UTIL_THREAD_BARRIER_HPP_
+#endif// NES_INCLUDE_UTIL_THREAD_BARRIER_HPP_

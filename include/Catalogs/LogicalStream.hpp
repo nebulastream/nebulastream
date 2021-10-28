@@ -51,4 +51,4 @@ class LogicalStream {
 using LogicalStreamPtr = std::shared_ptr<LogicalStream>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_
+#endif// NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_

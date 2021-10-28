@@ -87,4 +87,4 @@ void writeToBuffer(const NetworkValues& metrics, Runtime::TupleBuffer& buf, uint
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_VALUES_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_VALUES_HPP_

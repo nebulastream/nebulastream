@@ -131,4 +131,4 @@ using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_SINKS_MEDIUMS_SINK_MEDIUM_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_SINK_MEDIUM_HPP_

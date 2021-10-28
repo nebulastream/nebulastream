@@ -94,4 +94,4 @@ using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
 
 }// namespace NES::Network
 
-#endif  // NES_INCLUDE_NETWORK_NETWORK_SOURCE_HPP_
+#endif// NES_INCLUDE_NETWORK_NETWORK_SOURCE_HPP_

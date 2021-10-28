@@ -57,4 +57,4 @@ class BufferStorageUnit {
 
 using BufferStorageUnitPtr = std::shared_ptr<BufferStorageUnit>;
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_UTIL_BUFFER_STORAGE_UNIT_HPP_
+#endif// NES_INCLUDE_UTIL_BUFFER_STORAGE_UNIT_HPP_

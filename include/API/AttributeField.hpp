@@ -65,4 +65,4 @@ class AttributeField {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_API_ATTRIBUTE_FIELD_HPP_
+#endif// NES_INCLUDE_API_ATTRIBUTE_FIELD_HPP_

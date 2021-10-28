@@ -89,4 +89,4 @@ class QueryPlacementPhase {
     z3::ContextPtr z3Context;
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_PHASES_QUERY_PLACEMENT_PHASE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_PHASES_QUERY_PLACEMENT_PHASE_HPP_

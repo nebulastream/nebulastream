@@ -80,4 +80,4 @@ SchemaPtr getSchema(const DiskMetrics& metric, const std::string& prefix);
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_DISK_METRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_DISK_METRICS_HPP_

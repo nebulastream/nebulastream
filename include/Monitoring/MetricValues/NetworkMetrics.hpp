@@ -83,4 +83,4 @@ SchemaPtr getSchema(const NetworkMetrics& metric, const std::string& prefix);
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_METRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_METRICS_HPP_

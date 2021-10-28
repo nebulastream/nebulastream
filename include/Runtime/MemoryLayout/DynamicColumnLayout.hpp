@@ -63,4 +63,4 @@ class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_share
 
 }// namespace NES::Runtime::DynamicMemoryLayout
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_HPP_

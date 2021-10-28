@@ -271,4 +271,4 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_SOURCES_DATA_SOURCE_HPP_
+#endif// NES_INCLUDE_SOURCES_DATA_SOURCE_HPP_

@@ -46,4 +46,4 @@ class PhysicalMultiplexOperator : public PhysicalOperator, public ExchangeOperat
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_PHYSICAL_MULTIPLEX_OPERATOR_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_PHYSICAL_MULTIPLEX_OPERATOR_HPP_

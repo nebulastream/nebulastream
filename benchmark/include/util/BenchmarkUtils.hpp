@@ -241,4 +241,4 @@ class BenchmarkUtils {
 
 }// namespace NES::Benchmarking
 
-#endif  // NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_UTILS_HPP_
+#endif// NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_UTILS_HPP_

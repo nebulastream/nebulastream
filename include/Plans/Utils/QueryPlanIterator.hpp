@@ -98,4 +98,4 @@ class QueryPlanIterator {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_PLANS_UTILS_QUERY_PLAN_ITERATOR_HPP_
+#endif// NES_INCLUDE_PLANS_UTILS_QUERY_PLAN_ITERATOR_HPP_

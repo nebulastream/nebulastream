@@ -139,4 +139,4 @@ inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler(QueryCompilati
 }// namespace TestUtils
 }// namespace NES
 
-#endif  // NES_TESTS_UTIL_TEST_QUERY_COMPILER_HPP_
+#endif// NES_TESTS_UTIL_TEST_QUERY_COMPILER_HPP_

@@ -84,4 +84,4 @@ class StreamCatalogService {
 };
 using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
 }// namespace NES
-#endif  // NES_INCLUDE_SERVICES_STREAM_CATALOG_SERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_STREAM_CATALOG_SERVICE_HPP_

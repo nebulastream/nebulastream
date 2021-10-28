@@ -51,4 +51,4 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_BINARY_OPERATOR_NODE_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_BINARY_OPERATOR_NODE_HPP_

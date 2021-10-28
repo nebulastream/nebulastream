@@ -51,4 +51,4 @@ class DynamicObject {
 
 }// namespace NES::Compiler
 
-#endif  // NES_INCLUDE_COMPILER_DYNAMIC_OBJECT_HPP_
+#endif// NES_INCLUDE_COMPILER_DYNAMIC_OBJECT_HPP_

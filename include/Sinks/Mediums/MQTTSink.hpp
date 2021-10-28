@@ -159,4 +159,4 @@ using MQTTSinkPtr = std::shared_ptr<MQTTSink>;
 
 }// namespace NES
 #endif
-#endif  // NES_INCLUDE_SINKS_MEDIUMS_MQTT_SINK_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_MQTT_SINK_HPP_

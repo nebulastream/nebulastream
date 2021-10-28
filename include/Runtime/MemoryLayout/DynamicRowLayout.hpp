@@ -69,4 +69,4 @@ class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_f
 
 }// namespace NES::Runtime::DynamicMemoryLayout
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_HPP_

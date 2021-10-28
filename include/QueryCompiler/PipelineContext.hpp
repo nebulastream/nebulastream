@@ -85,4 +85,4 @@ class PipelineContext {
 };
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERY_COMPILER_PIPELINE_CONTEXT_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_PIPELINE_CONTEXT_HPP_

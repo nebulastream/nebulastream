@@ -111,4 +111,4 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
     std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>> getLogicalGraphToDuplicate(const OperatorNodePtr& operatorNode);
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_LOGICAL_SOURCE_EXPANSION_RULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_LOGICAL_SOURCE_EXPANSION_RULE_HPP_

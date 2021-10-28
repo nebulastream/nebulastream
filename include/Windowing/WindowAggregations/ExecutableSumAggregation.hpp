@@ -61,4 +61,4 @@ class ExecutableSumAggregation : public ExecutableWindowAggregation<InputType, I
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_EXECUTABLE_SUM_AGGREGATION_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_EXECUTABLE_SUM_AGGREGATION_HPP_

@@ -26,4 +26,4 @@ enum MetricValueType { CpuMetric, DiskMetric, MemoryMetric, NetworkMetric };
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_METRIC_VALUE_TYPE_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_METRIC_VALUE_TYPE_HPP_

@@ -31,4 +31,4 @@ class OperatorAtATimePolicy : public OperatorFusionPolicy {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_OPERATOR_AT_A_TIME_POLICY_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_OPERATOR_AT_A_TIME_POLICY_HPP_

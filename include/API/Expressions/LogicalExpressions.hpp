@@ -137,4 +137,4 @@ inline auto operator>(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_API_EXPRESSIONS_LOGICAL_EXPRESSIONS_HPP_
+#endif// NES_INCLUDE_API_EXPRESSIONS_LOGICAL_EXPRESSIONS_HPP_

@@ -42,4 +42,4 @@ using StreamCatalogControllerPtr = std::shared_ptr<StreamCatalogController>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_REST_CONTROLLER_STREAM_CATALOG_CONTROLLER_HPP_
+#endif// NES_INCLUDE_REST_CONTROLLER_STREAM_CATALOG_CONTROLLER_HPP_

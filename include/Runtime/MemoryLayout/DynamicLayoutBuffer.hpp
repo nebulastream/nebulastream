@@ -75,4 +75,4 @@ class DynamicLayoutBuffer {
 };
 }// namespace NES::Runtime::DynamicMemoryLayout
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_LAYOUT_BUFFER_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_LAYOUT_BUFFER_HPP_

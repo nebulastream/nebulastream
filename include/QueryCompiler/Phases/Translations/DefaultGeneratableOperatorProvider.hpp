@@ -146,4 +146,4 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_TRANSLATIONS_DEFAULT_GENERATABLE_OPERATOR_PROVIDER_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_PHASES_TRANSLATIONS_DEFAULT_GENERATABLE_OPERATOR_PROVIDER_HPP_

@@ -78,4 +78,4 @@ class SinkFormat {
 using SinkFormatPtr = std::shared_ptr<SinkFormat>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_SINKS_FORMATS_SINK_FORMAT_HPP_
+#endif// NES_INCLUDE_SINKS_FORMATS_SINK_FORMAT_HPP_

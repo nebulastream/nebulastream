@@ -42,4 +42,4 @@ class QueryDeploymentException : public std::runtime_error {
     SharedQueryId sharedQueryId;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_EXCEPTIONS_QUERY_DEPLOYMENT_EXCEPTION_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_QUERY_DEPLOYMENT_EXCEPTION_HPP_

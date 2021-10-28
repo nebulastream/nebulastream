@@ -225,4 +225,4 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_COMPONENTS_NES_COORDINATOR_HPP_
+#endif// NES_INCLUDE_COMPONENTS_NES_COORDINATOR_HPP_

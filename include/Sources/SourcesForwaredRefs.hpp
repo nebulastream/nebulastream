@@ -23,4 +23,4 @@ class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_SOURCES_SOURCES_FORWARED_REFS_HPP_
+#endif// NES_INCLUDE_SOURCES_SOURCES_FORWARED_REFS_HPP_

@@ -81,4 +81,4 @@ using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_QUERY_VALIDATION_SEMANTIC_QUERY_VALIDATION_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERY_VALIDATION_SEMANTIC_QUERY_VALIDATION_HPP_

@@ -36,4 +36,4 @@ class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter, 
     virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_RUNTIME_EXECUTION_DATA_EMITTER_HPP_
+#endif// NES_INCLUDE_RUNTIME_EXECUTION_DATA_EMITTER_HPP_

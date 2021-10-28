@@ -39,4 +39,4 @@ class BroadcastLogicalOperatorNode : public ExchangeOperatorNode, public Logical
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_BROADCAST_LOGICAL_OPERATOR_NODE_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_BROADCAST_LOGICAL_OPERATOR_NODE_HPP_

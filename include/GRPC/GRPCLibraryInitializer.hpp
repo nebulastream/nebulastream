@@ -25,4 +25,4 @@ class GrpcLibraryInizializer {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_GRPC_GRPC_LIBRARY_INITIALIZER_HPP_
+#endif// NES_INCLUDE_GRPC_GRPC_LIBRARY_INITIALIZER_HPP_

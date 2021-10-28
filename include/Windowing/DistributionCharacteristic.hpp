@@ -73,4 +73,4 @@ class DistributionCharacteristic {
 };
 
 }// namespace NES::Windowing
-#endif  // NES_INCLUDE_WINDOWING_DISTRIBUTION_CHARACTERISTIC_HPP_
+#endif// NES_INCLUDE_WINDOWING_DISTRIBUTION_CHARACTERISTIC_HPP_

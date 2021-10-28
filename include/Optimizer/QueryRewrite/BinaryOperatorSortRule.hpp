@@ -60,4 +60,4 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_BINARY_OPERATOR_SORT_RULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_BINARY_OPERATOR_SORT_RULE_HPP_

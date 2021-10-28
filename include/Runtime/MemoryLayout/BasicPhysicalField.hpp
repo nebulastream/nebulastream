@@ -61,4 +61,4 @@ PhysicalFieldPtr createBasicPhysicalField(uint64_t bufferOffset) {
 }
 }// namespace NES::Runtime
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_BASIC_PHYSICAL_FIELD_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_BASIC_PHYSICAL_FIELD_HPP_

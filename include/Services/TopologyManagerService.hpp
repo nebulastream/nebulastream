@@ -92,4 +92,4 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 }//namespace NES
 
-#endif  // NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_

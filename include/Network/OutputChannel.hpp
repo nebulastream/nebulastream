@@ -95,4 +95,4 @@ class OutputChannel {
 }// namespace Network
 }// namespace NES
 
-#endif  // NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_
+#endif// NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_

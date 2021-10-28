@@ -101,4 +101,4 @@ class GlobalQueryNode : public Node {
     OperatorNodePtr operatorNode;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_NODE_HPP_
+#endif// NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_NODE_HPP_

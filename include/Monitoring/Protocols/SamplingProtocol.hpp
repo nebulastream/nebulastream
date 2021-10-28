@@ -41,4 +41,4 @@ using SamplingProtocolPtr = std::shared_ptr<SamplingProtocol>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_PROTOCOLS_SAMPLING_PROTOCOL_HPP_
+#endif// NES_INCLUDE_MONITORING_PROTOCOLS_SAMPLING_PROTOCOL_HPP_

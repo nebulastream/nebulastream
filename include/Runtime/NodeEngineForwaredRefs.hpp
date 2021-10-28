@@ -137,4 +137,4 @@ using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_RUNTIME_NODE_ENGINE_FORWARED_REFS_HPP_
+#endif// NES_INCLUDE_RUNTIME_NODE_ENGINE_FORWARED_REFS_HPP_

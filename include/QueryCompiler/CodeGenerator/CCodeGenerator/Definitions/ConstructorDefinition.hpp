@@ -90,4 +90,4 @@ class ConstructorDefinition : public std::enable_shared_from_this<ConstructorDef
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_DEFINITIONS_CONSTRUCTOR_DEFINITION_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_DEFINITIONS_CONSTRUCTOR_DEFINITION_HPP_

@@ -334,4 +334,4 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
 #endif
 
 }// namespace NES
-#endif  // NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_
+#endif// NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_

@@ -34,4 +34,4 @@ class IngestionTimeWatermarkGenerator : public Watermark {
 };
 
 }// namespace NES::Windowing
-#endif  // NES_INCLUDE_WINDOWING_WATERMARK_INGESTION_TIME_WATERMARK_GENERATOR_HPP_
+#endif// NES_INCLUDE_WINDOWING_WATERMARK_INGESTION_TIME_WATERMARK_GENERATOR_HPP_

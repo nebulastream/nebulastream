@@ -60,4 +60,4 @@ class ProjectBeforeUnionOperatorRule : public BaseRewriteRule {
 };
 
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_PROJECT_BEFORE_UNION_OPERATOR_RULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_PROJECT_BEFORE_UNION_OPERATOR_RULE_HPP_

@@ -672,4 +672,4 @@ class TestUtils {
     }
 };
 }// namespace NES
-#endif  // NES_INCLUDE_UTIL_TEST_UTILS_HPP_
+#endif// NES_INCLUDE_UTIL_TEST_UTILS_HPP_

@@ -39,4 +39,4 @@ class LinkProperty {
 
 using LinkPropertyPtr = std::shared_ptr<LinkProperty>;
 
-#endif  // NES_INCLUDE_TOPOLOGY_LINK_PROPERTY_HPP_
+#endif// NES_INCLUDE_TOPOLOGY_LINK_PROPERTY_HPP_

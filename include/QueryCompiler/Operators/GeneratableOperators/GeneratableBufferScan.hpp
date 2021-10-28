@@ -58,4 +58,4 @@ class GeneratableBufferScan : public GeneratableOperator {
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_GENERATABLE_BUFFER_SCAN_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_GENERATABLE_BUFFER_SCAN_HPP_

@@ -64,4 +64,4 @@ class GeneratedCode {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_GENERATED_CODE_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_GENERATED_CODE_HPP_

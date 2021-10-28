@@ -31,4 +31,4 @@ class SliceAggregationTriggerActionDescriptor : public BaseWindowActionDescripto
     SliceAggregationTriggerActionDescriptor();
 };
 }// namespace NES::Windowing
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_SLICE_AGGREGATION_TRIGGER_ACTION_DESCRIPTOR_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_SLICE_AGGREGATION_TRIGGER_ACTION_DESCRIPTOR_HPP_

@@ -24,4 +24,4 @@
 #include <regex>
 #include <string>
 #include <vector>
-#endif  // NES_INCLUDE_REST_STD_SERVICE_HPP_
+#endif// NES_INCLUDE_REST_STD_SERVICE_HPP_

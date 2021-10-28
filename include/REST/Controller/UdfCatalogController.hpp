@@ -76,4 +76,4 @@ class UdfCatalogController : public BaseController {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_REST_CONTROLLER_UDF_CATALOG_CONTROLLER_HPP_
+#endif// NES_INCLUDE_REST_CONTROLLER_UDF_CATALOG_CONTROLLER_HPP_

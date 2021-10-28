@@ -60,4 +60,4 @@ class PredicationOptimizationPhase {
 };
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_PREDICATION_OPTIMIZATION_PHASE_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_PHASES_PREDICATION_OPTIMIZATION_PHASE_HPP_

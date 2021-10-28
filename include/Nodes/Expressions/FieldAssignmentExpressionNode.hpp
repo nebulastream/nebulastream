@@ -63,4 +63,4 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_NODES_EXPRESSIONS_FIELD_ASSIGNMENT_EXPRESSION_NODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_FIELD_ASSIGNMENT_EXPRESSION_NODE_HPP_

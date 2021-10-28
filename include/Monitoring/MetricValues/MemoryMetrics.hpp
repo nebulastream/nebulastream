@@ -91,4 +91,4 @@ SchemaPtr getSchema(const MemoryMetrics& metric, const std::string& prefix);
 using MemoryMetricsPtr = std::shared_ptr<MemoryMetrics>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_MEMORY_METRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_MEMORY_METRICS_HPP_

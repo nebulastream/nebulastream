@@ -56,4 +56,4 @@ class Undefined final : public DataType {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_COMMON_DATA_TYPES_UNDEFINED_HPP_
+#endif// NES_INCLUDE_COMMON_DATA_TYPES_UNDEFINED_HPP_

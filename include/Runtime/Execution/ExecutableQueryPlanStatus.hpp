@@ -31,4 +31,4 @@ enum ExecutableQueryPlanStatus {
 };
 }// namespace NES::Runtime::Execution
 
-#endif  // NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_QUERY_PLAN_STATUS_HPP_
+#endif// NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_QUERY_PLAN_STATUS_HPP_

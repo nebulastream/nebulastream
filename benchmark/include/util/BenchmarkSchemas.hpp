@@ -75,4 +75,4 @@ class BenchmarkSchemas {
     }
 };
 }// namespace NES::Benchmarking
-#endif  // NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_SCHEMAS_HPP_
+#endif// NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_SCHEMAS_HPP_

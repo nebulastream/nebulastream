@@ -34,4 +34,4 @@ class DiscardingExecutablePipelineStage : public ExecutablePipelineStage {
                             WorkerContext& workerContext) override;
 };
 }// namespace NES::Runtime::Execution
-#endif  // NES_INCLUDE_RUNTIME_EXECUTION_DISCARDING_EXECUTABLE_PIPELINE_STAGE_HPP_
+#endif// NES_INCLUDE_RUNTIME_EXECUTION_DISCARDING_EXECUTABLE_PIPELINE_STAGE_HPP_

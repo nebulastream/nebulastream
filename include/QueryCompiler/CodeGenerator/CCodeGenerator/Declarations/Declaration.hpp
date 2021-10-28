@@ -40,4 +40,4 @@ class StructDeclaration;
 const DataTypePtr createUserDefinedType(const StructDeclaration& decl);
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_DECLARATIONS_DECLARATION_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_DECLARATIONS_DECLARATION_HPP_

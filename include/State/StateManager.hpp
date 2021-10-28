@@ -130,4 +130,4 @@ class StateManager {
 };
 }// namespace Runtime
 }// namespace NES
-#endif  // NES_INCLUDE_STATE_STATE_MANAGER_HPP_
+#endif// NES_INCLUDE_STATE_STATE_MANAGER_HPP_

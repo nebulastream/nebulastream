@@ -46,4 +46,4 @@ class ConnectivityController : public BaseController {
 
 using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
 }// namespace NES
-#endif  // NES_INCLUDE_REST_CONTROLLER_CONNECTIVITY_CONTROLLER_HPP_
+#endif// NES_INCLUDE_REST_CONTROLLER_CONNECTIVITY_CONTROLLER_HPP_

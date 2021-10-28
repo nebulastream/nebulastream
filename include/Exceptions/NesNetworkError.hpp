@@ -36,4 +36,4 @@ class NesNetworkError : public std::runtime_error {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_EXCEPTIONS_NES_NETWORK_ERROR_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_NES_NETWORK_ERROR_HPP_

@@ -41,4 +41,4 @@ class DefaultQueryMergerRule final : public BaseQueryMergerRule {
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_QUERY_MERGER_DEFAULT_QUERY_MERGER_RULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERY_MERGER_DEFAULT_QUERY_MERGER_RULE_HPP_

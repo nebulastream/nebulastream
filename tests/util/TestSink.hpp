@@ -96,4 +96,4 @@ class TestSink : public SinkMedium {
 
 }// namespace NES
 
-#endif  // NES_TESTS_UTIL_TEST_SINK_HPP_
+#endif// NES_TESTS_UTIL_TEST_SINK_HPP_

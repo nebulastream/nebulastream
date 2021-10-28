@@ -103,4 +103,4 @@ class CompilationRequest {
 
 }// namespace NES::Compiler
 
-#endif  // NES_INCLUDE_COMPILER_COMPILATION_REQUEST_HPP_
+#endif// NES_INCLUDE_COMPILER_COMPILATION_REQUEST_HPP_

@@ -97,4 +97,4 @@ class MQTTClientWrapper {
 using MQTTClientWrapperPtr = std::shared_ptr<MQTTClientWrapper>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_UTIL_MQTT_CLIENT_WRAPPER_HPP_
+#endif// NES_INCLUDE_UTIL_MQTT_CLIENT_WRAPPER_HPP_

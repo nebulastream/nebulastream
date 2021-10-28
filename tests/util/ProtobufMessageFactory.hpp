@@ -52,4 +52,4 @@ class ProtobufMessageFactory {
 };
 
 }// namespace NES
-#endif  // NES_TESTS_UTIL_PROTOBUF_MESSAGE_FACTORY_HPP_
+#endif// NES_TESTS_UTIL_PROTOBUF_MESSAGE_FACTORY_HPP_

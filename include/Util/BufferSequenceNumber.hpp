@@ -72,4 +72,4 @@ class BufferSequenceNumber {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_UTIL_BUFFER_SEQUENCE_NUMBER_HPP_
+#endif// NES_INCLUDE_UTIL_BUFFER_SEQUENCE_NUMBER_HPP_

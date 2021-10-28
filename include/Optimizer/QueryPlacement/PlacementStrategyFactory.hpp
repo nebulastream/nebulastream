@@ -112,4 +112,4 @@ class PlacementStrategyFactory {
                                                               const StreamCatalogPtr& streamCatalog);
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_PLACEMENT_STRATEGY_FACTORY_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_PLACEMENT_STRATEGY_FACTORY_HPP_

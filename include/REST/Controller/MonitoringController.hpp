@@ -54,4 +54,4 @@ using MonitoringControllerPtr = std::shared_ptr<MonitoringController>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_REST_CONTROLLER_MONITORING_CONTROLLER_HPP_
+#endif// NES_INCLUDE_REST_CONTROLLER_MONITORING_CONTROLLER_HPP_

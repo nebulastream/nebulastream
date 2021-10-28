@@ -91,4 +91,4 @@ class WindowType {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_TYPES_WINDOW_TYPE_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_TYPES_WINDOW_TYPE_HPP_

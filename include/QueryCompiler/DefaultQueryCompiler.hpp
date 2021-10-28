@@ -57,4 +57,4 @@ class DefaultQueryCompiler : public QueryCompiler {
 };
 
 }// namespace NES::QueryCompilation
-#endif  // NES_INCLUDE_QUERY_COMPILER_DEFAULT_QUERY_COMPILER_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_DEFAULT_QUERY_COMPILER_HPP_

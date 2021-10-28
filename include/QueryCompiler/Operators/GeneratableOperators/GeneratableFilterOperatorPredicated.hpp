@@ -58,4 +58,4 @@ class GeneratableFilterOperatorPredicated : public GeneratableOperator {
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_GENERATABLE_FILTER_OPERATOR_PREDICATED_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_GENERATABLE_FILTER_OPERATOR_PREDICATED_HPP_

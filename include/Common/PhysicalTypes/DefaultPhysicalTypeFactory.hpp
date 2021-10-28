@@ -79,4 +79,4 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_COMMON_PHYSICAL_TYPES_DEFAULT_PHYSICAL_TYPE_FACTORY_HPP_
+#endif// NES_INCLUDE_COMMON_PHYSICAL_TYPES_DEFAULT_PHYSICAL_TYPE_FACTORY_HPP_

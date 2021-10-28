@@ -99,4 +99,4 @@ class NetworkSink : public SinkMedium {
 
 }// namespace NES::Network
 
-#endif  // NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_
+#endif// NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_

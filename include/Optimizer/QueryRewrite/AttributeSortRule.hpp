@@ -126,4 +126,4 @@ class AttributeSortRule : public BaseRewriteRule {
     static std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression);
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_ATTRIBUTE_SORT_RULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_ATTRIBUTE_SORT_RULE_HPP_

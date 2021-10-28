@@ -334,4 +334,4 @@ class JoinHandler : public AbstractJoinHandler {
     Runtime::StateManagerPtr stateManager;
 };
 }// namespace NES::Join
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_HANDLER_JOIN_HANDLER_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_HANDLER_JOIN_HANDLER_HPP_

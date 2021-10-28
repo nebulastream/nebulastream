@@ -31,4 +31,4 @@ class QueryCompilationException : public NesRuntimeException {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_EXCEPTIONS_QUERY_COMPILATION_EXCEPTION_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_EXCEPTIONS_QUERY_COMPILATION_EXCEPTION_HPP_

@@ -31,4 +31,4 @@ enum MetricType { CounterType, GaugeType, HistogramType, MeterType, UnknownType 
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_

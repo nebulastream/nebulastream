@@ -46,4 +46,4 @@ class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
 }// namespace NES::Join
-#endif  // NES_INCLUDE_WINDOWING_JOIN_FORWARD_REFS_HPP_
+#endif// NES_INCLUDE_WINDOWING_JOIN_FORWARD_REFS_HPP_

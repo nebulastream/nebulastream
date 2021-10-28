@@ -141,4 +141,4 @@ class GlobalQueryPlan {
     std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToPlanMap;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_PLAN_HPP_
+#endif// NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_PLAN_HPP_

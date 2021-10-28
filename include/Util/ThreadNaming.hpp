@@ -31,4 +31,4 @@ namespace NES {
 void setThreadName(const char* threadNameFmt, ...);
 }// namespace NES
 
-#endif  // NES_INCLUDE_UTIL_THREAD_NAMING_HPP_
+#endif// NES_INCLUDE_UTIL_THREAD_NAMING_HPP_

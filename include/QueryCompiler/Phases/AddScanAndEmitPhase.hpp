@@ -34,4 +34,4 @@ class AddScanAndEmitPhase {
 }// namespace QueryCompilation
 };// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_ADD_SCAN_AND_EMIT_PHASE_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_PHASES_ADD_SCAN_AND_EMIT_PHASE_HPP_

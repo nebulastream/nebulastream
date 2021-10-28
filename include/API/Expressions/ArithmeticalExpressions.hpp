@@ -99,4 +99,4 @@ ExpressionNodePtr operator++(ExpressionItem exp, int);
 ExpressionNodePtr operator--(ExpressionItem exp, int);
 
 }// namespace NES
-#endif  // NES_INCLUDE_API_EXPRESSIONS_ARITHMETICAL_EXPRESSIONS_HPP_
+#endif// NES_INCLUDE_API_EXPRESSIONS_ARITHMETICAL_EXPRESSIONS_HPP_

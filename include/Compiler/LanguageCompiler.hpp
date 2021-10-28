@@ -45,4 +45,4 @@ class LanguageCompiler {
 
 }// namespace NES::Compiler
 
-#endif  // NES_INCLUDE_COMPILER_LANGUAGE_COMPILER_HPP_
+#endif// NES_INCLUDE_COMPILER_LANGUAGE_COMPILER_HPP_

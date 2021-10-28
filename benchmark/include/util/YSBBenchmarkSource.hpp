@@ -147,4 +147,4 @@ class YSBBenchmarkSource : public SimpleBenchmarkSource {
     }
 };
 }// namespace NES::Benchmarking
-#endif  // NES_BENCHMARK_INCLUDE_UTIL_YSB_BENCHMARK_SOURCE_HPP_
+#endif// NES_BENCHMARK_INCLUDE_UTIL_YSB_BENCHMARK_SOURCE_HPP_

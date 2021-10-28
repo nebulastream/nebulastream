@@ -50,4 +50,4 @@ class SourceCode {
 
 }// namespace NES::Compiler
 
-#endif  // NES_INCLUDE_COMPILER_SOURCE_CODE_HPP_
+#endif// NES_INCLUDE_COMPILER_SOURCE_CODE_HPP_

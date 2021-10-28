@@ -56,4 +56,4 @@ class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
 };
 
 }// namespace NES::Windowing
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_POLICIES_EXECUTABLE_ON_TIME_TRIGGER_POLICY_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_POLICIES_EXECUTABLE_ON_TIME_TRIGGER_POLICY_HPP_

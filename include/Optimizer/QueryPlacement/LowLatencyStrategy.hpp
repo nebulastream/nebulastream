@@ -64,4 +64,4 @@ class LowLatencyStrategy : public BasePlacementStrategy {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_LOW_LATENCY_STRATEGY_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_LOW_LATENCY_STRATEGY_HPP_

@@ -40,4 +40,4 @@ class PhysicalOperator : public virtual OperatorNode {
 
 }// namespace NES::QueryCompilation::PhysicalOperators
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_PHYSICAL_OPERATOR_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_PHYSICAL_OPERATOR_HPP_

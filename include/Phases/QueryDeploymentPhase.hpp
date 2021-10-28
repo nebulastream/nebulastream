@@ -76,4 +76,4 @@ class QueryDeploymentPhase {
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_PHASES_QUERY_DEPLOYMENT_PHASE_HPP_
+#endif// NES_INCLUDE_PHASES_QUERY_DEPLOYMENT_PHASE_HPP_

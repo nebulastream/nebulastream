@@ -43,4 +43,4 @@ class ErrorListener : public detail::virtual_enable_shared_from_this<ErrorListen
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_RUNTIME_ERROR_LISTENER_HPP_
+#endif// NES_INCLUDE_RUNTIME_ERROR_LISTENER_HPP_

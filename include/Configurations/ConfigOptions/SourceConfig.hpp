@@ -151,4 +151,4 @@ class SourceConfig {
     BoolConfigOption skipHeader;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_
+#endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_

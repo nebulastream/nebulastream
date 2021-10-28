@@ -44,4 +44,4 @@ using CounterPtr = std::shared_ptr<Counter>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICS_COUNTER_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICS_COUNTER_HPP_

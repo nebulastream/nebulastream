@@ -90,4 +90,4 @@ class MonitoringAgent {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_
+#endif// NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_

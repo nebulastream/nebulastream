@@ -61,4 +61,4 @@ class SharedLibrary : public DynamicObject {
 
 }// namespace NES::Compiler
 
-#endif  // NES_INCLUDE_COMPILER_UTIL_SHARED_LIBRARY_HPP_
+#endif// NES_INCLUDE_COMPILER_UTIL_SHARED_LIBRARY_HPP_

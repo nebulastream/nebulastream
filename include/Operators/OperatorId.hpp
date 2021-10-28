@@ -25,4 +25,4 @@
 using OperatorId = uint64_t;
 static constexpr uint64_t INVALID_OPERATOR_ID = 0;
 
-#endif  // NES_INCLUDE_OPERATORS_OPERATOR_ID_HPP_
+#endif// NES_INCLUDE_OPERATORS_OPERATOR_ID_HPP_

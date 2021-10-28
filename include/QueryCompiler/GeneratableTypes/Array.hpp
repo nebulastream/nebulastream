@@ -398,4 +398,4 @@ struct std::hash<NES::QueryCompilation::Array<T, N>> {
     }
 };
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_HPP_

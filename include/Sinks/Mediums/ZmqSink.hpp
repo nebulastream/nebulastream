@@ -69,4 +69,4 @@ class ZmqSink : public SinkMedium {
 using ZmqSinkPtr = std::shared_ptr<ZmqSink>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_SINKS_MEDIUMS_ZMQ_SINK_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_ZMQ_SINK_HPP_

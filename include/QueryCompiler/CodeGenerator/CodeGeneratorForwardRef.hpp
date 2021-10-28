@@ -132,4 +132,4 @@ using RecordHandlerPtr = std::shared_ptr<RecordHandler>;
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_CODE_GENERATOR_FORWARD_REF_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_CODE_GENERATOR_FORWARD_REF_HPP_

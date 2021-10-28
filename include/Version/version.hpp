@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_VERSION_VERSION_HPP_
-#define NES_INCLUDE_VERSION_VERSION_HPP_
+#ifndef __VERSION_HPP__
+#define __VERSION_HPP__
 #define NES_VERSION_MAJOR 0
 #define NES_VERSION_MINOR 0
-#define NES_VERSION_PATCH 556
-constexpr char const* NES_VERSION = "0.0.556";
-#endif  // NES_INCLUDE_VERSION_VERSION_HPP_
+#define NES_VERSION_PATCH 557
+constexpr char const* NES_VERSION = "0.0.557";
+#endif

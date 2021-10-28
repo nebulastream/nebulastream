@@ -72,4 +72,4 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_NES_REQUEST_HPP_
+#endif// NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_NES_REQUEST_HPP_

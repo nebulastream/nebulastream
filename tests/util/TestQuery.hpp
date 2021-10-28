@@ -46,4 +46,4 @@ class TestQuery : public Query {
 
 }// namespace NES
 
-#endif  // NES_TESTS_UTIL_TEST_QUERY_HPP_
+#endif// NES_TESTS_UTIL_TEST_QUERY_HPP_

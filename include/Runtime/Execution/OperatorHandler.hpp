@@ -52,4 +52,4 @@ class OperatorHandler : public Reconfigurable {
 }// namespace Runtime
 }// namespace NES
 
-#endif  // NES_INCLUDE_RUNTIME_EXECUTION_OPERATOR_HANDLER_HPP_
+#endif// NES_INCLUDE_RUNTIME_EXECUTION_OPERATOR_HANDLER_HPP_

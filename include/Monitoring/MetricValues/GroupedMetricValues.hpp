@@ -53,4 +53,4 @@ using GroupedMetricValuesPtr = std::shared_ptr<GroupedMetricValues>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_GROUPED_METRIC_VALUES_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_GROUPED_METRIC_VALUES_HPP_

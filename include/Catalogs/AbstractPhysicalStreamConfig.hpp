@@ -62,4 +62,4 @@ class AbstractPhysicalStreamConfig {
 using AbstractPhysicalStreamConfigPtr = std::shared_ptr<AbstractPhysicalStreamConfig>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_ABSTRACT_PHYSICAL_STREAM_CONFIG_HPP_
+#endif// NES_INCLUDE_CATALOGS_ABSTRACT_PHYSICAL_STREAM_CONFIG_HPP_

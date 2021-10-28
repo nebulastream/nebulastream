@@ -34,4 +34,4 @@ class InvalidQueryStatusException : public std::exception {
     std::string message;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_STATUS_EXCEPTION_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_STATUS_EXCEPTION_HPP_

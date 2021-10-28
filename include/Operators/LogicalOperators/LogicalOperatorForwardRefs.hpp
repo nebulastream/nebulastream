@@ -112,4 +112,4 @@ using BroadcastLogicalOperatorNodePtr = std::shared_ptr<BroadcastLogicalOperator
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_OPERATOR_FORWARD_REFS_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_OPERATOR_FORWARD_REFS_HPP_

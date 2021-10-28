@@ -113,4 +113,4 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 };
 
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_PHYSICAL_STREAM_CONFIG_HPP_
+#endif// NES_INCLUDE_CATALOGS_PHYSICAL_STREAM_CONFIG_HPP_

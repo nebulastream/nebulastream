@@ -30,4 +30,4 @@ class InvalidQueryException : public std::runtime_error {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_EXCEPTION_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_EXCEPTION_HPP_

@@ -194,4 +194,4 @@ class LogicalWindowDefinition {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_LOGICAL_WINDOW_DEFINITION_HPP_
+#endif// NES_INCLUDE_WINDOWING_LOGICAL_WINDOW_DEFINITION_HPP_

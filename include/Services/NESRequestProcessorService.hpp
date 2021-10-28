@@ -113,4 +113,4 @@ class NESRequestProcessorService {
     z3::ContextPtr z3Context;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_SERVICES_NES_REQUEST_PROCESSOR_SERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_NES_REQUEST_PROCESSOR_SERVICE_HPP_

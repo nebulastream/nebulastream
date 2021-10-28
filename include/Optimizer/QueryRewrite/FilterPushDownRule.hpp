@@ -77,4 +77,4 @@ class FilterPushDownRule : public BaseRewriteRule {
 
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_FILTER_PUSH_DOWN_RULE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_FILTER_PUSH_DOWN_RULE_HPP_

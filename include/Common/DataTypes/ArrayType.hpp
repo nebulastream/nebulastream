@@ -74,4 +74,4 @@ class ArrayType : public DataType {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_COMMON_DATA_TYPES_ARRAY_TYPE_HPP_
+#endif// NES_INCLUDE_COMMON_DATA_TYPES_ARRAY_TYPE_HPP_

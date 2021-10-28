@@ -27,4 +27,4 @@ Timestamp getTimestamp();
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_UTIL_TIME_MEASUREMENT_HPP_
+#endif// NES_INCLUDE_UTIL_TIME_MEASUREMENT_HPP_

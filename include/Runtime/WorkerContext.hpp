@@ -88,4 +88,4 @@ class WorkerContext {
     Network::OutputChannel* getChannel(Network::OperatorId ownerId);
 };
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_
+#endif// NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_

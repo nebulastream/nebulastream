@@ -44,6 +44,6 @@ class CompiledDummyPlan : public HandCodedQueryExecutionPlan {
 };
 typedef std::shared_ptr<CompiledDummyPlan> CompiledDummyPlanPtr;
 
-};     // namespace NES
+};// namespace NES
 
-#endif  // NES_TESTS_TEST_QEPS_COMPILED_DUMMY_PLAN_HPP_
+#endif// NES_TESTS_TEST_QEPS_COMPILED_DUMMY_PLAN_HPP_

@@ -118,4 +118,4 @@ inline T& DynamicRowLayoutField<T, boundaryChecks>::operator[](size_t recordInde
 
 }// namespace NES::Runtime::DynamicMemoryLayout
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_FIELD_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_FIELD_HPP_

@@ -32,4 +32,4 @@ using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_COMMON_FORWARD_DECLARATION_HPP_
+#endif// NES_INCLUDE_COMMON_FORWARD_DECLARATION_HPP_

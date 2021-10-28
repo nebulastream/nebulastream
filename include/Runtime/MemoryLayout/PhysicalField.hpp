@@ -77,4 +77,4 @@ class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
 PhysicalFieldPtr createArrayPhysicalField(const PhysicalTypePtr& componentField, uint64_t bufferOffset);
 
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_PHYSICAL_FIELD_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_PHYSICAL_FIELD_HPP_
