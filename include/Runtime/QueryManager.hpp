@@ -302,4 +302,4 @@ using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 }// namespace Runtime
 }// namespace NES
-#endif  // NES_INCLUDE_RUNTIME_QUERY_MANAGER_HPP_
+#endif// NES_INCLUDE_RUNTIME_QUERY_MANAGER_HPP_

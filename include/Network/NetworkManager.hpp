@@ -123,4 +123,4 @@ using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
 }// namespace Network
 }// namespace NES
 
-#endif  // NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_
+#endif// NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_

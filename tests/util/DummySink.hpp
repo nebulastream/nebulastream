@@ -28,4 +28,4 @@ class DummySink : public SinkDescriptor {
     [[nodiscard]] bool equal(SinkDescriptorPtr const&) override { return false; }
 };
 }// namespace NES
-#endif  // NES_TESTS_UTIL_DUMMY_SINK_HPP_
+#endif// NES_TESTS_UTIL_DUMMY_SINK_HPP_

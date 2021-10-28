@@ -253,4 +253,4 @@ class QueryPlan {
     std::string sourceConsumed;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_PLANS_QUERY_QUERY_PLAN_HPP_
+#endif// NES_INCLUDE_PLANS_QUERY_QUERY_PLAN_HPP_

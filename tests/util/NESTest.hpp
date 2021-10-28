@@ -22,4 +22,4 @@
         auto message = (node)->toString() + " is not of instance " + std::string(typeid(instance).name());                       \
         GTEST_FATAL_FAILURE_(message.c_str());                                                                                   \
     }
-#endif  // NES_TESTS_UTIL_NES_TEST_HPP_
+#endif// NES_TESTS_UTIL_NES_TEST_HPP_

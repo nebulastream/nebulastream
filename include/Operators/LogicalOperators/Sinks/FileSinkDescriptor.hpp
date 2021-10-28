@@ -66,4 +66,4 @@ class FileSinkDescriptor : public SinkDescriptor {
 using FileSinkDescriptorPtr = std::shared_ptr<FileSinkDescriptor>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_FILE_SINK_DESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_FILE_SINK_DESCRIPTOR_HPP_

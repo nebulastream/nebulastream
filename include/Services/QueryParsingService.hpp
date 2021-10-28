@@ -57,4 +57,4 @@ class QueryParsingService {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_SERVICES_QUERY_PARSING_SERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_QUERY_PARSING_SERVICE_HPP_

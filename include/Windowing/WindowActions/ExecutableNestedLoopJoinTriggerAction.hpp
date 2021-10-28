@@ -310,4 +310,4 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     uint64_t id;
 };
 }// namespace NES::Join
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_EXECUTABLE_NESTED_LOOP_JOIN_TRIGGER_ACTION_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_EXECUTABLE_NESTED_LOOP_JOIN_TRIGGER_ACTION_HPP_

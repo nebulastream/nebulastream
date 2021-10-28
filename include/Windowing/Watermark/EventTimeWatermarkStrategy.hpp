@@ -49,4 +49,4 @@ class EventTimeWatermarkStrategy : public WatermarkStrategy {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WATERMARK_EVENT_TIME_WATERMARK_STRATEGY_HPP_
+#endif// NES_INCLUDE_WINDOWING_WATERMARK_EVENT_TIME_WATERMARK_STRATEGY_HPP_

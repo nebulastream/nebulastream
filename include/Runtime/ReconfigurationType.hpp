@@ -32,4 +32,4 @@ enum ReconfigurationType : uint8_t {
 };
 }
 
-#endif  // NES_INCLUDE_RUNTIME_RECONFIGURATION_TYPE_HPP_
+#endif// NES_INCLUDE_RUNTIME_RECONFIGURATION_TYPE_HPP_

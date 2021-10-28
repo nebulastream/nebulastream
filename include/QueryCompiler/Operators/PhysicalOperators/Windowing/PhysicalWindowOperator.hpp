@@ -45,4 +45,4 @@ class PhysicalWindowOperator : public PhysicalUnaryOperator {
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_WINDOWING_PHYSICAL_WINDOW_OPERATOR_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_WINDOWING_PHYSICAL_WINDOW_OPERATOR_HPP_

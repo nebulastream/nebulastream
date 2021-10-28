@@ -358,4 +358,4 @@ class ExecutableCompleteAggregationTriggerAction
     PartialAggregateType partialAggregateTypeInitialValue;
 };
 }// namespace NES::Windowing
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_EXECUTABLE_COMPLETE_AGGREGATION_TRIGGER_ACTION_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_EXECUTABLE_COMPLETE_AGGREGATION_TRIGGER_ACTION_HPP_

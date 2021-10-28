@@ -86,4 +86,4 @@ SchemaPtr getSchema(const RuntimeNesMetrics& metrics, const std::string& prefix)
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_RUNTIME_NES_METRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_RUNTIME_NES_METRICS_HPP_

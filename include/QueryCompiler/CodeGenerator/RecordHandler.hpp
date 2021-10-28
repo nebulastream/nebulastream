@@ -57,4 +57,4 @@ class RecordHandler {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_RECORD_HANDLER_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_RECORD_HANDLER_HPP_

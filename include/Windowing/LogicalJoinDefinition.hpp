@@ -163,4 +163,4 @@ class LogicalJoinDefinition {
 
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 }// namespace NES::Join
-#endif  // NES_INCLUDE_WINDOWING_LOGICAL_JOIN_DEFINITION_HPP_
+#endif// NES_INCLUDE_WINDOWING_LOGICAL_JOIN_DEFINITION_HPP_

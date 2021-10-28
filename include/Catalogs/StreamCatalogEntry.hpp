@@ -105,4 +105,4 @@ class StreamCatalogEntry {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_CATALOGS_STREAM_CATALOG_ENTRY_HPP_
+#endif// NES_INCLUDE_CATALOGS_STREAM_CATALOG_ENTRY_HPP_

@@ -46,4 +46,4 @@ class BufferRecycler {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_RUNTIME_BUFFER_RECYCLER_HPP_
+#endif// NES_INCLUDE_RUNTIME_BUFFER_RECYCLER_HPP_

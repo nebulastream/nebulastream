@@ -35,4 +35,4 @@ class IngestionTimeWatermarkStrategy : public WatermarkStrategy {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WATERMARK_INGESTION_TIME_WATERMARK_STRATEGY_HPP_
+#endif// NES_INCLUDE_WINDOWING_WATERMARK_INGESTION_TIME_WATERMARK_STRATEGY_HPP_

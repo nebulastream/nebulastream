@@ -63,4 +63,4 @@ class CodeGenerationPhase {
 }// namespace QueryCompilation
 };// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_CODE_GENERATION_PHASE_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_PHASES_CODE_GENERATION_PHASE_HPP_

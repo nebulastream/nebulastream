@@ -283,4 +283,4 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_NODE_ENGINE_HPP_
+#endif// NES_INCLUDE_RUNTIME_NODE_ENGINE_HPP_

@@ -81,4 +81,4 @@ class KafkaSink : public SinkMedium {
 typedef std::shared_ptr<KafkaSink> KafkaSinkPtr;
 }// namespace NES
 #endif
-#endif  // NES_INCLUDE_SINKS_MEDIUMS_KAFKA_SINK_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_KAFKA_SINK_HPP_

@@ -56,4 +56,4 @@ struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this
 
 }// namespace NES::detail
 
-#endif  // NES_INCLUDE_UTIL_VIRTUAL_ENABLE_SHARED_FROM_THIS_HPP_
+#endif// NES_INCLUDE_UTIL_VIRTUAL_ENABLE_SHARED_FROM_THIS_HPP_

@@ -221,4 +221,4 @@ class NesWorker {
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
+#endif// NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_

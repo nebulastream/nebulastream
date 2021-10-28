@@ -104,4 +104,4 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     DataSource::GatheringMode gatheringMode;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_MEMORY_SOURCE_STREAM_CONFIG_HPP_
+#endif// NES_INCLUDE_CATALOGS_MEMORY_SOURCE_STREAM_CONFIG_HPP_

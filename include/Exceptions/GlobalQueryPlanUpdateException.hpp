@@ -32,4 +32,4 @@ class GlobalQueryPlanUpdateException : public std::runtime_error {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_EXCEPTIONS_GLOBAL_QUERY_PLAN_UPDATE_EXCEPTION_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_GLOBAL_QUERY_PLAN_UPDATE_EXCEPTION_HPP_

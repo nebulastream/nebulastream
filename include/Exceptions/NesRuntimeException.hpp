@@ -60,4 +60,4 @@ class NesRuntimeException : virtual public std::exception {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_EXCEPTIONS_NES_RUNTIME_EXCEPTION_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_NES_RUNTIME_EXCEPTION_HPP_

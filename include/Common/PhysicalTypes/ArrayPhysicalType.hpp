@@ -96,4 +96,4 @@ class ArrayPhysicalType final : public PhysicalType {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_COMMON_PHYSICAL_TYPES_ARRAY_PHYSICAL_TYPE_HPP_
+#endif// NES_INCLUDE_COMMON_PHYSICAL_TYPES_ARRAY_PHYSICAL_TYPE_HPP_

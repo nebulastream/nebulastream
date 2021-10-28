@@ -71,4 +71,4 @@ class SlidingWindow : public WindowType {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_TYPES_SLIDING_WINDOW_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_TYPES_SLIDING_WINDOW_HPP_

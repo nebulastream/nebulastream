@@ -100,4 +100,4 @@ BinaryOperatorStatement operator<<(const ExpressionStatement& lhs, const Express
 BinaryOperatorStatement operator>>(const ExpressionStatement& lhs, const ExpressionStatement& rhs);
 
 }// namespace NES::QueryCompilation
-#endif  // NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_STATEMENTS_BINARY_OPERATOR_STATEMENT_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_C_CODE_GENERATOR_STATEMENTS_BINARY_OPERATOR_STATEMENT_HPP_

@@ -76,4 +76,4 @@ class BinarySource : public DataSource {
 using BinarySourcePtr = std::shared_ptr<BinarySource>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_SOURCES_BINARY_SOURCE_HPP_
+#endif// NES_INCLUDE_SOURCES_BINARY_SOURCE_HPP_

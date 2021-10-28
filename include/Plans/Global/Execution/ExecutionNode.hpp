@@ -140,4 +140,4 @@ class ExecutionNode : public Node {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTION_NODE_HPP_
+#endif// NES_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTION_NODE_HPP_

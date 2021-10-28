@@ -134,4 +134,4 @@ using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
 }// namespace Network
 }// namespace NES
 
-#endif  // NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_
+#endif// NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_

@@ -62,4 +62,4 @@ class KafkaSinkDescriptor : public SinkDescriptor {
 typedef std::shared_ptr<KafkaSinkDescriptor> KafkaSinkDescriptorPtr;
 }// namespace NES
 #endif
-#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_KAFKA_SINK_DESCRIPTOR_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_KAFKA_SINK_DESCRIPTOR_HPP_

@@ -244,4 +244,4 @@ std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex)
 
 }// namespace NES::Runtime::DynamicMemoryLayout
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_BUFFER_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_BUFFER_HPP_

@@ -107,4 +107,4 @@ using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_SERVICES_MONITORING_SERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_MONITORING_SERVICE_HPP_

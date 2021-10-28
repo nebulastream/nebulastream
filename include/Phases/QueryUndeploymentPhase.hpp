@@ -85,4 +85,4 @@ class QueryUndeploymentPhase {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_PHASES_QUERY_UNDEPLOYMENT_PHASE_HPP_
+#endif// NES_INCLUDE_PHASES_QUERY_UNDEPLOYMENT_PHASE_HPP_

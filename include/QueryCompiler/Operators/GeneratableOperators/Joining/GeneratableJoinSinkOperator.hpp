@@ -61,4 +61,4 @@ class GeneratableJoinSinkOperator : public GeneratableJoinOperator {
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES
-#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_JOINING_GENERATABLE_JOIN_SINK_OPERATOR_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_JOINING_GENERATABLE_JOIN_SINK_OPERATOR_HPP_

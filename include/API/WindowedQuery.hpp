@@ -91,4 +91,4 @@ class KeyedWindowedQuery {
 }// namespace WindowOperatorBuilder
 }// namespace NES
 
-#endif  // NES_INCLUDE_API_WINDOWED_QUERY_HPP_
+#endif// NES_INCLUDE_API_WINDOWED_QUERY_HPP_

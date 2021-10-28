@@ -75,4 +75,4 @@ using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_NODES_EXPRESSIONS_FIELD_ACCESS_EXPRESSION_NODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_FIELD_ACCESS_EXPRESSION_NODE_HPP_

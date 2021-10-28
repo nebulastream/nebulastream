@@ -146,4 +146,4 @@ using OPCSinkPtr = std::shared_ptr<OPCSink>;
 }// namespace NES
 
 #endif
-#endif  // NES_INCLUDE_SINKS_MEDIUMS_OPC_SINK_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_OPC_SINK_HPP_

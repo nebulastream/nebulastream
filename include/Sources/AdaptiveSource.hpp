@@ -77,4 +77,4 @@ using AdaptiveSourcePtr = std::shared_ptr<AdaptiveSource>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_SOURCES_ADAPTIVE_SOURCE_HPP_
+#endif// NES_INCLUDE_SOURCES_ADAPTIVE_SOURCE_HPP_

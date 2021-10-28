@@ -195,4 +195,4 @@ class MQTTSource : public DataSource {
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;
 }// namespace NES
 #endif//NES_MQTTSOURCE_HPP
-#endif  // NES_INCLUDE_SOURCES_MQTT_SOURCE_HPP_
+#endif// NES_INCLUDE_SOURCES_MQTT_SOURCE_HPP_

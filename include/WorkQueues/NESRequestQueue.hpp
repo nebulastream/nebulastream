@@ -85,4 +85,4 @@ class NESRequestQueue {
 };
 using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
 }// namespace NES
-#endif  // NES_INCLUDE_WORK_QUEUES_NES_REQUEST_QUEUE_HPP_
+#endif// NES_INCLUDE_WORK_QUEUES_NES_REQUEST_QUEUE_HPP_

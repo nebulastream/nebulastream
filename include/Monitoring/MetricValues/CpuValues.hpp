@@ -87,4 +87,4 @@ void writeToBuffer(const CpuValues& metrics, Runtime::TupleBuffer& buf, uint64_t
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_VALUES_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_VALUES_HPP_

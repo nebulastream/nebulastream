@@ -67,4 +67,4 @@ class DataTypeToZ3ExprUtil {
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_UTILS_DATA_TYPE_TO_Z3_EXPR_UTIL_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_UTILS_DATA_TYPE_TO_Z3_EXPR_UTIL_HPP_

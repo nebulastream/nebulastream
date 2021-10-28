@@ -45,4 +45,4 @@ class ArrayPhysicalField : public PhysicalField {
 };
 }// namespace NES::Runtime
 
-#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_ARRAY_PHYSICAL_FIELD_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_ARRAY_PHYSICAL_FIELD_HPP_

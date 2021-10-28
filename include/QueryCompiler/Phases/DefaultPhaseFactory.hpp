@@ -44,4 +44,4 @@ class DefaultPhaseFactory : public PhaseFactory {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_DEFAULT_PHASE_FACTORY_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_PHASES_DEFAULT_PHASE_FACTORY_HPP_

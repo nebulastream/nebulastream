@@ -53,4 +53,4 @@ class CompilationResult {
 
 }// namespace NES::Compiler
 
-#endif  // NES_INCLUDE_COMPILER_COMPILATION_RESULT_HPP_
+#endif// NES_INCLUDE_COMPILER_COMPILATION_RESULT_HPP_

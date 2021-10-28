@@ -79,4 +79,4 @@ using MetricStorePtr = std::shared_ptr<MetricStore>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
+#endif// NES_INCLUDE_MONITORING_METRIC_STORE_HPP_

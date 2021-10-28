@@ -34,4 +34,4 @@ class FuseNonPipelineBreakerPolicy : public OperatorFusionPolicy {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_FUSE_NON_PIPELINE_BREAKER_POLICY_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_FUSE_NON_PIPELINE_BREAKER_POLICY_HPP_

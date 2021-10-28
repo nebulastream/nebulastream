@@ -84,4 +84,4 @@ using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
 }// namespace NES::Runtime
 
-#endif  // NES_INCLUDE_RUNTIME_BUFFER_STORAGE_HPP_
+#endif// NES_INCLUDE_RUNTIME_BUFFER_STORAGE_HPP_

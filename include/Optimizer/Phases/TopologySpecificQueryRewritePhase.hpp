@@ -63,4 +63,4 @@ class TopologySpecificQueryRewritePhase {
     DistributeJoinRulePtr distributeJoinRule;
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_PHASES_TOPOLOGY_SPECIFIC_QUERY_REWRITE_PHASE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_PHASES_TOPOLOGY_SPECIFIC_QUERY_REWRITE_PHASE_HPP_

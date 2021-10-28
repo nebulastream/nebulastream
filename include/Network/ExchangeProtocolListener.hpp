@@ -50,4 +50,4 @@ class ExchangeProtocolListener {
 };
 }// namespace Network
 }// namespace NES
-#endif  // NES_INCLUDE_NETWORK_EXCHANGE_PROTOCOL_LISTENER_HPP_
+#endif// NES_INCLUDE_NETWORK_EXCHANGE_PROTOCOL_LISTENER_HPP_

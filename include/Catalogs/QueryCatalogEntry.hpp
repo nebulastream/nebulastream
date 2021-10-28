@@ -153,4 +153,4 @@ class QueryCatalogEntry {
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_CATALOGS_QUERY_CATALOG_ENTRY_HPP_
+#endif// NES_INCLUDE_CATALOGS_QUERY_CATALOG_ENTRY_HPP_

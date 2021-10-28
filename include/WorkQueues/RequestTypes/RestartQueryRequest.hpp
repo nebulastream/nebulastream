@@ -45,4 +45,4 @@ class RestartQueryRequest : public NESRequest {
     explicit RestartQueryRequest(QueryId queryId);
 };
 }// namespace NES
-#endif  // NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RESTART_QUERY_REQUEST_HPP_
+#endif// NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RESTART_QUERY_REQUEST_HPP_

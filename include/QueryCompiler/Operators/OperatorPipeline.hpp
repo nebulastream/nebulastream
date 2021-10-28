@@ -162,4 +162,4 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_OPERATOR_PIPELINE_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_OPERATOR_PIPELINE_HPP_

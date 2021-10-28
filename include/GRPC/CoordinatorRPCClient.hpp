@@ -131,4 +131,4 @@ class CoordinatorRPCClient {
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_
+#endif// NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_

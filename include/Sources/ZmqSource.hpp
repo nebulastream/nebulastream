@@ -116,4 +116,4 @@ class ZmqSource : public DataSource {
 
 using ZmqSourcePtr = std::shared_ptr<ZmqSource>;
 }// namespace NES
-#endif  // NES_INCLUDE_SOURCES_ZMQ_SOURCE_HPP_
+#endif// NES_INCLUDE_SOURCES_ZMQ_SOURCE_HPP_

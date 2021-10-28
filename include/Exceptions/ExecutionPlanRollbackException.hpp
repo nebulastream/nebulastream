@@ -31,4 +31,4 @@ class ExecutionPlanRollbackException : public std::runtime_error {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_EXCEPTIONS_EXECUTION_PLAN_ROLLBACK_EXCEPTION_HPP_
+#endif// NES_INCLUDE_EXCEPTIONS_EXECUTION_PLAN_ROLLBACK_EXCEPTION_HPP_

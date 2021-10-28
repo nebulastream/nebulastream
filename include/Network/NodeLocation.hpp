@@ -53,4 +53,4 @@ class NodeLocation {
 };
 }// namespace Network
 }// namespace NES
-#endif  // NES_INCLUDE_NETWORK_NODE_LOCATION_HPP_
+#endif// NES_INCLUDE_NETWORK_NODE_LOCATION_HPP_

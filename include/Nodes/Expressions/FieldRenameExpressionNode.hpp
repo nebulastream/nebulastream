@@ -67,4 +67,4 @@ using FieldRenameExpressionNodePtr = std::shared_ptr<FieldRenameExpressionNode>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_NODES_EXPRESSIONS_FIELD_RENAME_EXPRESSION_NODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_FIELD_RENAME_EXPRESSION_NODE_HPP_

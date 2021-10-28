@@ -180,4 +180,4 @@ class NesNetworkError : public std::runtime_error {
 }// namespace Network
 }// namespace NES
 
-#endif  // NES_INCLUDE_NETWORK_NETWORK_MESSAGE_HPP_
+#endif// NES_INCLUDE_NETWORK_NETWORK_MESSAGE_HPP_

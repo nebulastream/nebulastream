@@ -74,4 +74,4 @@ class CompiledExecutablePipelineStage : public Runtime::Execution::ExecutablePip
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_COMPILER_COMPILED_EXECUTABLE_PIPELINE_STAGE_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_COMPILER_COMPILED_EXECUTABLE_PIPELINE_STAGE_HPP_

@@ -74,4 +74,4 @@ using I2CBusPtr = std::shared_ptr<I2CBus>;
 }//namespace Sensors
 }//namespace NES
 #endif
-#endif  // NES_INCLUDE_SENSORS_I2_C_BUS_HPP_
+#endif// NES_INCLUDE_SENSORS_I2_C_BUS_HPP_

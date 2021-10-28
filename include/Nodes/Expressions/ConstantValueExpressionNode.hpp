@@ -76,4 +76,4 @@ class ConstantValueExpressionNode : public ExpressionNode {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_NODES_EXPRESSIONS_CONSTANT_VALUE_EXPRESSION_NODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_CONSTANT_VALUE_EXPRESSION_NODE_HPP_

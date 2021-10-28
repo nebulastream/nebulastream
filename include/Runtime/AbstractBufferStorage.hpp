@@ -51,4 +51,4 @@ class AbstractBufferStorage {
     virtual size_t getStorageSize() const = 0;
 };
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_STORAGE_HPP_
+#endif// NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_STORAGE_HPP_

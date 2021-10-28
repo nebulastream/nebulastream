@@ -50,4 +50,4 @@ class SharedLibrary {
 
 #pragma GCC diagnostic pop
 
-#endif  // NES_INCLUDE_UTIL_SHARED_LIBRARY_HPP_
+#endif// NES_INCLUDE_UTIL_SHARED_LIBRARY_HPP_

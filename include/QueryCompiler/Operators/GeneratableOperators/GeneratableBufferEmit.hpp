@@ -63,4 +63,4 @@ class GeneratableBufferEmit : public GeneratableOperator {
     OutputBufferAllocationStrategy bufferStrategy;
 };
 }// namespace NES::QueryCompilation::GeneratableOperators
-#endif  // NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_GENERATABLE_BUFFER_EMIT_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_GENERATABLE_BUFFER_EMIT_HPP_

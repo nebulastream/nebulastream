@@ -116,4 +116,4 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
     uint64_t sourceAffinity;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_BENCHMARK_SOURCE_STREAM_CONFIG_HPP_
+#endif// NES_INCLUDE_CATALOGS_BENCHMARK_SOURCE_STREAM_CONFIG_HPP_

@@ -33,4 +33,4 @@ class SchemaSourceDescriptor : public SourceDescriptor {
 
 }// namespace NES
 
-#endif  // NES_TESTS_UTIL_SCHEMA_SOURCE_DESCRIPTOR_HPP_
+#endif// NES_TESTS_UTIL_SCHEMA_SOURCE_DESCRIPTOR_HPP_

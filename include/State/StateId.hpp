@@ -46,4 +46,4 @@ struct hash<NES::StateId> {
 };
 }// namespace std
 
-#endif  // NES_INCLUDE_STATE_STATE_ID_HPP_
+#endif// NES_INCLUDE_STATE_STATE_ID_HPP_

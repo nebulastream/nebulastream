@@ -41,4 +41,4 @@ class TimeMeasure : public WindowMeasure {
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_MEASURES_TIME_MEASURE_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_MEASURES_TIME_MEASURE_HPP_

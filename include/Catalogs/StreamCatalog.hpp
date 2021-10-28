@@ -198,4 +198,4 @@ class StreamCatalog {
 };
 using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 }// namespace NES
-#endif  // NES_INCLUDE_CATALOGS_STREAM_CATALOG_HPP_
+#endif// NES_INCLUDE_CATALOGS_STREAM_CATALOG_HPP_

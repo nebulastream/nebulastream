@@ -137,4 +137,4 @@ using OPCSourcePtr = std::shared_ptr<OPCSource>;
 }// namespace NES
 
 #endif
-#endif  // NES_INCLUDE_SOURCES_OPC_SOURCE_HPP_
+#endif// NES_INCLUDE_SOURCES_OPC_SOURCE_HPP_

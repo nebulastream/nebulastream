@@ -32,4 +32,4 @@ enum class ExecutionResult : unsigned char {
 
 }
 
-#endif  // NES_INCLUDE_RUNTIME_EXECUTION_RESULT_HPP_
+#endif// NES_INCLUDE_RUNTIME_EXECUTION_RESULT_HPP_

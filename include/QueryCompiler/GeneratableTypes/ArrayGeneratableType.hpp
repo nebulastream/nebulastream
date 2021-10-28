@@ -57,4 +57,4 @@ class ArrayGeneratableType final : public GeneratableDataType {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_GENERATABLE_TYPE_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_GENERATABLE_TYPE_HPP_

@@ -162,4 +162,4 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_GRPC_WORKER_RPC_CLIENT_HPP_
+#endif// NES_INCLUDE_GRPC_WORKER_RPC_CLIENT_HPP_

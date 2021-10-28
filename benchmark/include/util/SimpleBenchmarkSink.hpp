@@ -192,4 +192,4 @@ class SimpleBenchmarkSink : public SinkMedium {
 };
 }// namespace NES::Benchmarking
 
-#endif  // NES_BENCHMARK_INCLUDE_UTIL_SIMPLE_BENCHMARK_SINK_HPP_
+#endif// NES_BENCHMARK_INCLUDE_UTIL_SIMPLE_BENCHMARK_SINK_HPP_

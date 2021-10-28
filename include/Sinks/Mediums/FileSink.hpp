@@ -86,4 +86,4 @@ class FileSink : public SinkMedium {
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_SINKS_MEDIUMS_FILE_SINK_HPP_
+#endif// NES_INCLUDE_SINKS_MEDIUMS_FILE_SINK_HPP_

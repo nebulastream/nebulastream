@@ -408,4 +408,4 @@ class TestHarness {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_UTIL_TEST_HARNESS_TEST_HARNESS_HPP_
+#endif// NES_INCLUDE_UTIL_TEST_HARNESS_TEST_HARNESS_HPP_

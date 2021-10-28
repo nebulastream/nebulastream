@@ -73,4 +73,4 @@ class Float final : public Numeric {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_COMMON_DATA_TYPES_FLOAT_HPP_
+#endif// NES_INCLUDE_COMMON_DATA_TYPES_FLOAT_HPP_

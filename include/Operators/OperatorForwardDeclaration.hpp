@@ -58,4 +58,4 @@ class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_OPERATORS_OPERATOR_FORWARD_DECLARATION_HPP_
+#endif// NES_INCLUDE_OPERATORS_OPERATOR_FORWARD_DECLARATION_HPP_

@@ -86,4 +86,4 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_EXECUTABLE_AVG_AGGREGATION_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_EXECUTABLE_AVG_AGGREGATION_HPP_

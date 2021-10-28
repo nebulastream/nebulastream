@@ -103,4 +103,4 @@ class AbstractPoolProvider {
 };
 
 }// namespace NES::Runtime
-#endif  // NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_PROVIDER_HPP_
+#endif// NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_PROVIDER_HPP_

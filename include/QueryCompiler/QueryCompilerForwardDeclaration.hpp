@@ -202,4 +202,4 @@ using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_QUERY_COMPILER_QUERY_COMPILER_FORWARD_DECLARATION_HPP_
+#endif// NES_INCLUDE_QUERY_COMPILER_QUERY_COMPILER_FORWARD_DECLARATION_HPP_

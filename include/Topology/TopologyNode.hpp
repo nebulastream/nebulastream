@@ -153,4 +153,4 @@ class TopologyNode : public Node {
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_TOPOLOGY_TOPOLOGY_NODE_HPP_
+#endif// NES_INCLUDE_TOPOLOGY_TOPOLOGY_NODE_HPP_

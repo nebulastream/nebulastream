@@ -58,4 +58,4 @@ class BaseExecutableWindowTriggerPolicy {
     virtual bool stop() = 0;
 };
 }// namespace NES::Windowing
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_POLICIES_BASE_EXECUTABLE_WINDOW_TRIGGER_POLICY_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_POLICIES_BASE_EXECUTABLE_WINDOW_TRIGGER_POLICY_HPP_

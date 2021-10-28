@@ -47,4 +47,4 @@ class SinkLogicalOperatorNode : public LogicalUnaryOperatorNode {
     SinkDescriptorPtr sinkDescriptor;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_SINK_LOGICAL_OPERATOR_NODE_HPP_
+#endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_SINK_LOGICAL_OPERATOR_NODE_HPP_

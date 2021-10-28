@@ -58,4 +58,4 @@ class TextFormat : public SinkFormat {
     FormatTypes getSinkFormat() override;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_SINKS_FORMATS_TEXT_FORMAT_HPP_
+#endif// NES_INCLUDE_SINKS_FORMATS_TEXT_FORMAT_HPP_

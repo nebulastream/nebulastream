@@ -144,4 +144,4 @@ class HardwareManager {
 
 }// namespace NES::Runtime
 
-#endif  // NES_INCLUDE_RUNTIME_HARDWARE_MANAGER_HPP_
+#endif// NES_INCLUDE_RUNTIME_HARDWARE_MANAGER_HPP_

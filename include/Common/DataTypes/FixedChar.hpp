@@ -40,4 +40,4 @@ class FixedChar final : public ArrayType {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_COMMON_DATA_TYPES_FIXED_CHAR_HPP_
+#endif// NES_INCLUDE_COMMON_DATA_TYPES_FIXED_CHAR_HPP_

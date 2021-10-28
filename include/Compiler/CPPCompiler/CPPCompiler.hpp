@@ -68,4 +68,4 @@ class CPPCompiler : public LanguageCompiler {
 
 }// namespace NES::Compiler
 
-#endif  // NES_INCLUDE_COMPILER_CPP_COMPILER_CPP_COMPILER_HPP_
+#endif// NES_INCLUDE_COMPILER_CPP_COMPILER_CPP_COMPILER_HPP_

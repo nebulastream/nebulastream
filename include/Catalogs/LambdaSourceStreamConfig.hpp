@@ -105,4 +105,4 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_CATALOGS_LAMBDA_SOURCE_STREAM_CONFIG_HPP_
+#endif// NES_INCLUDE_CATALOGS_LAMBDA_SOURCE_STREAM_CONFIG_HPP_

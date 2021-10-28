@@ -76,4 +76,4 @@ class DynamicMemoryLayout {
 };
 
 }// namespace NES::Runtime::DynamicMemoryLayout
-#endif  // NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_

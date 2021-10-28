@@ -67,4 +67,4 @@ class IntCounter : public Counter {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICS_INT_COUNTER_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICS_INT_COUNTER_HPP_

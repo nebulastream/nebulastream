@@ -27,4 +27,4 @@ namespace NES {
 using QueryId = uint64_t;
 static constexpr uint64_t INVALID_QUERY_ID = 0;
 }// namespace NES
-#endif  // NES_INCLUDE_PLANS_QUERY_QUERY_ID_HPP_
+#endif// NES_INCLUDE_PLANS_QUERY_QUERY_ID_HPP_

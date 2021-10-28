@@ -30,4 +30,4 @@ class SliceCombinerTriggerActionDescriptor : public BaseWindowActionDescriptor {
     SliceCombinerTriggerActionDescriptor();
 };
 }// namespace NES::Windowing
-#endif  // NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_SLICE_COMBINER_TRIGGER_ACTION_DESCRIPTOR_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_SLICE_COMBINER_TRIGGER_ACTION_DESCRIPTOR_HPP_
