@@ -22,26 +22,28 @@ namespace NES::Runtime {
 
 void BufferStorage::insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) {
     std::unique_lock<std::mutex> lck(mutex);
-    if (this->buffers.find(id.getOriginId()) == this->buffers.end()) {
+    auto iterator = this->buffers.find(id.getOriginId());
+    if (iterator == this->buffers.end()) {
         auto queue = BufferStoragePriorityQueue();
-        NES_DEBUG("Insert tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> into buffer storage");
+        NES_TRACE("Insert tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> into buffer storage");
         queue.push(std::make_shared<BufferStorageUnit>(id, bufferPtr));
         this->buffers[id.getOriginId()] = std::move(queue);
     } else {
-        NES_DEBUG("Insert tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> into buffer storage");
-        this->buffers[id.getOriginId()].push(std::make_shared<BufferStorageUnit>(id, bufferPtr));
+        NES_TRACE("Insert tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> into buffer storage");
+        iterator->second.push(std::make_shared<BufferStorageUnit>(id, bufferPtr));
     }
 }
 
 bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
     std::unique_lock<std::mutex> lck(mutex);
-    NES_DEBUG("Trying to delete tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> from buffer storage");
-    if (this->buffers.find(id.getOriginId()) != this->buffers.end()) {
-        auto& queue = this->buffers[id.getOriginId()];
+    NES_TRACE("Trying to delete tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> from buffer storage");
+    auto iterator = this->buffers.find(id.getOriginId());
+    if (iterator != this->buffers.end()) {
+        auto& queue = iterator->second;
         if (!queue.empty()) {
             auto topElement = queue.top()->getSequenceNumber();
             while (!queue.empty() && topElement < id) {
-                NES_DEBUG("Delete tuple<" << topElement.getSequenceNumber() << "," << topElement.getOriginId()
+                NES_TRACE("Delete tuple<" << topElement.getSequenceNumber() << "," << topElement.getOriginId()
                                           << "> from buffer storage");
                 queue.pop();
                 topElement = queue.top()->getSequenceNumber();
@@ -63,19 +65,21 @@ size_t BufferStorage::getStorageSize() const {
 
 size_t BufferStorage::getStorageSizeForQueue(uint64_t queueId) const {
     std::unique_lock<std::mutex> lck(mutex);
-    if (this->buffers.find(queueId) == this->buffers.end()) {
+    auto iterator = this->buffers.find(queueId);
+    if (iterator == this->buffers.end()) {
         return 0;
     } else {
-        return this->buffers.at(queueId).size();
+        return iterator->second.size();
     }
 }
 
 BufferStorageUnitPtr BufferStorage::getTopElementFromQueue(uint64_t queueId) const {
     std::unique_lock<std::mutex> lck(mutex);
-    if (this->buffers.find(queueId) == this->buffers.end()) {
+    auto iterator = this->buffers.find(queueId);
+    if (iterator == this->buffers.end()) {
         return nullptr;
     } else {
-        return this->buffers.at(queueId).top();
+        return iterator->second.top();
     }
 }
 
