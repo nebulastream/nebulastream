@@ -91,11 +91,11 @@ class StreamCatalogEntry {
      * @brief get a vector of logical stream names
      * @return vector of names as strings
      */
-    std::vector<std::string> getLogicalName();
+    std::vector<std::string> getLogicalNames();
 
     /**
      * @brief get a vector of logical stream names which are mismapped (logical schema does not exists)
-     * @return vector of names as strings
+     * @return vector of logical stream names as strings
      */
     std::vector<std::string> getMissmappedLogicalName();
 
@@ -158,8 +158,8 @@ class StreamCatalogEntry {
   private:
     std::string sourceType;
     std::string physicalStreamName;
-    std::vector<std::string> logicalStreamName;
-    std::vector<std::string> mismappedLogicalStreamName;
+    std::vector<std::string> logicalStreamNames;
+    std::vector<std::string> mismappedLogicalStreamNames;
     TopologyNodePtr node;
     PhysicalStreamState physicalStreamState;
 };

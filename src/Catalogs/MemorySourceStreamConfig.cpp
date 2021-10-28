@@ -51,7 +51,7 @@ const std::string MemorySourceStreamConfig::toString() { return sourceType; }
 
 const std::string MemorySourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-const std::vector<std::string> MemorySourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+const std::vector<std::string> MemorySourceStreamConfig::getLogicalStreamNames() { return logicalStreamName; }
 
 SourceDescriptorPtr MemorySourceStreamConfig::build(SchemaPtr ptr, std::string logicalStreamName) {
     std::string notUsed = logicalStreamName;

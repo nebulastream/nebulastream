@@ -72,9 +72,9 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
 
     /**
      * @brief Provides the logical stream names of the source
-     * @return the logical stream name of the source
+     * @return the logical stream names of the source
      */
-    const std::vector<std::string> getLogicalStreamName() override;
+    const std::vector<std::string> getLogicalStreamNames() override;
 
     /**
      * @brief Factory method of LambdaSourceStreamConfig

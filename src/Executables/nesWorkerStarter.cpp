@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
 
             NES_INFO("NESWORKERSTARTER: Source Config type = "
                      << config->getSourceType()->getValue() << " Config = " << config->getSourceConfig()->getValue()
-                     << " physicalStreamName = " << config->getPhysicalStreamName()->getValue() << " logicalStreamName = "
+                     << " physicalStreamName = " << config->getPhysicalStreamName()->getValue() << " logicalStreamNames = "
                      << "(" << UtilityFunctions::combineStringsWithDelimiter(lNames, ",") + ")");
 
             wrk->setWithRegister(conf);

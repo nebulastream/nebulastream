@@ -49,7 +49,7 @@ const std::string PhysicalStreamConfig::toString() {
        << "ms"
        << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
        << " numberOfBuffersToProduce=" << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
-       << " logicalStreamName="
+       << " logicalStreamNames="
        << "(" + UtilityFunctions::combineStringsWithDelimiter(logicalStreamName, ", ") + ")";
     return ss.str();
 }
@@ -66,7 +66,7 @@ uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numb
 
 const std::string PhysicalStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-const std::vector<std::string> PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+const std::vector<std::string> PhysicalStreamConfig::getLogicalStreamNames() { return logicalStreamName; }
 
 void PhysicalStreamConfig::addLogicalStreamName(std::string logicalStreamName) {
     this->logicalStreamName.push_back(logicalStreamName);

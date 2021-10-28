@@ -251,7 +251,7 @@ bool StreamCatalog::addPhysicalStreamToLogicalStream(std::string physicalStreamN
     }
 
     // check if physical stream to logical stream mapping already exists
-    for (std::string& logStream : nameToPhysicalStream[physicalStreamName]->getLogicalName()) {
+    for (std::string& logStream : nameToPhysicalStream[physicalStreamName]->getLogicalNames()) {
         if (logStream == logicalStreamName) {
             NES_ERROR("StreamCatalog: addPhysicalStreamToLogicalStream - mapping already exists");
             return false;
@@ -360,9 +360,9 @@ bool StreamCatalog::removePhysicalToLogicalMappingFromMismappedStreams(std::stri
     return true;
 }
 
-bool StreamCatalog::removeAllMismapped(std::string logicalStreamName) {
+bool StreamCatalog::removeAllMismappings(std::string logicalStreamName) {
     if (mismappedStreams.find(logicalStreamName) == mismappedStreams.end()) {
-        NES_ERROR("StreamCatalog: removeAllMismapped - logical stream " + logicalStreamName + " does not exist in mismappings.");
+        NES_ERROR("StreamCatalog: removeAllMismappings - logical stream " + logicalStreamName + " does not exist in mismappings.");
         return false;
     }
     bool failed = false;
@@ -394,7 +394,7 @@ bool StreamCatalog::unregisterPhysicalStreamByHashId(uint64_t hashId) {
             continue;
         }
         auto mismappedLogs = phyStream.second->getMissmappedLogicalName();
-        auto logStreams = phyStream.second->getLogicalName();
+        auto logStreams = phyStream.second->getLogicalNames();
 
         //TODO: change to batch delete
         for (auto mis : mismappedLogs) {
@@ -442,7 +442,7 @@ bool StreamCatalog::unregisterPhysicalStream(std::string physicalStreamName, std
 
 bool StreamCatalog::unregisterPhysicalStreamFromAllLogicalStreams(std::string physicalStreamName) {
     StreamCatalogEntryPtr entry = nameToPhysicalStream[physicalStreamName];
-    auto logicalStreamNames = entry->getLogicalName();
+    auto logicalStreamNames = entry->getLogicalNames();
     NES_DEBUG("StreamCatalog: Try to remove physical stream "
               << physicalStreamName
               << " from logical streams: " << UtilityFunctions::combineStringsWithDelimiter(logicalStreamNames, ", "));
@@ -641,7 +641,7 @@ std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() { return l
 
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStreamForPhysicalStream(std::string physicalStreamName) {
     std::unique_lock lock(catalogMutex);
-    std::vector<std::string> logicalStreamNames = nameToPhysicalStream[physicalStreamName]->getLogicalName();
+    std::vector<std::string> logicalStreamNames = nameToPhysicalStream[physicalStreamName]->getLogicalNames();
     std::map<std::string, std::string> allLogicalStreamAsString;
     const std::map<std::string, SchemaPtr> allLogicalStream = getAllLogicalStream();
     // filter this now according to logicalStreamNames
@@ -728,7 +728,7 @@ bool StreamCatalog::validatePhysicalStreamName(std::string physicalStreamName) {
     if (nameToPhysicalStream.find(physicalStreamName) != nameToPhysicalStream.end()) {
         if (!nameToPhysicalStream[physicalStreamName]->getPhysicalStreamState().isNameValid()) {
             auto& phyStream = nameToPhysicalStream[physicalStreamName];
-            std::vector<std::string> logStreams = phyStream->getLogicalName();
+            std::vector<std::string> logStreams = phyStream->getLogicalNames();
 
             // check if logical stream schemas exist
             auto inAndExclude = testIfLogicalStreamVecExistsInSchemaMapping(logStreams);

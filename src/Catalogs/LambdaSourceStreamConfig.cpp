@@ -44,7 +44,7 @@ const std::string LambdaSourceStreamConfig::toString() { return sourceType; }
 
 const std::string LambdaSourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-const std::vector<std::string> LambdaSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+const std::vector<std::string> LambdaSourceStreamConfig::getLogicalStreamNames() { return logicalStreamName; }
 
 SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema, std::string logicalStreamName) {
     std::string notUsed = logicalStreamName;

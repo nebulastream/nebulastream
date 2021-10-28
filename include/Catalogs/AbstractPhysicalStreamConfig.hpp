@@ -60,7 +60,7 @@ class AbstractPhysicalStreamConfig {
      * @brief Provides the vector of logical stream names of the source
      * @return the logical stream names of the source
      */
-    virtual const std::vector<std::string> getLogicalStreamName() = 0;
+    virtual const std::vector<std::string> getLogicalStreamNames() = 0;
 
     /**
      * @brief Provides a SourceConfig from this AbstractPhysicalStreamConfig

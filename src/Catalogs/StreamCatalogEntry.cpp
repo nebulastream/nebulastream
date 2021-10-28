@@ -23,21 +23,21 @@ namespace NES {
 
 StreamCatalogEntry::StreamCatalogEntry(std::string sourceType,
                                        std::string physicalStreamName,
-                                       std::vector<std::string> logicalStreamName,
+                                       std::vector<std::string> logicalStreamNames,
                                        TopologyNodePtr node)
-    : sourceType(sourceType), physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), node(node) {}
+    : sourceType(sourceType), physicalStreamName(physicalStreamName), logicalStreamNames(logicalStreamNames), node(node) {}
 
 StreamCatalogEntry::StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node)
     : sourceType(config->getSourceType()), physicalStreamName(config->getPhysicalStreamName()),
-      logicalStreamName(config->getLogicalStreamName()), node(node) {
+      logicalStreamNames(config->getLogicalStreamNames()), node(node) {
     // nop
 }
 
 StreamCatalogEntryPtr StreamCatalogEntry::create(std::string sourceType,
                                                  std::string physicalStreamName,
-                                                 std::vector<std::string> logicalStreamName,
+                                                 std::vector<std::string> logicalStreamNames,
                                                  TopologyNodePtr node) {
-    return std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, node);
+    return std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamNames, node);
 }
 
 StreamCatalogEntryPtr StreamCatalogEntry::create(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node) {
@@ -50,61 +50,61 @@ TopologyNodePtr StreamCatalogEntry::getNode() { return node; }
 
 std::string StreamCatalogEntry::getPhysicalName() { return physicalStreamName; }
 
-std::vector<std::string> StreamCatalogEntry::getLogicalName() { return logicalStreamName; }
+std::vector<std::string> StreamCatalogEntry::getLogicalNames() { return logicalStreamNames; }
 
-std::vector<std::string> StreamCatalogEntry::getMissmappedLogicalName() { return mismappedLogicalStreamName; }
+std::vector<std::string> StreamCatalogEntry::getMissmappedLogicalName() { return logicalStreamNames; }
 
 bool StreamCatalogEntry::addLogicalStreamName(std::string newLogicalStreamName) {
-    for (std::string name : logicalStreamName) {
+    for (std::string name : logicalStreamNames) {
         if (name == newLogicalStreamName) {
             NES_ERROR("StreamCatalogEntry::addLogicalStreamName logicalStreamName="
                       << newLogicalStreamName << " could not be added to StreamCatalogEntry as it already exists");
             return false;
         }
     }
-    logicalStreamName.push_back(newLogicalStreamName);
+    logicalStreamNames.push_back(newLogicalStreamName);
     physicalStreamState.removeReason(NO_LOGICAL_STREAM);
     return true;
 }
 
 bool StreamCatalogEntry::addLogicalStreamNameToMismapped(std::string newLogicalStreamName) {
-    for (std::string& name : mismappedLogicalStreamName) {
+    for (std::string& name : mismappedLogicalStreamNames) {
         if (name == newLogicalStreamName) {
             NES_ERROR("StreamCatalogEntry::addLogicalStreamNameToMismapped logicalStreamName="
                       << newLogicalStreamName << " could not be added to StreamCatalogEntry as it already exists");
             return false;
         }
     }
-    mismappedLogicalStreamName.push_back(newLogicalStreamName);
+    mismappedLogicalStreamNames.push_back(newLogicalStreamName);
     physicalStreamState.addReason(LOGICAL_STREAM_WITHOUT_SCHEMA,
-                                  "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",") + ")");
+                                  "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamNames, ",") + ")");
     return true;
 }
 
 void StreamCatalogEntry::moveLogicalStreamFromMismappedToRegular(std::string logicalStreamName) {
-    auto it = std::remove(mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end(), logicalStreamName);
-    mismappedLogicalStreamName.erase(it, mismappedLogicalStreamName.end());
+    auto it = std::remove(mismappedLogicalStreamNames.begin(), mismappedLogicalStreamNames.end(), logicalStreamName);
+    mismappedLogicalStreamNames.erase(it, mismappedLogicalStreamNames.end());
 
-    this->logicalStreamName.push_back(logicalStreamName);
-    if (mismappedLogicalStreamName.empty()) {
+    this->logicalStreamNames.push_back(logicalStreamName);
+    if (mismappedLogicalStreamNames.empty()) {
         physicalStreamState.removeReason(LOGICAL_STREAM_WITHOUT_SCHEMA);
     } else {
         physicalStreamState.addReason(LOGICAL_STREAM_WITHOUT_SCHEMA,
-                                      "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",") + ")");
+                                      "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamNames, ",") + ")");
     }
 }
 
 bool StreamCatalogEntry::removeLogicalStreamFromMismapped(std::string oldLogicalStreamName) {
-    for (std::string& name : mismappedLogicalStreamName) {
+    for (std::string& name : mismappedLogicalStreamNames) {
         if (name == oldLogicalStreamName) {
-            auto it = std::remove(mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end(), oldLogicalStreamName);
-            mismappedLogicalStreamName.erase(it, mismappedLogicalStreamName.end());
+            auto it = std::remove(mismappedLogicalStreamNames.begin(), mismappedLogicalStreamNames.end(), oldLogicalStreamName);
+            mismappedLogicalStreamNames.erase(it, mismappedLogicalStreamNames.end());
             NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName=" << oldLogicalStreamName << " was removed.");
-            if (mismappedLogicalStreamName.empty()) {
+            if (mismappedLogicalStreamNames.empty()) {
                 physicalStreamState.removeReason(LOGICAL_STREAM_WITHOUT_SCHEMA);
             } else {
                 physicalStreamState.addReason(LOGICAL_STREAM_WITHOUT_SCHEMA,
-                                              "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamName, ",")
+                                              "(" + UtilityFunctions::combineStringsWithDelimiter(mismappedLogicalStreamNames, ",")
                                                   + ")");
             }
             return true;
@@ -116,12 +116,12 @@ bool StreamCatalogEntry::removeLogicalStreamFromMismapped(std::string oldLogical
 }
 
 bool StreamCatalogEntry::removeLogicalStream(std::string oldLogicalStreamName) {
-    for (std::string& name : logicalStreamName) {
+    for (std::string& name : logicalStreamNames) {
         if (name == oldLogicalStreamName) {
-            auto it = std::remove(logicalStreamName.begin(), logicalStreamName.end(), oldLogicalStreamName);
-            logicalStreamName.erase(it, logicalStreamName.end());
+            auto it = std::remove(logicalStreamNames.begin(), logicalStreamNames.end(), oldLogicalStreamName);
+            logicalStreamNames.erase(it, logicalStreamNames.end());
             NES_DEBUG("StreamCatalogEntry::removeLogicalStream logicalStreamName=" << oldLogicalStreamName << " was removed.");
-            if (logicalStreamName.empty()) {
+            if (logicalStreamNames.empty()) {
                 physicalStreamState.addReason(NO_LOGICAL_STREAM, "no valid logical stream");
             }
             return true;
@@ -147,15 +147,15 @@ void StreamCatalogEntry::changePhysicalStreamName(std::string newName) {
 }
 
 void StreamCatalogEntry::getAllLogicalName(std::vector<std::string>& all) {
-    all.reserve(logicalStreamName.size() + mismappedLogicalStreamName.size());// preallocate memory
-    all.insert(all.end(), logicalStreamName.begin(), logicalStreamName.end());
-    all.insert(all.end(), mismappedLogicalStreamName.begin(), mismappedLogicalStreamName.end());
+    all.reserve(logicalStreamNames.size() + mismappedLogicalStreamNames.size());// preallocate memory
+    all.insert(all.end(), logicalStreamNames.begin(), logicalStreamNames.end());
+    all.insert(all.end(), mismappedLogicalStreamNames.begin(), mismappedLogicalStreamNames.end());
 }
 
 std::string StreamCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalName=" << physicalStreamName << " logicalStreamName=("
-       << UtilityFunctions::combineStringsWithDelimiter(logicalStreamName, ",") << ") sourceType=" << sourceType
+    ss << "physicalName=" << physicalStreamName << " logicalStreamNames=("
+       << UtilityFunctions::combineStringsWithDelimiter(logicalStreamNames, ",") << ") sourceType=" << sourceType
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }

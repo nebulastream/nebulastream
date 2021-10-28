@@ -168,7 +168,7 @@ class TestHarness {
         currentMemorySource.record = currentSourceRecords;
         currentMemorySource.schema = schema;
         std::vector<std::string> logicalStreamNames{logicalStreamName};
-        currentMemorySource.logicalStreamName = logicalStreamNames;
+        currentMemorySource.logicalStreamNames = logicalStreamNames;
         currentMemorySource.physicalStreamName = physicalStreamName;
 
         testHarnessWorkers.push_back(currentMemorySource);
@@ -214,7 +214,7 @@ class TestHarness {
 
         testHarnessWorkers.push_back(currentCsvSource);
 
-        for(std::string logicalStreamName : csvSourceConf->getLogicalStreamName()){
+        for(std::string logicalStreamName : csvSourceConf->getLogicalStreamNames()){
             checkAndAddSource(logicalStreamName, schema);
         }
     }
@@ -303,7 +303,7 @@ class TestHarness {
                 AbstractPhysicalStreamConfigPtr conf =
                     MemorySourceStreamConfig::create("MemorySource",
                                                      worker.physicalStreamName,
-                                                     worker.logicalStreamName,
+                                                     worker.logicalStreamNames,
                                                      memArea,
                                                      memAreaSize,
                                                      /** numberOfBuffers*/ memSrcNumBuffToProcess,

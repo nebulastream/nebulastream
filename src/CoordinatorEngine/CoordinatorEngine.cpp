@@ -71,7 +71,7 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
         //add default logical
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
-        std::vector<std::string> logicalStreamNames = streamConf->getLogicalStreamName();
+        std::vector<std::string> logicalStreamNames = streamConf->getLogicalStreamNames();
         auto inAndExcluded = streamCatalog->testIfLogicalStreamVecExistsInSchemaMapping(logicalStreamNames);
 
         // print ERROR in case the mapping does not exist

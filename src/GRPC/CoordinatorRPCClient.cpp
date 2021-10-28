@@ -58,7 +58,7 @@ RegisterPhysicalStreamResponse CoordinatorRPCClient::registerPhysicalStream(Abst
     request.set_id(workerId);
     request.set_sourcetype(conf->getSourceType());
     request.set_physicalstreamname(conf->getPhysicalStreamName());
-    auto logicalStreamNames = conf->getLogicalStreamName();
+    auto logicalStreamNames = conf->getLogicalStreamNames();
     request.set_logicalstreamname(UtilityFunctions::combineStringsWithDelimiter(logicalStreamNames, ","));
     NES_DEBUG("RegisterPhysicalStreamRequest::RegisterLogicalStreamRequest request=" << request.DebugString());
 

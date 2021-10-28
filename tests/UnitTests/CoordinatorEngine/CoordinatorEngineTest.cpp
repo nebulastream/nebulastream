@@ -130,7 +130,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
 
     // coordinator engine aspects combined string
-    std::vector<std::string> logicalStreamName = conf->getLogicalStreamName();
+    std::vector<std::string> logicalStreamName = conf->getLogicalStreamNames();
 
     // assumed that logicalStreamName has only one entry
     bool successRegisterLogicalStream = coordinatorEngine->registerLogicalStream(logicalStreamName[0], testSchema);

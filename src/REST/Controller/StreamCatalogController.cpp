@@ -583,7 +583,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
         try {
             std::string streamName = logicalStreamName->second;
 
-            bool removed = streamCatalog->removeAllMismapped(streamName);
+            bool removed = streamCatalog->removeAllMismappings(streamName);
 
             //Prepare the response
             json::value result{};
@@ -596,7 +596,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
 
             return;
         } catch (const std::exception& exc) {
-            NES_ERROR("StreamCatalogController: handleDelete -removeAllMismapped: Exception occurred removing all "
+            NES_ERROR("StreamCatalogController: handleDelete -removeAllMismappings: Exception occurred removing all "
                       "the mismapped from the specified logical stream "
                       << exc.what());
             handleException(request, exc);
