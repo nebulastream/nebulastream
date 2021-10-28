@@ -21,34 +21,34 @@
 namespace NES {
 
 void BaseController::handleGet(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultNotImplementedReply(methods::GET, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::GET, request);
 }
 
 void BaseController::handlePut(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultNotImplementedReply(methods::PUT, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::PUT, request);
 }
 
 void BaseController::handlePost(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
 }
 
 void BaseController::handleDelete(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultNotImplementedReply(methods::DEL, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::DEL, request);
 }
 
 void BaseController::handlePatch(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
 }
 void BaseController::handleHead(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultNotImplementedReply(methods::HEAD, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::HEAD, request);
 }
 
 void BaseController::handleTrace(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
 }
 
 void BaseController::handleMerge(const std::vector<utility::string_t>&, http_request& request) {
-  RestEngine::returnDefaultNotImplementedReply(methods::MERGE, request);
+    RestEngine::returnDefaultNotImplementedReply(methods::MERGE, request);
 }
 
 void BaseController::handleOptions(const http_request& request) {
@@ -191,5 +191,4 @@ void BaseController::handleException(const web::http::http_request& message, con
         this->internalServerErrorImpl(message);
     }
 }
-
 }// namespace NES

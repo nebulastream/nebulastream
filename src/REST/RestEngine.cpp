@@ -26,7 +26,6 @@
 #include <Util/Logger.hpp>
 #include <iostream>
 
-
 namespace NES {
 
 RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
@@ -175,17 +174,11 @@ void RestEngine::handleDelete(http_request request) {
 
 utility::string_t RestEngine::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
 
-void RestEngine::handleHead(http_request request) {
-    RestEngine::returnDefaultNotImplementedReply(methods::HEAD, request);
-}
+void RestEngine::handleHead(http_request request) { RestEngine::returnDefaultNotImplementedReply(methods::HEAD, request); }
 
-void RestEngine::handleMerge(http_request request) {
-    RestEngine::returnDefaultNotImplementedReply(methods::MERGE, request);
-}
+void RestEngine::handleMerge(http_request request) { RestEngine::returnDefaultNotImplementedReply(methods::MERGE, request); }
 
-void RestEngine::handleTrace(http_request request) {
-    RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request);
-}
+void RestEngine::handleTrace(http_request request) { RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request); }
 
 //TODO (covered in issue 1919 (Add option to configure whitelisted addresses for CORS))
 // the '*' should be replaced at some point, with specifically allowed addresses, provided by a config
@@ -233,11 +226,10 @@ json::value RestEngine::responseNotImpl(const http::method& method, utility::str
     return response;
 }
 
-void RestEngine::returnDefaultUnknownEndpointResponse(http_request request){
+void RestEngine::returnDefaultUnknownEndpointResponse(http_request request) {
     web::json::value response{};
     response["detail"] = json::value::string("Unknown endpoint");
     BaseController::badRequestImpl(request, response);
 }
-
 
 }// namespace NES

@@ -95,8 +95,12 @@ class BaseController {
 
     static void internalServerErrorImpl(const web::http::http_request& message);
 
-    template <typename T>
-    static void successMessageImpl(const http_request& request, const T& result) {
+    static void resourceNotFoundImpl(const web::http::http_request& message);
+    static void noContentImpl(const web::http::http_request& message);
+
+    template<typename T,
+             std::enable_if_t<std::is_same<T, std::string>::value || std::is_same<T, web::json::value>::value, bool> = true>
+    static void successMessageImpl(const web::http::http_request& request, const T& result) {
         http_response response(status_codes::OK);
         response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
         response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
@@ -104,16 +108,14 @@ class BaseController {
         request.reply(response);
     }
 
-    static void resourceNotFoundImpl(const web::http::http_request& message);
-    static void noContentImpl(const web::http::http_request& message);
-
     /**
      * @brief Return a 400 Bad Request response with a detailed error message.
      * @tparam T The type of the error message. Supported types are std::string and web::json::value.
      * @param request The HTTP request.
      * @param detail The detailed error message.
      */
-    template<typename T>
+    template<typename T,
+             std::enable_if_t<std::is_same<T, std::string>::value || std::is_same<T, web::json::value>::value, bool> = true>
     static void badRequestImpl(const web::http::http_request& request, const T& detail) {
         // Returns error with http code 400 to indicate bad user request
         http_response response(status_codes::BadRequest);
@@ -127,14 +129,11 @@ class BaseController {
 
     virtual void handleException(const web::http::http_request& message, const std::exception& exc);
 
-
     /**
      * @brief Get the parameters from the request if any
      * @param request : the user request
      * @return a map containing parameter keys and values
      */
     static std::map<utility::string_t, utility::string_t> getParameters(http_request& request);
-
-
 };
 }// namespace NES#endif// NES_INCLUDE_REST_CONTROLLER_BASE_CONTROLLER_HPP_
