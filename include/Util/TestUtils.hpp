@@ -65,30 +65,30 @@ class TestUtils {
 
     [[nodiscard]] static std::string rpcPort(uint64_t rpcPort) { return "--rpcPort=" + std::to_string(rpcPort); }
 
-    [[nodiscard]] static std::string sourceType(std::string sourceType) { return "--sourceType=" + sourceType; }
+    [[nodiscard]] static std::string sourceType(std::string sourceType) { return "--" + SOURCE_TYPE_CONFIG + "=" + sourceType; }
 
-    [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) { return "--CSVSourceFilePath=" + filePath; }
+    [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) { return "--" + CSV_FILE_PATH_CONFIG + "=" + filePath; }
 
     [[nodiscard]] static std::string dataPort(uint64_t dataPort) { return "--dataPort=" + std::to_string(dataPort); }
 
     [[nodiscard]] static std::string numberOfTuplesToProducePerBuffer(uint64_t numberOfTuplesToProducePerBuffer) {
-        return "--numberOfTuplesToProducePerBuffer=" + std::to_string(numberOfTuplesToProducePerBuffer);
+        return "--" + NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + "=" + std::to_string(numberOfTuplesToProducePerBuffer);
     }
 
     [[nodiscard]] static std::string physicalStreamName(std::string physicalStreamName) {
-        return "--physicalStreamName=" + physicalStreamName;
+        return "--" + PHYSICAL_STREAM_NAME_CONFIG + "=" + physicalStreamName;
     }
 
     [[nodiscard]] static std::string logicalStreamName(std::string logicalStreamName) {
-        return "--logicalStreamName=" + logicalStreamName;
+        return "--" + LOGICAL_STREAM_NAME_CONFIG + "=" + logicalStreamName;
     }
 
     [[nodiscard]] static std::string numberOfBuffersToProduce(uint64_t numberOfBuffersToProduce) {
-        return "--numberOfBuffersToProduce=" + std::to_string(numberOfBuffersToProduce);
+        return "--" + NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + "=" + std::to_string(numberOfBuffersToProduce);
     }
 
     [[nodiscard]] static std::string sourceFrequency(uint64_t sourceFrequency) {
-        return "--sourceFrequency=" + std::to_string(sourceFrequency);
+        return "--" + SOURCE_FREQUENCY_CONFIG + "=" + std::to_string(sourceFrequency);
     }
 
     [[nodiscard]] static std::string restPort(uint64_t restPort) { return "--restPort=" + std::to_string(restPort); }

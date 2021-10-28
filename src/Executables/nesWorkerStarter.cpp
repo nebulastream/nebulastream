@@ -36,6 +36,7 @@
 #include <thread>
 #include <unistd.h>
 using namespace NES;
+using namespace Configurations;
 using std::cout;
 using std::endl;
 using std::string;

@@ -41,6 +41,8 @@
 
 namespace NES {
 
+using namespace Configurations;
+
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
 uint64_t rpcPort = 5000;

@@ -25,59 +25,59 @@ namespace NES {
 namespace Configurations {
 
 SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType)
-    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 1, "Number of buffers to produce.")),
+    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
       numberOfTuplesToProducePerBuffer(
-          ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.")),
+          ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG, 1, "Number of tuples to produce per buffer.")),
       physicalStreamName(
-          ConfigOption<std::string>::create("physicalStreamName", "default_physical", "Physical name of the stream.")),
-      logicalStreamName(ConfigOption<std::string>::create("logicalStreamName", "default_logical", "Logical name of the stream.")),
-      sourceFrequency(ConfigOption<uint32_t>::create("sourceFrequency", 1, "Sampling frequency of the source.")),
-      rowLayout(ConfigOption<bool>::create("rowLayout", true, "storage layout, true = row layout, false = column layout")),
-      inputFormat(ConfigOption<std::string>::create("inputFormat", "JSON", "input data format")),
-      sourceType(ConfigOption<std::string>::create("sourceType",
+          ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
+      logicalStreamName(ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
+      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
+      rowLayout(ConfigOption<bool>::create(ROW_LAYOUT_CONFIG, true, "storage layout, true = row layout, false = column layout")),
+      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")),
+      sourceType(ConfigOption<std::string>::create(SOURCE_TYPE_CONFIG,
                                                    std::move(_sourceType),
                                                    "Type of the Source (available options: NoSource, DefaultSource, CSVSource, "
                                                    "BinarySource, MQTTSource, KafkaSource, OPCSource).")) {
     NES_INFO("NesSourceConfig: Init source config object with new values.");
 
-    if (sourceConfigMap.find("numberOfBuffersToProduce") != sourceConfigMap.end()) {
-        numberOfBuffersToProduce->setValue(std::stoi(sourceConfigMap.find("numberOfBuffersToProduce")->second));
+    if (sourceConfigMap.find(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
+        numberOfBuffersToProduce->setValue(std::stoi(sourceConfigMap.find(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
     }
-    if (sourceConfigMap.find("numberOfTuplesToProducePerBuffer") != sourceConfigMap.end()) {
-        numberOfTuplesToProducePerBuffer->setValue(std::stoi(sourceConfigMap.find("numberOfTuplesToProducePerBuffer")->second));
+    if (sourceConfigMap.find(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG) != sourceConfigMap.end()) {
+        numberOfTuplesToProducePerBuffer->setValue(std::stoi(sourceConfigMap.find(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
     }
-    if (sourceConfigMap.find("physicalStreamName") != sourceConfigMap.end()) {
-        physicalStreamName->setValue(sourceConfigMap.find("physicalStreamName")->second);
+    if (sourceConfigMap.find(PHYSICAL_STREAM_NAME_CONFIG) != sourceConfigMap.end()) {
+        physicalStreamName->setValue(sourceConfigMap.find(PHYSICAL_STREAM_NAME_CONFIG)->second);
     }
-    if (sourceConfigMap.find("logicalStreamName") != sourceConfigMap.end()) {
-        logicalStreamName->setValue(sourceConfigMap.find("logicalStreamName")->second);
+    if (sourceConfigMap.find(LOGICAL_STREAM_NAME_CONFIG) != sourceConfigMap.end()) {
+        logicalStreamName->setValue(sourceConfigMap.find(LOGICAL_STREAM_NAME_CONFIG)->second);
     }
-    if (sourceConfigMap.find("sourceFrequency") != sourceConfigMap.end()) {
-        sourceFrequency->setValue(std::stoi(sourceConfigMap.find("sourceFrequency")->second));
+    if (sourceConfigMap.find(SOURCE_FREQUENCY_CONFIG) != sourceConfigMap.end()) {
+        sourceFrequency->setValue(std::stoi(sourceConfigMap.find(SOURCE_FREQUENCY_CONFIG)->second));
     }
-    if (sourceConfigMap.find("rowLayout") != sourceConfigMap.end()) {
-        rowLayout->setValue((sourceConfigMap.find("rowLayout")->second == "true"));
+    if (sourceConfigMap.find(ROW_LAYOUT_CONFIG) != sourceConfigMap.end()) {
+        rowLayout->setValue((sourceConfigMap.find(ROW_LAYOUT_CONFIG)->second == "true"));
     }
-    if (sourceConfigMap.find("inputFormat") != sourceConfigMap.end()) {
-        inputFormat->setValue(sourceConfigMap.find("inputFormat")->second);
+    if (sourceConfigMap.find(INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
+        inputFormat->setValue(sourceConfigMap.find(INPUT_FORMAT_CONFIG)->second);
     }
-    if (sourceConfigMap.find("sourceType") != sourceConfigMap.end()) {
-        sourceType->setValue(sourceConfigMap.find("sourceType")->second);
+    if (sourceConfigMap.find(SOURCE_TYPE_CONFIG) != sourceConfigMap.end()) {
+        sourceType->setValue(sourceConfigMap.find(SOURCE_TYPE_CONFIG)->second);
     }
 }
 
 SourceConfig::SourceConfig(std::string _sourceType)
-    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 1, "Number of buffers to produce.")),
+    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
       numberOfTuplesToProducePerBuffer(
-          ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.")),
+          ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG, 1, "Number of tuples to produce per buffer.")),
       physicalStreamName(
-          ConfigOption<std::string>::create("physicalStreamName", "default_physical", "Physical name of the stream.")),
-      logicalStreamName(ConfigOption<std::string>::create("logicalStreamName", "default_logical", "Logical name of the stream.")),
-      sourceFrequency(ConfigOption<uint32_t>::create("sourceFrequency", 1, "Sampling frequency of the source.")),
-      rowLayout(ConfigOption<bool>::create("rowLayout", true, "storage layout, true = row layout, false = column layout")),
-      inputFormat(ConfigOption<std::string>::create("inputFormat", "JSON", "input data format")),
+          ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
+      logicalStreamName(ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
+      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
+      rowLayout(ConfigOption<bool>::create(ROW_LAYOUT_CONFIG, true, "storage layout, true = row layout, false = column layout")),
+      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")),
       sourceType(
-          ConfigOption<std::string>::create("sourceType",
+          ConfigOption<std::string>::create(SOURCE_TYPE_CONFIG,
                                             std::move(_sourceType),
                                             "Type of the Source (available options: DefaultSource, CSVSource, BinarySource).")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");

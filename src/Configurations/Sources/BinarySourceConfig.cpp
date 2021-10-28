@@ -31,20 +31,20 @@ BinarySourceConfigPtr BinarySourceConfig::create(std::map<std::string, std::stri
 BinarySourceConfigPtr BinarySourceConfig::create() { return std::make_shared<BinarySourceConfig>(BinarySourceConfig()); }
 
 BinarySourceConfig::BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap, "BinarySource"),
-      filePath(ConfigOption<std::string>::create("filePath",
+    : SourceConfig(sourceConfigMap, BINARY_SOURCE_CONFIG),
+      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG,
                                                  "",
                                                  "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceConfig: Init source config object.");
-    if (sourceConfigMap.find("BinarySourceFilePath") != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find("BinarySourceFilePath")->second);
+    if (sourceConfigMap.find(BINARY_SOURCE_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find(BINARY_SOURCE_FILE_PATH_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("BinarySourceConfig:: no filePath defined! Please define a filePath.");
     }
 }
 
 BinarySourceConfig::BinarySourceConfig()
-    : SourceConfig("BinarySource"), filePath(ConfigOption<std::string>::create("filePath",
+    : SourceConfig(BINARY_SOURCE_CONFIG), filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG,
                                                                                "../tests/test_data/QnV_short.csv",
                                                                                "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceConfig: Init source config object with default params.");
@@ -52,7 +52,7 @@ BinarySourceConfig::BinarySourceConfig()
 
 void BinarySourceConfig::resetSourceOptions() {
     setFilePath(filePath->getDefaultValue());
-    SourceConfig::resetSourceOptions("BinarySource");
+    SourceConfig::resetSourceOptions(BINARY_SOURCE_CONFIG);
 }
 
 std::string BinarySourceConfig::toString() {

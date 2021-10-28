@@ -38,9 +38,11 @@ MQTTSource:
   # Set url to connect to
   - url: tcp://127.0.0.1:2000
   # Set clientId
-    clientId: blabla
+    clientId: testClient
   # Set userName
-    userName:
+    userName: testUser
+  # Set topic to listen to
+    topic: testTopic
   # set quality of service
     qos: 2
   # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)

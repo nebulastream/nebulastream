@@ -58,6 +58,8 @@ using grpc::Status;
 
 namespace NES {
 
+using namespace Configurations;
+
 NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig, WorkerConfigPtr workerConfigInput)
     : NesCoordinator(coordinatorConfig) {
     workerConfig = workerConfigInput;

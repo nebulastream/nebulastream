@@ -30,15 +30,15 @@ DefaultSourceConfigPtr DefaultSourceConfig::create(std::map<std::string, std::st
 DefaultSourceConfigPtr DefaultSourceConfig::create() { return std::make_shared<DefaultSourceConfig>(DefaultSourceConfig()); }
 
 DefaultSourceConfig::DefaultSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(std::move(sourceConfigMap), "DefaultSource") {
+    : SourceConfig(std::move(sourceConfigMap), DEFAULT_SOURCE_CONFIG) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
-DefaultSourceConfig::DefaultSourceConfig() : SourceConfig("DefaultSource") {
+DefaultSourceConfig::DefaultSourceConfig() : SourceConfig(DEFAULT_SOURCE_CONFIG) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
-void DefaultSourceConfig::resetSourceOptions() { SourceConfig::resetSourceOptions("DefaultSource"); }
+void DefaultSourceConfig::resetSourceOptions() { SourceConfig::resetSourceOptions(DEFAULT_SOURCE_CONFIG); }
 
 std::string DefaultSourceConfig::toString() {
     std::stringstream ss;
