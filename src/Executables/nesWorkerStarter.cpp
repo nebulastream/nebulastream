@@ -96,7 +96,16 @@ int main(int argc, char** argv) {
         wrk->setWithParent(workerConfig->getParentId()->getValue());
     }
 
-    wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
-    wrk->stop(/**force*/ true);
+
+    try {
+        wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
+        wrk->stop(/**force*/ true);
+    }
+    catch(std::exception& exp) {
+        NES_ERROR("Problem with Worker:  << " << exp.what());
+    }
+    catch(...) {
+        throw;
+    }
     NES_INFO("worker started");
 }
