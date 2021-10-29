@@ -52,7 +52,7 @@ class InMemoryLineageManager : public AbstractLineageManager {
      * @param id new id of the tuple
      * @return old id of the tuple
      */
-    BufferSequenceNumber findTupleBufferAncestor(BufferSequenceNumber bufferSequenceNumber);
+    std::vector<BufferSequenceNumber> findTupleBufferAncestor(BufferSequenceNumber bufferSequenceNumber);
 
     /**
      * @brief Return current bufferAncestorMapping size
@@ -63,7 +63,7 @@ class InMemoryLineageManager : public AbstractLineageManager {
   private:
     ///this unordered map maps new buffer sequence numbers to old ones, which tuple buffer had before a statefull operator
 
-    std::unordered_map<BufferSequenceNumber, BufferSequenceNumber> bufferAncestorMapping;
+    std::unordered_map<BufferSequenceNumber, std::vector<BufferSequenceNumber>> bufferAncestorMapping;
     mutable std::mutex mutex;
 };
 
