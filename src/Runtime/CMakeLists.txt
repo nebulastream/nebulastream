@@ -19,7 +19,7 @@ add_source_nes(
         ReconfigurationMessage.cpp
         BufferStorage.cpp
         BufferManager.cpp
-        LineageManager.cpp
+        InMemoryLineageManager.cpp
         FixedSizeBufferPool.cpp
         ThreadPool.cpp
         Task.cpp

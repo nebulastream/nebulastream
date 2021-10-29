@@ -29,46 +29,45 @@ namespace NES::Runtime {
  * @brief The Lineage Manager class stores map of all tuples that got their sequence number changed
  * by stateful operators
  */
-class LineageManager : public AbstractLineageManager {
+class InMemoryLineageManager : public AbstractLineageManager {
   public:
-    /**
-     * @brief Constructor, which creates a lineage manager
-     */
-    LineageManager() = default;
+    InMemoryLineageManager() = default;
 
     /**
-     * @brief Inserts a pair newId, oldId into lineage, where newId is a key
+     * @brief Inserts a pair newId, oldId into bufferAncestorMapping, where newId is a key
      * @param newId new sequence number that was created by a stateful operator
      * @param oldId old sequence number that the tuple had
      */
-    void insertIntoLineage(BufferSequenceNumber newId, BufferSequenceNumber oldId) override;
+    void insert(BufferSequenceNumber newBufferSequenceNumber, BufferSequenceNumber oldBufferSequenceNumber) override;
 
     /**
-     * @brief Deletes a pair<newId,oldId> from lineage manager
+     * @brief Deletes a pair<newId,oldId> from bufferAncestorMapping manager
      * @param id newId of the tuple
      * @return true in case of a success trimming
      */
-    bool trimLineage(BufferSequenceNumber id) override;
+    bool trim(BufferSequenceNumber bufferSequenceNumber) override;
 
     /**
      * @brief Finds an old id for the tuple with a given id
      * @param id new id of the tuple
      * @return old id of the tuple
      */
-    BufferSequenceNumber findTupleAncestor(BufferSequenceNumber id);
+    BufferSequenceNumber findTupleBufferAncestor(BufferSequenceNumber bufferSequenceNumber);
 
     /**
-     * @brief Return current lineage size
-     * @return Current lineage size
+     * @brief Return current bufferAncestorMapping size
+     * @return Current bufferAncestorMapping size
      */
     size_t getLineageSize() const override;
 
   private:
-    std::unordered_map<BufferSequenceNumber, BufferSequenceNumber> lineage;
+    ///this unordered map maps new buffer sequence numbers to old ones, which tuple buffer had before a statefull operator
+
+    std::unordered_map<BufferSequenceNumber, BufferSequenceNumber> bufferAncestorMapping;
     mutable std::mutex mutex;
 };
 
-using LineageManagerPtr = std::shared_ptr<Runtime::LineageManager>;
+using LineageManagerPtr = std::shared_ptr<Runtime::InMemoryLineageManager>;
 
 }// namespace NES::Runtime
 

@@ -30,9 +30,6 @@ namespace NES {
 class BufferSequenceNumber {
 
   public:
-    /**
-     * @brief Default constructor, which creates a buffer sequence number
-     */
     BufferSequenceNumber() = default;
     /**
      * @brief Constructor, which creates new buffer sequence number out of pair sequnce number and origin id
@@ -46,23 +43,23 @@ class BufferSequenceNumber {
      * @brief Getter for a sequence number of a buffer sequence number
      * @return sequence number
      */
-    uint64_t getSequenceNumber() const { return sequenceNumber; }
+    uint64_t getSequenceNumber() const;
 
     /**
      * @brief Getter for an origin id of a buffer sequence number
      * @return origin id
      */
-    uint64_t getOriginId() const { return originId; }
+    uint64_t getOriginId() const;
 
     /**
      * @brief Methods to check if a buffer sequence number is a valid pair
      * @return true if this sequence number is valid
      */
-    bool isValid() { return sequenceNumber > -1 && originId > -1; }
+    bool isValid();
 
   private:
-    int64_t sequenceNumber;
-    int64_t originId;
+    uint64_t sequenceNumber;
+    uint64_t originId;
     friend bool operator<(const BufferSequenceNumber& lhs, const BufferSequenceNumber& rhs) {
         return lhs.sequenceNumber < rhs.sequenceNumber;
     }
@@ -89,10 +86,7 @@ using BufferSequenceNumberPtr = std::shared_ptr<BufferSequenceNumber>;
 namespace std {
 template<>
 struct hash<NES::BufferSequenceNumber> {
-    uint64_t operator()(const NES::BufferSequenceNumber& sn) const {
-        typedef unsigned long ulong;
-        return ulong(sn.getOriginId() << 16) | ulong(sn.getSequenceNumber() << 8);
-    }
+    uint64_t operator()(const NES::BufferSequenceNumber& sn) const { return sn.getSequenceNumber() ^ sn.getOriginId(); }
 };
 }// namespace std
 #endif//NES_BUFFERSEQUENCENUMBER_HPP

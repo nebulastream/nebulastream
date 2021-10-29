@@ -21,7 +21,7 @@
 namespace NES::Runtime {
 
 void BufferStorage::insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) {
-    std::unique_lock<std::mutex> lck(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     auto iterator = this->buffers.find(id.getOriginId());
     if (iterator == this->buffers.end()) {
         auto queue = BufferStoragePriorityQueue();
@@ -35,7 +35,7 @@ void BufferStorage::insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuf
 }
 
 bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
-    std::unique_lock<std::mutex> lck(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     NES_TRACE("Trying to delete tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> from buffer storage");
     auto iterator = this->buffers.find(id.getOriginId());
     if (iterator != this->buffers.end()) {
@@ -55,7 +55,7 @@ bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
 }
 
 size_t BufferStorage::getStorageSize() const {
-    std::unique_lock<std::mutex> lck(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     size_t size = 0;
     for (auto& q : buffers) {
         size += this->buffers.at(q.first).size();
@@ -64,7 +64,7 @@ size_t BufferStorage::getStorageSize() const {
 }
 
 size_t BufferStorage::getStorageSizeForQueue(uint64_t queueId) const {
-    std::unique_lock<std::mutex> lck(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     auto iterator = this->buffers.find(queueId);
     if (iterator == this->buffers.end()) {
         return 0;
@@ -74,7 +74,7 @@ size_t BufferStorage::getStorageSizeForQueue(uint64_t queueId) const {
 }
 
 BufferStorageUnitPtr BufferStorage::getTopElementFromQueue(uint64_t queueId) const {
-    std::unique_lock<std::mutex> lck(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     auto iterator = this->buffers.find(queueId);
     if (iterator == this->buffers.end()) {
         return nullptr;
