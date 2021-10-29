@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
         wrk->stop(/**force*/ true);
     }
     catch(std::exception& exp) {
-        NES_ERROR("Problem with Worker:  << " << exp.what());
+        NES_ERROR("Problem with worker:  << " << exp.what());
     }
     catch(...) {
         throw;
