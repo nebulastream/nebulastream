@@ -208,6 +208,13 @@ class Query {
     CEPOperatorBuilder::And andWith(Query& subQueryRhs);
 
     /**
+     * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
+     * @param subQueryRhs
+     * @return object where where() function is defined and can be called by user
+     */
+    JoinOperatorBuilder::Join seqWith(const Query& subQueryRhs);
+
+    /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class Or.
      * @param subQueryRhs
      * @return the query (pushed to union with)
@@ -334,6 +341,21 @@ class Query {
      * @return the query
      */
     Query& andWith(const Query& subQueryRhs,
+                   ExpressionItem onLeftKey,
+                   ExpressionItem onRightKey,
+                   Windowing::WindowTypePtr const& windowType);
+
+    /**
+     * @new change: Now it's private, because we don't want the user to have access to it.
+     * We call it only internal as a last step during the SEQ operation
+     * @brief This methods adds the joinType to the join operator and calls join function to add the operator to a query
+     * @param subQueryRhs subQuery to be composed
+     * @param onLeftKey key attribute of the left stream
+     * @param onLeftKey key attribute of the right stream
+     * @param windowType Window definition.
+     * @return the query
+     */
+    Query& seqWith(const Query& subQueryRhs,
                    ExpressionItem onLeftKey,
                    ExpressionItem onRightKey,
                    Windowing::WindowTypePtr const& windowType);

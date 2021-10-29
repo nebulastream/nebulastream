@@ -42,7 +42,7 @@ class LogicalJoinDefinition {
      * CARTESIAN_PRODUCT: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2), (key2,3,key2,3)}
      *
      */
-    enum JoinType { INNER_JOIN, CARTESIAN_PRODUCT };
+    enum JoinType { INNER_JOIN, CARTESIAN_PRODUCT, SEQUENCE };
     static LogicalJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
                                            const FieldAccessExpressionNodePtr& rightJoinKeyType,
                                            const Windowing::WindowTypePtr& windowType,
