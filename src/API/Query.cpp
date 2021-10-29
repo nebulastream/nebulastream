@@ -53,7 +53,7 @@ ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem) { return 
 
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
 
-AndOperatorBuilder::And Query::andWith(Query& subQueryRhs) { return AndOperatorBuilder::And(subQueryRhs, *this); }
+CEPOperatorBuilder::And Query::andWith(Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
 namespace JoinOperatorBuilder {
 
@@ -81,17 +81,23 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
 
 }// namespace JoinOperatorBuilder
 
-namespace AndOperatorBuilder {
+namespace CEPOperatorBuilder {
 
 And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to and with to add virtual key to originalQuery");
-    //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product
+    //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
+
+    //here, we add artificial key attributes to the streams in order to reuse the join-logic later
+    //first, get unique ids for the key attributes
     auto cepLeftId = Util::getNextOperatorId();
     auto cepRightId = Util::getNextOperatorId();
+    //second, create a unique name for both key attributes
     std::string cepLeftKey = "cep_leftkey" + std::to_string(cepLeftId);
     std::string cepRightKey = "cep_rightkey" + std::to_string(cepRightId);
+    //3. map the attributes with value 1 to the left and right stream
     originalQuery.map(Attribute(cepLeftKey) = 1);
     subQueryRhs.map(Attribute(cepRightKey) = 1);
+    //last, define the artificial attributes as key attributes
     onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
     onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
 }
@@ -99,7 +105,7 @@ And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), o
 Query& And::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType); //call original andWith() function
 }
-}// namespace AndOperatorBuilder
+}// namespace CEPOperatorBuilder
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
 
