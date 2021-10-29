@@ -23,7 +23,7 @@ void InMemoryLineageManager::insert(BufferSequenceNumber newBufferSequenceNumber
     std::unique_lock<std::mutex> lock(mutex);
     NES_TRACE("Insert tuple<" << newBufferSequenceNumber.getSequenceNumber() << "," << oldBufferSequenceNumber.getOriginId()
                               << "> into bufferAncestorMapping manager");
-    this->bufferAncestorMapping[newBufferSequenceNumber] = oldBufferSequenceNumber;
+    this->bufferAncestorMapping[newBufferSequenceNumber].push_back(oldBufferSequenceNumber);
 }
 
 bool InMemoryLineageManager::trim(BufferSequenceNumber bufferSequenceNumber) {
@@ -38,14 +38,15 @@ bool InMemoryLineageManager::trim(BufferSequenceNumber bufferSequenceNumber) {
     return false;
 }
 
-BufferSequenceNumber InMemoryLineageManager::findTupleBufferAncestor(BufferSequenceNumber bufferSequenceNumber) {
+std::vector<BufferSequenceNumber> InMemoryLineageManager::findTupleBufferAncestor(BufferSequenceNumber bufferSequenceNumber) {
     std::unique_lock<std::mutex> lock(mutex);
     auto iterator = this->bufferAncestorMapping.find(bufferSequenceNumber);
     if (iterator != this->bufferAncestorMapping.end()) {
         return iterator->second;
     } else {
-        //if a tuple buffer was not found return invalid tuple buffer
-        return BufferSequenceNumber(std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::max());
+        //if a tuple buffer was not found return empty vector
+        std::vector<BufferSequenceNumber> emptyVector;
+        return emptyVector;
     }
 }
 

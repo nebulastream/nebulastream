@@ -51,12 +51,6 @@ class BufferSequenceNumber {
      */
     uint64_t getOriginId() const;
 
-    /**
-     * @brief Methods to check if a buffer sequence number is a valid pair
-     * @return true if this sequence number is valid
-     */
-    bool isValid();
-
   private:
     uint64_t sequenceNumber;
     uint64_t originId;

@@ -21,8 +21,4 @@ uint64_t BufferSequenceNumber::getSequenceNumber() const { return sequenceNumber
 
 uint64_t BufferSequenceNumber::getOriginId() const { return originId; }
 
-bool BufferSequenceNumber::isValid() {
-    auto max = std::numeric_limits<uint64_t>::max();
-    return sequenceNumber != max && originId != max;
-}
 }// namespace NES

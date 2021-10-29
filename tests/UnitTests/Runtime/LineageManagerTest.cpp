@@ -55,6 +55,18 @@ TEST_F(LineageManagerTest, bufferInsertionInLineageManager) {
 }
 
 /**
+     * @brief test inserts buffers with the same new buffer sequence number into bufferAncestorMapping and checks that the vector
+     * size with a given new buffer sequnce number increased.
+*/
+TEST_F(LineageManagerTest, bufferInsertionWithTheSameSNInLineageManager) {
+    auto lineageManager = std::make_shared<Runtime::InMemoryLineageManager>();
+    for (size_t i = 0; i < buffersInserted; i++) {
+        lineageManager->insert(BufferSequenceNumber(0, 0), BufferSequenceNumber(i, i));
+    }
+    ASSERT_EQ(lineageManager->findTupleBufferAncestor(BufferSequenceNumber(0, 0)).size(), buffersInserted);
+}
+
+/**
      * @brief test tries to delete from an empty bufferAncestorMapping
 */
 TEST_F(LineageManagerTest, deletionFromAnEmptyLineageManager) {
@@ -85,7 +97,7 @@ TEST_F(LineageManagerTest, bufferDeletionFromLineageManager) {
 */
 TEST_F(LineageManagerTest, invertNonExistingId) {
     auto lineageManager = std::make_shared<Runtime::InMemoryLineageManager>();
-    ASSERT_EQ(lineageManager->findTupleBufferAncestor(BufferSequenceNumber(0, 0)).isValid(), false);
+    ASSERT_EQ(lineageManager->findTupleBufferAncestor(BufferSequenceNumber(0, 0)).empty(), true);
 }
 
 /**
@@ -98,7 +110,7 @@ TEST_F(LineageManagerTest, invertExistingId) {
         ASSERT_EQ(lineageManager->getLineageSize(), i + 1);
     }
     ASSERT_EQ(lineageManager->getLineageSize(), buffersInserted);
-    ASSERT_EQ(lineageManager->findTupleBufferAncestor(BufferSequenceNumber(0, 0)), BufferSequenceNumber(1, 1));
+    ASSERT_EQ(lineageManager->findTupleBufferAncestor(BufferSequenceNumber(0, 0))[0], BufferSequenceNumber(1, 1));
 }
 
 /**
