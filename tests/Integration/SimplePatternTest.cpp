@@ -350,6 +350,7 @@ TEST_F(SimplePatternTest, testAndPattern) {
 /* 4.Test
  * Here, we test if we can use and operator for patterns and create complex events with it
  */
+//TODO Ariane issue 2303
 TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();

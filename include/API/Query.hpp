@@ -148,7 +148,7 @@ class JoinCondition {
 
 }//namespace JoinOperatorBuilder
 
-namespace AndOperatorBuilder {
+namespace CEPOperatorBuilder {
 
 class And {
   public:
@@ -173,7 +173,7 @@ class And {
     ExpressionNodePtr onRightKey;
 };
 
-}//namespace AndOperatorBuilder
+}//namespace CEPOperatorBuilder
 
 /**
  * User interface to create stream processing queries.
@@ -185,9 +185,9 @@ class Query {
 
     virtual ~Query() = default;
 
-    //both, Join and AndOperatorBuilder friend classes, are required as they use the private joinWith method.
+    //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinCondition;
-    friend class AndOperatorBuilder::And;
+    friend class CEPOperatorBuilder::And;
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
@@ -205,7 +205,7 @@ class Query {
      * @param subQueryRhs
      * @return object where where() function is defined and can be called by user
      */
-    AndOperatorBuilder::And andWith(Query& subQueryRhs);
+    CEPOperatorBuilder::And andWith(Query& subQueryRhs);
 
     /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.
