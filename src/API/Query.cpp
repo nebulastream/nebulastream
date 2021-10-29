@@ -50,6 +50,8 @@ JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return Joi
 
 CEPOperatorBuilder::And Query::andWith(Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
+JoinOperatorBuilder::Join Query::seqWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
+
 namespace JoinOperatorBuilder {
 
 JoinWhere Join::where(const ExpressionItem& onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
@@ -250,6 +252,16 @@ Query& Query::andWith(const Query& subQueryRhs,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType to AND Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
+    return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
+}
+
+Query& Query::seqWith(const Query& subQueryRhs,
+                      ExpressionItem onLeftKey,
+                      ExpressionItem onRightKey,
+                      const Windowing::WindowTypePtr& windowType) {
+    NES_DEBUG("Query: add JoinType to SEQ Operator");
+
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::SEQUENCE;
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
