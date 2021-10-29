@@ -31,22 +31,22 @@ class AbstractLineageManager {
     virtual ~AbstractLineageManager() noexcept = default;
 
     /**
-     * @brief Inserts a pair newId, oldId into lineage, where newId is a key
+     * @brief Inserts a pair newId, oldId into bufferAncestorMapping, where newId is a key
      * @param newId new sequence number that was created by a stateful operator
      * @param oldId old sequence number that the tuple had
      */
-    virtual void insertIntoLineage(BufferSequenceNumber newId, BufferSequenceNumber oldId) = 0;
+    virtual void insert(BufferSequenceNumber newBufferSequenceNumber, BufferSequenceNumber oldBufferSequenceNumber) = 0;
 
     /**
-     * @brief Deletes a pair<newId,oldId> from lineage manager
-     * @param id newId of the tuple
+     * @brief Deletes a pair<newId,oldId> from bufferAncestorMapping manager
+     * @param bufferSequenceNumber newId of the tuple
      * @return true in case of a success trimming
      */
-    virtual bool trimLineage(BufferSequenceNumber id) = 0;
+    virtual bool trim(BufferSequenceNumber bufferSequenceNumber) = 0;
 
     /**
-     * @brief Return current lineage size
-     * @return Current lineage size
+     * @brief Return current bufferAncestorMapping size
+     * @return Current bufferAncestorMapping size
      */
     virtual size_t getLineageSize() const = 0;
 };
