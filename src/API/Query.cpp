@@ -103,7 +103,7 @@ And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), o
 }
 
 Query& And::window(const Windowing::WindowTypePtr& windowType) const {
-    return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType); //call original andWith() function
+    return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original andWith() function
 }
 }// namespace CEPOperatorBuilder
 

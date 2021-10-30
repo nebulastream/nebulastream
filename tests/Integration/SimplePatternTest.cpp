@@ -65,8 +65,8 @@ class SimplePatternTest : public testing::Test {
     string removeRandomKey(string contentString) {
         std::regex r1("cep_leftkey([0-9]+)");
         std::regex r2("cep_rightkey([0-9]+)");
-        contentString = std::regex_replace(contentString,r1,"cep_leftkey");
-        contentString = std::regex_replace(contentString,r2,"cep_rightkey");
+        contentString = std::regex_replace(contentString, r1, "cep_leftkey");
+        contentString = std::regex_replace(contentString, r2, "cep_rightkey");
         return contentString;
     }
 };
