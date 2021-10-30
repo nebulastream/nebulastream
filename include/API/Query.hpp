@@ -166,7 +166,7 @@ class And {
      */
     [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
-   private:
+  private:
     Query& subQueryRhs;
     Query& originalQuery;
     ExpressionNodePtr onLeftKey;
