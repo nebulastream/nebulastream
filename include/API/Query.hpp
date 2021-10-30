@@ -173,6 +173,40 @@ class And {
     ExpressionNodePtr onRightKey;
 };
 
+class Seq {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @param subQueryRhs
+     * @param originalQuery
+     */
+    Seq(Query& subQueryRhs, Query& originalQuery);
+
+    /**
+     * @brief: calls internal the original seqWith function with all the gathered parameters.
+     * @param windowType
+     * @return the query with the result of the original seqWith function is returned.
+     */
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+
+  private:
+    Query& subQueryRhs;
+    Query& originalQuery;
+    ExpressionNodePtr onLeftKey;
+    ExpressionNodePtr onRightKey;
+};
+//TODO these two methods below are a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
+/**
+     * @brief: this function creates a virtual key for the left side of the binary operator
+     * @return the unique name of the key
+     */
+std::string keyAssignmentLeft();
+
+/**
+     * @brief: this function creates a virtual key for the right side of the binary operator
+     * @return the unique name of the key
+     */
+std::string keyAssignmentRight();
 }//namespace CEPOperatorBuilder
 
 /**
@@ -188,6 +222,7 @@ class Query {
     //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinCondition;
     friend class CEPOperatorBuilder::And;
+    friend class CEPOperatorBuilder::Seq;
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
@@ -212,7 +247,7 @@ class Query {
      * @param subQueryRhs
      * @return object where where() function is defined and can be called by user
      */
-    JoinOperatorBuilder::Join seqWith(const Query& subQueryRhs);
+    CEPOperatorBuilder::Seq seqWith(Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class Or.
