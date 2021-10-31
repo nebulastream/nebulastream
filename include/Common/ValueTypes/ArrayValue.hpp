@@ -25,7 +25,7 @@ namespace NES {
 
 class [[nodiscard]] ArrayValue final : public ValueType {
   public:
-    inline ArrayValue(DataTypePtr&& type, std::vector<std::string>&& values) noexcept
+    inline ArrayValue(DataTypePtr && type, std::vector<std::string> && values) noexcept
         : ValueType(std::move(type)), values(std::move(values)) {}
 
     virtual ~ArrayValue() = default;
