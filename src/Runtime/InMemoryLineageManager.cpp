@@ -45,8 +45,7 @@ std::vector<BufferSequenceNumber> InMemoryLineageManager::findTupleBufferAncesto
         return iterator->second;
     } else {
         //if a tuple buffer was not found return empty vector
-        std::vector<BufferSequenceNumber> emptyVector;
-        return emptyVector;
+        return std::vector<BufferSequenceNumber>(0);
     }
 }
 
