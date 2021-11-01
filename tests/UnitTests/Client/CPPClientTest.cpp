@@ -21,11 +21,14 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <unistd.h>
 
 using namespace std;
 
 namespace NES {
 
+//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+// by assigning a different RPC port for each test case
 uint64_t rpcPort = 1200;
 uint64_t dataPort = 1400;
 uint64_t restPort = 8000;
@@ -36,13 +39,20 @@ class CPPClientTest : public testing::Test {
     static void SetUpTestCase() { NES::setupLogging("CPPClientTest.log", NES::LOG_DEBUG); }
     static void TearDownTestCase() { NES_INFO("Tear down CPPClientTest test class."); }
 
+    void SetUp() override {
+        rpcPort += 10;
+        dataPort += 10;
+        restPort += 10;
+    }
+
     CPPClient cppClient;
 };
 
 TEST_F(CPPClientTest, DeployQueryTest) {
-    auto coordinator = TestUtils::startCoordinator({TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort), TestUtils::numberOfSlots(8)});
+    sleep(15);
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
-
     std::stringstream schema;
     schema << "{\"streamName\" : \"window\",\"schema\" "
               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
@@ -50,6 +60,7 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
     EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    sleep(15);
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
                                           TestUtils::dataPort(dataPort),
@@ -61,17 +72,12 @@ TEST_F(CPPClientTest, DeployQueryTest) {
                                           TestUtils::sourceFrequency(1000),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::physicalStreamName("test_stream")});
-
-    /*auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
-                                          TestUtils::numberOfSlots(8)});*/
+    sleep(15);
 
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     auto query = Query::from("window").sink(PrintSinkDescriptor::create());
-    auto queryPlan = query.getQueryPlan();
-    cppClient.deployQuery(queryPlan, "localhost", std::to_string(restPort));
+    cppClient.deployQuery(query.getQueryPlan(), "localhost", std::to_string(restPort));
 }
 
 }// namespace NES
