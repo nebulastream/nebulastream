@@ -31,7 +31,7 @@ using CSVParserPtr = std::shared_ptr<CSVParser>;
 class CSVSource : public DataSource {
   public:
     /**
-   * @brief constructor of CSV sou1rce
+   * @brief constructor of CSV source
    * @param schema of the source
    * @param path to the csv file
    * @param delimiter inside the file, default ","

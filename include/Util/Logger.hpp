@@ -44,44 +44,32 @@ auto catString = [os = std::ostringstream{}](auto&&... p) mutable {
 enum DebugLevel { LOG_NONE, LOG_ERROR, LOG_FATAL, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
 
 #ifndef NES_LOGGING_NO_LEVEL
-static std::string getDebugLevelAsString(DebugLevel level) {
-    switch (level) {
-        case LOG_NONE: return "LOG_NONE";
-        case LOG_WARNING: return "LOG_WARNING";
-        case LOG_ERROR: return "LOG_ERROR";
-        case LOG_FATAL: return "LOG_FATAL";
-        case LOG_DEBUG: return "LOG_DEBUG";
-        case LOG_INFO: return "LOG_INFO";
-        case LOG_TRACE: return "LOG_TRACE";
-        default: return "UNKNOWN";
-    }
-}
+std::string getDebugLevelAsString(DebugLevel level);
 #endif
 DISABLE_WARNING_PUSH
 DISABLE_WARNING_UNREFERENCED_FUNCTION
-static DebugLevel getDebugLevelFromString(const std::string& level) {
-    if (level == "LOG_NONE") {
-        return LOG_NONE;
-    }
-    if (level == "LOG_WARNING") {
-        return LOG_WARNING;
-    } else if (level == "LOG_ERROR") {
-        return LOG_ERROR;
-    } else if (level == "LOG_FATAL") {
-        return LOG_FATAL;
-    } else if (level == "LOG_DEBUG") {
-        return LOG_DEBUG;
-    } else if (level == "LOG_INFO") {
-        return LOG_INFO;
-    } else if (level == "LOG_TRACE") {
-        return LOG_TRACE;
-    } else {
-        throw std::runtime_error("Logger: Debug level unknown: " + level);
-    }
-}
+DebugLevel getDebugLevelFromString(const std::string& level);
 DISABLE_WARNING_POP
 
-static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
+#ifndef NESLOGGER_HPP
+#define NESLOGGER_HPP
+
+class NESLogger {
+    // Singleton design pattern
+public:
+    static log4cxx::LoggerPtr& getInstance();
+private:
+    NESLogger();
+public:
+    // make deleted constructors public for better error messages:
+    NESLogger(NESLogger const&)         = delete;
+    void operator=(NESLogger const&)    = delete;
+};
+
+#endif
+
+// todo delete old version when done: 
+// static const log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 }// namespace NES
 // LoggerPtr logger(Logger::getLogger("NES"));
 
@@ -104,23 +92,23 @@ struct LoggingBlackHole {
 #ifdef NES_LOGGING_TRACE_LEVEL
 #define NES_TRACE(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        LOG4CXX_TRACE(NES::NESLogger, TEXT);                                                                                     \
+        LOG4CXX_TRACE(NES::NESLogger::getInstance(), TEXT);                                                                                     \
     } while (0)
 #define NES_DEBUG(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        LOG4CXX_DEBUG(NES::NESLogger, TEXT);                                                                                     \
+        LOG4CXX_DEBUG(NES::NESLogger::getInstance(), TEXT);                                                                                     \
     } while (0)
 #define NES_INFO(TEXT)                                                                                                           \
     do {                                                                                                                         \
-        LOG4CXX_INFO(NES::NESLogger, TEXT);                                                                                      \
+        LOG4CXX_INFO(NES::NESLogger::getInstance(), TEXT);                                                                                      \
     } while (0)
 #define NES_WARNING(TEXT)                                                                                                        \
     do {                                                                                                                         \
-        LOG4CXX_WARN(NES::NESLogger, TEXT);                                                                                      \
+        LOG4CXX_WARN(NES::NESLogger::getInstance(), TEXT);                                                                                      \
     } while (0)
 #define NES_ERROR(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        LOG4CXX_ERROR(NES::NESLogger, TEXT);                                                                                     \
+        LOG4CXX_ERROR(NES::NESLogger::getInstance(), TEXT);                                                                                     \
     } while (0)
 #endif
 #ifdef NES_LOGGING_DEBUG_LEVEL
@@ -133,19 +121,19 @@ struct LoggingBlackHole {
     } while (0)
 #define NES_DEBUG(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        LOG4CXX_DEBUG(NES::NESLogger, TEXT);                                                                                     \
+        LOG4CXX_DEBUG(NES::NESLogger::getInstance(), TEXT);                                                                                     \
     } while (0)
 #define NES_INFO(TEXT)                                                                                                           \
     do {                                                                                                                         \
-        LOG4CXX_INFO(NES::NESLogger, TEXT);                                                                                      \
+        LOG4CXX_INFO(NES::NESLogger::getInstance(), TEXT);                                                                                      \
     } while (0)
 #define NES_WARNING(TEXT)                                                                                                        \
     do {                                                                                                                         \
-        LOG4CXX_WARN(NES::NESLogger, TEXT);                                                                                      \
+        LOG4CXX_WARN(NES::NESLogger::getInstance(), TEXT);                                                                                      \
     } while (0)
 #define NES_ERROR(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        LOG4CXX_ERROR(NES::NESLogger, TEXT);                                                                                     \
+        LOG4CXX_ERROR(NES::NESLogger::getInstance(), TEXT);                                                                                     \
     } while (0)
 #endif
 #ifdef NES_LOGGING_INFO_LEVEL
@@ -165,15 +153,15 @@ struct LoggingBlackHole {
     } while (0)
 #define NES_INFO(TEXT)                                                                                                           \
     do {                                                                                                                         \
-        LOG4CXX_INFO(NES::NESLogger, TEXT);                                                                                      \
+        LOG4CXX_INFO(NES::NESLogger::getInstance(), TEXT);                                                                                      \
     } while (0)
 #define NES_WARNING(TEXT)                                                                                                        \
     do {                                                                                                                         \
-        LOG4CXX_WARN(NES::NESLogger, TEXT);                                                                                      \
+        LOG4CXX_WARN(NES::NESLogger::getInstance(), TEXT);                                                                                      \
     } while (0)
 #define NES_ERROR(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        LOG4CXX_ERROR(NES::NESLogger, TEXT);                                                                                     \
+        LOG4CXX_ERROR(NES::NESLogger::getInstance(), TEXT);                                                                                     \
     } while (0)
 #endif
 #ifdef NES_LOGGING_WARNING_LEVEL
@@ -200,11 +188,11 @@ struct LoggingBlackHole {
     } while (0)
 #define NES_WARNING(TEXT)                                                                                                        \
     do {                                                                                                                         \
-        LOG4CXX_WARN(NES::NESLogger, TEXT);                                                                                      \
+        LOG4CXX_WARN(NES::NESLogger::getInstance(), TEXT);                                                                                      \
     } while (0)
 #define NES_ERROR(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        LOG4CXX_ERROR(NES::NESLogger, TEXT);                                                                                     \
+        LOG4CXX_ERROR(NES::NESLogger::getInstance(), TEXT);                                                                                     \
     } while (0)
 #endif
 #ifdef NES_LOGGING_ERROR_LEVEL
@@ -238,7 +226,7 @@ struct LoggingBlackHole {
     } while (0)
 #define NES_ERROR(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        LOG4CXX_ERROR(NES::NESLogger, TEXT);                                                                                     \
+        LOG4CXX_ERROR(NES::NESLogger::getInstance(), TEXT);                                                                                     \
     } while (0)
 #endif
 #ifdef NES_LOGGING_FATAL_ERROR_LEVEL
@@ -272,7 +260,7 @@ struct LoggingBlackHole {
     } while (0)
 #define NES_ERROR(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        LOG4CXX_ERROR(NES::NESLogger, TEXT);                                                                                     \
+        LOG4CXX_ERROR(NES::NESLogger::getInstance(), TEXT);                                                                                     \
     } while (0)
 #endif
 #ifdef NES_LOGGING_NO_LEVEL
@@ -327,7 +315,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
 #define NES_VERIFY(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
+            LOG4CXX_ERROR(NES::NESLogger::getInstance(), "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
             {                                                                                                                    \
                 auto __stacktrace = NES::Runtime::collectAndPrintStacktrace();                                                   \
                 std::stringbuf __buffer;                                                                                         \
@@ -345,7 +333,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
 #define NES_ASSERT(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
+            LOG4CXX_ERROR(NES::NESLogger::getInstance(), "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
             {                                                                                                                    \
                 auto __stacktrace = NES::Runtime::collectAndPrintStacktrace();                                                   \
                 std::stringbuf __buffer;                                                                                         \
@@ -360,7 +348,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
 #define NES_ASSERT2_FMT(CONDITION, ...)                                                                                          \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << __VA_ARGS__);                      \
+            LOG4CXX_ERROR(NES::NESLogger::getInstance(), "NES Fatal Error on " #CONDITION << " message: " << __VA_ARGS__);                      \
             {                                                                                                                    \
                 auto __stacktrace = NES::Runtime::collectAndPrintStacktrace();                                                   \
                 std::stringbuf __buffer;                                                                                         \
@@ -378,76 +366,20 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
         std::stringbuf __buffer;                                                                                                 \
         std::ostream __os(&__buffer);                                                                                            \
         __os << __VA_ARGS__;                                                                                                     \
-        LOG4CXX_ERROR(NES::NESLogger, __VA_ARGS__);                                                                              \
+        LOG4CXX_ERROR(NES::NESLogger::getInstance(), __VA_ARGS__);                                                                              \
         throw NesRuntimeException(__buffer.str(), std::move(__stacktrace));                                                      \
     } while (0)
 
 #define NES_FATAL_ERROR(...)                                                                                                     \
     do {                                                                                                                         \
-        LOG4CXX_ERROR(NES::NESLogger, __VA_ARGS__);                                                                              \
+        LOG4CXX_ERROR(NES::NESLogger::getInstance() , __VA_ARGS__);                                                                              \
     } while (0)
 
 namespace NES {
-static void setLogLevel(DebugLevel level) {
-    // set log level
-#ifdef NES_LOGGING_NO_LEVEL
-    NESLogger->setLevel(log4cxx::Level::getOff());
-    ((void) level);
-#else
-    // set log level
-    switch (level) {
-        case LOG_NONE: {
-            NESLogger->setLevel(log4cxx::Level::getOff());
-            break;
-        }
-        case LOG_ERROR: {
-            NESLogger->setLevel(log4cxx::Level::getError());
-            break;
-        }
-        case LOG_FATAL: {
-            NESLogger->setLevel(log4cxx::Level::getFatal());
-            break;
-        }
-        case LOG_WARNING: {
-            NESLogger->setLevel(log4cxx::Level::getWarn());
-            break;
-        }
-        case LOG_DEBUG: {
-            NESLogger->setLevel(log4cxx::Level::getDebug());
-            break;
-        }
-        case LOG_INFO: {
-            NESLogger->setLevel(log4cxx::Level::getInfo());
-            break;
-        }
-        case LOG_TRACE: {
-            NESLogger->setLevel(log4cxx::Level::getTrace());
-            break;
-        }
-        default: {
-            NES_FATAL_ERROR("setupLogging: log level not supported " << getDebugLevelAsString(level));
-        }
-    }
-#endif
-}
+    void setLogLevel(DebugLevel level);
 DISABLE_WARNING_PUSH
 DISABLE_WARNING_UNREFERENCED_FUNCTION
-static void setupLogging(const std::string& logFileName, DebugLevel level) {
-    std::cout << "Logger: SETUP_LOGGING" << std::endl;
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n"));
-
-    // create FileAppender
-    LOG4CXX_DECODE_CHAR(fileName, logFileName);
-    log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-    // create ConsoleAppender
-    log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-    setLogLevel(level);
-    NESLogger->addAppender(file);
-    NESLogger->addAppender(console);
-}
+    void setupLogging(const std::string& logFileName, DebugLevel level);
 DISABLE_WARNING_UNREFERENCED_FUNCTION
 
 #define NES_NOT_IMPLEMENTED()                                                                                                    \

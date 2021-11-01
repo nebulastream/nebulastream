@@ -232,7 +232,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType()
                             << " ingestion rate=" << gatheringIngestionRate);
     if (numBuffersToProcess == 0) {
-        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffers until "
                   "the source is empty");
     } else {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
@@ -253,7 +253,7 @@ void DataSource::runningRoutineWithIngestionRate() {
             auto optBuf = receiveData();
 
             if (optBuf.has_value()) {
-                // here we got a valid bu fer
+                // here we got a valid buffer
                 NES_DEBUG("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
                 emitWorkFromSource(buf);
@@ -275,7 +275,7 @@ void DataSource::runningRoutineWithIngestionRate() {
         NES_DEBUG("DataSource: startTimeSendBuffers=" << startPeriod << " endTimeSendBuffers=" << endPeriod
                                                       << " nextPeriodStartTime=" << nextPeriodStartTime);
 
-        //If this happoens then the second was not enough to create so many tuples and the ingestion rate should be decreased
+        //If this happens then the second was not enough to create so many tuples and the ingestion rate should be decreased
         if (nextPeriodStartTime < endPeriod) {
             NES_ERROR("Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
                       << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod);
