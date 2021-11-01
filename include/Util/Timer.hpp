@@ -74,7 +74,7 @@ class Timer {
     };
 
     /**
-     * @brief saves current runtime as a snapshot. Usefull for
+     * @brief saves current runtime as a snapshot. Useful for
      * measuring the time of sub-components.
      * @note The runtime is the time from the last taken snapshot
      * till now if saveSnapshot was called earlier. Otherwise
@@ -138,7 +138,7 @@ class Timer {
      * @brief overwrites insert string operator
      */
     friend std::ostream& operator<<(std::ostream& str, const Timer& t) {
-        str << "overall runtime: " << t.getRuntime();
+        str << "overall runtime: " << t.getRuntime() / 1000000 << "." << t.getRuntime() / 1000 % 1000 << " ms";
         for (auto& s : t.getSnapshots()) {
             str << Timer<TimeUnit>::printHelper(std::string(), s);
         }
@@ -147,11 +147,11 @@ class Timer {
 
     /**
      * @brief helper function for insert string operator
-     * recursively goes through the (probability) nested snapshots and prints them
+     * recursively goes through the (probably) nested snapshots and prints them
      */
     static std::string printHelper(std::string str, Snapshot s) {
         std::ostringstream ostr;
-        ostr << str << '\n' << s.name + ": " << s.getRuntime();
+        ostr << str << '\n' << s.name + ":\t" << s.getRuntime() / 1000000 << "." << s.getRuntime() / 1000 % 1000 << " ms";
         for (auto& c : s.children) {
             ostr << printHelper(str, c);
         }
