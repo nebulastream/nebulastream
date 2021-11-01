@@ -24,7 +24,7 @@ namespace NES {
     }
     NESLogger::NESLogger() {};
 
-    std::string getDebugLevelAsString(DebugLevel level) {
+    static std::string getDebugLevelAsString(DebugLevel level) {
         switch (level) {
             case LOG_NONE: return "LOG_NONE";
             case LOG_WARNING: return "LOG_WARNING";

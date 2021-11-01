@@ -44,15 +44,16 @@ auto catString = [os = std::ostringstream{}](auto&&... p) mutable {
 enum DebugLevel { LOG_NONE, LOG_ERROR, LOG_FATAL, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
 
 #ifndef NES_LOGGING_NO_LEVEL
-std::string getDebugLevelAsString(DebugLevel level);
+DISABLE_WARNING_UNREFERENCED_FUNCTION
+static std::string getDebugLevelAsString(DebugLevel level);
 #endif
 DISABLE_WARNING_PUSH
 DISABLE_WARNING_UNREFERENCED_FUNCTION
 DebugLevel getDebugLevelFromString(const std::string& level);
 DISABLE_WARNING_POP
 
-#ifndef NESLOGGER_HPP
-#define NESLOGGER_HPP
+#ifndef NES_INCLUDE_UTIL_SHARED_LOGGER_HPP
+#define NES_INCLUDE_UTIL_SHARED_LOGGER_HPP
 
 class NESLogger {
     // Singleton design pattern
@@ -66,7 +67,7 @@ public:
     void operator=(NESLogger const&)    = delete;
 };
 
-#endif
+#endif// NES_INCLUDE_UTIL_SHARED_
 
 // todo delete old version when done: 
 // static const log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
@@ -376,6 +377,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
     } while (0)
 
 namespace NES {
+DISABLE_WARNING_UNREFERENCED_FUNCTION
     void setLogLevel(DebugLevel level);
 DISABLE_WARNING_PUSH
 DISABLE_WARNING_UNREFERENCED_FUNCTION
