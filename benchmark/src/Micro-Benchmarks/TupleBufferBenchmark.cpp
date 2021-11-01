@@ -775,7 +775,7 @@ BENCHMARK(BM_ReadFieldStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->Re
 //BENCHMARK(BM_CustomFilling)->DenseRange(0, 3, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 int main(int argc, char** argv) {
-    NESLogger->removeAllAppenders();
+    NESLogger::getInstance()->removeAllAppenders();
     NES::setupLogging("TupleBufferBenchmark.log", LOG_WARNING);
 
     benchmark::Initialize(&argc, argv);

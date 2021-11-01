@@ -36,14 +36,14 @@ class DynamicMemoryLayoutTest : public testing::Test {
     BufferManagerPtr bufferManager;
 
     void SetUp() override {
-        NESLogger->removeAllAppenders();
+        NESLogger::getInstance()->removeAllAppenders();
         NES::setupLogging("DynamicMemoryLayoutTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
         bufferManager = std::make_shared<BufferManager>(4096, 10);
     }
     static void TearDownTestCase() {
         std::cout << "Tear down DynamicMemoryLayoutTest class." << std::endl;
-        NESLogger->removeAllAppenders();
+        NESLogger::getInstance()->removeAllAppenders();
     }
 };
 
