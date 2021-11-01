@@ -211,7 +211,7 @@ class BenchmarkUtils {
             NES_ERROR("Caught RuntimeException: " << e.what());                                                                  \
         }                                                                                                                        \
                                                                                                                                  \
-        NES::NESLogger->removeAllAppenders();                                                                                    \
+        NES::NESLogger::getInstance()->removeAllAppenders();                                                                                    \
     }
 
 /**

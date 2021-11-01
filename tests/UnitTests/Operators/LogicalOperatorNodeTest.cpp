@@ -117,11 +117,11 @@ class LogicalOperatorNodeTest : public testing::Test {
         log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
         // set log level
-        NESLogger->setLevel(log4cxx::Level::getDebug());
+        NESLogger::getInstance()->setLevel(log4cxx::Level::getDebug());
 
         // add appenders and other will inherit the settings
-        NESLogger->addAppender(file);
-        NESLogger->addAppender(console);
+        NESLogger::getInstance()->addAppender(file);
+        NESLogger::getInstance()->addAppender(console);
     }
 };
 

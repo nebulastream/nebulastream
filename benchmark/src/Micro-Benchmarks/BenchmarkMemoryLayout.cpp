@@ -400,7 +400,7 @@ BENCHMARK(BM_ReadFieldRowLayoutOldLayout)->Repetitions(REPETITIONS)->ReportAggre
 
 // A benchmark main is needed
 int main(int argc, char** argv) {
-    NESLogger->removeAllAppenders();
+    NESLogger::getInstance()->removeAllAppenders();
     NES::setupLogging("BenchmarkMemoryLayout.log", NES::LOG_WARNING);
 
     benchmark::Initialize(&argc, argv);
