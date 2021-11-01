@@ -20,6 +20,7 @@
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger.hpp>
+#include <cpprest/http_client.h>
 
 /* TODO: No using in HPP files */
 using namespace web;
@@ -40,23 +41,30 @@ class CPPClient {
     static void deployQuery(const QueryPlanPtr& queryPlan,
                             const std::string& coordinatorHost = "127.0.0.1",
                             const std::string& coordinatorPort = "8081") {
+        SubmitQueryRequest request = SubmitQueryRequest();
+        auto queryPlanSerialized = request.mutable_queryplan();
 
-        SubmitQueryRequest protobufMessage = SubmitQueryRequest();
-        SerializableQueryPlan* queryPlanSerialized = protobufMessage.mutable_queryplan();
         QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, queryPlanSerialized);
-
-        protobufMessage.set_allocated_queryplan(queryPlanSerialized);
-        std::string msg = protobufMessage.SerializeAsString();
+        NES_TRACE("WorkerRPCClient:registerQuery -> " << request.DebugString());
+        NES_INFO("QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, queryPlanSerialized);");
+        request.set_allocated_queryplan(queryPlanSerialized);
+        NES_INFO("protobufMessage.set_allocated_queryplan(queryPlanSerialized);");
+        std::string msg = request.SerializeAsString();
+        NES_INFO("std::string msg = protobufMessage.SerializeAsString();");
 
         web::json::value json_return;
         web::http::client::http_client client("http://" + coordinatorHost + ":" + coordinatorPort + "/v1/nes/");
+        NES_INFO("web::http::client::http_client client");
         client.request(web::http::methods::POST, "query/execute-query-ex", msg)
             .then([](const web::http::http_response& response) {
-                return response.extract_json();
+                auto i = response.extract_json();
+                NES_INFO("response.extract_json ");
+                return i;
             })
             .then([&json_return](const pplx::task<web::json::value>& task) {
                 try {
                     json_return = task.get();
+                    NES_INFO("json_return " << json_return);
                 } catch (const web::http::http_exception& e) {
                     NES_ERROR("error " << e.what());
                 }
