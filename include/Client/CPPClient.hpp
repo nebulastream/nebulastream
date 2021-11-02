@@ -17,6 +17,11 @@
 #ifndef NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 #define NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 
+// Should include all headers to build query plans
+#include <API/Query.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+//....
+
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger.hpp>
