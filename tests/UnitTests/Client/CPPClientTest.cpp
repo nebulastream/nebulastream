@@ -32,7 +32,6 @@ namespace NES {
 uint64_t rpcPort = 1200;
 uint64_t dataPort = 1400;
 uint64_t restPort = 8000;
-uint16_t timeout = 5;
 
 class CPPClientTest : public testing::Test {
   protected:
@@ -49,35 +48,60 @@ class CPPClientTest : public testing::Test {
 };
 
 TEST_F(CPPClientTest, DeployQueryTest) {
-    auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::coordinatorPort(rpcPort), TestUtils::restPort(restPort), TestUtils::numberOfSlots(8)});
-    sleep(15);
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
-    std::stringstream schema;
-    schema << "{\"streamName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
-              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
-    schema << endl;
-    NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
-    sleep(15);
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
-                                          TestUtils::logicalStreamName("window"),
-                                          TestUtils::sourceType("CSVSource"),
-                                          TestUtils::sourceConfig("../tests/test_data/window.csv"),
-                                          TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::sourceFrequency(1000),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                          TestUtils::physicalStreamName("test_stream")});
-    sleep(15);
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    NES_INFO("DeployQueryTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0U);
+    NES_INFO("DeployQueryTest: Coordinator started successfully");
 
-    auto query = Query::from("window").sink(PrintSinkDescriptor::create());
-    cppClient.deployQuery(query.getQueryPlan(), "localhost", std::to_string(restPort));
+    NES_INFO("DeployQueryTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("DeployQueryTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    // Register query
+    SourceConfigPtr sourceConfig;
+    sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("test_stream");
+
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    Query query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+
+    web::json::value postJsonReturn = cppClient.deployQuery(query.getQueryPlan(), "localhost", std::to_string(restPort));
+
+    EXPECT_TRUE(postJsonReturn.has_field("queryId"));
+    EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
 }
 
 }// namespace NES
