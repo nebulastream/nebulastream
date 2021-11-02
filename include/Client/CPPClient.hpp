@@ -22,13 +22,10 @@
 #include <Util/Logger.hpp>
 #include <cpprest/http_client.h>
 
-/* TODO: No using in HPP files */
-using namespace web;
-
 namespace NES {
 
 /**
- * @brief
+ * @brief CPP client to deploy queries over the REST API
  */
 class CPPClient {
   public:
@@ -36,7 +33,7 @@ class CPPClient {
      * @brief Deploy a query to the coordinator
      * @param query plan to deploy
      * @param coordinator host e.g. 127.0.0.1
-     * @param coordinator port e.g. 8081
+     * @param coordinator REST port e.g. 8081
      */
     static web::json::value deployQuery(const QueryPlanPtr& queryPlan,
                                         const std::string& coordinatorHost = "127.0.0.1",
