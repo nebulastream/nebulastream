@@ -47,6 +47,10 @@ class CPPClientTest : public testing::Test {
     CPPClient cppClient;
 };
 
+/**
+ * @brief Test if doploying a query over the REST api works properly
+ * @result deployed query ID is valid
+ */
 TEST_F(CPPClientTest, DeployQueryTest) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
