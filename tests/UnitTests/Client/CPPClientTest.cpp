@@ -16,9 +16,7 @@
 
 #include <gtest/gtest.h>
 
-#include <API/Query.hpp>
 #include <Client/CPPClient.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <unistd.h>
