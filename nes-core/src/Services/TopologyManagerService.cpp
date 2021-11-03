@@ -31,7 +31,7 @@ TopologyManagerService::TopologyManagerService(TopologyPtr topology) : topology(
 }
 
 uint64_t
-TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots) {
+TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, double latitude, double longitude) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -62,6 +62,15 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
     } else {
         NES_DEBUG("TopologyManagerService::registerNode: add link to the root node " << rootNode->toString());
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
+    }
+
+    //todo: what is the best way to represent an incalid value?
+    if (latitude != 200 && longitude != 200) {
+        //todo: add call to add location here
+        NES_DEBUG("added node with geographical location: " << latitude << ", " << longitude);
+        topology->setPhysicalNodePosition(physicalNode, latitude, longitude);
+    } else {
+        NES_DEBUG("added node does not have a geographical location");
     }
 
     NES_DEBUG("TopologyManagerService::registerNode: topology after insert = ");

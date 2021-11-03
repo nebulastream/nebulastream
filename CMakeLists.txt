@@ -367,6 +367,10 @@ set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_inter
 find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
 set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
 
+# s2 Library
+find_package(s2)
+set(LIBRARIES ${LIBRARIES} s2)
+
 # Library containing Kafka client
 if (NES_USE_KAFKA)
     find_package(CppKafka CONFIG REQUIRED)

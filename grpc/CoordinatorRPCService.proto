@@ -50,12 +50,15 @@ service CoordinatorRPCService {
   rpc NotifyEpochTermination (EpochBarrierPropagationNotification) returns (EpochBarrierPropagationReply) {}
 }
 
+//todo: also add location param here
 message RegisterNodeRequest {
   string address = 1;
   uint32 grpcPort = 2;
   uint32 dataPort = 3;
   uint32 numberOfSlots = 4;
   NES.SerializableStaticNesMetrics monitoringData = 6;
+  double latitude = 7;
+  double longitude = 8;
 }
 
 message RegisterNodeReply {

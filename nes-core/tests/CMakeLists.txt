@@ -676,6 +676,16 @@ add_executable(grpc-test "UnitTests/gRPC/grpcTests.cpp")
 target_link_libraries(grpc-test nes-tests)
 add_test(NAME grpc-test COMMAND grpc-test)
 
+### S2libTest ###
+add_executable(s2-library-test "felix-ba-tests/s2libraryTests.cpp")
+target_link_libraries(s2-library-test nes ${GTEST_LIBRARIES})
+add_test(NAME s2-library-test COMMAND s2-library-test)
+
+### S2libTest ###
+add_executable(GeoLocationTests "felix-ba-tests/GeoLocationTests.cpp")
+target_link_libraries(GeoLocationTests nes ${GTEST_LIBRARIES})
+add_test(NAME GeoLocationTests COMMAND GeoLocationTests)
+
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
 add_executable(e2e-coordinator-single-worker-test "E2e/E2ECoordinatorSingleWorkerTest.cpp")

@@ -25,6 +25,7 @@
 #include <future>
 #include <vector>
 #include <memory>
+#include <s2/s2point.h>
 
 namespace grpc {
 class Server;
@@ -137,6 +138,30 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     TopologyNodeId getTopologyNodeId() const;
 
     /**
+     * @brief check if a location was set for this Node
+     *
+     */
+    bool hasLocation();
+
+    /**
+     * @brief method to set the coordinates from pair of degrees
+     * @return success of operation
+     */
+    bool setNodeLocationCoordinates(std::tuple<double, double> coordinates);
+
+    /**
+     * @brief returns lat/lng coordinates of the node if a location was set
+     */
+    std::tuple<double, double> getNodeLocationCoordinates();
+
+    /**
+     *
+     * @param coordinates = string of the format "<double>, <double>"
+     * @return std::optional containing a tuple which contains the lat/lng degrees of std::nullopt_t
+     * if the supplied string is not a valid coordinate pair
+     */
+    std::optional<std::tuple<double, double>> locationStringToTuple(std::string coordinates);
+    /**
      * @brief Method to check if a worker is still running
      * @return running status of the worker
      */
@@ -215,6 +240,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     uint32_t numberOfBuffersPerWorker;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
+    std::optional<std::tuple<double, double>> locationCoordinates;
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;

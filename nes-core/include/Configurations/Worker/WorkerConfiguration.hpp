@@ -156,6 +156,8 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     SequenceOption<WrapOption<PhysicalSourcePtr, PhysicalSourceFactory>> physicalSources = {PHYSICAL_SOURCES, "Physical sources"};
 
+    StringOption locationCoordinates = {"", "", "the physical location of the worker"};
+
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
   private:
@@ -179,7 +181,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &numaAwareness,
                 &enableMonitoring,
                 &queryCompiler,
-                &physicalSources};
+                &physicalSources,
+                &locationCoordinates};
     }
 };
 }// namespace Configurations
