@@ -92,7 +92,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             internalServerErrorImpl(request);
             return;
         }
-    } else if(path[1] == "schema") {
+    } else if (path[1] == "schema") {
         //Check if the path contains the query id
         auto param = parameters.find("logicalStreamName");
         if (param == parameters.end()) {
@@ -112,8 +112,9 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             return;
 
         } catch (const std::exception& exc) {
-            NES_ERROR("StreamCatalogController: handleGet -schema: Exception occurred while retrieving the schema for a logical stream"
-                      << exc.what());
+            NES_ERROR(
+                "StreamCatalogController: handleGet -schema: Exception occurred while retrieving the schema for a logical stream"
+                << exc.what());
             handleException(request, exc);
             return;
         } catch (...) {
