@@ -138,7 +138,7 @@ class Timer {
      * @brief overwrites insert string operator
      */
     friend std::ostream& operator<<(std::ostream& str, const Timer& t) {
-        str << "overall runtime: " << t.getRuntime() / 1000000 << "." << t.getRuntime() / 1000 % 1000 << " ms";
+        str << "overall runtime: " << t.getRuntime() << getTimeUnitString();
         for (auto& s : t.getSnapshots()) {
             str << Timer<TimeUnit>::printHelper(std::string(), s);
         }
@@ -151,11 +151,28 @@ class Timer {
      */
     static std::string printHelper(std::string str, Snapshot s) {
         std::ostringstream ostr;
-        ostr << str << '\n' << s.name + ":\t" << s.getRuntime() / 1000000 << "." << s.getRuntime() / 1000 % 1000 << " ms";
+        ostr << str << '\n' << s.name + ":\t" << s.getRuntime() << getTimeUnitString();
         for (auto& c : s.children) {
             ostr << printHelper(str, c);
         }
         return ostr.str();
+    }
+
+    /**
+     * @brief helper function to return a time unit literal string based on TimeUnit
+     */
+    static std::string getTimeUnitString() {
+        if constexpr (std::is_same_v<TimeUnit, std::chrono::nanoseconds>) {
+            return " ns";
+        } else if constexpr (std::is_same_v<TimeUnit, std::chrono::microseconds>) {
+            return " µs";
+        } else if constexpr (std::is_same_v<TimeUnit, std::chrono::milliseconds>) {
+            return " ms";
+        } else if constexpr (std::is_same_v<TimeUnit, std::chrono::seconds>) {
+            return " s";
+        } else {
+            return " time units";
+        }
     }
 
   private:
