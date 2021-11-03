@@ -101,8 +101,11 @@ void BenchmarkSource::runningRoutine() {
     std::cout << "Going to produce " << numberOfTuplesToProduce << std::endl;
 
     for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
-        auto buffer =
-            Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
+        auto buffer = bufferManager->getBufferBlocking();
+        memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
+
+//        auto buffer =
+//            Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
         buffer.setNumberOfTuples(numberOfTuplesToProduce);
         for (const auto& successor : executableSuccessors) {
             queryManager->addWorkForNextPipeline(buffer, successor, numaNode);
