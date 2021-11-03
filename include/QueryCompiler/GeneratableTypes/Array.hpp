@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <QueryCompiler/GeneratableTypes/NESType.hpp>
 
 namespace NES::QueryCompilation {
 /**
@@ -33,7 +34,7 @@ namespace NES::QueryCompilation {
  * @tparam size  the fixed-size array's size.
  */
 template<typename T, std::size_t s, typename = std::enable_if_t<!std::is_pointer_v<T> && std::is_arithmetic_v<T>>>
-class ArrayBase : public std::array<T, s> {
+class ArrayBase : public std::array<T, s>, public NESType {
   public:
     /// @brief Public, externally visible type of this array.
     using type = T;

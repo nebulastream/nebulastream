@@ -371,7 +371,7 @@ target_link_libraries(global-query-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-plan-tests COMMAND global-query-plan-tests)
 
 ### Choose MemLayout Phase Tests ###
-add_executable(choose-mem-layout-phase-tests "UnitTests/Optimizer/Phases/QueryChooseMemLayoutPhaseTest.cpp")
+add_executable(choose-mem-layout-phase-tests "UnitTests/Optimizer/Phases/SetMemoryLayoutPhaseTest.cpp")
 target_link_libraries(choose-mem-layout-phase-tests nes ${GTEST_LIBRARIES})
 add_test(NAME choose-mem-layout-phase-tests COMMAND choose-mem-layout-phase-tests)
 

@@ -18,7 +18,6 @@
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_HPP_
 
 #include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
-#include <Runtime/NodeEngine.hpp>
 
 namespace NES::Runtime::DynamicMemoryLayout {
 

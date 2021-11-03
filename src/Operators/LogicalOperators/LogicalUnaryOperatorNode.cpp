@@ -47,8 +47,10 @@ bool LogicalUnaryOperatorNode::inferSchema() {
     //Reset and reinitialize the input and output schemas
     inputSchema->clear();
     inputSchema = inputSchema->copyFields(childSchema);
+    inputSchema->setLayoutType(childSchema->getLayoutType());
     outputSchema->clear();
     outputSchema = outputSchema->copyFields(childSchema);
+    outputSchema->setLayoutType(childSchema->getLayoutType());
     return true;
 }
 

@@ -20,6 +20,7 @@
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/SetMemoryLayoutPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -54,7 +55,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, queryMergerRule);
 
     // TODO change this to a more intelligent way
-    queryChooseMemLayoutPtr = QueryChooseMemLayoutPhase::create(Schema::COL_LAYOUT);
+    setMemoryLayoutPhase = SetMemoryLayoutPhase::create(Schema::COL_LAYOUT);
 }
 
 GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
@@ -91,7 +92,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 queryPlan = typeInferencePhase->execute(queryPlan);
 
                 NES_DEBUG("QueryProcessingService: Performing query choose memory layout phase: " << queryId);
-                queryChooseMemLayoutPtr->execute(queryPlan);
+                setMemoryLayoutPhase->execute(queryPlan);
 
                 NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                 queryPlan = queryRewritePhase->execute(queryPlan);
