@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
+        BufferAccessException.cpp
         ExecutionPlanRollbackException.cpp
         RequestTypeNotHandledException.cpp
         GlobalQueryPlanUpdateException.cpp

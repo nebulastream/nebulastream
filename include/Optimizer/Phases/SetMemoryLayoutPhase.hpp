@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYCHOOSEMEMLAYOUTPHASE_HPP
-#define NES_QUERYCHOOSEMEMLAYOUTPHASE_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_PHASES_SETMEMORYLAYOUTPHASE_HPP
+#define NES_INCLUDE_OPTIMIZER_PHASES_SETMEMORYLAYOUTPHASE_HPP
 
 #include <memory>
 #include <vector>
@@ -30,20 +30,18 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 namespace NES::Optimizer {
 
-class QueryChooseMemLayoutPhase;
-using QueryChooseMemLayoutPhasePtr = std::shared_ptr<QueryChooseMemLayoutPhase>;
+class SetMemoryLayoutPhase;
+using SetMemoryLayoutPhasePtr = std::shared_ptr<SetMemoryLayoutPhase>;
 
 
-class QueryChooseMemLayoutPhase {
+class SetMemoryLayoutPhase {
   public:
-
-
     /**
      * @brief Method for creating a choose mem layout phase
      * @param layoutType
      * @return QueryChooseMemLayoutPhasePtr
      */
-    static QueryChooseMemLayoutPhasePtr create(Schema::MemoryLayoutType layoutType);
+    static SetMemoryLayoutPhasePtr create(Schema::MemoryLayoutType layoutType);
 
     /**
      * @brief Sets either all sources to col or row layout
@@ -56,11 +54,11 @@ class QueryChooseMemLayoutPhase {
      * @brief Constructor for QueryChooseMemLayoutPhase
      * @param layoutType
      */
-    QueryChooseMemLayoutPhase(Schema::MemoryLayoutType layoutType);
+    SetMemoryLayoutPhase(Schema::MemoryLayoutType layoutType);
 
   private:
     Schema::MemoryLayoutType layoutType;
 };
 }
 
-#endif//NES_QUERYCHOOSEMEMLAYOUTPHASE_HPP
+#endif//NES_INCLUDE_OPTIMIZER_PHASES_SETMEMORYLAYOUTPHASE_HPP

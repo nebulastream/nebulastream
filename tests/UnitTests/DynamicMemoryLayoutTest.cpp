@@ -16,12 +16,14 @@
 
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <QueryCompiler/GeneratableTypes/Array.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/DynamicColumnLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/MagicLayoutBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 
 #include <gtest/gtest.h>
@@ -679,6 +681,77 @@ TEST_F(DynamicMemoryLayoutTest, getFieldViaFieldNameColumnLayout) {
     ASSERT_THROW((DynamicColumnLayoutField<uint32_t, true>::create("t4", bindedColumnLayout)), NES::NesRuntimeException);
     ASSERT_THROW((DynamicColumnLayoutField<uint32_t, true>::create("t5", bindedColumnLayout)), NES::NesRuntimeException);
     ASSERT_THROW((DynamicColumnLayoutField<uint32_t, true>::create("t6", bindedColumnLayout)), NES::NesRuntimeException);
+}
+
+TEST_F(DynamicMemoryLayoutTest, accessDynamicColumnBufferTest) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+
+    DynamicColumnLayoutPtr columnLayout;
+    ASSERT_NO_THROW(columnLayout = DynamicColumnLayout::create(schema, true));
+    ASSERT_NE(columnLayout, nullptr);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
+    DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
+    auto buffer = MagicLayoutBuffer(bindedColumnLayout);
+    uint32_t numberOfRecords = 10;
+    for (uint32_t i = 0; i < numberOfRecords; i++) {
+        auto record = buffer[i];
+        record[0].write<uint8_t>(i);
+        record[1].write<uint16_t>(i);
+        record[2].write<uint32_t>(i);
+    }
+
+    for (uint32_t i = 0; i < numberOfRecords; i++) {
+        auto record = buffer[i];
+        ASSERT_EQ(record[0].read<uint8_t>(), i);
+        ASSERT_EQ(record[1].read<uint16_t>(), i);
+        ASSERT_EQ(record[2].read<uint32_t>(), i);
+    }
+}
+
+TEST_F(DynamicMemoryLayoutTest, accessDynamicBufferExceptionTest) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+
+    DynamicColumnLayoutPtr columnLayout;
+    ASSERT_NO_THROW(columnLayout = DynamicColumnLayout::create(schema, true));
+    ASSERT_NE(columnLayout, nullptr);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
+    DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
+    auto buffer = MagicLayoutBuffer(bindedColumnLayout);
+    ASSERT_ANY_THROW(buffer[10000000L]);
+    ASSERT_ANY_THROW(buffer[0][5]);
+}
+
+TEST_F(DynamicMemoryLayoutTest, accessArrayDynamicBufferTest) {
+    SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()));
+
+    DynamicColumnLayoutPtr columnLayout;
+    ASSERT_NO_THROW(columnLayout = DynamicColumnLayout::create(schema, true));
+    ASSERT_NE(columnLayout, nullptr);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
+    DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
+    auto buffer = MagicLayoutBuffer(bindedColumnLayout);
+    auto array = NES::QueryCompilation::Array<int64_t, 10>();
+    for (int i = 0; i < 10; i++) {
+        array[i] = i * 2;
+    }
+    buffer[0][0].write<NES::QueryCompilation::Array<int64_t, 10>>(array);
+    auto value = buffer[0][0].read<NES::QueryCompilation::Array<int64_t, 10>>();
+    for (int i = 0; i < 10; i++) {
+        ASSERT_EQ(value[i], i * 2);
+    }
+
+    auto* arrayPtr = buffer[0][0].read<int64_t*>();
+    for (int i = 0; i < 10; i++) {
+        ASSERT_EQ(arrayPtr[i], i * 2);
+    }
 }
 
 }// namespace NES::Runtime::DynamicMemoryLayout

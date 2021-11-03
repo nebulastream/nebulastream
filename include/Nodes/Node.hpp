@@ -203,6 +203,16 @@ class Node : public std::enable_shared_from_this<Node> {
     }
 
     /**
+     * @brief Dynamically casts the node to a NodeType
+     * @tparam NodeType
+     * @return returns a shared pointer of the NodeType
+     */
+    template<class NodeType>
+    std::shared_ptr<NodeType> as_if() {
+        return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
+    }
+
+    /**
      * @brief Collects all nodes that are of a specific node type, e.g. all FilterOperatorNodes.
      * @tparam NodeType
      * @return vector of nodes

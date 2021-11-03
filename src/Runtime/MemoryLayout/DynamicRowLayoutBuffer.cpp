@@ -14,29 +14,27 @@
     limitations under the License.
 */
 
+#include <Exceptions/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <utility>
 
 namespace NES::Runtime::DynamicMemoryLayout {
 
 uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) {
-
     auto fieldOffSets = dynamicRowLayout->getFieldOffSets();
     auto recordSize = dynamicRowLayout->getRecordSize();
     if (boundaryChecks && fieldIndex >= fieldOffSets.size()) {
-        NES_THROW_RUNTIME_ERROR("jthField " << fieldIndex << " is larger than fieldOffsets.size() " << fieldOffSets.size());
+        throw BufferAccessException("jthField " + std::to_string(fieldIndex) + " is larger than fieldOffsets.size() "
+                                    + std::to_string(fieldOffSets.size()));
     }
-
     auto offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex];
-    NES_DEBUG("DynamicRowLayoutBuffer.calcOffset: offSet = " << offSet);
+    NES_TRACE("DynamicRowLayoutBuffer.calcOffset: offSet = " << offSet);
     return offSet;
 }
 DynamicRowLayoutBuffer::DynamicRowLayoutBuffer(TupleBuffer tupleBuffer,
                                                uint64_t capacity,
                                                std::shared_ptr<DynamicRowLayout> dynamicRowLayout)
     : DynamicLayoutBuffer(tupleBuffer, capacity), dynamicRowLayout(std::move(dynamicRowLayout)),
-      basePointer(tupleBuffer.getBuffer<uint8_t>()) {
-    // this->basePointer = tupleBuffer.getBuffer<uint8_t>();
-}
+      basePointer(tupleBuffer.getBuffer<uint8_t>()) {}
 
 }// namespace NES::Runtime::DynamicMemoryLayout

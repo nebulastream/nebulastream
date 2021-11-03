@@ -35,6 +35,9 @@ using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 class Schema {
   public:
+    /**
+     * @brief Enum to identify the memory layout in which we want to represent the schema physically.
+     */
     enum MemoryLayoutType : std::int8_t { ROW_LAYOUT = 1, COL_LAYOUT = 2 };
 
     Schema(MemoryLayoutType layoutType = ROW_LAYOUT);
@@ -193,19 +196,6 @@ class Schema {
      * @return qualifier with
      */
     std::string getQualifierNameForSystemGeneratedFieldsWithSeparator();
-
-    /**
-     * @brief getter of layoutType
-     * @return
-     */
-    [[nodiscard]] MemoryLayoutType getLayoutType() const;
-
-    /**
-     * @brief setter of layoutType
-     * @param layoutType
-     */
-    void setLayoutType(MemoryLayoutType layoutType);
-
 
     /**
      * @brief Remove all fields and qualifying name
