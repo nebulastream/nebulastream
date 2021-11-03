@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <deque>
 #include <utility>
+#include <s2/s2latlng.h>
+#include <s2/s2closest_point_query.h>
 
 namespace NES {
 
@@ -66,6 +68,26 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     NES_WARNING("Topology: Unable to remove the node.");
     return false;
 }
+
+bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, double latitude, double longitude) {
+    S2Point loc(S2LatLng::FromDegrees(latitude, longitude));
+    //todo: check if we need to remove the old location before updating
+    NES_DEBUG("updating location of Node to: " << latitude << ", " << longitude);
+    NES_DEBUG(node);
+    //std::cout << loc << std::endl;
+
+    nodePointIndex.Add(loc, node);
+    node->setCoordinates(latitude, longitude);
+    return true;
+}
+
+TopologyNodePtr Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr) {
+    S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
+    std::tuple<double, double> coordTuple = nodePtr->getCoordinates();
+    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(std::get<0>(coordTuple), std::get<1>(coordTuple))));
+    return query.FindClosestPoint(&target).data();
+}
+
 
 std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
                                                        const std::vector<TopologyNodePtr>& destinationNodes) {

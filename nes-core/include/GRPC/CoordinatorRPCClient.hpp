@@ -112,11 +112,14 @@ class CoordinatorRPCClient {
      * @param staticNesMetrics: metrics to report
      * @return bool indicating success
      */
+     //todo: add parameter here?
     bool registerNode(const std::string& ipAddress,
                       int64_t grpcPort,
                       int64_t dataPort,
                       int16_t numberOfSlots,
-                      std::optional<StaticNesMetricsPtr> staticNesMetrics);
+                      std::optional<StaticNesMetricsPtr> staticNesMetrics,
+                      double latitude,
+                      double longitude);
 
     /**
    * @brief method to unregister a node after the connection is established

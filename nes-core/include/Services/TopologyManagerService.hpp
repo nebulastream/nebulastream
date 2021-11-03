@@ -39,7 +39,7 @@ class TopologyManagerService {
      * @param nodeProperties of the to be added sensor
      * @return id of node
      */
-    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots);
+    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, double latitude, double longitude);
 
     /**
     * @brief unregister an existing node

@@ -21,6 +21,7 @@
 #include <mutex>
 #include <optional>
 #include <vector>
+#include <s2/s2point_index.h>
 
 namespace NES {
 
@@ -62,6 +63,10 @@ class Topology {
      * @return true if successful
      */
     bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
+
+    bool setPhysicalNodePosition(const TopologyNodePtr& node, double latitude, double longitude);
+
+    TopologyNodePtr getClosestNodeTo(const TopologyNodePtr& nodePtr);
 
     /**
      * @brief This method will find a given physical node by its id
@@ -209,6 +214,7 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
+    S2PointIndex<TopologyNodePtr> nodePointIndex;
 };
 }// namespace NES
 #endif  // NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_

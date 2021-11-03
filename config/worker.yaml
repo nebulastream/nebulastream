@@ -142,3 +142,5 @@ physicalSources:
       #userName:
       # Set password, needed for: OPCSource
       #password:
+
+locationCoordinates: 1.344, 4.55

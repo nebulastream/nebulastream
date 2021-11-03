@@ -143,6 +143,10 @@ class TopologyNode : public Node {
      */
     bool removeLinkProperty(const TopologyNodePtr& linkedNode);
 
+    std::tuple<double, double> getCoordinates();
+
+    bool setCoordinates(double lat, double lng);
+
   private:
     uint64_t id;
     std::string ipAddress;
@@ -151,6 +155,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     bool maintenanceFlag;
+    std::tuple<double, double> coordinates;
 
     /**
      * @brief A field to store a map of node properties

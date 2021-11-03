@@ -378,7 +378,10 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t grpcPort,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
-                                        std::optional<StaticNesMetricsPtr> staticNesMetrics) {
+                                        std::optional<StaticNesMetricsPtr> staticNesMetrics,
+                                        double latitude,
+                                        double longitude) {
+
     RegisterNodeRequest request;
     request.set_address(ipAddress);
     request.set_grpcport(grpcPort);
@@ -392,6 +395,8 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     }
 
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
+    request.set_latitude(latitude);
+    request.set_longitude(longitude);
 
     class RegisterNodeListener : public detail::RpcExecutionListener<bool, RegisterNodeRequest, RegisterNodeReply> {
       public:
