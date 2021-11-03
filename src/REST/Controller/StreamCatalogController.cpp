@@ -92,6 +92,35 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             internalServerErrorImpl(request);
             return;
         }
+    } else if(path[1] == "schema") {
+        //Check if the path contains the query id
+        auto param = parameters.find("logicalStreamName");
+        if (param == parameters.end()) {
+            NES_ERROR("QueryController: Unable to find logical stream name for the GET schema request");
+            json::value errorResponse{};
+            errorResponse["detail"] = json::value::string("Parameter logicalStreamName must be provided");
+            badRequestImpl(request, errorResponse);
+        }
+        try {
+            //Prepare Input query from user string
+            std::string logicalStreamName = param->second;
+
+            SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(logicalStreamName);
+            SerializableSchemaPtr serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
+            std::string msg = serializableSchema->SerializeAsString();
+            successMessageImpl(request, msg);
+            return;
+
+        } catch (const std::exception& exc) {
+            NES_ERROR("StreamCatalogController: handleGet -schema: Exception occurred while retrieving the schema for a logical stream"
+                      << exc.what());
+            handleException(request, exc);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+            return;
+        }
     } else {
         resourceNotFoundImpl(request);
     }
