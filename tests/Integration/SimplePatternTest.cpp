@@ -404,7 +404,7 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     wrk3->registerLogicalStream("QnV2", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setPhysicalStreamName("test_stream_R2000070");
     srcConf->setLogicalStreamName("QnV");
@@ -413,7 +413,7 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     wrk1->registerPhysicalStream(conf70);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setPhysicalStreamName("test_stream_R20000701");
     srcConf->setLogicalStreamName("QnV1");
@@ -422,7 +422,7 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     wrk2->registerPhysicalStream(conf701);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setPhysicalStreamName("test_stream_R2000073");
     srcConf->setLogicalStreamName("QnV2");
