@@ -26,6 +26,9 @@ namespace NES::Runtime::Profiler {
 #ifdef ENABLE_PAPI_PROFILER
 namespace detail {
 
+/**
+ * @brief Read the current clock-based timestamp from the cpu
+ */
 static inline size_t rdtsc() {
     uint64_t rax;
     uint64_t rdx;
@@ -33,6 +36,9 @@ static inline size_t rdtsc() {
     return static_cast<size_t>((rdx << 32) | rax);
 }
 
+/**
+ * @brief Compute the clock speed of the underlying CPU
+ */
 static double measureRdtscFreq() {
     struct timespec start, end;
     clock_gettime(CLOCK_REALTIME, &start);
