@@ -33,9 +33,11 @@ class PapiCpuProfiler : public BaseProfiler {
     enum class Presets {
         /// frontend, backend (core and memory), branch mispredicition stalls
         Multiplexing = 0,
+        /// frontend, backend (core and memory), branch mispredicition stalls (extended)
         MultiplexExtended,
         /// compmemory bound
         MemoryBound,
+        /// mix of prefetching and cache access ops
         ResourceUsage,
         /// compute IPC
         IPC,
@@ -47,16 +49,19 @@ class PapiCpuProfiler : public BaseProfiler {
         CachePresets,
         ///  compute prefetcher cache misses
         CachePrefetcherPresets,
+        /// some extra cache presets
         CachePresetsEx,
         /// compute misprediction
         BranchPresets,
         /// frontend related latency
         FrontendLatency,
+        /// some extra cache prefetcher
         CachePrefetcherPresetsExt,
+        /// core bound
         CoreBound,
-        InvalidPreset,
         /// details on L1 cache behaviour
-        L1Detail
+        L1Detail,
+        InvalidPreset
     };
 
     /**
