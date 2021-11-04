@@ -24,18 +24,18 @@
 
 namespace NES {
 
-JSONParser::JSONParser(uint64_t tupleSize,
-                       uint64_t numberOfSchemaFields,
+JSONParser::JSONParser(uint64_t numberOfSchemaFields,
                        std::vector<std::string> schemaKeys,
                        std::vector<NES::PhysicalTypePtr> physicalTypes)
-    : Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
+    : Parser(physicalTypes), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
       physicalTypes(std::move(physicalTypes)) {}
 
 bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
                                               uint64_t tupleCount,
-                                              NES::Runtime::TupleBuffer& tupleBuffer) {
+                                              NES::Runtime::TupleBuffer& tupleBuffer,
+                                              SchemaPtr schema,
+                                              bool rowLayout) {
     NES_TRACE("JSONParser::parseJSONMessage: Current TupleCount: " << tupleCount);
-    uint64_t offset = 0;
 
     std::vector<std::string> helperToken;
 
@@ -46,12 +46,7 @@ bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
     std::basic_string<char> jsonValue;
     for (uint64_t fieldIndex = 0; fieldIndex < numberOfSchemaFields; fieldIndex++) {
         auto field = physicalTypes[fieldIndex];
-        uint64_t fieldSize = field->size();
         try {
-            NES_ASSERT2_FMT(fieldSize + offset + tupleCount * tupleSize < tupleBuffer.getBufferSize(),
-                            "Overflow detected: buffer size = " << tupleBuffer.getBufferSize()
-                                                                << " position = " << (offset + tupleCount * tupleSize)
-                                                                << " field size " << fieldSize);
             //serialize() is called to get the web::json::value as a string. This is done for 2 reasons:
             // 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
             // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
@@ -60,8 +55,12 @@ bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
             NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: " << jsonException.what());
             return false;
         }
-        writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, offset + tupleCount * tupleSize, true);
-        offset += fieldSize;
+
+        if (rowLayout == true) {
+            writeFieldValueToTupleBufferRowLayout(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
+        } else {
+            writeFieldValueToTupleBufferColumnLayout(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
+        }
     }
     return true;
 }

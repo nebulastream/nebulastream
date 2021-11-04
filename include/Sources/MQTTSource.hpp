@@ -192,6 +192,7 @@ class MQTTSource : public DataSource {
     long bufferFlushIntervalMs;
     //Read timeout in ms for mqtt message consumer
     long readTimeoutInMs;
+    bool rowLayout;
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;

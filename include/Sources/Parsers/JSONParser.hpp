@@ -26,8 +26,7 @@ class JSONParser : public Parser {
     /**
    * @brief public constructor for JSON input data parser
    */
-    JSONParser(uint64_t tupleSize,
-               uint64_t numberOfSchemaFields,
+    JSONParser(uint64_t numberOfSchemaFields,
                std::vector<std::string> schemaKeys,
                std::vector<NES::PhysicalTypePtr> physicalTypes);
 
@@ -36,12 +35,16 @@ class JSONParser : public Parser {
    * @param jsonTuple: string value that is cast to the PhysicalType and written to the TupleBuffer
    * @param tupleCount: the number of tuples already written to the current TupleBuffer
    * @param buffer: the TupleBuffer to which the value is written
+   * @param schema: data schema
+   * @param rowLayout: internal row layout, row if true, otherwise column will be used
    */
-    bool
-    writeInputTupleToTupleBuffer(std::string jsonTuple, uint64_t tupleCount, NES::Runtime::TupleBuffer& tupleBuffer) override;
+    bool writeInputTupleToTupleBuffer(std::string jsonTuple,
+                                      uint64_t tupleCount,
+                                      NES::Runtime::TupleBuffer& tupleBuffer,
+                                      SchemaPtr schema,
+                                      bool rowLayout) override;
 
   private:
-    uint64_t tupleSize;
     uint64_t numberOfSchemaFields;
     std::vector<std::string> schemaKeys;
     std::vector<NES::PhysicalTypePtr> physicalTypes;

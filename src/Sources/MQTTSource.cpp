@@ -67,7 +67,8 @@ MQTTSource::MQTTSource(SchemaPtr schema,
       qualityOfService(MQTTSourceDescriptor::ServiceQualities(sourceConfig->getQos()->getValue())),
       cleanSession(sourceConfig->getCleanSession()->getValue()),
       bufferFlushIntervalMs(sourceConfig->getFlushIntervalMS()->getValue()),
-      readTimeoutInMs(sourceConfig->getFlushIntervalMS()->getValue() > 0 ? sourceConfig->getFlushIntervalMS()->getValue() : 100) {
+      readTimeoutInMs(sourceConfig->getFlushIntervalMS()->getValue() > 0 ? sourceConfig->getFlushIntervalMS()->getValue() : 100),
+      rowLayout(sourceConfig->getRowLayout()->getValue()) {
 
     if (cleanSession) {
         uint32_t randomizeClientId = random();
@@ -173,7 +174,8 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
                 if (message) {// Check if message was received correctly (not nullptr)
                     NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
                     receivedMessageString = message->get_payload_str();
-                    if (!inputParser->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer)) {
+                    if (!inputParser
+                             ->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer, schema, rowLayout)) {
                         NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
