@@ -27,21 +27,23 @@ class CSVParser : public Parser {
     /**
    * @brief public constructor for CSV input data parser
    */
-    CSVParser(uint64_t tupleSize,
-              uint64_t numberOfSchemaFields,
-              std::vector<NES::PhysicalTypePtr> physicalTypes,
-              std::string const& delimiter);
+    CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string const& delimiter);
 
     /**
    * @brief takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
    * @param csvInput: csv string value(one line) that is cast to the PhysicalType and written to the TupleBuffer
    * @param tupleCount: the number of tuples already written to the current TupleBuffer
    * @param buffer: the TupleBuffer to which the value is written
+   * @param schema: data schema
+   * @param rowLayout: internal row layout, row if true, otherwise column will be used
    */
-    bool writeInputTupleToTupleBuffer(std::string csvInput, uint64_t tupleCount, NES::Runtime::TupleBuffer& tupleBuffer) override;
+    bool writeInputTupleToTupleBuffer(std::string csvInput,
+                                      uint64_t tupleCount,
+                                      NES::Runtime::TupleBuffer& tupleBuffer,
+                                      SchemaPtr schema,
+                                      bool rowLayout) override;
 
   private:
-    uint64_t tupleSize;
     uint64_t numberOfSchemaFields;
     std::vector<NES::PhysicalTypePtr> physicalTypes;
     std::string delimiter;

@@ -23,31 +23,27 @@
 
 namespace NES {
 
-CSVParser::CSVParser(uint64_t tupleSize,
-                     uint64_t numberOfSchemaFields,
-                     std::vector<NES::PhysicalTypePtr> physicalTypes,
-                     std::string const& delimiter)
-    : Parser(physicalTypes), tupleSize(tupleSize), numberOfSchemaFields(numberOfSchemaFields),
-      physicalTypes(std::move(physicalTypes)), delimiter(delimiter) {}
+CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string const& delimiter)
+    : Parser(physicalTypes), numberOfSchemaFields(numberOfSchemaFields), physicalTypes(std::move(physicalTypes)),
+      delimiter(delimiter) {}
 
 bool CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine,
                                              uint64_t tupleCount,
-                                             NES::Runtime::TupleBuffer& tupleBuffer) {
+                                             NES::Runtime::TupleBuffer& tupleBuffer,
+                                             SchemaPtr schema,
+                                             bool rowLayout) {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
-    uint64_t offset = 0;
 
     std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
 
     // iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
         auto field = physicalTypes[j];
-        uint64_t fieldSize = field->size();
-
-        NES_ASSERT2_FMT(fieldSize + offset + tupleCount * tupleSize < tupleBuffer.getBufferSize(),
-                        "Overflow detected: buffer size = " << tupleBuffer.getBufferSize() << " position = "
-                                                            << (offset + tupleCount * tupleSize) << " field size " << fieldSize);
-        writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, offset + tupleCount * tupleSize, false);
-        offset += fieldSize;
+        if (rowLayout == true) {
+            writeFieldValueToTupleBufferRowLayout(values[j], j, tupleBuffer, false, schema, tupleCount);
+        } else {
+            writeFieldValueToTupleBufferColumnLayout(values[j], j, tupleBuffer, false, schema, tupleCount);
+        }
     }
     return true;
 }

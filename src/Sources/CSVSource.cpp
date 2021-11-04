@@ -157,7 +157,7 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buffer) {
         NES_TRACE("CSVSource line=" << tupleCount << " val=" << line);
         // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
 
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, rowLayout);
         tupleCount++;
     }//end of while
 
