@@ -50,6 +50,8 @@ JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return Joi
 
 CEPOperatorBuilder::And Query::andWith(Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
+CEPOperatorBuilder::Or Query::orWith(Query& subQueryRhs) { return CEPOperatorBuilder::Or(subQueryRhs, *this); }
+
 namespace JoinOperatorBuilder {
 
 JoinWhere Join::where(const ExpressionItem& onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
@@ -100,6 +102,30 @@ And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), o
 Query& And::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original andWith() function
 }
+
+Or::Or(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
+    NES_DEBUG("Query: add map operator to and with to add virtual key to originalQuery");
+    //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
+
+    //here, we add artificial key attributes to the streams in order to reuse the join-logic later
+    //first, get unique ids for the key attributes
+    auto cepLeftId = Util::getNextOperatorId();
+    auto cepRightId = Util::getNextOperatorId();
+    //second, create a unique name for both key attributes
+    std::string cepLeftKey = "cep_leftkey" + std::to_string(cepLeftId);
+    std::string cepRightKey = "cep_rightkey" + std::to_string(cepRightId);
+    //3. map the attributes with value 1 to the left and right stream
+    originalQuery.map(Attribute(cepLeftKey) = 1);
+    subQueryRhs.map(Attribute(cepRightKey) = 1);
+    //last, define the artificial attributes as key attributes
+    onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
+    onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
+}
+
+Query& Or::window(const Windowing::WindowTypePtr& windowType) const {
+    return originalQuery.orWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original orWith() function
+}
+
 }// namespace CEPOperatorBuilder
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
@@ -251,6 +277,15 @@ Query& Query::andWith(const Query& subQueryRhs,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType to AND Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
+    return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
+}
+
+Query& Query::orWith(const Query& subQueryRhs,
+                      ExpressionItem onLeftKey,
+                      ExpressionItem onRightKey,
+                      const Windowing::WindowTypePtr& windowType) {
+    NES_DEBUG("Query: add JoinType to OR Operator");
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::ALL_POSSIBILITIES;
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 

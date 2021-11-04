@@ -33,6 +33,7 @@ class LogicalJoinDefinition {
      * With this enum we distinguish between options to compose two streams, in particular, we reuse Join Logic for binary CEP operators which require a Cartesian product.
      * Thus, INNER_JOIN combines two tuples in case they share a common key attribute
      * CARTESIAN_PRODUCT combines two tuples regardless if they share a common attribute.
+     * ALL_POSSIBILITIES combines two tuples including empty tuple regardless if they share a common attribute.
      *
      * Example:
      * Stream1: {(key1,2),(key2,3)}
@@ -40,9 +41,10 @@ class LogicalJoinDefinition {
      *
      * INNER_JOIN: {(Key1,2,2), (key2,3,3)}
      * CARTESIAN_PRODUCT: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2), (key2,3,key2,3)}
+     * ALL_POSSIBILITIES: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2), (key2,3,key2,3)}
      *
      */
-    enum JoinType { INNER_JOIN, CARTESIAN_PRODUCT };
+    enum JoinType { INNER_JOIN, CARTESIAN_PRODUCT, ALL_POSSIBILITIES };
     static LogicalJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
                                            const FieldAccessExpressionNodePtr& rightJoinKeyType,
                                            const Windowing::WindowTypePtr& windowType,

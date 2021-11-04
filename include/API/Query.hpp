@@ -173,6 +173,29 @@ class And {
     ExpressionNodePtr onRightKey;
 };
 
+class Or {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @param subQueryRhs
+     * @param originalQuery
+     */
+    Or(Query& subQueryRhs, Query& originalQuery);
+
+    /**
+     * @brief: calls internal the original orWith function with all the gathered parameters.
+     * @param windowType
+     * @return the query with the result of the original orWith function is returned.
+     */
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+
+  private:
+    Query& subQueryRhs;
+    Query& originalQuery;
+    ExpressionNodePtr onLeftKey;
+    ExpressionNodePtr onRightKey;
+};
+
 }//namespace CEPOperatorBuilder
 
 /**
@@ -188,6 +211,7 @@ class Query {
     //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinCondition;
     friend class CEPOperatorBuilder::And;
+    friend class CEPOperatorBuilder::Or;
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
@@ -206,6 +230,13 @@ class Query {
      * @return object where where() function is defined and can be called by user
      */
     CEPOperatorBuilder::And andWith(Query& subQueryRhs);
+
+    /**
+     * @brief can be called on the original query with the query to be composed with and sets this query in the class Or.
+     * @param subQueryRhs
+     * @return object where where() function is defined and can be called by user
+     */
+    CEPOperatorBuilder::Or orWith(Query& subQueryRhs);
 
     /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.
@@ -327,6 +358,21 @@ class Query {
      * @return the query
      */
     Query& andWith(const Query& subQueryRhs,
+                   ExpressionItem onLeftKey,
+                   ExpressionItem onRightKey,
+                   Windowing::WindowTypePtr const& windowType);
+
+    /**
+     * @new change: Now it's private, because we don't want the user to have access to it.
+     * We call it only internal as a last step during the OR operation
+     * @brief This methods adds the joinType to the join operator and calls join function to add the operator to a query
+     * @param subQueryRhs subQuery to be composed
+     * @param onLeftKey key attribute of the left stream
+     * @param onLeftKey key attribute of the right stream
+     * @param windowType Window definition.
+     * @return the query
+     */
+    Query& orWith(const Query& subQueryRhs,
                    ExpressionItem onLeftKey,
                    ExpressionItem onRightKey,
                    Windowing::WindowTypePtr const& windowType);

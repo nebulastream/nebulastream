@@ -567,6 +567,9 @@ OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePt
     } else if (joinDefinition->getJoinType() == Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT) {
         joinDetails.mutable_jointype()->set_jointype(
             SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT);
+    } else if (joinDefinition->getJoinType() == Join::LogicalJoinDefinition::JoinType::ALL_POSSIBILITIES) {
+        joinDetails.mutable_jointype()->set_jointype(
+            SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_ALL_POSSIBILITIES);
     }
     return joinDetails;
 }
@@ -811,6 +814,10 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     // with Cartesian Product is set, change join type
     if (serializedJoinType.jointype() == SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT) {
         joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
+    }
+    // with All Possibilities is set, change join type
+    else if (serializedJoinType.jointype() == SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_ALL_POSSIBILITIES) {
+        joinType = Join::LogicalJoinDefinition::ALL_POSSIBILITIES;
     }
 
     Join::BaseJoinActionDescriptorPtr action;
