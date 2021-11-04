@@ -232,8 +232,9 @@ void DataSource::runningRoutineWithIngestionRate() {
     NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType()
                             << " ingestion rate=" << gatheringIngestionRate);
     if (numBuffersToProcess == 0) {
-        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffers until "
-                  "the source is empty");
+        NES_DEBUG(
+            "DataSource: the user does not specify the number of buffers to produce therefore we will produce buffers until "
+            "the source is empty");
     } else {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
