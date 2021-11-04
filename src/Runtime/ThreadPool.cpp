@@ -171,7 +171,7 @@ bool ThreadPool::start() {
                                                                         NesThread::getId());
             queryManager->cpuProfilers[NesThread::getId() % queryManager->cpuProfilers.size()] = profiler;
 #endif
-            // TODO properly initialize the profiler with a file, thread, and core id
+            // TODO (2310) properly initialize the profiler with a file, thread, and core id
 
             runningRoutine(WorkerContext(NesThread::getId(), localBufferManager, numberOfBuffersPerWorker));
         });
