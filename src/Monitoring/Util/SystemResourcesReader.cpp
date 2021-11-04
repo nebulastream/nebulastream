@@ -127,7 +127,7 @@ StaticNesMetrics SystemResourcesReader::readStaticNesMetrics() {
 
         // check if a limit is set for the given cgroup, the smaller value is the available RAM
         uint64_t systemMem = SystemResourcesReader::readMemoryStats().TOTAL_RAM;
-        uint64_t limitMem = std::stoull(memoryStr);
+        uint64_t limitMem = std::stoull(memoryStr); // TODO: lets coordinator crash on macOS-Intel as memoryStr="". #2307
         output.totalMemoryBytes = std::min(limitMem, systemMem);
     } catch (const RuntimeException& e) {
         NES_ERROR("SystemResourcesReader: Error reading static memory metrics " << e.what());
