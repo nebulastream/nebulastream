@@ -67,10 +67,8 @@ public:
     void operator=(NESLogger const&)    = delete;
 };
 
-#endif// NES_INCLUDE_UTIL_SHARED_
+#endif// NES_INCLUDE_UTIL_SHARED_LOGGER_HPP
 
-// todo delete old version when done: 
-// static const log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 }// namespace NES
 // LoggerPtr logger(Logger::getLogger("NES"));
 
