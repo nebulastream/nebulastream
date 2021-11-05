@@ -30,17 +30,12 @@
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/WatermarkStrategy.hpp>
-
-#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <cstdarg>
+#include <numeric>
 #include <iostream>
 
 #include <API/WindowedQuery.hpp>

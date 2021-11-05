@@ -21,6 +21,7 @@
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <functional>
 #include <map>
 #include <string>
 

@@ -19,6 +19,8 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cpprest/http_msg.h>
+#include <cpprest/json.h>
 #include <utility>
 #include <vector>
 
@@ -31,7 +33,7 @@ void TopologyController::handleGet(const std::vector<utility::string_t>& paths, 
 
     topology->print();
     if (paths.size() == 1) {
-        web::json::value topologyJson = getTopologyAsJson(topology->getRoot());
+        web::json::value topologyJson = getTopologyAsJson(topology);
         successMessageImpl(message, topologyJson);
         return;
     }
@@ -168,11 +170,11 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
     return;
 }
 
-web::json::value TopologyController::getTopologyAsJson(TopologyNodePtr root) {
+web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
     NES_INFO("TopologyController: getting topology as JSON");
 
     web::json::value topologyJson{};
-
+    auto root = topo->getRoot();
     std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
     std::deque<TopologyNodePtr> childToAdd;
 
