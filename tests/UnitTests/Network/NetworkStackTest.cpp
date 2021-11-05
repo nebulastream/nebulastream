@@ -24,8 +24,8 @@
 #include <Network/ZmqServer.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Runtime/HardwareManager.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -115,12 +115,12 @@ class TestSink : public SinkMedium {
     std::promise<uint64_t> completed;
 };
 
-void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
+void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::DynamicRowLayoutPtr& memoryLayout) {
 
     auto bindedRowLayout = memoryLayout->bind(buf);
-    auto recordIndexFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
-    auto fields01 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
-    auto fields02 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
+    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, bindedRowLayout);
+    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, bindedRowLayout);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         recordIndexFields[recordIndex] = recordIndex;

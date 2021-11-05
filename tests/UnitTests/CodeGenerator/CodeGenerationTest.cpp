@@ -40,7 +40,8 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -540,10 +541,10 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto recordSchema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
-    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(recordSchema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(recordSchema, true);
     auto bindedRowLayout = layout->bind(inputBuffer);
 
-    auto recordIndexFieldsInput = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto recordIndexFieldsInput = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayout);
 
     for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         recordIndexFieldsInput[recordIndex] = recordIndex;
@@ -564,7 +565,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* check result for correctness */
     auto bindedOutputRowLayout = layout->bind(outputBuffer);
     auto sumGeneratedCode =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
+        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
     auto sum = 0;
     for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         sum += recordIndexFieldsInput[recordIndex];

@@ -14,13 +14,13 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_HPP_
-#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_HPP_
+#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_ROW_LAYOUT_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_ROW_LAYOUT_HPP_
 
-#include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 
-namespace NES::Runtime::DynamicMemoryLayout {
+namespace NES::Runtime::MemoryLayouts {
 
 using FIELD_OFFSET = uint64_t;
 
@@ -28,45 +28,37 @@ using FIELD_OFFSET = uint64_t;
  * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member
  * @caution This class is non-thread safe
  */
-class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicRowLayout> {
+class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLayout> {
 
   public:
-    /**
-     * @brief Constructor for DynamicRowLayout
-     * @param checkBoundaries
-     * @param schema
-     */
-    DynamicRowLayout(bool checkBoundaries, const SchemaPtr& schema);
-    ~DynamicRowLayout() override = default;
+    RowLayout(const SchemaPtr& schema, uint64_t bufferSize);
 
-    /**
-     * @brief Copies a DynamicMemoryLayoutPtr
-     * @return copied version
-     */
-    DynamicMemoryLayoutPtr copy() const override;
     /**
      * @brief Creates a DynamicColumnLayout as a shared_ptr
      * @param schema
      * @param checkBoundaries
      * @return created DynamicRowLayout as a shared ptr
      */
-    static DynamicRowLayoutPtr create(const SchemaPtr& schema, bool checkBoundaries);
+    static std::shared_ptr<RowLayout> create(const SchemaPtr& schema, uint64_t bufferSize);
 
     /**
      * @return fieldOffSets vector
      */
     const std::vector<FIELD_SIZE>& getFieldOffSets() const;
+
     /**
      * Binds a memoryLayout to a tupleBuffer
      * @param tupleBuffer
      * @return shared_ptr to DynamicRowLayoutBuffer
      */
-    DynamicRowLayoutBufferPtr bind(const TupleBuffer& tupleBuffer);
+    std::shared_ptr<MemoryLayoutTupleBuffer> bind(const TupleBuffer& tupleBuffer);
+
+    uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) override;
 
   private:
     std::vector<FIELD_OFFSET> fieldOffSets;
 };
 
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_ROW_LAYOUT_HPP_

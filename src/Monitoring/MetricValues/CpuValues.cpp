@@ -17,14 +17,14 @@
 #include <Monitoring/MetricValues/CpuValues.hpp>
 
 #include <API/Schema.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
@@ -57,19 +57,19 @@ CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& b
         NES_THROW_RUNTIME_ERROR("CpuValues: Incomplete number of fields in schema.");
     }
 
-    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    output.user = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 0, bindedRowLayout)[0];
-    output.nice = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 1, bindedRowLayout)[0];
-    output.system = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 2, bindedRowLayout)[0];
-    output.idle = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 3, bindedRowLayout)[0];
-    output.iowait = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 4, bindedRowLayout)[0];
-    output.irq = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 5, bindedRowLayout)[0];
-    output.softirq = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 6, bindedRowLayout)[0];
-    output.steal = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 7, bindedRowLayout)[0];
-    output.guest = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 8, bindedRowLayout)[0];
-    output.guestnice = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 9, bindedRowLayout)[0];
+    output.user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 0, bindedRowLayout)[0];
+    output.nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 1, bindedRowLayout)[0];
+    output.system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 2, bindedRowLayout)[0];
+    output.idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 3, bindedRowLayout)[0];
+    output.iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 4, bindedRowLayout)[0];
+    output.irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 5, bindedRowLayout)[0];
+    output.softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 6, bindedRowLayout)[0];
+    output.steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 7, bindedRowLayout)[0];
+    output.guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 8, bindedRowLayout)[0];
+    output.guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 9, bindedRowLayout)[0];
 
     return output;
 }

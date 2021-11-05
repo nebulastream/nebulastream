@@ -21,7 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <cstring>
 
-namespace NES::Runtime::DynamicMemoryLayout {
+namespace NES::Runtime::MemoryLayouts {
 
 using FIELD_SIZE = uint64_t;
 
@@ -30,7 +30,7 @@ using FIELD_SIZE = uint64_t;
  * As the base class, it has multiple methods or members that are useful for both derived classes.
  * @caution This class is non-thread safe
  */
-class DynamicLayoutBuffer {
+class MemoryLayoutTupleBuffer {
 
   public:
     /**
@@ -38,9 +38,9 @@ class DynamicLayoutBuffer {
      * @param tupleBuffer
      * @param capacity
      */
-    DynamicLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity);
+    MemoryLayoutTupleBuffer(TupleBuffer tupleBuffer, uint64_t capacity);
 
-    virtual ~DynamicLayoutBuffer() = default;
+    virtual ~MemoryLayoutTupleBuffer() = default;
 
     /**
     * @brief This method returns the maximum number of records, so the capacity.

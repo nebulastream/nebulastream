@@ -16,9 +16,9 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -67,9 +67,9 @@ NetworkMetrics NetworkMetrics::fromBuffer(const SchemaPtr& schema, Runtime::Tupl
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && hasField) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
 
-        auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
         auto bindedRowLayout = layout->bind(buf);
-        auto numInt = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i, bindedRowLayout)[0];
+        auto numInt = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i, bindedRowLayout)[0];
 
         for (auto n{0ul}; n < numInt; ++n) {
             NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");

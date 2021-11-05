@@ -14,28 +14,26 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_HPP_
-#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_HPP_
+#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_COLUMN_LAYOUT_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_COLUMN_LAYOUT_HPP_
 
-#include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
-namespace NES::Runtime::DynamicMemoryLayout {
+namespace NES::Runtime::MemoryLayouts {
 
 /**
  * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member
  * @caution This class is non-thread safe
  */
-class DynamicColumnLayout;
+class ColumnLayout;
 
-class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicColumnLayout> {
-
+class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<ColumnLayout> {
   public:
     /**
-     * @brief Copies a DynamicMemoryLayoutPtr
-     * @return copied version
-     */
-    DynamicMemoryLayoutPtr copy() const override;
-    ~DynamicColumnLayout() override = default;
+    * @brief Constructor for DynamicColumnLayout
+    * @param schema
+    */
+    ColumnLayout(const SchemaPtr& schema, uint64_t bufferSize);
 
     /**
      * @brief Creates a DynamicColumnLayout as a shared_ptr
@@ -43,23 +41,21 @@ class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_share
      * @param checkBoundaries
      * @return created DynamicColumnLayout as a shared ptr
      */
-    static DynamicColumnLayoutPtr create(const SchemaPtr& schema, bool checkBoundaries);
+    static ColumnLayoutPtr create(const SchemaPtr& schema, uint64_t bufferSize);
 
     /**
      * Binds a memoryLayout to a tupleBuffer
      * @param tupleBuffer
      * @return shared_ptr to DynamicRowLayoutBuffer
      */
-    DynamicColumnLayoutBufferPtr bind(const TupleBuffer& tupleBuffer);
+    std::shared_ptr<MemoryLayoutTupleBuffer> bind(const TupleBuffer& tupleBuffer);
 
-    /**
-     * @brief Constructor for DynamicColumnLayout
-     * @param checkBoundaries
-     * @param schema
-     */
-    DynamicColumnLayout(bool checkBoundaries, const SchemaPtr& schema);
+    uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) override;
+
+  private:
+    std::vector<uint64_t> columnOffsets;
 };
 
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_HPP_
+#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_COLUMN_LAYOUT_HPP_

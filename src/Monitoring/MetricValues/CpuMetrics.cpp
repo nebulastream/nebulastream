@@ -18,9 +18,9 @@
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -51,9 +51,9 @@ CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer&
 
     if (idx < schema->getSize() && buf.getNumberOfTuples() == 1 && Util::endsWith(schema->fields[idx]->getName(), "CORE_NO")) {
         //if schema contains cpuMetrics parse the wrapper object
-        auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
         auto bindedRowLayout = layout->bind(buf);
-        auto numCores = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, true>::create(idx, bindedRowLayout)[0];
+        auto numCores = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(idx, bindedRowLayout)[0];
 
         auto cpu = std::vector<CpuValues>(numCores);
         auto totalCpu = CpuValues::fromBuffer(schema, buf, prefix + "CPU[TOTAL]_");

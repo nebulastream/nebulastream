@@ -26,9 +26,9 @@
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/LayoutedTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -131,16 +131,16 @@ class WindowSource : public NES::DefaultSource {
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
-        auto rowLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
         auto bindedRowLayout = rowLayout->bind(buffer);
 
         for (int i = 0; i < 10; i++) {
-            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(0, bindedRowLayout)[i] = 1;
-            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(1, bindedRowLayout)[i] = 1;
+            Runtime::MemoryLayouts::RowLayoutField<int16_t, true>::create(0, bindedRowLayout)[i] = 1;
+            Runtime::MemoryLayouts::RowLayoutField<int16_t, true>::create(1, bindedRowLayout)[i] = 1;
 
             if (varyWatermark) {
                 if (!decreaseTime) {
-                    Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
+                    Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
                         timestamp++;
                 } else {
                     if (runCnt == 0) {
@@ -162,10 +162,10 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         if (i < 9) {
-                            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
+                            Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
                                 timestamp++;
                         } else {
-                            Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
+                            Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
                                 timestamp + 20;
                         }
                     } else {
@@ -186,12 +186,12 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         timestamp = timestamp - 1 <= 0 ? 0 : timestamp - 1;
-                        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
+                        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
                             timestamp;
                     }
                 }
             } else {
-                Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
+                Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
             }
         }
         buffer.setNumberOfTuples(10);
@@ -247,12 +247,12 @@ class WindowSource : public NES::DefaultSource {
     }
 };
 
-void fillBuffer(TupleBuffer& buf, const Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout) {
+void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::DynamicRowLayoutPtr& memoryLayout) {
     auto bindedRowLayout = memoryLayout->bind(buf);
 
-    auto recordIndexFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
-    auto fields01 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
-    auto fields02 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
+    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, bindedRowLayout);
+    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, bindedRowLayout);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         recordIndexFields[recordIndex] = recordIndex;
@@ -301,7 +301,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -317,10 +317,10 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
@@ -369,7 +369,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -385,10 +385,10 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
@@ -436,7 +436,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -452,11 +452,11 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
-    auto resultFields01 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
+        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
@@ -581,12 +581,12 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1ULL);
 
-    auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto startFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayoutResult);
-    auto endFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayoutResult);
-    auto keyFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayoutResult);
-    auto valueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayoutResult);
+    auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, bindedRowLayoutResult);
+    auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, bindedRowLayoutResult);
+    auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayoutResult);
+    auto valueFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(3, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
@@ -732,7 +732,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 3U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
@@ -756,11 +756,11 @@ TEST_F(ProjectionTest, mergeQuery) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    auto resultLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
-    auto resultFields01 = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
+        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
         std::cout << "cmp first=" << resultRecordIndexFields[recordIndex] << " seconds=" << recordIndex * 2 << std::endl;

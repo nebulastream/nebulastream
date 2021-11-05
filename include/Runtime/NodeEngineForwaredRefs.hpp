@@ -111,22 +111,22 @@ using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 
 }// namespace Execution
 
-namespace DynamicMemoryLayout {
+namespace MemoryLayouts {
 
-class DynamicMemoryLayout;
-using DynamicMemoryLayoutPtr = std::shared_ptr<DynamicMemoryLayout>;
+class MemoryLayout;
+using MemoryLayoutPtr = std::shared_ptr<MemoryLayout>;
 
-class DynamicColumnLayout;
-using DynamicColumnLayoutPtr = std::shared_ptr<DynamicColumnLayout>;
+class ColumnLayout;
+using ColumnLayoutPtr = std::shared_ptr<ColumnLayout>;
 
-class DynamicRowLayout;
-using DynamicRowLayoutPtr = std::shared_ptr<DynamicRowLayout>;
+class RowLayout;
+using DynamicRowLayoutPtr = std::shared_ptr<RowLayout>;
 
-class DynamicColumnLayoutBuffer;
-using DynamicColumnLayoutBufferPtr = std::shared_ptr<DynamicColumnLayoutBuffer>;
+class ColumnLayoutTupleBuffer;
+using ColumnLayoutBufferPtr = std::shared_ptr<ColumnLayoutTupleBuffer>;
 
-class DynamicRowLayoutBuffer;
-using DynamicRowLayoutBufferPtr = std::shared_ptr<DynamicRowLayoutBuffer>;
+class RowLayoutTupleBuffer;
+using DynamicRowLayoutBufferPtr = std::shared_ptr<RowLayoutTupleBuffer>;
 
 }// namespace DynamicMemoryLayout
 

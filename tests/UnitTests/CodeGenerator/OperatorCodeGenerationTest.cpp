@@ -31,10 +31,10 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -223,7 +223,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         TupleBuffer buf = bufferManager->getBufferBlocking();
 
         if (schema->getLayoutType() == Schema::COL_LAYOUT) {
-            auto layoutCol = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(schema, true);
+            auto layoutCol = Runtime::MemoryLayouts::ColumnLayout::create(schema, true);
             uint64_t tupleCnt = buf.getBufferSize() / layoutCol->getRecordSize();
             auto bindedColLayout = layoutCol->bind(buf);
 
@@ -244,7 +244,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
             buf.setNumberOfTuples(tupleCnt);
 
         } else if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
-            auto layoutRow = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+            auto layoutRow = Runtime::MemoryLayouts::RowLayout::create(schema, true);
             uint64_t tupleCnt = buf.getBufferSize() / layoutRow->getRecordSize();
             auto bindedRowLayout = layoutRow->bind(buf);
 
@@ -461,9 +461,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
-    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buffer);
-    auto firstFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+    auto firstFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
     for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
         EXPECT_EQ(firstFields[recordIndex], 1UL);
     }
@@ -722,15 +722,15 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     {
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout =
-            Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        Runtime::MemoryLayouts::DynamicRowLayoutPtr rowLayout =
+            Runtime::MemoryLayouts::RowLayout::create(schema, true);
         auto bindedRowLayout = rowLayout->bind(buffer);
 
-        auto startFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
-        auto stopFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
-        auto cntFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
-        auto keyFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
-        auto valueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
+        auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+        auto stopFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
+        auto cntFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
+        auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+        auto valueFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
 
         startFields[0] = 100;//start 100
         stopFields[0] = 110; //stop 200
@@ -955,16 +955,16 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto resultBuffer = queryContext->buffers[0];
 
-    auto inputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, true);
+    auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
 
     auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
 
-    auto secondFieldsInput = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputRowLayout);
-    auto thirdFieldsInput = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputRowLayout);
+    auto secondFieldsInput = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, bindedInputRowLayout);
+    auto thirdFieldsInput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, bindedInputRowLayout);
 
-    auto fourthFieldsOutput = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputRowLayout);
+    auto fourthFieldsOutput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, bindedOutputRowLayout);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
@@ -1031,18 +1031,18 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
-    auto inputLayout = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, true);
+    auto outputLayout = Runtime::MemoryLayouts::ColumnLayout::create(outputSchema, true);
 
     auto bindedInputColumnLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputColumnLayout = outputLayout->bind(resultBuffer);
 
     auto secondFieldsInput =
-        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<float, true>::create(2, bindedInputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, bindedInputColumnLayout);
     auto thirdFieldsInput =
-        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(3, bindedInputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3, bindedInputColumnLayout);
     auto fourthFieldsOutput =
-        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
@@ -1109,17 +1109,17 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
-    auto inputLayout = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, true);
+    auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
 
     auto bindedInputColumnLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
 
     auto secondFieldsInput =
-        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<float, true>::create(2, bindedInputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, bindedInputColumnLayout);
     auto thirdFieldsInput =
-        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(3, bindedInputColumnLayout);
-    auto fourthFieldsOutput = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputRowLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3, bindedInputColumnLayout);
+    auto fourthFieldsOutput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, bindedOutputRowLayout);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
@@ -1186,16 +1186,16 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
-    auto inputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, true);
+    auto outputLayout = Runtime::MemoryLayouts::ColumnLayout::create(outputSchema, true);
 
     auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputColumnLayout = outputLayout->bind(resultBuffer);
 
-    auto secondFieldsInput = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputRowLayout);
-    auto thirdFieldsInput = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputRowLayout);
+    auto secondFieldsInput = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, bindedInputRowLayout);
+    auto thirdFieldsInput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, bindedInputRowLayout);
     auto fourthFieldsOutput =
-        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
@@ -1265,16 +1265,16 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 
     auto resultBuffer = queryContext->buffers[0];
 
-    auto inputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, true);
+    auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
 
     auto bindedInputLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputLayout = outputLayout->bind(resultBuffer);
 
-    auto floatValueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputLayout);
-    auto doubleValueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputLayout);
+    auto floatValueFields = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, bindedInputLayout);
+    auto doubleValueFields = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, bindedInputLayout);
 
-    auto mappedValueFields = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputLayout);
+    auto mappedValueFields = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, bindedOutputLayout);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = floatValueFields[recordIndex];

@@ -32,8 +32,8 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -141,7 +141,7 @@ class TestSink : public SinkMedium {
 };
 
 void fillBufferRowLayout(TupleBuffer& buf,
-                         const Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr& memoryLayout,
+                         const Runtime::MemoryLayouts::DynamicRowLayoutPtr& memoryLayout,
                          uint64_t numberOfTuples) {
 
     auto bindedRowLayout = memoryLayout->bind(buf);
@@ -158,7 +158,7 @@ void fillBufferRowLayout(TupleBuffer& buf,
 }
 
 void fillBufferColLayout(TupleBuffer& buf,
-                         const Runtime::DynamicMemoryLayout::DynamicColumnLayoutPtr& memoryLayout,
+                         const Runtime::MemoryLayouts::ColumnLayoutPtr& memoryLayout,
                          uint64_t numberOfTuples) {
 
     auto bindedColLayout = memoryLayout->bind(buf);
