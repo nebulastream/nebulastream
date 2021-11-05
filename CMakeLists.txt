@@ -56,6 +56,7 @@ elseif(NES_BUILD_DEPENDENCIES_LOCAL)
     FetchContent_Declare(
             nesdebs
             GIT_REPOSITORY  https://github.com/nebulastream/nebulastream-dependencies.git
+            GIT_TAG ${VCPKG_BINARY_VERSION}
     )
     FetchContent_Populate(nesdebs)
     set(CMAKE_TOOLCHAIN_FILE ${nesdebs_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
