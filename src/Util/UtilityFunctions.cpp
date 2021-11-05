@@ -247,53 +247,6 @@ uint64_t Util::getNextPipelineId() {
     return ++id;
 }
 
-web::json::value Util::getTopologyAsJson(TopologyNodePtr root) {
-    NES_INFO("UtilityFunctions: getting topology as JSON");
-
-    web::json::value topologyJson{};
-
-    std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
-    std::deque<TopologyNodePtr> childToAdd;
-
-    std::vector<web::json::value> nodes = {};
-    std::vector<web::json::value> edges = {};
-
-    while (!parentToAdd.empty()) {
-        // Current topology node to add to the JSON
-        TopologyNodePtr currentNode = parentToAdd.front();
-        web::json::value currentNodeJsonValue{};
-
-        parentToAdd.pop_front();
-        // Add properties for current topology node
-        currentNodeJsonValue["id"] = web::json::value::number(currentNode->getId());
-        currentNodeJsonValue["available_resources"] = web::json::value::number(currentNode->getAvailableResources());
-        currentNodeJsonValue["ip_address"] = web::json::value::string(currentNode->getIpAddress());
-
-        for (const auto& child : currentNode->getChildren()) {
-            // Add edge information for current topology node
-            web::json::value currentEdgeJsonValue{};
-            currentEdgeJsonValue["source"] = web::json::value::number(child->as<TopologyNode>()->getId());
-            currentEdgeJsonValue["target"] = web::json::value::number(currentNode->getId());
-            edges.push_back(currentEdgeJsonValue);
-
-            childToAdd.push_back(child->as<TopologyNode>());
-        }
-
-        if (parentToAdd.empty()) {
-            parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
-            childToAdd.clear();
-        }
-
-        nodes.push_back(currentNodeJsonValue);
-    }
-    NES_INFO("UtilityFunctions: no more topology node to add");
-
-    // add `nodes` and `edges` JSON array to the final JSON result
-    topologyJson["nodes"] = web::json::value::array(nodes);
-    topologyJson["edges"] = web::json::value::array(edges);
-    return topologyJson;
-}
-
 bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan,
                                             std::vector<std::map<std::string, std::any>> properties) {
     // count the number of operators in the query
