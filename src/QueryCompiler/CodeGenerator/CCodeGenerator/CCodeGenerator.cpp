@@ -60,8 +60,8 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/MemoryLayout/DynamicColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -275,7 +275,7 @@ void CCodeGenerator::generateCodeInitStructFieldsColLayout(const SchemaPtr& sche
                                                            const std::string& capacityVarName) {
 
     // Creating a layout from the schema
-    auto layout = Runtime::DynamicMemoryLayout::DynamicColumnLayout::create(schema, false);
+    auto layout = Runtime::MemoryLayouts::ColumnLayout::create(schema, false);
 
     // Creating capacity variable
     auto capacityVarDeclaration =

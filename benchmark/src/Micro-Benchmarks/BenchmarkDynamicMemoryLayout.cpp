@@ -16,12 +16,12 @@
 
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/DynamicColumnLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <benchmark/benchmark.h>

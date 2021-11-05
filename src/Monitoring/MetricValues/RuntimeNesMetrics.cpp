@@ -19,8 +19,8 @@
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -64,21 +64,21 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
         NES_THROW_RUNTIME_ERROR("RuntimeNesMetrics: Incomplete number of fields in schema.");
     }
 
-    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    output.wallTimeNs = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.wallTimeNs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.memoryUsageInBytes =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.cpuLoadInJiffies =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.blkioBytesRead = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.blkioBytesRead = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.blkioBytesWritten =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
     output.batteryStatusInPercent =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.latCoord = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.longCoord = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.latCoord = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.longCoord = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
     return output;
 }

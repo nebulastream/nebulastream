@@ -19,8 +19,8 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SerializableDataType.pb.h>
 #include <Util/Logger.hpp>
@@ -79,19 +79,19 @@ StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::
         NES_THROW_RUNTIME_ERROR("StaticNesMetrics: Incomplete number of fields in schema.");
     }
 
-    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
     output.totalMemoryBytes =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
-    output.cpuCoreNum = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, true>::create(i++, bindedRowLayout)[0];
-    output.totalCPUJiffies = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.cpuPeriodUS = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(i++, bindedRowLayout)[0];
-    output.cpuQuotaUS = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(i++, bindedRowLayout)[0];
+    output.cpuCoreNum = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(i++, bindedRowLayout)[0];
+    output.totalCPUJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.cpuPeriodUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(i++, bindedRowLayout)[0];
+    output.cpuQuotaUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(i++, bindedRowLayout)[0];
 
-    output.isMoving = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<bool, true>::create(i++, bindedRowLayout)[0];
-    output.hasBattery = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<bool, true>::create(i++, bindedRowLayout)[0];
+    output.isMoving = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, bindedRowLayout)[0];
+    output.hasBattery = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, bindedRowLayout)[0];
 
     return output;
 }

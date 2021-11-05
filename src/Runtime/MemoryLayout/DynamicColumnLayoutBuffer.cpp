@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include <Runtime/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <utility>
 
-namespace NES::Runtime::DynamicMemoryLayout {
-uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) {
+namespace NES::Runtime::MemoryLayouts {
+uint64_t ColumnLayoutTupleBuffer::calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) {
     auto fieldSizes = dynamicColLayout->getFieldSizes();
 
     if (boundaryChecks && fieldIndex >= fieldSizes.size()) {
@@ -32,13 +32,13 @@ uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fi
     NES_DEBUG("DynamicColumnLayoutBuffer.calcOffset: offSet = " << offSet);
     return offSet;
 }
-DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer,
-                                                     uint64_t capacity,
-                                                     std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
-                                                     std::vector<COL_OFFSET_SIZE> columnOffsets)
-    : DynamicLayoutBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)),
+ColumnLayoutTupleBuffer::ColumnLayoutTupleBuffer(TupleBuffer tupleBuffer,
+                                                 uint64_t capacity,
+                                                 std::shared_ptr<ColumnLayout> dynamicColLayout,
+                                                 std::vector<COL_OFFSET_SIZE> columnOffsets)
+    : MemoryLayoutTupleBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)),
       dynamicColLayout(std::move(dynamicColLayout)) {
     this->basePointer = tupleBuffer.getBuffer<uint8_t>();
 }
 
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts

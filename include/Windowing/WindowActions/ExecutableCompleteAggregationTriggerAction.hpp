@@ -20,9 +20,9 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger.hpp>
@@ -73,7 +73,7 @@ class ExecutableCompleteAggregationTriggerAction
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()
                                                                                        << " id=" << id);
         this->windowSchema = outputSchema;
-        windowTupleLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
+        windowTupleLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, true);
     }
 
     bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
@@ -353,7 +353,7 @@ class ExecutableCompleteAggregationTriggerAction
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
+    Runtime::MemoryLayouts::DynamicRowLayoutPtr windowTupleLayout;
     uint64_t id;
     PartialAggregateType partialAggregateTypeInitialValue;
 };

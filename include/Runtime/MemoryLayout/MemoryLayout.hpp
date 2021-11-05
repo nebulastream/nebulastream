@@ -17,18 +17,18 @@
 #ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_
 
-#include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/LayoutedTupleBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 
-namespace NES::Runtime::DynamicMemoryLayout {
+namespace NES::Runtime::MemoryLayouts {
 
-using FIELD_SIZE = uint64_t;
+class MemoryLayoutTupleBuffer;
 
 /**
  * @brief This abstract class is the base class for DynamicRowLayout and DynamicColumnLayout.
  * As the base class, it has multiple methods or members that are useful for both a row and column layout.
  */
-class DynamicMemoryLayout {
+class MemoryLayout {
 
   public:
     /**
@@ -37,20 +37,16 @@ class DynamicMemoryLayout {
      * @param recordSize
      * @param fieldSizes
      */
-    DynamicMemoryLayout(bool checkBoundaryFieldChecks, uint64_t recordSize, std::vector<FIELD_SIZE>& fieldSizes);
-    virtual ~DynamicMemoryLayout() = default;
+    MemoryLayout(uint64_t bufferSize,
+                 const SchemaPtr& schema);
+
+    virtual ~MemoryLayout() = default;
 
     /**
      * @param fieldName
      * @return either field index for fieldName or empty optinal
      */
     [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string& fieldName) const;
-
-    /**
-     * @brief Abstract copy method
-     * @return copied version
-     */
-    [[nodiscard]] virtual DynamicMemoryLayoutPtr copy() const = 0;
 
     /**
      * @return true if boundaries are actively being checked
@@ -67,11 +63,16 @@ class DynamicMemoryLayout {
      */
     [[nodiscard]] const std::vector<FIELD_SIZE>& getFieldSizes() const;
 
+    virtual std::shared_ptr<MemoryLayoutTupleBuffer> bind(const TupleBuffer& tupleBuffer) = 0 ;
+
+    virtual uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) = 0;
+
   protected:
-    explicit DynamicMemoryLayout();
-    bool checkBoundaryFieldChecks{true};
-    uint64_t recordSize{0};
-    std::vector<FIELD_SIZE> fieldSizes;
+    const uint64_t bufferSize;
+    const SchemaPtr schema;
+    uint64_t recordSize;
+    uint64_t capacity;
+    std::vector<uint64_t> physicalFieldSizes;
     std::map<std::string, uint64_t> nameFieldIndexMap;
 };
 

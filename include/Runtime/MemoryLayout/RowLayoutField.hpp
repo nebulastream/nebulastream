@@ -17,19 +17,12 @@
 #ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_FIELD_HPP_
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_FIELD_HPP_
 
-#include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <utility>
 
-
-namespace NES::Runtime::DynamicMemoryLayout {
-
-// These defines can be used to improve the code readability. The second one sets the checkBoundary to true
-#define RowLayoutField(TYPE, INDEX, LAYOUTBUFFER) RowLayoutField_(TYPE, true, INDEX, LAYOUTBUFFER)
-#define RowLayoutField_(TYPE, CHECKBOUNDARIES, INDEX, LAYOUTBUFFER) Runtime::DynamicMemoryLayout::DynamicRowLayoutField<TYPE, \
-                                                                            CHECKBOUNDARIES>::create(INDEX, \
-                                                                            LAYOUTBUFFER)
+namespace NES::Runtime::MemoryLayouts {
 
 /**
  * @brief This class is used for handling fields in a given DynamicColumnLayoutBuffer. It also overrides the operator[] for a more user friendly access of records for a predefined field.
@@ -38,7 +31,7 @@ namespace NES::Runtime::DynamicMemoryLayout {
  * @caution This class is non-thread safe
  */
 template<class T, bool boundaryChecks>
-class DynamicRowLayoutField {
+class RowLayoutField {
 
   public:
     /**
@@ -48,8 +41,8 @@ class DynamicRowLayoutField {
      * @tparam T type of field
      * @return field handler via a fieldIndex and a layoutBuffer
      */
-    static inline DynamicRowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex,
-                                                                  std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer);
+    static inline RowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex,
+                                                           std::shared_ptr<RowLayoutTupleBuffer> layoutBuffer);
 
     /**
      * @param fieldIndex
@@ -58,8 +51,8 @@ class DynamicRowLayoutField {
      * @tparam T type of field
      * @return field handler via a fieldName and a layoutBuffer
      */
-    static inline DynamicRowLayoutField<T, boundaryChecks> create(const std::string& fieldName,
-                                                                  std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer);
+    static inline RowLayoutField<T, boundaryChecks> create(const std::string& fieldName,
+                                                           std::shared_ptr<RowLayoutTupleBuffer> layoutBuffer);
 
     /**
      * @param recordIndex
@@ -75,10 +68,10 @@ class DynamicRowLayoutField {
      * @param fieldIndex
      * @param recordSize
      */
-    DynamicRowLayoutField(std::shared_ptr<DynamicRowLayoutBuffer> dynamicRowLayoutBuffer,
-                          uint8_t* basePointer,
-                          FIELD_SIZE fieldIndex,
-                          FIELD_SIZE recordSize)
+    RowLayoutField(std::shared_ptr<RowLayoutTupleBuffer> dynamicRowLayoutBuffer,
+                   uint8_t* basePointer,
+                   FIELD_SIZE fieldIndex,
+                   FIELD_SIZE recordSize)
         : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer),
           dynamicRowLayoutBuffer(std::move(dynamicRowLayoutBuffer)){};
 
@@ -89,8 +82,8 @@ class DynamicRowLayoutField {
 };
 
 template<class T, bool boundaryChecks>
-inline DynamicRowLayoutField<T, boundaryChecks>
-DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer) {
+inline RowLayoutField<T, boundaryChecks>
+RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayoutTupleBuffer> layoutBuffer) {
     if (boundaryChecks && fieldIndex >= layoutBuffer->getFieldOffSets().size()) {
         NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds!" << layoutBuffer->getFieldOffSets().size() << " >= " << fieldIndex);
     }
@@ -100,22 +93,21 @@ DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::share
     auto offSet = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
     auto* basePointer = bufferBasePointer + offSet;
 
-    return DynamicRowLayoutField<T, boundaryChecks>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
+    return RowLayoutField<T, boundaryChecks>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
 }
 
 template<class T, bool boundaryChecks>
-inline DynamicRowLayoutField<T, boundaryChecks>
-DynamicRowLayoutField<T, boundaryChecks>::create(const std::string& fieldName,
-                                                 std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer) {
+inline RowLayoutField<T, boundaryChecks>
+RowLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<RowLayoutTupleBuffer> layoutBuffer) {
     auto fieldIndex = layoutBuffer->getFieldIndexFromName(fieldName);
     if (fieldIndex.has_value()) {
-        return DynamicRowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layoutBuffer);
+        return RowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layoutBuffer);
     }
     NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutField: Could not find fieldIndex for " << fieldName);
 }
 
 template<class T, bool boundaryChecks>
-inline T& DynamicRowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
+inline T& RowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
     if (boundaryChecks && recordIndex >= dynamicRowLayoutBuffer->getCapacity()) {
         NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << dynamicRowLayoutBuffer->getCapacity() << " >= " << recordIndex);
     }
@@ -123,6 +115,6 @@ inline T& DynamicRowLayoutField<T, boundaryChecks>::operator[](size_t recordInde
     return *reinterpret_cast<T*>(basePointer + recordSize * recordIndex);
 }
 
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts
 
 #endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_FIELD_HPP_

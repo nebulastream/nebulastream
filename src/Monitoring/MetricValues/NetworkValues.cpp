@@ -18,9 +18,9 @@
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -67,27 +67,27 @@ NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleB
     if (!MetricUtils::validateFieldsInSchema(NetworkValues::getSchema(""), schema, i)) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Incomplete number of fields in schema.");
     }
-    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    output.interfaceName = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rBytes = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rPackets = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rErrs = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rDrop = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rFifo = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rFrame = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rCompressed = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.rMulticast = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.interfaceName = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rPackets = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rErrs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rDrop = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rFifo = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rFrame = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rCompressed = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.rMulticast = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
-    output.tBytes = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tPackets = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tErrs = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tDrop = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tFifo = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tColls = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tCarrier = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.tCompressed = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i, bindedRowLayout)[0];
+    output.tBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tPackets = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tErrs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tDrop = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tFifo = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tColls = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tCarrier = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.tCompressed = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i, bindedRowLayout)[0];
 
     return output;
 }

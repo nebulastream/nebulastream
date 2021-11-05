@@ -22,6 +22,7 @@
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <atomic>
 #include <chrono>
 #include <mutex>
@@ -235,6 +236,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     bool checkSupportedLayoutTypes(SchemaPtr& schema);
 
   protected:
+
+    Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
+
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};

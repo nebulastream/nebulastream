@@ -65,7 +65,7 @@ class ExecutableSliceAggregationTriggerAction
 
         this->windowSchema = outputSchema;
 
-        windowTupleLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
+        windowTupleLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, true);
     }
 
     bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
@@ -229,7 +229,7 @@ class ExecutableSliceAggregationTriggerAction
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
+    Runtime::MemoryLayouts::DynamicRowLayoutPtr windowTupleLayout;
     uint64_t id;
 };
 }// namespace NES::Windowing

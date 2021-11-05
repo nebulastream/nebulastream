@@ -16,13 +16,13 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayout.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
@@ -61,14 +61,14 @@ DiskMetrics DiskMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffe
         NES_THROW_RUNTIME_ERROR("DiskMetrics: Missing fields in schema.");
     }
 
-    auto layout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    output.fBsize = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.fFrsize = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.fBlocks = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.fBfree = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.fBavail = Runtime::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fFrsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBlocks = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBfree = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBavail = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
     return output;
 }

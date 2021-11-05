@@ -18,19 +18,19 @@
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_MAGIC_LAYOUT_BUFFER_HPP_
 
 #include <QueryCompiler/GeneratableTypes/NESType.hpp>
-#include <Runtime/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstring>
 #include <variant>
 
-namespace NES::Runtime::DynamicMemoryLayout {
+namespace NES::Runtime::MemoryLayouts {
 
 using FIELD_SIZE = uint64_t;
 
-class DynamicLayoutBuffer;
-using DynamicLayoutBufferPtr = std::shared_ptr<DynamicLayoutBuffer>;
+class MemoryLayoutTupleBuffer;
+using DynamicLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
 
 
 
@@ -69,16 +69,16 @@ class DynamicRecord {
  * As the base class, it has multiple methods or members that are useful for both derived classes.
  * @caution This class is non-thread safe
  */
-class MagicLayoutBuffer {
+class DynamicTupleBuffer {
   public:
     /**
      * @brief Constructor for DynamicLayoutBuffer
      * @param tupleBuffer
      * @param capacity
      */
-    explicit MagicLayoutBuffer(std::shared_ptr<DynamicLayoutBuffer> buffer);
+    explicit DynamicTupleBuffer(std::shared_ptr<MemoryLayoutTupleBuffer> buffer);
 
-    virtual ~MagicLayoutBuffer() = default;
+    virtual ~DynamicTupleBuffer() = default;
 
     /**
     * @brief This method returns the maximum number of records, so the capacity.
@@ -102,8 +102,8 @@ class MagicLayoutBuffer {
                                                 DynamicRecord           // reference
                                                 > {
       public:
-        explicit RecordIterator(MagicLayoutBuffer& buffer);
-        explicit RecordIterator(MagicLayoutBuffer& buffer, uint64_t currentIndex);
+        explicit RecordIterator(DynamicTupleBuffer& buffer);
+        explicit RecordIterator(DynamicTupleBuffer& buffer, uint64_t currentIndex);
         RecordIterator& operator++();
         const RecordIterator operator++(int);
         bool operator==(RecordIterator other) const;
@@ -111,14 +111,14 @@ class MagicLayoutBuffer {
         reference operator*() const;
 
       private:
-        MagicLayoutBuffer& buffer;
+        DynamicTupleBuffer& buffer;
         uint64_t currentIndex;
     };
     RecordIterator begin() { return RecordIterator(*this); }
     RecordIterator end() { return RecordIterator(*this, getNumberOfRecords()); }
 
   private:
-    std::shared_ptr<DynamicLayoutBuffer> buffer;
+    std::shared_ptr<MemoryLayoutTupleBuffer> buffer;
 };
 
 }// namespace NES::Runtime::DynamicMemoryLayout

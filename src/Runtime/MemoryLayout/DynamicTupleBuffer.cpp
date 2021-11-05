@@ -15,9 +15,9 @@
      limitations under the License.
  */
 #include <Exceptions/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/MagicLayoutBuffer.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <utility>
-namespace NES::Runtime::DynamicMemoryLayout {
+namespace NES::Runtime::MemoryLayouts {
 
 DynamicField::DynamicField(uint8_t* address) : address(address) {}
 
@@ -31,41 +31,41 @@ DynamicField DynamicRecord::operator[](std::size_t fieldIndex) const {
 DynamicRecord::DynamicRecord(uint64_t recordIndex, DynamicLayoutBufferPtr buffer)
     : recordIndex(recordIndex), buffer(std::move(buffer)){};
 
-uint64_t MagicLayoutBuffer::getCapacity() const { return buffer->getCapacity(); }
+uint64_t DynamicTupleBuffer::getCapacity() const { return buffer->getCapacity(); }
 
-uint64_t MagicLayoutBuffer::getNumberOfRecords() const { return buffer->getNumberOfRecords(); }
+uint64_t DynamicTupleBuffer::getNumberOfRecords() const { return buffer->getNumberOfRecords(); }
 
-DynamicRecord MagicLayoutBuffer::operator[](std::size_t recordIndex) {
+DynamicRecord DynamicTupleBuffer::operator[](std::size_t recordIndex) {
     if (recordIndex >= getCapacity()) {
         throw BufferAccessException("index is out of bound");
     }
     return {recordIndex, buffer};
 }
 
-MagicLayoutBuffer::MagicLayoutBuffer(std::shared_ptr<DynamicLayoutBuffer> buffer) : buffer(std::move(buffer)) {}
+DynamicTupleBuffer::DynamicTupleBuffer(std::shared_ptr<MemoryLayoutTupleBuffer> buffer) : buffer(std::move(buffer)) {}
 
-MagicLayoutBuffer::RecordIterator::RecordIterator(MagicLayoutBuffer& buffer) : RecordIterator(buffer, 0) {}
+DynamicTupleBuffer::RecordIterator::RecordIterator(DynamicTupleBuffer& buffer) : RecordIterator(buffer, 0) {}
 
-MagicLayoutBuffer::RecordIterator::RecordIterator(MagicLayoutBuffer& buffer, uint64_t currentIndex)
+DynamicTupleBuffer::RecordIterator::RecordIterator(DynamicTupleBuffer& buffer, uint64_t currentIndex)
     : buffer(buffer), currentIndex(currentIndex) {}
 
-MagicLayoutBuffer::RecordIterator& MagicLayoutBuffer::RecordIterator::operator++() {
+DynamicTupleBuffer::RecordIterator& DynamicTupleBuffer::RecordIterator::operator++() {
     currentIndex++;
     return *this;
 }
 
-const MagicLayoutBuffer::RecordIterator MagicLayoutBuffer::RecordIterator::operator++(int) {
+const DynamicTupleBuffer::RecordIterator DynamicTupleBuffer::RecordIterator::operator++(int) {
     RecordIterator retval = *this;
     ++(*this);
     return retval;
 }
 
-bool MagicLayoutBuffer::RecordIterator::operator==(RecordIterator other) const {
+bool DynamicTupleBuffer::RecordIterator::operator==(RecordIterator other) const {
     return currentIndex == other.currentIndex && &buffer == &other.buffer;
 }
 
-bool MagicLayoutBuffer::RecordIterator::operator!=(RecordIterator other) const { return !(*this == other); }
+bool DynamicTupleBuffer::RecordIterator::operator!=(RecordIterator other) const { return !(*this == other); }
 
-DynamicRecord MagicLayoutBuffer::RecordIterator::operator*() const { return buffer[currentIndex]; }
+DynamicRecord DynamicTupleBuffer::RecordIterator::operator*() const { return buffer[currentIndex]; }
 
 }// namespace NES::Runtime::DynamicMemoryLayout
