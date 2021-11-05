@@ -79,16 +79,15 @@ else ()
     # set toolchain file to use prebuild dependencies only if no toolchain file is already set.
     message(STATUS "Set toolchain file for prebuild dir.")
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/scripts/buildsystems/vcpkg.cmake")
+endif ()
 
-    # In combination with prebuild binaries, NES supports self hosting its compilation with the clang binary.
-    # This could be handy if the build environment has no recent compiler.
-    if (NES_SELF_HOSTING)
-        message(STATUS "Self-host compilation of NES")
-        set(CMAKE_C_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang-12")
-        set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang++")
-    else ()
-        message(STATUS "Use system compiler")
-    endif ()
+# NES supports self hosting its compilation with the local clang binary.
+if (NES_SELF_HOSTING)
+    message(STATUS "Self-host compilation of NES")
+    set(CMAKE_C_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang-12")
+    set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang++")
+else ()
+    message(STATUS "Use system compiler")
 endif ()
 
 project(NES CXX)
