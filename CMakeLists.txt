@@ -61,9 +61,10 @@ elseif(NES_BUILD_DEPENDENCIES_LOCAL)
     FetchContent_Populate(nesdebs)
     set(CMAKE_TOOLCHAIN_FILE ${nesdebs_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
             CACHE STRING "CMake toolchain file")
-    set(VCPKG_MANIFEST_DIR ${nesdebs_SOURCE_DIR} CACHE STRING "CMake toolchain file")
+    set(VCPKG_MANIFEST_DIR ${nesdebs_SOURCE_DIR} CACHE STRING "vcpkg manifest dir")
     set(VCPKG_OVERLAY_TRIPLETS ${nesdebs_SOURCE_DIR}/custom-triplets/ CACHE STRING "CMake toolchain file")
-
+    set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
+    message(STATUS "output test" ${VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS})
 else ()
     message(STATUS "Use prebuild dependencies")
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
@@ -99,7 +100,7 @@ option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_CLANG_TIDY OFF)
 option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
-
+set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
 if (POLICY CMP0004)
