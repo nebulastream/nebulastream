@@ -16,6 +16,8 @@ cmake_minimum_required(VERSION 3.20.0)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v6)
 
+include(FetchContent)
+
 # for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
 # The system architecture is normally set in CMAKE_HOST_PROCESSOR,
 # which is set by the PROJECT command. However, we cannot call PROJECT
@@ -49,7 +51,20 @@ set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 # check if prebuild dependencies are already downloaded
 if (CMAKE_TOOLCHAIN_FILE)
     message(STATUS "Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
+elseif(NES_BUILD_DEPENDENCIES_LOCAL)
+    message(STATUS "Build Dependencies locally")
+    FetchContent_Declare(
+            nesdebs
+            GIT_REPOSITORY  https://github.com/nebulastream/nebulastream-dependencies.git
+    )
+    FetchContent_Populate(nesdebs)
+    set(CMAKE_TOOLCHAIN_FILE ${nesdebs_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
+            CACHE STRING "CMake toolchain file")
+    set(VCPKG_MANIFEST_DIR ${nesdebs_SOURCE_DIR} CACHE STRING "CMake toolchain file")
+    set(VCPKG_OVERLAY_TRIPLETS ${nesdebs_SOURCE_DIR}/custom-triplets/ CACHE STRING "CMake toolchain file")
+
 else ()
+    message(STATUS "Use prebuild dependencies")
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
     IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
         message(STATUS "NES dependencies do not exist!")

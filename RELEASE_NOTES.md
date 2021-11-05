@@ -17,5 +17,7 @@
 ### - Monitoring
 ### - Build Management
 1. Add Folly as default dependency [#2194](https://github.com/nebulastream/nebulastream/issues/2194)
+2. Add CMAKE flag to build dependencies locally [#2313](https://github.com/nebulastream/nebulastream/issues/2313)
+   -DNES_BUILD_DEPENDENCIES_LOCAL=1
 ### - UDF Support
 ### - Network Stack
