@@ -49,7 +49,6 @@
 #include <utility>
 
 using namespace NES;
-using namespace web;
 using namespace z3;
 
 class ILPPlacementTest : public testing::Test {

@@ -25,6 +25,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <iostream>
+#include <fstream>
 #include <utility>
 
 namespace NES {

@@ -20,7 +20,6 @@
 #include <REST/Controller/BaseController.hpp>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_msg.h>
-#include <cpprest/json.h>
 
 namespace NES {
 class StreamCatalog;

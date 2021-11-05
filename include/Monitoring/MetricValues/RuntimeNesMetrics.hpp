@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRIC_VALUES_RUNTIME_NES_METRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRIC_VALUES_RUNTIME_NES_METRICS_HPP_
 
-#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <cpprest/json.h>
 
 namespace NES {
 

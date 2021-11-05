@@ -15,7 +15,6 @@
 */
 
 #include <Runtime/internal/backward.hpp>
-#include <Util/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
 
 #define CALLSTACK_MAX_SIZE 32

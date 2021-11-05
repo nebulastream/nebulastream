@@ -21,10 +21,10 @@
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryPlacement/IFCOPStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <random>
 #include <utility>
 
 namespace NES::Optimizer {

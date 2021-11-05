@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#define _TURN_OFF_PLATFORM_STRING // for cpprest/details/basic_types.h
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
