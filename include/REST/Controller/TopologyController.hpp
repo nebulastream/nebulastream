@@ -20,6 +20,7 @@
 #include <REST/Controller/BaseController.hpp>
 #include <REST/RestEngine.hpp>
 #include <cpprest/http_msg.h>
+#include <cpprest/json.h>
 
 /*
 - * The above undef ensures that NES will compile.
@@ -53,6 +54,12 @@ class TopologyController : public BaseController {
 
   private:
     TopologyPtr topology;
+    /**
+      * @brief function to obtain JSON representation of a NES Topology
+      * @param root of the Topology
+      * @return JSON representation of the Topology
+      */
+    web::json::value getTopologyAsJson(TopologyNodePtr root);
 };
 
 using TopologyControllerPtr = std::shared_ptr<TopologyController>;
