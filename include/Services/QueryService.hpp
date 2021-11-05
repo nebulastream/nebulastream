@@ -19,7 +19,6 @@
 
 #include <API/Query.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <cpprest/json.h>
 
 namespace NES::Optimizer {
 class SyntacticQueryValidation;
