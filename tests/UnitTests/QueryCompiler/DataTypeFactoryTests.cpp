@@ -94,7 +94,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
         ASSERT_TRUE(stamp->isFloat());
         const auto floatStamp = DataType::as<Float>(stamp);
         ASSERT_EQ(floatStamp->getBits(), 32);
-        ASSERT_EQ(floatStamp->lowerBound, std::numeric_limits<float>::min());
+        ASSERT_EQ(floatStamp->lowerBound, std::numeric_limits<float>::lowest());
         ASSERT_EQ(floatStamp->upperBound, 100);
     }
 
