@@ -351,11 +351,6 @@ add_executable(maintenance-service-test "UnitTests/Services/MaintenanceServiceTe
 target_link_libraries(maintenance-service-test  nes ${GTEST_LIBRARIES})
 add_test(NAME maintenance-service-test  COMMAND maintenance-service-test )
 
-### CoordinatorEngine Tests ###
-add_executable(coordinator-engine-tests "UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp")
-target_link_libraries(coordinator-engine-tests nes ${GTEST_LIBRARIES})
-add_test(NAME coordinator-engine-tests COMMAND coordinator-engine-tests)
-
 ### Query Plan Tests ###
 add_executable(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
 target_link_libraries(query-plan-tests nes ${GTEST_LIBRARIES})
