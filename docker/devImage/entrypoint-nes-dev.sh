@@ -25,6 +25,10 @@ then
     apt-get install -y \
       flex \
       bison \
+      libcap-dev \
+      systemtap-sdt-dev \
+      libiberty-dev \
+      libzstd-dev \
     && apt-get clean
     kernel_ver=$(uname --kernel-release | sed 's/-.*//')
     echo "Get perf sources for kernel $kernel_ver"
