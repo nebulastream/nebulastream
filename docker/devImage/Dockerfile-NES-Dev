@@ -13,3 +13,6 @@ RUN service ssh start && useradd -m nes && yes password | passwd nes
 EXPOSE 22
 
 CMD ["/usr/sbin/sshd", "-D"]
+
+ADD entrypoint-nes-dev.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
