@@ -45,7 +45,9 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     //If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
     // then apply special rewrite rules for improving the match identification
     if (queryMergerRule == Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
+        || queryMergerRule == Optimizer::QueryMergerRule::SyntaxBasedPartialQueryMergerRule
         || queryMergerRule == Optimizer::QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
+        || queryMergerRule == Optimizer::QueryMergerRule::ImprovedStringSignatureBasedPartialQueryMergerRule
         || queryMergerRule == Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
         || queryMergerRule == Optimizer::QueryMergerRule::HybridCompleteQueryMergerRule) {
         applyRulesImprovingSharingIdentification = true;
