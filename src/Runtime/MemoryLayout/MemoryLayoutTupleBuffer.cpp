@@ -14,15 +14,13 @@
     limitations under the License.
 */
 
-#include <Runtime/MemoryLayout/LayoutedTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {
-
 MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(TupleBuffer tupleBuffer, uint64_t capacity)
     : tupleBuffer(std::move(tupleBuffer)), capacity(capacity) {}
-
 uint64_t MemoryLayoutTupleBuffer::getCapacity() const { return capacity; }
 uint64_t MemoryLayoutTupleBuffer::getNumberOfRecords() const { return numberOfRecords; }
 TupleBuffer MemoryLayoutTupleBuffer::getTupleBuffer() { return tupleBuffer; }
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts

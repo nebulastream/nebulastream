@@ -120,13 +120,13 @@ class ColumnLayout;
 using ColumnLayoutPtr = std::shared_ptr<ColumnLayout>;
 
 class RowLayout;
-using DynamicRowLayoutPtr = std::shared_ptr<RowLayout>;
+using RowLayoutPtr = std::shared_ptr<RowLayout>;
 
 class ColumnLayoutTupleBuffer;
 using ColumnLayoutBufferPtr = std::shared_ptr<ColumnLayoutTupleBuffer>;
 
 class RowLayoutTupleBuffer;
-using DynamicRowLayoutBufferPtr = std::shared_ptr<RowLayoutTupleBuffer>;
+using RowLayoutTupleBufferPtr = std::shared_ptr<RowLayoutTupleBuffer>;
 
 }// namespace DynamicMemoryLayout
 

@@ -22,6 +22,7 @@
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -53,9 +54,8 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutCreateTest) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
-    DynamicRowLayoutPtr rowLayout;
+    RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, true));
-    ASSERT_EQ(rowLayout->isCheckBoundaryFieldChecks(), true);
     ASSERT_NE(rowLayout, nullptr);
 }
 
@@ -65,7 +65,6 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutCreateTest) {
 
     ColumnLayoutPtr columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, true));
-    ASSERT_EQ(columnLayout->isCheckBoundaryFieldChecks(), true);
     ASSERT_NE(columnLayout, nullptr);
 }
 
@@ -73,7 +72,7 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutMapCalcOffsetTest) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    DynamicRowLayoutPtr rowLayout;
+    RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, true));
     ASSERT_NE(rowLayout, nullptr);
 
@@ -83,8 +82,8 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutMapCalcOffsetTest) {
 
     ASSERT_EQ(bindedRowLayout->getCapacity(), tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     ASSERT_EQ(bindedRowLayout->getNumberOfRecords(), 0u);
-    ASSERT_EQ(bindedRowLayout->calcOffset(1, 2, true), schema->getSchemaSizeInBytes() * 1 + (1 + 2));
-    ASSERT_EQ(bindedRowLayout->calcOffset(4, 0, true), schema->getSchemaSizeInBytes() * 4 + 0);
+    ASSERT_EQ(rowLayout->getFieldOffset(1, 2), schema->getSchemaSizeInBytes() * 1 + (1 + 2));
+    ASSERT_EQ(rowLayout->getFieldOffset(4, 0), schema->getSchemaSizeInBytes() * 4 + 0);
 }
 
 TEST_F(DynamicMemoryLayoutTest, columnLayoutMapCalcOffsetTest) {
@@ -102,16 +101,16 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutMapCalcOffsetTest) {
     auto capacity = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
     ASSERT_EQ(bindedColumnLayout->getCapacity(), capacity);
     ASSERT_EQ(bindedColumnLayout->getNumberOfRecords(), 0u);
-    ASSERT_EQ(bindedColumnLayout->calcOffset(1, 2, true), capacity * 1 + capacity * 2 + 1 * 4);
-    ASSERT_EQ(bindedColumnLayout->calcOffset(5, 1, true), capacity * 1 + 5 * 2);
-    ASSERT_EQ(bindedColumnLayout->calcOffset(4, 0, true), capacity * 0 + 4);
+    ASSERT_EQ(columnLayout->getFieldOffset(1, 2), capacity * 1 + capacity * 2 + 1 * 4);
+    ASSERT_EQ(columnLayout->getFieldOffset(5, 1), capacity * 1 + 5 * 2);
+    ASSERT_EQ(columnLayout->getFieldOffset(4, 0), capacity * 0 + 4);
 }
 
 TEST_F(DynamicMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    DynamicRowLayoutPtr rowLayout;
+    RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, true));
     ASSERT_NE(rowLayout, nullptr);
 
@@ -132,13 +131,13 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleReco
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    DynamicRowLayoutPtr rowLayout;
+    RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, true));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    DynamicRowLayoutBufferPtr bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
+    auto bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
 
     size_t NUM_TUPLES = 230;//tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
@@ -212,13 +211,13 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldSimple) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    DynamicRowLayoutPtr rowLayout;
+    RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, true));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    DynamicRowLayoutBufferPtr bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
+    auto bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
@@ -229,9 +228,9 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldSimple) {
         bindedRowLayout->pushRecord<true>(writeRecord);
     }
 
-    auto field0 = RowLayoutField<uint8_t, true>::create(0, bindedRowLayout);
-    auto field1 = RowLayoutField<uint16_t, true>::create(1, bindedRowLayout);
-    auto field2 = RowLayoutField<uint32_t, true>::create(2, bindedRowLayout);
+    auto field0 = RowLayoutField<uint8_t, true>::create(0, rowLayout, tupleBuffer);
+    auto field1 = RowLayoutField<uint16_t, true>::create(1, rowLayout, tupleBuffer);
+    auto field2 = RowLayoutField<uint32_t, true>::create(2, rowLayout, tupleBuffer);
 
     for (size_t i = 0; i < NUM_TUPLES; ++i) {
         ASSERT_EQ(std::get<0>(allTuples[i]), field0[i]);
@@ -244,8 +243,7 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldSimple) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, true));
+    std::shared_ptr<ColumnLayout> columnLayout = ColumnLayout::create(schema, true);
     ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -262,9 +260,9 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldSimple) {
         bindedColumnLayout->pushRecord<true>(writeRecord);
     }
 
-    auto field0 = ColumnLayoutField<uint8_t, true>::create(0, bindedColumnLayout);
-    auto field1 = ColumnLayoutField<uint16_t, true>::create(1, bindedColumnLayout);
-    auto field2 = ColumnLayoutField<uint32_t, true>::create(2, bindedColumnLayout);
+    auto field0 = ColumnLayoutField<uint8_t, true>::create(0, columnLayout, tupleBuffer);
+    auto field1 = ColumnLayoutField<uint16_t, true>::create(1, columnLayout, tupleBuffer);
+    auto field2 = ColumnLayoutField<uint32_t, true>::create(2, columnLayout, tupleBuffer);
 
     for (size_t i = 0; i < NUM_TUPLES; ++i) {
         ASSERT_EQ(std::get<0>(allTuples[i]), field0[i]);
@@ -277,13 +275,13 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    DynamicRowLayoutPtr rowLayout;
+    RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, true));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    DynamicRowLayoutBufferPtr bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
+    auto bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
@@ -294,13 +292,13 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
         bindedRowLayout->pushRecord<true>(writeRecord);
     }
 
-    auto field0 = RowLayoutField<uint8_t, true>::create(0, bindedRowLayout);
-    auto field1 = RowLayoutField<uint16_t, true>::create(1, bindedRowLayout);
-    auto field2 = RowLayoutField<uint32_t, true>::create(2, bindedRowLayout);
+    auto field0 = RowLayoutField<uint8_t, true>::create(0, rowLayout, tupleBuffer);
+    auto field1 = RowLayoutField<uint16_t, true>::create(1, rowLayout, tupleBuffer);
+    auto field2 = RowLayoutField<uint32_t, true>::create(2, rowLayout, tupleBuffer);
 
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(3, bindedRowLayout)), NES::NesRuntimeException);
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(4, bindedRowLayout)), NES::NesRuntimeException);
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(5, bindedRowLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(3, rowLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(4, rowLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(5, rowLayout, tupleBuffer)), NES::NesRuntimeException);
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -339,12 +337,12 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
         bindedColumnLayout->pushRecord<true>(writeRecord);
     }
 
-    auto field0 = ColumnLayoutField<uint8_t, true>::create(0, bindedColumnLayout);
-    auto field1 = ColumnLayoutField<uint16_t, true>::create(1, bindedColumnLayout);
-    auto field2 = ColumnLayoutField<uint32_t, true>::create(2, bindedColumnLayout);
-    ASSERT_THROW((ColumnLayoutField<uint8_t, true>::create(3, bindedColumnLayout)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint16_t, true>::create(4, bindedColumnLayout)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create(5, bindedColumnLayout)), NES::NesRuntimeException);
+    auto field0 = ColumnLayoutField<uint8_t, true>::create(0, columnLayout, tupleBuffer);
+    auto field1 = ColumnLayoutField<uint16_t, true>::create(1,  columnLayout, tupleBuffer);
+    auto field2 = ColumnLayoutField<uint32_t, true>::create(2,  columnLayout, tupleBuffer);
+    ASSERT_THROW((ColumnLayoutField<uint8_t, true>::create(3,  columnLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint16_t, true>::create(4,  columnLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create(5,  columnLayout, tupleBuffer)), NES::NesRuntimeException);
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -366,13 +364,13 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    DynamicRowLayoutPtr rowLayout;
+    RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, true));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    DynamicRowLayoutBufferPtr bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
+    auto bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
@@ -383,12 +381,12 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
         bindedRowLayout->pushRecord<true>(writeRecord);
     }
 
-    auto field0 = RowLayoutField<uint8_t, false>::create(0, bindedRowLayout);
-    auto field1 = RowLayoutField<uint16_t, false>::create(1, bindedRowLayout);
-    auto field2 = RowLayoutField<uint32_t, false>::create(2, bindedRowLayout);
+    auto field0 = RowLayoutField<uint8_t, false>::create(0, rowLayout, tupleBuffer);
+    auto field1 = RowLayoutField<uint16_t, false>::create(1, rowLayout, tupleBuffer);
+    auto field2 = RowLayoutField<uint32_t, false>::create(2, rowLayout, tupleBuffer);
 
     try {
-        RowLayoutField<uint32_t, false>::create(3, bindedRowLayout);
+        RowLayoutField<uint32_t, false>::create(3, rowLayout, tupleBuffer);
     } catch (NES::NesRuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
@@ -396,7 +394,7 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
     }
 
     try {
-        RowLayoutField<uint32_t, false>::create(4, bindedRowLayout);
+        RowLayoutField<uint32_t, false>::create(4, rowLayout, tupleBuffer);
     } catch (NES::NesRuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
@@ -404,7 +402,7 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
     }
 
     try {
-        RowLayoutField<uint32_t, false>::create(5, bindedRowLayout);
+        RowLayoutField<uint32_t, false>::create(5, rowLayout, tupleBuffer);
     } catch (NES::NesRuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
@@ -489,12 +487,12 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
         bindedColumnLayout->pushRecord<true>(writeRecord);
     }
 
-    auto field0 = ColumnLayoutField<uint8_t, false>::create(0, bindedColumnLayout);
-    auto field1 = ColumnLayoutField<uint16_t, false>::create(1, bindedColumnLayout);
-    auto field2 = ColumnLayoutField<uint32_t, false>::create(2, bindedColumnLayout);
+    auto field0 = ColumnLayoutField<uint8_t, false>::create(0,  columnLayout, tupleBuffer);
+    auto field1 = ColumnLayoutField<uint16_t, false>::create(1,  columnLayout, tupleBuffer);
+    auto field2 = ColumnLayoutField<uint32_t, false>::create(2,  columnLayout, tupleBuffer);
 
     try {
-        ColumnLayoutField<uint32_t, false>::create(3, bindedColumnLayout);
+        ColumnLayoutField<uint32_t, false>::create(3,  columnLayout, tupleBuffer);
     } catch (NES::NesRuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
@@ -502,7 +500,7 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
     }
 
     try {
-        ColumnLayoutField<uint32_t, false>::create(4, bindedColumnLayout);
+        ColumnLayoutField<uint32_t, false>::create(4,  columnLayout, tupleBuffer);
     } catch (NES::NesRuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
@@ -510,7 +508,7 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
     }
 
     try {
-        ColumnLayoutField<uint32_t, false>::create(5, bindedColumnLayout);
+        ColumnLayoutField<uint32_t, false>::create(5,  columnLayout, tupleBuffer);
     } catch (NES::NesRuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
@@ -577,13 +575,13 @@ TEST_F(DynamicMemoryLayoutTest, pushRecordTooManyRecordsRowLayout) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    DynamicRowLayoutPtr rowLayout;
+    RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, true));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    DynamicRowLayoutBufferPtr bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
+    auto bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
 
     size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
 
@@ -650,21 +648,21 @@ TEST_F(DynamicMemoryLayoutTest, getFieldViaFieldNameRowLayout) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    DynamicRowLayoutPtr rowLayout;
+    RowLayoutPtr rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, true));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    DynamicRowLayoutBufferPtr bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
+    auto bindedRowLayout = std::dynamic_pointer_cast<RowLayoutTupleBuffer>(rowLayout->bind(tupleBuffer));
 
-    ASSERT_NO_THROW((RowLayoutField<uint8_t, true>::create("t1", bindedRowLayout)));
-    ASSERT_NO_THROW((RowLayoutField<uint16_t, true>::create("t2", bindedRowLayout)));
-    ASSERT_NO_THROW((RowLayoutField<uint32_t, true>::create("t3", bindedRowLayout)));
+    ASSERT_NO_THROW((RowLayoutField<uint8_t, true>::create("t1", rowLayout, tupleBuffer)));
+    ASSERT_NO_THROW((RowLayoutField<uint16_t, true>::create("t2", rowLayout, tupleBuffer)));
+    ASSERT_NO_THROW((RowLayoutField<uint32_t, true>::create("t3", rowLayout, tupleBuffer)));
 
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t4", bindedRowLayout)), NES::NesRuntimeException);
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t5", bindedRowLayout)), NES::NesRuntimeException);
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t6", bindedRowLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t4", rowLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t5", rowLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t6", rowLayout, tupleBuffer)), NES::NesRuntimeException);
 }
 
 TEST_F(DynamicMemoryLayoutTest, getFieldViaFieldNameColumnLayout) {
@@ -680,13 +678,13 @@ TEST_F(DynamicMemoryLayoutTest, getFieldViaFieldNameColumnLayout) {
     ColumnLayoutBufferPtr bindedColumnLayout =
         std::dynamic_pointer_cast<ColumnLayoutTupleBuffer>(columnLayout->bind(tupleBuffer));
 
-    ASSERT_NO_THROW((ColumnLayoutField<uint8_t, true>::create("t1", bindedColumnLayout)));
-    ASSERT_NO_THROW((ColumnLayoutField<uint16_t, true>::create("t2", bindedColumnLayout)));
-    ASSERT_NO_THROW((ColumnLayoutField<uint32_t, true>::create("t3", bindedColumnLayout)));
+    ASSERT_NO_THROW((ColumnLayoutField<uint8_t, true>::create("t1", columnLayout, tupleBuffer)));
+    ASSERT_NO_THROW((ColumnLayoutField<uint16_t, true>::create("t2", columnLayout, tupleBuffer)));
+    ASSERT_NO_THROW((ColumnLayoutField<uint32_t, true>::create("t3", columnLayout, tupleBuffer)));
 
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t4", bindedColumnLayout)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t5", bindedColumnLayout)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t6", bindedColumnLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t4", columnLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t5", columnLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t6", columnLayout, tupleBuffer)), NES::NesRuntimeException);
 }
 
 TEST_F(DynamicMemoryLayoutTest, accessDynamicColumnBufferTest) {
@@ -698,10 +696,7 @@ TEST_F(DynamicMemoryLayoutTest, accessDynamicColumnBufferTest) {
     ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-
-    ColumnLayoutBufferPtr bindedColumnLayout =
-        std::dynamic_pointer_cast<ColumnLayoutTupleBuffer>(columnLayout->bind(tupleBuffer));
-    auto buffer = DynamicTupleBuffer(bindedColumnLayout);
+    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
     uint32_t numberOfRecords = 10;
     for (uint32_t i = 0; i < numberOfRecords; i++) {
         auto record = buffer[i];
@@ -727,10 +722,7 @@ TEST_F(DynamicMemoryLayoutTest, accessDynamicBufferExceptionTest) {
     ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-
-    ColumnLayoutBufferPtr bindedColumnLayout =
-        std::dynamic_pointer_cast<ColumnLayoutTupleBuffer>(columnLayout->bind(tupleBuffer));
-    auto buffer = DynamicTupleBuffer(bindedColumnLayout);
+    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
     ASSERT_ANY_THROW(buffer[10000000L]);
     ASSERT_ANY_THROW(buffer[0][5]);
 }
@@ -743,10 +735,7 @@ TEST_F(DynamicMemoryLayoutTest, accessArrayDynamicBufferTest) {
     ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-
-    ColumnLayoutBufferPtr bindedColumnLayout =
-        std::dynamic_pointer_cast<ColumnLayoutTupleBuffer>(columnLayout->bind(tupleBuffer));
-    auto buffer = DynamicTupleBuffer(bindedColumnLayout);
+    auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
     auto array = NES::QueryCompilation::Array<int64_t, 10>();
     for (int i = 0; i < 10; i++) {
         array[i] = i * 2;

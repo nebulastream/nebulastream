@@ -462,8 +462,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
-    auto bindedRowLayout = layout->bind(buffer);
-    auto firstFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+    auto firstFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, layout, buffer);
     for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
         EXPECT_EQ(firstFields[recordIndex], 1UL);
     }
@@ -722,15 +721,14 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     {
-        Runtime::MemoryLayouts::DynamicRowLayoutPtr rowLayout =
+        Runtime::MemoryLayouts::RowLayoutPtr rowLayout =
             Runtime::MemoryLayouts::RowLayout::create(schema, true);
-        auto bindedRowLayout = rowLayout->bind(buffer);
 
-        auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
-        auto stopFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
-        auto cntFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
-        auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
-        auto valueFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
+        auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, rowLayout, buffer);
+        auto stopFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, rowLayout, buffer);
+        auto cntFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer);
+        auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(3, rowLayout, buffer);
+        auto valueFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(4, rowLayout, buffer);
 
         startFields[0] = 100;//start 100
         stopFields[0] = 110; //stop 200
@@ -958,13 +956,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, true);
     auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
 
-    auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
-    auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
+    auto secondFieldsInput = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, inputLayout, inputBuffer);
+    auto thirdFieldsInput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, inputLayout, inputBuffer);
 
-    auto secondFieldsInput = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, bindedInputRowLayout);
-    auto thirdFieldsInput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, bindedInputRowLayout);
-
-    auto fourthFieldsOutput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, bindedOutputRowLayout);
+    auto fourthFieldsOutput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, outputLayout, resultBuffer);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
@@ -1034,15 +1029,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, true);
     auto outputLayout = Runtime::MemoryLayouts::ColumnLayout::create(outputSchema, true);
 
-    auto bindedInputColumnLayout = inputLayout->bind(inputBuffer);
-    auto bindedOutputColumnLayout = outputLayout->bind(resultBuffer);
-
     auto secondFieldsInput =
-        Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, bindedInputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, inputLayout, inputBuffer);
     auto thirdFieldsInput =
-        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3, bindedInputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3 , inputLayout, inputBuffer);
     auto fourthFieldsOutput =
-        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, outputLayout, resultBuffer);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
@@ -1112,14 +1104,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, true);
     auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
 
-    auto bindedInputColumnLayout = inputLayout->bind(inputBuffer);
-    auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
-
     auto secondFieldsInput =
-        Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, bindedInputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, inputLayout, inputBuffer);
     auto thirdFieldsInput =
-        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3, bindedInputColumnLayout);
-    auto fourthFieldsOutput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, bindedOutputRowLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3, inputLayout, inputBuffer);
+    auto fourthFieldsOutput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, outputLayout, resultBuffer);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
@@ -1192,10 +1181,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputColumnLayout = outputLayout->bind(resultBuffer);
 
-    auto secondFieldsInput = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, bindedInputRowLayout);
-    auto thirdFieldsInput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, bindedInputRowLayout);
+    auto secondFieldsInput = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, inputLayout, inputBuffer);
+    auto thirdFieldsInput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, inputLayout, inputBuffer);
     auto fourthFieldsOutput =
-        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, bindedOutputColumnLayout);
+        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, outputLayout, resultBuffer);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
@@ -1271,10 +1260,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto bindedInputLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputLayout = outputLayout->bind(resultBuffer);
 
-    auto floatValueFields = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, bindedInputLayout);
-    auto doubleValueFields = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, bindedInputLayout);
+    auto floatValueFields = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, inputLayout, inputBuffer);
+    auto doubleValueFields = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, inputLayout, inputBuffer);
 
-    auto mappedValueFields = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, bindedOutputLayout);
+    auto mappedValueFields = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, outputLayout, resultBuffer);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = floatValueFields[recordIndex];

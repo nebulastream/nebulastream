@@ -18,7 +18,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_EXECUTABLE_NESTED_LOOP_JOIN_TRIGGER_ACTION_HPP_
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/LayoutedTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -306,7 +306,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   private:
     LogicalJoinDefinitionPtr joinDefinition;
     SchemaPtr windowSchema;
-    Runtime::MemoryLayouts::DynamicRowLayoutPtr windowTupleLayout;
+    Runtime::MemoryLayouts::RowLayoutPtr windowTupleLayout;
     uint64_t id;
 };
 }// namespace NES::Join

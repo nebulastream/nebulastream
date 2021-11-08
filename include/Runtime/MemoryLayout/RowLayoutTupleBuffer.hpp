@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_BUFFER_HPP_
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_BUFFER_HPP_
 
-#include <Runtime/MemoryLayout/LayoutedTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <cstdint>
@@ -50,14 +50,6 @@ class RowLayoutTupleBuffer : public MemoryLayoutTupleBuffer {
     [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
         return dynamicRowLayout->getFieldIndexFromName(std::move(fieldName));
     };
-    /**
-     * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
-     * @param ithRecord
-     * @param jthField
-     * @param boundaryChecks if true will check if access is allowed
-     * @return calculated offset
-     */
-    uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, bool boundaryChecks) override;
 
     /**
      * @brief Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
@@ -140,7 +132,7 @@ class RowLayoutTupleBuffer : public MemoryLayoutTupleBuffer {
     typename std::enable_if<(I == sizeof...(Ts)), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup,
                                                                                         const uint8_t* address);
 
-    const DynamicRowLayoutPtr dynamicRowLayout;
+    const RowLayoutPtr dynamicRowLayout;
     uint8_t* basePointer;
 };
 

@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_
 
-#include <Runtime/MemoryLayout/LayoutedTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 
 namespace NES::Runtime::MemoryLayouts {
@@ -37,8 +37,7 @@ class MemoryLayout {
      * @param recordSize
      * @param fieldSizes
      */
-    MemoryLayout(uint64_t bufferSize,
-                 const SchemaPtr& schema);
+    MemoryLayout(uint64_t bufferSize, const SchemaPtr& schema);
 
     virtual ~MemoryLayout() = default;
 
@@ -47,11 +46,6 @@ class MemoryLayout {
      * @return either field index for fieldName or empty optinal
      */
     [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string& fieldName) const;
-
-    /**
-     * @return true if boundaries are actively being checked
-     */
-    [[nodiscard]] bool isCheckBoundaryFieldChecks() const;
 
     /**
      * @return number of current records
@@ -63,9 +57,8 @@ class MemoryLayout {
      */
     [[nodiscard]] const std::vector<FIELD_SIZE>& getFieldSizes() const;
 
-    virtual std::shared_ptr<MemoryLayoutTupleBuffer> bind(const TupleBuffer& tupleBuffer) = 0 ;
-
     virtual uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) = 0;
+    uint64_t getCapacity() const;
 
   protected:
     const uint64_t bufferSize;
@@ -76,5 +69,5 @@ class MemoryLayout {
     std::map<std::string, uint64_t> nameFieldIndexMap;
 };
 
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts
 #endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_

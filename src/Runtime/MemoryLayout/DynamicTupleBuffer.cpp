@@ -16,33 +16,37 @@
  */
 #include <Exceptions/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <utility>
 namespace NES::Runtime::MemoryLayouts {
 
 DynamicField::DynamicField(uint8_t* address) : address(address) {}
 
-DynamicField DynamicRecord::operator[](std::size_t fieldIndex) const {
-    auto* bufferBasePointer = buffer->getTupleBuffer().getBuffer<uint8_t>();
-    auto offset = buffer->calcOffset(recordIndex, fieldIndex, true);
+DynamicField DynamicTuple::operator[](std::size_t fieldIndex) {
+    auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
+    auto offset = memoryLayout->getFieldOffset(recordIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
     return DynamicField{basePointer};
 }
 
-DynamicRecord::DynamicRecord(uint64_t recordIndex, DynamicLayoutBufferPtr buffer)
-    : recordIndex(recordIndex), buffer(std::move(buffer)){};
+DynamicTuple::DynamicTuple(const uint64_t recordIndex, MemoryLayoutPtr memoryLayout, TupleBuffer& buffer)
+    : recordIndex(recordIndex), memoryLayout(std::move(memoryLayout)), buffer(std::move(buffer)){};
 
-uint64_t DynamicTupleBuffer::getCapacity() const { return buffer->getCapacity(); }
+uint64_t DynamicTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
 
-uint64_t DynamicTupleBuffer::getNumberOfRecords() const { return buffer->getNumberOfRecords(); }
+uint64_t DynamicTupleBuffer::getNumberOfRecords() const { return buffer.getNumberOfTuples(); }
 
-DynamicRecord DynamicTupleBuffer::operator[](std::size_t recordIndex) {
+void DynamicTupleBuffer::setNumberOfRecords(uint64_t value) { buffer.setNumberOfTuples(value); }
+
+DynamicTuple DynamicTupleBuffer::operator[](std::size_t recordIndex) {
     if (recordIndex >= getCapacity()) {
         throw BufferAccessException("index is out of bound");
     }
-    return {recordIndex, buffer};
+    return {recordIndex, memoryLayout, buffer};
 }
 
-DynamicTupleBuffer::DynamicTupleBuffer(std::shared_ptr<MemoryLayoutTupleBuffer> buffer) : buffer(std::move(buffer)) {}
+DynamicTupleBuffer::DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer& buffer)
+    : memoryLayout(memoryLayout), buffer(buffer) {}
 
 DynamicTupleBuffer::RecordIterator::RecordIterator(DynamicTupleBuffer& buffer) : RecordIterator(buffer, 0) {}
 
@@ -66,6 +70,6 @@ bool DynamicTupleBuffer::RecordIterator::operator==(RecordIterator other) const 
 
 bool DynamicTupleBuffer::RecordIterator::operator!=(RecordIterator other) const { return !(*this == other); }
 
-DynamicRecord DynamicTupleBuffer::RecordIterator::operator*() const { return buffer[currentIndex]; }
+DynamicTuple DynamicTupleBuffer::RecordIterator::operator*() const { return buffer[currentIndex]; }
 
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts

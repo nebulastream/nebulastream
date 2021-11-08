@@ -41,8 +41,8 @@ class RowLayoutField {
      * @tparam T type of field
      * @return field handler via a fieldIndex and a layoutBuffer
      */
-    static inline RowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex,
-                                                           std::shared_ptr<RowLayoutTupleBuffer> layoutBuffer);
+    static inline RowLayoutField<T, boundaryChecks>
+    create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer);
 
     /**
      * @param fieldIndex
@@ -51,8 +51,8 @@ class RowLayoutField {
      * @tparam T type of field
      * @return field handler via a fieldName and a layoutBuffer
      */
-    static inline RowLayoutField<T, boundaryChecks> create(const std::string& fieldName,
-                                                           std::shared_ptr<RowLayoutTupleBuffer> layoutBuffer);
+    static inline RowLayoutField<T, boundaryChecks>
+    create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer);
 
     /**
      * @param recordIndex
@@ -68,48 +68,44 @@ class RowLayoutField {
      * @param fieldIndex
      * @param recordSize
      */
-    RowLayoutField(std::shared_ptr<RowLayoutTupleBuffer> dynamicRowLayoutBuffer,
-                   uint8_t* basePointer,
-                   FIELD_SIZE fieldIndex,
-                   FIELD_SIZE recordSize)
-        : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer),
-          dynamicRowLayoutBuffer(std::move(dynamicRowLayoutBuffer)){};
+    RowLayoutField(std::shared_ptr<RowLayout> layout, uint8_t* basePointer, FIELD_SIZE fieldIndex, FIELD_SIZE recordSize)
+        : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), layout(std::move(layout)){};
 
     const FIELD_SIZE fieldIndex;
     const FIELD_SIZE recordSize;
     uint8_t* basePointer;
-    DynamicRowLayoutBufferPtr dynamicRowLayoutBuffer;
+    std::shared_ptr<RowLayout> layout;
 };
 
 template<class T, bool boundaryChecks>
 inline RowLayoutField<T, boundaryChecks>
-RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayoutTupleBuffer> layoutBuffer) {
-    if (boundaryChecks && fieldIndex >= layoutBuffer->getFieldOffSets().size()) {
-        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds!" << layoutBuffer->getFieldOffSets().size() << " >= " << fieldIndex);
+RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer) {
+    if (boundaryChecks && fieldIndex >= layout->getFieldOffSets().size()) {
+        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds!" << layout->getFieldOffSets().size() << " >= " << fieldIndex);
     }
 
     // via pointer arithmetic gets the starting field address
-    auto* bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBuffer<uint8_t>()[0]);
-    auto offSet = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
+    auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);
+    auto offSet = layout->getFieldOffset(0, fieldIndex);
     auto* basePointer = bufferBasePointer + offSet;
 
-    return RowLayoutField<T, boundaryChecks>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
+    return RowLayoutField<T, boundaryChecks>(layout, basePointer, fieldIndex, layout->getRecordSize());
 }
 
 template<class T, bool boundaryChecks>
 inline RowLayoutField<T, boundaryChecks>
-RowLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<RowLayoutTupleBuffer> layoutBuffer) {
-    auto fieldIndex = layoutBuffer->getFieldIndexFromName(fieldName);
+RowLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer) {
+    auto fieldIndex = layout->getFieldIndexFromName(fieldName);
     if (fieldIndex.has_value()) {
-        return RowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layoutBuffer);
+        return RowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
     }
     NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutField: Could not find fieldIndex for " << fieldName);
 }
 
 template<class T, bool boundaryChecks>
 inline T& RowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
-    if (boundaryChecks && recordIndex >= dynamicRowLayoutBuffer->getCapacity()) {
-        NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << dynamicRowLayoutBuffer->getCapacity() << " >= " << recordIndex);
+    if (boundaryChecks && recordIndex >= layout->getCapacity()) {
+        NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << layout->getCapacity() << " >= " << recordIndex);
     }
 
     return *reinterpret_cast<T*>(basePointer + recordSize * recordIndex);

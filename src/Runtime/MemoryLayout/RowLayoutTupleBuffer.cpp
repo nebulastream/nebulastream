@@ -20,17 +20,6 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-uint64_t RowLayoutTupleBuffer::calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) {
-    auto fieldOffSets = dynamicRowLayout->getFieldOffSets();
-    auto recordSize = dynamicRowLayout->getRecordSize();
-    if (boundaryChecks && fieldIndex >= fieldOffSets.size()) {
-        throw BufferAccessException("jthField " + std::to_string(fieldIndex) + " is larger than fieldOffsets.size() "
-                                    + std::to_string(fieldOffSets.size()));
-    }
-    auto offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex];
-    NES_TRACE("DynamicRowLayoutBuffer.calcOffset: offSet = " << offSet);
-    return offSet;
-}
 RowLayoutTupleBuffer::RowLayoutTupleBuffer(TupleBuffer tupleBuffer,
                                                uint64_t capacity,
                                                std::shared_ptr<RowLayout> dynamicRowLayout)

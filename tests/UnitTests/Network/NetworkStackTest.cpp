@@ -115,12 +115,10 @@ class TestSink : public SinkMedium {
     std::promise<uint64_t> completed;
 };
 
-void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::DynamicRowLayoutPtr& memoryLayout) {
-
-    auto bindedRowLayout = memoryLayout->bind(buf);
-    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayout);
-    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, bindedRowLayout);
-    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, bindedRowLayout);
+void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
+    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, buf);
+    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, buf);
+    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, buf);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         recordIndexFields[recordIndex] = recordIndex;

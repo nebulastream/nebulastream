@@ -48,7 +48,7 @@ class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<Co
      * @param tupleBuffer
      * @return shared_ptr to DynamicRowLayoutBuffer
      */
-    std::shared_ptr<MemoryLayoutTupleBuffer> bind(const TupleBuffer& tupleBuffer);
+    std::shared_ptr<ColumnLayoutTupleBuffer> bind(const TupleBuffer& tupleBuffer);
 
     uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) override;
 

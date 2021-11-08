@@ -217,6 +217,7 @@ class ExecutableSliceAggregationTriggerAction
                            ValueType value,
                            uint64_t cnt) {
         auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
+
         if (windowDefinition->isKeyed()) {
             std::tuple<uint64_t, uint64_t, uint64_t, KeyType, ValueType> keyedTuple(startTs, endTs, cnt, key, value);
             bindedRowLayout->pushRecord<true>(keyedTuple, index);
@@ -229,7 +230,7 @@ class ExecutableSliceAggregationTriggerAction
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    Runtime::MemoryLayouts::DynamicRowLayoutPtr windowTupleLayout;
+    Runtime::MemoryLayouts::RowLayoutPtr windowTupleLayout;
     uint64_t id;
 };
 }// namespace NES::Windowing

@@ -20,6 +20,8 @@
 #include <thread>
 
 #include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -55,7 +57,7 @@ DataSource::GatheringMode DataSource::getGatheringModeFromString(const std::stri
     }
 }
 
-DataSource::DataSource(const SchemaPtr& pSchema,
+DataSource::DataSource(SchemaPtr pSchema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
                        OperatorId operatorId,
@@ -63,12 +65,17 @@ DataSource::DataSource(const SchemaPtr& pSchema,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
-      executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(pSchema),
+      executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
 
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
+    if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
+        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    } else if (schema->getLayoutType() == Schema::COL_LAYOUT) {
+        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+    }
 }
 
 void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
@@ -402,7 +409,6 @@ void DataSource::runningRoutineWithFrequency() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
-
 // debugging
 uint64_t DataSource::getNumberOfGeneratedTuples() const { return generatedTuples; };
 uint64_t DataSource::getNumberOfGeneratedBuffers() const { return generatedBuffers; };
@@ -413,14 +419,16 @@ uint64_t DataSource::getNumBuffersToProcess() const { return numBuffersToProcess
 
 std::chrono::milliseconds DataSource::getGatheringInterval() const { return gatheringInterval; }
 uint64_t DataSource::getGatheringIntervalCount() const { return gatheringInterval.count(); }
-std::vector<Schema::MemoryLayoutType> DataSource::getSupportedLayouts() {
-    return {Schema::MemoryLayoutType::ROW_LAYOUT};
-}
+std::vector<Schema::MemoryLayoutType> DataSource::getSupportedLayouts() { return {Schema::MemoryLayoutType::ROW_LAYOUT}; }
 
 bool DataSource::checkSupportedLayoutTypes(SchemaPtr& schema) {
     auto supportedLayouts = getSupportedLayouts();
     return std::find(supportedLayouts.begin(), supportedLayouts.end(), schema->getLayoutType()) != supportedLayouts.end();
 }
 
+Runtime::MemoryLayouts::DynamicTupleBuffer DataSource::allocateBuffer() {
+    auto buffer = bufferManager->getBufferBlocking();
+    return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+}
 
 }// namespace NES

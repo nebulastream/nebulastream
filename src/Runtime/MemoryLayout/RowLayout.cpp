@@ -35,7 +35,7 @@ std::shared_ptr<RowLayout> RowLayout::create(const SchemaPtr& schema, uint64_t b
     return std::make_shared<RowLayout>(schema, bufferSize);
 }
 
-std::shared_ptr<MemoryLayoutTupleBuffer> RowLayout::bind(const TupleBuffer& tupleBuffer) {
+std::shared_ptr<RowLayoutTupleBuffer> RowLayout::bind(const TupleBuffer& tupleBuffer) {
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
     return std::make_shared<RowLayoutTupleBuffer>(tupleBuffer, capacity, this->shared_from_this());
 }
