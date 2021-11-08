@@ -80,18 +80,15 @@ StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::
     }
 
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
-    auto bindedRowLayout = layout->bind(buf);
+    output.totalMemoryBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
 
-    output.totalMemoryBytes =
-        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.cpuCoreNum = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(i++, layout, buf)[0];
+    output.totalCPUJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
+    output.cpuPeriodUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(i++, layout, buf)[0];
+    output.cpuQuotaUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(i++, layout, buf)[0];
 
-    output.cpuCoreNum = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(i++, bindedRowLayout)[0];
-    output.totalCPUJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
-    output.cpuPeriodUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(i++, bindedRowLayout)[0];
-    output.cpuQuotaUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(i++, bindedRowLayout)[0];
-
-    output.isMoving = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, bindedRowLayout)[0];
-    output.hasBattery = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, bindedRowLayout)[0];
+    output.isMoving = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, layout, buf)[0];
+    output.hasBattery = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, layout, buf)[0];
 
     return output;
 }

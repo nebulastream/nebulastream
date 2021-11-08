@@ -19,10 +19,10 @@ add_source_nes(
         PhysicalSchema.cpp
         PhysicalFieldUtil.cpp
         ColumnLayout.cpp
-        DynamicLayoutBuffer.cpp
+        MemoryLayoutTupleBuffer.cpp
         RowLayout.cpp
         MemoryLayout.cpp
         RowLayoutTupleBuffer.cpp
-        DynamicColumnLayoutBuffer.cpp
+        ColumnLayoutBuffer.cpp
         DynamicTupleBuffer.cpp
 )

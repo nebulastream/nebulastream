@@ -70,7 +70,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(const SchemaPtr& schema,
+    explicit DataSource(SchemaPtr  schema,
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
                         OperatorId operatorId,
@@ -236,9 +236,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     bool checkSupportedLayoutTypes(SchemaPtr& schema);
 
   protected:
-
-    Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
-
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
@@ -256,7 +253,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     SourceType type;
     std::atomic<bool> wasGracefullyStopped{true};
     std::atomic_bool running{false};
-
+    uint32_t numaNode;
     /**
      * @brief Emits a tuple buffer to the successors.
      * @param buffer
@@ -264,11 +261,17 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     void emitWork(Runtime::TupleBuffer& buffer) override;
 
     void emitWorkFromSource(Runtime::TupleBuffer& buffer);
+    Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
+
+
+
+
 
   private:
     mutable std::mutex startStopMutex;
     std::shared_ptr<std::thread> thread{nullptr};
     uint64_t maxSequenceNumber = 0;
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 
     /**
     * @brief running routine with a fix frequency
@@ -279,9 +282,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     * @brief running routine with a fix ingestion rate
     */
     virtual void runningRoutineWithIngestionRate();
-
-  protected:
-    uint32_t numaNode;
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

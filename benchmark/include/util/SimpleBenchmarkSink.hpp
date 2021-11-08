@@ -188,7 +188,7 @@ class SimpleBenchmarkSink : public SinkMedium {
     uint64_t currentTuples = 0;
     std::vector<Runtime::TupleBuffer> resultBuffers;
     std::mutex m;
-    Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout;
+    Runtime::DynamicMemoryLayout::RowLayoutPtr rowLayout;
 };
 }// namespace NES::Benchmarking
 

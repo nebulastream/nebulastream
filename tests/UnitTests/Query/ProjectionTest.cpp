@@ -26,7 +26,7 @@
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Runtime/MemoryLayout/LayoutedTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -135,13 +135,12 @@ class WindowSource : public NES::DefaultSource {
         auto bindedRowLayout = rowLayout->bind(buffer);
 
         for (int i = 0; i < 10; i++) {
-            Runtime::MemoryLayouts::RowLayoutField<int16_t, true>::create(0, bindedRowLayout)[i] = 1;
-            Runtime::MemoryLayouts::RowLayoutField<int16_t, true>::create(1, bindedRowLayout)[i] = 1;
+            Runtime::MemoryLayouts::RowLayoutField<int16_t, true>::create(0, rowLayout, buffer)[i] = 1;
+            Runtime::MemoryLayouts::RowLayoutField<int16_t, true>::create(1, rowLayout, buffer)[i] = 1;
 
             if (varyWatermark) {
                 if (!decreaseTime) {
-                    Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
-                        timestamp++;
+                    Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] = timestamp++;
                 } else {
                     if (runCnt == 0) {
                         /**
@@ -162,10 +161,9 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         if (i < 9) {
-                            Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
-                                timestamp++;
+                            Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] = timestamp++;
                         } else {
-                            Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
+                            Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] =
                                 timestamp + 20;
                         }
                     } else {
@@ -186,12 +184,11 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         timestamp = timestamp - 1 <= 0 ? 0 : timestamp - 1;
-                        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
-                            timestamp;
+                        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] = timestamp;
                     }
                 }
             } else {
-                Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
+                Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] = timestamp;
             }
         }
         buffer.setNumberOfTuples(10);
@@ -247,12 +244,11 @@ class WindowSource : public NES::DefaultSource {
     }
 };
 
-void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::DynamicRowLayoutPtr& memoryLayout) {
-    auto bindedRowLayout = memoryLayout->bind(buf);
+void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
 
-    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayout);
-    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, bindedRowLayout);
-    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, bindedRowLayout);
+    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, buf);
+    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, buf);
+    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, buf);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         recordIndexFields[recordIndex] = recordIndex;
@@ -318,9 +314,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
     auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
-    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto resultRecordIndexFields =
-        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
@@ -387,8 +381,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
     auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto resultRecordIndexFields =
-        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
@@ -454,9 +447,8 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto resultRecordIndexFields =
-        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
-    auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
+    auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
+    auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, resultLayout, resultBuffer);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
@@ -582,11 +574,10 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1ULL);
 
     auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, true);
-    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, bindedRowLayoutResult);
-    auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, bindedRowLayoutResult);
-    auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, bindedRowLayoutResult);
-    auto valueFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(3, bindedRowLayoutResult);
+    auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, resultLayout, resultBuffer);
+    auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, resultLayout, resultBuffer);
+    auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, resultLayout, resultBuffer);
+    auto valueFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(3, resultLayout, resultBuffer);
 
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
@@ -758,9 +749,8 @@ TEST_F(ProjectionTest, mergeQuery) {
 
     auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto resultRecordIndexFields =
-        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
-    auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
+    auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
+    auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, resultLayout, resultBuffer);
 
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
         std::cout << "cmp first=" << resultRecordIndexFields[recordIndex] << " seconds=" << recordIndex * 2 << std::endl;

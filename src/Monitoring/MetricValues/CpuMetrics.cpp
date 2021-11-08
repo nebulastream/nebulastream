@@ -52,8 +52,7 @@ CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer&
     if (idx < schema->getSize() && buf.getNumberOfTuples() == 1 && Util::endsWith(schema->fields[idx]->getName(), "CORE_NO")) {
         //if schema contains cpuMetrics parse the wrapper object
         auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
-        auto bindedRowLayout = layout->bind(buf);
-        auto numCores = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(idx, bindedRowLayout)[0];
+        auto numCores = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(idx, layout, buf)[0];
 
         auto cpu = std::vector<CpuValues>(numCores);
         auto totalCpu = CpuValues::fromBuffer(schema, buf, prefix + "CPU[TOTAL]_");

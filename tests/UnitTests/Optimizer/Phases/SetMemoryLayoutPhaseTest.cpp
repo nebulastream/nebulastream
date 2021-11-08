@@ -140,14 +140,11 @@ class TestSink : public SinkMedium {
     std::vector<TupleBuffer> resultBuffers;
 };
 
-void fillBufferRowLayout(TupleBuffer& buf,
-                         const Runtime::MemoryLayouts::DynamicRowLayoutPtr& memoryLayout,
-                         uint64_t numberOfTuples) {
+void fillBufferRowLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout, uint64_t numberOfTuples) {
 
-    auto bindedRowLayout = memoryLayout->bind(buf);
-    auto recordIndexFields = RowLayoutField(int64_t, 0, bindedRowLayout);
-    auto fields01 = RowLayoutField(int64_t, 1, bindedRowLayout);
-    auto fields02 = RowLayoutField(int64_t, 2, bindedRowLayout);
+    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, buf);
+    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, buf);
+    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, buf);
 
     for (size_t recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
         recordIndexFields[recordIndex] = recordIndex;
@@ -157,14 +154,11 @@ void fillBufferRowLayout(TupleBuffer& buf,
     buf.setNumberOfTuples(numberOfTuples);
 }
 
-void fillBufferColLayout(TupleBuffer& buf,
-                         const Runtime::MemoryLayouts::ColumnLayoutPtr& memoryLayout,
-                         uint64_t numberOfTuples) {
+void fillBufferColLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::ColumnLayoutPtr& memoryLayout, uint64_t numberOfTuples) {
 
-    auto bindedColLayout = memoryLayout->bind(buf);
-    auto recordIndexFields = ColLayoutField(int64_t, 0, bindedColLayout);
-    auto fields01 = ColLayoutField(int64_t, 1, bindedColLayout);
-    auto fields02 = ColLayoutField(int64_t, 2, bindedColLayout);
+    auto recordIndexFields = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(0, memoryLayout, buf);
+    auto fields01 = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(1, memoryLayout, buf);
+    auto fields02 = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(2, memoryLayout, buf);
 
     for (size_t recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
         recordIndexFields[recordIndex] = recordIndex;
@@ -182,7 +176,7 @@ TEST_F(QueryChooseMemLayoutPhaseTest, setColumnarLayoutMapQuery) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->setLayoutType(Schema::ROW_LAYOUT);
 
-    auto query = TestQuery::from( DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
+    auto query = TestQuery::from(DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
                      .map(Attribute("f3") = Attribute("f1") * 42)
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
@@ -209,10 +203,9 @@ TEST_F(QueryChooseMemLayoutPhaseTest, setRowLayoutMapQuery) {
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
-
-    auto query = TestQuery::from( DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
-        .map(Attribute("f3") = Attribute("f1") * 42)
-        .sink(FileSinkDescriptor::create(""));
+    auto query = TestQuery::from(DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
+                     .map(Attribute("f3") = Attribute("f1") * 42)
+                     .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
     auto phase = Optimizer::SetMemoryLayoutPhase::create(Schema::ROW_LAYOUT);

@@ -59,7 +59,7 @@ static void BM_WriteRecordsRowLayoutNewLayout(benchmark::State& state) {
     for (auto singleState : state) {
         state.PauseTiming();
 
-        DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+        RowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
         DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
         state.ResumeTiming();
         std::tuple<int32_t,
@@ -93,7 +93,7 @@ static void BM_ReadRecordsRowLayoutNewLayout(benchmark::State& state) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
-    DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+    RowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
     std::tuple<int32_t,
@@ -274,7 +274,7 @@ static void BM_ReadFieldRowLayoutNewLayout(benchmark::State& state) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
-    DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+    RowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
@@ -359,7 +359,7 @@ static void BM_WriteFieldRowLayoutNewLayout(benchmark::State& state) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
-    DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+    RowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
     auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, bindedRowLayout);
@@ -453,7 +453,7 @@ static void BM_WriteWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& sta
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
-    DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+    RowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
     auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, bindedRowLayout);
@@ -630,7 +630,7 @@ static void BM_ReadWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& stat
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
-    DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+    RowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
     std::tuple<int32_t,
@@ -754,7 +754,7 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
     auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
-    DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+    RowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
     std::tuple<int32_t,
                int32_t,
@@ -2207,7 +2207,7 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
     auto bufferManager = std::make_shared<NES::Runtime::BufferManager>(bufferSize, 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
-    DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
+    RowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
     state.ResumeTiming();
     std::tuple<int32_t,

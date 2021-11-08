@@ -542,9 +542,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto recordSchema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
     auto layout = Runtime::MemoryLayouts::RowLayout::create(recordSchema, true);
-    auto bindedRowLayout = layout->bind(inputBuffer);
-
-    auto recordIndexFieldsInput = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto recordIndexFieldsInput = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, layout, inputBuffer);
 
     for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         recordIndexFieldsInput[recordIndex] = recordIndex;
@@ -563,9 +561,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     NES_INFO(Util::prettyPrintTupleBuffer(outputBuffer, recordSchema));
 
     /* check result for correctness */
-    auto bindedOutputRowLayout = layout->bind(outputBuffer);
     auto sumGeneratedCode =
-        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
+        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, layout, outputBuffer)[0];
     auto sum = 0;
     for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         sum += recordIndexFieldsInput[recordIndex];

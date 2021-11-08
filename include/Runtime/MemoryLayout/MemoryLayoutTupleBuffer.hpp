@@ -60,14 +60,6 @@ class MemoryLayoutTupleBuffer {
      */
     TupleBuffer getTupleBuffer();
 
-    /**
-     * @brief calculates the address/offset of ithRecord and jthField
-     * @param ithRecord
-     * @param jthField
-     * @return
-     */
-    virtual uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, bool boundaryChecks) = 0;
-
   protected:
     TupleBuffer tupleBuffer;
     uint64_t capacity;

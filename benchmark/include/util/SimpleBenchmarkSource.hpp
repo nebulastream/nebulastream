@@ -271,7 +271,7 @@ class SimpleBenchmarkSource : public DataSource {
     uint64_t keyPos = 0;
     uint64_t curNumberOfTuplesPerBuffer;
     uint64_t maxNumberOfPeriods;
-    Runtime::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout;
+    Runtime::DynamicMemoryLayout::RowLayoutPtr rowLayout;
 };
 }// namespace NES::Benchmarking
 

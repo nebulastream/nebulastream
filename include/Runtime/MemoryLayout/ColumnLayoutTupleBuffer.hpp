@@ -18,7 +18,7 @@
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_BUFFER_HPP_
 
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/LayoutedTupleBuffer.hpp>
+#include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <cstdint>
 #include <utility>
@@ -52,15 +52,6 @@ class ColumnLayoutTupleBuffer : public MemoryLayoutTupleBuffer {
     [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
         return dynamicColLayout->getFieldIndexFromName(std::move(fieldName));
     };
-
-    /**
-     * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
-     * @param recordIndex
-     * @param fieldIndex
-     * @param boundaryChecks
-     * @return calculated offset
-     */
-    uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, bool boundaryChecks) override;
 
     /**
      * @brief Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.

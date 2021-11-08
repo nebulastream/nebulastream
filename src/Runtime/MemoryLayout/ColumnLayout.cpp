@@ -33,7 +33,7 @@ ColumnLayoutPtr ColumnLayout::create(const SchemaPtr& schema, uint64_t bufferSiz
     return std::make_shared<ColumnLayout>(schema, bufferSize);
 }
 
-std::shared_ptr<MemoryLayoutTupleBuffer> ColumnLayout::bind(const TupleBuffer& tupleBuffer) {
+std::shared_ptr<ColumnLayoutTupleBuffer> ColumnLayout::bind(const TupleBuffer& tupleBuffer) {
 
     return std::make_shared<ColumnLayoutTupleBuffer>(tupleBuffer, capacity, this->shared_from_this(), columnOffsets);
 }
