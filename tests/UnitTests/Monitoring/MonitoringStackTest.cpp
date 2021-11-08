@@ -29,8 +29,8 @@
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Util/SystemResourcesReader.hpp>
-#include <Services/MonitoringService.hpp>
 #include <Util/Logger.hpp>
+#include <cpprest/json.h>
 
 namespace NES {
 

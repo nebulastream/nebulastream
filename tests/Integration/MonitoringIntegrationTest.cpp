@@ -23,14 +23,11 @@
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/IntCounter.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 
@@ -41,6 +38,7 @@
 #include <Components/NesWorker.hpp>
 #include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Services/MonitoringService.hpp>
+#include <cpprest/json.h>
 #include <cstdint>
 #include <memory>
 

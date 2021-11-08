@@ -36,6 +36,7 @@
 #include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
+#include <cpprest/json.h>
 #include <memory>
 
 namespace NES {

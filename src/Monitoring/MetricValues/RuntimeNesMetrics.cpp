@@ -24,6 +24,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cpprest/json.h>
 #include <cstring>
 
 namespace NES {
