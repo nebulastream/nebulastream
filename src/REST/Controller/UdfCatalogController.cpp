@@ -19,6 +19,8 @@
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <UdfCatalogService.pb.h>
 #include <Util/Logger.hpp>
+#include <cpprest/details/basic_types.h>
+#include <cpprest/http_msg.h>
 #include <algorithm>
 #include <iterator>
 
@@ -41,7 +43,7 @@ bool UdfCatalogController::verifyCorrectPathPrefix(const std::string& path_prefi
 
 bool UdfCatalogController::verifyCorrectEndpoints(const std::vector<std::string>& path,
                                                   const std::unordered_set<std::string>& endpoints,
-                                                  http_request& request) {
+                                                  web::http::http_request& request) {
     if (path.size() != 2 || endpoints.find(path[1]) == endpoints.end()) {
         std::stringstream ss;
         ss << "HTTP request with unknown path: /";
@@ -55,11 +57,11 @@ bool UdfCatalogController::verifyCorrectEndpoints(const std::vector<std::string>
 
 bool UdfCatalogController::verifyCorrectEndpoint(const std::vector<std::string>& path,
                                                  const std::string& endpoint,
-                                                 http_request& request) {
+                                                 web::http::http_request& request) {
     return verifyCorrectEndpoints(path, {endpoint}, request);
 }
 
-std::pair<bool, const std::string> UdfCatalogController::extractUdfNameParameter(http_request& request) {
+std::pair<bool, const std::string> UdfCatalogController::extractUdfNameParameter(web::http::http_request& request) {
     auto queries = web::uri::split_query(request.request_uri().query());
     auto query = queries.find("udfName");
     // Verify that the udfName parameter exists.
@@ -87,7 +89,7 @@ std::pair<bool, const std::string> UdfCatalogController::extractUdfNameParameter
     return {true, query->second};
 }
 
-void UdfCatalogController::handleGetUdfDescriptor(http_request& request) {
+void UdfCatalogController::handleGetUdfDescriptor(web::http::http_request& request) {
     auto [found, udfName] = extractUdfNameParameter(request);
     if (!found) {
         return;
@@ -116,7 +118,7 @@ void UdfCatalogController::handleGetUdfDescriptor(http_request& request) {
     successMessageImpl(request, response.SerializeAsString());
 }
 
-void UdfCatalogController::handleListUdfs(http_request& request) {
+void UdfCatalogController::handleListUdfs(web::http::http_request& request) {
     web::json::value result;
     // Initialize empty list of UDFs.
     result["udfs"] = web::json::value::array();
@@ -127,7 +129,7 @@ void UdfCatalogController::handleListUdfs(http_request& request) {
     successMessageImpl(request, result);
 }
 
-void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path, http_request& request) {
+void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
     if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoints(path, {"getUdfDescriptor", "listUdfs"}, request)) {
         return;
     }
@@ -141,7 +143,7 @@ void UdfCatalogController::handleGet(const std::vector<utility::string_t>& path,
     }
 }
 
-void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, http_request& request) {
+void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request) {
     if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoint(path, "registerJavaUdf", request)) {
         return;
     }
@@ -183,7 +185,7 @@ void UdfCatalogController::handlePost(const std::vector<utility::string_t>& path
         .wait();
 }
 
-void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& path, http_request& request) {
+void UdfCatalogController::handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) {
     if (!verifyCorrectPathPrefix(path[0], request) || !verifyCorrectEndpoint(path, "removeUdf", request)) {
         return;
     }
