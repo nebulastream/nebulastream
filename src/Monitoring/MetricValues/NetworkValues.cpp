@@ -118,7 +118,7 @@ web::json::value NetworkValues::toJson() const {
 
 void writeToBuffer(const NetworkValues& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(NetworkValues) < buf.getBufferSize(), "NetworkValues: Content does not fit in TupleBuffer");
+    NES_ASSERT(byteOffset + sizeof(NetworkValues) <= buf.getBufferSize(), "NetworkValues: Content does not fit in TupleBuffer");
 
     memcpy(tbuffer + byteOffset, &metric, sizeof(NetworkValues));
     buf.setNumberOfTuples(1);
