@@ -22,6 +22,8 @@
 
 #include <memory>
 namespace NES {
+class StreamCatalog;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class SerializableOperator;
 class SerializableOperator_SourceDetails;
@@ -51,6 +53,14 @@ class OperatorSerializationUtil {
      * @return OperatorNodePtr
      */
     static OperatorNodePtr deserializeOperator(SerializableOperator serializedOperator);
+
+    /**
+     * @brief De-serializes a source operator originated from a client
+     * Note: This method will not deserialize its children
+     * @param serializedOperator the serialized operator.
+     * @return OperatorNodePtr
+     */
+    static OperatorNodePtr deserializeClientOriginatedSourceOperator(SerializableOperator serializedClientOriginatedSourceOperator, StreamCatalogPtr streamCatalog);
 
     /**
     * @brief Serializes an source operator and all its properties to a SerializableOperator_SourceDetails object.
@@ -111,7 +121,16 @@ class OperatorSerializationUtil {
      * @param sourceDetails The source details object.
      * @return the serialized SerializableOperator_SourceDetails.
      */
-    static SerializableOperator_SourceDetails* serializeSourceSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
+    static SerializableOperator_SourceDetails* serializeSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
+                                                                               SerializableOperator_SourceDetails* sourceDetails);
+
+    /**
+     * @brief Serializes an source descriptor coming from a client and all its properties to a SerializableOperator_SourceDetails object.
+     * @param sourceDescriptor The source descriptor.
+     * @param sourceDetails The source details object.
+     * @return the serialized SerializableOperator_SourceDetails.
+     */
+    static SerializableOperator_SourceDetails* serializeClientOriginatedSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
                                                                                SerializableOperator_SourceDetails* sourceDetails);
 
     /**
@@ -120,6 +139,13 @@ class OperatorSerializationUtil {
      * @return SourceDescriptorPtr
      */
     static SourceDescriptorPtr deserializeSourceDescriptor(SerializableOperator_SourceDetails* sourceDetails);
+
+    /**
+     * @brief De-serializes the SerializableOperator_SourceDetails coming from a client and all its properties back to a sink SourceDescriptorPtr.
+     * @param sourceDetails The serialized source operator details.
+     * @return SourceDescriptorPtr
+     */
+    static SourceDescriptorPtr deserializeClientOriginatedSourceDescriptor(SerializableOperator_SourceDetails* serializedSourceDetails, StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Serializes an sink descriptor and all its properties to a SerializableOperator_SinkDetails object.
