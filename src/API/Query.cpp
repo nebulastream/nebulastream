@@ -112,7 +112,15 @@ Seq::Seq(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), o
 }
 
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
-    return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original seqWith() function
+    auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
+    std::vector<std::string> sourceNameLeft;
+    std::vector<std::string> sourceNameRight;
+    sourceNameLeft.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
+    sourceNameRight.emplace_back(originalQuery.getQueryPlan()->getSourceConsumed());
+    std::string streamNameLeft = sourceNameLeft[0] + "$" + timestamp;
+    std::string streamNameRight = sourceNameRight[0] + "$" + timestamp;
+    //TODO: not assign less than
+    return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType).filter(Attribute(streamNameLeft,UINT64) = Attribute(streamNameRight,UINT64));//call original seqWith() function
 }
 
 //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
