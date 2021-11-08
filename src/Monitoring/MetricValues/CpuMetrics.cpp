@@ -84,7 +84,9 @@ web::json::value CpuMetrics::toJson() {
 void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     uint64_t totalSize = byteOffset + sizeof(uint16_t) + sizeof(CpuValues) * (metrics.getNumCores() + 1);
-    NES_ASSERT(totalSize < buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");
+    NES_ASSERT(totalSize <= buf.getBufferSize(),
+               "CpuMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     auto coreNum = metrics.getNumCores();
     memcpy(tbuffer + byteOffset, &coreNum, sizeof(uint16_t));

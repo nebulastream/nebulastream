@@ -97,7 +97,7 @@ void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uin
     uint64_t intNum = metrics.getInterfaceNum();
 
     uint64_t totalSize = byteOffset + sizeof(uint64_t) + sizeof(NetworkValues) * intNum;
-    NES_ASSERT(totalSize < buf.getBufferSize(), "NetworkMetrics: Content does not fit in TupleBuffer");
+    NES_ASSERT(totalSize <= buf.getBufferSize(), "NetworkMetrics: Content does not fit in TupleBuffer");
 
     memcpy(tbuffer + byteOffset, &intNum, sizeof(uint64_t));
     byteOffset += sizeof(uint64_t);

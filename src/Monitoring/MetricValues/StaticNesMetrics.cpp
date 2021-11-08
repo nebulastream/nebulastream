@@ -133,7 +133,7 @@ bool StaticNesMetrics::operator!=(const StaticNesMetrics& rhs) const { return !(
 
 void writeToBuffer(const StaticNesMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(StaticNesMetrics) < buf.getBufferSize(),
+    NES_ASSERT(byteOffset + sizeof(StaticNesMetrics) <= buf.getBufferSize(),
                "RuntimeNesMetrics: Content does not fit in TupleBuffer");
     NES_ASSERT(sizeof(StaticNesMetrics) == StaticNesMetrics::getSchema("")->getSchemaSizeInBytes(),
                sizeof(StaticNesMetrics) << "!=" << StaticNesMetrics::getSchema("")->getSchemaSizeInBytes());

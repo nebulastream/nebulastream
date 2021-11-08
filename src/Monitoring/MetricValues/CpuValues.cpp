@@ -100,7 +100,7 @@ web::json::value CpuValues::toJson() const {
 
 void writeToBuffer(const CpuValues& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(CpuValues) < buf.getBufferSize(), "CpuValues: Content does not fit in TupleBuffer");
+    NES_ASSERT(byteOffset + sizeof(CpuValues) <= buf.getBufferSize(), "CpuValues: Content does not fit in TupleBuffer");
 
     memcpy(tbuffer + byteOffset, &metrics, sizeof(CpuValues));
     buf.setNumberOfTuples(1);
