@@ -17,18 +17,9 @@
 #ifndef NES_INCLUDE_REST_CONTROLLER_TOPOLOGY_CONTROLLER_HPP_
 #define NES_INCLUDE_REST_CONTROLLER_TOPOLOGY_CONTROLLER_HPP_
 
+#include <REST/CpprestForwardedRefs.hpp>
 #include <REST/Controller/BaseController.hpp>
 #include <REST/RestEngine.hpp>
-
-namespace web {
-namespace json {
-class value;
-}// namespace json
-
-namespace http {
-class http_request;
-}// namespace http
-}// namespace web
 
 namespace NES {
 

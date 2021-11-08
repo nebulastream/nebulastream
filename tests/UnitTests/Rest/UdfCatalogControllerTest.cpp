@@ -61,7 +61,7 @@ class UdfCatalogControllerTest : public testing::Test {
     static void verifyResponseStatusCode(const web::http::http_request& request,
                                          const web::http::status_code expectedStatusCode) {
         request.get_response()
-            .then([=](const pplx::task<http_response>& task) {
+        .then([=](const pplx::task<web::http::http_response>& task) {
                 auto response = task.get();
                 ASSERT_EQ(response.status_code(), expectedStatusCode);
             })
@@ -70,7 +70,7 @@ class UdfCatalogControllerTest : public testing::Test {
 
     static void verifyResponseResult(const web::http::http_request& request, const web::json::value& expected) {
         request.get_response()
-            .then([&expected](const pplx::task<http_response>& task) {
+        .then([&expected](const pplx::task<web::http::http_response>& task) {
                 auto response = task.get();
                 response.extract_json()
                     .then([&expected](const pplx::task<web::json::value>& task) {
@@ -99,10 +99,10 @@ class UdfCatalogControllerTest : public testing::Test {
         }
     }
 
-    [[nodiscard]] static GetJavaUdfDescriptorResponse extractGetJavaUdfDescriptorResponse(const http_request& request) {
+    [[nodiscard]] static GetJavaUdfDescriptorResponse extractGetJavaUdfDescriptorResponse(const web::http::http_request& request) {
         GetJavaUdfDescriptorResponse response;
         request.get_response()
-            .then([&response](const pplx::task<http_response>& task) {
+        .then([&response](const pplx::task<web::http::http_response>& task) {
                 task.get()
                     .extract_string(true)
                     .then([&response](const pplx::task<std::string>& task) {
@@ -130,7 +130,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostToRegisterJavaUdfDescriptor) {
     // when that message is passed to the controller
     udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerJavaUdf"}, request);
     // then the HTTP response is OK
-    verifyResponseStatusCode(request, status_codes::OK);
+    verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the catalog contains a Java UDF descriptor representing the Java UDF
     auto javaUdfDescriptor = udfCatalog->getUdfDescriptor(javaUdfRequest.udf_name());
     ASSERT_NE(javaUdfDescriptor, nullptr);
@@ -147,7 +147,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostShouldVerifyUrlPathPrefix) {
     // when that message is passed to the controller with the wrong path prefix
     udfCatalogController.handlePost({"wrong-path-prefix"}, request);
     // then the HTTP response is InternalServerError
-    verifyResponseStatusCode(request, status_codes::InternalError);
+    verifyResponseStatusCode(request, web::http::status_codes::InternalError);
 }
 
 TEST_F(UdfCatalogControllerTest, HandlePostChecksForKnownPath) {
@@ -156,7 +156,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostChecksForKnownPath) {
     // when that message is passed to the controller with an unknown path
     udfCatalogController.handlePost({UdfCatalogController::path_prefix, "unknown-path"}, request);
     // then the HTTP response is BadRequest
-    verifyResponseStatusCode(request, status_codes::BadRequest);
+    verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
 }
 
 TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
@@ -168,10 +168,10 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     // when that message is passed to the controller (which should cause an exception)
     udfCatalogController.handlePost({UdfCatalogController::path_prefix, "registerJavaUdf"}, request);
     // then the response is BadRequest
-    verifyResponseStatusCode(request, status_codes::BadRequest);
+    verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
     // make sure the response does not contain the stack trace
     request.get_response()
-        .then([=](const pplx::task<http_response>& task) {
+    .then([=](const pplx::task<web::http::http_response>& task) {
             auto response = task.get();
             response.extract_string(true)
                 .then([=](const pplx::task<std::string>& task) {
@@ -196,7 +196,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteToRemoveUdf) {
     request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf?udfName="s + udfName);
     udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
     // then the response is OK
-    verifyResponseStatusCode(request, status_codes::OK);
+    verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the UDF does no longer exist in the catalog
     ASSERT_EQ(udfCatalog->getUdfDescriptor(udfName), nullptr);
     // and the response shows that the UDF was removed
@@ -211,7 +211,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteSignalsIfUdfDidNotExist) {
     request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf?udfName=unknown_udf"s);
     udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
     // then the response is OK
-    verifyResponseStatusCode(request, status_codes::OK);
+    verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the response shows that the UDF was not removed
     web::json::value json;
     json["removed"] = web::json::value(false);
@@ -224,7 +224,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteExpectsUdfParameter) {
     request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf"s);
     udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
     // then the response is BadRequest
-    verifyResponseStatusCode(request, status_codes::BadRequest);
+    verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
 }
 
 TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreAnErrorCondition) {
@@ -233,7 +233,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteTreatsSuperfluousParametersAreAnErr
     request.set_request_uri(UdfCatalogController::path_prefix + "/removeUdf?udfName=some_udf&unknownParameter=unknownValue"s);
     udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "removeUdf"}, request);
     // then the response is BadRequest
-    verifyResponseStatusCode(request, status_codes::BadRequest);
+    verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
 }
 
 TEST_F(UdfCatalogControllerTest, HandleDeleteShouldVerifyUrlPathPrefix) {
@@ -242,7 +242,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteShouldVerifyUrlPathPrefix) {
     // when that message is passed to the controller with the wrong path prefix
     udfCatalogController.handleDelete({"wrong-path-prefix"}, request);
     // then the HTTP response is InternalServerError
-    verifyResponseStatusCode(request, status_codes::InternalError);
+    verifyResponseStatusCode(request, web::http::status_codes::InternalError);
 }
 
 TEST_F(UdfCatalogControllerTest, HandleDeleteChecksForKnownPath) {
@@ -251,7 +251,7 @@ TEST_F(UdfCatalogControllerTest, HandleDeleteChecksForKnownPath) {
     request.set_request_uri(UdfCatalogController::path_prefix + "/unknown-path?udfName=unknown_udf"s);
     udfCatalogController.handleDelete({UdfCatalogController::path_prefix, "unknown-path"}, request);
     // then the HTTP response is BadRequest
-    verifyResponseStatusCode(request, status_codes::BadRequest);
+    verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
 }
 
 TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
@@ -267,7 +267,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveJavaUdfDescriptor) {
     request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName="s + udfName);
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is OK
-    verifyResponseStatusCode(request, status_codes::OK);
+    verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the response message indicates that the UDF was found
     auto response = extractGetJavaUdfDescriptorResponse(request);
     ASSERT_TRUE(response.found());
@@ -285,7 +285,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetShouldReturnNotFoundIfUdfDoesNotExist)
     request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor?udfName=unknownUdf"s);
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is OK
-    verifyResponseStatusCode(request, status_codes::OK);
+    verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the response message indicates that the UDF was not found
     auto response = extractGetJavaUdfDescriptorResponse(request);
     ASSERT_FALSE(response.found());
@@ -297,7 +297,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetExpectsUdfParameter) {
     request.set_request_uri(UdfCatalogController::path_prefix + "/getUdfDescriptor"s);
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is BadRequest
-    verifyResponseStatusCode(request, status_codes::BadRequest);
+    verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
 }
 
 TEST_F(UdfCatalogControllerTest, HandleGetTreatsSuperfluousParametersAreAnErrorCondition) {
@@ -307,7 +307,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetTreatsSuperfluousParametersAreAnErrorC
                             + "/getUdfDescriptor?udfName=some_udf&unknownParameter=unknownValue"s);
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "getUdfDescriptor"}, request);
     // then the response is BadRequest
-    verifyResponseStatusCode(request, status_codes::BadRequest);
+    verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
 }
 
 TEST_F(UdfCatalogControllerTest, HandleGetShouldVerifyUrlPathPrefix) {
@@ -316,7 +316,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetShouldVerifyUrlPathPrefix) {
     // when that message is passed to the controller with the wrong path prefix
     udfCatalogController.handleGet({"wrong-path-prefix"}, request);
     // then the HTTP response is InternalServerError
-    verifyResponseStatusCode(request, status_codes::InternalError);
+    verifyResponseStatusCode(request, web::http::status_codes::InternalError);
 }
 
 TEST_F(UdfCatalogControllerTest, HandleGetChecksForKnownPath) {
@@ -325,7 +325,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetChecksForKnownPath) {
     request.set_request_uri(UdfCatalogController::path_prefix + "/unknown-path?udfName=unknown_udf"s);
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "unknown-path"}, request);
     // then the HTTP response is BadRequest
-    verifyResponseStatusCode(request, status_codes::BadRequest);
+    verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
 }
 
 TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
@@ -340,7 +340,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveListOfUdfs) {
     auto request = web::http::http_request{web::http::methods::GET};
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "listUdfs"}, request);
     // then the response is OK
-    verifyResponseStatusCode(request, status_codes::OK);
+    verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the response message contains a list of UDFs
     web::json::value json;
     json["udfs"][0] = web::json::value(udfName);
@@ -352,7 +352,7 @@ TEST_F(UdfCatalogControllerTest, HandleGetToRetrieveEmptyUdfList) {
     auto request = web::http::http_request{web::http::methods::GET};
     udfCatalogController.handleGet({UdfCatalogController::path_prefix, "listUdfs"}, request);
     // then the response is OK
-    verifyResponseStatusCode(request, status_codes::OK);
+    verifyResponseStatusCode(request, web::http::status_codes::OK);
     // and the response message contains an empty list of UDFs
     web::json::value json;
     json["udfs"] = web::json::value::array();

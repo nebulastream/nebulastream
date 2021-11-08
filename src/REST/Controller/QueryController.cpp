@@ -28,6 +28,7 @@
 #include <REST/std_service.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger.hpp>
+#include <cpprest/http_msg.h>
 #include <utility>
 
 namespace NES {
@@ -49,8 +50,8 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         auto const queryParameter = parameters.find("queryId");
         if (queryParameter == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
             return;
         }
@@ -74,8 +75,8 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
         auto param = parameters.find("queryId");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
         }
 
@@ -125,7 +126,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     std::string userRequest(body.begin(), body.end());
                     NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << userRequest
                                                                                            << "try to parse query");
-                    json::value req = json::value::parse(userRequest);
+                    web::json::value req = web::json::value::parse(userRequest);
                     NES_DEBUG("QueryController: handlePost -execute-query: get user query");
                     std::string userQuery;
                     if (req.has_field("userQuery")) {
@@ -140,8 +141,8 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
 
                     //Prepare the response
-                    json::value restResponse{};
-                    restResponse["queryId"] = json::value::number(queryId);
+                    web::json::value restResponse{};
+                    restResponse["queryId"] = web::json::value::number(queryId);
                     successMessageImpl(message, restResponse);
                     return;
                 } catch (const std::exception& exc) {
@@ -165,8 +166,8 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
 
                     if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
-                        json::value errorResponse{};
-                        errorResponse["detail"] = json::value::string("Invalid Protobuf message");
+                        web::json::value errorResponse{};
+                        errorResponse["detail"] = web::json::value::string("Invalid Protobuf message");
                         badRequestImpl(message, errorResponse);
                         return;
                     }
@@ -178,8 +179,8 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
 
                     QueryId queryId = queryService->addQueryRequest(*queryString, queryPlan, *placementStrategy);
 
-                    json::value restResponse{};
-                    restResponse["queryId"] = json::value::number(queryId);
+                    web::json::value restResponse{};
+                    restResponse["queryId"] = web::json::value::number(queryId);
                     successMessageImpl(message, restResponse);
                     return;
                 } catch (const std::exception& exc) {
@@ -210,8 +211,8 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
         auto param = parameters.find("queryId");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
         }
 
@@ -221,8 +222,8 @@ void QueryController::handleDelete(const std::vector<utility::string_t>& path, w
 
             bool success = queryService->validateAndQueueStopRequest(queryId);
             //Prepare the response
-            json::value result{};
-            result["success"] = json::value::boolean(success);
+            web::json::value result{};
+            result["success"] = web::json::value::boolean(success);
             successMessageImpl(request, result);
             return;
         } catch (QueryNotFoundException& exc) {

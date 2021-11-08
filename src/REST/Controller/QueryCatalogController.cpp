@@ -22,6 +22,7 @@
 #include <REST/runtime_utils.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Util/Logger.hpp>
+#include <cpprest/json.h>
 #include <utility>
 
 namespace NES {
@@ -43,8 +44,8 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
         auto param = parameters.find("status");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
         }
 
@@ -53,11 +54,11 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             std::string queryStatus = param->second;
 
             //Prepare the response
-            json::value result{};
+            web::json::value result{};
             std::map<uint64_t, std::string> queries = queryCatalog->getQueriesWithStatus(queryStatus);
 
             for (auto [key, value] : queries) {
-                result[key] = json::value::string(value);
+                result[key] = web::json::value::string(value);
             }
 
             if (queries.empty()) {
@@ -81,17 +82,17 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
     } else if (path[1] == "allRegisteredQueries") {
         try {
             //Prepare the response
-            json::value result{};
+            web::json::value result{};
             std::map<uint64_t, QueryCatalogEntryPtr> queryCatalogEntries = queryCatalog->getAllQueryCatalogEntries();
 
             uint64_t index = 0;
             for (auto& [queryId, catalogEntry] : queryCatalogEntries) {
-                json::value jsonEntry;
-                jsonEntry["queryId"] = json::value::number(queryId);
-                jsonEntry["queryString"] = json::value::string(catalogEntry->getQueryString());
-                jsonEntry["queryStatus"] = json::value::string(catalogEntry->getQueryStatusAsString());
+                web::json::value jsonEntry;
+                jsonEntry["queryId"] = web::json::value::number(queryId);
+                jsonEntry["queryString"] = web::json::value::string(catalogEntry->getQueryString());
+                jsonEntry["queryStatus"] = web::json::value::string(catalogEntry->getQueryStatusAsString());
                 jsonEntry["queryPlan"] = PlanJsonGenerator::getQueryPlanAsJson(catalogEntry->getInputQueryPlan());
-                jsonEntry["queryInfo"] = json::value::string(catalogEntry->getFailureReason());
+                jsonEntry["queryInfo"] = web::json::value::string(catalogEntry->getFailureReason());
                 result[index] = jsonEntry;
                 index++;
             }
@@ -119,8 +120,8 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
         auto param = parameters.find("queryId");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
         }
 
@@ -131,7 +132,7 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(std::stoi(queryId));
 
             //Prepare the response
-            json::value result{};
+            web::json::value result{};
             uint64_t processedBuffers = 0;
             if (auto shared_back_reference = coordinator.lock()) {
                 processedBuffers = shared_back_reference->getQueryStatistics(sharedQueryId)[0]->getProcessedBuffers();
@@ -157,8 +158,8 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
         auto param = parameters.find("queryId");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
         }
 
@@ -168,12 +169,12 @@ void QueryCatalogController::handleGet(const std::vector<utility::string_t>& pat
             std::string queryId = param->second;
 
             //Prepare the response
-            json::value result{};
+            web::json::value result{};
             const QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(std::stoi(queryId));
             std::string currentQueryStatus = queryCatalogEntry->getQueryStatusAsString();
             NES_DEBUG("Current query status=" << currentQueryStatus);
 
-            result["status"] = json::value::string(currentQueryStatus);
+            result["status"] = web::json::value::string(currentQueryStatus);
             successMessageImpl(request, result);
             return;
         } catch (const std::exception& exc) {

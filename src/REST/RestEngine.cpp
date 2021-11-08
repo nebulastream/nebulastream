@@ -24,6 +24,8 @@
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
+#include <cpprest/details/http_server.h>
+#include <cpprest/http_listener.h>
 #include <iostream>
 
 namespace NES {
@@ -50,31 +52,31 @@ RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
 RestEngine::~RestEngine() { NES_DEBUG("~RestEngine()"); }
 
 void RestEngine::initRestOpHandlers() {
-    _listener.support(methods::GET, [this](auto&& PH1) {
+    _listener.support(web::http::methods::GET, [this](auto&& PH1) {
         handleGet(std::forward<decltype(PH1)>(PH1));
     });
-    _listener.support(methods::PUT, [this](auto&& PH1) {
+    _listener.support(web::http::methods::PUT, [this](auto&& PH1) {
         handlePut(std::forward<decltype(PH1)>(PH1));
     });
-    _listener.support(methods::POST, [this](auto&& PH1) {
+    _listener.support(web::http::methods::POST, [this](auto&& PH1) {
         handlePost(std::forward<decltype(PH1)>(PH1));
     });
-    _listener.support(methods::DEL, [this](auto&& PH1) {
+    _listener.support(web::http::methods::DEL, [this](auto&& PH1) {
         handleDelete(std::forward<decltype(PH1)>(PH1));
     });
-    _listener.support(methods::PATCH, [this](auto&& PH1) {
+    _listener.support(web::http::methods::PATCH, [this](auto&& PH1) {
         handlePatch(std::forward<decltype(PH1)>(PH1));
     });
-    _listener.support(methods::MERGE, [this](auto&& PH1) {
+    _listener.support(web::http::methods::MERGE, [this](auto&& PH1) {
         handleMerge(std::forward<decltype(PH1)>(PH1));
     });
-    _listener.support(methods::TRCE, [this](auto&& PH1) {
+    _listener.support(web::http::methods::TRCE, [this](auto&& PH1) {
         handleTrace(std::forward<decltype(PH1)>(PH1));
     });
-    _listener.support(methods::HEAD, [this](auto&& PH1) {
+    _listener.support(web::http::methods::HEAD, [this](auto&& PH1) {
         handleHead(std::forward<decltype(PH1)>(PH1));
     });
-    _listener.support(methods::OPTIONS, [this](auto&& PH1) {
+    _listener.support(web::http::methods::OPTIONS, [this](auto&& PH1) {
         this->handlePreflightOptions(std::forward<decltype(PH1)>(PH1));
     });
 }
@@ -93,7 +95,7 @@ void RestEngine::setEndpoint(const std::string& value) {
     _listener = web::http::experimental::listener::http_listener(endpointBuilder.to_uri());
 }
 
-void RestEngine::handleGet(http_request request) {
+void RestEngine::handleGet(web::http::http_request request) {
     auto const path = getPath(request);
 
     if (auto const paths = splitPath(path); !paths.empty()) {
@@ -124,7 +126,7 @@ void RestEngine::handleGet(http_request request) {
     returnDefaultUnknownEndpointResponse(request);
 }
 
-void RestEngine::handlePost(http_request request) {
+void RestEngine::handlePost(web::http::http_request request) {
     auto path = getPath(request);
     auto paths = splitPath(path);
 
@@ -150,7 +152,7 @@ void RestEngine::handlePost(http_request request) {
     returnDefaultUnknownEndpointResponse(request);
 }
 
-void RestEngine::handleDelete(http_request request) {
+void RestEngine::handleDelete(web::http::http_request request) {
     NES_DEBUG("RestEngine::handleDelete");
     auto path = getPath(request);
     auto paths = splitPath(path);
@@ -172,31 +174,31 @@ void RestEngine::handleDelete(http_request request) {
     returnDefaultUnknownEndpointResponse(request);
 }
 
-utility::string_t RestEngine::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
+utility::string_t RestEngine::getPath(web::http::http_request& request) { return web::uri::decode(request.relative_uri().path()); }
 
-void RestEngine::handleHead(http_request request) { RestEngine::returnDefaultNotImplementedReply(methods::HEAD, request); }
+void RestEngine::handleHead(web::http::http_request request) { RestEngine::returnDefaultNotImplementedReply(web::http::methods::HEAD, request); }
 
-void RestEngine::handleMerge(http_request request) { RestEngine::returnDefaultNotImplementedReply(methods::MERGE, request); }
+void RestEngine::handleMerge(web::http::http_request request) { RestEngine::returnDefaultNotImplementedReply(web::http::methods::MERGE, request); }
 
-void RestEngine::handleTrace(http_request request) { RestEngine::returnDefaultNotImplementedReply(methods::TRCE, request); }
+void RestEngine::handleTrace(web::http::http_request request) { RestEngine::returnDefaultNotImplementedReply(web::http::methods::TRCE, request); }
 
 //TODO (covered in issue 1919 (Add option to configure whitelisted addresses for CORS))
 // the '*' should be replaced at some point, with specifically allowed addresses, provided by a config
 // Note: it is not possible to provide several allowed addresses at once, rather, a check should be performed here
-void RestEngine::handlePreflightOptions(const http_request& request) {
-    http_response response(status_codes::OK);
+void RestEngine::handlePreflightOptions(const web::http::http_request& request) {
+    web::http::http_response response(web::http::status_codes::OK);
     response.headers().add(("Access-Control-Allow-Origin"), ("*"));
     response.headers().add(("Access-Control-Allow-Methods"), ("DELETE"));
     response.headers().add(("Access-Control-Allow-Headers"), ("Content-Type"));
     request.reply(response);
 }
 
-void RestEngine::handlePut(http_request request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT, getPath(request)));
+void RestEngine::handlePut(web::http::http_request request) {
+    request.reply(web::http::status_codes::NotImplemented, responseNotImpl(web::http::methods::PUT, getPath(request)));
 }
 
-void RestEngine::handlePatch(http_request request) {
-    request.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH, getPath(request)));
+void RestEngine::handlePatch(web::http::http_request request) {
+    request.reply(web::http::status_codes::NotImplemented, responseNotImpl(web::http::methods::PATCH, getPath(request)));
 }
 
 std::string RestEngine::endpoint() const { return _listener.uri().to_string(); }
@@ -215,20 +217,20 @@ std::vector<utility::string_t> RestEngine::splitPath(const utility::string_t& re
     return web::uri::split_path(relativePath);
 }
 
-pplx::task<void> RestEngine::returnDefaultNotImplementedReply(const http::method& method, http_request& request) {
-    return request.reply(status_codes::NotImplemented, responseNotImpl(method, getPath(request)));
+pplx::task<void> RestEngine::returnDefaultNotImplementedReply(const web::http::method& method, web::http::http_request& request) {
+    return request.reply(web::http::status_codes::NotImplemented, responseNotImpl(method, getPath(request)));
 }
 
-json::value RestEngine::responseNotImpl(const http::method& method, utility::string_t path) {
-    auto response = json::value::object();
-    response["path"] = json::value::string(std::move(path));
-    response["http_method"] = json::value::string(method);
+web::json::value RestEngine::responseNotImpl(const web::http::method& method, utility::string_t path) {
+    auto response = web::json::value::object();
+    response["path"] = web::json::value::string(std::move(path));
+    response["http_method"] = web::json::value::string(method);
     return response;
 }
 
-void RestEngine::returnDefaultUnknownEndpointResponse(http_request request) {
+void RestEngine::returnDefaultUnknownEndpointResponse(web::http::http_request request) {
     web::json::value response{};
-    response["detail"] = json::value::string("Unknown endpoint");
+    response["detail"] = web::json::value::string("Unknown endpoint");
     BaseController::badRequestImpl(request, response);
 }
 

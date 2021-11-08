@@ -14,22 +14,35 @@
     limitations under the License.
 */
 
-#include <REST/Controller/ConnectivityController.hpp>
-#include <REST/std_service.hpp>
-#include <cpprest/json.h>
+#ifndef NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_H_
+#define NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_H_
 
-namespace NES {
+#include <string>
+namespace web {
 
-ConnectivityController::ConnectivityController() = default;
+namespace http {
+class http_request;
+class http_response;
+// same as basic_types.h from cpprest
+using method = std::string;
 
-void ConnectivityController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
-    if (path[1] == "check") {
-        web::json::value result{};
-        result["success"] = web::json::value::boolean(true);
-        successMessageImpl(message, result);
-    } else {
-        resourceNotFoundImpl(message);
-    }
-}
+namespace experimental {
+namespace listener {
+class http_listener;
+}// namespace experimental::listener
+}// namespace experimental
 
-}// namespace NES
+}// namespace http
+
+namespace json {
+class value;
+}// namespace json
+
+}// namespace web
+
+namespace utility {
+// same as basic_types.h from cpprest
+using string_t = std::string;
+}// namespace utility
+
+#endif//NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_H_

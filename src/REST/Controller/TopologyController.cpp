@@ -51,7 +51,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
                     NES_DEBUG("TopologyController::handlePost:addParent: userRequest: " << payload);
-                    json::value req = json::value::parse(payload);
+                    web::json::value req = web::json::value::parse(payload);
                     NES_DEBUG("TopologyController::handlePost:addParent: Json Parse Value: " << req);
                     uint64_t childId = std::stoull(req.at("childId").as_string());
                     uint64_t parentId = std::stoull(req.at("parentId").as_string());
@@ -84,8 +84,8 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     }
 
                     //Prepare the response
-                    json::value result{};
-                    result["Success"] = json::value::boolean(added);
+                    web::json::value result{};
+                    result["Success"] = web::json::value::boolean(added);
                     successMessageImpl(message, result);
                     return;
                 } catch (const std::exception& exc) {
@@ -112,7 +112,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
                     NES_DEBUG("TopologyController::handlePost:removeParent: userRequest: " << payload);
-                    json::value req = json::value::parse(payload);
+                    web::json::value req = web::json::value::parse(payload);
                     NES_DEBUG("TopologyController::handlePost:removeParent: Json Parse Value: " << req);
                     uint64_t childId = std::stoull(req.at("childId").as_string());
                     uint64_t parentId = std::stoull(req.at("parentId").as_string());
@@ -147,8 +147,8 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     }
 
                     //Prepare the response
-                    json::value result{};
-                    result["Success"] = json::value::boolean(added);
+                    web::json::value result{};
+                    result["Success"] = web::json::value::boolean(added);
                     successMessageImpl(message, result);
                     return;
                 } catch (const std::exception& exc) {

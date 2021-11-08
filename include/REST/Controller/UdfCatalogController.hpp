@@ -16,9 +16,8 @@
 
 #ifndef NES_INCLUDE_REST_CONTROLLER_UDF_CATALOG_CONTROLLER_HPP_
 #define NES_INCLUDE_REST_CONTROLLER_UDF_CATALOG_CONTROLLER_HPP_
+#include <REST/CpprestForwardedRefs.hpp>
 #include <REST/Controller/BaseController.hpp>
-#include <cpprest/details/basic_types.h>
-#include <cpprest/http_msg.h>
 #include <unordered_set>
 
 namespace NES {
@@ -37,39 +36,39 @@ class UdfCatalogController : public BaseController {
 
     explicit UdfCatalogController(UdfCatalogPtr udfCatalog) : udfCatalog(std::move(udfCatalog)) {}
 
-    void handleGet(const std::vector<utility::string_t>& path, http_request& request);
+    void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
-    void handlePost(const std::vector<utility::string_t>& path, http_request& request);
+    void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
-    void handleDelete(const std::vector<utility::string_t>& path, http_request& request);
+    void handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
   private:
     // Sanity check that the REST engine delegated the correct requests to this controller.
     // If this is not the case, this method constructs a InternalServerError response and returns false.
     // Handler methods should call this method in the beginning and immediately return when this method returns false.
-    [[nodiscard]] static bool verifyCorrectPathPrefix(const std::string& path_prefix, http_request& request);
+    [[nodiscard]] static bool verifyCorrectPathPrefix(const std::string& path_prefix, web::http::http_request& request);
 
     // Check that a handler method was called for a known REST endpoint.
     // If this is not the case, this method constructs a BadRequest response and returns false.
     // Handler methods should call this method in the beginning and immediately return when this method returns false.
     [[nodiscard]] static bool verifyCorrectEndpoints(const std::vector<std::string>& path,
                                                      const std::unordered_set<std::string>& endpoints,
-                                                     http_request& request);
+                                                     web::http::http_request& request);
 
     // Convenience method to check for a single known REST endpoint.
     [[nodiscard]] static bool
-    verifyCorrectEndpoint(const std::vector<std::string>& path, const std::string& endpoint, http_request& request);
+    verifyCorrectEndpoint(const std::vector<std::string>& path, const std::string& endpoint, web::http::http_request& request);
 
     // Extract the udfName parameter from the URL query string.
     // This method checks if the udfName parameter exists and if it's the only parameter.
     // If either is not true, this method constructs a BadRequest response and returns false as the first return value.
     // Otherwise, the UDF name is returned as the second return value;
     // Handler methods may call this method in the beginning and should immediately return when this method returns false.
-    [[nodiscard]] static std::pair<bool, const std::string> extractUdfNameParameter(http_request& request);
+    [[nodiscard]] static std::pair<bool, const std::string> extractUdfNameParameter(web::http::http_request& request);
 
-    void handleGetUdfDescriptor(http_request& request);
+    void handleGetUdfDescriptor(web::http::http_request& request);
 
-    void handleListUdfs(http_request& request);
+    void handleListUdfs(web::http::http_request& request);
 
     UdfCatalogPtr udfCatalog;
 };

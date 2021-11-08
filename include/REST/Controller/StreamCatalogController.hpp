@@ -17,9 +17,8 @@
 #ifndef NES_INCLUDE_REST_CONTROLLER_STREAM_CATALOG_CONTROLLER_HPP_
 #define NES_INCLUDE_REST_CONTROLLER_STREAM_CATALOG_CONTROLLER_HPP_
 
+#include <REST/CpprestForwardedRefs.hpp>
 #include <REST/Controller/BaseController.hpp>
-#include <cpprest/details/basic_types.h>
-#include <cpprest/http_msg.h>
 
 namespace NES {
 class StreamCatalog;
