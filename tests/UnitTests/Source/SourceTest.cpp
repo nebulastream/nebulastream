@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#define _TURN_OFF_PLATFORM_STRING // for cpprest/details/basic_types.h
+#define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <cstring>

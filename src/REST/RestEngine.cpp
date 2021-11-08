@@ -174,13 +174,21 @@ void RestEngine::handleDelete(web::http::http_request request) {
     returnDefaultUnknownEndpointResponse(request);
 }
 
-utility::string_t RestEngine::getPath(web::http::http_request& request) { return web::uri::decode(request.relative_uri().path()); }
+utility::string_t RestEngine::getPath(web::http::http_request& request) {
+    return web::uri::decode(request.relative_uri().path());
+}
 
-void RestEngine::handleHead(web::http::http_request request) { RestEngine::returnDefaultNotImplementedReply(web::http::methods::HEAD, request); }
+void RestEngine::handleHead(web::http::http_request request) {
+    RestEngine::returnDefaultNotImplementedReply(web::http::methods::HEAD, request);
+}
 
-void RestEngine::handleMerge(web::http::http_request request) { RestEngine::returnDefaultNotImplementedReply(web::http::methods::MERGE, request); }
+void RestEngine::handleMerge(web::http::http_request request) {
+    RestEngine::returnDefaultNotImplementedReply(web::http::methods::MERGE, request);
+}
 
-void RestEngine::handleTrace(web::http::http_request request) { RestEngine::returnDefaultNotImplementedReply(web::http::methods::TRCE, request); }
+void RestEngine::handleTrace(web::http::http_request request) {
+    RestEngine::returnDefaultNotImplementedReply(web::http::methods::TRCE, request);
+}
 
 //TODO (covered in issue 1919 (Add option to configure whitelisted addresses for CORS))
 // the '*' should be replaced at some point, with specifically allowed addresses, provided by a config

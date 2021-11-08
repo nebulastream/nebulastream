@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#define _TURN_OFF_PLATFORM_STRING // for cpprest/details/basic_types.h
+#define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>

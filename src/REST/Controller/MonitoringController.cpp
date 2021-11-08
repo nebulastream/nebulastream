@@ -113,7 +113,8 @@ void MonitoringController::handlePost(const std::vector<utility::string_t>& path
                                 }
                             } else {
                                 NES_DEBUG("MonitoringController: POST metrics for " + strNodeId + " invalid");
-                                message.reply(web::http::status_codes::BadRequest, "The provided node ID " + strNodeId + " is not valid.");
+                                message.reply(web::http::status_codes::BadRequest,
+                                              "The provided node ID " + strNodeId + " is not valid.");
                             }
                             return;
                         }//otherwise get metrics from all nodes via prometheus

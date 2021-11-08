@@ -52,7 +52,7 @@ TEST_F(TopologyControllerTest, testAddParentTopologyWhenChildParentAreEqual) {
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "addParent"}, msg);
     msg.get_response()
-    .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -94,7 +94,7 @@ TEST_F(TopologyControllerTest, testAddParentTopologyWhenChildIsAbsent) {
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "addParent"}, msg);
     msg.get_response()
-    .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -136,7 +136,7 @@ TEST_F(TopologyControllerTest, testAddParentTopologyWhenParentIsAbsent) {
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "addParent"}, msg);
     msg.get_response()
-    .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -173,7 +173,7 @@ TEST_F(TopologyControllerTest, testRemoveParentTopologyWhenChildParentAreEqual) 
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "removeParent"}, msg);
     msg.get_response()
-    .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -215,7 +215,7 @@ TEST_F(TopologyControllerTest, testRemoveParentTopologyWhenChildIsAbsent) {
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "removeParent"}, msg);
     msg.get_response()
-    .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -257,7 +257,7 @@ TEST_F(TopologyControllerTest, testRemoveParentTopologyWhenParentIsAbsent) {
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "removeParent"}, msg);
     msg.get_response()
-    .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
