@@ -100,7 +100,7 @@ class BaseController {
     static void noContentImpl(const web::http::http_request& message);
 
     template<typename T,
-    std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
+             std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
     static void successMessageImpl(const web::http::http_request& request, const T& result) {
         web::http::http_response response(web::http::status_codes::OK);
         response.headers().add("Access-Control-Allow-Origin", "*");
@@ -116,7 +116,7 @@ class BaseController {
      * @param detail The detailed error message.
      */
     template<typename T,
-    std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
+             std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
     static void badRequestImpl(const web::http::http_request& request, const T& detail) {
         // Returns error with http code 400 to indicate bad user request
         web::http::http_response response(web::http::status_codes::BadRequest);

@@ -61,7 +61,7 @@ class UdfCatalogControllerTest : public testing::Test {
     static void verifyResponseStatusCode(const web::http::http_request& request,
                                          const web::http::status_code expectedStatusCode) {
         request.get_response()
-        .then([=](const pplx::task<web::http::http_response>& task) {
+            .then([=](const pplx::task<web::http::http_response>& task) {
                 auto response = task.get();
                 ASSERT_EQ(response.status_code(), expectedStatusCode);
             })
@@ -70,7 +70,7 @@ class UdfCatalogControllerTest : public testing::Test {
 
     static void verifyResponseResult(const web::http::http_request& request, const web::json::value& expected) {
         request.get_response()
-        .then([&expected](const pplx::task<web::http::http_response>& task) {
+            .then([&expected](const pplx::task<web::http::http_response>& task) {
                 auto response = task.get();
                 response.extract_json()
                     .then([&expected](const pplx::task<web::json::value>& task) {
@@ -99,10 +99,11 @@ class UdfCatalogControllerTest : public testing::Test {
         }
     }
 
-    [[nodiscard]] static GetJavaUdfDescriptorResponse extractGetJavaUdfDescriptorResponse(const web::http::http_request& request) {
+    [[nodiscard]] static GetJavaUdfDescriptorResponse
+    extractGetJavaUdfDescriptorResponse(const web::http::http_request& request) {
         GetJavaUdfDescriptorResponse response;
         request.get_response()
-        .then([&response](const pplx::task<web::http::http_response>& task) {
+            .then([&response](const pplx::task<web::http::http_response>& task) {
                 task.get()
                     .extract_string(true)
                     .then([&response](const pplx::task<std::string>& task) {
@@ -171,7 +172,7 @@ TEST_F(UdfCatalogControllerTest, HandlePostHandlesException) {
     verifyResponseStatusCode(request, web::http::status_codes::BadRequest);
     // make sure the response does not contain the stack trace
     request.get_response()
-    .then([=](const pplx::task<web::http::http_response>& task) {
+        .then([=](const pplx::task<web::http::http_response>& task) {
             auto response = task.get();
             response.extract_string(true)
                 .then([=](const pplx::task<std::string>& task) {

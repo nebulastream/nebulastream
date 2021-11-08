@@ -35,8 +35,7 @@ std::string Iterator::dataJson() {
             jsonObject[fieldName] = web::json::value(fieldValue);
         }
     } catch (web::json::json_exception& jsonException) {
-        NES_ERROR("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values"
-                  << jsonException.what());
+        NES_ERROR("FormatIterator::dataJson: Error when creating JSON object from TupleBuffer values" << jsonException.what());
         return "";
     }
     return jsonObject.serialize();

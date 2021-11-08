@@ -19,9 +19,9 @@
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <UdfCatalogService.pb.h>
 #include <Util/Logger.hpp>
+#include <algorithm>
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_msg.h>
-#include <algorithm>
 #include <iterator>
 
 namespace NES {
