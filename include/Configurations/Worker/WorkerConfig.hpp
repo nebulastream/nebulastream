@@ -244,9 +244,19 @@ class WorkerConfig {
     [[nodiscard]] const StringConfigOption& getWorkerPinList() const;
     void setWorkerPinList(std::string list);
 
+    /**
+    * @brief getter/setter for workerPinList
+    * @return
+    */
     [[nodiscard]] bool isNumaAware() const;
-
     void setNumaAware(bool status);
+
+    /**
+    * @brief getter/setter for workerPinList
+    * @return
+    */
+    BoolConfigOption getEnableMonitoring();
+    void setEnableMonitoring(bool enableMonitoring);
 
   private:
     StringConfigOption localWorkerIp;
@@ -268,8 +278,10 @@ class WorkerConfig {
     StringConfigOption queryCompilerPipeliningStrategy;
     // indicates, which output buffer allocation strategy should be used.
     StringConfigOption queryCompilerOutputBufferOptimizationLevel;
-    /// numa awarness
+    // numa awareness
     BoolConfigOption numaAwareness;
+    // enable monitoring
+    BoolConfigOption enableMonitoring;
 
     StringConfigOption sourcePinList;
     StringConfigOption workerPinList;

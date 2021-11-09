@@ -224,6 +224,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     GlobalQueryPlanPtr globalQueryPlan;
     WorkerConfigPtr workerConfig;
     Catalogs::UdfCatalogPtr udfCatalog;
+    bool enableMonitoring;
 };
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 

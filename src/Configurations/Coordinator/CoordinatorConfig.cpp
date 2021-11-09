@@ -196,6 +196,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setQueryBatchSize(queryBatchSize->getDefaultValue());
     setQueryMergerRule(queryMergerRule->getDefaultValue());
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
+    setEnableMonitoring(enableMonitoring->getDefaultValue());
 }
 
 std::string CoordinatorConfig::toString() {
