@@ -35,12 +35,19 @@ MonitoringAgent::MonitoringAgent()
     NES_DEBUG("MonitoringAgent: Init with default monitoring plan");
 }
 
+MonitoringAgent::MonitoringAgent(bool enabled)
+    : monitoringPlan(MonitoringPlan::DefaultPlan()), catalog(MetricCatalog::NesMetrics()), schema(monitoringPlan->createSchema()),
+      enabled(enabled) {
+    NES_DEBUG("MonitoringAgent: Init with enabled=" << enabled);
+}
 MonitoringAgent::MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog, bool enabled)
     : monitoringPlan(monitoringPlan), catalog(std::move(catalog)), schema(monitoringPlan->createSchema()), enabled(enabled) {
     NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString());
 }
 
 MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
+
+MonitoringAgentPtr MonitoringAgent::create(bool enabled) { return std::make_shared<MonitoringAgent>(enabled); }
 
 MonitoringAgentPtr
 MonitoringAgent::create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog, bool enabled) {
@@ -85,10 +92,11 @@ std::optional<RuntimeNesMetricsPtr> MonitoringAgent::getRuntimeNesMetrics() cons
     return std::nullopt;
 }
 
-void MonitoringAgent::enableMonitoring() { enabled = true; }
-
-void MonitoringAgent::disableMonitoring() { enabled = false; }
-
 bool MonitoringAgent::isEnabled() const { return enabled; }
+
+void MonitoringAgent::setEnableMonitoring(bool enable) {
+    NES_INFO("MonitoringAgent: Setting enable monitoring=" << enable);
+    enable = enabled;
+}
 
 }// namespace NES

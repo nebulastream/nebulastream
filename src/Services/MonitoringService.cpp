@@ -39,11 +39,11 @@ MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPt
     monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology);
 }
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enable) {
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enable)
+    : topology(topology), enableMonitoring(enable) {
     NES_DEBUG("MonitoringService: Initializing with monitoring=" << enable);
-    monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology);
+    monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology, enableMonitoring);
 }
-
 
 MonitoringService::~MonitoringService() { NES_DEBUG("MonitoringService: Shutting down"); }
 

@@ -44,8 +44,10 @@ using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeNesMetrics>;
 class MonitoringAgent {
   public:
     MonitoringAgent();
+    MonitoringAgent(bool enabled);
     MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog, bool enabled);
     static MonitoringAgentPtr create();
+    static MonitoringAgentPtr create(bool enabled);
     static MonitoringAgentPtr create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog, bool enabled);
 
     /**
@@ -83,20 +85,16 @@ class MonitoringAgent {
     [[nodiscard]] std::optional<RuntimeNesMetricsPtr> getRuntimeNesMetrics() const;
 
     /**
-     * enables collecting of metrics
+     * @brief Enables collecting of metrics
+     * @param true if enable, else false
      */
-    void enableMonitoring();
-
-    /**
-     * disables collecting of metrics
-     */
-    void disableMonitoring();
+    void setEnableMonitoring(bool enable);
 
     /**
      * checks if monitoring is enabled
      * @return true if enabled. else false
      */
-    bool isEnabled() const;
+    [[nodiscard]] bool isEnabled() const;
 
   private:
     MonitoringPlanPtr monitoringPlan;

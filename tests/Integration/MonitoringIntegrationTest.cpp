@@ -157,7 +157,6 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
 TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEnabled) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -244,10 +243,13 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
 TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDisabled) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
+    bool monitoring = false;
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
+    crdConf->setEnableMonitoring(monitoring);
     wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setEnableMonitoring(monitoring);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -294,6 +296,7 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDis
     EXPECT_EQ(jsons.size(), nodeNumber);
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
+    auto emptyStaticNesMetrics = StaticNesMetrics{};
 
     for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
@@ -303,13 +306,13 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDis
         json = json["staticNesMetrics"];
 
         EXPECT_TRUE(json.has_field("TotalMemory"));
-        EXPECT_TRUE(json["TotalMemory"].as_double() > 1);
+        EXPECT_TRUE(json["TotalMemory"].as_double() == emptyStaticNesMetrics.totalMemoryBytes);
 
         EXPECT_TRUE(json.has_field("CpuCoreNum"));
-        EXPECT_TRUE(json["CpuCoreNum"].as_double() >= 1);
+        EXPECT_TRUE(json["CpuCoreNum"].as_double() == emptyStaticNesMetrics.cpuCoreNum);
 
         EXPECT_TRUE(json.has_field("TotalCPUJiffies"));
-        EXPECT_TRUE(json["TotalCPUJiffies"].as_double() >= 1);
+        EXPECT_TRUE(json["TotalCPUJiffies"].as_double() == emptyStaticNesMetrics.totalCPUJiffies);
 
         EXPECT_TRUE(json.has_field("CpuPeriodUS"));
         EXPECT_TRUE(json.has_field("CpuQuotaUS"));

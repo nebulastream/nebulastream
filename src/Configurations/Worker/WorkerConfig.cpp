@@ -81,6 +81,8 @@ WorkerConfig::WorkerConfig() {
     workerPinList = ConfigOption<std::string>::create("workerPinList", "", "comma separated list of where to map the worker");
 
     numaAwareness = ConfigOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
+
+    enableMonitoring = ConfigOption<bool>::create("enableMonitoring", true, "Enable monitoring");
 }
 
 void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -158,6 +160,10 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             } else {
                 numaAwareness->setValue(true);
             }
+            if (!config["enableMonitoring"].As<std::string>().empty()
+                && config["enableMonitoring"].As<std::string>() != "\n") {
+                setEnableMonitoring(config["enableMonitoring"].As<bool>());
+            }
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
                       "values. "
@@ -210,6 +216,8 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setWorkerPinList(it->second);
             } else if (it->first == "--numaAwareness") {
                 setNumaAware(true);
+            } else if (it->first == "--enableMonitoring" && !it->second.empty()) {
+                setEnableMonitoring((it->second == "true"));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -240,6 +248,7 @@ void WorkerConfig::resetWorkerOptions() {
     setQueryCompilerOutputBufferAllocationStrategy(queryCompilerOutputBufferOptimizationLevel->getDefaultValue());
     setWorkerPinList(workerPinList->getDefaultValue());
     setSourcePinList(sourcePinList->getDefaultValue());
+    setEnableMonitoring(enableMonitoring->getDefaultValue());
 }
 
 std::string WorkerConfig::toString() {
@@ -259,6 +268,7 @@ std::string WorkerConfig::toString() {
     ss << queryCompilerOutputBufferOptimizationLevel->toStringNameCurrentValue();
     ss << workerPinList->toStringNameCurrentValue();
     ss << sourcePinList->toStringNameCurrentValue();
+    ss << enableMonitoring->toStringNameCurrentValue();
     return ss.str();
 }
 
@@ -352,6 +362,12 @@ void WorkerConfig::setSourcePinList(const std::string list) {
 bool WorkerConfig::isNumaAware() const { return numaAwareness->getValue(); }
 
 void WorkerConfig::setNumaAware(bool status) { numaAwareness->setValue(status); }
+
+BoolConfigOption WorkerConfig::getEnableMonitoring() { return enableMonitoring; }
+
+void WorkerConfig::setEnableMonitoring(bool enableMonitoring) {
+    WorkerConfig::enableMonitoring->setValue(enableMonitoring);
+}
 
 }// namespace Configurations
 }// namespace NES
