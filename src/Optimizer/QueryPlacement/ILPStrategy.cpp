@@ -106,14 +106,14 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         std::string operatorParentID = std::to_string(operatorParent->getId());
 
         auto distance = position - distances.find(operatorParentID)->second;
-        NES_DEBUG("distance: " << operatorID << " " << distance << std::endl);
+        NES_DEBUG("distance: " << operatorID << " " << distance);
 
         std::any prop = operatorNode->getProperty("output");
         auto output = std::any_cast<double>(prop);
 
         cost_net = cost_net + z3Context->real_val(std::to_string(output).c_str()) * distance;
     }
-    NES_DEBUG("cost_net: " << cost_net << std::endl);
+    NES_DEBUG("cost_net: " << cost_net);
 
     // 3. Calculate the node over-utilization cost.
     // Over-utilization cost = sum of the over-utilization of all nodes
