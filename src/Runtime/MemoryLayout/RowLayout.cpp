@@ -23,7 +23,13 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-RowLayout::RowLayout(const SchemaPtr& schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema) {}
+RowLayout::RowLayout(const SchemaPtr& schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema) {
+    uint64_t offsetCounter = 0;
+    for (auto& fieldSize : physicalFieldSizes) {
+        fieldOffSets.emplace_back(offsetCounter);
+        offsetCounter += fieldSize;
+    }
+}
 
 /**
  *
