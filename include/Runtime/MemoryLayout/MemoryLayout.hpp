@@ -60,6 +60,8 @@ class MemoryLayout {
     virtual uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) = 0;
     uint64_t getCapacity() const;
 
+    const SchemaPtr& getSchema() const;
+
   protected:
     const uint64_t bufferSize;
     const SchemaPtr schema;
