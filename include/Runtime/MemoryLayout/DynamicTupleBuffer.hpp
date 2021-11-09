@@ -86,7 +86,7 @@ class DynamicTuple {
      */
     DynamicTuple(uint64_t recordIndex,
                   MemoryLayoutPtr  memoryLayout,
-                  TupleBuffer& buffer);
+                  TupleBuffer buffer);
 
     /**
      * @brief Accesses an individual field in the record.
@@ -114,7 +114,7 @@ class DynamicTupleBuffer {
      * @param memoryLayout memory layout to calculate field offset
      * @param tupleBuffer buffer that we want to access
      */
-    explicit DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer& buffer);
+    explicit DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer);
 
     /**
     * @brief This method returns the maximum number of records, so the capacity.
