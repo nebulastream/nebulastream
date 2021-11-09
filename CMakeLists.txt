@@ -67,15 +67,14 @@ elseif(NES_BUILD_DEPENDENCIES_LOCAL)
     FetchContent_Declare(
             nesdebs
             GIT_REPOSITORY  https://github.com/nebulastream/nebulastream-dependencies.git
-            GIT_TAG ${VCPKG_BINARY_VERSION}
+            #GIT_TAG ${VCPKG_BINARY_VERSION}
+            GIT_TAG  origin/fix-VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS
     )
     FetchContent_Populate(nesdebs)
     set(CMAKE_TOOLCHAIN_FILE ${nesdebs_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
             CACHE STRING "CMake toolchain file")
     set(VCPKG_MANIFEST_DIR ${nesdebs_SOURCE_DIR} CACHE STRING "vcpkg manifest dir")
     set(VCPKG_OVERLAY_TRIPLETS ${nesdebs_SOURCE_DIR}/custom-triplets/ CACHE STRING "CMake toolchain file")
-    set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
-    message(STATUS "output test" ${VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS})
     set(NES_DEPENDENCIES_BINARY_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/vcpkg_installed/${VCPKG_TARGET_TRIPLET})
 else ()
     message(STATUS "Use prebuild dependencies")
