@@ -26,7 +26,7 @@ uint64_t MemoryLayout::getRecordSize() const { return recordSize; }
 
 const std::vector<FIELD_SIZE>& MemoryLayout::getFieldSizes() const { return physicalFieldSizes; }
 
-MemoryLayout::MemoryLayout(uint64_t bufferSize, const SchemaPtr& schema) : bufferSize(bufferSize), schema(schema), recordSize(0) {
+MemoryLayout::MemoryLayout(uint64_t bufferSize, SchemaPtr schema) : bufferSize(bufferSize), schema(schema), recordSize(0) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (size_t fieldIndex = 0; fieldIndex < schema->fields.size(); fieldIndex++) {
         auto field = schema->fields[fieldIndex];
@@ -35,8 +35,8 @@ MemoryLayout::MemoryLayout(uint64_t bufferSize, const SchemaPtr& schema) : buffe
         recordSize += physicalFieldSize;
         nameFieldIndexMap[field->getName()] = fieldIndex;
     }
-
-    capacity = bufferSize / recordSize;
+    // calculate the buffer capacity only if the record size is larger then zero
+    capacity = recordSize > 0 ? bufferSize / recordSize : 0;
 }
 
 std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& fieldName) const {
@@ -46,5 +46,5 @@ std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& f
     }
     return std::optional<uint64_t>(nameFieldIt->second);
 }
- uint64_t MemoryLayout::getCapacity() const { return capacity; }
+uint64_t MemoryLayout::getCapacity() const { return capacity; }
 }// namespace NES::Runtime::MemoryLayouts

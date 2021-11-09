@@ -31,7 +31,7 @@ using FIELD_OFFSET = uint64_t;
 class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLayout> {
 
   public:
-    RowLayout(const SchemaPtr& schema, uint64_t bufferSize);
+    RowLayout(SchemaPtr schema, uint64_t bufferSize);
 
     /**
      * @brief Creates a DynamicColumnLayout as a shared_ptr
@@ -39,7 +39,7 @@ class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLa
      * @param checkBoundaries
      * @return created DynamicRowLayout as a shared ptr
      */
-    static std::shared_ptr<RowLayout> create(const SchemaPtr& schema, uint64_t bufferSize);
+    static std::shared_ptr<RowLayout> create(SchemaPtr schema, uint64_t bufferSize);
 
     /**
      * @return fieldOffSets vector

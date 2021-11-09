@@ -21,7 +21,7 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-ColumnLayout::ColumnLayout(const SchemaPtr& schema, uint64_t bufferSize): MemoryLayout(bufferSize, schema) {
+ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize): MemoryLayout(bufferSize, schema) {
     uint64_t offsetCounter = 0;
     for (auto& fieldSize : physicalFieldSizes) {
         columnOffsets.emplace_back(offsetCounter);
@@ -29,7 +29,7 @@ ColumnLayout::ColumnLayout(const SchemaPtr& schema, uint64_t bufferSize): Memory
     }
 }
 
-ColumnLayoutPtr ColumnLayout::create(const SchemaPtr& schema, uint64_t bufferSize) {
+ColumnLayoutPtr ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize) {
     return std::make_shared<ColumnLayout>(schema, bufferSize);
 }
 
