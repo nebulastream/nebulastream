@@ -17,7 +17,7 @@
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Persistence/DefaultStreamCatalogPersistence.hpp>
+#include <Configurations/Persistence/DefaultStreamCatalogPersistence.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

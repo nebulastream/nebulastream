@@ -15,7 +15,7 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Persistence/FilePhysicalStreamsPersistence.hpp>
+#include <Configurations/Persistence/FilePhysicalStreamsPersistence.hpp>
 #include <Util/Logger.hpp>
 #include <filesystem>
 #include <fstream>
@@ -45,7 +45,7 @@ bool FilePhysicalStreamsPersistence::persistConfiguration(SourceConfigPtr source
     try {
         std::ofstream ofs(filePath);
         ofs << sourceConfig->toJson();
-        ofs << "\n";
+        ofs << std::endl;
         ofs.close();
         return true;
     } catch (std::exception& ex) {

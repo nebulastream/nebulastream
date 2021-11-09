@@ -16,12 +16,15 @@
 
 #ifndef NEBULASTREAM_DEFAULTSTREAMCATALOGPERSISTENCE_H
 #define NEBULASTREAM_DEFAULTSTREAMCATALOGPERSISTENCE_H
-#include <Persistence/StreamCatalogPersistence.hpp>
+#include <Configurations/Persistence/StreamCatalogPersistence.hpp>
 
 namespace NES {
 class DefaultStreamCatalogPersistence;
 typedef std::shared_ptr<DefaultStreamCatalogPersistence> DefaultStreamCatalogPersistencePtr;
 
+/**
+ * Default persistence for the stream catalog
+ */
 class DefaultStreamCatalogPersistence : public StreamCatalogPersistence {
   public:
     static DefaultStreamCatalogPersistencePtr create();

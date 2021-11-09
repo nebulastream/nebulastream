@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Persistence/FileStreamCatalogPersistence.hpp>
+#include <Configurations/Persistence/FileStreamCatalogPersistence.hpp>
 #include <Util/Logger.hpp>
 #include <filesystem>
 #include <fstream>
@@ -44,7 +44,7 @@ bool FileStreamCatalogPersistence::persistLogicalStream(const std::string& logic
 
         std::ofstream ofs(filePath);
         ofs << schemaString;
-        ofs << "\n";
+        ofs << std::endl;
         ofs.close();
         return true;
     } catch (std::exception& ex) {

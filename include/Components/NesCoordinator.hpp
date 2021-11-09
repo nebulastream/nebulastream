@@ -18,9 +18,10 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/Persistence/StreamCatalogPersistence.hpp>
+#include <Configurations/Persistence/StreamCatalogPersistenceFactory.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <Persistence/StreamCatalogPersistence.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
@@ -176,8 +177,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     uint32_t numberOfBuffersPerPipeline;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
+    StreamCatalogPersistenceType persistenceType;
     std::string persistenceDir;
-    std::string persistenceType;
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;

@@ -56,7 +56,9 @@ CoordinatorConfig::CoordinatorConfig() {
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
 
     persistenceType = ConfigOption<std::string>::create("persistenceType", "none", "Type of persistence (support: none, file");
-    persistenceDir = ConfigOption<std::string>::create("persistenceDir", "/tmp/nes/data/", "Directory for Persistence");
+    persistenceDir = ConfigOption<std::string>::create("persistenceDir",
+                                                       std::filesystem::temp_directory_path() / "nes" / "data",
+                                                       "Directory for Persistence");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {

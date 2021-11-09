@@ -14,21 +14,30 @@
     limitations under the License.
 */
 
-#ifndef NES_DEFAULTPHYSICALSTREAMSPERSISTENCE_H
-#define NES_DEFAULTPHYSICALSTREAMSPERSISTENCE_H
-#include <Persistence/PhysicalStreamsPersistence.hpp>
-namespace NES {
-class DefaultPhysicalStreamsPersistence;
-typedef std::shared_ptr<DefaultPhysicalStreamsPersistence> DefaultPhysicalStreamsPersistencePtr;
+#ifndef NES_FILEPHYSICALSTREAMSPERSISTENCE_H
+#define NES_FILEPHYSICALSTREAMSPERSISTENCE_H
 
-class DefaultPhysicalStreamsPersistence : public PhysicalStreamsPersistence {
+#include <Configurations/Persistence/PhysicalStreamsPersistence.hpp>
+#include <filesystem>
+
+namespace NES {
+class FilePhysicalStreamsPersistence;
+typedef std::shared_ptr<FilePhysicalStreamsPersistence> FilePhysicalStreamsPersistencePtr;
+
+/**
+ * Simple file-based persistence for physical streams
+ */
+class FilePhysicalStreamsPersistence : public PhysicalStreamsPersistence {
   public:
-    static DefaultPhysicalStreamsPersistencePtr create();
+    FilePhysicalStreamsPersistence(const std::string& baseDir);
 
     bool persistConfiguration(SourceConfigPtr sourceConfig) override;
 
     std::vector<SourceConfigPtr> loadConfigurations() override;
+
+  private:
+    std::filesystem::path baseDir;
 };
 }// namespace NES
 
-#endif//NES_DEFAULTPHYSICALSTREAMSPERSISTENCE_H
+#endif//NES_FILEPHYSICALSTREAMSPERSISTENCE_H

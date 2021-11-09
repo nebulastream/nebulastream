@@ -25,10 +25,22 @@ namespace NES {
 class PhysicalStreamsPersistence;
 typedef std::shared_ptr<PhysicalStreamsPersistence> PhysicalStreamsPersistencePtr;
 
+/**
+ * Persistence class for physical streams
+ */
 class PhysicalStreamsPersistence {
   public:
+    /**
+     * Persists a given source configurations
+     * @param sourceConfig The source config to persist
+     * @return true when persisting was successful
+     */
     virtual bool persistConfiguration(SourceConfigPtr sourceConfig) = 0;
 
+    /**
+     * Loads all source configurations from the persistence
+     * @return all loaded source configurations
+     */
     virtual std::vector<SourceConfigPtr> loadConfigurations() = 0;
 };
 

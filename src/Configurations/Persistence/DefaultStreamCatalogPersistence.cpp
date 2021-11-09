@@ -14,22 +14,21 @@
     limitations under the License.
 */
 
-#ifndef NEBULASTREAM_STREAMCATALOGPERSISTENCE_H
-#define NEBULASTREAM_STREAMCATALOGPERSISTENCE_H
-
-#include <map>
-#include <memory>
+#include <Configurations/Persistence/DefaultStreamCatalogPersistence.hpp>
+#include <Util/Logger.hpp>
+#include <filesystem>
 
 namespace NES {
-class StreamCatalogPersistence;
-typedef std::shared_ptr<StreamCatalogPersistence> StreamCatalogPersistencePtr;
 
-class StreamCatalogPersistence {
-  public:
-    virtual bool persistLogicalStream(const std::string& logicalStreamName, const std::string& schema) = 0;
-    virtual bool deleteLogicalStream(const std::string& logicalStreamName) = 0;
+DefaultStreamCatalogPersistencePtr DefaultStreamCatalogPersistence::create() {
+    return std::make_shared<DefaultStreamCatalogPersistence>();
+}
 
-    virtual std::map<std::string, std::string> loadLogicalStreams() = 0;
-};
+bool DefaultStreamCatalogPersistence::persistLogicalStream(const std::string&, const std::string&) { return true; }
+bool DefaultStreamCatalogPersistence::deleteLogicalStream(const std::string&) { return true; }
+
+std::map<std::string, std::string> DefaultStreamCatalogPersistence::loadLogicalStreams() {
+    return std::map<std::string, std::string>();
+}
+
 }// namespace NES
-#endif//NEBULASTREAM_STREAMCATALOGPERSISTENCE_H

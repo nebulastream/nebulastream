@@ -24,7 +24,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Persistence/PhysicalStreamsPersistenceFactory.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -56,7 +56,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
                                  uint64_t numberOfBuffersInGlobalBufferManager,
                                  uint64_t numberOfBuffersInSourceLocalBufferPool,
                                  uint64_t numberOfBuffersPerPipeline,
-                                 std::string configPersistenceType,
+                                 PhysicalStreamsPersistenceType configPersistenceType,
                                  std::string configPersistencePath) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();

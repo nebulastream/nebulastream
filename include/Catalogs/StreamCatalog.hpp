@@ -20,7 +20,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Persistence/StreamCatalogPersistence.hpp>
+#include <Configurations/Persistence/StreamCatalogPersistence.hpp>
 #include <Sources/DataSource.hpp>
 #include <deque>
 #include <map>

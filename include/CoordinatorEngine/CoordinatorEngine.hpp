@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 
-#include <Persistence/StreamCatalogPersistence.hpp>
+#include <Configurations/Persistence/StreamCatalogPersistence.hpp>
 #include <memory>
 #include <mutex>
 

@@ -19,6 +19,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
@@ -201,7 +202,7 @@ class NesWorker {
     uint32_t numberOfBuffersPerPipeline;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
-    std::string configurationPersistenceType;
+    PhysicalStreamsPersistenceType configurationPersistenceType;
     std::string configurationPersistencePath;
     NesNodeType type;
     std::atomic<bool> isRunning;

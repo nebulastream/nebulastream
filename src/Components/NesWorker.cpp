@@ -17,6 +17,9 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Persistence/DefaultPhysicalStreamsPersistence.hpp>
+#include <Configurations/Persistence/FilePhysicalStreamsPersistence.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -26,9 +29,6 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
-#include <Persistence/FilePhysicalStreamsPersistence.hpp>
-
 #include <Util/Logger.hpp>
 #include <future>
 #include <signal.h>
@@ -55,7 +55,8 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NesNodeType type)
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
       numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()),
-      configurationPersistenceType(workerConfig->getConfigPersistenceType()->getValue()),
+      configurationPersistenceType(
+          PhysicalStreamsPersistenceFactory::getTypeForString(workerConfig->getConfigPersistenceType()->getValue())),
       configurationPersistencePath(workerConfig->getConfigPersistencePath()->getValue()), type(type), configs{},
       topologyNodeId(INVALID_TOPOLOGY_NODE_ID), isRunning(false) {
     connected = false;

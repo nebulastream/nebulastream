@@ -13,4 +13,5 @@
 # limitations under the License.
 
 add_subdirectory(ConfigOptions)
+add_subdirectory(Persistence)
 

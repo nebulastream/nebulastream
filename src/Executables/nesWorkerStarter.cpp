@@ -31,7 +31,7 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <Persistence/PhysicalStreamsPersistenceFactory.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <sys/stat.h>

@@ -60,7 +60,7 @@ WorkerConfig::WorkerConfig() {
                                           "none",
                                           "The type of configuration persistence to use (supported: none, file)");
     configPersistencePath = ConfigOption<std::string>::create("configPersistencePath",
-                                                              "/tmp/nes/config/",
+                                                              std::filesystem::temp_directory_path() / "nes" / "data",
                                                               "The path to the configuration persistence");
 }
 

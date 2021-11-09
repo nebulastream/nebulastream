@@ -26,7 +26,8 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
-#include <Persistence/PhysicalStreamsPersistence.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistence.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -85,7 +86,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                                 uint64_t numberOfBuffersInGlobalBufferManager,
                                 uint64_t numberOfBuffersInSourceLocalBufferPool,
                                 uint64_t numberOfBuffersPerPipeline,
-                                std::string configPersistenceType = "none",
+                                PhysicalStreamsPersistenceType configPersistenceType = PhysicalStreamsPersistenceType::NONE,
                                 std::string configPersistencePath = "");
 
     /**

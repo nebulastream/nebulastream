@@ -20,7 +20,7 @@
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
+#include <Configurations/Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>

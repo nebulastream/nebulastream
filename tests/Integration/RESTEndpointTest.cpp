@@ -22,7 +22,7 @@
 #include <Components/NesWorker.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <Persistence/DefaultStreamCatalogPersistence.hpp>
+#include <Configurations/Persistence/DefaultStreamCatalogPersistence.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>

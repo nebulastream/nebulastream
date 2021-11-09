@@ -21,7 +21,7 @@
 #include <GRPC/WorkerRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Persistence/StreamCatalogPersistenceFactory.hpp>
+#include <Configurations/Persistence/StreamCatalogPersistenceFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -62,7 +62,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
       numberOfBuffersInSourceLocalBufferPool(coordinatorConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()),
       numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()),
-      persistenceType(coordinatorConfig->getPersistenceType()->getValue()),
+      persistenceType(StreamCatalogPersistenceFactory::getTypeForString(coordinatorConfig->getPersistenceType()->getValue())),
       persistenceDir(coordinatorConfig->getPersistenceDir()->getValue()), inherited0(), inherited1(), isRunning(false) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");

@@ -17,7 +17,7 @@
 #ifndef NES_FILESTREAMCATALOGPERSISTENCE_H
 #define NES_FILESTREAMCATALOGPERSISTENCE_H
 
-#include <Persistence/StreamCatalogPersistence.hpp>
+#include <Configurations/Persistence/StreamCatalogPersistence.hpp>
 #include <filesystem>
 #include <memory>
 #include <vector>
@@ -26,6 +26,9 @@ namespace NES {
 class FileStreamCatalogPersistence;
 typedef std::shared_ptr<FileStreamCatalogPersistence> FileStreamCatalogPersistencePtr;
 
+/**
+ * Simple file-based persistence for the stream catalog
+ */
 class FileStreamCatalogPersistence : public StreamCatalogPersistence {
   public:
     FileStreamCatalogPersistence(const std::string& baseDir);

@@ -26,7 +26,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <Persistence/DefaultPhysicalStreamsPersistence.hpp>
+#include <Configurations/Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
