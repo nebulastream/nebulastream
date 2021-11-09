@@ -247,7 +247,7 @@ bool NesWorker::connect() {
 
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
     std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
-    auto staticStats = MetricUtils::staticNesStats().measure();
+    auto staticStats = monitoringAgent->getStaticNesMetrics();
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
     bool successPRCRegister = false;

@@ -30,20 +30,21 @@
 namespace NES {
 
 MonitoringAgent::MonitoringAgent()
-    : monitoringPlan(MonitoringPlan::DefaultPlan()), catalog(MetricCatalog::NesMetrics()),
-      schema(monitoringPlan->createSchema()) {
+    : monitoringPlan(MonitoringPlan::DefaultPlan()), catalog(MetricCatalog::NesMetrics()), schema(monitoringPlan->createSchema()),
+      enabled(true) {
     NES_DEBUG("MonitoringAgent: Init with default monitoring plan");
 }
 
-MonitoringAgent::MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog)
-    : monitoringPlan(monitoringPlan), catalog(std::move(catalog)), schema(monitoringPlan->createSchema()) {
+MonitoringAgent::MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog, bool enabled)
+    : monitoringPlan(monitoringPlan), catalog(std::move(catalog)), schema(monitoringPlan->createSchema()), enabled(enabled) {
     NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString());
 }
 
 MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
 
-MonitoringAgentPtr MonitoringAgent::create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog) {
-    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog);
+MonitoringAgentPtr
+MonitoringAgent::create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog, bool enabled) {
+    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, enabled);
 }
 
 SchemaPtr MonitoringAgent::registerMonitoringPlan(const MonitoringPlanPtr& monitoringPlan) {
@@ -53,23 +54,35 @@ SchemaPtr MonitoringAgent::registerMonitoringPlan(const MonitoringPlanPtr& monit
 }
 
 bool MonitoringAgent::getMetricsFromPlan(Runtime::TupleBuffer& tupleBuffer) {
-    MetricGroupPtr metricGroup = monitoringPlan->createMetricGroup(catalog);
-    metricGroup->getSample(tupleBuffer);
-    return true;
+    if (enabled) {
+        MetricGroupPtr metricGroup = monitoringPlan->createMetricGroup(catalog);
+        metricGroup->getSample(tupleBuffer);
+        return true;
+    }
+    NES_WARNING("MonitoringAgent: Monitoring disabled, getMetricsFromPlan() failed.");
+    return false;
 }
 
 SchemaPtr MonitoringAgent::getSchema() { return schema; }
 
-StaticNesMetricsPtr MonitoringAgent::getStaticNesMetrics() {
-    auto staticStats = MetricUtils::staticNesStats();
-    auto measuredVal = std::make_shared<StaticNesMetrics>(staticStats.measure());
-    return measuredVal;
+std::optional<StaticNesMetricsPtr> MonitoringAgent::getStaticNesMetrics() const {
+    if (enabled) {
+        auto staticStats = MetricUtils::staticNesStats();
+        auto measuredVal = std::make_shared<StaticNesMetrics>(staticStats.measure());
+        return measuredVal;
+    }
+    NES_WARNING("MonitoringAgent: Monitoring disabled, getStaticNesMetrics() returns empty object.");
+    return std::nullopt;
 }
 
-RuntimeNesMetricsPtr MonitoringAgent::getRuntimeNesMetrics() {
-    auto rutimeStats = MetricUtils::runtimeNesStats();
-    auto measuredVal = std::make_shared<RuntimeNesMetrics>(rutimeStats.measure());
-    return measuredVal;
+std::optional<RuntimeNesMetricsPtr> MonitoringAgent::getRuntimeNesMetrics() const{
+    if (enabled) {
+        auto runtimeStats = MetricUtils::runtimeNesStats();
+        auto measuredVal = std::make_shared<RuntimeNesMetrics>(runtimeStats.measure());
+        return measuredVal;
+    }
+    NES_WARNING("MonitoringAgent: Monitoring disabled, getRuntimeNesMetrics() returns empty object.");
+    return std::nullopt;
 }
 
 }// namespace NES
