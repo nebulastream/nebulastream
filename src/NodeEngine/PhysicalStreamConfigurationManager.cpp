@@ -14,30 +14,47 @@
     limitations under the License.
 */
 
-#include "../../include/NodeEngine/PhysicalStreamConfigurationManager.hpp"
+#include <NodeEngine/PhysicalStreamConfigurationManager.hpp>
 
 namespace NES::NodeEngine {
 
-PhysicalStreamConfigurationManager::PhysicalStreamConfigurationManager() {}
-
 PhysicalStreamConfigurationManager::PhysicalStreamConfigurationManager(
-    const std::vector<PhysicalStreamConfigPtr>& initialPhysicalStreamConfigs) {
-    for (auto const& physicalStreamConfig : initialPhysicalStreamConfigs){
-        this->physicalStreams[physicalStreamConfig]
+    PhysicalStreamsPersistencePtr configurationPersistence,
+    const std::vector<PhysicalStreamConfigPtr>& initialPhysicalStreamConfigs)
+    : configurationPersistence(std::move(configurationPersistence)) {
+
+    for (auto const& physicalStreamConfig : initialPhysicalStreamConfigs) {
+        this->addPhysicalStreamConfig(physicalStreamConfig);
     }
 }
 
-PhysicalStreamConfigurationManagerPtr PhysicalStreamConfigurationManager::create() {
-    return std::make_shared<PhysicalStreamConfigurationManager>();
+AbstractPhysicalStreamConfigPtr
+PhysicalStreamConfigurationManager::getPhysicalStreamConfig(const std::string& physicalStreamName) {
+    if (physicalStreams.find(physicalStreamName) != physicalStreams.end()) {
+        return physicalStreams[physicalStreamName];
+    } else {
+        NES_ERROR("NodeEngine::getConfig: physical stream does not exists " << physicalStreamName);
+        throw Exception("Required stream does not exists " + physicalStreamName);
+    }
 }
 
-PhysicalStreamConfigPtr PhysicalStreamConfigurationManager::getPhysicalStreamConfig(const std::string& physicalStreamName) {
-
+AbstractPhysicalStreamConfigPtr
+PhysicalStreamConfigurationManager::getPhysicalStreamConfigForSourceDescriptorName(const std::string& sourceDescriptorName) {
+    for (auto const& [physicalStreamName, conf] : physicalStreams) {
+        auto logicalStreamNames = conf->getLogicalStreamNames();
+        for (std::string logicalStreamName : logicalStreamNames) {
+            if (logicalStreamName == sourceDescriptorName) {
+                return conf;
+            }
+        }
+    }
     return NULL;
 }
-
-std::vector<PhysicalStreamConfigPtr>
-PhysicalStreamConfigurationManager::getPhysicalStreamConfigByLogicalName(const std::string& logicalStreamName) {
-    return NULL;
+bool PhysicalStreamConfigurationManager::addPhysicalStreamConfig(AbstractPhysicalStreamConfigPtr physicalStreamConfig) {
+    this->physicalStreams[physicalStreamConfig->getPhysicalStreamName()] = physicalStreamConfig;
+    return this->configurationPersistence->persistConfiguration(physicalStreamConfig->toSourceConfig());
+}
+PhysicalStreamConfigurationManager::~PhysicalStreamConfigurationManager() {
+    // nop
 }
 }// namespace NES::NodeEngine
