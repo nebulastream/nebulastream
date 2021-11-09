@@ -58,7 +58,7 @@ class Metric {
      * @dev too broad to make non-explicit.
      */
     template<typename T>
-    explicit Metric(T x) : self(std::make_unique<model<T>>(std::move(x))) {}
+    explicit Metric(T x) : self(std::make_unique<Model<T>>(std::move(x))) {}
     ~Metric() = default;
 
     /**
@@ -81,7 +81,7 @@ class Metric {
      */
     template<typename T>
     [[nodiscard]] T& getValue() const {
-        return dynamic_cast<model<T>*>(self.get())->data;
+        return dynamic_cast<Model<T>*>(self.get())->data;
     }
 
     /**
@@ -112,10 +112,10 @@ class Metric {
     /**
      * @brief Abstract superclass that represents the conceptual features of a metric
      */
-    struct concept_t {
-        concept_t() = default;
-        virtual ~concept_t() = default;
-        [[nodiscard]] virtual std::unique_ptr<concept_t> copy() const = 0;
+    struct ConceptT {
+        ConceptT() = default;
+        virtual ~ConceptT() = default;
+        [[nodiscard]] virtual std::unique_ptr<ConceptT> copy() const = 0;
         [[nodiscard]] virtual MetricType getType() const = 0;
 
         /**
@@ -131,10 +131,10 @@ class Metric {
      * @tparam T
      */
     template<typename T>
-    struct model final : concept_t {
-        explicit model(T x) : data(std::move(x)), type(MetricType::UnknownType){};
+    struct Model final : ConceptT {
+        explicit Model(T x) : data(std::move(x)), type(MetricType::UnknownType){};
 
-        [[nodiscard]] std::unique_ptr<concept_t> copy() const override { return std::make_unique<model>(*this); }
+        [[nodiscard]] std::unique_ptr<ConceptT> copy() const override { return std::make_unique<Model>(*this); }
 
         [[nodiscard]] MetricType getType() const override { return getMetricType(data); }
 
@@ -148,7 +148,7 @@ class Metric {
         MetricType type;
     };
 
-    std::unique_ptr<concept_t> self;
+    std::unique_ptr<ConceptT> self;
 };
 
 }// namespace NES
