@@ -16,14 +16,24 @@ cmake_minimum_required(VERSION 3.20.0)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v6)
 
-include(FetchContent)
+# Activate self hosting, such that the compiler from the dependencies is taken
+option(NES_SELF_HOSTING "use self hosting compiler" ON)
+# Enable native mtune/march for optimizations
+option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
+option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
+option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
+option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
+option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" ON)
+option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
+option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
+option(ENABLE_CLANG_TIDY OFF)
 
 # for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
 # The system architecture is normally set in CMAKE_HOST_PROCESSOR,
 # which is set by the PROJECT command. However, we cannot call PROJECT
 # at this point because we want to use a custom toolchain file.
 execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
-
+set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 if(APPLE)
     if (NES_HOST_PROCESSOR MATCHES "x86_64")
         set(VCPKG_TARGET_TRIPLET x64-osx-nes)
@@ -53,6 +63,7 @@ if (CMAKE_TOOLCHAIN_FILE)
     message(STATUS "Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
 elseif(NES_BUILD_DEPENDENCIES_LOCAL)
     message(STATUS "Build Dependencies locally")
+    include(FetchContent)
     FetchContent_Declare(
             nesdebs
             GIT_REPOSITORY  https://github.com/nebulastream/nebulastream-dependencies.git
@@ -65,6 +76,7 @@ elseif(NES_BUILD_DEPENDENCIES_LOCAL)
     set(VCPKG_OVERLAY_TRIPLETS ${nesdebs_SOURCE_DIR}/custom-triplets/ CACHE STRING "CMake toolchain file")
     set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
     message(STATUS "output test" ${VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS})
+    set(NES_DEPENDENCIES_BINARY_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/vcpkg_installed/${VCPKG_TARGET_TRIPLET})
 else ()
     message(STATUS "Use prebuild dependencies")
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
@@ -80,26 +92,19 @@ else ()
     # set toolchain file to use prebuild dependencies only if no toolchain file is already set.
     message(STATUS "Set toolchain file for prebuild dir.")
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/scripts/buildsystems/vcpkg.cmake")
+    set(NES_DEPENDENCIES_BINARY_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET})
 endif ()
 
 # NES supports self hosting its compilation with the local clang binary.
 if (NES_SELF_HOSTING)
-    message(STATUS "Self-host compilation of NES")
-    set(CMAKE_C_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang-12")
-    set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang++")
+    message(STATUS "Self-host compilation of NES from ${NES_DEPENDENCIES_BINARY_ROOT}")
+    set(CMAKE_C_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang-12")
+    set(CMAKE_CXX_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang++")
 else ()
     message(STATUS "Use system compiler")
 endif ()
 
 project(NES CXX)
-option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
-option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
-option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
-option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" ON)
-option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
-option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
-option(ENABLE_CLANG_TIDY OFF)
-option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
