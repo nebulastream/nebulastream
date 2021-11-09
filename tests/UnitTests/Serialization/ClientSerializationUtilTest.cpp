@@ -86,7 +86,7 @@ TEST_F(ClientSerializationUtilTest, testSerializeSimpleQueryPlan) {
     auto queryPlan = query.getQueryPlan();
 
     auto serializedQueryPlan = new SerializableQueryPlan();
-    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    QueryPlanSerializationUtil::serializeClientOriginatedQueryPlan(queryPlan, serializedQueryPlan);
 
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeClientOriginatedQueryPlan(serializedQueryPlan, streamCatalog);
 
@@ -97,7 +97,12 @@ TEST_F(ClientSerializationUtilTest, testSerializeSimpleQueryPlan) {
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() != queryPlan->getQueryId());
     EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() != queryPlan->getQuerySubPlanId());
 
-    //    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
+    // Expect that the root operator from the original and deserialized query plan are the same
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
+
+    // Expect that the child of the root operator from the original and deserialized query plan are the same
+    // i.e., the source operator from  original and deserialized query plan are the same
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->equal(queryPlan->getRootOperators()[0]->getChildren()[0]));
 }
 
 }// namespace NES

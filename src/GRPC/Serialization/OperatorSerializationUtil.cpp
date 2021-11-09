@@ -897,6 +897,14 @@ OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNo
     return sourceDetails;
 }
 
+SerializableOperator_SourceDetails
+OperatorSerializationUtil::serializeClientOriginatedSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator) {
+    auto sourceDetails = SerializableOperator_SourceDetails();
+    auto sourceDescriptor = sourceOperator->getSourceDescriptor();
+    serializeClientOriginatedSourceDescriptor(sourceDescriptor, &sourceDetails);
+    return sourceDetails;
+}
+
 SerializableOperator_SinkDetails
 OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperatorNodePtr& sinkOperator) {
     auto sinkDetails = SerializableOperator_SinkDetails();
@@ -1075,6 +1083,24 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
+    }
+    return sourceDetails;
+}
+
+SerializableOperator_SourceDetails*
+OperatorSerializationUtil::serializeClientOriginatedSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
+                                                     SerializableOperator_SourceDetails* sourceDetails) {
+    if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
+        // serialize logical stream source descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor");
+        auto logicalStreamSourceDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
+        auto logicalStreamSerializedSourceDescriptor =
+            SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
+        logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
+
+        // no schema need to be added
+        sourceDetails->mutable_sourcedescriptor()->PackFrom(logicalStreamSerializedSourceDescriptor);
     }
     return sourceDetails;
 }
@@ -1475,23 +1501,6 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
     }
 }
 
-SerializableOperator_SourceDetails*
-OperatorSerializationUtil::serializeClientOriginatedSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
-                                                                     SerializableOperator_SourceDetails* sourceDetails) {
-    if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
-        // serialize logical stream source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor");
-        auto logicalStreamSourceDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
-        auto logicalStreamSerializedSourceDescriptor =
-            SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
-        logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
-
-        // We do not serialize the schema as we do not have it
-        sourceDetails->mutable_sourcedescriptor()->PackFrom(logicalStreamSerializedSourceDescriptor);
-    }
-    return sourceDetails;
-}
 SourceDescriptorPtr OperatorSerializationUtil::deserializeClientOriginatedSourceDescriptor(
     SerializableOperator_SourceDetails* serializedSourceDetails,
     StreamCatalogPtr streamCatalog) {
@@ -1512,7 +1521,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeClientOriginatedSource
             LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
         logicalStreamSourceDescriptor->setSchema(schema);
         return logicalStreamSourceDescriptor;
-    } else {
+    } else { // source operator coming from client's query plan is always a logical source
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << serializedSourceDescriptor.type_url());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
