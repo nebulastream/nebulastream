@@ -23,6 +23,7 @@
 #include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <Services/QueryService.hpp>
@@ -164,18 +165,20 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
 }
 
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+// TODO 2187: This test fails
 TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
     auto crd = createAndStartCoordinator();
     auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
 
-    QueryPlanPtr queryPlan = QueryPlan::create();
+    auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
 
     //make a Protobuff object
     SubmitQueryRequest request;
     auto serializedQueryPlan = request.mutable_queryplan();
-    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    QueryPlanSerializationUtil::serializeClientOriginatedQueryPlan(queryPlan, serializedQueryPlan);
     //convert it to string for the request function
     request.set_querystring("");
     request.set_placement("");

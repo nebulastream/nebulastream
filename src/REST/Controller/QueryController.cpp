@@ -36,9 +36,10 @@ namespace NES {
 QueryController::QueryController(QueryServicePtr queryService,
                                  QueryCatalogPtr queryCatalog,
                                  TopologyPtr topology,
-                                 GlobalExecutionPlanPtr globalExecutionPlan)
+                                 GlobalExecutionPlanPtr globalExecutionPlan,
+                                 StreamCatalogPtr streamCatalog)
     : topology(std::move(topology)), queryService(std::move(queryService)), queryCatalog(std::move(queryCatalog)),
-      globalExecutionPlan(std::move(globalExecutionPlan)) {}
+      globalExecutionPlan(std::move(globalExecutionPlan)), streamCatalog(std::move(streamCatalog)) {}
 
 void QueryController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 
@@ -173,7 +174,7 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     }
                     // decode protobuf message into c++ obj repr
                     SerializableQueryPlan* queryPlanSerialized = protobufMessage->mutable_queryplan();
-                    QueryPlanPtr queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(queryPlanSerialized));
+                    QueryPlanPtr queryPlan(QueryPlanSerializationUtil::deserializeClientOriginatedQueryPlan(queryPlanSerialized, streamCatalog));
                     std::string* placementStrategy = protobufMessage->mutable_placement();
                     std::string* queryString = protobufMessage->mutable_querystring();
 
