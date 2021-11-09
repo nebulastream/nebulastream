@@ -29,7 +29,7 @@ DynamicField DynamicTuple::operator[](std::size_t fieldIndex) {
     return DynamicField{basePointer};
 }
 
-DynamicTuple::DynamicTuple(const uint64_t recordIndex, MemoryLayoutPtr memoryLayout, TupleBuffer& buffer)
+DynamicTuple::DynamicTuple(const uint64_t recordIndex, MemoryLayoutPtr memoryLayout, TupleBuffer buffer)
     : recordIndex(recordIndex), memoryLayout(std::move(memoryLayout)), buffer(std::move(buffer)){};
 
 uint64_t DynamicTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
@@ -45,7 +45,7 @@ DynamicTuple DynamicTupleBuffer::operator[](std::size_t recordIndex) {
     return {recordIndex, memoryLayout, buffer};
 }
 
-DynamicTupleBuffer::DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer& buffer)
+DynamicTupleBuffer::DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer)
     : memoryLayout(memoryLayout), buffer(buffer) {}
 
 DynamicTupleBuffer::RecordIterator::RecordIterator(DynamicTupleBuffer& buffer) : RecordIterator(buffer, 0) {}
