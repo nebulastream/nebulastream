@@ -23,6 +23,7 @@
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstring>
+#include <ostream>
 #include <variant>
 
 namespace NES::Runtime::MemoryLayouts {
@@ -141,6 +142,8 @@ class DynamicTupleBuffer {
      */
     DynamicTuple operator[](std::size_t recordIndex);
 
+    TupleBuffer getBuffer();
+
     /**
      * @brief Iterator to process the records in a DynamicTupleBuffer
      */
@@ -187,9 +190,11 @@ class DynamicTupleBuffer {
      */
     RecordIterator end() { return RecordIterator(*this, getNumberOfTuples()); }
 
+    friend std::ostream& operator<<(std::ostream& os, const DynamicTupleBuffer& buffer);
+
   private:
     const MemoryLayoutPtr memoryLayout;
-    TupleBuffer buffer;
+    mutable TupleBuffer buffer;
 };
 
 }// namespace NES::Runtime::MemoryLayouts

@@ -122,18 +122,15 @@ class WindowSource : public NES::DefaultSource {
           timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
 
     std::optional<TupleBuffer> receiveData() override {
-        auto buffer = bufferManager->getBufferBlocking();
-        auto rowLayout = NES::Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-
-        auto bindedRowLayout = rowLayout->bind(buffer);
+        auto buffer = allocateBuffer();
 
         for (int i = 0; i < 10; i++) {
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, rowLayout, buffer)[i] = 1;
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, rowLayout, buffer)[i] = 1;
+            buffer[i][0].write<int64_t>(1);
+            buffer[i][1].write<int64_t>(1);
 
             if (varyWatermark) {
                 if (!decreaseTime) {
-                    Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] = timestamp++;
+                    buffer[i][2].write<uint64_t>(timestamp++);
                 } else {
                     if (runCnt == 0) {
                         /**
@@ -154,10 +151,9 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         if (i < 9) {
-                            Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] = timestamp++;
+                            buffer[i][2].write<uint64_t>(timestamp++);
                         } else {
-                            Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] =
-                                timestamp + 20;
+                            buffer[i][2].write<uint64_t>(timestamp + 20);
                         }
                     } else {
                         /**
@@ -177,19 +173,19 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         timestamp = timestamp - 1 <= 0 ? 0 : timestamp - 1;
-                        Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] = timestamp;
+                        buffer[i][2].write<uint64_t>(timestamp);
                     }
                 }
             } else {
-                Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, rowLayout, buffer)[i] = timestamp;
+                buffer[i][2].write<uint64_t>(timestamp);
             }
         }
         buffer.setNumberOfTuples(10);
         timestamp = timestamp + 10;
         runCnt++;
 
-        NES_DEBUG("QueryExecutionTest: source buffer=" << Util::prettyPrintTupleBuffer(buffer, schema));
-        return buffer;
+        NES_DEBUG("QueryExecutionTest: source buffer=" << buffer);
+        return buffer.getBuffer();
     };
 
     static DataSourcePtr create(const SchemaPtr& schema,

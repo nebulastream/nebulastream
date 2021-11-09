@@ -17,6 +17,7 @@
 #include <Exceptions/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <utility>
 namespace NES::Runtime::MemoryLayouts {
 
@@ -47,6 +48,12 @@ DynamicTuple DynamicTupleBuffer::operator[](std::size_t recordIndex) {
 
 DynamicTupleBuffer::DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer)
     : memoryLayout(memoryLayout), buffer(buffer) {}
+
+TupleBuffer DynamicTupleBuffer::getBuffer() { return buffer; }
+std::ostream& operator<<(std::ostream& os, const DynamicTupleBuffer& buffer) {
+    os << Util::prettyPrintTupleBuffer(buffer.buffer, buffer.memoryLayout->getSchema());
+    return os;
+}
 
 DynamicTupleBuffer::RecordIterator::RecordIterator(DynamicTupleBuffer& buffer) : RecordIterator(buffer, 0) {}
 
