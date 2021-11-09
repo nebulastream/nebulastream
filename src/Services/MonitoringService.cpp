@@ -35,9 +35,15 @@
 namespace NES {
 
 MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology) : topology(topology) {
-    NES_DEBUG("MonitoringService: Initializing");
+    NES_DEBUG("MonitoringService: Initializing with monitoring enabled");
     monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology);
 }
+
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enable) {
+    NES_DEBUG("MonitoringService: Initializing with monitoring=" << enable);
+    monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology);
+}
+
 
 MonitoringService::~MonitoringService() { NES_DEBUG("MonitoringService: Shutting down"); }
 
@@ -140,5 +146,4 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesViaPromethe
 }
 
 const MonitoringManagerPtr MonitoringService::getMonitoringManager() const { return monitoringManager; }
-
 }// namespace NES

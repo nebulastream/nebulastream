@@ -82,6 +82,22 @@ class MonitoringAgent {
      */
     [[nodiscard]] std::optional<RuntimeNesMetricsPtr> getRuntimeNesMetrics() const;
 
+    /**
+     * enables collecting of metrics
+     */
+    void enableMonitoring();
+
+    /**
+     * disables collecting of metrics
+     */
+    void disableMonitoring();
+
+    /**
+     * checks if monitoring is enabled
+     * @return true if enabled. else false
+     */
+    bool isEnabled() const;
+
   private:
     MonitoringPlanPtr monitoringPlan;
     MetricCatalogPtr catalog;

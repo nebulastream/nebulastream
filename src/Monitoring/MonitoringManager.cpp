@@ -34,8 +34,15 @@
 namespace NES {
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
-    : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology) {
-    NES_DEBUG("MonitoringManager: Init");
+    : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology),
+      enableMonitoring(true) {
+    NES_DEBUG("MonitoringManager: Init with monitoring enabled");
+}
+
+MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
+    : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology),
+      enableMonitoring(true) {
+    NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring);
 }
 
 MonitoringManager::~MonitoringManager() {
@@ -46,6 +53,10 @@ MonitoringManager::~MonitoringManager() {
 
 bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds,
                                                       const MonitoringPlanPtr& monitoringPlan) {
+    if (!enableMonitoring) {
+        NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
+        return false;
+    }
     if (!monitoringPlan) {
         NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
         return false;
@@ -82,6 +93,12 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
 }
 
 GroupedMetricValues MonitoringManager::requestMonitoringData(uint64_t nodeId, Runtime::BufferManagerPtr bufferManager) {
+    if (!enableMonitoring) {
+        NES_ERROR("MonitoringManager: Requesting monitoring data for node " << nodeId << " failed. Monitoring is disabled, "
+                                                                                         "returning empty object");
+        return GroupedMetricValues{};
+    }
+
     NES_DEBUG("MonitoringManager: Requesting metrics for node id=" + std::to_string(nodeId));
     auto plan = getMonitoringPlan(nodeId);
     auto schema = plan->createSchema();

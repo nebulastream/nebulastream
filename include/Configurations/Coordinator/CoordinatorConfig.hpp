@@ -229,10 +229,22 @@ class CoordinatorConfig {
     BoolConfigOption getEnableSemanticQueryValidation();
 
     /**
-     * @brief Set the value for enableing SemanticQueryValidation
+     * @brief Set the value for enabling SemanticQueryValidation
      * @param enableSemanticQueryValidation: enable or disable semantic validation
      */
     void setEnableSemanticQueryValidation(bool enableSemanticQueryValidation);
+
+    /**
+     * @brief Get the value for enabling monitoring.
+     * @return monitoring config option
+     */
+    BoolConfigOption getEnableMonitoring();
+
+    /**
+     * Set the value for enabling monitoring.
+     * @param enableMonitoring enable or disable monitoring.
+     */
+    void setEnableMonitoring(bool enableMonitoring);
 
   private:
     /**
@@ -253,6 +265,7 @@ class CoordinatorConfig {
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
     StringConfigOption queryMergerRule;
+    BoolConfigOption enableMonitoring;
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;
