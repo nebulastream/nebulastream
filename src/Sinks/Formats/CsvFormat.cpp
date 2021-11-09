@@ -22,6 +22,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <iostream>
+#include <cmath>
 #include <utility>
 namespace NES {
 
