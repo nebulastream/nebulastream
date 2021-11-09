@@ -63,7 +63,7 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
 }
 
 QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan) {
-    NES_DEBUG("QueryPlanSerializationUtil: Deserializing query plan " << serializedQueryPlan->DebugString());
+    NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan " << serializedQueryPlan->DebugString());
     std::vector<OperatorNodePtr> rootOperators;
     std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
 
