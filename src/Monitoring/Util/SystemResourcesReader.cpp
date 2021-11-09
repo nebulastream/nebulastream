@@ -113,7 +113,7 @@ RuntimeNesMetrics SystemResourcesReader::readRuntimeNesMetrics() {
 
 StaticNesMetrics SystemResourcesReader::readStaticNesMetrics() {
     StaticNesMetrics output{false, false};
-
+#ifdef __linux__
     std::vector<std::string> metricLocations{"/sys/fs/cgroup/memory/memory.limit_in_bytes",
                                              "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us",
                                              "/sys/fs/cgroup/cpuacct/cpu.cfs_quota_us"};
@@ -152,6 +152,11 @@ StaticNesMetrics SystemResourcesReader::readStaticNesMetrics() {
     } catch (const RuntimeException& e) {
         NES_ERROR("SystemResourcesReader: Error reading static cpu metrics " << e.what());
     }
+#else
+    // TODO #2269 Set metrics on macOS
+    // the metricLocations are not right for macOS
+    NES_WARNING("SystemResourcesReader: Could not set StaticNesMetrics because the platform is not supported.");
+#endif
     return output;
 }
 
@@ -296,7 +301,7 @@ NetworkMetrics SystemResourcesReader::readNetworkStats() {
 #else
     // TODO #2269 Set metrics on macOS
     // /proc/net/dev only exists on Linux
-    NES_WARNING("Could not set NetworkMetrics because the platform is not supported.");
+    NES_WARNING("SystemResourcesReader: Could not set NetworkMetrics because the platform is not supported.");
 #endif
     return output;
 }
@@ -334,7 +339,7 @@ MemoryMetrics SystemResourcesReader::readMemoryStats() {
 #else
     // TODO #2269 Set metrics on macOS
     // <sys/sysinfo.h> only exists on Linux?
-    NES_WARNING("Could not set MemoryMetrics because the platform is not supported.");
+    NES_WARNING("SystemResourcesReader: Could not set MemoryMetrics because the platform is not supported.");
 #endif
     return output;
 }
