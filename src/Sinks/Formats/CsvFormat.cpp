@@ -20,9 +20,9 @@
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cmath>
 #include <cstring>
 #include <iostream>
-#include <cmath>
 #include <utility>
 namespace NES {
 
