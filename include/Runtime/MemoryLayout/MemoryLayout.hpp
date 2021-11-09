@@ -37,7 +37,7 @@ class MemoryLayout {
      * @param recordSize
      * @param fieldSizes
      */
-    MemoryLayout(uint64_t bufferSize, const SchemaPtr& schema);
+    MemoryLayout(uint64_t bufferSize, SchemaPtr schema);
 
     virtual ~MemoryLayout() = default;
 

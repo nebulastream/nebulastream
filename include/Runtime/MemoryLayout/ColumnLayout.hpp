@@ -33,7 +33,7 @@ class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<Co
     * @brief Constructor for DynamicColumnLayout
     * @param schema
     */
-    ColumnLayout(const SchemaPtr& schema, uint64_t bufferSize);
+    ColumnLayout(SchemaPtr schema, uint64_t bufferSize);
 
     /**
      * @brief Creates a DynamicColumnLayout as a shared_ptr
@@ -41,7 +41,7 @@ class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<Co
      * @param checkBoundaries
      * @return created DynamicColumnLayout as a shared ptr
      */
-    static ColumnLayoutPtr create(const SchemaPtr& schema, uint64_t bufferSize);
+    static ColumnLayoutPtr create(SchemaPtr schema, uint64_t bufferSize);
 
     /**
      * Binds a memoryLayout to a tupleBuffer

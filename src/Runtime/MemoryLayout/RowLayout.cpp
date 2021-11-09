@@ -23,7 +23,7 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-RowLayout::RowLayout(const SchemaPtr& schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema) {
+RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema) {
     uint64_t offsetCounter = 0;
     for (auto& fieldSize : physicalFieldSizes) {
         fieldOffSets.emplace_back(offsetCounter);
@@ -37,7 +37,7 @@ RowLayout::RowLayout(const SchemaPtr& schema, uint64_t bufferSize) : MemoryLayou
  * @param bufferSize
  * @return
  */
-std::shared_ptr<RowLayout> RowLayout::create(const SchemaPtr& schema, uint64_t bufferSize) {
+std::shared_ptr<RowLayout> RowLayout::create(SchemaPtr schema, uint64_t bufferSize) {
     return std::make_shared<RowLayout>(schema, bufferSize);
 }
 
