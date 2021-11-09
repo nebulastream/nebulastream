@@ -123,7 +123,7 @@ class WindowSource : public NES::DefaultSource {
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
-        auto rowLayout = NES::Runtime::MemoryLayouts::RowLayout::create(schema, true);
+        auto rowLayout = NES::Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
         auto bindedRowLayout = rowLayout->bind(buffer);
 
@@ -291,7 +291,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
             ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
             EXPECT_EQ(plan->getPipelines().size(), 1u);
             auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-            auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
+            auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
             fillBuffer(buffer, memoryLayout);
             plan->setup();
             ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -357,7 +357,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -373,7 +373,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10UL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
 
     for (uint32_t recordIndex = 0UL; recordIndex < 10UL; ++recordIndex) {
@@ -451,7 +451,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -629,7 +629,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, resultLayout, resultBuffer);
     auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, resultLayout, resultBuffer);
     auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, resultLayout, resultBuffer);
@@ -717,7 +717,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
 
     auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, resultLayout, resultBuffer);
@@ -1007,7 +1007,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // EXPECT_EQ(plan->getNumberOfPipelines(), 3);
 
     // TODO switch to event time if that is ready to remove sleep
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
@@ -1109,7 +1109,7 @@ TEST_F(QueryExecutionTest, ExternalOperatorQueryQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 2u);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
