@@ -44,6 +44,8 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 class MonitoringService {
   public:
     explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology);
+    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
+
     ~MonitoringService();
 
     /**
@@ -101,6 +103,7 @@ class MonitoringService {
   private:
     MonitoringManagerPtr monitoringManager;
     TopologyPtr topology;
+    bool enableMonitoring;
 };
 
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;

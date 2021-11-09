@@ -75,7 +75,7 @@ std::optional<StaticNesMetricsPtr> MonitoringAgent::getStaticNesMetrics() const 
     return std::nullopt;
 }
 
-std::optional<RuntimeNesMetricsPtr> MonitoringAgent::getRuntimeNesMetrics() const{
+std::optional<RuntimeNesMetricsPtr> MonitoringAgent::getRuntimeNesMetrics() const {
     if (enabled) {
         auto runtimeStats = MetricUtils::runtimeNesStats();
         auto measuredVal = std::make_shared<RuntimeNesMetrics>(runtimeStats.measure());
@@ -84,5 +84,11 @@ std::optional<RuntimeNesMetricsPtr> MonitoringAgent::getRuntimeNesMetrics() cons
     NES_WARNING("MonitoringAgent: Monitoring disabled, getRuntimeNesMetrics() returns empty object.");
     return std::nullopt;
 }
+
+void MonitoringAgent::enableMonitoring() { enabled = true; }
+
+void MonitoringAgent::disableMonitoring() { enabled = false; }
+
+bool MonitoringAgent::isEnabled() const { return enabled; }
 
 }// namespace NES
