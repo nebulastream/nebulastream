@@ -15,6 +15,7 @@
 */
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
@@ -26,7 +27,6 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <Configurations/Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
@@ -665,8 +665,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
 TEST_F(NetworkStackTest, testNetworkSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine =
-        NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -689,8 +688,7 @@ TEST_F(NetworkStackTest, testNetworkSource) {
 
 TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine =
-        NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -725,6 +723,11 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                      ExtraParameters&&... extraParams) {
     try {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        std::vector<PhysicalStreamConfigPtr> streamConfigs{streamConf};
+        auto configurationPersistence = std::make_shared<DefaultPhysicalStreamsPersistence>();
+        auto configurationManager =
+            std::make_shared<NodeEngine::PhysicalStreamConfigurationManager>(configurationPersistence, streamConfigs);
+
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
         auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
@@ -739,8 +742,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
         options->setNumSourceLocalBuffers(12);
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory);
 
-        std::vector<PhysicalStreamConfigPtr> streamConfigs{streamConf};
-        return std::make_shared<MockedNodeEngine>(streamConfigs,
+        return std::make_shared<MockedNodeEngine>(std::move(configurationManager),
                                                   std::move(bufferManager),
                                                   std::move(queryManager),
                                                   std::move(networkManagerCreator),
@@ -775,7 +777,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         atomic<int>& bufferCnt;
 
         explicit MockedNodeEngine(
-            const std::vector<PhysicalStreamConfigPtr>& streamConfigs,
+            NES::NodeEngine::PhysicalStreamConfigurationManagerPtr&& configurationManager,
             NES::NodeEngine::BufferManagerPtr&& bufferManager,
             NES::NodeEngine::QueryManagerPtr&& queryManager,
             std::function<Network::NetworkManagerPtr(NES::NodeEngine::NodeEnginePtr)>&& networkManagerCreator,
@@ -784,14 +786,13 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             std::promise<bool>& completed,
             NesPartition nesPartition,
             std::atomic<int>& bufferCnt)
-            : NodeEngine(streamConfigs,
+            : NodeEngine(std::move(configurationManager),
                          std::move(bufferManager),
                          std::move(queryManager),
                          std::move(networkManagerCreator),
                          std::move(partitionManager),
                          std::move(queryCompiler),
                          std::make_shared<NES::NodeEngine::StateManager>(),
-                         std::make_shared<NES::DefaultPhysicalStreamsPersistence>(),
                          0,
                          64,
                          64,
@@ -890,8 +891,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                            ->addField("test$value", DataTypeFactory::createInt64());
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine =
-        NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 12);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 12);
     auto netManager = nodeEngine->getNetworkManager();
     // create NetworkSink
 

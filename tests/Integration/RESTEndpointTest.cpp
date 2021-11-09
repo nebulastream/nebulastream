@@ -635,10 +635,10 @@ TEST_F(RESTEndpointTest, testGetAllPhysicalStreams) {
 
     NES_INFO("allPhysicalStream: try to acc return");
     NES_DEBUG("allPhysicalStream response: " << getAllPhysicalStreamJsonReturn.serialize());
-    std::string expected = "{\"Physical Streams\":[\"physicalName=test_physical1 logicalStreamName=(default_logical) "
+    std::string expected = "{\"Physical Streams\":[\"physicalName=test_physical1 logicalStreamNames=(default_logical) "
                            "sourceType=DefaultSource on node="
         + std::to_string(wrk1->getWorkerId())
-        + "\",\"physicalName=test_physical2 logicalStreamName=(default_logical) sourceType=DefaultSource on node="
+        + "\",\"physicalName=test_physical2 logicalStreamNames=(default_logical) sourceType=DefaultSource on node="
         + std::to_string(wrk2->getWorkerId()) + "\"]}";
     NES_DEBUG("allPhysicalStream response: expected = " << expected);
     ASSERT_EQ(getAllPhysicalStreamJsonReturn.serialize(), expected);
@@ -1335,8 +1335,8 @@ TEST_F(RESTEndpointTest, testGetAllMisconfiguredStreamCatalogEntries) {
 
     NES_INFO("allMisconfiguredStreamCatalogEntries: try to acc return");
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: " << allMisconfiguredStreamCatalogEntriesJsonReturn.serialize());
-    std::string expected = "{\"test_physical1\":\"MISCONFIGURED\\nnoLogicalStream: no valid logical "
-                           "stream\",\"test_physical2\":\"MISCONFIGURED\\nlogicalStreamWithoutSchema: (non_existing_logical)\"}";
+    std::string expected = "{\"test_physical1\":\"MISCONFIGURED\\nNO_LOGICAL_STREAM: no valid logical "
+                           "stream\",\"test_physical2\":\"MISCONFIGURED\\nLOGICAL_STREAM_WITHOUT_SCHEMA: (non_existing_logical)\"}";
     NES_DEBUG("allMisconfiguredStreamCatalogEntries response: expected = " << expected);
     ASSERT_EQ(allMisconfiguredStreamCatalogEntriesJsonReturn.serialize(), expected);
 

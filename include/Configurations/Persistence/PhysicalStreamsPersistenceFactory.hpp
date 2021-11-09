@@ -16,13 +16,12 @@
 
 #ifndef NES_PHYSICALSTREAMSPERSISTENCEFACTORY_H
 #define NES_PHYSICALSTREAMSPERSISTENCEFACTORY_H
+
 #include <Configurations/Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <Configurations/Persistence/FilePhysicalStreamsPersistence.hpp>
+
 namespace NES {
-enum PhysicalStreamsPersistenceType {
-    NONE,
-    FILE
-};
+enum class PhysicalStreamsPersistenceType { NONE, FILE };
 
 /**
  * Factory class to create physical stream persistence
@@ -48,7 +47,7 @@ class PhysicalStreamsPersistenceFactory {
      * @return A persistence object
      */
     static PhysicalStreamsPersistencePtr createForType(PhysicalStreamsPersistenceType persistenceType,
-                                                     const std::string& persistenceDir) {
+                                                       const std::string& persistenceDir) {
         if (persistenceType == PhysicalStreamsPersistenceType::FILE) {
             return std::make_shared<FilePhysicalStreamsPersistence>(persistenceDir);
         }

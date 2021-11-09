@@ -16,11 +16,11 @@
 
 #include <gtest/gtest.h>
 
+#include <Configurations/Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <Configurations/Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -114,6 +114,9 @@ std::shared_ptr<MockedNodeEngine>
 createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize = 8192, uint64_t numBuffers = 1024) {
     try {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        std::vector<PhysicalStreamConfigPtr> streamConfigs{streamConf};
+        auto configurationPersistence = std::make_shared<NES::DefaultPhysicalStreamsPersistence>();
+        auto configurationManager = std::make_shared<PhysicalStreamConfigurationManager>(configurationPersistence, streamConfigs);
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
         auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
@@ -127,8 +130,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto queryCompiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory);
 
-        std::vector<PhysicalStreamConfigPtr> streamConfigs{streamConf};
-        auto mockEngine = std::make_shared<MockedNodeEngine>(streamConfigs,
+        auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(configurationManager),
                                                              std::move(bufferManager),
                                                              std::move(queryManager),
                                                              std::move(networkManagerCreator),
@@ -617,7 +619,7 @@ void assertKiller() {
       public:
         using NodeEngine::NodeEngine;
 
-        explicit MockedNodeEngine(const std::vector<PhysicalStreamConfigPtr>& streamConfigs,
+        explicit MockedNodeEngine(PhysicalStreamConfigurationManagerPtr&& configMgr,
                                   BufferManagerPtr&& buffMgr,
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
@@ -627,14 +629,13 @@ void assertKiller() {
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerPipeline)
-            : NodeEngine(streamConfigs,
+            : NodeEngine(std::move(configMgr),
                          std::move(buffMgr),
                          std::move(queryMgr),
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),
                          std::make_shared<NES::NodeEngine::StateManager>(),
-                         std::make_shared<NES::DefaultPhysicalStreamsPersistence>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
@@ -659,7 +660,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     class MockedNodeEngine : public NodeEngine::NodeEngine {
       public:
         std::promise<bool> completedPromise;
-        explicit MockedNodeEngine(const std::vector<PhysicalStreamConfigPtr>& streamConfigs,
+        explicit MockedNodeEngine(PhysicalStreamConfigurationManagerPtr&& configMgr,
                                   BufferManagerPtr&& buffMgr,
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
@@ -669,14 +670,13 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerPipeline)
-            : NodeEngine(streamConfigs,
+            : NodeEngine(std::move(configMgr),
                          std::move(buffMgr),
                          std::move(queryMgr),
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),
                          std::make_shared<NES::NodeEngine::StateManager>(),
-                         std::make_shared<NES::DefaultPhysicalStreamsPersistence>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,
@@ -729,7 +729,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
       public:
         std::promise<bool> completedPromise;
 
-        explicit MockedNodeEngine(const std::vector<PhysicalStreamConfigPtr>& streamConfigs,
+        explicit MockedNodeEngine(PhysicalStreamConfigurationManagerPtr&& configMgr,
                                   BufferManagerPtr&& buffMgr,
                                   QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
@@ -739,14 +739,13 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerPipeline)
-            : NodeEngine(streamConfigs,
+            : NodeEngine(std::move(configMgr),
                          std::move(buffMgr),
                          std::move(queryMgr),
                          std::move(netFuncInit),
                          std::move(partitionManager),
                          std::move(compiler),
                          std::make_shared<NES::NodeEngine::StateManager>(),
-                         std::make_shared<NES::DefaultPhysicalStreamsPersistence>(),
                          nodeEngineId,
                          numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool,

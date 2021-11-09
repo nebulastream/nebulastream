@@ -20,7 +20,7 @@
 #include <Configurations/Persistence/DefaultStreamCatalogPersistence.hpp>
 #include <Configurations/Persistence/FileStreamCatalogPersistence.hpp>
 namespace NES {
-enum StreamCatalogPersistenceType { NONE, FILE };
+enum class StreamCatalogPersistenceType { NONE, FILE };
 
 /**
  * Factory class to create stream catalog persistence

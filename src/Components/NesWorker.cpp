@@ -19,7 +19,7 @@
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Configurations/Persistence/DefaultPhysicalStreamsPersistence.hpp>
 #include <Configurations/Persistence/FilePhysicalStreamsPersistence.hpp>
-#include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>

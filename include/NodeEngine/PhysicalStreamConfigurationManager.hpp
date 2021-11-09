@@ -17,6 +17,10 @@
 #ifndef NES_PHYSICALSTREAMCONFIGURATIONMANAGER_H
 #define NES_PHYSICALSTREAMCONFIGURATIONMANAGER_H
 
+#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistence.hpp>
+#include <vector>
+
 namespace NES::NodeEngine {
 
 /**
@@ -24,31 +28,26 @@ namespace NES::NodeEngine {
  */
 class PhysicalStreamConfigurationManager {
   public:
-    /**
-    * @brief create a new PhysicalStreamConfigurationManager object
-    */
-    PhysicalStreamConfigurationManager();
+    PhysicalStreamConfigurationManager() = delete;
+    PhysicalStreamConfigurationManager(const QueryManager&) = delete;
+    PhysicalStreamConfigurationManager& operator=(const QueryManager&) = delete;
 
-    PhysicalStreamConfigurationManager(const std::vector<PhysicalStreamConfigPtr>& initialPhysicalStreamConfigs);
+    explicit PhysicalStreamConfigurationManager(PhysicalStreamsPersistencePtr configurationPersistence,
+                                                const std::vector<PhysicalStreamConfigPtr>& initialPhysicalStreamConfigs);
 
-    /**
-     * @brief Factory to create a pointer
-     * @return
-     */
-    static PhysicalStreamConfigurationManagerPtr create();
+    ~PhysicalStreamConfigurationManager();
 
-    ~PhysicalStreamConfigurationManager() = default;
+    AbstractPhysicalStreamConfigPtr getPhysicalStreamConfig(const std::string& physicalStreamName);
 
-    PhysicalStreamConfigPtr getPhysicalStreamConfig(const std::string& physicalStreamName);
+    bool addPhysicalStreamConfig(AbstractPhysicalStreamConfigPtr physicalStreamConfig);
 
-    bool addPhysicalStreamConfig(PhysicalStreamConfigPtr physicalStreamConfig);
-
-    std::vector<PhysicalStreamConfigPtr> getPhysicalStreamConfigByLogicalName(const std::string& logicalStreamName);
+    AbstractPhysicalStreamConfigPtr getPhysicalStreamConfigForSourceDescriptorName(const std::string& sourceDescriptorName);
 
   private:
+    PhysicalStreamsPersistencePtr configurationPersistence;
     std::map<std::string, AbstractPhysicalStreamConfigPtr> physicalStreams;
 };
 
-typedef std::shared_ptr<PhysicalStreamConfigurationManager> PhysicalStreamConfigurationManager;
+typedef std::shared_ptr<PhysicalStreamConfigurationManager> PhysicalStreamConfigurationManagerPtr;
 }// namespace NES::NodeEngine
 #endif//NES_PHYSICALSTREAMCONFIGURATIONMANAGER_H

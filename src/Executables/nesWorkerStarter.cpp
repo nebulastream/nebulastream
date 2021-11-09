@@ -30,8 +30,8 @@
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <CoordinatorRPCService.pb.h>
 #include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp>
+#include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <sys/stat.h>
@@ -106,8 +106,10 @@ int main(int argc, char** argv) {
                                                   << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
+    auto configurationPersistenceType =
+        PhysicalStreamsPersistenceFactory::getTypeForString(workerConfig->getConfigPersistenceType()->getValue());
     auto configurationPersistence =
-        PhysicalStreamsPersistenceFactory::createForType(workerConfig->getConfigPersistenceType()->getValue(),
+        PhysicalStreamsPersistenceFactory::createForType(configurationPersistenceType,
                                                          workerConfig->getConfigPersistencePath()->getValue());
 
     auto loadedConfigs = configurationPersistence->loadConfigurations();

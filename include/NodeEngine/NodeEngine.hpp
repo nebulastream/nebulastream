@@ -19,15 +19,16 @@
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistence.hpp>
+#include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
+#include <NodeEngine/PhysicalStreamConfigurationManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
-#include <Configurations/Persistence/PhysicalStreamsPersistence.hpp>
-#include <Configurations/Persistence/PhysicalStreamsPersistenceFactory.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -93,14 +94,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(const std::vector<PhysicalStreamConfigPtr>& configs,
+    explicit NodeEngine(PhysicalStreamConfigurationManagerPtr&&,
                         BufferManagerPtr&&,
                         QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
-                        PhysicalStreamsPersistencePtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
@@ -279,7 +279,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
   private:
-    std::map<std::string, AbstractPhysicalStreamConfigPtr> physicalStreams;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
@@ -289,7 +288,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::NetworkManagerPtr networkManager;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
-    PhysicalStreamsPersistencePtr configurationPersistence;
+    PhysicalStreamConfigurationManagerPtr configurationManager;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     std::atomic<bool> isRunning;
     mutable std::recursive_mutex engineMutex;
