@@ -15,6 +15,7 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -112,6 +113,7 @@ Seq::Seq(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), o
 }
 
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
+    NES_DEBUG("Sequence enters window function");
     auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
     std::vector<std::string> sourceNameLeft;
     std::vector<std::string> sourceNameRight;
@@ -119,8 +121,10 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     sourceNameRight.emplace_back(originalQuery.getQueryPlan()->getSourceConsumed());
     std::string streamNameLeft = sourceNameLeft[0] + "$" + timestamp;
     std::string streamNameRight = sourceNameRight[0] + "$" + timestamp;
-    //TODO: not assign less than
-    return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType).filter(Attribute(streamNameLeft,UINT64) = Attribute(streamNameRight,UINT64));//call original seqWith() function
+    NES_DEBUG("ExpressionItem for Left stream " << streamNameLeft);
+    NES_DEBUG("ExpressionItem for Right stream " << streamNameRight);
+    return originalQuery.seqWith(subQueryRhs, onLeftKey, onRightKey, windowType)
+        .filter(Attribute(streamNameLeft) < Attribute(streamNameRight));//call original seqWith() function
 }
 
 //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
@@ -299,7 +303,7 @@ Query& Query::seqWith(const Query& subQueryRhs,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType to SEQ Operator");
 
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::SEQUENCE;
+    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
