@@ -34,13 +34,13 @@ DynamicTuple::DynamicTuple(const uint64_t recordIndex, MemoryLayoutPtr memoryLay
 
 uint64_t DynamicTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
 
-uint64_t DynamicTupleBuffer::getNumberOfRecords() const { return buffer.getNumberOfTuples(); }
+uint64_t DynamicTupleBuffer::getNumberOfTuples() const { return buffer.getNumberOfTuples(); }
 
-void DynamicTupleBuffer::setNumberOfRecords(uint64_t value) { buffer.setNumberOfTuples(value); }
+void DynamicTupleBuffer::setNumberOfTuples(uint64_t value) { buffer.setNumberOfTuples(value); }
 
 DynamicTuple DynamicTupleBuffer::operator[](std::size_t recordIndex) {
     if (recordIndex >= getCapacity()) {
-        throw BufferAccessException("index is out of bound");
+        throw BufferAccessException("index " + std::to_string(recordIndex) + " is out of bound");
     }
     return {recordIndex, memoryLayout, buffer};
 }
