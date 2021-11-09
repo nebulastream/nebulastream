@@ -44,9 +44,9 @@ using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeNesMetrics>;
 class MonitoringAgent {
   public:
     MonitoringAgent();
-    MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog);
+    MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog, bool enabled);
     static MonitoringAgentPtr create();
-    static MonitoringAgentPtr create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog);
+    static MonitoringAgentPtr create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog, bool enabled);
 
     /**
      * @brief Register a monitoring plan at the local worker. The plan is indicating which metrics to collect.
@@ -74,18 +74,19 @@ class MonitoringAgent {
      * @brief Returns the static metrics used for NES.
      * @return The metric object.
      */
-    static StaticNesMetricsPtr getStaticNesMetrics();
+    [[nodiscard]] std::optional<StaticNesMetricsPtr> getStaticNesMetrics() const;
 
     /**
      * @brief Returns the static metrics used for NES.
      * @return The metric object.
      */
-    static RuntimeNesMetricsPtr getRuntimeNesMetrics();
+    [[nodiscard]] std::optional<RuntimeNesMetricsPtr> getRuntimeNesMetrics() const;
 
   private:
     MonitoringPlanPtr monitoringPlan;
     MetricCatalogPtr catalog;
     SchemaPtr schema;
+    bool enabled;
 };
 
 }// namespace NES
