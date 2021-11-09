@@ -731,7 +731,7 @@ TEST_F(DynamicMemoryLayoutTest, accessArrayDynamicBufferTest) {
     SchemaPtr schema = Schema::create()->addField("t1", DataTypeFactory::createArray(10, DataTypeFactory::createInt64()));
 
     ColumnLayoutPtr columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, true));
+    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();

@@ -126,12 +126,12 @@ class DynamicTupleBuffer {
      * @brief This method returns the current number of records that are in the associated buffer
      * @return Number of records that are in the associated buffer
      */
-    [[nodiscard]] uint64_t getNumberOfRecords() const;
+    [[nodiscard]] uint64_t getNumberOfTuples() const;
 
     /**
      * @brief Set the number of records to the TupleBuffer
      */
-    void setNumberOfRecords(uint64_t value);
+    void setNumberOfTuples(uint64_t value);
 
     /**
      * @brief Accesses an individual record in the buffer
@@ -182,10 +182,10 @@ class DynamicTupleBuffer {
     RecordIterator begin() { return RecordIterator(*this); }
 
     /**
-     * @brief End of the iterator at index getNumberOfRecords()
+     * @brief End of the iterator at index getNumberOfTuples()
      * @return RecordIterator
      */
-    RecordIterator end() { return RecordIterator(*this, getNumberOfRecords()); }
+    RecordIterator end() { return RecordIterator(*this, getNumberOfTuples()); }
 
   private:
     const MemoryLayoutPtr memoryLayout;
