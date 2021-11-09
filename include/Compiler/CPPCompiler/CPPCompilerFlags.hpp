@@ -25,7 +25,7 @@ namespace NES::Compiler {
 class CPPCompilerFlags {
   public:
     // sets the cpp language version for the code
-    inline static const std::string CXX_VERSION = "-std=c++17";
+    inline static const std::string CXX_VERSION = "-std=c++20";
     // disables trigraphs
     inline static const std::string NO_TRIGRAPHS = "-fno-trigraphs";
     //Position Independent Code means that the generated machine code is not dependent on being located at a specific address in order to work.
