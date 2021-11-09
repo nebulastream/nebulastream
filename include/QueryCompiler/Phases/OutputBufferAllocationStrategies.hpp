@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_QUERY_COMPILER_PHASES_OUTPUT_BUFFER_ALLOCATION_STRATEGIES_HPP_
 #define NES_INCLUDE_QUERY_COMPILER_PHASES_OUTPUT_BUFFER_ALLOCATION_STRATEGIES_HPP_
-
+#include <stdint.h>
 namespace NES::QueryCompilation {
 
 enum OutputBufferAssignmentStrategy : uint8_t {
