@@ -75,7 +75,6 @@ void FixedSizeBufferPool::destroy() {
         bufferManager->recyclePooledBuffer(memSegment);
     }
 #endif
-//    isDestroyed = true;
 }
 
 size_t FixedSizeBufferPool::getAvailableBuffers() const {
@@ -146,9 +145,8 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
 }
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
-//    std::unique_lock lock(mutex);
     NES_VERIFY(memSegment, "null memory segment");
-    if (isDestroyed) {//make it atomic
+    if (isDestroyed) {
         // return recycled buffer to the global pool
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);

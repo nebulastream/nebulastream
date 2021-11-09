@@ -101,12 +101,47 @@ void BenchmarkSource::runningRoutine() {
     std::cout << "Going to produce " << numberOfTuplesToProduce << std::endl;
 
     for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
-        auto buffer = bufferManager->getBufferBlocking();
-        memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
+        Runtime::TupleBuffer buffer;
+        switch (sourceMode) {
+            case EMPTY_BUFFER: {
+                buffer = bufferManager->getBufferBlocking();
+                break;
+            }
+            case COPY_BUFFER_SIMD_RTE: {
+#ifdef __x86_64__
+                buffer = bufferManager->getBufferBlocking();
+                rte_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
+#else
+                NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
+#endif
+                break;
+            }
+            case COPY_BUFFER_SIMD_APEX: {
+                buffer = bufferManager->getBufferBlocking();
+                apex_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
+                break;
+            }
+            case CACHE_COPY: {
+                buffer = bufferManager->getBufferBlocking();
+                memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
+                break;
+            }
+            case COPY_BUFFER: {
+                buffer = bufferManager->getBufferBlocking();
+                memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
+                break;
+            }
+            case WRAP_BUFFER: {
+                buffer =
+                    Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
+                break;
+            }
+        }
 
-//        auto buffer =
-//            Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
         buffer.setNumberOfTuples(numberOfTuplesToProduce);
+        generatedTuples += numberOfTuplesToProduce;
+        generatedBuffers++;
+
         for (const auto& successor : executableSuccessors) {
             queryManager->addWorkForNextPipeline(buffer, successor, numaNode);
         }
@@ -126,72 +161,9 @@ void BenchmarkSource::close() {
 }
 
 std::optional<Runtime::TupleBuffer> BenchmarkSource::receiveData() {
-    NES_DEBUG("BenchmarkSource::receiveData called on operatorId=" << operatorId);
-
-    if (memoryAreaSize > bufferSize) {
-        if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > memoryAreaSize) {
-            if (numBuffersToProcess != 0) {
-                NES_DEBUG("BenchmarkSource::receiveData: reset buffer to 0");
-                currentPositionInBytes = 0;
-            } else {
-                NES_DEBUG("BenchmarkSource::receiveData: return as mem sry is empty");
-                return std::nullopt;
-            }
-        }
-    }
-
-    NES_ASSERT2_FMT(numberOfTuplesToProduce * schemaSize <= bufferSize, "value to write is larger than the buffer");
-
+    //the benchmark source does not follow the receive pattern and overwrites the running routine
+    NES_NOT_IMPLEMENTED();
     Runtime::TupleBuffer buffer;
-    switch (sourceMode) {
-        case EMPTY_BUFFER: {
-            buffer = bufferManager->getBufferBlocking();
-            break;
-        }
-        case COPY_BUFFER_SIMD_RTE: {
-#ifdef __x86_64__
-            buffer = bufferManager->getBufferBlocking();
-            rte_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
-#else
-            NES_THROW_RUNTIME_ERROR("COPY_BUFFER_SIMD_RTE source mode is not supported.");
-#endif
-            break;
-        }
-        case COPY_BUFFER_SIMD_APEX: {
-            buffer = bufferManager->getBufferBlocking();
-            apex_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
-            break;
-        }
-        case CACHE_COPY: {
-            buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
-            break;
-        }
-        case COPY_BUFFER: {
-            buffer = bufferManager->getBufferBlocking();
-            memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
-            break;
-        }
-        case WRAP_BUFFER: {
-            buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
-            break;
-        }
-    }
-
-    if (memoryAreaSize > bufferSize) {
-        NES_DEBUG("BenchmarkSource::receiveData: add offset=" << bufferSize << " to currentpos=" << currentPositionInBytes);
-        currentPositionInBytes += bufferSize;
-    }
-
-    buffer.setNumberOfTuples(numberOfTuplesToProduce);
-
-    generatedTuples += buffer.getNumberOfTuples();
-    generatedBuffers++;
-
-    NES_DEBUG("BenchmarkSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
-    if (buffer.getNumberOfTuples() == 0) {
-        return std::nullopt;
-    }
     return buffer;
 }
 
