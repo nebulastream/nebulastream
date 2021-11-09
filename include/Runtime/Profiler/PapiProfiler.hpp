@@ -56,6 +56,7 @@ class PapiCpuProfiler : public BaseProfiler {
     std::ofstream csvWriter;
     const uint32_t threadId;
     const uint32_t coreId;
+
     const double freqGhz;
     double startTsc;
     const Presets preset;
