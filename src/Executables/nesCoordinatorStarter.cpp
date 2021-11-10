@@ -77,8 +77,8 @@ int main(int argc, const char* argv[]) {
         crd->stopCoordinator(true);
     }
     catch(std::exception& exp) {
-            NES_ERROR("Problem with coordinator:  << " << exp.what());
-            return 1;
+        NES_ERROR("Problem with coordinator:  << " << exp.what());
+        return 1;
     }
     catch(...) {
         NES_ERROR("Unknown exception was thrown");
