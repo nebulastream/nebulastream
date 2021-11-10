@@ -93,10 +93,10 @@ MQTTSource::MQTTSource(SchemaPtr schema,
 
     switch (inputFormat) {
         case SourceDescriptor::JSON:
-            inputParser = std::make_unique<JSONParser>(tupleSize, schema->getSize(), schemaKeys, physicalTypes);
+            inputParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
             break;
         case SourceDescriptor::CSV:
-            inputParser = std::make_unique<CSVParser>(tupleSize, schema->getSize(), physicalTypes, ",");
+            inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
             break;
     }
 
@@ -316,11 +316,7 @@ bool MQTTSource::getCleanSession() const { return cleanSession; }
 
 std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const { return physicalTypes; }
 
-const Configurations::MQTTSourceConfigPtr& MQTTSource::getSourceConfig() const { return sourceConfig; }
-
-void MQTTSource::setSourceConfig(const Configurations::MQTTSourceConfigPtr& sourceConfig) {
-    MQTTSource::sourceConfig = sourceConfig;
-}
+const Configurations::MQTTSourceConfigPtr& MQTTSource::getSourceConfigPtr() const { return sourceConfigPtr; }
 
 }// namespace NES
 #endif

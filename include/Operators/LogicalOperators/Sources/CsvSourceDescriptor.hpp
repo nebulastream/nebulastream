@@ -17,7 +17,9 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_CSV_SOURCE_DESCRIPTOR_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_CSV_SOURCE_DESCRIPTOR_HPP_
 
+#include <Configurations/ConfigOption.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <chrono>
 
 namespace NES {
@@ -29,84 +31,30 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema,
-                                      std::string filePath,
-                                      std::string delimiter,
-                                      uint64_t numberOfTuplesToProducePerBuffer,
-                                      uint64_t numBuffersToProcess,
-                                      uint64_t frequency,
-                                      bool skipHeader);
-
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      std::string streamName,
-                                      std::string filePath,
-                                      std::string delimiter,
-                                      uint64_t numberOfTuplesToProducePerBuffer,
-                                      uint64_t numBuffersToProcess,
-                                      uint64_t frequency,
-                                      bool skipHeader);
+                                      Configurations::CSVSourceConfigPtr sourceConfigPtr,
+                                      std::string delimiter);
 
     /**
-     * @brief get file path for reading the csv file
+     * @brief get source config ptr with all configurations for csv source
      */
-    const std::string& getFilePath() const;
+    Configurations::CSVSourceConfigPtr getSourceConfigPtr() const;
 
     /**
      * @brief get delimiter for the csv file
      */
     const std::string& getDelimiter() const;
 
-    /**
-     * @brief Get number of buffers to process
-     */
-    uint64_t getNumBuffersToProcess() const;
-
-    /**
-    * @brief Get number of number of tuples within the buffer
-    */
-    uint64_t getNumberOfTuplesToProducePerBuffer() const;
-
-    /**
-     * @brief get the frequency of reading the csv file
-     */
-    std::chrono::milliseconds getFrequency() const;
-
-    /**
-     * @brief get the frequency of reading the csv file as number of time units
-     */
-    uint64_t getFrequencyCount() const;
-
-    /**
-     * @brief get the value of the skipHeader
-     */
-    bool getSkipHeader() const;
-
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
 
   private:
     explicit CsvSourceDescriptor(SchemaPtr schema,
-                                 std::string filePath,
-                                 std::string delimiter,
-                                 uint64_t numberOfTuplesToProducePerBuffer,
-                                 uint64_t numBuffersToProcess,
-                                 uint64_t frequency,
-                                 bool skipHeader);
+                                 Configurations::CSVSourceConfigPtr sourceConfigPtr,
+                                 std::string delimiter);
 
-    explicit CsvSourceDescriptor(SchemaPtr schema,
-                                 std::string streamName,
-                                 std::string filePath,
-                                 std::string delimiter,
-                                 uint64_t numberOfTuplesToProducePerBuffer,
-                                 uint64_t numBuffersToProcess,
-                                 uint64_t frequency,
-                                 bool skipHeader);
-
-    std::string filePath;
+    Configurations::CSVSourceConfigPtr sourceConfigPtr;
     std::string delimiter;
-    uint64_t numBuffersToProcess;
-    uint64_t numberOfTuplesToProducePerBuffer;
-    std::chrono::milliseconds frequency;
-    bool skipHeader;
+
 };
 
 using CsvSourceDescriptorPtr = std::shared_ptr<CsvSourceDescriptor>;

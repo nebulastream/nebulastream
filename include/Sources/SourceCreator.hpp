@@ -20,6 +20,7 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Sources/BenchmarkSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
@@ -178,12 +179,8 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
 DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                   const Runtime::BufferManagerPtr& bufferManager,
                                   const Runtime::QueryManagerPtr& queryManager,
-                                  const std::string& pathToFile,
+                                  const Configurations::CSVSourceConfigPtr& sourceConfigPtr,
                                   const std::string& delimiter,
-                                  uint64_t numberOfTuplesToProducePerBuffer,
-                                  uint64_t numbersOfBufferToProduce,
-                                  uint64_t frequency,
-                                  bool skipHeader,
                                   OperatorId operatorId,
                                   size_t numSourceLocalBuffers,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);

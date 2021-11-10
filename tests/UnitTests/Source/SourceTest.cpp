@@ -38,6 +38,7 @@
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -270,24 +271,16 @@ class CSVSourceProxy : public CSVSource {
     CSVSourceProxy(SchemaPtr schema,
                    Runtime::BufferManagerPtr bufferManager,
                    Runtime::QueryManagerPtr queryManager,
-                   std::string const& filePath,
+                   Configurations::CSVSourceConfigPtr sourceConfigPtr,
                    std::string const& delimiter,
-                   uint64_t numberOfTuplesToProducePerBuffer,
-                   uint64_t numBuffersToProcess,
-                   uint64_t frequency,
-                   bool skipHeader,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : CSVSource(schema,
                     bufferManager,
                     queryManager,
-                    filePath,
+                    sourceConfigPtr,
                     delimiter,
-                    numberOfTuplesToProducePerBuffer,
-                    numBuffersToProcess,
-                    frequency,
-                    skipHeader,
                     operatorId,
                     numSourceLocalBuffers,
                     DataSource::FREQUENCY_MODE,
@@ -863,15 +856,18 @@ TEST_F(SourceTest, testBinarySourceFillBufferContents) {
 }
 
 TEST_F(SourceTest, testCSVSourceGetType) {
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(0);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 this->path_to_file,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 0,
-                                 0,
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -879,15 +875,19 @@ TEST_F(SourceTest, testCSVSourceGetType) {
 }
 
 TEST_F(SourceTest, testCSVSourceWrongFilePath) {
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->wrong_filepath);
+    sourceConfigPtr->setNumberOfBuffersToProduce(0);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 this->wrong_filepath,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 0,
-                                 0,
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -895,15 +895,19 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
 }
 
 TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(0);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 this->path_to_file,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 0,
-                                 0,
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -911,15 +915,19 @@ TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(0);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 this->path_to_file,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 0,
-                                 0,
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -930,15 +938,20 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(1);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+    sourceConfigPtr->setSkipHeader(true);
+
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 this->path_to_file,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 1,
-                                 1,
-                                 this->frequency,
-                                 true,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -951,16 +964,20 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file_head);
+    sourceConfigPtr->setNumberOfBuffersToProduce(1);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     // read actual header, get error from casting input to schema
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 this->path_to_file_head,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 1,
-                                 1,
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -979,15 +996,20 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file_head);
+    sourceConfigPtr->setNumberOfBuffersToProduce(1);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+    sourceConfigPtr->setSkipHeader(true);
+
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 this->path_to_file_head,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 1,
-                                 1,
-                                 this->frequency,
-                                 true,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1004,15 +1026,19 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
     // expectedNumberOfBuffers in c-tor, no looping
     uint64_t expectedNumberOfTuples = 100;
     uint64_t expectedNumberOfBuffers = 2;
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 this->path_to_file,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 0,
-                                 expectedNumberOfBuffers,// file is not going to loop
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1042,15 +1068,19 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
     // expectedNumberOfBuffers set 0 in c-tor, looping
     uint64_t expectedNumberOfTuples = 104;
     uint64_t expectedNumberOfBuffers = 2;
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(0);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 this->path_to_file,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 0,
-                                 0,
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1080,15 +1110,18 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 
     std::string path_to_int_file = "../tests/test_data/every-int.csv";
 
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(path_to_int_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(1); // file not looping
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     CSVSourceProxy csvDataSource(int_schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 path_to_int_file,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 1,
-                                 1,// file is not going to loop
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1140,15 +1173,18 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
 
     std::string path_to_float_file = "../tests/test_data/every-float.csv";
 
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(path_to_float_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(1); // file is not going to loop
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     CSVSourceProxy csvDataSource(float_schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 path_to_float_file,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 1,
-                                 1,// file is not going to loop
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1175,15 +1211,18 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
 
     std::string path_to_bool_file = "../tests/test_data/every-boolean.csv";
 
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(path_to_bool_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(1);// file is not going to loop
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+
     CSVSourceProxy csvDataSource(bool_schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
-                                 path_to_bool_file,
+                                 sourceConfigPtr,
                                  this->delimiter,
-                                 1,
-                                 1,// file is not going to loop
-                                 this->frequency,
-                                 false,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});

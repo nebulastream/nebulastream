@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -29,6 +30,8 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
+using namespace Configurations;
+
 class ConvertLogicalToPhysicalSourceTest : public testing::Test {
   public:
     Runtime::NodeEnginePtr engine;
@@ -63,7 +66,15 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, "testStream", "csv.log", ",", 0, 10, 1, false);
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath("csv.log");
+    sourceConfigPtr->setLogicalStreamName("testStream");
+    sourceConfigPtr->setNumberOfBuffersToProduce(10);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfigPtr->setSourceFrequency(1);
+
+    SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, sourceConfigPtr, ",");
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, sourceDescriptor, engine, 12);
     EXPECT_EQ(csvFileSource->getType(), CSV_SOURCE);
 }
