@@ -27,7 +27,7 @@ namespace Configurations {
 class WorkerConfig;
 using WorkerConfigPtr = std::shared_ptr<WorkerConfig>;
 
-}
+}// namespace Configurations
 
 class PhysicalStreamConfig;
 using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;

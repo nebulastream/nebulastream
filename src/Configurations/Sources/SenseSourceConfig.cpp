@@ -44,10 +44,10 @@ SenseSourceConfig::SenseSourceConfig(std::map<std::string, std::string> sourceCo
 }
 
 SenseSourceConfig::SenseSourceConfig()
-    : SourceConfig(SENSE_SOURCE_CONFIG), udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
+    : SourceConfig(SENSE_SOURCE_CONFIG),
+      udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with default values.");
 }
-
 
 void SenseSourceConfig::resetSourceOptions() {
     setUdfs(udfs->getDefaultValue());
@@ -65,5 +65,5 @@ StringConfigOption SenseSourceConfig::getUdfs() const { return udfs; }
 
 void SenseSourceConfig::setUdfs(std::string udfsValue) { udfs->setValue(udfsValue); }
 
-}
+}// namespace Configurations
 }// namespace NES

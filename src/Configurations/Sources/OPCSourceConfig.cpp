@@ -32,7 +32,8 @@ std::shared_ptr<OPCSourceConfig> OPCSourceConfig::create() { return std::make_sh
 
 OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(sourceConfigMap, OPC_SOURCE_CONFIG),
-      namespaceIndex(ConfigOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
+      namespaceIndex(
+          ConfigOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
       nodeIdentifier(ConfigOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "", "node identifier, needed for: OPCSource")),
       userName(ConfigOption<std::string>::create(USER_NAME_CONFIG,
                                                  "",
@@ -59,8 +60,10 @@ OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfig
 
 OPCSourceConfig::OPCSourceConfig()
     : SourceConfig(OPC_SOURCE_CONFIG),
-      namespaceIndex(ConfigOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
-      nodeIdentifier(ConfigOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "the.answer", "node identifier, needed for: OPCSource")),
+      namespaceIndex(
+          ConfigOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
+      nodeIdentifier(
+          ConfigOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "the.answer", "node identifier, needed for: OPCSource")),
       userName(ConfigOption<std::string>::create(USER_NAME_CONFIG,
                                                  "testUser",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
@@ -104,5 +107,5 @@ void OPCSourceConfig::setUserName(std::string userNameValue) { userName->setValu
 
 void OPCSourceConfig::setPassword(std::string passwordValue) { password->setValue(std::move(passwordValue)); }
 
-}
+}// namespace Configurations
 }// namespace NES

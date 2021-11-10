@@ -87,7 +87,7 @@ class SourceConfigFactory {
     overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams,
                                         std::map<std::string, std::string> configurationMap);
 };
-}
+}// namespace Configurations
 }// namespace NES
 
 #endif//NES_SOURCECONFIGFACTORY_HPP

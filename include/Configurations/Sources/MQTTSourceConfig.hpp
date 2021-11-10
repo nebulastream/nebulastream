@@ -147,6 +147,6 @@ class MQTTSourceConfig : public SourceConfig {
     BoolConfigOption cleanSession;
     FloatConfigOption flushIntervalMS;
 };
-}
+}// namespace Configurations
 }// namespace NES
 #endif

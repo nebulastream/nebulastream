@@ -258,7 +258,7 @@ class CoordinatorConfig {
     BoolConfigOption enableSemanticQueryValidation;
 };
 
-}
+}// namespace Configurations
 }// namespace NES
 
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_COORDINATOR_CONFIG_HPP_

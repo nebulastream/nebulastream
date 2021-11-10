@@ -307,7 +307,9 @@ std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const { return physi
 
 const Configurations::MQTTSourceConfigPtr& MQTTSource::getSourceConfig() const { return sourceConfig; }
 
-void MQTTSource::setSourceConfig(const Configurations::MQTTSourceConfigPtr& sourceConfig) { MQTTSource::sourceConfig = sourceConfig; }
+void MQTTSource::setSourceConfig(const Configurations::MQTTSourceConfigPtr& sourceConfig) {
+    MQTTSource::sourceConfig = sourceConfig;
+}
 
 }// namespace NES
 #endif

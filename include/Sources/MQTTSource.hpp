@@ -18,11 +18,11 @@
 #define NES_INCLUDE_SOURCES_MQTT_SOURCE_HPP_
 #ifdef ENABLE_MQTT_BUILD
 
+#include <Sources/DataSource.hpp>
+#include <Sources/Parsers/Parser.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <Sources/DataSource.hpp>
-#include <Sources/Parsers/Parser.hpp>
 
 namespace mqtt {
 class async_client;

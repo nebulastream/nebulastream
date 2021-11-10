@@ -82,6 +82,6 @@ class SenseSourceConfig : public SourceConfig {
 
     StringConfigOption udfs;
 };
-}
+}// namespace Configurations
 }// namespace NES
 #endif

@@ -76,7 +76,6 @@ class BinarySourceConfig : public SourceConfig {
      */
     explicit BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap);
 
-
     /**
      * @brief constructor to create a new Binary source config object initialized with default values as set below
      */
@@ -84,6 +83,6 @@ class BinarySourceConfig : public SourceConfig {
 
     StringConfigOption filePath;
 };
-}
+}// namespace Configurations
 }// namespace NES
 #endif

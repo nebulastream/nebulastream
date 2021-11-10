@@ -276,5 +276,5 @@ void CoordinatorConfig::setEnableSemanticQueryValidation(bool enableSemanticQuer
     CoordinatorConfig::enableSemanticQueryValidation->setValue(enableSemanticQueryValidation);
 }
 
-}
+}// namespace Configurations
 }// namespace NES
