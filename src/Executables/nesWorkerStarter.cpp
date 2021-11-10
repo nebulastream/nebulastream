@@ -96,7 +96,6 @@ int main(int argc, char** argv) {
         wrk->setWithParent(workerConfig->getParentId()->getValue());
     }
 
-
     try {
         wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
         wrk->stop(/**force*/ true);
