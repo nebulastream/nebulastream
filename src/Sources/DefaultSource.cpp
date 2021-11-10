@@ -57,7 +57,6 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
     // 10 tuples of size one
     NES_DEBUG("Source:" << this << " requesting buffer");
 
-    auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("Source:" << this << " got buffer");
     uint64_t tupleCnt = 10;
 
@@ -105,12 +104,12 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
             }
         }
     }
-    buf.setNumberOfTuples(tupleCnt);
+    buffer.setNumberOfTuples(tupleCnt);
     // TODO move this to trace
-    NES_DEBUG("Source: id=" << operatorId << " Generated buffer with " << buf.getNumberOfTuples() << "/"
+    NES_DEBUG("Source: id=" << operatorId << " Generated buffer with " << buffer.getNumberOfTuples() << "/"
                             << schema->getSchemaSizeInBytes() << "\n"
-                            << Util::prettyPrintTupleBuffer(buf, schema));
-    return buf;
+                            << buffer);
+    return buffer.getBuffer();
 }
 
 SourceType DefaultSource::getType() const { return DEFAULT_SOURCE; }

@@ -223,7 +223,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         TupleBuffer buf = bufferManager->getBufferBlocking();
 
         if (schema->getLayoutType() == Schema::COL_LAYOUT) {
-            auto layoutCol = Runtime::MemoryLayouts::ColumnLayout::create(schema, true);
+            auto layoutCol = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
             uint64_t tupleCnt = buf.getBufferSize() / layoutCol->getRecordSize();
             auto bindedColLayout = layoutCol->bind(buf);
 
@@ -244,7 +244,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
             buf.setNumberOfTuples(tupleCnt);
 
         } else if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
-            auto layoutRow = Runtime::MemoryLayouts::RowLayout::create(schema, true);
+            auto layoutRow = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
             uint64_t tupleCnt = buf.getBufferSize() / layoutRow->getRecordSize();
             auto bindedRowLayout = layoutRow->bind(buf);
 
@@ -459,10 +459,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     stage->start(*queryContext);
     stage->execute(buffer, *queryContext, wctx);
     auto resultBuffer = queryContext->buffers[0];
+
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
-    auto firstFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, layout, buffer);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, nodeEngine->getBufferManager()->getBufferSize());
+    std::cout << Runtime::MemoryLayouts::DynamicTupleBuffer(layout, resultBuffer);
+    auto firstFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, layout, resultBuffer);
     for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
         EXPECT_EQ(firstFields[recordIndex], 1UL);
     }
@@ -722,7 +724,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     {
         Runtime::MemoryLayouts::RowLayoutPtr rowLayout =
-            Runtime::MemoryLayouts::RowLayout::create(schema, true);
+            Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
 
         auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, rowLayout, buffer);
         auto stopFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, rowLayout, buffer);
@@ -953,8 +955,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
 
     auto resultBuffer = queryContext->buffers[0];
 
-    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
 
     auto secondFieldsInput = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, inputLayout, inputBuffer);
     auto thirdFieldsInput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, inputLayout, inputBuffer);
@@ -1026,8 +1028,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
-    auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::MemoryLayouts::ColumnLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema,  nodeEngine->getBufferManager()->getBufferSize());
+    auto outputLayout = Runtime::MemoryLayouts::ColumnLayout::create(outputSchema,  nodeEngine->getBufferManager()->getBufferSize());
 
     auto secondFieldsInput =
         Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, inputLayout, inputBuffer);
@@ -1101,8 +1103,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
-    auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
 
     auto secondFieldsInput =
         Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, inputLayout, inputBuffer);
@@ -1175,8 +1177,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
-    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::MemoryLayouts::ColumnLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema,nodeEngine->getBufferManager()->getBufferSize());
+    auto outputLayout = Runtime::MemoryLayouts::ColumnLayout::create(outputSchema,nodeEngine->getBufferManager()->getBufferSize());
 
     auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputColumnLayout = outputLayout->bind(resultBuffer);
@@ -1254,8 +1256,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 
     auto resultBuffer = queryContext->buffers[0];
 
-    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, true);
-    auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
+    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
 
     auto bindedInputLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputLayout = outputLayout->bind(resultBuffer);

@@ -441,8 +441,8 @@ TEST_F(EngineTest, testParallelSameSource) {
     EXPECT_TRUE(engine->startQuery(1));
     EXPECT_TRUE(engine->startQuery(2));
 
-    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
-    EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
+//    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
+ //   EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
