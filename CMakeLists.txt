@@ -14,7 +14,7 @@
 cmake_minimum_required(VERSION 3.20.0)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v6)
+set(VCPKG_BINARY_VERSION v7)
 
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
