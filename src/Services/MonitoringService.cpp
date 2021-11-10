@@ -34,10 +34,8 @@
 
 namespace NES {
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology) : topology(topology) {
-    NES_DEBUG("MonitoringService: Initializing with monitoring enabled");
-    monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology);
-}
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology)
+    : MonitoringService(workerClient, topology, true) {}
 
 MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enable)
     : topology(topology), enableMonitoring(enable) {

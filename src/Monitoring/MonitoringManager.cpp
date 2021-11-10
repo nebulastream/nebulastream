@@ -33,15 +33,12 @@
 
 namespace NES {
 
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
-    : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology),
-      enableMonitoring(true) {
-    NES_DEBUG("MonitoringManager: Init with monitoring enabled");
+MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology): MonitoringManager(workerClient, topology, true) {
 }
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
     : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology),
-      enableMonitoring(true) {
+      enableMonitoring(enableMonitoring) {
     NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring);
 }
 
