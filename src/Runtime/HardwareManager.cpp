@@ -80,7 +80,7 @@ void readCpuConfig(uint32_t& numa_nodes_count,
     sysctlbyname("hw.physicalcpu", &count, &len, NULL, 0);
     numa_nodes_count = 1;
     num_physical_cpus = count;
-    auto ref = cpuMapping.emplace_back(0);
+    auto ref = cpuMapping[0] = HardwareManager::NumaDescriptor(0);
     for (uint32_t i = 0; i < num_physical_cpus; ++i) {
         ref.addCpu(0, i);
     }
