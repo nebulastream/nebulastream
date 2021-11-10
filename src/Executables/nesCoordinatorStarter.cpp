@@ -81,8 +81,8 @@ int main(int argc, const char* argv[]) {
             return 1;
     }
     catch(...) {
-        throw;
         NES_ERROR("Unknown exception was thrown");
+        throw;
     }
     NES_INFO("coordinator started");
 }
