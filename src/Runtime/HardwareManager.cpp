@@ -34,7 +34,7 @@ namespace detail {
 
 void readCpuConfig(uint32_t& numa_nodes_count,
                    uint32_t& num_physical_cpus,
-                   std::vector<HardwareManager::NumaDescriptor>& cpuMapping) {
+                   std::unordered_map<uint64_t, HardwareManager::NumaDescriptor>& cpuMapping) {
 #ifdef __linux__
     std::stringstream buffer;
     FILE* fp = popen("lscpu --all --extended", "r");
@@ -59,22 +59,20 @@ void readCpuConfig(uint32_t& numa_nodes_count,
                 splits.push_back(s);
             }
         }
-        auto online = splits[5] == "yes";
+        bool online = splits[5] == "yes";
         if (!online) {
             continue;
         }
         unsigned long cpu = std::stoi(splits[0]);
         unsigned long node = std::stoi(splits[1]);
         unsigned long core = std::stoi(splits[3]);
-        if (cpuMapping.empty() || cpuMapping.size() <= node) {
-            cpuMapping.emplace_back(node);
+        if (auto it = cpuMapping.find(node); it != cpuMapping.end()) {
+            cpuMapping[node] = HardwareManager::NumaDescriptor(node);
         }
         auto& descriptor = cpuMapping[node];
         descriptor.addCpu(cpu, core);
-        if (online) {
-            numa_nodes_count = std::max<uint32_t>(numa_nodes_count, node + 1);
-            num_physical_cpus = std::max<uint32_t>(num_physical_cpus, core + 1);
-        }
+        numa_nodes_count = std::max<uint32_t>(numa_nodes_count, node + 1);
+        num_physical_cpus = std::max<uint32_t>(num_physical_cpus, core + 1);
     }
 #elif defined(__APPLE__)
     int count;

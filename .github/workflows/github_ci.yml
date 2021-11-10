@@ -31,7 +31,7 @@ jobs:
           access_token: ${{ github.token }}
       - name: Run tests
         run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup
         if: ${{ always() }}
         run: |
@@ -64,7 +64,7 @@ jobs:
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run tests
         run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eOS="ARM64" --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eOS="ARM64" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup
         if: ${{ always() }}
         run: |
@@ -141,7 +141,7 @@ jobs:
           CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
-          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
       #Find the PR associated with this push, if there is one.
       - uses: jwalton/gh-find-current-pr@v1
         id: findPr
