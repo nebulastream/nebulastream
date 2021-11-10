@@ -17,7 +17,6 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>

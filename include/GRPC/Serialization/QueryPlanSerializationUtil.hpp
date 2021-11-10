@@ -20,8 +20,6 @@
 #include <memory>
 
 namespace NES {
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;

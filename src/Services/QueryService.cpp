@@ -26,15 +26,12 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <SerializableOperator.pb.h>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <utility>
-
-// Move the mechanism to re-generate operator IDs coming from client
 
 namespace NES {
 
