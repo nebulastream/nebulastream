@@ -37,7 +37,7 @@ class SimpleBenchmarkSink : public SinkMedium {
   public:
     SimpleBenchmarkSink(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0) {
-        rowLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, false);
+        rowLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, bufferManager->getBufferSize());
 
         // An end of benchmark will be signaled by the source as key field will be equal to -1
         auto fields = getSchemaPtr()->fields;

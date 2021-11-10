@@ -64,7 +64,7 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
         NES_THROW_RUNTIME_ERROR("RuntimeNesMetrics: Incomplete number of fields in schema.");
     }
 
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
     output.wallTimeNs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
     output.memoryUsageInBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];

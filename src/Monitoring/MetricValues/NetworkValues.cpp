@@ -67,7 +67,7 @@ NetworkValues NetworkValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleB
     if (!MetricUtils::validateFieldsInSchema(NetworkValues::getSchema(""), schema, i)) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Incomplete number of fields in schema.");
     }
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
     output.interfaceName = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
     output.rBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];

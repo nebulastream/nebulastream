@@ -67,7 +67,7 @@ NetworkMetrics NetworkMetrics::fromBuffer(const SchemaPtr& schema, Runtime::Tupl
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && hasField) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
 
-        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
+        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
         auto numInt = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i,  layout, buf)[0];
 
         for (auto n{0ul}; n < numInt; ++n) {

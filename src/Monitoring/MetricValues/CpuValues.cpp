@@ -57,7 +57,7 @@ CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& b
         NES_THROW_RUNTIME_ERROR("CpuValues: Incomplete number of fields in schema.");
     }
 
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
     output.user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 0, layout, buf)[0];
     output.nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 1,  layout, buf)[0];

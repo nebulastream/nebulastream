@@ -79,7 +79,7 @@ StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::
         NES_THROW_RUNTIME_ERROR("StaticNesMetrics: Incomplete number of fields in schema.");
     }
 
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
     output.totalMemoryBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
 
     output.cpuCoreNum = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(i++, layout, buf)[0];

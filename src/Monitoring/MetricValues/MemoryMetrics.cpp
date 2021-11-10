@@ -68,7 +68,7 @@ MemoryMetrics MemoryMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleB
     }
 
     //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
     output.TOTAL_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
     output.TOTAL_SWAP = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];

@@ -65,7 +65,6 @@ class ExecutableSliceAggregationTriggerAction
 
         this->windowSchema = outputSchema;
 
-        windowTupleLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, true);
     }
 
     bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
@@ -82,6 +81,8 @@ class ExecutableSliceAggregationTriggerAction
         }
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = workerContext.allocateTupleBuffer();
+
+        windowTupleLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {

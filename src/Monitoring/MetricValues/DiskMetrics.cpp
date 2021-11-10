@@ -61,7 +61,7 @@ DiskMetrics DiskMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffe
         NES_THROW_RUNTIME_ERROR("DiskMetrics: Missing fields in schema.");
     }
 
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
     output.fBsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
     output.fFrsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
     output.fBlocks = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
