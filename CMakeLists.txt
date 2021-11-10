@@ -20,6 +20,8 @@ set(VCPKG_BINARY_VERSION v7)
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
+# Enable local dependency building (this may take a long time)
+option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
@@ -33,7 +35,7 @@ option(ENABLE_CLANG_TIDY OFF)
 # which is set by the PROJECT command. However, we cannot call PROJECT
 # at this point because we want to use a custom toolchain file.
 execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
-set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
+
 if(APPLE)
     if (NES_HOST_PROCESSOR MATCHES "x86_64")
         set(VCPKG_TARGET_TRIPLET x64-osx-nes)
