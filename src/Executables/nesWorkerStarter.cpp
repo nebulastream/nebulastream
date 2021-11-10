@@ -106,8 +106,8 @@ int main(int argc, char** argv) {
         return 1;
     }
     catch(...) {
-        throw;
         NES_ERROR("Unknown exception was thrown");
+        throw;
     }
     NES_INFO("worker started");
 }
