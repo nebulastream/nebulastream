@@ -71,12 +71,8 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             const CSVSourcePtr csvSourcePtr = std::dynamic_pointer_cast<CSVSource>(dataSource);
             const SourceDescriptorPtr csvSourceDescriptor =
                 CsvSourceDescriptor::create(csvSourcePtr->getSchema(),
-                                            csvSourcePtr->getFilePath(),
-                                            csvSourcePtr->getDelimiter(),
-                                            csvSourcePtr->getNumberOfTuplesToProducePerBuffer(),
-                                            csvSourcePtr->getNumBuffersToProcess(),
-                                            csvSourcePtr->getGatheringIntervalCount(),
-                                            csvSourcePtr->getSkipHeader());
+                                            csvSourcePtr->getSourceConfigPtr(),
+                                            csvSourcePtr->getDelimiter());
             return csvSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD
@@ -98,7 +94,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             NES_INFO("ConvertPhysicalToLogicalSource: Creating MQTT source");
             const MQTTSourcePtr mqttSourcePtr = std::dynamic_pointer_cast<MQTTSource>(dataSource);
             const SourceDescriptorPtr mqttSourceDescriptor = MQTTSourceDescriptor::create(mqttSourcePtr->getSchema(),
-                                                                                          mqttSourcePtr->getSourceConfig(),
+                                                                                          mqttSourcePtr->getSourceConfigPtr(),
                                                                                           mqttSourcePtr->getInputFormat());
             return mqttSourceDescriptor;
         }

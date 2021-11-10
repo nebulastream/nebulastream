@@ -17,6 +17,8 @@
 #ifndef NES_INCLUDE_SOURCES_CSV_SOURCE_HPP_
 #define NES_INCLUDE_SOURCES_CSV_SOURCE_HPP_
 
+#include <Configurations/ConfigOption.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>
@@ -40,12 +42,8 @@ class CSVSource : public DataSource {
     explicit CSVSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       std::string const& filePath,
+                       Configurations::CSVSourceConfigPtr sourceConfigPtr,
                        std::string const& delimiter,
-                       uint64_t numberOfTuplesToProducePerBuffer,
-                       uint64_t numBuffersToProcess,
-                       uint64_t frequency,
-                       bool skipHeader,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
@@ -95,12 +93,19 @@ class CSVSource : public DataSource {
      */
     bool getSkipHeader() const;
 
+    /**
+     * @brief getter for source config
+     * @return sourceConfigPtr
+     */
+    const Configurations::CSVSourceConfigPtr& getSourceConfigPtr() const;
+
   protected:
     std::ifstream input;
     bool fileEnded;
     bool loopOnFile;
 
   private:
+    Configurations::CSVSourceConfigPtr sourceConfigPtr;
     std::string filePath;
     uint64_t tupleSize;
     uint64_t numberOfTuplesToProducePerBuffer;
@@ -110,6 +115,7 @@ class CSVSource : public DataSource {
     size_t fileSize;
     bool skipHeader;
     CSVParserPtr inputParser;
+    bool rowLayout;
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;

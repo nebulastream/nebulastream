@@ -88,6 +88,7 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 using namespace NES;
+using namespace Configurations;
 
 class SerializationUtilTest : public testing::Test {
 
@@ -242,7 +243,14 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        auto source = CsvSourceDescriptor::create(schema, "testStream", "localhost", ",", 0, 10, 10, false);
+        CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+        sourceConfigPtr->setFilePath("localhost");
+        sourceConfigPtr->setLogicalStreamName("testStream");
+        sourceConfigPtr->setNumberOfBuffersToProduce(0);
+        sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(10);
+        sourceConfigPtr->setSourceFrequency(10);
+        auto source = CsvSourceDescriptor::create(schema, sourceConfigPtr, ",");
         auto* serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);

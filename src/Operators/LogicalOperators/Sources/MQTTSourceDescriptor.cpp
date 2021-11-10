@@ -23,20 +23,19 @@
 
 namespace NES {
 
-SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
-                                                 Configurations::MQTTSourceConfigPtr sourceConfig,
-                                                 SourceDescriptor::InputFormat inputFormat) {
-    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema), std::move(sourceConfig), inputFormat));
+SourceDescriptorPtr
+MQTTSourceDescriptor::create(SchemaPtr schema, Configurations::MQTTSourceConfigPtr sourceConfigPtr, SourceDescriptor::InputFormat inputFormat) {
+    return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema), std::move(sourceConfigPtr), inputFormat));
 }
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
-                                           Configurations::MQTTSourceConfigPtr sourceConfig,
+                                           Configurations::MQTTSourceConfigPtr sourceConfigPtr,
                                            SourceDescriptor::InputFormat inputFormat)
-    : SourceDescriptor(std::move(schema)), sourceConfig(std::move(sourceConfig)), inputFormat(inputFormat) {}
+    : SourceDescriptor(std::move(schema)), sourceConfigPtr(std::move(sourceConfigPtr)), inputFormat(inputFormat) {}
 
-Configurations::MQTTSourceConfigPtr MQTTSourceDescriptor::getSourceConfig() const { return sourceConfig; }
+Configurations::MQTTSourceConfigPtr MQTTSourceDescriptor::getSourceConfigPtr() const { return sourceConfigPtr; }
 
-std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor()"; }
+std::string MQTTSourceDescriptor::toString() { return "MQTTSourceDescriptor(" + sourceConfigPtr->toString() + ")"; }
 
 SourceDescriptor::InputFormat MQTTSourceDescriptor::getInputFormat() const { return inputFormat; }
 
@@ -46,15 +45,15 @@ bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
         return false;
     }
     auto otherMQTTSource = other->as<MQTTSourceDescriptor>();
-    NES_DEBUG("URL= " << sourceConfig->getUrl()->getValue()
-                      << " == " << otherMQTTSource->getSourceConfig()->getUrl()->getValue());
-    return sourceConfig->getUrl()->getValue() == otherMQTTSource->getSourceConfig()->getUrl()->getValue()
-        && sourceConfig->getClientId()->getValue() == otherMQTTSource->getSourceConfig()->getClientId()->getValue()
-        && sourceConfig->getUserName()->getValue() == otherMQTTSource->getSourceConfig()->getUserName()->getValue()
-        && sourceConfig->getTopic()->getValue() == otherMQTTSource->getSourceConfig()->getTopic()->getValue()
+    NES_DEBUG("URL= " << sourceConfigPtr->getUrl()->getValue()
+                      << " == " << otherMQTTSource->getSourceConfigPtr()->getUrl()->getValue());
+    return sourceConfigPtr->getUrl()->getValue() == otherMQTTSource->getSourceConfigPtr()->getUrl()->getValue()
+        && sourceConfigPtr->getClientId()->getValue() == otherMQTTSource->getSourceConfigPtr()->getClientId()->getValue()
+        && sourceConfigPtr->getUserName()->getValue() == otherMQTTSource->getSourceConfigPtr()->getUserName()->getValue()
+        && sourceConfigPtr->getTopic()->getValue() == otherMQTTSource->getSourceConfigPtr()->getTopic()->getValue()
         && inputFormat == otherMQTTSource->getInputFormat()
-        && sourceConfig->getQos()->getValue() == otherMQTTSource->getSourceConfig()->getQos()->getValue()
-        && sourceConfig->getCleanSession()->getValue() == otherMQTTSource->getSourceConfig()->getCleanSession()->getValue();
+        && sourceConfigPtr->getQos()->getValue() == otherMQTTSource->getSourceConfigPtr()->getQos()->getValue()
+        && sourceConfigPtr->getCleanSession()->getValue() == otherMQTTSource->getSourceConfigPtr()->getCleanSession()->getValue();
 }
 
 }// namespace NES

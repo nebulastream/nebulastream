@@ -143,12 +143,7 @@ class MQTTSource : public DataSource {
      * @brief getter for source config
      * @return sourceConfig
      */
-    const Configurations::MQTTSourceConfigPtr& getSourceConfig() const;
-    /**
-     * set SourceConfig
-     * @param sourceConfig
-     */
-    void setSourceConfig(const Configurations::MQTTSourceConfigPtr& sourceConfig);
+    const Configurations::MQTTSourceConfigPtr& getSourceConfigPtr() const;
 
   private:
     /**
@@ -175,7 +170,7 @@ class MQTTSource : public DataSource {
      * serialization/deserialization process
      */
     friend class DataSource;
-    Configurations::MQTTSourceConfigPtr sourceConfig;
+    Configurations::MQTTSourceConfigPtr sourceConfigPtr;
     bool connected;
     std::string serverAddress;
     std::string clientId;

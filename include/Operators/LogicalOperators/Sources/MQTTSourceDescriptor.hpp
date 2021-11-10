@@ -46,7 +46,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @brief get MQTT server address
      * @return serverAddress
      */
-    Configurations::MQTTSourceConfigPtr getSourceConfig() const;
+    Configurations::MQTTSourceConfigPtr getSourceConfigPtr() const;
 
     /**
      * @brief getter for inputFormat
@@ -74,7 +74,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                   Configurations::MQTTSourceConfigPtr sourceConfig,
                                   SourceDescriptor::InputFormat inputFormat);
 
-    Configurations::MQTTSourceConfigPtr sourceConfig;
+    Configurations::MQTTSourceConfigPtr sourceConfigPtr;
     SourceDescriptor::InputFormat inputFormat;
 };
 

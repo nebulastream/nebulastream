@@ -187,15 +187,19 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, queryId, context, executableStage, 1, {sink});
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(numberOfBuffers);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
+    sourceConfigPtr->setSourceFrequency(frequency);
+
     auto source = createCSVFileSource(schema,
                                       this->nodeEngine->getBufferManager(),
                                       this->nodeEngine->getQueryManager(),
-                                      this->path_to_file,
+                                      sourceConfigPtr,
                                       del,
-                                      numberOfTuplesToProcess,
-                                      numberOfBuffers,
-                                      frequency,
-                                      false,
                                       1,
                                       12,
                                       {pipeline});
@@ -232,15 +236,18 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     uint64_t numberOfBuffers = 1;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(numberOfBuffers);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
+    sourceConfigPtr->setSourceFrequency(frequency);
+
     const DataSourcePtr source = createCSVFileSource(schema,
                                                      nodeEngine->getBufferManager(),
                                                      nodeEngine->getQueryManager(),
-                                                     this->path_to_file,
+                                                     sourceConfigPtr,
                                                      del,
-                                                     numberOfTuplesToProcess,
-                                                     numberOfBuffers,
-                                                     frequency,
-                                                     false,
                                                      1,
                                                      12,
                                                      {});

@@ -21,88 +21,36 @@
 namespace NES {
 
 CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
-                                         std::string filePath,
-                                         std::string delimiter,
-                                         uint64_t numberOfTuplesToProducePerBuffer,
-                                         uint64_t numBuffersToProcess,
-                                         uint64_t frequency,
-                                         bool skipHeader)
-    : SourceDescriptor(std::move(schema)), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
-      numBuffersToProcess(numBuffersToProcess), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      frequency(frequency), skipHeader(skipHeader) {}
-
-CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
-                                         std::string streamName,
-                                         std::string filePath,
-                                         std::string delimiter,
-                                         uint64_t numberOfTuplesToProducePerBuffer,
-                                         uint64_t numBuffersToProcess,
-                                         uint64_t frequency,
-                                         bool skipHeader)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
-      numBuffersToProcess(numBuffersToProcess), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      frequency(frequency), skipHeader(skipHeader) {}
+                                         Configurations::CSVSourceConfigPtr sourceConfigPtr,
+                                         std::string delimiter)
+    : SourceDescriptor(std::move(schema)), sourceConfigPtr(std::move(sourceConfigPtr)), delimiter(std::move(delimiter)) {}
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
-                                                std::string filePath,
-                                                std::string delimiter,
-                                                uint64_t numberOfTuplesToProducePerBuffer,
-                                                uint64_t numBuffersToProcess,
-                                                uint64_t frequency,
-                                                bool skipHeader) {
+                                                Configurations::CSVSourceConfigPtr sourceConfigPtr,
+                                                std::string delimiter) {
     return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema),
-                                                                     std::move(filePath),
-                                                                     std::move(delimiter),
-                                                                     numberOfTuplesToProducePerBuffer,
-                                                                     numBuffersToProcess,
-                                                                     frequency,
-                                                                     skipHeader));
+                                                                     std::move(sourceConfigPtr),
+                                                                     std::move(delimiter)));
 }
 
-SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
-                                                std::string streamName,
-                                                std::string filePath,
-                                                std::string delimiter,
-                                                uint64_t numberOfTuplesToProducePerBuffer,
-                                                uint64_t numBuffersToProcess,
-                                                uint64_t frequency,
-                                                bool skipHeader) {
-    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema),
-                                                                     std::move(streamName),
-                                                                     std::move(filePath),
-                                                                     std::move(delimiter),
-                                                                     numberOfTuplesToProducePerBuffer,
-                                                                     numBuffersToProcess,
-                                                                     frequency,
-                                                                     skipHeader));
-}
-
-const std::string& CsvSourceDescriptor::getFilePath() const { return filePath; }
+Configurations::CSVSourceConfigPtr CsvSourceDescriptor::getSourceConfigPtr() const { return sourceConfigPtr; }
 
 const std::string& CsvSourceDescriptor::getDelimiter() const { return delimiter; }
-
-bool CsvSourceDescriptor::getSkipHeader() const { return skipHeader; }
-
-uint64_t CsvSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
-
-uint64_t CsvSourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
-
-std::chrono::milliseconds CsvSourceDescriptor::getFrequency() const { return frequency; }
-uint64_t CsvSourceDescriptor::getFrequencyCount() const { return frequency.count(); }
 
 bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<CsvSourceDescriptor>()) {
         return false;
     }
     auto otherSource = other->as<CsvSourceDescriptor>();
-    return filePath == otherSource->getFilePath() && delimiter == otherSource->getDelimiter()
-        && numBuffersToProcess == otherSource->getNumBuffersToProcess() && frequency == otherSource->getFrequency()
+    return sourceConfigPtr->getFilePath()->getValue() == otherSource->getSourceConfigPtr()->getFilePath()->getValue() && delimiter == otherSource->getDelimiter()
+        && sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue() == otherSource->getSourceConfigPtr()->getNumberOfTuplesToProducePerBuffer()->getValue()
+        && sourceConfigPtr->getSourceFrequency()->getValue() == otherSource->getSourceConfigPtr()->getSourceFrequency()->getValue()
         && getSchema()->equals(otherSource->getSchema());
 }
 
 std::string CsvSourceDescriptor::toString() {
-    return "CsvSourceDescriptor(" + filePath + "," + delimiter + ", " + std::to_string(numBuffersToProcess) + ", "
-        + std::to_string(frequency.count()) + "ms)";
+    return "CsvSourceDescriptor(" + sourceConfigPtr->getFilePath()->getValue() + "," + delimiter + ", " + std::to_string(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()) + ", "
+        + std::to_string(std::chrono::milliseconds(sourceConfigPtr->getSourceFrequency()->getValue()).count()) + "ms)";
 }
 
 }// namespace NES

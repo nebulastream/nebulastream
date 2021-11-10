@@ -44,7 +44,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @brief get sourceConfig
      * @return returns the source configuration
      */
-    [[nodiscard]] Configurations::SourceConfigPtr getSourceConfig() const;
+    [[nodiscard]] Configurations::SourceConfigPtr getSourceConfigPtr() const;
 
     /**
      * @brief get the number of tuples to produce in a buffer
@@ -81,9 +81,9 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     SourceDescriptorPtr build(SchemaPtr) override;
 
   protected:
-    explicit PhysicalStreamConfig(const Configurations::SourceConfigPtr& sourceConfig);
+    explicit PhysicalStreamConfig(const Configurations::SourceConfigPtr& sourceConfigPtr);
 
-    Configurations::SourceConfigPtr sourceConfig;
+    Configurations::SourceConfigPtr sourceConfigPtr;
     uint32_t numberOfTuplesToProducePerBuffer;
     uint32_t numberOfBuffersToProduce;
     std::string physicalStreamName;

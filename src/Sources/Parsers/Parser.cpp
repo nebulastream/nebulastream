@@ -136,7 +136,11 @@ void Parser::writeFieldValueToTupleBufferRowLayout(std::basic_string<char> input
         std::string value;
         // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
         // improve behavior with json library
-        value = (json) ? inputString.substr(1, inputString.size() - 2) : inputString.c_str();
+        value = (json) ? inputString.substr(1, inputString.size() - 2) : inputString;
+
+        //TODO: Remove later
+        //TODO: Find out why parsing not working
+        std::cout << "This is the input string: " << inputString << std::endl;
         Runtime::DynamicMemoryLayout::DynamicRowLayoutField<std::string, true>::create(schemaFieldIndex,
                                                                                        bindedRowLayout)[tupleCount] = value;
     }
