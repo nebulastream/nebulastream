@@ -41,8 +41,7 @@ class QueryController : public BaseController {
     explicit QueryController(QueryServicePtr queryService,
                              QueryCatalogPtr queryCatalog,
                              TopologyPtr topology,
-                             GlobalExecutionPlanPtr globalExecutionPlan,
-                             StreamCatalogPtr streamCatalog);
+                             GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~QueryController() = default;
 
@@ -72,7 +71,6 @@ class QueryController : public BaseController {
     QueryServicePtr queryService;
     QueryCatalogPtr queryCatalog;
     GlobalExecutionPlanPtr globalExecutionPlan;
-    StreamCatalogPtr streamCatalog;
 };
 
 using QueryControllerPtr = std::shared_ptr<QueryController>;

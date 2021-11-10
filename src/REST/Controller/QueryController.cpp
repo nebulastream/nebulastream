@@ -36,10 +36,9 @@ namespace NES {
 QueryController::QueryController(QueryServicePtr queryService,
                                  QueryCatalogPtr queryCatalog,
                                  TopologyPtr topology,
-                                 GlobalExecutionPlanPtr globalExecutionPlan,
-                                 StreamCatalogPtr streamCatalog)
+                                 GlobalExecutionPlanPtr globalExecutionPlan)
     : topology(std::move(topology)), queryService(std::move(queryService)), queryCatalog(std::move(queryCatalog)),
-      globalExecutionPlan(std::move(globalExecutionPlan)), streamCatalog(std::move(streamCatalog)) {}
+      globalExecutionPlan(std::move(globalExecutionPlan)){}
 
 void QueryController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 

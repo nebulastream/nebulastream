@@ -42,7 +42,7 @@ RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
                        const Runtime::BufferManagerPtr bufferManager) {
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator, globalQueryPlan);
-    queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan, streamCatalog);
+    queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
     connectivityController = std::make_shared<ConnectivityController>();
     monitoringController = std::make_shared<MonitoringController>(monitoringService, bufferManager);
     topologyController = std::make_shared<TopologyController>(topology);

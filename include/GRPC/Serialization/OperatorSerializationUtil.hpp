@@ -22,8 +22,6 @@
 
 #include <memory>
 namespace NES {
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class SerializableOperator;
 class SerializableOperator_SourceDetails;
