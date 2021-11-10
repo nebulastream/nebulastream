@@ -86,16 +86,9 @@ TEST_F(ClientSerializationUtilTest, testSerializeSimpleQueryPlan) {
     auto queryPlan = query.getQueryPlan();
 
     auto serializedQueryPlan = new SerializableQueryPlan();
-    QueryPlanSerializationUtil::serializeClientOriginatedQueryPlan(queryPlan, serializedQueryPlan);
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
 
-    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeClientOriginatedQueryPlan(serializedQueryPlan, streamCatalog);
-
-    EXPECT_TRUE(deserializedQueryPlan->getQueryId() != INVALID_QUERY_ID);
-    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() != INVALID_QUERY_SUB_PLAN_ID);
-
-    // Since the deserialization acquires the next queryId and querySubPlanId from the PlanIdGenerator, the deserialized Id should not be the same with the original Id
-    EXPECT_TRUE(deserializedQueryPlan->getQueryId() != queryPlan->getQueryId());
-    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() != queryPlan->getQuerySubPlanId());
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
     // Expect that the root operator from the original and deserialized query plan are the same
     EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
@@ -103,6 +96,10 @@ TEST_F(ClientSerializationUtilTest, testSerializeSimpleQueryPlan) {
     // Expect that the child of the root operator from the original and deserialized query plan are the same
     // i.e., the source operator from  original and deserialized query plan are the same
     EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->equal(queryPlan->getRootOperators()[0]->getChildren()[0]));
+
+    // Expect that the id of operators in the deserialized query plan are different to the original query plan, because the initial IDs are client-generated and NES should provide its own IDs
+    EXPECT_FALSE(queryPlan->getRootOperators()[0]->getId() == deserializedQueryPlan->getRootOperators()[0]->getId());
+    EXPECT_FALSE(queryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId() == deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId());
 }
 
 }// namespace NES

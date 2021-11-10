@@ -25,12 +25,16 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <SerializableOperator.pb.h>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <utility>
+
+// Move the mechanism to re-generate operator IDs coming from client
 
 namespace NES {
 
@@ -139,6 +143,18 @@ uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan, const std:
 uint64_t QueryService::addQueryRequest(const std::string& queryString,
                                        const QueryPlanPtr& queryPlan,
                                        const std::string& placementStrategyName) {
+
+    // Set the queryId and querySubPlanId
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+    queryPlan->setQuerySubPlanId(PlanIdGenerator::getNextQuerySubPlanId());
+
+    // Iterate over all operators in the query and replace the client-provided ID
+    auto queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+        auto visitingOp = (*itr)->as<OperatorNode>();
+        visitingOp->setId(Util::getNextOperatorId());
+    }
+
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);

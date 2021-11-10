@@ -39,26 +39,11 @@ class QueryPlanSerializationUtil {
     static void serializeQueryPlan(const QueryPlanPtr& queryPlan, SerializableQueryPlan* serializableQueryPlan);
 
     /**
-     * @brief Serializes a Query Plan from a client and all its root operators to a SerializableQueryPlan object.
-     * @param queryPlan: The query plan
-     * @param serializableQueryPlan: pointer to the serializable query Plan object
-     * @return the pointer to serialized SerializableQueryPlan
-     */
-    static void serializeClientOriginatedQueryPlan(const QueryPlanPtr& queryPlan, SerializableQueryPlan* serializableQueryPlan);
-
-    /**
      * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr
      * @param serializedQueryPlan the serialized query plan.
      * @return the pointer to the deserialized query plan
      */
     static QueryPlanPtr deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan);
-
-    /**
-     * @brief De-serializes the SerializableQueryPlan coming from a client and all its root operators back to a QueryPlanPtr
-     * @param serializedQueryPlan the serialized query plan.
-     * @return the pointer to the deserialized query plan
-     */
-    static QueryPlanPtr deserializeClientOriginatedQueryPlan(NES::SerializableQueryPlan* serializedQueryPlan, StreamCatalogPtr streamCatalog);
 };
 }// namespace NES
 #endif// NES_INCLUDE_GRPC_SERIALIZATION_QUERY_PLAN_SERIALIZATION_UTIL_HPP_
