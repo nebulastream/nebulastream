@@ -541,7 +541,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto recordSchema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(recordSchema, true);
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(recordSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto recordIndexFieldsInput = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, layout, inputBuffer);
 
     for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
