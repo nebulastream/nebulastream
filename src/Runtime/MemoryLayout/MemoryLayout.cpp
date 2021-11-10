@@ -48,4 +48,5 @@ std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& f
 }
 uint64_t MemoryLayout::getCapacity() const { return capacity; }
 const SchemaPtr& MemoryLayout::getSchema() const { return schema; }
+uint64_t MemoryLayout::getBufferSize() const { return bufferSize; }
 }// namespace NES::Runtime::MemoryLayouts

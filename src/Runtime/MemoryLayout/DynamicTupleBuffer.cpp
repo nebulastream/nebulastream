@@ -18,6 +18,7 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/Logger.hpp>
 #include <utility>
 namespace NES::Runtime::MemoryLayouts {
 
@@ -47,7 +48,9 @@ DynamicTuple DynamicTupleBuffer::operator[](std::size_t recordIndex) {
 }
 
 DynamicTupleBuffer::DynamicTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer)
-    : memoryLayout(memoryLayout), buffer(buffer) {}
+    : memoryLayout(memoryLayout), buffer(buffer) {
+    NES_ASSERT(memoryLayout->getBufferSize() == buffer.getBufferSize(), "Buffer size of layout has to be same then from the buffer.");
+}
 
 TupleBuffer DynamicTupleBuffer::getBuffer() { return buffer; }
 std::ostream& operator<<(std::ostream& os, const DynamicTupleBuffer& buffer) {
