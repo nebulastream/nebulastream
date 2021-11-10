@@ -153,7 +153,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   queryCompilerOutputBufferOptimizationLevel);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create(enableMonitoring);
-        NES_DEBUG("NesWorker: MonitoringAgent configured with default with monitoring=" << enableMonitoring);
+        NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << enableMonitoring);
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
         throw Exception("NesWorker error while starting node engine");

@@ -29,20 +29,14 @@
 
 namespace NES {
 
-MonitoringAgent::MonitoringAgent()
-    : monitoringPlan(MonitoringPlan::DefaultPlan()), catalog(MetricCatalog::NesMetrics()), schema(monitoringPlan->createSchema()),
-      enabled(true) {
-    NES_DEBUG("MonitoringAgent: Init with default monitoring plan");
-}
+MonitoringAgent::MonitoringAgent() : MonitoringAgent(MonitoringPlan::DefaultPlan(), MetricCatalog::NesMetrics(), true) {}
 
 MonitoringAgent::MonitoringAgent(bool enabled)
-    : monitoringPlan(MonitoringPlan::DefaultPlan()), catalog(MetricCatalog::NesMetrics()), schema(monitoringPlan->createSchema()),
-      enabled(enabled) {
-    NES_DEBUG("MonitoringAgent: Init with enabled=" << enabled);
-}
+    : MonitoringAgent(MonitoringPlan::DefaultPlan(), MetricCatalog::NesMetrics(), enabled) {}
+
 MonitoringAgent::MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog, bool enabled)
     : monitoringPlan(monitoringPlan), catalog(std::move(catalog)), schema(monitoringPlan->createSchema()), enabled(enabled) {
-    NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString());
+    NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString() + " and enabled=" << enabled);
 }
 
 MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }

@@ -46,6 +46,7 @@ class MonitoringAgent {
     MonitoringAgent();
     MonitoringAgent(bool enabled);
     MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog, bool enabled);
+
     static MonitoringAgentPtr create();
     static MonitoringAgentPtr create(bool enabled);
     static MonitoringAgentPtr create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog, bool enabled);
@@ -86,13 +87,13 @@ class MonitoringAgent {
 
     /**
      * @brief Enables collecting of metrics
-     * @param true if enable, else false
+     * @param If enabled then true, else false
      */
     void setEnableMonitoring(bool enable);
 
     /**
-     * checks if monitoring is enabled
-     * @return true if enabled. else false
+     * @brief Checks if monitoring is enabled
+     * @return If enabled then true, else false
      */
     [[nodiscard]] bool isEnabled() const;
 

@@ -245,14 +245,14 @@ class WorkerConfig {
     void setWorkerPinList(std::string list);
 
     /**
-    * @brief getter/setter for workerPinList
+    * @brief getter/setter for numa awareness
     * @return
     */
     [[nodiscard]] bool isNumaAware() const;
     void setNumaAware(bool status);
 
     /**
-    * @brief getter/setter for workerPinList
+    * @brief getter/setter to check if monitoring is enabled
     * @return
     */
     BoolConfigOption getEnableMonitoring();
