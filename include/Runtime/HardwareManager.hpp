@@ -73,6 +73,10 @@ class HardwareManager {
             // nop
         }
 
+        NumaDescriptor(const NumaDescriptor& other) {
+            *this = other;
+        }
+
         NumaDescriptor& operator=(const NumaDescriptor& other) {
             nodeId = other.nodeId;
             physicalCpus = std::map<uint16_t, CpuDescriptor>(other.physicalCpus.begin(), other.physicalCpus.end());
