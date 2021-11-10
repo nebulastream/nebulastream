@@ -135,7 +135,7 @@ class ConfigOption {
     T value;
     T defaultValue;
 };
-}
+}// namespace Configurations
 }// namespace NES
 
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTION_HPP_

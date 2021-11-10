@@ -45,5 +45,5 @@ std::string DefaultSourceConfig::toString() {
     ss << SourceConfig::toString();
     return ss.str();
 }
-}
+}// namespace Configurations
 }// namespace NES

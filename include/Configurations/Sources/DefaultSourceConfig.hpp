@@ -68,6 +68,6 @@ class DefaultSourceConfig : public SourceConfig {
      */
     DefaultSourceConfig();
 };
-}
+}// namespace Configurations
 }// namespace NES
 #endif

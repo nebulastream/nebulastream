@@ -125,6 +125,6 @@ class KafkaSourceConfig : public SourceConfig {
     StringConfigOption topic;
     IntConfigOption connectionTimeout;
 };
-}
+}// namespace Configurations
 }// namespace NES
 #endif

@@ -25,12 +25,15 @@ namespace NES {
 namespace Configurations {
 
 SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType)
-    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
-      numberOfTuplesToProducePerBuffer(
-          ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG, 1, "Number of tuples to produce per buffer.")),
+    : numberOfBuffersToProduce(
+        ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
+      numberOfTuplesToProducePerBuffer(ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
+                                                                      1,
+                                                                      "Number of tuples to produce per buffer.")),
       physicalStreamName(
           ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
-      logicalStreamName(ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
+      logicalStreamName(
+          ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
       sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
       rowLayout(ConfigOption<bool>::create(ROW_LAYOUT_CONFIG, true, "storage layout, true = row layout, false = column layout")),
       inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")),
@@ -44,7 +47,8 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, s
         numberOfBuffersToProduce->setValue(std::stoi(sourceConfigMap.find(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
     }
     if (sourceConfigMap.find(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG) != sourceConfigMap.end()) {
-        numberOfTuplesToProducePerBuffer->setValue(std::stoi(sourceConfigMap.find(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
+        numberOfTuplesToProducePerBuffer->setValue(
+            std::stoi(sourceConfigMap.find(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
     }
     if (sourceConfigMap.find(PHYSICAL_STREAM_NAME_CONFIG) != sourceConfigMap.end()) {
         physicalStreamName->setValue(sourceConfigMap.find(PHYSICAL_STREAM_NAME_CONFIG)->second);
@@ -67,12 +71,15 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, s
 }
 
 SourceConfig::SourceConfig(std::string _sourceType)
-    : numberOfBuffersToProduce(ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
-      numberOfTuplesToProducePerBuffer(
-          ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG, 1, "Number of tuples to produce per buffer.")),
+    : numberOfBuffersToProduce(
+        ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
+      numberOfTuplesToProducePerBuffer(ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
+                                                                      1,
+                                                                      "Number of tuples to produce per buffer.")),
       physicalStreamName(
           ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
-      logicalStreamName(ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
+      logicalStreamName(
+          ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
       sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
       rowLayout(ConfigOption<bool>::create(ROW_LAYOUT_CONFIG, true, "storage layout, true = row layout, false = column layout")),
       inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")),
@@ -147,5 +154,5 @@ void SourceConfig::setInputFormat(std::string inputFormatValue) { inputFormat->s
 
 void SourceConfig::setRowLayout(bool rowLayoutValue) { rowLayout->setValue(rowLayoutValue); }
 
-}
+}// namespace Configurations
 }// namespace NES

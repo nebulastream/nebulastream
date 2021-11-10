@@ -2381,7 +2381,7 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
 
     auto futureCompiledExecutablePipelineStage = std::async(std::launch::async, [result, code, src]() {
         auto compiledCode = result.get().getDynamicObject();
-        PipelineStageArity const arity = [& ari = code->arity]() {
+        PipelineStageArity const arity = [&ari = code->arity]() {
             switch (ari) {
                 case PipelineContext::Unary: return Unary;
                 case PipelineContext::BinaryLeft: return BinaryLeft;

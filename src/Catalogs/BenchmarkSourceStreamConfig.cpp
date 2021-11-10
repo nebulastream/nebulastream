@@ -15,8 +15,8 @@
 */
 
 #include <Catalogs/BenchmarkSourceStreamConfig.hpp>
-#include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 

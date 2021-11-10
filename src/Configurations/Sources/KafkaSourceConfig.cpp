@@ -31,7 +31,8 @@ KafkaSourceConfigPtr KafkaSourceConfig::create(std::map<std::string, std::string
 KafkaSourceConfigPtr KafkaSourceConfig::create() { return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig()); }
 
 KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap, KAFKA_SOURCE_CONFIG), brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
+    : SourceConfig(sourceConfigMap, KAFKA_SOURCE_CONFIG),
+      brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
           AUTO_COMMIT,
           1,
@@ -40,8 +41,9 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
                                                 "",
                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
       topic(ConfigOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to")),
-      connectionTimeout(
-          ConfigOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG, 10, "connection time out for source, needed for: KafkaSource")) {
+      connectionTimeout(ConfigOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG,
+                                                       10,
+                                                       "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceConfig: Init source config object with values from sourceConfigMap.");
 
     if (sourceConfigMap.find(KAFKA_SOURCE_BROKERS_CONFIG) != sourceConfigMap.end()) {
@@ -77,8 +79,9 @@ KafkaSourceConfig::KafkaSourceConfig()
                                                 "testGroup",
                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
       topic(ConfigOption<std::string>::create(TOPIC_CONFIG, "testTopic", "topic to listen to")),
-      connectionTimeout(
-          ConfigOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG, 10, "connection time out for source, needed for: KafkaSource")) {
+      connectionTimeout(ConfigOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG,
+                                                       10,
+                                                       "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceConfig: Init source config object with default values.");
 }
 
@@ -123,5 +126,5 @@ void KafkaSourceConfig::setTopic(std::string topicValue) { topic->setValue(std::
 void KafkaSourceConfig::setConnectionTimeout(uint32_t connectionTimeoutValue) {
     connectionTimeout->setValue(connectionTimeoutValue);
 }
-}
+}// namespace Configurations
 }// namespace NES

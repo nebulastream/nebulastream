@@ -113,6 +113,6 @@ class OPCSourceConfig : public SourceConfig {
     StringConfigOption userName;
     StringConfigOption password;
 };
-}
+}// namespace Configurations
 }// namespace NES
 #endif

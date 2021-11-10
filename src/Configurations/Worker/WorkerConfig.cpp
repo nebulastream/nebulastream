@@ -353,5 +353,5 @@ bool WorkerConfig::isNumaAware() const { return numaAwareness->getValue(); }
 
 void WorkerConfig::setNumaAware(bool status) { numaAwareness->setValue(status); }
 
-}
+}// namespace Configurations
 }// namespace NES

@@ -24,7 +24,6 @@ namespace NES {
 
 namespace Configurations {
 
-
 MQTTSourceConfigPtr MQTTSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<MQTTSourceConfig>(MQTTSourceConfig(std::move(sourceConfigMap)));
 }
@@ -105,7 +104,7 @@ MQTTSourceConfig::MQTTSourceConfig()
                                      true,
                                      "cleanSession true = clean up session after client loses connection, false = keep data for "
                                      "client after connection loss (persistent session), needed for: MQTTSource")),
-      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")){
+      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -160,5 +159,5 @@ void MQTTSourceConfig::setCleanSession(bool cleanSessionValue) { cleanSession->s
 
 void MQTTSourceConfig::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS->setValue(flushIntervalMs); }
 
-}
+}// namespace Configurations
 }// namespace NES
