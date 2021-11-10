@@ -78,9 +78,12 @@ int main(int argc, const char* argv[]) {
     }
     catch(std::exception& exp) {
             NES_ERROR("Problem with coordinator:  << " << exp.what());
+            return;
     }
     catch(...) {
         throw;
+        NES_ERROR("Unknown exception was thrown");
+        return;
     }
     NES_INFO("coordinator started");
 }
