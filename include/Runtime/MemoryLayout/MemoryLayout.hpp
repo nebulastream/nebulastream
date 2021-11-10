@@ -56,6 +56,7 @@ class MemoryLayout {
      * @return reference of field sizes vector
      */
     [[nodiscard]] const std::vector<FIELD_SIZE>& getFieldSizes() const;
+    [[nodiscard]] uint64_t getBufferSize() const;
 
     virtual uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) = 0;
     uint64_t getCapacity() const;
