@@ -897,14 +897,6 @@ OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNo
     return sourceDetails;
 }
 
-SerializableOperator_SourceDetails
-OperatorSerializationUtil::serializeClientOriginatedSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator) {
-    auto sourceDetails = SerializableOperator_SourceDetails();
-    auto sourceDescriptor = sourceOperator->getSourceDescriptor();
-    serializeClientOriginatedSourceDescriptor(sourceDescriptor, &sourceDetails);
-    return sourceDetails;
-}
-
 SerializableOperator_SinkDetails
 OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperatorNodePtr& sinkOperator) {
     auto sinkDetails = SerializableOperator_SinkDetails();
@@ -1076,31 +1068,11 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         auto logicalStreamSerializedSourceDescriptor =
             SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
-        // serialize source schema
-        SchemaSerializationUtil::serializeSchema(logicalStreamSourceDescriptor->getSchema(),
-                                                 logicalStreamSerializedSourceDescriptor.mutable_sourceschema());
+
         sourceDetails->mutable_sourcedescriptor()->PackFrom(logicalStreamSerializedSourceDescriptor);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
-    }
-    return sourceDetails;
-}
-
-SerializableOperator_SourceDetails*
-OperatorSerializationUtil::serializeClientOriginatedSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
-                                                     SerializableOperator_SourceDetails* sourceDetails) {
-    if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
-        // serialize logical stream source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor");
-        auto logicalStreamSourceDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
-        auto logicalStreamSerializedSourceDescriptor =
-            SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
-        logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
-
-        // no schema need to be added
-        sourceDetails->mutable_sourcedescriptor()->PackFrom(logicalStreamSerializedSourceDescriptor);
     }
     return sourceDetails;
 }
@@ -1219,11 +1191,16 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto logicalStreamSerializedSourceDescriptor =
             SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&logicalStreamSerializedSourceDescriptor);
+
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
         SourceDescriptorPtr logicalStreamSourceDescriptor =
             LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
-        logicalStreamSourceDescriptor->setSchema(schema);
+        // check if the schema is set
+        if (logicalStreamSerializedSourceDescriptor.has_sourceschema()) {
+            auto schema = SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
+            logicalStreamSourceDescriptor->setSchema(schema);
+        }
+
         return logicalStreamSourceDescriptor;
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << serializedSourceDescriptor.type_url());
@@ -1499,48 +1476,5 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
         NES_ERROR("OperatorSerializationUtil: Unknown Serialized Watermark Strategy Descriptor Type");
         throw std::invalid_argument("Unknown Serialized Watermark Strategy Descriptor Type");
     }
-}
-
-SourceDescriptorPtr OperatorSerializationUtil::deserializeClientOriginatedSourceDescriptor(
-    SerializableOperator_SourceDetails* serializedSourceDetails,
-    StreamCatalogPtr streamCatalog) {
-    const auto& serializedSourceDescriptor = serializedSourceDetails->sourcedescriptor();
-
-    if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor>()) {
-        // de-serialize logical stream source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as LogicalStreamSourceDescriptor");
-        auto logicalStreamSerializedSourceDescriptor =
-            SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
-        serializedSourceDescriptor.UnpackTo(&logicalStreamSerializedSourceDescriptor);
-
-        // get the schema based on the stream name
-        auto streamName = logicalStreamSerializedSourceDescriptor.streamname();
-        auto schema = streamCatalog->getSchemaForLogicalStream(streamName);
-
-        SourceDescriptorPtr logicalStreamSourceDescriptor =
-            LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
-        logicalStreamSourceDescriptor->setSchema(schema);
-        return logicalStreamSourceDescriptor;
-    } else { // source operator coming from client's query plan is always a logical source
-        NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << serializedSourceDescriptor.type_url());
-        throw std::invalid_argument("Unknown Source Descriptor Type");
-    }
-}
-OperatorNodePtr OperatorSerializationUtil::deserializeClientOriginatedSourceOperator(
-    SerializableOperator serializedClientOriginatedSourceOperator,
-    StreamCatalogPtr streamCatalog) {
-    auto details = serializedClientOriginatedSourceOperator.details();
-    LogicalOperatorNodePtr operatorNode;
-    // de-serialize source operator
-    auto serializedSourceDescriptor = SerializableOperator_SourceDetails();
-    details.UnpackTo(&serializedSourceDescriptor);
-
-    // de-serialize source descriptor
-    auto sourceDescriptor = deserializeClientOriginatedSourceDescriptor(&serializedSourceDescriptor, streamCatalog);
-    operatorNode = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
-
-    // Use the schema obtained from streamCatalog in deserializeClientOriginatedSourceDescriptor() as the output schema
-    operatorNode->setOutputSchema(sourceDescriptor->getSchema());
-    return operatorNode;
 }
 }// namespace NES

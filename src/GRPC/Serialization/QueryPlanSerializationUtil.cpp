@@ -58,56 +58,6 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
     serializableQueryPlan->set_queryid(queryPlan->getQueryId());
 }
 
-void QueryPlanSerializationUtil::serializeClientOriginatedQueryPlan(const QueryPlanPtr& queryPlan,
-                                                                    SerializableQueryPlan* serializableQueryPlan) {
-    NES_INFO("QueryPlanSerializationUtil: serializing query plan from client " << queryPlan->toString());
-    std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
-    NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
-
-    //Serialize Query Plan operators
-    auto& serializedOperatorMap = *serializableQueryPlan->mutable_operatormap();
-    auto bfsIterator = QueryPlanIterator(queryPlan);
-    for (auto itr = bfsIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
-        auto visitingOp = (*itr)->as<OperatorNode>();
-        if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
-            // skip rest of the steps as the operator is already serialized
-            continue;
-        }
-        NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
-
-        // if visitingOp is a source operator, then call client originated operator serialization util
-        SerializableOperator serializedOperator;
-        if (visitingOp->instanceOf<SourceLogicalOperatorNode>()) {
-            auto sourceDetails = OperatorSerializationUtil::serializeClientOriginatedSourceOperator(visitingOp->as<SourceLogicalOperatorNode>());
-            serializedOperator.mutable_details()->PackFrom(sourceDetails);
-
-            // serialize operator id
-            serializedOperator.set_operatorid(visitingOp->getId());
-
-            // serialize and append children if the node has any
-            for (const auto& child : visitingOp->getChildren()) {
-                serializedOperator.add_childrenids(child->as<OperatorNode>()->getId());
-            }
-        } else {
-            serializedOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
-        }
-
-        serializedOperatorMap[visitingOp->getId()] = serializedOperator;
-    }
-
-    //Serialize the root operator ids
-    for (const auto& rootOperator : rootOperators) {
-        u_int64_t rootOperatorId = rootOperator->getId();
-        serializableQueryPlan->add_rootoperatorids(rootOperatorId);
-    }
-
-    //Serialize the sub query plan and query plan id
-    NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
-    serializableQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
-    serializableQueryPlan->set_queryid(queryPlan->getQueryId());
-}
-
-
 QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan) {
     NES_DEBUG("QueryPlanSerializationUtil: Deserializing query plan " << serializedQueryPlan->DebugString());
     std::vector<OperatorNodePtr> rootOperators;
@@ -137,44 +87,6 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     //set properties of the query plan
     uint64_t queryId = serializedQueryPlan->queryid();
     uint64_t querySubPlanId = serializedQueryPlan->querysubplanid();
-    return QueryPlan::create(queryId, querySubPlanId, rootOperators);
-}
-QueryPlanPtr QueryPlanSerializationUtil::deserializeClientOriginatedQueryPlan(NES::SerializableQueryPlan* serializedQueryPlan,
-                                                                              StreamCatalogPtr streamCatalog) {
-    std::vector<OperatorNodePtr> rootOperators;
-
-    std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
-
-    //Deserialize all operators in the operator map
-    for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap()) {
-        auto serializedOperator = operatorIdAndSerializedOperator.second;
-
-        if (serializedOperator.details().Is<SerializableOperator_SourceDetails>()) {
-            operatorIdToOperatorMap[serializedOperator.operatorid()] =
-                OperatorSerializationUtil::deserializeClientOriginatedSourceOperator(serializedOperator, streamCatalog);
-        } else {
-            operatorIdToOperatorMap[serializedOperator.operatorid()] =
-                OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        }
-    }
-
-    //Add deserialized children
-    for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap()) {
-        auto serializedOperator = operatorIdAndSerializedOperator.second;
-        auto deserializedOperator = operatorIdToOperatorMap[serializedOperator.operatorid()];
-        for (auto childId : serializedOperator.childrenids()) {
-            deserializedOperator->addChild(operatorIdToOperatorMap[childId]);
-        }
-    }
-
-    //add root operators
-    for (auto rootOperatorId : serializedQueryPlan->rootoperatorids()) {
-        rootOperators.emplace_back(operatorIdToOperatorMap[rootOperatorId]);
-    }
-
-    // Acquire and set the next queryId and nextQuerySubPlanId from the PlanIdGenerator
-    uint64_t queryId = PlanIdGenerator::getNextQueryId();
-    uint64_t querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();
     return QueryPlan::create(queryId, querySubPlanId, rootOperators);
 }
 
