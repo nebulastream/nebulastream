@@ -103,12 +103,11 @@ int main(int argc, char** argv) {
     }
     catch(std::exception& exp) {
         NES_ERROR("Problem with worker:  << " << exp.what());
-        return;
+        return 1;
     }
     catch(...) {
         throw;
         NES_ERROR("Unknown exception was thrown");
-        return;
     }
     NES_INFO("worker started");
 }
