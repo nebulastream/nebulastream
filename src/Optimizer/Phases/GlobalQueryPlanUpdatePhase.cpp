@@ -55,7 +55,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, queryMergerRule);
 
     // TODO change this to a more intelligent way
-    setMemoryLayoutPhase = SetMemoryLayoutPhase::create(Schema::COL_LAYOUT);
+    setMemoryLayoutPhase = SetMemoryLayoutPhase::create(Schema::ROW_LAYOUT);
 }
 
 GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,

@@ -58,7 +58,7 @@ class SimpleBenchmarkSource : public DataSource {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
         this->ingestionRate = ingestionRate;
         this->numberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
-        this->rowLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, false);
+        this->rowLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(schema, bufferManager->getBufferSize());
         this->curNumberOfTuplesPerBuffer = this->numberOfTuplesPerBuffer;
         this->maxNumberOfPeriods =
             std::ceil((double) BenchmarkUtils::runSingleExperimentSeconds / (double) BenchmarkUtils::periodLengthInSeconds);

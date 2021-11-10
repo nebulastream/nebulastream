@@ -131,7 +131,7 @@ class WindowSource : public NES::DefaultSource {
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
-        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(schema, true);
+        auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
         auto bindedRowLayout = rowLayout->bind(buffer);
 
         for (int i = 0; i < 10; i++) {
@@ -297,7 +297,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -313,7 +313,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
@@ -363,7 +363,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -379,7 +379,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
@@ -429,7 +429,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -445,7 +445,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
     auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, resultLayout, resultBuffer);
@@ -573,7 +573,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1ULL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, resultLayout, resultBuffer);
     auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, resultLayout, resultBuffer);
     auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, resultLayout, resultBuffer);
@@ -723,7 +723,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 3U);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, true);
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
@@ -747,7 +747,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, true);
+    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
     auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, resultLayout, resultBuffer);

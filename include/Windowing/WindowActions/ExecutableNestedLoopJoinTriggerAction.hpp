@@ -54,7 +54,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         : joinDefinition(joinDefinition), id(id) {
         windowSchema = joinDefinition->getOutputSchema();
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " join output schema=" << windowSchema->toString());
-        windowTupleLayout = NES::Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, true);
+
     }
 
     virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG("~ExecutableNestedLoopJoinTriggerAction " << id << ":()"); }
@@ -73,6 +73,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = workerContext.allocateTupleBuffer();
+        windowTupleLayout = NES::Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
         // iterate over all keys in both window states and perform the join
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: doing the nested loop join");
         size_t numberOfFlushedRecords = 0;
