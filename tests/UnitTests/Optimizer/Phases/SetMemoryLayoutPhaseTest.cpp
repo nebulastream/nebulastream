@@ -186,7 +186,7 @@ TEST_F(QueryChooseMemLayoutPhaseTest, setColumnarLayoutMapQuery) {
     // Check if all operators in the query have an column layout
     for (auto node : QueryPlanIterator(plan)) {
         if (auto op = node->as_if<OperatorNode>()) {
-            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::COL_LAYOUT);
+            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::COLUMNAR_LAYOUT);
         }
     }
 }
@@ -197,7 +197,7 @@ TEST_F(QueryChooseMemLayoutPhaseTest, setRowLayoutMapQuery) {
 
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
-    inputSchema->setLayoutType(Schema::COL_LAYOUT);
+    inputSchema->setLayoutType(Schema::COLUMNAR_LAYOUT);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");

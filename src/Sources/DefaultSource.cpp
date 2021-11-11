@@ -115,7 +115,7 @@ std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {
 SourceType DefaultSource::getType() const { return DEFAULT_SOURCE; }
 
 std::vector<Schema::MemoryLayoutType> DefaultSource::getSupportedLayouts() {
-    return {Schema::MemoryLayoutType::ROW_LAYOUT, Schema::MemoryLayoutType::COL_LAYOUT};
+    return {Schema::MemoryLayoutType::ROW_LAYOUT, Schema::MemoryLayoutType::COLUMNAR_LAYOUT};
 }
 
 }// namespace NES

@@ -37,7 +37,7 @@ SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& 
     // Serialize layoutType
     if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
         serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_ROW_LAYOUT);
-    } else if (schema->getLayoutType() == Schema::COL_LAYOUT) {
+    } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
         serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_COL_LAYOUT);
     }
 
