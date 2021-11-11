@@ -48,17 +48,17 @@ using NES::Runtime::TupleBuffer;
 
 namespace NES {
 
-class QueryChooseMemLayoutPhaseTest : public testing::Test {
+class MemoryLayoutSelectionPhaseTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("QueryChooseMemLayoutPhaseTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup QueryChooseMemLayoutPhaseTest test case.");
+        NES::setupLogging("MemoryLayoutSelectionPhase.log", NES::LOG_DEBUG);
+        NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
     }
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        NES_INFO("Setup QueryChooseMemLayoutPhaseTest test case.");
+        NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
 
         testSchema = Schema::create()
                          ->addField("test$id", BasicType::INT64)
@@ -69,10 +69,10 @@ class QueryChooseMemLayoutPhaseTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("Tear down QueryChooseMemLayoutPhaseTest test case."); }
+    void TearDown() override { NES_INFO("Tear down MemoryLayoutSelectionPhase test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down QueryChooseMemLayoutPhaseTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down MemoryLayoutSelectionPhase test class."); }
 
     SchemaPtr testSchema;
 };
@@ -168,7 +168,7 @@ void fillBufferColLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::ColumnL
     buf.setNumberOfTuples(numberOfTuples);
 }
 
-TEST_F(QueryChooseMemLayoutPhaseTest, setColumnarLayoutMapQuery) {
+TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery) {
     const uint64_t numbersOfBufferToProduce = 1000;
     const uint64_t frequency = 1000;
 
@@ -191,7 +191,7 @@ TEST_F(QueryChooseMemLayoutPhaseTest, setColumnarLayoutMapQuery) {
     }
 }
 
-TEST_F(QueryChooseMemLayoutPhaseTest, setRowLayoutMapQuery) {
+TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
     const uint64_t numbersOfBufferToProduce = 1000;
     const uint64_t frequency = 1000;
 
