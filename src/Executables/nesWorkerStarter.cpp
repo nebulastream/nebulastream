@@ -99,12 +99,10 @@ int main(int argc, char** argv) {
     try {
         wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
         wrk->stop(/**force*/ true);
-    }
-    catch(std::exception& exp) {
+    } catch (std::exception& exp) {
         NES_ERROR("Problem with worker:  << " << exp.what());
         return 1;
-    }
-    catch(...) {
+    } catch (...) {
         NES_ERROR("Unknown exception was thrown");
         throw;
     }
