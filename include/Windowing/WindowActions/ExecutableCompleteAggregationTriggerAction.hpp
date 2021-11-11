@@ -92,7 +92,6 @@ class ExecutableCompleteAggregationTriggerAction
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = workerContext.allocateTupleBuffer();
 
-        windowTupleLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
         tupleBuffer.setOriginId(windowDefinition->getOriginId());
 
         // iterate over all keys in the window state
@@ -312,9 +311,8 @@ class ExecutableCompleteAggregationTriggerAction
                            KeyType key,
                            ValueType value,
                            uint64_t cnt) {
-
-        auto bindedRowLayout =
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayoutTupleBuffer>(windowTupleLayout->bind(tupleBuffer));
+        auto windowTupleLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
+        std::shared_ptr<Runtime::MemoryLayouts::RowLayoutTupleBuffer> bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
         if (windowDefinition->isKeyed()) {
             std::tuple<uint64_t, uint64_t, uint64_t, KeyType, ValueType> keyedTuple(startTs, endTs, cnt, key, value);
             bindedRowLayout->pushRecord<true>(keyedTuple, index);
@@ -342,8 +340,8 @@ class ExecutableCompleteAggregationTriggerAction
                            uint64_t endTs,
                            KeyType key,
                            ValueType value) {
-        auto bindedRowLayout =
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayoutTupleBuffer>(windowTupleLayout->bind(tupleBuffer));
+        auto windowTupleLayout = Runtime::MemoryLayouts::RowLayout::create(this->windowSchema, tupleBuffer.getBufferSize());
+        std::shared_ptr<Runtime::MemoryLayouts::RowLayoutTupleBuffer> bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
         if (windowDefinition->isKeyed()) {
             std::tuple<uint64_t, uint64_t, KeyType, ValueType> keyedTuple(startTs, endTs, key, value);
             bindedRowLayout->pushRecord<true>(keyedTuple, index);
@@ -356,7 +354,6 @@ class ExecutableCompleteAggregationTriggerAction
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    Runtime::MemoryLayouts::RowLayoutPtr windowTupleLayout;
     uint64_t id;
     PartialAggregateType partialAggregateTypeInitialValue;
 };
