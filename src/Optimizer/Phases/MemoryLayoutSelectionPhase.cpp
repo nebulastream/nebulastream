@@ -14,15 +14,28 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Optimizer/Phases/SetMemoryLayoutPhase.hpp>
+#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES::Optimizer {
-void SetMemoryLayoutPhase::execute(const QueryPlanPtr& queryPlan) {
+void MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) {
+
+    Schema::MemoryLayoutType layoutType;
+    switch (policy) {
+        case FORCE_ROW_LAYOUT: {
+            layoutType = Schema::ROW_LAYOUT;
+            break;
+        }
+        case FORCE_COLUMN_LAYOUT: {
+            layoutType = Schema::ROW_LAYOUT;
+            break;
+        }
+    }
+
     // iterate over all operators and set the output schema
     auto iterator = QueryPlanIterator(queryPlan);
     for (auto node : iterator) {
@@ -41,9 +54,10 @@ void SetMemoryLayoutPhase::execute(const QueryPlanPtr& queryPlan) {
     }
 }
 
-SetMemoryLayoutPhase::SetMemoryLayoutPhase(Schema::MemoryLayoutType layoutType) : layoutType(layoutType) {}
-SetMemoryLayoutPhasePtr SetMemoryLayoutPhase::create(Schema::MemoryLayoutType layoutType) {
-    return std::make_shared<SetMemoryLayoutPhase>(SetMemoryLayoutPhase(layoutType));
+MemoryLayoutSelectionPhase::MemoryLayoutSelectionPhase(MemoryLayoutPolicy policy) : policy(policy) {}
+
+MemoryLayoutSelectionPhasePtr MemoryLayoutSelectionPhase::create(MemoryLayoutPolicy policy) {
+    return std::make_shared<MemoryLayoutSelectionPhase>(MemoryLayoutSelectionPhase(policy));
 }
 
 }// namespace NES::Optimizer
