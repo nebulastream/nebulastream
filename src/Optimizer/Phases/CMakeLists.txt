@@ -22,5 +22,5 @@ add_source_nes(
         TypeInferencePhase.cpp
         QueryPlacementPhase.cpp
         QueryRewritePhase.cpp
-        SetMemoryLayoutPhase.cpp
+        MemoryLayoutSelectionPhase.cpp
 )

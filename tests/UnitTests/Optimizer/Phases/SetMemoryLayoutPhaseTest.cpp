@@ -28,7 +28,7 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/SetMemoryLayoutPhase.hpp>
+#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
@@ -180,7 +180,7 @@ TEST_F(QueryChooseMemLayoutPhaseTest, setColumnarLayoutMapQuery) {
                      .map(Attribute("f3") = Attribute("f1") * 42)
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
-    auto phase = Optimizer::SetMemoryLayoutPhase::create(Schema::COL_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Schema::COL_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
@@ -208,7 +208,7 @@ TEST_F(QueryChooseMemLayoutPhaseTest, setRowLayoutMapQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::SetMemoryLayoutPhase::create(Schema::ROW_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Schema::ROW_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout

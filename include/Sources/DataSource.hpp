@@ -20,9 +20,9 @@
 #include <API/Schema.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <atomic>
 #include <chrono>
 #include <mutex>
@@ -70,7 +70,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr  schema,
+    explicit DataSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
                         OperatorId operatorId,
@@ -262,10 +262,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
     void emitWorkFromSource(Runtime::TupleBuffer& buffer);
     Runtime::MemoryLayouts::DynamicTupleBuffer allocateBuffer();
-
-
-
-
 
   private:
     mutable std::mutex startStopMutex;

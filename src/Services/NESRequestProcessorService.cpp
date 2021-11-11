@@ -69,7 +69,7 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
     cfg.set("type_check", false);
     z3Context = std::make_shared<z3::context>(cfg);
     globalQueryPlanUpdatePhase =
-        Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context, queryMergerRule);
+        Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context, queryMergerRule, Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
 }
 
 NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }

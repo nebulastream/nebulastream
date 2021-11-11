@@ -18,9 +18,9 @@
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Optimizer/Phases/SetMemoryLayoutPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -37,37 +37,39 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
                                                        const StreamCatalogPtr& streamCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
-                                                       Optimizer::QueryMergerRule queryMergerRule)
+                                                       QueryMergerRule queryMergerRule,
+                                                       MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy)
     : queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)), z3Context(std::move(z3Context)) {
-    queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
+    queryMergerPhase = QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     bool applyRulesImprovingSharingIdentification = false;
     //If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
     // then apply special rewrite rules for improving the match identification
-    if (queryMergerRule == Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
-        || queryMergerRule == Optimizer::QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
-        || queryMergerRule == Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
-        || queryMergerRule == Optimizer::QueryMergerRule::HybridCompleteQueryMergerRule) {
+    if (queryMergerRule == QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
+        || queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
+        || queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
+        || queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule) {
         applyRulesImprovingSharingIdentification = true;
     }
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog);
-    signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, queryMergerRule);
-
-    // TODO change this to a more intelligent way
-    setMemoryLayoutPhase = SetMemoryLayoutPhase::create(Schema::ROW_LAYOUT);
+    signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, queryMergerRule);
+    setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(memoryLayoutPolicy);
 }
 
-GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
-                                                                 StreamCatalogPtr streamCatalog,
-                                                                 GlobalQueryPlanPtr globalQueryPlan,
-                                                                 z3::ContextPtr z3Context,
-                                                                 Optimizer::QueryMergerRule queryMergerRule) {
+GlobalQueryPlanUpdatePhasePtr
+GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
+                                   StreamCatalogPtr streamCatalog,
+                                   GlobalQueryPlanPtr globalQueryPlan,
+                                   z3::ContextPtr z3Context,
+                                   QueryMergerRule queryMergerRule,
+                                   MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalog),
                                                                                    std::move(streamCatalog),
                                                                                    std::move(globalQueryPlan),
                                                                                    std::move(z3Context),
-                                                                                   queryMergerRule));
+                                                                                   queryMergerRule,
+                                                                                   memoryLayoutPolicy));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {

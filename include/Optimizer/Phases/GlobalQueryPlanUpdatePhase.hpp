@@ -18,6 +18,7 @@
 #define NES_INCLUDE_OPTIMIZER_PHASES_GLOBAL_QUERY_PLAN_UPDATE_PHASE_HPP_
 
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
+#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <memory>
 #include <vector>
 
@@ -62,8 +63,8 @@ using SignatureInferencePhasePtr = std::shared_ptr<SignatureInferencePhase>;
 class QueryMergerPhase;
 using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 
-class SetMemoryLayoutPhase;
-using SetMemoryLayoutPhasePtr = std::shared_ptr<SetMemoryLayoutPhase>;
+class MemoryLayoutSelectionPhase;
+using MemoryLayoutSelectionPhasePtr = std::shared_ptr<MemoryLayoutSelectionPhase>;
 
 /**
  * @brief This class is responsible for accepting a batch of query requests and then updating the Global Query Plan accordingly.
@@ -77,13 +78,15 @@ class GlobalQueryPlanUpdatePhase {
      * @param globalQueryPlan: the input global query plan
      * @param enableQueryMerging: enable or disable query merging
      * @param queryMergerRule: Rule to be used fro performing query merging if merging enabled
+     * @param memoryLayoutPolicy: Layout selection policy
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog,
                                                 StreamCatalogPtr streamCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
-                                                Optimizer::QueryMergerRule queryMergerRule);
+                                                QueryMergerRule queryMergerRule,
+                                                MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -97,7 +100,8 @@ class GlobalQueryPlanUpdatePhase {
                                         const StreamCatalogPtr& streamCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
-                                        Optimizer::QueryMergerRule queryMergerRule);
+                                        QueryMergerRule queryMergerRule,
+                                        MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy);
 
     QueryCatalogPtr queryCatalog;
     GlobalQueryPlanPtr globalQueryPlan;
@@ -106,7 +110,7 @@ class GlobalQueryPlanUpdatePhase {
     TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
     Optimizer::QueryMergerPhasePtr queryMergerPhase;
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
-    SetMemoryLayoutPhasePtr setMemoryLayoutPhase;
+    MemoryLayoutSelectionPhasePtr setMemoryLayoutPhase;
     z3::ContextPtr z3Context;
 };
 }// namespace NES::Optimizer
