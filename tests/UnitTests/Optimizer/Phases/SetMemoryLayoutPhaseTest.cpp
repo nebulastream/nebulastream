@@ -180,7 +180,7 @@ TEST_F(QueryChooseMemLayoutPhaseTest, setColumnarLayoutMapQuery) {
                      .map(Attribute("f3") = Attribute("f1") * 42)
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
-    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Schema::COL_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::FORCE_COLUMN_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
@@ -208,7 +208,7 @@ TEST_F(QueryChooseMemLayoutPhaseTest, setRowLayoutMapQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Schema::ROW_LAYOUT);
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
