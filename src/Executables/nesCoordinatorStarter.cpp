@@ -75,12 +75,10 @@ int main(int argc, const char* argv[]) {
     try {
         crd->startCoordinator(/**blocking**/ true);//blocking call
         crd->stopCoordinator(true);
-    }
-    catch(std::exception& exp) {
+    } catch (std::exception& exp) {
         NES_ERROR("Problem with coordinator:  << " << exp.what());
         return 1;
-    }
-    catch(...) {
+    } catch (...) {
         NES_ERROR("Unknown exception was thrown");
         throw;
     }
