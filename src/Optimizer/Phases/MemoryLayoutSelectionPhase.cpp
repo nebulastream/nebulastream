@@ -31,7 +31,7 @@ void MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) {
             break;
         }
         case FORCE_COLUMN_LAYOUT: {
-            layoutType = Schema::ROW_LAYOUT;
+            layoutType = Schema::COLUMNAR_LAYOUT;
             break;
         }
     }

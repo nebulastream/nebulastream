@@ -92,7 +92,7 @@ StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(const std::stri
         if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
             structDeclarationTuple.addField(
                 VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->getName()));
-        } else if (schema->getLayoutType() == Schema::COL_LAYOUT) {
+        } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
             auto valuePointer = GeneratableTypesFactory::createPointer(tf->createDataType(schema->get(i)->getDataType()));
             auto valuePointerDeclaration = VariableDeclaration::create(valuePointer, schema->get(i)->getName());
             structDeclarationTuple.addField(valuePointerDeclaration);
@@ -195,7 +195,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclarationInputTuples[0])),
                                         "inputTuples");
-    } else if (inputSchema->getLayoutType() == Schema::COL_LAYOUT) {
+    } else if (inputSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
         auto varDeclInputTupleStmt = VarDeclStatement(code->varDeclarationInputTuples);
@@ -215,7 +215,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                 .assign(getTypedBuffer(code->varDeclarationInputBuffer, code->structDeclarationInputTuples[0]))
                 .copy());
 
-    } else if (inputSchema->getLayoutType() == Schema::COL_LAYOUT) {
+    } else if (inputSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
         auto compStatement = code->currentCodeInsertionPoint;
         generateCodeInitStructFieldsColLayout(inputSchema,
                                               tf,
@@ -251,7 +251,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                     VarRef(variable));
             recordHandler->registerAttribute(field->getName(), fieldRefStatement.copy());
         }
-    } else if (inputSchema->getLayoutType() == Schema::COL_LAYOUT) {
+    } else if (inputSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
         for (const AttributeFieldPtr& field : inputSchema->fields) {
             auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
             auto fieldRefStatement = VarRef(context->code->varDeclarationInputTuples)
@@ -540,7 +540,7 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
                 generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple, sinkSchema);
             }
         }
-    } else if (sinkSchema->getLayoutType() == Schema::COL_LAYOUT) {
+    } else if (sinkSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
         auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
         auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
         code->varDeclarationResultBuffer = varDeclarationResultBuffer;
@@ -807,7 +807,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     }
 
     // Setting the start of all fields for col layout
-    if (schema->getLayoutType() == Schema::COL_LAYOUT) {// TODO duplicate to maxTuple?
+    if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {// TODO duplicate to maxTuple?
         std::vector<StatementPtr> statements;
         generateCodeInitStructFieldsColLayout(schema,
                                               tf,

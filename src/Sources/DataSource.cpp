@@ -73,7 +73,7 @@ DataSource::DataSource(SchemaPtr pSchema,
     NES_ASSERT(this->queryManager, "Invalid query manager");
     if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, localBufferManager->getBufferSize());
-    } else if (schema->getLayoutType() == Schema::COL_LAYOUT) {
+    } else if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, localBufferManager->getBufferSize());
     }
 }

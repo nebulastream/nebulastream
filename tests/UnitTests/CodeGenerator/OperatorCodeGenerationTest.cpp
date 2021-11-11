@@ -222,7 +222,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         // 10 tuples of size one
         TupleBuffer buf = bufferManager->getBufferBlocking();
 
-        if (schema->getLayoutType() == Schema::COL_LAYOUT) {
+        if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
             auto layoutCol = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
             uint64_t tupleCnt = buf.getBufferSize() / layoutCol->getRecordSize();
             auto bindedColLayout = layoutCol->bind(buf);
@@ -982,7 +982,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
 
     /* prepare objects for test */
     auto source =
-        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::COL_LAYOUT);
+        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::COLUMNAR_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
@@ -990,7 +990,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
 
     /* generate code for writing result tuples to output buffer */
-    auto outputSchema = Schema::create(Schema::COL_LAYOUT)
+    auto outputSchema = Schema::create(Schema::COLUMNAR_LAYOUT)
                             ->addField("id", DataTypeFactory::createInt32())
                             ->addField("valueSmall", DataTypeFactory::createInt16())
                             ->addField("valueFloat", DataTypeFactory::createFloat())
@@ -1057,7 +1057,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
 
     /* prepare objects for test */
     auto source =
-        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::COL_LAYOUT);
+        createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), Schema::COLUMNAR_LAYOUT);
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
     auto context = QueryCompilation::PipelineContext::create();
     context->pipelineName = "1";
@@ -1139,7 +1139,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
 
     /* generate code for writing result tuples to output buffer */
-    auto outputSchema = Schema::create(Schema::COL_LAYOUT)
+    auto outputSchema = Schema::create(Schema::COLUMNAR_LAYOUT)
                             ->addField("id", DataTypeFactory::createInt32())
                             ->addField("valueSmall", DataTypeFactory::createInt16())
                             ->addField("valueFloat", DataTypeFactory::createFloat())

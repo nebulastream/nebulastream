@@ -38,7 +38,7 @@ class Schema {
     /**
      * @brief Enum to identify the memory layout in which we want to represent the schema physically.
      */
-    enum MemoryLayoutType : std::int8_t { ROW_LAYOUT = 0, COL_LAYOUT = 1 };
+    enum MemoryLayoutType : std::int8_t { ROW_LAYOUT = 0, COLUMNAR_LAYOUT = 1 };
 
     Schema(MemoryLayoutType layoutType = ROW_LAYOUT);
     Schema(SchemaPtr const& query, MemoryLayoutType layoutType = ROW_LAYOUT);

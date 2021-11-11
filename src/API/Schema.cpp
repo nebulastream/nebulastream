@@ -252,7 +252,7 @@ void Schema::clear() { fields.clear(); }
 std::string Schema::getLayoutTypeAsString() const {
     switch (this->layoutType) {
         case ROW_LAYOUT: return "ROW_LAYOUT";
-        case COL_LAYOUT: return "COL_LAYOUT";
+        case COLUMNAR_LAYOUT: return "COL_LAYOUT";
     }
 }
 Schema::MemoryLayoutType Schema::getLayoutType() const { return layoutType; }
