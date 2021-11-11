@@ -33,8 +33,8 @@
 
 namespace NES {
 
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology): MonitoringManager(workerClient, topology, true) {
-}
+MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
+    : MonitoringManager(workerClient, topology, true) {}
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
     : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology),
@@ -91,8 +91,9 @@ bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t
 
 GroupedMetricValues MonitoringManager::requestMonitoringData(uint64_t nodeId, Runtime::BufferManagerPtr bufferManager) {
     if (!enableMonitoring) {
-        NES_ERROR("MonitoringManager: Requesting monitoring data for node " << nodeId << " failed. Monitoring is disabled, "
-                                                                                         "returning empty object");
+        NES_ERROR("MonitoringManager: Requesting monitoring data for node " << nodeId
+                                                                            << " failed. Monitoring is disabled, "
+                                                                               "returning empty object");
         return GroupedMetricValues{};
     }
 

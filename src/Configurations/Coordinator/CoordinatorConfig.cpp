@@ -56,8 +56,7 @@ CoordinatorConfig::CoordinatorConfig() {
 
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
-    enableMonitoring =
-        ConfigOption<bool>::create("enableMonitoring", true, "Enable monitoring");
+    enableMonitoring = ConfigOption<bool>::create("enableMonitoring", true, "Enable monitoring");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -116,8 +115,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
                 && config["enableSemanticQueryValidation"].As<std::string>() != "\n") {
                 setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
             }
-            if (!config["enableMonitoring"].As<std::string>().empty()
-                && config["enableMonitoring"].As<std::string>() != "\n") {
+            if (!config["enableMonitoring"].As<std::string>().empty() && config["enableMonitoring"].As<std::string>() != "\n") {
                 setEnableMonitoring(config["enableMonitoring"].As<bool>());
             }
             if (!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<std::string>() != "\n") {

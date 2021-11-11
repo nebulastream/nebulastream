@@ -160,8 +160,7 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             } else {
                 numaAwareness->setValue(true);
             }
-            if (!config["enableMonitoring"].As<std::string>().empty()
-                && config["enableMonitoring"].As<std::string>() != "\n") {
+            if (!config["enableMonitoring"].As<std::string>().empty() && config["enableMonitoring"].As<std::string>() != "\n") {
                 setEnableMonitoring(config["enableMonitoring"].As<bool>());
             }
         } catch (std::exception& e) {
@@ -365,9 +364,7 @@ void WorkerConfig::setNumaAware(bool status) { numaAwareness->setValue(status); 
 
 BoolConfigOption WorkerConfig::getEnableMonitoring() { return enableMonitoring; }
 
-void WorkerConfig::setEnableMonitoring(bool enableMonitoring) {
-    WorkerConfig::enableMonitoring->setValue(enableMonitoring);
-}
+void WorkerConfig::setEnableMonitoring(bool enableMonitoring) { WorkerConfig::enableMonitoring->setValue(enableMonitoring); }
 
 }// namespace Configurations
 }// namespace NES
