@@ -250,8 +250,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
 
     if (staticNesMetrics.has_value()) {
         request.mutable_monitoringdata()->Swap(staticNesMetrics.value()->toProtobufSerializable().get());
-    }
-    else {
+    } else {
         NES_WARNING("CoordinatorRPCClient: Registering node without monitoring data.");
     }
 
