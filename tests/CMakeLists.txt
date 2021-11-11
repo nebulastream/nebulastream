@@ -235,7 +235,7 @@ if (NES_USE_MQTT)
 endif (NES_USE_MQTT)
 
 ### Dynamic Memory Layout Tests ###
-add_executable(dynamic-memory-layout-tests "UnitTests/DynamicMemoryLayoutTest.cpp")
+add_executable(dynamic-memory-layout-tests "UnitTests/Runtime/DynamicMemoryLayoutTest.cpp")
 target_link_libraries(dynamic-memory-layout-tests nes ${GTEST_LIBRARIES})
 add_test(NAME dynamic-memory-layout-tests COMMAND dynamic-memory-layout-tests)
 
