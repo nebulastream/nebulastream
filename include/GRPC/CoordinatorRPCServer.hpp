@@ -131,6 +131,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status RemoveParent(ServerContext* context, const RemoveParentRequest* request, RemoveParentReply* reply) override;
 
+    //to do
+    Status NotifyQueryFailure(ServerContext* context, const QueryFailureNotification* request, QueryFailureNotificationReply* reply) override;
+
   private:
     TopologyManagerServicePtr topologyManagerService;
     StreamCatalogServicePtr streamCatalogService;
