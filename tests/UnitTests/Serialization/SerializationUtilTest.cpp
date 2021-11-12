@@ -680,13 +680,13 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     }
 }
 
-TEST_F(SerializationUtilTest, testSerializeSimpleQueryPlan) {
+TEST_F(SerializationUtilTest, testSerializeDeserializeCilentOriginatedQueryPlan) {
 
     auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
 
     auto serializedQueryPlan = new SerializableQueryPlan();
-    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    QueryPlanSerializationUtil::serializeClientOriginatedQueryPlan(queryPlan, serializedQueryPlan);
 
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 

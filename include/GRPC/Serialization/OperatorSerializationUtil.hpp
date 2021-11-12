@@ -60,6 +60,13 @@ class OperatorSerializationUtil {
     static SerializableOperator_SourceDetails serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator);
 
     /**
+    * @brief Serializes an source operator from a client-originated queries and all its properties to a SerializableOperator_SourceDetails object.
+    * @param sourceOperator The source operator node.
+    * @return the serialized SerializableOperator_SourceDetails
+    */
+    static SerializableOperator_SourceDetails serializeClientOriginatedSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator);
+
+    /**
      * @brief Serializes an sink operator and all its properties to a SerializableOperator_SinkDetails object.
      * @param sinkOperator The sink operator node.
      * @return the serialized SerializableOperator_SinkDetails.
@@ -113,6 +120,16 @@ class OperatorSerializationUtil {
      */
     static SerializableOperator_SourceDetails* serializeSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
                                                                                SerializableOperator_SourceDetails* sourceDetails);
+
+    /**
+     * @brief Serializes a client-originated source descriptor and all its properties to a SerializableOperator_SourceDetails object.
+     * @param sourceDescriptor The source descriptor.
+     * @param sourceDetails The source details object.
+     * @return the serialized SerializableOperator_SourceDetails.
+     */
+    static SerializableOperator_SourceDetails* serializeClientOriginatedSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
+                                                                         SerializableOperator_SourceDetails* sourceDetails);
+
 
     /**
      * @brief De-serializes the SerializableOperator_SourceDetails and all its properties back to a sink SourceDescriptorPtr.
