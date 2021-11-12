@@ -9,6 +9,8 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libssl-dev \
   build-essential \
   clang-format \
+  libnuma-dev \
+  numactl \
   libmbedtls-dev \
   libjemalloc-dev \
   git \
