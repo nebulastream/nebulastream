@@ -132,8 +132,21 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryP
     }
 
     //set properties of the query plan
-    uint64_t queryId = serializedQueryPlan->queryid();
-    uint64_t querySubPlanId = serializedQueryPlan->querysubplanid();
+    uint64_t queryId;
+    uint64_t querySubPlanId;
+
+    if (serializedQueryPlan->has_queryid()) {
+        queryId = serializedQueryPlan->queryid();
+    } else {
+        queryId = PlanIdGenerator::getNextQueryId();
+    }
+
+    if (serializedQueryPlan->has_querysubplanid()) {
+        querySubPlanId = serializedQueryPlan->querysubplanid();
+    } else {
+        querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();
+    }
+
     return QueryPlan::create(queryId, querySubPlanId, rootOperators);
 }
 

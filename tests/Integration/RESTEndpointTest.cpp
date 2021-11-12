@@ -180,7 +180,6 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     //convert it to string for the request function
     request.set_querystring("");
-    request.set_placement("");
 
     std::string msg = request.SerializeAsString();
 
@@ -233,9 +232,13 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     //make a Protobuff object
     SubmitQueryRequest request;
     auto serializedQueryPlan = request.mutable_queryplan();
-    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    QueryPlanSerializationUtil::serializeClientOriginatedQueryPlan(queryPlan, serializedQueryPlan);
     request.set_querystring("default_logical");
-    request.set_placement("");
+    auto &details = *request.mutable_details();
+
+    auto bottomUpPlacement = google::protobuf::Any();
+    bottomUpPlacement.set_value("BottomUp");
+    details["placement"] = bottomUpPlacement;
 
     std::string msg = request.SerializeAsString();
 
