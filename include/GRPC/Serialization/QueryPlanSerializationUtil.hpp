@@ -37,6 +37,15 @@ class QueryPlanSerializationUtil {
     static void serializeQueryPlan(const QueryPlanPtr& queryPlan, SerializableQueryPlan* serializableQueryPlan);
 
     /**
+     * @brief Serializes a client originated Query Plan and all its root operators to a SerializableQueryPlan object.
+     * Query plans from client do not have the query id, query sub plan id, and schema.
+     * @param queryPlan: The query plan
+     * @param serializableQueryPlan: pointer to the serializable query Plan object
+     * @return the pointer to serialized SerializableQueryPlan
+     */
+    static void serializeClientOriginatedQueryPlan(const QueryPlanPtr& queryPlan, SerializableQueryPlan* serializableQueryPlan);
+
+    /**
      * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr
      * @param serializedQueryPlan the serialized query plan.
      * @return the pointer to the deserialized query plan

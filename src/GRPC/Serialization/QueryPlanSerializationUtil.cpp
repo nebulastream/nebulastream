@@ -17,9 +17,10 @@
 #include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
@@ -55,6 +56,53 @@ void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPla
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
     serializableQueryPlan->set_querysubplanid(queryPlan->getQuerySubPlanId());
     serializableQueryPlan->set_queryid(queryPlan->getQueryId());
+}
+
+void QueryPlanSerializationUtil::serializeClientOriginatedQueryPlan(const QueryPlanPtr& queryPlan,
+                                                                    SerializableQueryPlan* serializableQueryPlan) {
+
+    NES_INFO("QueryPlanSerializationUtil: serializing client originated query plan " << queryPlan->toString());
+    std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
+    NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
+
+    //Serialize Query Plan operators
+    auto& serializedOperatorMap = *serializableQueryPlan->mutable_operatormap();
+    auto bfsIterator = QueryPlanIterator(queryPlan);
+    for (auto itr = bfsIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+        auto visitingOp = (*itr)->as<OperatorNode>();
+        if (serializedOperatorMap.find(visitingOp->getId()) != serializedOperatorMap.end()) {
+            // skip rest of the steps as the operator is already serialized
+            continue;
+        }
+
+        SerializableOperator serializedOperator;
+        // If the operator is a source operator, use a client-specific serializer
+        if (visitingOp->instanceOf<SourceLogicalOperatorNode>()) {
+            serializedOperator = SerializableOperator();
+            auto sourceDetails =
+                OperatorSerializationUtil::serializeClientOriginatedSourceOperator(visitingOp->as<SourceLogicalOperatorNode>());
+            serializedOperator.mutable_details()->PackFrom(sourceDetails);
+
+            // serialize operator id
+            serializedOperator.set_operatorid(visitingOp->getId());
+
+            // serialize and append children if the node has any
+            for (const auto& child : visitingOp->getChildren()) {
+                serializedOperator.add_childrenids(child->as<OperatorNode>()->getId());
+            }
+        } else {
+            serializedOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
+        }
+
+        NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
+        serializedOperatorMap[visitingOp->getId()] = serializedOperator;
+    }
+
+    //Serialize the root operator ids
+    for (const auto& rootOperator : rootOperators) {
+        u_int64_t rootOperatorId = rootOperator->getId();
+        serializableQueryPlan->add_rootoperatorids(rootOperatorId);
+    }
 }
 
 QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(SerializableQueryPlan* serializedQueryPlan) {
