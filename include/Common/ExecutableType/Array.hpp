@@ -1,18 +1,19 @@
 /*
-    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+     Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
-        https://www.apache.org/licenses/LICENSE-2.0
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
+         https://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+ */
 
 #ifndef NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_HPP_
 #define NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_HPP_
@@ -24,9 +25,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <QueryCompiler/GeneratableTypes/NESType.hpp>
+#include <Common/ExecutableType/NESType.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::ExecutableTypes {
 /**
  * @brief        Container for fixed size arrays of primitive types.
  *
@@ -387,8 +388,8 @@ Array(J const& array) -> Array<std::decay_t<decltype(array[0])>, std::extent<J>:
  * @tparam N size of the array
  */
 template<class T, size_t N>
-struct std::hash<NES::QueryCompilation::Array<T, N>> {
-    auto operator()(const NES::QueryCompilation::Array<T, N>& key) const {
+struct std::hash<NES::ExecutableTypes::Array<T, N>> {
+    auto operator()(const NES::ExecutableTypes::Array<T, N>& key) const {
         std::hash<T> hasher;
         size_t result = 0;
         for (size_t i = 0; i < N; ++i) {// FIXME: Potential bottleneck (#2014)

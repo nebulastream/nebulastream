@@ -63,12 +63,15 @@ class MemoryLayout {
 
     const SchemaPtr& getSchema() const;
 
+    const std::vector<PhysicalTypePtr>& getPhysicalTypes() const;
+
   protected:
     const uint64_t bufferSize;
     const SchemaPtr schema;
     uint64_t recordSize;
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
+    std::vector<PhysicalTypePtr> physicalTypes;
     std::map<std::string, uint64_t> nameFieldIndexMap;
 };
 

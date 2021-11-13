@@ -17,7 +17,10 @@
 #ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_MAGIC_LAYOUT_BUFFER_HPP_
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_MAGIC_LAYOUT_BUFFER_HPP_
 
-#include <QueryCompiler/GeneratableTypes/NESType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
+#include <Exceptions/BufferAccessException.hpp>
+#include <Common/ExecutableType/NESType.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -41,7 +44,7 @@ class DynamicField {
      * @brief Constructor to create a DynamicField
      * @param address for the field
      */
-    explicit DynamicField(uint8_t* address);
+    explicit DynamicField(uint8_t* address, PhysicalTypePtr physicalType);
 
     /**
      * @brief Read a pointer type and return the value as a pointer.
@@ -49,28 +52,47 @@ class DynamicField {
      * @return Pointer type
      */
     template<class Type>
-    requires IsNesType<Type> && std::is_pointer<Type>::value inline Type read() const { return reinterpret_cast<Type>(address); };
+    requires IsNesType<Type> && std::is_pointer<Type>::value inline Type read() const {
+        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
+            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
+                                        + " but accessed as " + typeid(Type).name());
+        }
+        return reinterpret_cast<Type>(address);
+    };
 
     /**
      * @brief Reads a field with a specific pointer.
      * @tparam Type of the field requires to be a NesType.
+     * @throws BufferAccessException if template Type is not compatible with actual physical type.
      * @return Value of the field.
      */
     template<class Type>
     requires(IsNesType<Type> && not std::is_pointer<Type>::value) inline Type& read() const {
+        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
+            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
+                                        + " but accessed as " + typeid(Type).name());
+        }
         return *reinterpret_cast<Type*>(address);
     };
 
     /**
-     * @brief Writes a value to a specific field.
-     * @tparam Type of the field. Type has to be a NesType.
+     * @brief Writes a value to a specific field address.
+     * @tparam Type of the field. Type has to be a NesType and to be compatible with the physical type of this field.
      * @param value of the field.
+     * @throws BufferAccessException if template Type is not compatible with actual physical type.
      */
     template<class Type>
-    requires(IsNesType<Type>) inline void write(Type value) { *reinterpret_cast<Type*>(address) = value; };
+    requires(IsNesType<Type>) inline void write(Type value) {
+        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
+            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
+                                        + " but accessed as " + typeid(Type).name());
+        }
+        *reinterpret_cast<Type*>(address) = value;
+    };
 
   private:
     uint8_t* address;
+    const PhysicalTypePtr physicalType;
 };
 
 /**
@@ -85,9 +107,7 @@ class DynamicTuple {
      * @param memoryLayout
      * @param buffer
      */
-    DynamicTuple(uint64_t recordIndex,
-                  MemoryLayoutPtr  memoryLayout,
-                  TupleBuffer buffer);
+    DynamicTuple(uint64_t recordIndex, MemoryLayoutPtr memoryLayout, TupleBuffer buffer);
 
     /**
      * @brief Accesses an individual field in the record.
@@ -96,6 +116,7 @@ class DynamicTuple {
      * @return DynamicField
      */
     DynamicField operator[](std::size_t fieldIndex);
+    DynamicField operator[](std::string fieldName);
 
   private:
     const uint64_t recordIndex;
@@ -148,9 +169,9 @@ class DynamicTupleBuffer {
      * @brief Iterator to process the records in a DynamicTupleBuffer
      */
     class RecordIterator : public std::iterator<std::input_iterator_tag,// iterator_category
-                                                DynamicTuple,          // value_type
-                                                DynamicTuple,          // difference_type
-                                                DynamicTuple*,         // pointer
+                                                DynamicTuple,           // value_type
+                                                DynamicTuple,           // difference_type
+                                                DynamicTuple*,          // pointer
                                                 DynamicTuple            // reference
                                                 > {
       public:

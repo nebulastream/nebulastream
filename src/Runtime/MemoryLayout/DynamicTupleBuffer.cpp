@@ -22,13 +22,22 @@
 #include <utility>
 namespace NES::Runtime::MemoryLayouts {
 
-DynamicField::DynamicField(uint8_t* address) : address(address) {}
+DynamicField::DynamicField(uint8_t* address, PhysicalTypePtr physicalType) : address(address), physicalType(physicalType) {}
 
 DynamicField DynamicTuple::operator[](std::size_t fieldIndex) {
     auto* bufferBasePointer = buffer.getBuffer<uint8_t>();
     auto offset = memoryLayout->getFieldOffset(recordIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
-    return DynamicField{basePointer};
+    auto physicalType = memoryLayout->getPhysicalTypes()[fieldIndex];
+    return DynamicField{basePointer, physicalType};
+}
+
+DynamicField DynamicTuple::operator[](std::string fieldName) {
+    auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
+    if(!fieldIndex.has_value()){
+        throw BufferAccessException("field name " + fieldName + " dose not exist in layout");
+    }
+    return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }
 
 DynamicTuple::DynamicTuple(const uint64_t recordIndex, MemoryLayoutPtr memoryLayout, TupleBuffer buffer)

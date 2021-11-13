@@ -153,24 +153,18 @@ class SelectionDataGenSource : public GeneratorSource {
 
     std::optional<Runtime::TupleBuffer> receiveData() override {
         // 10 tuples of size one
-        auto buf = bufferManager->getBufferBlocking();
-        uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
-
-        assert(buf.getBuffer() != nullptr);
-
-        auto* tuples = buf.getBuffer<InputTuple>();
-        for (uint32_t i = 0UL; i < tupleCnt; ++i) {
-            tuples[i].id = i;
-            tuples[i].value = i * 2;
-            for (int j = 0; j < 11; ++j) {
-                tuples[i].text[j] = ((j + i) % (255 - 'a')) + 'a';
+        auto buffer = allocateBuffer();
+        for (uint32_t i = 0; i < buffer.getCapacity(); i++) {
+            buffer[i]["id"].write<uint32_t>(i);
+            buffer[i]["value"].write<uint32_t>(i * 2);
+            auto charArray = buffer[i]["text"].read<char*>();
+            for (std::size_t j = 0; j < 11; ++j) {
+                charArray[j] = ((j + i) % (255 - 'a')) + 'a';
             }
-            tuples[i].text[11] = '\0';
+            charArray[11] = '\0';
         }
-
-        //buf.setBufferSizeInBytes(sizeof(InputTuple));
-        buf.setNumberOfTuples(tupleCnt);
-        return buf;
+        buffer.setNumberOfTuples(buffer.getCapacity());
+        return buffer.getBuffer();
     }
 
     struct __attribute__((packed)) InputTuple {
@@ -219,55 +213,27 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     };
 
     std::optional<TupleBuffer> receiveData() override {
-        // 10 tuples of size one
-        TupleBuffer buf = bufferManager->getBufferBlocking();
-
-        if (schema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
-            auto layoutCol = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
-            uint64_t tupleCnt = buf.getBufferSize() / layoutCol->getRecordSize();
-            auto bindedColLayout = layoutCol->bind(buf);
-
-            for (uint32_t i = 0; i < tupleCnt; i++) {
-                std::tuple<uint32_t, int16_t, float, double, char, std::array<char, 12>> tuple;
-                std::get<0>(tuple) = i;                            // id
-                std::get<1>(tuple) = -123 + (i * 2);               // valueSmall
-                std::get<2>(tuple) = i * M_PI;                     // valueFloat
-                std::get<3>(tuple) = i * M_PI * 2;                 // valueDouble
-                std::get<4>(tuple) = ((i + 1) % (127 - 'A')) + 'A';// singleChar
-                for (std::size_t j = 0; j < 11; ++j) {
-                    std::get<5>(tuple)[j] = ((i + 1) % 64) + 64;// text
-                }
-                std::get<5>(tuple)[11] = '\0';//text
-
-                bindedColLayout->pushRecord<true>(tuple);
+        auto buffer = allocateBuffer();
+        for (uint32_t i = 0; i < buffer.getCapacity(); i++) {
+            // id
+            buffer[i][0].write<uint32_t>(i);
+            // valueSmall
+            buffer[i][1].write<int16_t>(-123 + (i * 2));
+            // valueFloat
+            buffer[i][2].write<float>(i * M_PI);
+            // valueDouble
+            buffer[i][3].write<double>(i * M_PI * 2);
+            // singleChar
+            buffer[i][4].write<char>(((i + 1) % (127 - 'A')) + 'A');
+            //text
+            auto charArray = buffer[i][5].read<char*>();
+            for (std::size_t j = 0; j < 11; ++j) {
+                charArray[j] = ((i + 1) % 64) + 64;// text
             }
-            buf.setNumberOfTuples(tupleCnt);
-
-        } else if (schema->getLayoutType() == Schema::ROW_LAYOUT) {
-            auto layoutRow = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-            uint64_t tupleCnt = buf.getBufferSize() / layoutRow->getRecordSize();
-            auto bindedRowLayout = layoutRow->bind(buf);
-
-            for (uint32_t i = 0; i < tupleCnt; i++) {
-                std::tuple<uint32_t, int16_t, float, double, char, std::array<char, 12>> tuple;
-                std::get<0>(tuple) = i;                            // id
-                std::get<1>(tuple) = -123 + (i * 2);               // valueSmall
-                std::get<2>(tuple) = i * M_PI;                     // valueFloat
-                std::get<3>(tuple) = i * M_PI * 2;                 // valueDouble
-                std::get<4>(tuple) = ((i + 1) % (127 - 'A')) + 'A';// singleChar
-                for (std::size_t j = 0; j < 11; ++j) {
-                    std::get<5>(tuple)[j] = ((i + 1) % 64) + 64;// text
-                }
-                std::get<5>(tuple)[11] = '\0';//text
-
-                bindedRowLayout->pushRecord<true>(tuple);
-            }
-            buf.setNumberOfTuples(tupleCnt);
-        } else {
-            NES_ERROR("PredicateTestingDataGeneratorSource: schema->layoutType is neither ROW_LAYOUT nor COL_LAYOUT!!");
+            charArray[11] = '\0';
         }
-
-        return buf;
+        buffer.setNumberOfTuples(buffer.getCapacity());
+        return buffer.getBuffer();
     }
 };
 
@@ -1028,15 +994,13 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColLayout) {
     stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
-    auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema,  nodeEngine->getBufferManager()->getBufferSize());
-    auto outputLayout = Runtime::MemoryLayouts::ColumnLayout::create(outputSchema,  nodeEngine->getBufferManager()->getBufferSize());
+    auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto outputLayout =
+        Runtime::MemoryLayouts::ColumnLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
 
-    auto secondFieldsInput =
-        Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, inputLayout, inputBuffer);
-    auto thirdFieldsInput =
-        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3 , inputLayout, inputBuffer);
-    auto fourthFieldsOutput =
-        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, outputLayout, resultBuffer);
+    auto secondFieldsInput = Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, inputLayout, inputBuffer);
+    auto thirdFieldsInput = Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3, inputLayout, inputBuffer);
+    auto fourthFieldsOutput = Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, outputLayout, resultBuffer);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];
@@ -1106,10 +1070,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestColRowLayout) {
     auto inputLayout = Runtime::MemoryLayouts::ColumnLayout::create(inputSchema, nodeEngine->getBufferManager()->getBufferSize());
     auto outputLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
 
-    auto secondFieldsInput =
-        Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, inputLayout, inputBuffer);
-    auto thirdFieldsInput =
-        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3, inputLayout, inputBuffer);
+    auto secondFieldsInput = Runtime::MemoryLayouts::ColumnLayoutField<float, true>::create(2, inputLayout, inputBuffer);
+    auto thirdFieldsInput = Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(3, inputLayout, inputBuffer);
     auto fourthFieldsOutput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(4, outputLayout, resultBuffer);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
@@ -1177,16 +1139,16 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTestRowColLayout) {
     stage->execute(inputBuffer, *queryContext, wctx);
 
     auto resultBuffer = queryContext->buffers[0];
-    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema,nodeEngine->getBufferManager()->getBufferSize());
-    auto outputLayout = Runtime::MemoryLayouts::ColumnLayout::create(outputSchema,nodeEngine->getBufferManager()->getBufferSize());
+    auto inputLayout = Runtime::MemoryLayouts::RowLayout::create(inputSchema, nodeEngine->getBufferManager()->getBufferSize());
+    auto outputLayout =
+        Runtime::MemoryLayouts::ColumnLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
 
     auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
     auto bindedOutputColumnLayout = outputLayout->bind(resultBuffer);
 
     auto secondFieldsInput = Runtime::MemoryLayouts::RowLayoutField<float, true>::create(2, inputLayout, inputBuffer);
     auto thirdFieldsInput = Runtime::MemoryLayouts::RowLayoutField<double, true>::create(3, inputLayout, inputBuffer);
-    auto fourthFieldsOutput =
-        Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, outputLayout, resultBuffer);
+    auto fourthFieldsOutput = Runtime::MemoryLayouts::ColumnLayoutField<double, true>::create(4, outputLayout, resultBuffer);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = secondFieldsInput[recordIndex];

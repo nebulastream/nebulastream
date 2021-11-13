@@ -18,4 +18,5 @@ add_source_nes(
         BasicPhysicalType.cpp
         PhysicalTypeFactory.cpp
         DefaultPhysicalTypeFactory.cpp
+        PhysicalTypeUtil.cpp
 )
