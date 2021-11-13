@@ -51,7 +51,7 @@
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
-#include <QueryCompiler/GeneratableTypes/Array.hpp>
+#include <Common/ExecutableType/Array.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 using namespace NES::Windowing;
@@ -339,7 +339,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
                                   ->addField("key", DataTypeFactory::createFixedChar(32))
                                   ->addField("value", UINT32);
 
-    auto windowHandler = createWindowHandler<NES::QueryCompilation::Array<char, 32>,
+    auto windowHandler = createWindowHandler<NES::ExecutableTypes::Array<char, 32>,
                                              uint64_t,
                                              uint64_t,
                                              uint64_t,
@@ -350,7 +350,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
 
     windowHandler->setup(context);
 
-    NES::QueryCompilation::Array<char, 32> keyOne = {'K', 'e', 'y', ' ', 'O', 'n', 'e'};
+    NES::ExecutableTypes::Array<char, 32> keyOne = {'K', 'e', 'y', ' ', 'O', 'n', 'e'};
 
     auto windowStateVar = windowHandler->getTypedWindowState();
     auto key_value_handle = windowStateVar->get(keyOne);
@@ -381,7 +381,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
 
     auto windowAction = std::dynamic_pointer_cast<
         Windowing::
-            ExecutableCompleteAggregationTriggerAction<NES::QueryCompilation::Array<char, 32>, uint64_t, uint64_t, uint64_t>>(
+            ExecutableCompleteAggregationTriggerAction<NES::ExecutableTypes::Array<char, 32>, uint64_t, uint64_t, uint64_t>>(
         windowHandler->getWindowAction());
     windowAction->aggregateWindows(keyOne, store, windowDef, buf, ts, 7, ctx);
     windowAction->aggregateWindows(keyOne, store, windowDef, buf, ts, ts, ctx);

@@ -29,7 +29,7 @@
 #include <Configurations/Worker/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <QueryCompiler/GeneratableTypes/Array.hpp>
+#include <Common/ExecutableType/Array.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -943,12 +943,12 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
  */
 TEST_F(JoinDeploymentTest, testJoinWithFixedCharKey) {
     struct Window1 {
-        NES::QueryCompilation::Array<char, 8> id1;
+        NES::ExecutableTypes::Array<char, 8> id1;
         uint64_t timestamp;
     };
 
     struct Window2 {
-        NES::QueryCompilation::Array<char, 8> id2;
+        NES::ExecutableTypes::Array<char, 8> id2;
         uint64_t timestamp;
     };
 
@@ -994,7 +994,7 @@ TEST_F(JoinDeploymentTest, testJoinWithFixedCharKey) {
     struct Output {
         uint64_t window1window2$start;
         uint64_t window1window2$end;
-        NES::QueryCompilation::Array<char, 8> window1window2$key;
+        NES::ExecutableTypes::Array<char, 8> window1window2$key;
         uint64_t window2$timestamp;
 
         // overload the == operator to check if two instances are the same

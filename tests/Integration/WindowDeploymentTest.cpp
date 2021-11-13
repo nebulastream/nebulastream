@@ -34,7 +34,7 @@
 
 #include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Configurations/Sources/SourceConfigFactory.hpp>
-#include <QueryCompiler/GeneratableTypes/Array.hpp>
+#include <Common/ExecutableType/Array.hpp>
 #include <iostream>
 
 using namespace std;
@@ -1583,7 +1583,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
 
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
     struct Car {
-        NES::QueryCompilation::Array<char, 4> key;
+        NES::ExecutableTypes::Array<char, 4> key;
         uint32_t value1;
         uint64_t timestamp;
     };
@@ -1601,9 +1601,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
 
     testHarness.addMemorySource("car", carSchema, "car1");
 
-    NES::QueryCompilation::Array<char, 4> keyOne = "aaa";
-    NES::QueryCompilation::Array<char, 4> keyTwo = "bbb";
-    NES::QueryCompilation::Array<char, 4> keyThree = "ccc";
+    NES::ExecutableTypes::Array<char, 4> keyOne = "aaa";
+    NES::ExecutableTypes::Array<char, 4> keyTwo = "bbb";
+    NES::ExecutableTypes::Array<char, 4> keyThree = "ccc";
 
     testHarness.pushElement<Car>({keyOne, 2, 1000}, 0);
     testHarness.pushElement<Car>({keyTwo, 4, 1500}, 0);

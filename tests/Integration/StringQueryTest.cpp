@@ -25,7 +25,7 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <QueryCompiler/GeneratableTypes/Array.hpp>
+#include <Common/ExecutableType/Array.hpp>
 
 namespace NES {
 
