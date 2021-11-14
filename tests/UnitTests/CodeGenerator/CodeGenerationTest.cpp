@@ -162,13 +162,13 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                                                     DataTypeFactory::createFixedCharValue(vals));
         EXPECT_EQ(
             varDeclN.getCode(),
-            "NES::QueryCompilation::Array<char, 12> n = NES::QueryCompilation::Array {'a', 'b', 'c', static_cast<char>(0)}");
+            "NES::ExecutableTypes::Array<char, 12> n = NES::ExecutableTypes::Array {'a', 'b', 'c', static_cast<char>(0)}");
 
         auto varDeclO = VariableDeclaration::create(
             tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())),
             "o",
             DataTypeFactory::createArrayValueWithContainedType(DataTypeFactory::createUInt8(), {"2", "3", "4"}));
-        EXPECT_EQ(varDeclO.getCode(), "NES::QueryCompilation::Array<uint8_t, 4> o = NES::QueryCompilation::Array {2, 3, 4}");
+        EXPECT_EQ(varDeclO.getCode(), "NES::ExecutableTypes::Array<uint8_t, 4> o = NES::ExecutableTypes::Array {2, 3, 4}");
 
         /**
          todo currently no support for strings
