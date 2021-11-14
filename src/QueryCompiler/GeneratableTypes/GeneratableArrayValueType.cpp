@@ -26,7 +26,7 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
     bool const containsChars = valueType->dataType->isCharArray();
 
     std::stringstream str;
-    str << "NES::QueryCompilation::Array {";
+    str << "NES::ExecutableTypes::Array {";
     if (containsChars) {
 
         bool nullTerminated = false;

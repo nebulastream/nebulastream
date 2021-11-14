@@ -35,7 +35,7 @@ CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const { return s
 
 CodeExpressionPtr ArrayGeneratableType::getCode() const {
     std::stringstream str;
-    str << "NES::QueryCompilation::Array<" << component->getCode()->code_ << ", " << type->length << "> ";
+    str << "NES::ExecutableTypes::Array<" << component->getCode()->code_ << ", " << type->length << "> ";
     return std::make_shared<CodeExpression>(str.str());
 }
 
