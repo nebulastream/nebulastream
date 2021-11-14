@@ -22,7 +22,7 @@
 namespace NES::QueryCompilation {
 FileBuilder FileBuilder::create(const std::string&) {
     FileBuilder builder;
-    builder.declations << "#include <QueryCompiler/GeneratableTypes/Array.hpp>\n"
+    builder.declations << "#include <Common/ExecutableType/Array.hpp>\n"
                           "#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>\n"
                           "#include <cstdint>\n"
                           "#include <string.h>\n"
