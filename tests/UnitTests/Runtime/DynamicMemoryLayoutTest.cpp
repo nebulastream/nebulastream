@@ -705,7 +705,7 @@ TEST_F(DynamicMemoryLayoutTest, accessDynamicColumnBufferTest) {
 
     for (uint32_t i = 0; i < numberOfRecords; i++) {
         auto record = buffer[i];
-        ASSERT_EQ(record[0].read<uint8_t>(), 1.0);
+        ASSERT_EQ(record[0].read<uint8_t>(), i);
         ASSERT_EQ(record[1].read<uint16_t>(), i);
         ASSERT_EQ(record[2].read<uint32_t>(), i);
     }
