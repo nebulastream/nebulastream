@@ -16,7 +16,6 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkSource.hpp>
-#include <Runtime/MemoryLayout/PhysicalSchema.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>

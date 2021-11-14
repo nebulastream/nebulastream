@@ -15,6 +15,7 @@
 */
 
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -24,7 +25,7 @@ namespace NES::Runtime::MemoryLayouts {
 
 uint64_t MemoryLayout::getTupleSize() const { return recordSize; }
 
-const std::vector<FIELD_SIZE>& MemoryLayout::getFieldSizes() const { return physicalFieldSizes; }
+const std::vector<uint64_t>& MemoryLayout::getFieldSizes() const { return physicalFieldSizes; }
 
 MemoryLayout::MemoryLayout(uint64_t bufferSize, SchemaPtr schema) : bufferSize(bufferSize), schema(schema), recordSize(0) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();

@@ -13,11 +13,6 @@
 # limitations under the License.
 
 add_source_nes(
-        PhysicalField.cpp
-        BasicPhysicalField.cpp
-        ArrayPhysicalField.cpp
-        PhysicalSchema.cpp
-        PhysicalFieldUtil.cpp
         ColumnLayout.cpp
         MemoryLayoutTupleBuffer.cpp
         RowLayout.cpp
