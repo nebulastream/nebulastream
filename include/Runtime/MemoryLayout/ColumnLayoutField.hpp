@@ -24,28 +24,32 @@
 namespace NES::Runtime::MemoryLayouts {
 
 /**
- * @brief This class is used for handling fields in a given DynamicColumnLayoutBuffer. It also overrides the operator[] for a more user friendly access of records for a predefined field.
- * @tparam T
- * @tparam boundaryChecks
+ * @brief The ColumnLayoutField enables assesses to a specific field in a columnar layout.
+ * It overrides the operator[] for a more user friendly access of tuples for a predefined field.
+ * As this required direct knowledge of a particular memory layout at compile-time, consider to use the DynamicTupleBuffer.
+ * @tparam T the type of the field
+ * @tparam boundaryChecks flag to identify if buffer bounds should be checked at runtime.
  * @caution This class is non-thread safe
  */
-template<class T, bool boundaryChecks>
+template<class T, bool boundaryChecks = true>
 class ColumnLayoutField {
 
   public:
     /**
-     * @param fieldIndex
-     * @param layoutBuffer
-     * @tparam boundaryChecks if true will check if access is allowed
+     * Factory to create a ColumnLayoutField for a specific memory layout and a specific tuple buffer.
+     * @param fieldIndex the field which is accessed.
+     * @param layout the memory layout
+     * @tparam buffer the tuple buffer
      * @tparam T type of field
-     * @return field handler via a fieldIndex and a layoutBuffer
+     * @return field handler
      */
     static inline ColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer);
 
     /**
+     * Creates a ColumnLayoutField for a specific memory layout and a specific tuple buffer.
      * @param fieldIndex
-     * @param layoutBuffer
-     * @tparam boundaryChecks if true will check if access is allowed
+     * @param layout the memory layout
+     * @tparam buffer the tuple buffer
      * @tparam T type of field
      * @return field handler via a fieldName and a layoutBuffer
      */
@@ -53,6 +57,7 @@ class ColumnLayoutField {
     create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer);
 
     /**
+     * Accesses the value of this field for a specific record.
      * @param recordIndex
      * @return reference to a field attribute from the created field handler accessed by recordIndex
      */

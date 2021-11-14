@@ -203,9 +203,9 @@ class Node : public std::enable_shared_from_this<Node> {
     }
 
     /**
-     * @brief Dynamically casts the node to a NodeType
+     * @brief Dynamically casts the node to a NodeType or returns nullptr.
      * @tparam NodeType
-     * @return returns a shared pointer of the NodeType
+     * @return returns a shared pointer of the NodeType or nullptr if the type can't be casted.
      */
     template<class NodeType>
     std::shared_ptr<NodeType> as_if() {
