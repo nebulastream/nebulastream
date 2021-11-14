@@ -40,6 +40,7 @@ class MemoryLayout {
      * @param schema A memory layout is always created for a specific schema.
      */
     MemoryLayout(uint64_t bufferSize, SchemaPtr schema);
+    virtual ~MemoryLayout() = default;
 
     /**
      * Gets the field index for a specific field name. If the field name not exists, we return an invalid optional.
