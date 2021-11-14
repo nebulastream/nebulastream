@@ -36,7 +36,7 @@ class RowLayoutTupleBuffer : public MemoryLayoutTupleBuffer {
     /**
      * @return retrieves the record size
      */
-    FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
+    FIELD_SIZE getRecordSize() { return dynamicRowLayout->getTupleSize(); }
 
     /**
      * @return retrieves the field offsets of the column layout

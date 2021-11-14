@@ -281,7 +281,7 @@ void CCodeGenerator::generateCodeInitStructFieldsColLayout(const SchemaPtr& sche
     auto capacityVarDeclaration =
         VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()), capacityVarName);
     auto capacityVarStatement = getBufferSize(varDeclarationBuffer)
-        / Constant(tf->createValueType(DataTypeFactory::createBasicValue(layout->getRecordSize())));
+        / Constant(tf->createValueType(DataTypeFactory::createBasicValue(layout->getTupleSize())));
     auto capacityVarAssignment = VarDeclStatement(capacityVarDeclaration).assign(capacityVarStatement);
     statements.push_back(capacityVarAssignment.copy());
 

@@ -19,44 +19,67 @@
 
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
 
-using FIELD_OFFSET = uint64_t;
-
 /**
- * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member
- * @caution This class is non-thread safe
+ * @brief Implements a row layout, that maps all tuples in a tuple buffer to a row-wise layout.
+ * For a schema with 3 fields (F1, F2, and F3) we retrieve the following layout.
+ *
+ * | F1, F2, F3 |
+ * | F1, F2, F3 |
+ * | F1, F2, F3 |
+ *
+ * This may be beneficial for processing performance if all fields of the tuple are accessed.
  */
 class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLayout> {
 
   public:
+    /**
+     * @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
+     * @param schema the underling schema of this memory layout.
+     * @param bufferSize the expected buffer size.
+     */
     RowLayout(SchemaPtr schema, uint64_t bufferSize);
 
     /**
-     * @brief Creates a DynamicColumnLayout as a shared_ptr
-     * @param schema
-     * @param checkBoundaries
-     * @return created DynamicRowLayout as a shared ptr
+     * @brief Factory to create a RowLayout
+     * @param schema the underling schema of this memory layout.
+     * @param bufferSize the expected buffer size.
+     * @return std::shared_ptr<RowLayout>
      */
     static std::shared_ptr<RowLayout> create(SchemaPtr schema, uint64_t bufferSize);
 
     /**
-     * @return fieldOffSets vector
+     * Gets the offset in bytes of all fields within a single tuple.
+     * For a single tuple with three int64 fields, the second field has a offset of 8 bytes.
+     * @return vector of field offsets.
      */
-    const std::vector<FIELD_SIZE>& getFieldOffSets() const;
+    const std::vector<uint64_t>& getFieldOffSets() const;
 
     /**
-     * Binds a memoryLayout to a tupleBuffer
-     * @param tupleBuffer
-     * @return shared_ptr to DynamicRowLayoutBuffer
+     * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
+     * For the row layout the field offset is calculated as follows:
+     * \f$ offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex] \f$
+     * @param tupleIndex index of the tuple.
+     * @param fieldIndex index of the field.
+     * @throws BufferAccessException if the tuple index or the field index is out of bounds.
+     * @return offset in the tuple buffer.
+     */
+    [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
+
+    /**
+     * This method binds a tuple buffer to this specific memory layout.
+     * This enables to access the underling data very efficiently, buf requires to fix the memory layout at compilation time.
+     * If this is not practical consider to use the DynamicTupleBuffer.
+     * @param tupleBuffer for that we want to bind the layout
+     * @return shared_ptr to RowLayoutTupleBuffer
      */
     std::shared_ptr<RowLayoutTupleBuffer> bind(const TupleBuffer& tupleBuffer);
 
-    uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) override;
-
   private:
-    std::vector<FIELD_OFFSET> fieldOffSets;
+    std::vector<uint64_t> fieldOffSets;
 };
 
 }// namespace NES::Runtime::MemoryLayouts

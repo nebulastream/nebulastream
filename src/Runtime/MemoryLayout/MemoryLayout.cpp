@@ -22,7 +22,7 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-uint64_t MemoryLayout::getRecordSize() const { return recordSize; }
+uint64_t MemoryLayout::getTupleSize() const { return recordSize; }
 
 const std::vector<FIELD_SIZE>& MemoryLayout::getFieldSizes() const { return physicalFieldSizes; }
 
