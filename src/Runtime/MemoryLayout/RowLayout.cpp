@@ -14,7 +14,6 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Exceptions/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -48,12 +47,17 @@ std::shared_ptr<RowLayoutTupleBuffer> RowLayout::bind(const TupleBuffer& tupleBu
 
 const std::vector<FIELD_SIZE>& RowLayout::getFieldOffSets() const { return fieldOffSets; }
 
-uint64_t RowLayout::getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) {
+uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const {
     if (fieldIndex >= fieldOffSets.size()) {
-        throw BufferAccessException("jthField " + std::to_string(fieldIndex) + " is larger than fieldOffsets.size() "
-                                    + std::to_string(fieldOffSets.size()));
+        throw BufferAccessException("field index: " + std::to_string(fieldIndex)
+                                     + " is larger the number of field in the memory layout "
+                                     + std::to_string(physicalFieldSizes.size()));
     }
-    auto offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex];
+    if (tupleIndex >= getCapacity()) {
+        throw BufferAccessException("tuple index: " + std::to_string(tupleIndex)
+                                    + " is larger the maximal capacity in the memory layout " + std::to_string(getCapacity()));
+    }
+    auto offSet = (tupleIndex * recordSize) + fieldOffSets[fieldIndex];
     NES_TRACE("DynamicRowLayoutBuffer.calcOffset: offSet = " << offSet);
     return offSet;
 }

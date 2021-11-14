@@ -89,7 +89,7 @@ RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<R
     auto offSet = layout->getFieldOffset(0, fieldIndex);
     auto* basePointer = bufferBasePointer + offSet;
 
-    return RowLayoutField<T, boundaryChecks>(layout, basePointer, fieldIndex, layout->getRecordSize());
+    return RowLayoutField<T, boundaryChecks>(layout, basePointer, fieldIndex, layout->getTupleSize());
 }
 
 template<class T, bool boundaryChecks>
