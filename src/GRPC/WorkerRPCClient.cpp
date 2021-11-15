@@ -19,9 +19,9 @@
 #include <API/Schema.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
-
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <GRPC/CoordinatorRPCServer.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
@@ -338,6 +338,7 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     reply.set_buffer(buf.getBuffer<char>());
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetMonitoringData(&context, request, &reply);
 
@@ -356,26 +357,27 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     return false;
 }
 
-bool WorkerRPCClient::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string* errormsg) {
+bool WorkerRPCClient::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg) {
     // create & fill the protobuf
-    CoordinatorRPCService::Service::QueryFailureNotification request;
-    request.set_queryId(queryId);
-    request.set_subQueryId(subQueryId);
-    request.set_workerId(workerId);
-    request.set_operatorId(operatorId);
+    QueryFailureNotification request;
+    request.set_queryid(queryId);
+    request.set_subqueryid(subQueryId);
+    request.set_workerid(workerId);
+    request.set_operatorid(operatorId);
     request.set_errormsg(errormsg);
 
     ClientContext context;
-    CoordinatorRPCService::Service::QueryFailureNotificationReply reply;
 
-    // establish connection
-    // address?
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    QueryFailureNotificationReply reply;
+    //CoordinatorRPCServer::QueryFailureNotificationReply reply;
 
-    //from worker to Coordinator --> so coordinator stub???
-    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
+    // establish connection, but how get the adress of the Coordinator?
+    //    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    // is stub only for clients?
+    //    std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
 
-    Status status = coordinatorStub->NotifyQueryFailure(&context, request, &reply);
+    //brauche ein Coordinator Service object um die Methode nutzen zu können
+    Status status = CoordinatorRPCServer::NotifyQueryFailure(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::RequestNotifyQueryFailure: status ok");

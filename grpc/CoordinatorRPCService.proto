@@ -39,7 +39,7 @@ service CoordinatorRPCService {
   rpc ReplaceParent (ReplaceParentRequest) returns (ReplaceParentReply) {}
 
   // WO?
-  rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
+//  rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
 }
 
 
@@ -136,7 +136,7 @@ message RemoveParentRequest {
 message RemoveParentReply {
   bool success = 1;
 }
-
+/*
 message QueryFailureNotification{
   uint64 queryId = 1;
   uint64 subQueryId = 2;
@@ -147,4 +147,4 @@ message QueryFailureNotification{
 
 message QueryFailureNotificationReply{
   bool success = 1;
-}
+}*/
