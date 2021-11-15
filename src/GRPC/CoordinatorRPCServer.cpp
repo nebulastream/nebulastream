@@ -190,14 +190,15 @@ Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequ
 }
 
 
-Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*, const QueryFailureNotification*, QueryFailureNotificationReply* reply) {
+Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*, const QueryFailureNotification, QueryFailureNotificationReply* reply) {
     try {
         NES_DEBUG("CoordinatorRPCServer::notifyQueryFailure: failure message received");
 
-        /*TODO implement here what happens with received Query that failed
-         * add "request" as an QueryFailureNotification* object as method parameter
+        /* TODO implement here what happens with received Query that failed
          *
+         * add "request" as an QueryFailureNotification* object as method parameter
          * uint64_t queryId = request->queryid();
+         * etc
          */
 
         reply->set_success(true);
