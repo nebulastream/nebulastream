@@ -15,7 +15,9 @@
 */
 
 #include <Runtime/internal/apex_memmove.hpp>
+#ifdef __x86_64__
 #include <Runtime/internal/rte_memory.h>
+#endif
 #include <array>
 #include <benchmark/benchmark.h>
 #include <random>
