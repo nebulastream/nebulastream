@@ -100,13 +100,12 @@ CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
         NES_DEBUG("Library libnes.dylib found at: " << libNesPath.parent_path());
         return;
     } else {
-        NES_DEBUG("Invalid libnes.dylib file found at " << libNesPath <<
-        ". Searching next in DYLD_LIBRARY_PATH.");
+        NES_DEBUG("Invalid libnes.dylib file found at " << libNesPath << ". Searching next in DYLD_LIBRARY_PATH.");
 
         std::stringstream dyld_string(std::getenv("DYLD_LIBRARY_PATH"));
         std::string path;
 
-        while(std::getline(dyld_string, path, ':')) {
+        while (std::getline(dyld_string, path, ':')) {
             if (path == "") {
                 continue;
             }
