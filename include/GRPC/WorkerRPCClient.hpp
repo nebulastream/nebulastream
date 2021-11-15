@@ -89,14 +89,14 @@ class WorkerRPCClient {
 
     /**
      * @brief ungregisters a query
-     * @param queryIdto unregister query
+     * @param queryId to unregister query
      * @return true if succeeded, else false
      */
     static bool unregisterQuery(const std::string& address, QueryId queryId);
 
     /**
      * @brief ungregisters a query asynchronously
-     * @param queryIdto unregister query
+     * @param queryId to unregister query
      * @return true if succeeded, else false
      */
     static bool unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
@@ -155,7 +155,7 @@ class WorkerRPCClient {
      */
     static bool checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
 
-    static bool notifyQueryFailure(uint64 queryId, uint64 subQueryId, uint64 workerId, uint64 operatorId, string errormsg);
+    static bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string* errormsg);
 
   private:
 };
