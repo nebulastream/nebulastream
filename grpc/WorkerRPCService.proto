@@ -32,7 +32,7 @@ service WorkerRPCService {
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
   //WO
- // rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
+//  rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
 
 }
 
@@ -98,7 +98,8 @@ message MonitoringDataRequest {
 message MonitoringDataReply {
   bytes buffer = 1;
 }
-/* WO
+// WO
+/*
 message QueryFailureNotification{
   uint64 queryId = 1;
   uint64 subQueryId = 2;

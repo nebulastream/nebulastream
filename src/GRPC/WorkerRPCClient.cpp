@@ -356,9 +356,9 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     return false;
 }
 
-static bool WorkerRPCClient::notifyQueryFailure(uint64 queryId, uint64 subQueryId, uint64 workerId, uint64 operatorId, string errormsg) {
+bool WorkerRPCClient::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string* errormsg) {
     // create & fill the protobuf
-    QueryFailureNotification request;
+    CoordinatorRPCService::Service::QueryFailureNotification request;
     request.set_queryId(queryId);
     request.set_subQueryId(subQueryId);
     request.set_workerId(workerId);
@@ -366,9 +366,10 @@ static bool WorkerRPCClient::notifyQueryFailure(uint64 queryId, uint64 subQueryI
     request.set_errormsg(errormsg);
 
     ClientContext context;
-    QueryFailureNotificationReply reply;
+    CoordinatorRPCService::Service::QueryFailureNotificationReply reply;
 
-    //establish connection
+    // establish connection
+    // address?
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
     //from worker to Coordinator --> so coordinator stub???
@@ -380,10 +381,7 @@ static bool WorkerRPCClient::notifyQueryFailure(uint64 queryId, uint64 subQueryI
         NES_DEBUG("WorkerRPCClient::RequestNotifyQueryFailure: status ok");
         return true;
     }
-
     return false;
-
 }
-
 
 }// namespace NES
