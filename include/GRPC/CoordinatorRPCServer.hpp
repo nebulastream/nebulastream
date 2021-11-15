@@ -18,6 +18,7 @@
 #define NES_INCLUDE_GRPC_COORDINATOR_RPC_SERVER_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
+#include <WorkerRPCService.grpc.pb.h>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
@@ -132,7 +133,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     Status RemoveParent(ServerContext* context, const RemoveParentRequest* request, RemoveParentReply* reply) override;
 
     //to do
-    Status NotifyQueryFailure(ServerContext* context, const QueryFailureNotification* request, QueryFailureNotificationReply* reply) override;
+    Status NotifyQueryFailure(ServerContext* context, const QueryFailureNotification* request, QueryFailureNotificationReply* reply);
 
   private:
     TopologyManagerServicePtr topologyManagerService;
