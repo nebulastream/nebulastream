@@ -232,7 +232,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     //make a Protobuff object
     SubmitQueryRequest request;
     auto serializedQueryPlan = request.mutable_queryplan();
-    QueryPlanSerializationUtil::serializeClientOriginatedQueryPlan(queryPlan, serializedQueryPlan);
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan, true);
     request.set_querystring("default_logical");
     auto &context = *request.mutable_context();
 

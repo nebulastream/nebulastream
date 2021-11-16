@@ -91,13 +91,14 @@
 
 namespace NES {
 
-SerializableOperator OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode) {
+SerializableOperator OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode,
+                                                                  bool isClientOriginated) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator " << operatorNode->toString());
     SerializableOperator serializedOperator = SerializableOperator();
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // serialize source operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SourceLogicalOperatorNode");
-        auto sourceDetails = serializeSourceOperator(operatorNode->as<SourceLogicalOperatorNode>());
+        auto sourceDetails = serializeSourceOperator(operatorNode->as<SourceLogicalOperatorNode>(), isClientOriginated);
         serializedOperator.mutable_details()->PackFrom(sourceDetails);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         // serialize sink operator
@@ -889,18 +890,11 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     //    }
 }
 SerializableOperator_SourceDetails
-OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator) {
+OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator,
+                                                   bool isClientOriginated) {
     auto sourceDetails = SerializableOperator_SourceDetails();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
-    serializeSourceDescriptor(sourceDescriptor, &sourceDetails);
-    return sourceDetails;
-}
-
-SerializableOperator_SourceDetails
-OperatorSerializationUtil::serializeClientOriginatedSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator) {
-    auto sourceDetails = SerializableOperator_SourceDetails();
-    auto sourceDescriptor = sourceOperator->getSourceDescriptor();
-    serializeClientOriginatedSourceDescriptor(sourceDescriptor, &sourceDetails);
+    serializeSourceDescriptor(sourceDescriptor, &sourceDetails, isClientOriginated);
     return sourceDetails;
 }
 
@@ -919,7 +913,8 @@ OperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableO
 
 SerializableOperator_SourceDetails*
 OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
-                                                     SerializableOperator_SourceDetails* sourceDetails) {
+                                                     SerializableOperator_SourceDetails* sourceDetails,
+                                                     bool isClientOriginated) {
 
     // serialize a source descriptor and all its properties depending of its type
     NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with =" << sourceDescriptor->toString());
@@ -1075,30 +1070,12 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         auto logicalStreamSerializedSourceDescriptor =
             SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
-        // serialize source schema
-        SchemaSerializationUtil::serializeSchema(logicalStreamSourceDescriptor->getSchema(),
-                                                 logicalStreamSerializedSourceDescriptor.mutable_sourceschema());
-        sourceDetails->mutable_sourcedescriptor()->PackFrom(logicalStreamSerializedSourceDescriptor);
-    } else {
-        NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
-        throw std::invalid_argument("Unknown Source Descriptor Type");
-    }
-    return sourceDetails;
-}
 
-SerializableOperator_SourceDetails*
-OperatorSerializationUtil::serializeClientOriginatedSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
-                                                                     SerializableOperator_SourceDetails* sourceDetails) {
-    // clients only submit a logical stream source descriptor
-    if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
-        // serialize logical stream source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor");
-        auto logicalStreamSourceDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
-        auto logicalStreamSerializedSourceDescriptor =
-            SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
-        logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
-
+        if (!isClientOriginated) {
+            // serialize source schema
+            SchemaSerializationUtil::serializeSchema(logicalStreamSourceDescriptor->getSchema(),
+                                                     logicalStreamSerializedSourceDescriptor.mutable_sourceschema());
+        }
         sourceDetails->mutable_sourcedescriptor()->PackFrom(logicalStreamSerializedSourceDescriptor);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
@@ -1227,7 +1204,8 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
             LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
         // check if the schema is set
         if (logicalStreamSerializedSourceDescriptor.has_sourceschema()) {
-            auto schema = SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
+            auto schema =
+                SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
             logicalStreamSourceDescriptor->setSchema(schema);
         }
 

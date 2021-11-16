@@ -40,9 +40,10 @@ class OperatorSerializationUtil {
      * @brief Serializes an operator node and all its children to a SerializableOperator object.
      * @param operatorNode The operator node. Usually the root of the operator graph.
      * @param serializedParent The corresponding protobuff object, which is used to capture the state of the object.
+     * @param isClientOriginated Indicate if the source operator is originated from a client.
      * @return the modified serializableOperator
      */
-    static SerializableOperator serializeOperator(const OperatorNodePtr& operatorNode);
+    static SerializableOperator serializeOperator(const OperatorNodePtr& operatorNode, bool isClientOriginated=false);
 
     /**
      * @brief De-serializes the input SerializableOperator only
@@ -55,16 +56,11 @@ class OperatorSerializationUtil {
     /**
     * @brief Serializes an source operator and all its properties to a SerializableOperator_SourceDetails object.
     * @param sourceOperator The source operator node.
+    * @param isClientOriginated Indicate if the source operator is originated from a client.
     * @return the serialized SerializableOperator_SourceDetails
     */
-    static SerializableOperator_SourceDetails serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator);
-
-    /**
-    * @brief Serializes an source operator from a client-originated queries and all its properties to a SerializableOperator_SourceDetails object.
-    * @param sourceOperator The source operator node.
-    * @return the serialized SerializableOperator_SourceDetails
-    */
-    static SerializableOperator_SourceDetails serializeClientOriginatedSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator);
+    static SerializableOperator_SourceDetails serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator,
+                                                                      bool isClientOriginated = false);
 
     /**
      * @brief Serializes an sink operator and all its properties to a SerializableOperator_SinkDetails object.
@@ -116,20 +112,12 @@ class OperatorSerializationUtil {
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.
      * @param sourceDescriptor The source descriptor.
      * @param sourceDetails The source details object.
+     * @param isClientOriginated Indicate if the source operator is originated from a client
      * @return the serialized SerializableOperator_SourceDetails.
      */
     static SerializableOperator_SourceDetails* serializeSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
-                                                                               SerializableOperator_SourceDetails* sourceDetails);
-
-    /**
-     * @brief Serializes a client-originated source descriptor and all its properties to a SerializableOperator_SourceDetails object.
-     * @param sourceDescriptor The source descriptor.
-     * @param sourceDetails The source details object.
-     * @return the serialized SerializableOperator_SourceDetails.
-     */
-    static SerializableOperator_SourceDetails* serializeClientOriginatedSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
-                                                                         SerializableOperator_SourceDetails* sourceDetails);
-
+                                                                         SerializableOperator_SourceDetails* sourceDetails,
+                                                                         bool isClientOriginated = false);
 
     /**
      * @brief De-serializes the SerializableOperator_SourceDetails and all its properties back to a sink SourceDescriptorPtr.
