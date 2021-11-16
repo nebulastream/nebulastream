@@ -20,6 +20,8 @@
 #include <map>
 #include <string>
 #include <thread>
+#include <iostream>
+#include <Configurations/ConfigOption.hpp>
 
 namespace NES {
 
@@ -28,8 +30,6 @@ namespace Configurations {
 class CoordinatorConfig;
 using CoordinatorConfigPtr = std::shared_ptr<CoordinatorConfig>;
 
-template<class T>
-class ConfigOption;
 using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
 using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
@@ -41,6 +41,7 @@ class CoordinatorConfig {
 
   public:
     static CoordinatorConfigPtr create();
+    CoordinatorConfig();
 
     /**
      * @brief overwrite the default configurations with those loaded from a yaml file
@@ -262,7 +263,7 @@ class CoordinatorConfig {
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
      */
-    CoordinatorConfig();
+
     StringConfigOption restIp;
     StringConfigOption coordinatorIp;
     IntConfigOption rpcPort;

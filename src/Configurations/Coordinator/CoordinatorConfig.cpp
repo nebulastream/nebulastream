@@ -201,6 +201,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setQueryMergerRule(queryMergerRule->getDefaultValue());
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
     setEnableMonitoring(enableMonitoring->getDefaultValue());
+    setMemoryLayoutPolicy(memoryLayoutPolicy->getDefaultValue());
 }
 
 std::string CoordinatorConfig::toString() {
@@ -220,6 +221,8 @@ std::string CoordinatorConfig::toString() {
     ss << queryBatchSize->toStringNameCurrentValue();
     ss << queryMergerRule->toStringNameCurrentValue();
     ss << enableSemanticQueryValidation->toStringNameCurrentValue();
+    ss << enableMonitoring->toStringNameCurrentValue();
+    ss << memoryLayoutPolicy->toStringNameCurrentValue();
     return ss.str();
 }
 
@@ -295,7 +298,7 @@ void CoordinatorConfig::setEnableMonitoring(bool enableMonitoring) {
 }
 
 void CoordinatorConfig::setMemoryLayoutPolicy(std::string memoryLayoutPolicy) {
-    this->memoryLayoutPolicy->setValue(memoryLayoutPolicy);
+    this->memoryLayoutPolicy->setValue(std::move(memoryLayoutPolicy));
 }
 
 StringConfigOption CoordinatorConfig::getMemoryLayoutPolicy() {
