@@ -109,6 +109,8 @@ class QueryService {
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     bool enableSemanticQueryValidation;
+
+    void assignQueryAndOperatorIds(QueryPlanPtr queryPlan);
 };
 
 };// namespace NES

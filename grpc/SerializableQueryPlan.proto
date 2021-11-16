@@ -31,6 +31,6 @@ message SerializableQueryPlan{
 
 message SubmitQueryRequest {
   SerializableQueryPlan queryPlan = 1;
-  map<string, google.protobuf.Any> details = 2;
+  map<string, google.protobuf.Any> context = 2;
   optional string queryString = 3;
 }
