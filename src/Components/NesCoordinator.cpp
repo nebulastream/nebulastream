@@ -61,12 +61,12 @@ namespace NES {
 
 using namespace Configurations;
 
-NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig, WorkerConfigPtr workerConfigInput)
+NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig, WorkerConfigPtr workerConfigInput)
     : NesCoordinator(coordinatorConfig) {
     workerConfig = workerConfigInput;
 }
 
-NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
+NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
       rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
       numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
