@@ -32,10 +32,12 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
@@ -44,6 +46,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
+#include <Windowing/Experimental/RobbinThreadLocalPreAggregateWindowOperator.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
@@ -230,6 +233,10 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
 
 void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const QueryPlanPtr&,
                                                                        const LogicalOperatorNodePtr& operatorNode) {
+    if (true) {
+        operatorNode->removeAndJoinParentAndChildren();
+        return;
+    }
     auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
     auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
         logicalWatermarkAssignment->getInputSchema(),
@@ -244,6 +251,19 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
+
+    if (true) {
+        auto experimentalWindowOperator = std::make_shared<Experimental::RobinThreadLocalPreAggregateWindowOperator>(windowDefinition);
+        auto externalOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
+                                                                                    operatorNode->getOutputSchema(),
+                                                                                    operatorNode->getOutputSchema(),
+                                                                                    experimentalWindowOperator);
+        operatorNode->insertBetweenThisAndChildNodes(externalOperator);
+        operatorNode->replace(
+            PhysicalOperators::PhysicalScanOperator::create(Util::getNextOperatorId(), operatorNode->getOutputSchema()));
+    }
+
+
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
