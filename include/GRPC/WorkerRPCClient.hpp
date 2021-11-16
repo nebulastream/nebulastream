@@ -155,8 +155,6 @@ class WorkerRPCClient {
      */
     static bool checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
 
-    static bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg);
-
   private:
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;

@@ -267,4 +267,28 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     NES_ERROR(" CoordinatorRPCClient::registerNode error=" << status.error_code() << ": " << status.error_message());
     return false;
 }
+
+bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg) {
+
+    // create & fill the protobuf
+    QueryFailureNotification request;
+    request.set_queryid(queryId);
+    request.set_subqueryid(subQueryId);
+    request.set_workerid(workerId);
+    request.set_operatorid(operatorId);
+    request.set_errormsg(errormsg);
+
+    QueryFailureNotificationReply reply;
+
+    ClientContext context;
+
+    Status status = coordinatorStub->NotifyQueryFailure(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::NotifyQueryFailure: status ok");
+        return true;
+    }
+    return false;
+}
+
 }// namespace NES

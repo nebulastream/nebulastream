@@ -189,8 +189,7 @@ Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequ
     return Status::CANCELLED;
 }
 
-
-Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*, const QueryFailureNotification, QueryFailureNotificationReply* reply) {
+Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*, const QueryFailureNotification*, QueryFailureNotificationReply* reply) {
     try {
         NES_DEBUG("CoordinatorRPCServer::notifyQueryFailure: failure message received");
 
