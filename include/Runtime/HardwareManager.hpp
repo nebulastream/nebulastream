@@ -20,8 +20,8 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
 #include <memory>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace NES::Runtime {
 
@@ -73,9 +73,7 @@ class HardwareManager {
             // nop
         }
 
-        NumaDescriptor(const NumaDescriptor& other) {
-            *this = other;
-        }
+        NumaDescriptor(const NumaDescriptor& other) { *this = other; }
 
         NumaDescriptor& operator=(const NumaDescriptor& other) {
             nodeId = other.nodeId;
@@ -96,9 +94,7 @@ class HardwareManager {
             }
         }
 
-        uint32_t getNodeId() const {
-            return nodeId;
-        }
+        uint32_t getNodeId() const { return nodeId; }
 
       private:
         uint32_t nodeId;
