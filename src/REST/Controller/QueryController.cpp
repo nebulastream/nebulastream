@@ -174,8 +174,8 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     // decode protobuf message into c++ obj repr
                     SerializableQueryPlan* queryPlanSerialized = protobufMessage->mutable_queryplan();
                     QueryPlanPtr queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(queryPlanSerialized));
-                    auto* details = protobufMessage->mutable_details();
-                    std::string placementStrategy = details->at("placement").value();
+                    auto* context = protobufMessage->mutable_context();
+                    std::string placementStrategy = context->at("placement").value();
                     std::string* queryString = protobufMessage->mutable_querystring();
 
                     QueryId queryId = queryService->addQueryRequest(*queryString, queryPlan, placementStrategy);
