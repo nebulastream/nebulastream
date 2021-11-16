@@ -246,6 +246,18 @@ class CoordinatorConfig {
      */
     void setEnableMonitoring(bool enableMonitoring);
 
+    /**
+    * @brief Get the memory layout policy
+    * @return memory layout policy
+   */
+    StringConfigOption getMemoryLayoutPolicy();
+
+    /**
+     * @brief Set the memory layout policy
+     * @param memoryLayoutPolicy
+     */
+    void setMemoryLayoutPolicy(std::string memoryLayoutPolicy);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -266,6 +278,7 @@ class CoordinatorConfig {
     IntConfigOption queryBatchSize;
     StringConfigOption queryMergerRule;
     BoolConfigOption enableMonitoring;
+    StringConfigOption memoryLayoutPolicy;
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;

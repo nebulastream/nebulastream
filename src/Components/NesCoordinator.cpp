@@ -50,6 +50,7 @@
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
+#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -96,6 +97,12 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     queryRequestQueue = std::make_shared<NESRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
 
+    auto memoryLayoutPolicyString = coordinatorConfig->getMemoryLayoutPolicy()->getValue();
+    if(!Optimizer::stringToMemoryLayoutPolicy.contains(memoryLayoutPolicyString)){
+        NES_FATAL_ERROR("Unrecognized MemoryLayoutPolicy Detected " << memoryLayoutPolicyString);
+    }
+    auto memoryLayoutPolicy = Optimizer::stringToMemoryLayoutPolicy.find(memoryLayoutPolicyString)->second;
+
     std::string queryMergerRuleName = coordinatorConfig->getQueryMergerRule()->getValue();
     auto found = Optimizer::stringToMergerRuleEnum.find(queryMergerRuleName);
 
@@ -107,7 +114,8 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
                                                                                     streamCatalog,
                                                                                     workerRpcClient,
                                                                                     queryRequestQueue,
-                                                                                    found->second);
+                                                                                    found->second,
+                                                                                    memoryLayoutPolicy);
     } else {
         NES_FATAL_ERROR("Unrecognized Query Merger Rule Detected " << queryMergerRuleName);
     }

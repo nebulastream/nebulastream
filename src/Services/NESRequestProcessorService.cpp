@@ -53,7 +53,8 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
                                                        const StreamCatalogPtr& streamCatalog,
                                                        const WorkerRPCClientPtr& workerRpcClient,
                                                        NESRequestQueuePtr queryRequestQueue,
-                                                       Optimizer::QueryMergerRule queryMergerRule)
+                                                       Optimizer::QueryMergerRule queryMergerRule,
+                                                       Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy)
     : queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(std::move(queryRequestQueue)),
       globalQueryPlan(globalQueryPlan) {
 
@@ -69,7 +70,7 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
     cfg.set("type_check", false);
     z3Context = std::make_shared<z3::context>(cfg);
     globalQueryPlanUpdatePhase =
-        Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context, queryMergerRule, Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+        Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context, queryMergerRule, memoryLayoutPolicy);
 }
 
 NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
