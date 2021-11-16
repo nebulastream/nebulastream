@@ -686,7 +686,7 @@ TEST_F(SerializationUtilTest, testSerializeDeserializeCilentOriginatedQueryPlan)
     auto queryPlan = query.getQueryPlan();
 
     auto serializedQueryPlan = new SerializableQueryPlan();
-    QueryPlanSerializationUtil::serializeClientOriginatedQueryPlan(queryPlan, serializedQueryPlan);
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan, true);
 
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
