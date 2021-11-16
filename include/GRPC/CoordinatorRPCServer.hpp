@@ -28,6 +28,7 @@
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
+//using grpc::ClientContext;
 using grpc::Status;
 
 namespace NES {
@@ -132,9 +133,14 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status RemoveParent(ServerContext* context, const RemoveParentRequest* request, RemoveParentReply* reply) override;
 
-    //I had to make const QueryFailureNotification* to const QueryFailureNotification --> ??
-    //also I had to make this method static
-    static Status NotifyQueryFailure(ServerContext* context, const QueryFailureNotification request, QueryFailureNotificationReply* reply);
+    /**
+     * @brief RPC Call to notify the failure of a query
+     * @param context
+     * @param request
+     * @param reply
+     * @return success
+     */
+    Status NotifyQueryFailure(ServerContext* context, const QueryFailureNotification* request, QueryFailureNotificationReply* reply) override;
 
   private:
     TopologyManagerServicePtr topologyManagerService;

@@ -120,9 +120,21 @@ class CoordinatorRPCClient {
      */
     uint64_t getId() const;
 
+    /**
+     * @brief method to let the Coordinator know of the Failure of a query
+     * @param queryId: Query Id of failed Query
+     * @param subQueryId: subQuery Id of failed Query
+     * @param workerId: workerId where the Query failed
+     * @param operatorId: operator Id of failed Query
+     * @param errormsg: more information about failure of the Query
+     * @return bool indicating success
+     */
+    bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg);
+    // schiebe nach Coordinator Client
+    // no need of address
+
   private:
     uint64_t workerId;
-
     std::string address;
     std::shared_ptr<::grpc::Channel> rpcChannel;
     std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub;

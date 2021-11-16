@@ -358,40 +358,4 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     return false;
 }
 
-bool WorkerRPCClient::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg) {
-    // create & fill the protobuf
-    /*
-    QueryFailureNotification* request;
-    request->set_queryid(queryId);
-    request->set_subqueryid(subQueryId);
-    request->set_workerid(workerId);
-    request->set_operatorid(operatorId);
-    request->set_errormsg(errormsg);
-    */
-    QueryFailureNotification request;
-    request.set_queryid(queryId);
-    request.set_subqueryid(subQueryId);
-    request.set_workerid(workerId);
-    request.set_operatorid(operatorId);
-    request.set_errormsg(errormsg);
-
-    //should this be client context??
-    ServerContext context;
-    QueryFailureNotificationReply reply;
-
-    // establish connection, but how get the adress of the Coordinator??
-    //      std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    //      std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub = CoordinatorRPCService::NewStub(chan);
-
-    // need of object of CoordinatorRPCServer to use it
-    // solved by making NotifyQueryFailure static ? is that ok?
-    Status status = CoordinatorRPCServer::NotifyQueryFailure(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::NotifyQueryFailure: status ok");
-        return true;
-    }
-    return false;
-}
-
 }// namespace NES
