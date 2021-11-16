@@ -77,9 +77,16 @@ class MemoryLayoutSelectionPhase {
      * @param policy to select the memory layout for a query
      */
     MemoryLayoutSelectionPhase(MemoryLayoutPolicy policy);
+
   private:
     MemoryLayoutPolicy policy;
 };
+
+static const std::map<std::string, MemoryLayoutSelectionPhase::MemoryLayoutPolicy> stringToMemoryLayoutPolicy{
+    {"FORCE_ROW_LAYOUT", MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT},
+    {"FORCE_COLUMN_LAYOUT", MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT}
+};
+
 }// namespace NES::Optimizer
 
 #endif//NES_INCLUDE_OPTIMIZER_PHASES_SETMEMORYLAYOUTPHASE_HPP

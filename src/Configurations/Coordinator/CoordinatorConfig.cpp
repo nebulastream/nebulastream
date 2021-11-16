@@ -57,6 +57,7 @@ CoordinatorConfig::CoordinatorConfig() {
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
     enableMonitoring = ConfigOption<bool>::create("enableMonitoring", true, "Enable monitoring");
+    memoryLayoutPolicy = ConfigOption<std::string>::create("memoryLayoutPolicy", "FORCE_ROW_LAYOUT", "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -121,6 +122,9 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             if (!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<std::string>() != "\n") {
                 setNumWorkerThreads(config["numWorkerThreads"].As<uint32_t>());
             }
+            if (!config["memoryLayoutPolicy"].As<std::string>().empty() && config["memoryLayoutPolicy"].As<std::string>() != "\n") {
+                setMemoryLayoutPolicy(config["memoryLayoutPolicy"].As<std::string>());
+            }
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfig: Keeping default values.");
@@ -167,6 +171,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setEnableSemanticQueryValidation((it->second == "true"));
             } else if (it->first == "--enableMonitoring" && !it->second.empty()) {
                 setEnableMonitoring((it->second == "true"));
+            } else if (it->first == "--memoryLayoutPolicy" && !it->second.empty()) {
+                setMemoryLayoutPolicy(it->second);
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -286,6 +292,14 @@ BoolConfigOption CoordinatorConfig::getEnableMonitoring() { return enableMonitor
 
 void CoordinatorConfig::setEnableMonitoring(bool enableMonitoring) {
     CoordinatorConfig::enableMonitoring->setValue(enableMonitoring);
+}
+
+void CoordinatorConfig::setMemoryLayoutPolicy(std::string memoryLayoutPolicy) {
+    this->memoryLayoutPolicy->setValue(memoryLayoutPolicy);
+}
+
+StringConfigOption CoordinatorConfig::getMemoryLayoutPolicy() {
+    return memoryLayoutPolicy;
 }
 
 }// namespace Configurations

@@ -18,6 +18,7 @@
 #define NES_INCLUDE_SERVICES_NES_REQUEST_PROCESSOR_SERVICE_HPP_
 
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
+#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <memory>
 
 namespace z3 {
@@ -80,7 +81,8 @@ class NESRequestProcessorService {
                                         const StreamCatalogPtr& streamCatalog,
                                         const WorkerRPCClientPtr& workerRpcClient,
                                         NESRequestQueuePtr queryRequestQueue,
-                                        Optimizer::QueryMergerRule queryMergerRule);
+                                        Optimizer::QueryMergerRule queryMergerRule,
+                                        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy);
 
     ~NESRequestProcessorService();
     /**
