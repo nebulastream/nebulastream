@@ -17,8 +17,8 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
-#include <API/Schema.hpp>
 #include <API/Query.hpp>
+#include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
 #include <GRPC/Serialization/ExpressionSerializationUtil.hpp>
@@ -695,9 +695,11 @@ TEST_F(SerializationUtilTest, testSerializeDeserializeCilentOriginatedQueryPlan)
 
     // Expect that the child of the root operator from the original and deserialized query plan are the same
     // i.e., the source operator from  original and deserialized query plan are the same
-    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->equal(queryPlan->getRootOperators()[0]->getChildren()[0]));
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->equal(
+        queryPlan->getRootOperators()[0]->getChildren()[0]));
 
     // Expect that the id of operators in the deserialized query plan are different to the original query plan, because the initial IDs are client-generated and NES should provide its own IDs
     EXPECT_FALSE(queryPlan->getRootOperators()[0]->getId() == deserializedQueryPlan->getRootOperators()[0]->getId());
-    EXPECT_FALSE(queryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId() == deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId());
+    EXPECT_FALSE(queryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId()
+                 == deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId());
 }

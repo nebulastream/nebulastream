@@ -38,7 +38,7 @@ QueryController::QueryController(QueryServicePtr queryService,
                                  TopologyPtr topology,
                                  GlobalExecutionPlanPtr globalExecutionPlan)
     : topology(std::move(topology)), queryService(std::move(queryService)), queryCatalog(std::move(queryCatalog)),
-      globalExecutionPlan(std::move(globalExecutionPlan)){}
+      globalExecutionPlan(std::move(globalExecutionPlan)) {}
 
 void QueryController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) {
 

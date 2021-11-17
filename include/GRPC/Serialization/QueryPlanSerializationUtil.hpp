@@ -35,7 +35,9 @@ class QueryPlanSerializationUtil {
      * @param isClientOriginated Indicate if the source operator is originated from a client.
      * @return the pointer to serialized SerializableQueryPlan
      */
-    static void serializeQueryPlan(const QueryPlanPtr& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated = false);
+    static void serializeQueryPlan(const QueryPlanPtr& queryPlan,
+                                   SerializableQueryPlan* serializableQueryPlan,
+                                   bool isClientOriginated = false);
 
     /**
      * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr

@@ -27,7 +27,9 @@
 
 namespace NES {
 
-void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated) {
+void QueryPlanSerializationUtil::serializeQueryPlan(const QueryPlanPtr& queryPlan,
+                                                    SerializableQueryPlan* serializableQueryPlan,
+                                                    bool isClientOriginated) {
     NES_INFO("QueryPlanSerializationUtil: serializing query plan " << queryPlan->toString());
     std::vector<OperatorNodePtr> rootOperators = queryPlan->getRootOperators();
     NES_TRACE("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");

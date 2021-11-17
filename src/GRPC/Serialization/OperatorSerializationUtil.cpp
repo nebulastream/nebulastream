@@ -91,8 +91,7 @@
 
 namespace NES {
 
-SerializableOperator OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode,
-                                                                  bool isClientOriginated) {
+SerializableOperator OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode, bool isClientOriginated) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator " << operatorNode->toString());
     SerializableOperator serializedOperator = SerializableOperator();
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
@@ -890,8 +889,7 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     //    }
 }
 SerializableOperator_SourceDetails
-OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator,
-                                                   bool isClientOriginated) {
+OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator, bool isClientOriginated) {
     auto sourceDetails = SerializableOperator_SourceDetails();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     serializeSourceDescriptor(sourceDescriptor, &sourceDetails, isClientOriginated);

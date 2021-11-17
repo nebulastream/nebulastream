@@ -43,7 +43,7 @@ class OperatorSerializationUtil {
      * @param isClientOriginated Indicate if the source operator is originated from a client.
      * @return the modified serializableOperator
      */
-    static SerializableOperator serializeOperator(const OperatorNodePtr& operatorNode, bool isClientOriginated=false);
+    static SerializableOperator serializeOperator(const OperatorNodePtr& operatorNode, bool isClientOriginated = false);
 
     /**
      * @brief De-serializes the input SerializableOperator only
