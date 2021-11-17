@@ -163,7 +163,6 @@ void QueryService::assignQueryAndOperatorIds(QueryPlanPtr queryPlan) {
         auto visitingOp = (*itr)->as<OperatorNode>();
         visitingOp->setId(Util::getNextOperatorId());
     }
-
 }
 
 }// namespace NES

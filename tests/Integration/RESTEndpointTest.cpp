@@ -234,7 +234,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     auto serializedQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan, true);
     request.set_querystring("default_logical");
-    auto &context = *request.mutable_context();
+    auto& context = *request.mutable_context();
 
     auto bottomUpPlacement = google::protobuf::Any();
     bottomUpPlacement.set_value("BottomUp");
