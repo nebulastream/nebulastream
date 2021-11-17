@@ -104,26 +104,39 @@ Query& And::window(const Windowing::WindowTypePtr& windowType) const {
 }
 
 Or::Or(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
-    NES_DEBUG("Query: add map operator to and with to add virtual key to originalQuery");
-    //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
+    NES_DEBUG("Query: add map operator with stream name to originalQuery and subQuery");
+
+    std::vector<std::string> sourceNameLeft;
+    std::vector<std::string> sourceNameRight;
+
+    sourceNameLeft.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
+    std::sort(sourceNameLeft.begin(), sourceNameLeft.end());
+    auto updatedSourceNameLeft = std::accumulate(sourceNameLeft.begin(), sourceNameLeft.end(), std::string("-"));
+
+    sourceNameRight.emplace_back(originalQuery.getQueryPlan()->getSourceConsumed());
+    std::sort(sourceNameRight.begin(), sourceNameRight.end());
+    auto updatedSourceNameRight = std::accumulate(sourceNameRight.begin(), sourceNameRight.end(), std::string("-"));
+
+    std::string streamNameLeft = updatedSourceNameLeft;
+    std::string streamNameRight = updatedSourceNameRight;
+
+    NES_DEBUG("ExpressionItem for Left stream " << streamNameLeft);
+    NES_DEBUG("ExpressionItem for Right stream " << streamNameRight);
 
     //here, we add artificial key attributes to the streams in order to reuse the join-logic later
     //first, get unique ids for the key attributes
     auto cepLeftId = Util::getNextOperatorId();
     auto cepRightId = Util::getNextOperatorId();
     //second, create a unique name for both key attributes
-    std::string cepLeftKey = "cep_leftkey" + std::to_string(cepLeftId);
-    std::string cepRightKey = "cep_rightkey" + std::to_string(cepRightId);
-    //3. map the attributes with value 1 to the left and right stream
-    originalQuery.map(Attribute(cepLeftKey) = 1);
-    subQueryRhs.map(Attribute(cepRightKey) = 1);
-    //last, define the artificial attributes as key attributes
-    onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
-    onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
+    std::string cepLeftStreamName = "cep_leftStreamName" + std::to_string(cepLeftId);
+    std::string cepRightStreamName = "cep_rightStreamName" + std::to_string(cepRightId);
+    //3. map the attributes with value streamNameLeft and streamNameRight to the left and right stream
+    originalQuery.map(Attribute(cepLeftStreamName) = streamNameLeft);
+    subQueryRhs.map(Attribute(cepRightStreamName) = streamNameRight);
 }
 
 Query& Or::window(const Windowing::WindowTypePtr& windowType) const {
-    return originalQuery.orWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original orWith() function
+    return originalQuery.unionWith(subQueryRhs).window(windowType);//call original unionWith() function
 }
 
 }// namespace CEPOperatorBuilder
