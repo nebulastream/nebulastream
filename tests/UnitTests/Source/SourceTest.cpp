@@ -292,6 +292,7 @@ class CSVSourceProxy : public CSVSource {
     FRIEND_TEST(SourceTest, testCSVSourceCorrectFilePath);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFileEnded);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFile);
+    FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileColumnLayout);
     FRIEND_TEST(SourceTest, testCSVSourceFillBufferFullFileOnLoop);
 };
 
@@ -963,6 +964,33 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 1u);
 }
 
+TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(1);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+    sourceConfigPtr->setSkipHeader(true);
+    sourceConfigPtr->setRowLayout(false);
+
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfigPtr,
+                                 this->delimiter,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
+    auto buf = this->GetEmptyBuffer();
+    ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0u);
+    ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
+    csvDataSource.fillBuffer(*buf);
+    EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 1u);
+    EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 1u);
+}
+
 TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
 
     CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
@@ -995,6 +1023,39 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
     }
 }
 
+TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file_head);
+    sourceConfigPtr->setNumberOfBuffersToProduce(1);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+    sourceConfigPtr->setRowLayout(false);
+
+    // read actual header, get error from casting input to schema
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfigPtr,
+                                 this->delimiter,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
+    auto buf = this->GetEmptyBuffer();
+    try {
+        csvDataSource.fillBuffer(*buf);
+    } catch (std::invalid_argument const& err) {// 1/2 throwables from stoull
+        // TODO: is the "overwrite" of the message a good thing?
+        // EXPECT_EQ(err.what(),std::string("Invalid argument"));
+        EXPECT_EQ(err.what(), std::string("stoull"));
+    } catch (std::out_of_range const& err) {// 2/2 throwables from stoull
+        EXPECT_EQ(err.what(), std::string("Out of range"));
+    } catch (...) {
+        FAIL() << "Uncaught exception in test for file with headers!" << std::endl;
+    }
+}
+
 TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
 
     CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
@@ -1004,6 +1065,33 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
     sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfigPtr->setSourceFrequency(this->frequency);
     sourceConfigPtr->setSkipHeader(true);
+
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfigPtr,
+                                 this->delimiter,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
+    auto buf = this->GetEmptyBuffer();
+    csvDataSource.fillBuffer(*buf);
+    auto content = buf->getBuffer<ysbRecord>();
+    EXPECT_STREQ(content->ad_type, "banner78");
+    EXPECT_TRUE((!strcmp(content->event_type, "view") || !strcmp(content->event_type, "click")
+                 || !strcmp(content->event_type, "purchase")));
+}
+
+TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file_head);
+    sourceConfigPtr->setNumberOfBuffersToProduce(1);
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+    sourceConfigPtr->setSkipHeader(true);
+    sourceConfigPtr->setRowLayout(false);
 
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
@@ -1033,6 +1121,48 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
     sourceConfigPtr->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfigPtr->setSourceFrequency(this->frequency);
+
+    CSVSourceProxy csvDataSource(this->schema,
+                                 this->nodeEngine->getBufferManager(),
+                                 this->nodeEngine->getQueryManager(),
+                                 sourceConfigPtr,
+                                 this->delimiter,
+                                 this->operatorId,
+                                 this->numSourceLocalBuffersDefault,
+                                 {});
+    ASSERT_FALSE(csvDataSource.fileEnded);
+    ASSERT_FALSE(csvDataSource.loopOnFile);
+    auto buf = this->GetEmptyBuffer();
+    while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
+        csvDataSource.fillBuffer(*buf);
+        EXPECT_NE(buf->getNumberOfTuples(), 0u);
+        EXPECT_TRUE(buf.has_value());
+        for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
+            auto tuple = buf->getBuffer<ysbRecord>();
+            EXPECT_STREQ(tuple->ad_type, "banner78");
+            EXPECT_TRUE((!strcmp(tuple->event_type, "view") || !strcmp(tuple->event_type, "click")
+                         || !strcmp(tuple->event_type, "purchase")));
+        }
+    }
+    EXPECT_TRUE(csvDataSource.fileEnded);
+    EXPECT_FALSE(csvDataSource.loopOnFile);
+    EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), expectedNumberOfTuples);
+    EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), expectedNumberOfBuffers);
+}
+
+TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
+    // Full pass: 52 tuples in first buffer, 48 in second
+    // expectedNumberOfBuffers in c-tor, no looping
+    uint64_t expectedNumberOfTuples = 100;
+    uint64_t expectedNumberOfBuffers = 2;
+
+    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+
+    sourceConfigPtr->setFilePath(this->path_to_file);
+    sourceConfigPtr->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
+    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfigPtr->setSourceFrequency(this->frequency);
+    sourceConfigPtr->setRowLayout(false);
 
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),

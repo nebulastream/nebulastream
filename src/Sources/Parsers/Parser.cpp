@@ -133,15 +133,12 @@ void Parser::writeFieldValueToTupleBufferRowLayout(std::basic_string<char> input
             }
         }
     } else {// char array(string) case
-        std::string value;
+        const char* value;
         // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
         // improve behavior with json library
-        value = (json) ? inputString.substr(1, inputString.size() - 2) : inputString;
+        value = (json) ? inputString.substr(1, inputString.size() - 2).c_str() : inputString.c_str();
 
-        //TODO: Remove later
-        //TODO: Find out why parsing not working
-        std::cout << "This is the input string: " << inputString << std::endl;
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<std::string, true>::create(schemaFieldIndex,
+        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<const char*, true>::create(schemaFieldIndex,
                                                                                        bindedRowLayout)[tupleCount] = value;
     }
 }
@@ -261,11 +258,11 @@ void Parser::writeFieldValueToTupleBufferColumnLayout(std::basic_string<char> in
             }
         }
     } else {// char array(string) case
-        std::string value;
+        const char* value;
         // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
         // improve behavior with json library
-        value = (json) ? inputString.substr(1, value.size() - 2) : inputString.c_str();
-        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<std::string, true>::create(schemaFieldIndex,
+        value = (json) ? inputString.substr(1, inputString.size() - 2).c_str() : inputString.c_str();
+        Runtime::DynamicMemoryLayout::DynamicColumnLayoutField<const char*, true>::create(schemaFieldIndex,
                                                                                           bindedColumnLayout)[tupleCount] = value;
     }
 }
