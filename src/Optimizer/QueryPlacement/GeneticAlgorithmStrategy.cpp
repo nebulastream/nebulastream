@@ -313,6 +313,7 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
     std::vector<GeneticAlgorithmStrategy::Placement> offspringPopulation;
     uint32_t populationSize = population.size();
     std::vector<double> optimizedCostOfEachIteration;
+    std::ofstream outfile;
     //double initialCost = population[0].cost;
     /*std::map<uint32_t, uint32_t> populationSizes;
     std::map<uint32_t, double> costsAfterGA;
@@ -326,12 +327,12 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
          now = std::chrono::steady_clock::now()) {
         int numOfInvalidOffsprings = 0; */
 
-        uint32_t j = 0;
-        while ( j < population.size() -2) {
+
+        for (uint32_t j = 1; j < population.size();j++) {
             if(offspringPopulation.size() >= populationSize)
                 break;
             Placement parent1 = population[j];
-            for (uint32_t k = j+1; k < population.size() -1; k++) {
+            for (uint32_t k = 0; k < j; k++) {
                 Placement parent2 = population[k];
                 //srand(time(NULL));
                 //uint32_t crossOverIndex = (uint32_t) (1 + rand() % (queryOperators.size()-2));
@@ -407,6 +408,10 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
         population.clear();
         population = offspringPopulation;
         offspringPopulation.clear();
+        outfile.open("benchmark.txt", std::ios_base::app);
+        outfile << "Cost of Optimized Placement Of Iteration  "<<i+1 << "  is: " << optimizedPlacement.cost << "\n";
+        outfile << "Population Size Of Iteration  "<<i+1 << "  is: " << population.size() << "\n";
+        outfile.close();
     }
     /*
     NES_DEBUG("Cost Before Optimization:  " << costsAfterGA[0]);

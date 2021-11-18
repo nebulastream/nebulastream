@@ -1510,7 +1510,7 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFi
 
 /* Test query placement with genetic algorithm strategy  */
 TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGAStrategyFixedQueryWithDynamicTopologyWidth) {
-    std::list<int> listOfInts( {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40});
+    std::list<int> listOfInts( {100});
 
     int repetitions = 5;
     int SourcePerMiddle = 3;
@@ -1526,36 +1526,11 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGAStrategyFixedQueryWithDy
     mapOperator->addChild(filterOperator);
     filterOperator->addChild(sourceOperator);
 
-    std::vector<std::map<std::string, std::any>> properties;
-    // adding property of the source
-    std::map<std::string, std::any> srcProp;
-    srcProp.insert(std::make_pair("load", 1));
-    srcProp.insert(std::make_pair("dmf", 1.0));
 
-    // adding property of the filter
-    std::map<std::string, std::any> filterProp;
-    filterProp.insert(std::make_pair("load", 3));
-    filterProp.insert(std::make_pair("dmf", 0.2));
-
-    // adding property of the map
-    std::map<std::string, std::any> mapProp;
-    mapProp.insert(std::make_pair("load", 3));
-    mapProp.insert(std::make_pair("dmf", 2.0));
-
-    // adding property of the sink
-    std::map<std::string, std::any> sinkProp;
-    sinkProp.insert(std::make_pair("load", 4));
-    sinkProp.insert(std::make_pair("dmf", 3.0));
 
 
 
     for(int n : listOfInts) {
-        properties.push_back(sinkProp);
-        for(int i = 0; i < n*SourcePerMiddle; i++) {
-            properties.push_back(mapProp);
-            properties.push_back(filterProp);
-            properties.push_back(srcProp);
-        }
         QueryPlanPtr queryPlan = QueryPlan::create();
         queryPlan->addRootOperator(sinkOperator);
         QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -1579,7 +1554,6 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGAStrategyFixedQueryWithDy
         topologySpecificQueryRewrite->execute(queryPlan);
         typeInferencePhase->execute(queryPlan);
 
-        UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties);
         std::vector<long> counts_n;
         for(int j = 0; j < repetitions; j++) {
             auto start = std::chrono::high_resolution_clock::now();
@@ -1592,7 +1566,6 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGAStrategyFixedQueryWithDy
             globalExecutionPlan->removeQuerySubPlans(queryId);
         }
         counts.insert(std::make_pair(n, counts_n));
-        properties.clear();
     }
     for (auto& [n, counts_n] : counts) {
         std::sort(counts_n.begin(), counts_n.end());

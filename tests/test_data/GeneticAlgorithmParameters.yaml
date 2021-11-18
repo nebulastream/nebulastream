@@ -1,5 +1,5 @@
 populationSize: 1000
-numOfIterations: 1000
-patience: 10
+numOfIterations: 100
+patience: 8
 numOfGenesToMutate: 2
 mutationProbability: 1.0
