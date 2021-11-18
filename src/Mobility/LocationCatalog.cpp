@@ -112,10 +112,22 @@ void LocationCatalog::updateSinks() {
 
         bool filterEnabled = false;
         for (auto const& predictedSource: sink->getPredictedSources()) {
+            if (predictedSource->getOverlaps().empty()) {
+                continue;
+            }
+
             if (sink->getRange()->contains(predictedSource->getSource()->getRange())) {
                 predictedSource->setInRange(true);
                 filterEnabled = true;
+                break;
             }
+        }
+
+        if (sink->isFilterEnabled() != filterEnabled) {
+            string currentStatus = (filterEnabled) ? "true" : "false";
+            string oldStatus = (sink->isFilterEnabled()) ? "true" : "false";
+            NES_DEBUG("LocationCatalog: Sink '" << sink->getId() << "' changed from '" << oldStatus << "' to '"
+                                                  << currentStatus << "'!");
         }
         sink->setFilterEnabled(filterEnabled);
     }
