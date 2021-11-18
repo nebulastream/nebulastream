@@ -187,7 +187,7 @@ class Or {
      * @param windowType
      * @return the query with the result of the original orWith function is returned.
      */
-    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+    [[nodiscard]] const WindowOperatorBuilder::WindowedQuery window(Windowing::WindowTypePtr const& windowType) const;
 
   private:
     Query& subQueryRhs;
