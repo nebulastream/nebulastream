@@ -135,7 +135,7 @@ Or::Or(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), ori
     subQueryRhs.map(Attribute(cepRightStreamName) = streamNameRight);
 }
 
-Query& Or::window(const Windowing::WindowTypePtr& windowType) const {
+const WindowOperatorBuilder::WindowedQuery Or::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.unionWith(subQueryRhs).window(windowType);//call original unionWith() function
 }
 
