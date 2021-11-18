@@ -26,7 +26,7 @@ AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr b
                                    uint64_t numBuffersToProcess, uint64_t initialFrequency,
                                    const uint64_t numSourceLocalBuffers, OperatorId operatorId,
                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-    : AdaptiveSource(schema, bufferManager, queryManager, initialFrequency,
+    : DataSource(schema, bufferManager, queryManager,
                      operatorId, numSourceLocalBuffers, GatheringMode::FREQUENCY_MODE, std::move(successors)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), freqRange(2),
       frequency(initialFrequency), freqLastReceived(initialFrequency), kfErrorWindow(20) {
@@ -35,7 +35,32 @@ AdaptiveKFSource::AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr b
     this->kFilter.setDefaultValues();
 }
 
-std::string AdaptiveKFSource::toString() const { return std::string(); }
+std::string AdaptiveKFSource::toString() const {
+    std::stringstream ss;
+    ss << "ADAPTIVE_KF_SOURCE(SCHEMA(" << schema->toString() << "), freq=" << this->gatheringInterval.count()
+       << "ms,"
+       << " numBuff=" << this->numBuffersToProcess << ")";
+    return ss.str();
+}
+
+std::optional<Runtime::TupleBuffer> AdaptiveKFSource::receiveData() {
+    NES_DEBUG("AdaptiveKFSource::receiveData called on " << operatorId);
+    auto buffer = this->bufferManager->getBufferBlocking();
+    fillBuffer(buffer);
+    NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+
+    if (buffer.getNumberOfTuples() == 0) {
+        return std::nullopt;
+    }
+    return buffer;
+}
+
+void AdaptiveKFSource::fillBuffer(Runtime::TupleBuffer& buffer) {
+    // TODO: remove when moving the source to resemble a memory one
+    auto size = buffer.getBufferSize();
+    ++size;
+    buffer.setNumberOfTuples(size);
+}
 
 uint64_t AdaptiveKFSource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; };
 

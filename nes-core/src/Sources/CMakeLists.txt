@@ -21,7 +21,6 @@ add_source_nes(
         SourceCreator.cpp
         DefaultSource.cpp
         SenseSource.cpp
-        AdaptiveSource.cpp
         MonitoringSource.cpp
         MemorySource.cpp
         LambdaSource.cpp

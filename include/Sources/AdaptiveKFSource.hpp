@@ -17,14 +17,14 @@
 #ifndef NES_INCLUDE_SOURCES_ADAPTIVEKFSOURCE_HPP_
 #define NES_INCLUDE_SOURCES_ADAPTIVEKFSOURCE_HPP_
 
-#include <Sources/AdaptiveSource.hpp>
+#include <Sources/DataSource.hpp>
 #include <Util/CircularBuffer.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <cmath>
 
 namespace NES {
 
-class AdaptiveKFSource : public AdaptiveSource {
+class AdaptiveKFSource : public DataSource {
   public:
     explicit AdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
                               Runtime::QueryManagerPtr queryManager, const uint64_t numBuffersToProcess,
@@ -50,9 +50,21 @@ class AdaptiveKFSource : public AdaptiveSource {
      */
     SourceType getType() const override;
 
+    /**
+     * @brief override the receiveData method for the csv source
+     * @return returns a buffer if available
+     */
+    std::optional<Runtime::TupleBuffer> receiveData() override;
+
+    /**
+     *  @brief method to fill the buffer with tuples
+     *  @param buffer to be filled
+     */
+    void fillBuffer(Runtime::TupleBuffer&);
+
   private:
-    void sampleSourceAndFillBuffer(Runtime::TupleBuffer&) override;
-    void decideNewGatheringInterval() override;// eq. 10 in the paper
+    void sampleSourceAndFillBuffer(Runtime::TupleBuffer&);
+    void decideNewGatheringInterval();// eq. 10 in the paper
 
     // paper equations as methods
     bool desiredFreqInRange(); // eq. 7
