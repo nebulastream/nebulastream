@@ -157,6 +157,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
         }
         // add back an exclusive buffer to the local pool
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
+        std::unique_lock lock(mutex);
         exclusiveBuffers.emplace_back(memSegment);
         cvar.notify_all();
 #else

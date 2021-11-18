@@ -18,12 +18,6 @@
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #include <Util/Logger.hpp>
 #include <papi.h>
-static constexpr size_t to_kb(const size_t x) { return x << 10L; }
-static constexpr size_t to_mb(const size_t x) { return x << 20L; }
-static constexpr size_t to_gb(const size_t x) { return x << 30L; }
-static constexpr size_t to_ki(const size_t x) { return x * 1000UL; }
-static constexpr size_t to_mi(const size_t x) { return x * 1000000UL; }
-static constexpr size_t to_gi(const size_t x) { return x * 1000000000UL; }
 
 #define KB(x) (to_kb(x))
 #define MB(x) (to_mb(x))
@@ -36,8 +30,17 @@ static constexpr size_t to_gi(const size_t x) { return x * 1000000000UL; }
 #ifndef __x86_64__
 #error "Unsupported Architecture"
 #endif
-namespace NES::Runtime::Profiler {
+
 #ifdef ENABLE_PAPI_PROFILER
+
+namespace NES::Runtime::Profiler {
+static constexpr size_t to_kb(const size_t x) { return x << 10L; }
+static constexpr size_t to_mb(const size_t x) { return x << 20L; }
+static constexpr size_t to_gb(const size_t x) { return x << 30L; }
+static constexpr size_t to_ki(const size_t x) { return x * 1000UL; }
+static constexpr size_t to_mi(const size_t x) { return x * 1000000UL; }
+static constexpr size_t to_gi(const size_t x) { return x * 1000000000UL; }
+
 namespace detail {
 
 /**
