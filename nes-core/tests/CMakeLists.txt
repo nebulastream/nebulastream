@@ -336,11 +336,6 @@ add_test(NAME seq-operator-test COMMAND seq-operator-test)
 #target_link_libraries(sensor-bus-tests nes ${GTEST_LIBRARIES})
 #add_test(NAME sensor-bus-tests COMMAND sensor-bus-tests)
 
-### Adaptive Source Tests ###
-add_executable(adaptive-source-tests "UnitTests/Source/AdaptiveSourceTest.cpp")
-target_link_libraries(adaptive-source-tests nes ${GTEST_LIBRARIES})
-add_test(NAME adaptive-source-tests COMMAND adaptive-source-tests)
-
 ### Global Query Node Tests ###
 add_executable(global-query-node-tests "UnitTests/Plans/Global/Query/GlobalQueryNodeTest.cpp")
 target_link_libraries(global-query-node-tests nes ${GTEST_LIBRARIES})
