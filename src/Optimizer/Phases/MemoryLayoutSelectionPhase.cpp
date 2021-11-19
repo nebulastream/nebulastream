@@ -22,15 +22,17 @@
 #include <Util/Logger.hpp>
 
 namespace NES::Optimizer {
-void MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) {
+QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) {
 
     Schema::MemoryLayoutType layoutType;
     switch (policy) {
         case FORCE_ROW_LAYOUT: {
+            NES_DEBUG("Select Row Layout");
             layoutType = Schema::ROW_LAYOUT;
             break;
         }
         case FORCE_COLUMN_LAYOUT: {
+            NES_DEBUG("Select Column Layout");
             layoutType = Schema::COLUMNAR_LAYOUT;
             break;
         }
@@ -52,6 +54,7 @@ void MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan) {
             op->getOutputSchema()->setLayoutType(layoutType);
         }
     }
+    return queryPlan;
 }
 
 MemoryLayoutSelectionPhase::MemoryLayoutSelectionPhase(MemoryLayoutPolicy policy) : policy(policy) {}

@@ -219,4 +219,35 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
     }
 }
 
+TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
+    const uint64_t numbersOfBufferToProduce = 1000;
+    const uint64_t frequency = 1000;
+
+    auto inputSchema = Schema::create();
+    inputSchema->addField("default_logical$f1", BasicType::INT32);
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    streamCatalog->removeLogicalStream("default_logical");
+    streamCatalog->addLogicalStream("default_logical", inputSchema);
+
+    auto query = TestQuery::from(DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
+        .filter(Attribute("default_logical$f1") < 10)
+        .map(Attribute("default_logical$f1") = Attribute("default_logical$f1") * 42)
+                     .sink(FileSinkDescriptor::create(""));
+    auto plan = query.getQueryPlan();
+
+    auto typeInference = Optimizer::TypeInferencePhase::create(streamCatalog);
+    plan = typeInference->execute(plan);
+
+    auto phase = Optimizer::MemoryLayoutSelectionPhase::create(Optimizer::MemoryLayoutSelectionPhase::FORCE_COLUMN_LAYOUT);
+    phase->execute(plan);
+    plan = typeInference->execute(plan);
+    // Check if all operators in the query have an column layout
+    for (auto node : QueryPlanIterator(plan)) {
+        if (auto op = node->as_if<OperatorNode>()) {
+            ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::COLUMNAR_LAYOUT);
+        }
+    }
+}
+
 }// namespace NES

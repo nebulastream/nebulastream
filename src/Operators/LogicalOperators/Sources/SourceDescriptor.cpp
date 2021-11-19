@@ -20,8 +20,7 @@
 namespace NES {
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema) {
-    this->schema = Schema::create();
-    this->schema->copyFields(std::move(schema));
+    this->schema = schema->copy();
 }
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string streamName)

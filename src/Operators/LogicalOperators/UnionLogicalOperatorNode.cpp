@@ -57,9 +57,15 @@ bool UnionLogicalOperatorNode::inferSchema() {
                                      + leftInputSchema->toString() + " and Right schema " + rightInputSchema->toString());
     }
 
+    if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType()) {
+        NES_ERROR("Left and right should have same memory layout");
+        throw TypeInferenceException("Left and right should have same memory layout");
+    }
+
     //Copy the schema of left input
     outputSchema->clear();
     outputSchema->copyFields(leftInputSchema);
+    outputSchema->setLayoutType(leftInputSchema->getLayoutType());
     return true;
 }
 

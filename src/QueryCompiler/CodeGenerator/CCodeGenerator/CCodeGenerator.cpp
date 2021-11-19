@@ -192,10 +192,12 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             .copy());
 
     if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
+        NES_DEBUG("CCodeGenerator::generateCodeForEmit: generate emit for row layout");
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclarationInputTuples[0])),
                                         "inputTuples");
     } else if (inputSchema->getLayoutType() == Schema::COLUMNAR_LAYOUT) {
+        NES_DEBUG("CCodeGenerator::generateCodeForEmit: generate emit for row layout");
         code->varDeclarationInputTuples =
             VariableDeclaration::create(tf->createUserDefinedType(code->structDeclarationInputTuples[0]), "inputTuples");
         auto varDeclInputTupleStmt = VarDeclStatement(code->varDeclarationInputTuples);

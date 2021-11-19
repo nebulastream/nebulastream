@@ -51,7 +51,7 @@ namespace NES {
  */
 class TestUtils {
   public:
-    static constexpr uint64_t timeout = 60;
+    static constexpr uint64_t timeout = 6000;
     // in milliseconds
     static constexpr uint64_t sleepDuration = 250;
 

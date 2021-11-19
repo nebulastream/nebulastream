@@ -63,6 +63,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
@@ -194,11 +195,20 @@ TEST_F(SerializationUtilTest, schemaSerializationTest) {
     auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(serializedSchema.get());
     EXPECT_TRUE(deserializedSchema->equals(schema));
 
-    std::string json_string;
-    auto options = google::protobuf::util::JsonOptions();
-    options.add_whitespace = true;
-    google::protobuf::util::MessageToJsonString(*serializedSchema, &json_string, options);
-    std::cout << json_string << std::endl;
+}
+
+TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout) {
+
+    auto schema = Schema::create();
+    schema->addField("f1", DataTypeFactory::createDouble());
+    schema->addField("f2", DataTypeFactory::createInt32());
+    schema->addField("f3", DataTypeFactory::createArray(42, DataTypeFactory::createInt8()));
+    schema->setLayoutType(NES::Schema::COLUMNAR_LAYOUT);
+
+    auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
+    auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(serializedSchema.get());
+    EXPECT_TRUE(deserializedSchema->equals(schema));
+    EXPECT_EQ(deserializedSchema->getLayoutType(), NES::Schema::COLUMNAR_LAYOUT);
 }
 
 TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
@@ -550,6 +560,27 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 }
 
 TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
+
+    auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
+    auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
+    filter->addChild(source);
+    auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
+    map->addChild(filter);
+    auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    sink->addChild(map);
+
+    auto queryPlan = QueryPlan::create(1, 1, {sink});
+
+    auto serializedQueryPlan = new SerializableQueryPlan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+
+    EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
+}
+
+TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
 
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
