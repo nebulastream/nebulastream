@@ -50,8 +50,6 @@ JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return Joi
 
 CEPOperatorBuilder::And Query::andWith(Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
-CEPOperatorBuilder::Or Query::orWith(Query& subQueryRhs) { return CEPOperatorBuilder::Or(subQueryRhs, *this); }
-
 namespace JoinOperatorBuilder {
 
 JoinWhere Join::where(const ExpressionItem& onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
@@ -102,43 +100,6 @@ And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), o
 Query& And::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original andWith() function
 }
-
-Or::Or(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
-    NES_DEBUG("Query: add map operator with stream name to originalQuery and subQuery");
-
-    std::vector<std::string> sourceNameLeft;
-    std::vector<std::string> sourceNameRight;
-
-    sourceNameLeft.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
-    std::sort(sourceNameLeft.begin(), sourceNameLeft.end());
-    auto updatedSourceNameLeft = std::accumulate(sourceNameLeft.begin(), sourceNameLeft.end(), std::string("-"));
-
-    sourceNameRight.emplace_back(originalQuery.getQueryPlan()->getSourceConsumed());
-    std::sort(sourceNameRight.begin(), sourceNameRight.end());
-    auto updatedSourceNameRight = std::accumulate(sourceNameRight.begin(), sourceNameRight.end(), std::string("-"));
-
-    std::string streamNameLeft = updatedSourceNameLeft;
-    std::string streamNameRight = updatedSourceNameRight;
-
-    NES_DEBUG("ExpressionItem for Left stream " << streamNameLeft);
-    NES_DEBUG("ExpressionItem for Right stream " << streamNameRight);
-
-    //here, we add artificial key attributes to the streams in order to reuse the join-logic later
-    //first, get unique ids for the key attributes
-    auto cepLeftId = Util::getNextOperatorId();
-    auto cepRightId = Util::getNextOperatorId();
-    //second, create a unique name for both key attributes
-    std::string cepLeftStreamName = "cep_leftStreamName" + std::to_string(cepLeftId);
-    std::string cepRightStreamName = "cep_rightStreamName" + std::to_string(cepRightId);
-    //3. map the attributes with value streamNameLeft and streamNameRight to the left and right stream
-    originalQuery.map(Attribute(cepLeftStreamName) = streamNameLeft);
-    subQueryRhs.map(Attribute(cepRightStreamName) = streamNameRight);
-}
-
-const WindowOperatorBuilder::WindowedQuery Or::window(const Windowing::WindowTypePtr& windowType) const {
-    return originalQuery.unionWith(subQueryRhs).window(windowType);//call original unionWith() function
-}
-
 }// namespace CEPOperatorBuilder
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
@@ -293,13 +254,29 @@ Query& Query::andWith(const Query& subQueryRhs,
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
-Query& Query::orWith(const Query& subQueryRhs,
-                      ExpressionItem onLeftKey,
-                      ExpressionItem onRightKey,
-                      const Windowing::WindowTypePtr& windowType) {
-    NES_DEBUG("Query: add JoinType to OR Operator");
-    Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::ALL_POSSIBILITIES;
-    return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
+Query& Query::orWith(Query& subQueryRhs) {
+    NES_DEBUG("Query: add map operator that add the original stream name to the left and right side streams of the OR ");
+    //TODO: outcommented code would map stream name to Operator, fails due to schema mismatch (ArrayType of different length) Thus, 1 and 2 replace for now the different origins.
+    /*
+    std::vector<std::string> sourceNameLeft;
+    std::vector<std::string> sourceNameRight;
+    //get all source names of the left side and merge them
+    sourceNameLeft.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
+    std::sort(sourceNameLeft.begin(), sourceNameLeft.end());
+    std::string streamNameLeft = std::accumulate(sourceNameLeft.begin(), sourceNameLeft.end(), std::string("-"));
+    NES_DEBUG("Query: Source Names of the Left stream " << streamNameLeft);
+    //get all source names of the right side and merge them
+    sourceNameRight.emplace_back(this->getQueryPlan()->getSourceConsumed());
+    std::sort(sourceNameRight.begin(), sourceNameRight.end());
+    std::string streamNameRight = std::accumulate(sourceNameRight.begin(), sourceNameRight.end(), std::string("-"));
+    NES_DEBUG("Query: Source Names of the Right stream " << streamNameLeft);
+    */
+    std::string attName = "StreamName";
+    //3. map the attributes with value streamNameLeft and streamNameRight to the left and right stream
+    this->map(Attribute(attName, INT8) = 1);
+    subQueryRhs.map(Attribute(attName, INT8) = 2);
+    NES_DEBUG("Query: finally we translate the OR into a union OP ");
+    return Query::unionWith(subQueryRhs);
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {

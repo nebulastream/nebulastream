@@ -538,7 +538,7 @@ TEST_F(SimplePatternTest, testOrPattern) {
     wrk1->registerPhysicalStream(conf70);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf->setSourceConfig("../tests/test_data/QnV_short_R2000073.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setPhysicalStreamName("test_stream_R2000073");
     srcConf->setLogicalStreamName("QnV1");
@@ -552,8 +552,8 @@ TEST_F(SimplePatternTest, testOrPattern) {
     NES_INFO("SimplePatternTest: Submit andWith pattern");
 
     std::string query =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 80).orWith(Query::from("QnV1").filter(Attribute("velocity") > 80))
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
+        R"(Query::from("QnV").filter(Attribute("velocity") > 100).orWith(Query::from("QnV1").filter(Attribute("velocity") > 100))
+        .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -570,36 +570,32 @@ TEST_F(SimplePatternTest, testOrPattern) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:"
-        "FLOAT32|QnV$quantity:UINT64|QnV$cep_leftkey:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32"
-        "|QnV1$quantity:UINT64|QnV1$cep_rightkey:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000070|1543624980000|90.000000|9|1|\n"
-        "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000070|1543624980000|90.000000|9|1|\n"
-        "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000070|1543624980000|90.000000|9|1|\n"
-        "+----------------------------------------------------+";
-
-    /* TODO: the output should be something like:
-     * "+----------------------------------------------------+\n"
-     * "|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:"
-     * "FLOAT32|QnV$quantity:UINT64|QnV$cep_leftkey:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32"
-     * "|QnV1$quantity:UINT64|QnV1$cep_rightkey:INT32|\n"
-     * "+----------------------------------------------------+\n"
-     * "|1543624800000|1543625100000|-|-|-|-|-|1|R2000070|1543624980000|90.000000|9|1|\n"
-     * "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|-|-|-|-|-|-|\n"
-     * "|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000070|1543624980000|90.000000|9|1|\n"
-     * "+----------------------------------------------------+";
-     */
-
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
 
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
+    std::string line;
+    bool resultWrk1 = false;
+    bool resultWrk2 = false;
 
-    EXPECT_EQ(removeRandomKey(content), expectedContent);
+    while (std::getline(ifs, line)) {
+        NES_INFO("print line from content" << line);
+        std::vector<string> content = Util::splitWithStringDelimiter<std::string>(line, "|");
+        if (content.size() > 1 && content.at(1) == "R2000073") {
+            NES_INFO("First content=" << content.at(2));
+            NES_INFO("First: expContent= 102.629631");
+            if (content.at(3) == "102.629631") {
+                resultWrk1 = true;
+            }
+        } else if (content.size() > 1 && content.at(1) == "R2000070") {
+            NES_INFO("Second: content=" << content.at(2));
+            NES_INFO("Second: expContent= 108.166664");
+            if (content.at(3) == "108.166664") {
+                resultWrk2 = true;
+            }
+        }
+    }
+
+    EXPECT_TRUE((resultWrk1 && resultWrk2));
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
