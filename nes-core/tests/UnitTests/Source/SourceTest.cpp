@@ -43,12 +43,12 @@
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-// TODO: change order of includes and create issue for U from json.h
-#include <Sources/AdaptiveKFSource.hpp>
 #include <Services/QueryService.hpp>
 #include <Sinks/SinkCreator.hpp>
+#include <Sources/AdaptiveKFSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
+#include <Sources/KFSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
 #include <Util/TestUtils.hpp>
@@ -407,6 +407,29 @@ class AdaptiveKFSourceProxy : public AdaptiveKFSource {
     FRIEND_TEST(SourceTest, testAdaptiveKFSourceGetType);
 };
 
+class KFSourceProxy : public KFSource {
+  public:
+    KFSourceProxy(SchemaPtr schema,
+                  const std::shared_ptr<uint8_t>& memoryArea,
+                  size_t memoryAreaSize,
+                  Runtime::BufferManagerPtr bufferManager,
+                  Runtime::QueryManagerPtr queryManager,
+                  uint64_t numBuffersToProcess,
+                  uint64_t gatheringValue,
+                  OperatorId operatorId,
+                  size_t numSourceLocalBuffers,
+                  GatheringMode gatheringMode,
+                  uint64_t sourceAffinity,
+                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+        : KFSource(schema, memoryArea, memoryAreaSize,
+                   bufferManager, queryManager, numBuffersToProcess,
+                   gatheringValue, operatorId, numSourceLocalBuffers,
+                   gatheringMode, sourceAffinity, successors){};
+  private:
+    FRIEND_TEST(SourceTest, testKFSourceGetType);
+    FRIEND_TEST(SourceTest, testKFSourceConstruction);
+};
+
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
   public:
     MockedPipelineExecutionContext(Runtime::QueryManagerPtr queryManager, DataSinkPtr sink)
@@ -478,6 +501,12 @@ class SourceTest : public testing::Test {
         this->frequency = 1000;
         this->wrong_filepath = "this_doesnt_exist";
         this->queryId = 1;
+        this->bufferAreaSize = this->numberOfBuffers * this->buffer_size;
+        void* tmp = nullptr;
+        NES_ASSERT(posix_memalign(&tmp, 64, bufferAreaSize) == 0,
+                   "memory allocation failed with aligment");
+        this->singleMemoryArea = static_cast<uint8_t*>(tmp);
+        this->sourceAffinity = std::numeric_limits<uint64_t>::max();
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down SourceTest test class."); }
@@ -516,8 +545,11 @@ class SourceTest : public testing::Test {
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head;
     SchemaPtr schema, lambdaSchema;
+    uint8_t* singleMemoryArea;
     uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault,
-        frequency, queryId;
+        frequency, queryId, sourceAffinity;
+    size_t bufferAreaSize;
+    std::shared_ptr<uint8_t> singleBufferMemoryArea;
 };
 
 TEST_F(SourceTest, testDataSourceGetOperatorId) {
@@ -1748,6 +1780,33 @@ TEST_F(SourceTest, testAdaptiveKFSourceGetType) {
                                           this->operatorId,
                                           {});
     ASSERT_EQ(adaKFDataSource.getType(), SourceType::ADAPTIVE_KF_SOURCE);
+}
+
+TEST_F(SourceTest, testKFSourceGetType) {
+    KFSourceProxy kfSource(this->schema,
+                           static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea),
+                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
+                           this->nodeEngine->getQueryManager(), 0, 1,
+                           this->operatorId, this->numSourceLocalBuffersDefault,
+                           DataSource::GatheringMode::FREQUENCY_MODE,
+                           this->sourceAffinity, {});
+    ASSERT_EQ(kfSource.getType(), SourceType::KF_SOURCE);
+}
+
+TEST_F(SourceTest, testKFSourceConstruction) {
+    auto memAreaCast = static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea);
+    KFSourceProxy kfSource(this->schema,
+                           memAreaCast,
+                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
+                           this->nodeEngine->getQueryManager(), 0, 1000,
+                           this->operatorId, this->numSourceLocalBuffersDefault,
+                           DataSource::GatheringMode::FREQUENCY_MODE,
+                           this->sourceAffinity, {});
+    ASSERT_EQ(kfSource.getGatheringIntervalCount(), 1000u);
+    ASSERT_EQ(kfSource.memoryArea, memAreaCast);
+    ASSERT_EQ(kfSource.memoryAreaSize, this->bufferAreaSize);
+    ASSERT_TRUE(kfSource.memoryArea && kfSource.memoryAreaSize > 0);
+    ASSERT_EQ(kfSource.sourceAffinity, this->sourceAffinity);
 }
 
 TEST_F(SourceTest, testMemorySource) {

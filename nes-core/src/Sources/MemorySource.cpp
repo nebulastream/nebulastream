@@ -22,7 +22,6 @@
 #endif
 #include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
-#include <Util/ThreadNaming.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cmath>
 #ifdef NES_ENABLE_NUMA_SUPPORT
