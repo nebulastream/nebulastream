@@ -173,29 +173,6 @@ class And {
     ExpressionNodePtr onRightKey;
 };
 
-class Or {
-  public:
-    /**
-     * @brief Constructor. Initialises always subQueryRhs and original Query
-     * @param subQueryRhs
-     * @param originalQuery
-     */
-    Or(Query& subQueryRhs, Query& originalQuery);
-
-    /**
-     * @brief: calls internal the original orWith function with all the gathered parameters.
-     * @param windowType
-     * @return the query with the result of the original orWith function is returned.
-     */
-    [[nodiscard]] const WindowOperatorBuilder::WindowedQuery window(Windowing::WindowTypePtr const& windowType) const;
-
-  private:
-    Query& subQueryRhs;
-    Query& originalQuery;
-    ExpressionNodePtr onLeftKey;
-    ExpressionNodePtr onRightKey;
-};
-
 }//namespace CEPOperatorBuilder
 
 /**
@@ -211,7 +188,6 @@ class Query {
     //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinCondition;
     friend class CEPOperatorBuilder::And;
-    friend class CEPOperatorBuilder::Or;
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
@@ -227,16 +203,16 @@ class Query {
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
      * @param subQueryRhs
-     * @return object where where() function is defined and can be called by user
+     * @return object where the window() function is defined and can be called by user
      */
     CEPOperatorBuilder::And andWith(Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class Or.
      * @param subQueryRhs
-     * @return object where where() function is defined and can be called by user
+     * @return the query (pushed to union with)
      */
-    CEPOperatorBuilder::Or orWith(Query& subQueryRhs);
+    Query& orWith(Query& subQuery);
 
     /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.
