@@ -420,10 +420,9 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema,
     // add type declaration for the result tuple
     code->typeDeclarations.push_back(structDeclarationResultTuple);
 
-    if(bufferAssignmentStrategy==RECORD_COPY){
+    if (bufferAssignmentStrategy == RECORD_COPY) {
         structDeclarationResultTuple = code->structDeclarationInputTuples[0];
     }
-
 
     if (sinkSchema->getLayoutType() == Schema::ROW_LAYOUT) {
         VariableDeclaration varDeclResultTuple =

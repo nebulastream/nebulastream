@@ -102,8 +102,10 @@ class CodeGenerator {
     * @param bufferStrategy Strategy for allocation of and writing to result buffer.
     * @return flag if the generation was successful.
     */
-    virtual bool
-    generateCodeForEmit(SchemaPtr sinkSchema, OutputBufferAllocationStrategy bufferStrategy, OutputBufferAssignmentStrategy bufferAllocationStrategy, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForEmit(SchemaPtr sinkSchema,
+                                     OutputBufferAllocationStrategy bufferStrategy,
+                                     OutputBufferAssignmentStrategy bufferAllocationStrategy,
+                                     PipelineContextPtr context) = 0;
 
     /**
      * @brief Code generation for a watermark assigner operator.
