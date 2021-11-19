@@ -26,7 +26,7 @@ enum OutputBufferAssignmentStrategy : uint8_t {
     RECORD_COPY
 };
 
-enum OutputBufferAllocationStrategy : uint8_t{
+enum OutputBufferAllocationStrategy : uint8_t {
     /// If all records and all fields match up in input and result buffer we can simply emit the input buffer.
     /// For this no filter can be applied and no new fields can be added.
     /// The only typical operations possible are inplace-maps, e.g. "id = id + 1".

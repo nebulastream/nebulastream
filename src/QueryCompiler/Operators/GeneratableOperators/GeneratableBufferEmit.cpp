@@ -22,7 +22,7 @@
 namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableBufferEmit::GeneratableBufferEmit(OperatorId id, const SchemaPtr& outputSchema)
-: OperatorNode(id), GeneratableOperator(id, outputSchema, outputSchema), bufferAllocationStrategy(NO_OPTIMIZATION){};
+    : OperatorNode(id), GeneratableOperator(id, outputSchema, outputSchema), bufferAllocationStrategy(NO_OPTIMIZATION){};
 
 GeneratableOperatorPtr GeneratableBufferEmit::create(OperatorId id, SchemaPtr outputSchema) {
     return std::make_shared<GeneratableBufferEmit>(GeneratableBufferEmit(id, std::move(outputSchema)));
@@ -39,7 +39,9 @@ std::string GeneratableBufferEmit::toString() const { return "GeneratableBufferE
 
 OperatorNodePtr GeneratableBufferEmit::copy() { return create(id, outputSchema); }
 
-OutputBufferAllocationStrategy GeneratableBufferEmit::getOutputBufferAllocationStrategy() const { return bufferAllocationStrategy; };
+OutputBufferAllocationStrategy GeneratableBufferEmit::getOutputBufferAllocationStrategy() const {
+    return bufferAllocationStrategy;
+};
 
 void GeneratableBufferEmit::setOutputBufferAllocationStrategy(OutputBufferAllocationStrategy strategy) {
     this->bufferAllocationStrategy = strategy;

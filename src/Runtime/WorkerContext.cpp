@@ -15,8 +15,8 @@
 */
 
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime {
@@ -28,7 +28,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
     : workerId(workerId), numaNode(numaNode) {
     //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
-//    localBufferPool = bufferManager->createFixedSizeBufferPool(numberOfBuffersPerWorker);
+    //    localBufferPool = bufferManager->createFixedSizeBufferPool(numberOfBuffersPerWorker);
     NES_ASSERT(localBufferPool != NULL, "Local buffer is not allowed to be null");
 }
 
