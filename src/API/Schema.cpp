@@ -35,9 +35,7 @@ SchemaPtr Schema::create(MemoryLayoutType layoutType) { return std::make_shared<
 
 uint64_t Schema::getSize() const { return fields.size(); }
 
-Schema::Schema(const SchemaPtr& query, MemoryLayoutType layoutType): layoutType(layoutType) {
-    copyFields(query);
-}
+Schema::Schema(const SchemaPtr& schema, MemoryLayoutType layoutType) : layoutType(layoutType) { copyFields(schema); }
 
 SchemaPtr Schema::copy() const { return std::make_shared<Schema>(*this); }
 
@@ -257,5 +255,6 @@ std::string Schema::getLayoutTypeAsString() const {
 }
 Schema::MemoryLayoutType Schema::getLayoutType() const { return layoutType; }
 void Schema::setLayoutType(Schema::MemoryLayoutType layoutType) { Schema::layoutType = layoutType; }
+bool Schema::empty() { return fields.empty(); }
 
 }// namespace NES

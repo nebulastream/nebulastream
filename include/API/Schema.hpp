@@ -203,6 +203,11 @@ class Schema {
     void clear();
 
     /**
+    * @brief Is empty
+    */
+    bool empty();
+
+    /**
      * @brief method to get the type of the memory layout
      * @return MemoryLayoutType
      */

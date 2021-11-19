@@ -117,7 +117,11 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                     throw Exception("QueryProcessingService: Failed during Type inference phase for query: "
                                     + std::to_string(queryId));
                 }
-
+                queryPlan = setMemoryLayoutPhase->execute(queryPlan);
+                if (!queryPlan) {
+                    throw Exception("QueryProcessingService: Failed during Memory Layout Selection phase for query: "
+                    + std::to_string(queryId));
+                }
                 queryCatalog->setExecutedQueryPlanForQuery(queryId, queryPlan);
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 globalQueryPlan->addQueryPlan(queryPlan);

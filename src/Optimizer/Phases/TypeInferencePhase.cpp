@@ -45,9 +45,9 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         for (const auto& source : sources) {
             auto sourceDescriptor = source->getSourceDescriptor();
 
-            // if the source descriptor is only a logical stream source we have to replace it with the correct
+            // if the source descriptor has no schema set and is only a logical stream source we replace it with the correct
             // source descriptor form the catalog.
-            if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
+            if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>() && sourceDescriptor->getSchema()->empty()) {
                 auto streamName = sourceDescriptor->getStreamName();
                 SchemaPtr schema = Schema::create();
                 if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName)) {
@@ -55,6 +55,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                 }
                 auto originalSchema = streamCatalog->getSchemaForLogicalStream(streamName);
                 schema = schema->copyFields(originalSchema);
+                schema->setLayoutType(originalSchema->getLayoutType());
                 std::string qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
                 //perform attribute name resolution
                 for (auto& field : schema->fields) {

@@ -69,7 +69,7 @@ class MemoryLayoutSelectionPhase {
      * @brief Selects the memory layout for all operators within an query.
      * @param queryPlan : the input query plan
      */
-    void execute(const QueryPlanPtr& queryPlan);
+    QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
 
   private:
     /**
