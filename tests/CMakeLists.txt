@@ -234,8 +234,19 @@ if (NES_USE_MQTT)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
 
+
+### Row Layout Tests ###
+add_executable(row-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/RowMemoryLayoutTest.cpp")
+target_link_libraries(row-memory-layout-tests nes ${GTEST_LIBRARIES})
+add_test(NAME row-memory-layout-tests COMMAND row-memory-layout-tests)
+
+### Row Layout Tests ###
+add_executable(columnar-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/ColumnarMemoryLayoutTest.cpp")
+target_link_libraries(columnar-memory-layout-tests nes ${GTEST_LIBRARIES})
+add_test(NAME columnar-memory-layout-tests COMMAND columnar-memory-layout-tests)
+
 ### Dynamic Memory Layout Tests ###
-add_executable(dynamic-memory-layout-tests "UnitTests/Runtime/DynamicMemoryLayoutTest.cpp")
+add_executable(dynamic-memory-layout-tests "UnitTests/Runtime/MemoryLayouts/DynamicMemoryLayoutTest.cpp")
 target_link_libraries(dynamic-memory-layout-tests nes ${GTEST_LIBRARIES})
 add_test(NAME dynamic-memory-layout-tests COMMAND dynamic-memory-layout-tests)
 
@@ -371,7 +382,7 @@ target_link_libraries(global-query-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-plan-tests COMMAND global-query-plan-tests)
 
 ### Choose MemLayout Phase Tests ###
-add_executable(memory-layout-selection-phase-tests "UnitTests/Optimizer/Phases/MemoryLayoutSelectionPhase.cpp")
+add_executable(memory-layout-selection-phase-tests "UnitTests/Optimizer/Phases/MemoryLayoutSelectionPhaseTest.cpp")
 target_link_libraries(memory-layout-selection-phase-tests nes ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-selection-phase-tests COMMAND memory-layout-selection-phase-tests)
 

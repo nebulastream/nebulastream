@@ -87,7 +87,6 @@ class TestHarness {
         crdConf->setCoordinatorIp(ipAddress);
         crdConf->setRestPort(restPort);
         crdConf->setRpcPort(rpcPort);
-        crdConf->setMemoryLayoutPolicy("FORCE_COLUMN_LAYOUT");
         wrkConf = WorkerConfig::create();
         crd = std::make_shared<NesCoordinator>(crdConf);
         crdPort = crd->startCoordinator(/**blocking**/ false);
