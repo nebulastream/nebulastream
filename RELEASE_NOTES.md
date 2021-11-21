@@ -8,6 +8,11 @@
 ### - Rest-API
 ### - Optimizer
 ### - Runtime
+1. Add new `DynamicTupleBuffer` abstraction to operate on tuple buffers, without knowledge of the underling memory layout.
+2. Add experimental support for columnar layouts [2081](https://github.com/nebulastream/nebulastream/tree/2081-queryoptimizer-phase-choose-mem-layout).
+   Introduce `--memoryLayoutPolicy` in the coordinator configuration.
+   - `FORCE_ROW_LAYOUT` forces a row memory layout for all operators of an query.
+   - `FORCE_COLUMN_LAYOUT` forces a columnar memory layout for all operators of an query.
 ### - Query Compiler
 1. Add configuration flags for query compiler [#2194](https://github.com/nebulastream/nebulastream/issues/2194)
     - `--queryCompilerCompilationStrategy` Selects the optimization level of a query.
