@@ -53,6 +53,7 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
         double cost;
     };
     std::vector<Placement> population;
+    std::map<uint32_t , uint32_t> mapOfSourceOperatorIdToSourceOperatorIdx;
 
     explicit GeneticAlgorithmStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                       TopologyPtr topology,
@@ -70,7 +71,9 @@ class GeneticAlgorithmStrategy : public BasePlacementStrategy {
 
     Placement generatePlacement(QueryPlanPtr queryPlan);
 
-    double getCost(Placement placement);
+    double getCost(Placement placement, QueryPlanPtr queryPlan);
+
+    void setMapOfSourceOperatorsIdsToSourceOperatorIndices(QueryPlanPtr queryPlan);
 
     Placement getOptimizedPlacement(std::vector<Placement> population,uint32_t numOfIterations, uint32_t patience, uint32_t numOfGenesToMutate, double mutationProbability, QueryPlanPtr queryPlan);
 

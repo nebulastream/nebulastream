@@ -105,6 +105,7 @@ void GeneticAlgorithmStrategy::placeQueryPlan(QueryPlanPtr queryPlan) {
     //topology->print();
     //NES_DEBUG(queryPlan->toString());
     transitiveClosureOfTopology = getTransitiveClosure();
+    setMapOfSourceOperatorsIdsToSourceOperatorIndices(queryPlan);
 
     uint32_t populationSize = 1000;
     uint32_t numOfIterations = 10;
@@ -198,7 +199,7 @@ void GeneticAlgorithmStrategy::initializePopulation(QueryPlanPtr queryPlan, uint
         // check if an identical placement already exists to avoid duplicate placements.
         if(placementAlreadyExists(population,placement))
             continue;
-        placement.cost = getCost(placement);
+        placement.cost = getCost(placement, queryPlan);
         // Find the index of the current placement in population depending on the cost, we order the placements from low to high cost
         auto pos = std::find_if(population.begin(), population.end(), [placement](auto s) {
             return s.cost > placement.cost;
@@ -345,13 +346,13 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
                 tempOffspring1.cost = (double) RAND_MAX;
                 tempOffspring2.cost = (double) RAND_MAX;
                 if (checkPlacementValidation(tempOffspring1, queryPlan)) {
-                    tempOffspring1.cost = getCost(tempOffspring1);
+                    tempOffspring1.cost = getCost(tempOffspring1, queryPlan);
                 }
                 else{
                     //numOfInvalidOffsprings += 1;
                 }
                 if (checkPlacementValidation(tempOffspring2, queryPlan)) {
-                    tempOffspring2.cost = getCost(tempOffspring2);
+                    tempOffspring2.cost = getCost(tempOffspring2, queryPlan);
                 }
                 else{
                     //numOfInvalidOffsprings += 1;
@@ -361,10 +362,10 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
                 offspring1.cost = (double) RAND_MAX;
                 offspring2.cost = (double) RAND_MAX;
                 if (checkPlacementValidation(offspring1, queryPlan)) {
-                    offspring1.cost = getCost(offspring1);
+                    offspring1.cost = getCost(offspring1, queryPlan);
                 }
                 if (checkPlacementValidation(offspring2, queryPlan)) {
-                    offspring2.cost = getCost(offspring2);
+                    offspring2.cost = getCost(offspring2, queryPlan);
                 }
 
                 if(offspring1.cost > tempOffspring1.cost)
@@ -411,6 +412,21 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
         outfile.open("benchmark.txt", std::ios_base::app);
         outfile << "Cost of Optimized Placement Of Iteration  "<<i+1 << "  is: " << optimizedPlacement.cost << "\n";
         outfile << "Population Size Of Iteration  "<<i+1 << "  is: " << population.size() << "\n";
+
+        NES_DEBUG("Optimized Placement: ");
+        // print the placement
+        for(uint32_t f = 0 ; f < topologyNodes.size();f++){
+            std::string s2 = "";
+            for(uint32_t j = 0; j <queryOperators.size(); j++){
+
+                if(optimizedPlacement.chromosome.at(f*queryOperators.size()+j)){
+                    s2.append(std::to_string(queryOperators[j]->as<OperatorNode>()->getId()));
+                    s2.append(" ");
+                }
+            }
+            outfile <<"Topology Node with ID:  "<<topologyNodes[f]->getId()<<" has Operators:  "<<s2<< "\n";
+        }
+
         outfile.close();
     }
     /*
@@ -648,73 +664,74 @@ void GeneticAlgorithmStrategy ::setMapOfOperatorToSourceNodes(int queryId,
         }
     }
 }
-double GeneticAlgorithmStrategy::getCost(Placement placement) {
+double GeneticAlgorithmStrategy::getCost(Placement placement, QueryPlanPtr queryPlan) {
 
-    int numberOfOperators = queryOperators.size();
-    std::map<uint32_t , double> globalNodesCost;    //global cost of nodes in the placement
-    // we calculate the global costs of the nodes at the bottom of the topology and move upwards, we exclude the root node from the cost
-    for (int i = mapOfBreadthFirstToDepthFirst.size() - 1; i >0; i--) {
-        uint32_t nodeIndex = mapOfBreadthFirstToDepthFirst[i];   // when generating the placement we use depth first iteration, when calculating the cost we use depth first
-        uint32_t assignment_begin = nodeIndex * numberOfOperators;
-        double localCost = 0.0;    //if no operators are assigned to the  current node then the local cost is 1
-        int nodeLoad = 0;
-        std::map<int, std::vector<double>> mapOfSourceNodeToDMFs; // map of source node to the DMFs of its stream operators (we group the operators placed in the current node based on their physical streams)
-        //check which operators are assigned to the current node and add the cost of these operators to the local cost of the current node
-        for (int j = 0; j < numberOfOperators; j++) {
-            if (placement.chromosome[assignment_begin+j]) {
-                auto currentOperator = queryOperators[j]->as<OperatorNode>();
-                auto sourcesNodesOfTheCurrentOperator = mapOfOperatorToSourceNodes[j];
-                for(auto sourcesNodeOfTheCurrentOperator : sourcesNodesOfTheCurrentOperator){
-                    double dmf = 1;// fallback if the DMF property does not exist in the current operator
-                    // check if the current operator has the data modification factor (DMF) property, otherwise fallback to 1
-                    if (currentOperator->checkIfPropertyExist("DMF")) {
-                        // obtain the dmf property
-                        dmf = std::any_cast<double>(currentOperator->getProperty("DMF"));
-                    }
-                    mapOfSourceNodeToDMFs[sourcesNodeOfTheCurrentOperator].push_back(dmf);
-                }
-                int load = 1;// fallback if the Load property does not exist in the current operator
-                // check if the current operator has the Load property, otherwise fallback to 1
-                if (currentOperator->checkIfPropertyExist("Load")) {
+    std::vector<double> costsOfStreams;
+    //uint32_t numOfNodes = topologyNodes.size();
+    uint32_t numOfOperators = queryOperators.size();
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    uint32_t numOfStreamsToConsider = sourceOperators.size();
+
+    while(numOfStreamsToConsider > 0){
+        double currentStreamCost = 1.0;
+        auto currentOperator = sourceOperators[numOfStreamsToConsider-1]->as<OperatorNode>();
+        uint32_t currentOperatorId = currentOperator->getId();
+        uint32_t currentOperatorIdx = mapOfSourceOperatorIdToSourceOperatorIdx[currentOperatorId];
+        uint32_t currentOperatorNodeIdx = 0;
+        while(!placement.chromosome[currentOperatorNodeIdx * numOfOperators + currentOperatorIdx]){
+            currentOperatorNodeIdx += 1;
+        }
+        while(topologyNodes[currentOperatorNodeIdx] != topology->getRoot()){
+            auto parentOperator = currentOperator->getParents()[0]->as<OperatorNode>();
+            uint32_t parentOperatorIdx = currentOperatorIdx;
+            auto tempOperator = queryOperators[parentOperatorIdx];
+            while(parentOperator->as<OperatorNode>()->getId() != tempOperator->as<OperatorNode>()->getId()){
+                parentOperatorIdx -= 1;
+                tempOperator = queryOperators[parentOperatorIdx];
+            }
+
+            uint32_t parentOperatorNodeIdx = currentOperatorNodeIdx;
+            uint32_t distance = 1;
+            while(!placement.chromosome[parentOperatorNodeIdx * numOfOperators + parentOperatorIdx]){
+                parentOperatorNodeIdx -= 1;
+                distance += 1;
+            }
+            if(topologyNodes[parentOperatorNodeIdx] != topology->getRoot()){
+                double DMFCurrentOperator = 1.0;
+                double DMFParentOperator = 1.0;
+                if (currentOperator->checkIfPropertyExist("DMF")) {
                     // obtain the dmf property
-                    load = std::any_cast<int>(currentOperator->getProperty("Load"));
+                    DMFCurrentOperator = std::any_cast<double>(currentOperator->getProperty("DMF"));
                 }
-                nodeLoad += load;
-            }
-        }
-        //For each physical stream, we multiply the DMFs of its operators then we sum up the results
-        for(auto physicalStreamDMFs : mapOfSourceNodeToDMFs){
-            double streamCost = 1.0;    // In case the none of the operators of this physical stream is placed in the current node (avoid multiplying by zero)
-            for(auto streamDMF : physicalStreamDMFs.second){
-                streamCost *= streamDMF;
-            }
-            localCost += streamCost;
-        }
+                if (parentOperator->checkIfPropertyExist("DMF")) {
+                    // obtain the dmf property
+                    DMFParentOperator = std::any_cast<double>(parentOperator->getProperty("DMF"));
+                }
+                if(DMFParentOperator > DMFCurrentOperator){
+                    currentStreamCost *= (DMFParentOperator+DMFParentOperator/distance);
 
-        //check whether the current node is overloaded if yes then add the overloading penalization the local cost
-        auto availableCapacity = topologyNodes[nodeIndex]->getAvailableResources();
-        if (nodeLoad > availableCapacity){
-            localCost += (double)(nodeLoad - availableCapacity);
-        }
+                }
+                else if(DMFParentOperator < DMFCurrentOperator){
+                    currentStreamCost *=   DMFParentOperator * distance;
+                }
+                else if(DMFParentOperator == DMFCurrentOperator ){
+                    currentStreamCost *=   DMFParentOperator * distance;
+                }
+            }
 
-        //Add the global cost of the children nodes to the global cost of the current node
-        double childGlobalCost = 0;
-        double globalCost = 0;
-        auto children = topologyNodes.at(nodeIndex)->getChildren();
-        for (auto& child : children) {
-            childGlobalCost = globalNodesCost.at(child->as<TopologyNode>()->getId());
-            globalCost += localCost * childGlobalCost;
+            currentOperator = parentOperator;
+            currentOperatorIdx = parentOperatorIdx;
+            currentOperatorNodeIdx = parentOperatorNodeIdx;
         }
-        //In case the current node has no children then the global cost is the local cost
-        if (globalCost == 0){
-            globalCost = localCost;
-        }
-        globalNodesCost.insert(std::make_pair(topologyNodes[nodeIndex]->getId(), globalCost));
+        costsOfStreams.push_back(currentStreamCost);
+        numOfStreamsToConsider -= 1;
+
     }
-    double cost = 0;
-    std::map<uint32_t , double>::iterator it;
-    for (it = globalNodesCost.begin(); it != globalNodesCost.end(); it++) {
-        cost += it->second;
+
+    double cost = 0.0;
+    std::vector<double>::iterator it;
+    for (it = costsOfStreams.begin(); it != costsOfStreams.end(); it++) {
+        cost += *it;
     }
     return cost;
 }
@@ -790,6 +807,22 @@ void GeneticAlgorithmStrategy::assignDataModificationFactor(QueryPlanPtr queryPl
             continue;
         }
     }
+}
+void GeneticAlgorithmStrategy::setMapOfSourceOperatorsIdsToSourceOperatorIndices(QueryPlanPtr queryPlan){
+    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    for(uint32_t i = 0 ; i < sourceOperators.size(); i++){
+        uint32_t currentSourceOperatorId = sourceOperators[i]->getId();
+        uint32_t currentSourceOperatorIdx = 0;
+        if(i > 0){
+            currentSourceOperatorIdx = mapOfSourceOperatorIdToSourceOperatorIdx.find(sourceOperators[i-1]->getId())->second;
+        }
+        while(currentSourceOperatorId != queryOperators[currentSourceOperatorIdx]->as<OperatorNode>()->getId()){
+            currentSourceOperatorIdx += 1;
+        }
+        mapOfSourceOperatorIdToSourceOperatorIdx[currentSourceOperatorId] = currentSourceOperatorIdx;
+
+    }
+
 }
 }// namespace NES::Optimizer
 

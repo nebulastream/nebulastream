@@ -111,12 +111,12 @@ class GeneticAlgorithmBenchmark : public testing::Test {
 
 TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFixedTopologyWithDynamicQuery) {
 
-    std::list<int> listOfInts({20});
+    std::list<int> listOfInts({10});
     std::map<int, std::vector<long>> counts;
-    int SourcePerMiddle = 3;
-    int repetitions = 5;
+    int SourcePerMiddle = 2;
+    int repetitions = 1;
 
-    setupTopologyAndStreamCatalogForGA(10,SourcePerMiddle);
+    setupTopologyAndStreamCatalogForGA(3,SourcePerMiddle);
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("GeneticAlgorithm",
@@ -138,7 +138,8 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFi
             query.filter(Attribute("id") < n-i);
         }
         for(int i = 1; i < n; i+=2){
-            query.map(Attribute("value2") = Attribute("value") * 2);
+            std::string num = std::to_string(i);
+            query.map(Attribute("value"+num) = Attribute("value") * 2);
         }
         query.sink(PrintSinkDescriptor::create());
 
