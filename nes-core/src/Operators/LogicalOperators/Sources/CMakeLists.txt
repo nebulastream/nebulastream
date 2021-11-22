@@ -29,4 +29,5 @@ add_source_nes(
         LambdaSourceDescriptor.cpp
         BenchmarkSourceDescriptor.cpp
         AdaptiveKFSourceDescriptor.cpp
+        KFSourceDescriptor.cpp
 )
