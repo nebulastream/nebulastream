@@ -312,9 +312,9 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
 
     Placement optimizedPlacement = population[0];   //keep track of the best placement so far.
     std::vector<GeneticAlgorithmStrategy::Placement> offspringPopulation;
-    uint32_t populationSize = population.size();
+
     std::vector<double> optimizedCostOfEachIteration;
-    std::ofstream outfile;
+
     //double initialCost = population[0].cost;
     /*std::map<uint32_t, uint32_t> populationSizes;
     std::map<uint32_t, double> costsAfterGA;
@@ -322,76 +322,166 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
     NES_DEBUG("Cost before Optimization:  " << population[0].cost);
     costsAfterGA.insert(std::make_pair(0, optimizedPlacement.cost));    */
     uint32_t  numOfIterationsWithoutImprovement = 0;
+
+    std::ofstream outfile;
+    outfile.open("benchmark.txt", std::ios_base::app);
+    outfile << "Initial optimized Placement cost:  " << optimizedPlacement.cost << "\n";
+
+
+    // print the placement
+    for(uint32_t f = 0 ; f < topologyNodes.size();f++){
+        std::string s2 = "";
+        for(uint32_t j = 0; j <queryOperators.size(); j++){
+
+            if(optimizedPlacement.chromosome.at(f*queryOperators.size()+j)){
+                s2.append(std::to_string(queryOperators[j]->as<OperatorNode>()->getId()));
+                s2.append(" ");
+            }
+        }
+        outfile <<"Topology Node with ID:  "<<topologyNodes[f]->getId()<<" has Operators:  "<<s2<< "\n";
+    }
+
+    outfile.close();
+
     for (uint32_t i = 0; i < numOfIterations; i++) {
         /* int i = 0;
     for (auto start = std::chrono::steady_clock::now(), now = start; now < start + std::chrono::seconds{time};
          now = std::chrono::steady_clock::now()) {
         int numOfInvalidOffsprings = 0; */
 
+        uint32_t populationSize = population.size();
+        uint32_t elitismPortion = 0.05*populationSize;
+        for(uint32_t m = 0; m < elitismPortion; m++){
+            offspringPopulation.push_back(population[m]);
+        }
 
-        for (uint32_t j = 1; j < population.size();j++) {
+        double s = 0.0;
+        for(uint32_t m = 0; m < populationSize; m++){
+            if(s + (1/population[m].cost) < (double) RAND_MAX){
+                s += 1/population[m].cost;
+            }
+        }
+
+        srand(time(0));
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<> distrib(0.0, s);
+        while(offspringPopulation.size() < population.size()){
+            double s1 = distrib(gen);
+            double s2 = distrib(gen);
+            double p1 = 0.0;
+            double p2 = 0.0;
+
+            uint32_t limitP1 = 0;
+            uint32_t limitP2 = 0;
+            uint32_t parent1Index = 0;
+            uint32_t parent2Index = 0;
+            for(uint32_t n = 0; n < populationSize; n++){
+                if(p1 + (1/population[n].cost) < s1){
+                    p1 += 1/population[n].cost;
+                }
+                else{
+                    limitP1 = n;
+                    break;
+                }
+            }
+
+            if(s2 > s1){
+                p2 = p1;
+                for(uint32_t n = limitP1; n < populationSize; n++){
+                    if(p2 + (1/population[n].cost) < s2){
+                        p2 += 1/population[n].cost;
+                    }
+                    else{
+                        limitP2 = n;
+                        break;
+                    }
+                }
+            }
+            else{
+                p2 = 0.0;
+                for(uint32_t n = 0; n < populationSize; n++){
+                    if(p2 + (1/population[n].cost) < s2){
+                        p2 += 1/population[n].cost;
+                    }
+                    else{
+                        limitP2 = n;
+                        break;
+                    }
+                }
+            }
+            parent1Index = rand()%(limitP1 + 1);
+            parent2Index = rand()%(limitP2 + 1);
+
+            if(parent1Index == parent2Index){
+                continue;
+            }
+
+            Placement parent1 = population[parent1Index];
+            Placement parent2 = population[parent2Index];
+            //srand(time(NULL));
+            uint32_t crossOverIndex = (uint32_t) (1 + rand() % (queryOperators.size()-2));
+            //uint32_t crossOverIndex = queryOperators.size()/2;  // We cross over the query in the middle
+            Placement offspring1 = crossOver(parent1, parent2,crossOverIndex);
+            Placement offspring2 = crossOver(parent2, parent1,crossOverIndex);
+
+           /* Placement tempOffspring1 = offspring1;
+            Placement tempOffspring2 = offspring2;
+            tempOffspring1.cost = (double) RAND_MAX;
+            tempOffspring2.cost = (double) RAND_MAX;
+            if (checkPlacementValidation(tempOffspring1, queryPlan)) {
+                tempOffspring1.cost = getCost(tempOffspring1, queryPlan);
+            }
+            else{
+                //numOfInvalidOffsprings += 1;
+            }
+            if (checkPlacementValidation(tempOffspring2, queryPlan)) {
+                tempOffspring2.cost = getCost(tempOffspring2, queryPlan);
+            }
+            else{
+                //numOfInvalidOffsprings += 1;
+            }   */
+            offspring1 = mutate(offspring1, queryPlan, numOfGenesToMutate, mutationProbability);
+            offspring2 = mutate(offspring2, queryPlan, numOfGenesToMutate, mutationProbability);
+            offspring1.cost = (double) RAND_MAX;
+            offspring2.cost = (double) RAND_MAX;
+
+            if (checkPlacementValidation(offspring1, queryPlan)) {
+                offspring1.cost = getCost(offspring1, queryPlan);
+            }
+            if (checkPlacementValidation(offspring2, queryPlan)) {
+                offspring2.cost = getCost(offspring2, queryPlan);
+            }
+            /*
+            if(offspring1.cost > tempOffspring1.cost)
+                offspring1 = tempOffspring1;
+            if(offspring2.cost > tempOffspring2.cost)
+                offspring2 = tempOffspring2;    */
+            /*
+            if(offspring1.cost >= (double) RAND_MAX)
+                offspring1 = tempOffspring1;
+            if(offspring2.cost >= (double) RAND_MAX)
+                offspring2 = tempOffspring2;    */
+
+
+            if (!placementAlreadyExists(offspringPopulation, offspring1)) {
+                auto pos = std::find_if(offspringPopulation.begin(), offspringPopulation.end(), [offspring1](auto s) {
+                    return s.cost > offspring1.cost;
+                });
+                offspringPopulation.insert(pos, offspring1);
+            }
             if(offspringPopulation.size() >= populationSize)
                 break;
-            Placement parent1 = population[j];
-            for (uint32_t k = 0; k < j; k++) {
-                Placement parent2 = population[k];
-                //srand(time(NULL));
-                //uint32_t crossOverIndex = (uint32_t) (1 + rand() % (queryOperators.size()-2));
-                uint32_t crossOverIndex = queryOperators.size()/2;  // We cross over the query in the middle
-                Placement offspring1 = crossOver(parent1, parent2,crossOverIndex);
-                Placement offspring2 = crossOver(parent2, parent1,crossOverIndex);
-
-                Placement tempOffspring1 = offspring1;
-                Placement tempOffspring2 = offspring2;
-                tempOffspring1.cost = (double) RAND_MAX;
-                tempOffspring2.cost = (double) RAND_MAX;
-                if (checkPlacementValidation(tempOffspring1, queryPlan)) {
-                    tempOffspring1.cost = getCost(tempOffspring1, queryPlan);
-                }
-                else{
-                    //numOfInvalidOffsprings += 1;
-                }
-                if (checkPlacementValidation(tempOffspring2, queryPlan)) {
-                    tempOffspring2.cost = getCost(tempOffspring2, queryPlan);
-                }
-                else{
-                    //numOfInvalidOffsprings += 1;
-                }
-                offspring1 = mutate(offspring1, queryPlan, numOfGenesToMutate, mutationProbability);
-                offspring2 = mutate(offspring2, queryPlan, numOfGenesToMutate, mutationProbability);
-                offspring1.cost = (double) RAND_MAX;
-                offspring2.cost = (double) RAND_MAX;
-                if (checkPlacementValidation(offspring1, queryPlan)) {
-                    offspring1.cost = getCost(offspring1, queryPlan);
-                }
-                if (checkPlacementValidation(offspring2, queryPlan)) {
-                    offspring2.cost = getCost(offspring2, queryPlan);
-                }
-
-                if(offspring1.cost > tempOffspring1.cost)
-                    offspring1 = tempOffspring1;
-                if(offspring2.cost > tempOffspring2.cost)
-                    offspring2 = tempOffspring2;
-
-                if (!placementAlreadyExists(offspringPopulation, offspring1)) {
-                    auto pos = std::find_if(offspringPopulation.begin(), offspringPopulation.end(), [offspring1](auto s) {
-                        return s.cost > offspring1.cost;
-                    });
-                    offspringPopulation.insert(pos, offspring1);
-                }
-                if(offspringPopulation.size() >= populationSize)
-                    break;
-                if (!placementAlreadyExists(offspringPopulation, offspring2)) {
-                    auto pos = std::find_if(offspringPopulation.begin(), offspringPopulation.end(), [offspring2](auto s) {
-                        return s.cost > offspring2.cost;
-                    });
-                    offspringPopulation.insert(pos, offspring2);
-                }
-                if(offspringPopulation.size() >= populationSize)
-                    break;
+            if (!placementAlreadyExists(offspringPopulation, offspring2)) {
+                auto pos = std::find_if(offspringPopulation.begin(), offspringPopulation.end(), [offspring2](auto s) {
+                    return s.cost > offspring2.cost;
+                });
+                offspringPopulation.insert(pos, offspring2);
             }
-            j += 1;
         }
+        std::ofstream outfile;
+        outfile.open("benchmark.txt", std::ios_base::app);
+
         numOfIterationsWithoutImprovement += 1;
         /*populationSizes.insert(std::make_pair(i, selectedPortion));
         counts.insert(std::make_pair(i, numOfInvalidOffsprings));
@@ -409,7 +499,7 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
         population.clear();
         population = offspringPopulation;
         offspringPopulation.clear();
-        outfile.open("benchmark.txt", std::ios_base::app);
+        //outfile.open("benchmark.txt", std::ios_base::app);
         outfile << "Cost of Optimized Placement Of Iteration  "<<i+1 << "  is: " << optimizedPlacement.cost << "\n";
         outfile << "Population Size Of Iteration  "<<i+1 << "  is: " << population.size() << "\n";
 
@@ -428,8 +518,7 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
         }
 
         outfile.close();
-    }
-    /*
+        /*
     NES_DEBUG("Cost Before Optimization:  " << costsAfterGA[0]);
     for (auto& [i, numOfInvalidOffsprings] : counts) {
         NES_DEBUG("Current Generation:  " << i+1);
@@ -439,6 +528,9 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
         //NES_DEBUG("Best cost of this generation:  " << costs[i]);
 
     }   */
+
+        }
+
 
     return optimizedPlacement;
 }
@@ -813,9 +905,6 @@ void GeneticAlgorithmStrategy::setMapOfSourceOperatorsIdsToSourceOperatorIndices
     for(uint32_t i = 0 ; i < sourceOperators.size(); i++){
         uint32_t currentSourceOperatorId = sourceOperators[i]->getId();
         uint32_t currentSourceOperatorIdx = 0;
-        if(i > 0){
-            currentSourceOperatorIdx = mapOfSourceOperatorIdToSourceOperatorIdx.find(sourceOperators[i-1]->getId())->second;
-        }
         while(currentSourceOperatorId != queryOperators[currentSourceOperatorIdx]->as<OperatorNode>()->getId()){
             currentSourceOperatorIdx += 1;
         }

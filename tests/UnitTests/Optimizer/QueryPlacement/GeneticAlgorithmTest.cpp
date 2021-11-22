@@ -117,6 +117,8 @@ class GeneticAlgorithmStrategyTest : public testing::Test {
 };
 
 TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrategy1) {
+    std::ofstream outfile;
+    outfile.open ("benchmark.txt");
 
     setupTopologyAndStreamCatalogForGA(10);
 
@@ -127,60 +129,27 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
                                                                               topology,
                                                                               typeInferencePhase,
                                                                               streamCatalog);
-    // Prepare the query
-    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-    auto filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
-    auto mapOperator = LogicalOperatorFactory::createMapOperator(Attribute("newId") = Attribute("id") * 2);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
-    sinkOperator->addChild(mapOperator);
-    mapOperator->addChild(filterOperator);
-    filterOperator->addChild(sourceOperator);
+    Query query = Query::from("car").filter(Attribute("id") < 45).map(Attribute("newId2") = Attribute("id") * 2).sink(PrintSinkDescriptor::create());
 
-    QueryPlanPtr testQueryPlan = QueryPlan::create();
-    testQueryPlan->addRootOperator(sinkOperator);
+    QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
-    testQueryPlan->setQueryId(queryId);
-
-    std::vector<std::map<std::string, std::any>> properties;
-
-    // adding property of the source
-    std::map<std::string, std::any> srcProp;
-    srcProp.insert(std::make_pair("load", 1));
-    srcProp.insert(std::make_pair("dmf", 1.0));
-
-    // adding property of the filter
-    std::map<std::string, std::any> filterProp;
-    filterProp.insert(std::make_pair("load", 2));
-    filterProp.insert(std::make_pair("dmf", 0.4));
-
-    // adding property of the map
-    std::map<std::string, std::any> mapProp;
-    mapProp.insert(std::make_pair("load", 4));
-    mapProp.insert(std::make_pair("dmf", 2.0));
-
-    // adding property of the sink
-    std::map<std::string, std::any> sinkProp;
-    sinkProp.insert(std::make_pair("load", 6));
-    sinkProp.insert(std::make_pair("dmf", 4.0));
-
-    properties.push_back(sinkProp);
-    properties.push_back(mapProp);
-    properties.push_back(filterProp);
-    properties.push_back(srcProp);
+    queryPlan->setQueryId(queryId);
 
     // Execute optimization phases prior to placement
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    testQueryPlan = queryReWritePhase->execute(testQueryPlan);
-    typeInferencePhase->execute(testQueryPlan);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
-    topologySpecificQueryRewrite->execute(testQueryPlan);
-    typeInferencePhase->execute(testQueryPlan);
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+    outfile << "The topology is:\n"<<topology->toString();
+    outfile << "Query Plan:"<<queryPlan->toString()<<"\n";
+    outfile.close();
 
-    UtilityFunctions::assignPropertiesToQueryOperators(testQueryPlan, properties);
     auto start = std::chrono::high_resolution_clock::now();
-    ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(testQueryPlan));
+    ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(queryPlan));
     auto stop = std::chrono::high_resolution_clock::now();
     long count = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
     NES_DEBUG("Found Solution in " << count << "ms");
@@ -312,6 +281,8 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
     }
 }
 TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrategy3) {
+    std::ofstream outfile;
+    outfile.open ("benchmark.txt");
     // Setup the topology
     auto sinkNode = TopologyNode::create(1, "localhost", 4000, 5000, 4);
     auto midNode1 = TopologyNode::create(2, "localhost", 4001, 5001, 4);
@@ -434,43 +405,6 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    std::vector<std::map<std::string, std::any>> properties;
-
-    // adding property of the source
-    std::map<std::string, std::any> srcProp;
-    srcProp.insert(std::make_pair("load", 1));
-    srcProp.insert(std::make_pair("dmf", 1.0));
-
-    // adding property of the filter
-    std::map<std::string, std::any> filterProp;
-    filterProp.insert(std::make_pair("load", 2));
-    filterProp.insert(std::make_pair("dmf", 0.4));
-
-    // adding property of the union
-    std::map<std::string, std::any> unionProp;
-    unionProp.insert(std::make_pair("load", 3));
-    unionProp.insert(std::make_pair("dmf", 3.0));
-
-    // adding property of the sink
-    std::map<std::string, std::any> sinkProp;
-    sinkProp.insert(std::make_pair("load", 4));
-    sinkProp.insert(std::make_pair("dmf", 4.0));
-
-    properties.push_back(sinkProp);
-    properties.push_back(unionProp);
-    properties.push_back(unionProp);
-    properties.push_back(unionProp);
-    properties.push_back(unionProp);
-    properties.push_back(filterProp);
-    properties.push_back(srcProp);
-    properties.push_back(filterProp);
-    properties.push_back(srcProp);
-    properties.push_back(filterProp);
-    properties.push_back(srcProp);
-    properties.push_back(filterProp);
-    properties.push_back(srcProp);
-    properties.push_back(filterProp);
-    properties.push_back(srcProp);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -485,15 +419,21 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
+    outfile << "The topology is:\n"<<topology->toString();
+    outfile << "Query Plan:"<<queryPlan->toString()<<"\n";
+    outfile.close();
+
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties);
     ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(queryPlan));
 }
 
 TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrategy4) {
+    std::ofstream outfile;
+    outfile.open ("benchmark.txt");
+
 
     TopologyPtr topology = Topology::create();
     // create the topology for the test
@@ -656,6 +596,10 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
+    outfile << "The topology is:\n"<<topology->toString();
+    outfile << "Query Plan:"<<queryPlan->toString()<<"\n";
+    outfile.close();
+
     UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties);
     auto start = std::chrono::high_resolution_clock::now();
     ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(queryPlan));
@@ -665,6 +609,11 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
 }
 
 TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrategy55) {
+
+    std::ofstream outfile;
+    outfile.open ("benchmark.txt");
+
+
     TopologyPtr topology = Topology::create();
     // create the topology for the test
     uint32_t grpcPort = 4000;
@@ -760,6 +709,10 @@ TEST_F(GeneticAlgorithmStrategyTest, testPlacingQueryWithGeneticAlgorithmStrateg
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+
+    outfile << "The topology is:\n"<<topology->toString();
+    outfile << "Query Plan:"<<queryPlan->toString()<<"\n";
+    outfile.close();
 
     UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties);
     auto start = std::chrono::high_resolution_clock::now();
@@ -929,6 +882,9 @@ class GeneticAlgorithmStrategyEvaluationTest : public testing::Test{
     TopologyPtr topology;
 };
 TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest1) {
+    std::ofstream outfile;
+    outfile.open ("benchmark.txt");
+
 
     setupTopologyAndStreamCatalogForGA();
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -1063,6 +1019,9 @@ TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest1) {
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
+    outfile << "The topology is:\n"<<topology->toString();
+    outfile << "Query Plan:"<<queryPlan->toString()<<"\n";
+    outfile.close();
 
     UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties);
     auto start = std::chrono::high_resolution_clock::now();
@@ -1074,6 +1033,8 @@ TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest1) {
 
 TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest2) {
 
+    std::ofstream outfile;
+    outfile.open ("benchmark.txt");
     // create the topology for the test
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
@@ -1252,6 +1213,11 @@ TEST_F(GeneticAlgorithmStrategyEvaluationTest, evaluationTest2) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
+    outfile << "The topology is:\n"<<topology->toString();
+    outfile << "Query Plan:"<<queryPlan->toString()<<"\n";
+    outfile.close();
+
+
     UtilityFunctions::assignPropertiesToQueryOperators(queryPlan, properties);
     NES_DEBUG(queryPlan->toString());
     auto testOperators =  QueryPlanIterator(queryPlan).snapshot();
@@ -1405,10 +1371,11 @@ class GeneticAlgorithmBenchmark : public testing::Test {
 
 
 TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFixedTopologyWithDynamicQuery) {
-    std::list<int> listOfInts({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40});
+
+    std::list<int> listOfInts({20});
     std::map<int, std::vector<long>> counts;
     int SourcePerMiddle = 3;
-    int repetitions = 5;
+    int repetitions = 1;
 
 
 
@@ -1435,7 +1402,7 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFi
     sinkProp.insert(std::make_pair("dmf", 4.0));
 
     for(int n : listOfInts) {
-        setupTopologyAndStreamCatalogForGA(4,SourcePerMiddle);
+        setupTopologyAndStreamCatalogForGA(20,SourcePerMiddle);
         GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
         auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("GeneticAlgorithm",
@@ -1467,6 +1434,9 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFi
 
         std::vector<long> counts_n;
         for(int j = 0; j < repetitions; j++) {
+            std::ofstream outfile;
+            outfile.open ("benchmark.txt");
+
             QueryPlanPtr testQueryPlan = query.getQueryPlan();
             QueryId queryId = PlanIdGenerator::getNextQueryId();
             testQueryPlan->setQueryId(queryId);
@@ -1481,7 +1451,9 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFi
             typeInferencePhase->execute(testQueryPlan);
 
             UtilityFunctions::assignPropertiesToQueryOperators(testQueryPlan, properties);
-
+            outfile << "The topology is:\n"<<topology->toString();
+            outfile << "Query Plan:"<<testQueryPlan->toString()<<"\n";
+            outfile.close();
             auto start = std::chrono::high_resolution_clock::now();
             ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(testQueryPlan));
             auto stop = std::chrono::high_resolution_clock::now();
