@@ -17,14 +17,9 @@
 #ifndef NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 #define NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 
-// Should include all headers to build query plans
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-//....
 
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <SerializableQueryPlan.pb.h>
-#include <Util/Logger.hpp>
 #include <cpprest/http_client.h>
 
 namespace NES {
@@ -34,6 +29,8 @@ namespace NES {
  */
 class CPPClient {
   public:
+    CPPClient();
+
     /*
      * @brief Deploy a query to the coordinator
      * @param query plan to deploy
@@ -42,31 +39,7 @@ class CPPClient {
      */
     static web::json::value deployQuery(const QueryPlanPtr& queryPlan,
                                         const std::string& coordinatorHost = "127.0.0.1",
-                                        const std::string& coordinatorRESTPort = "8081") {
-        SubmitQueryRequest request;
-        auto serializedQueryPlan = request.mutable_queryplan();
-        QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
-        std::string msg = request.SerializeAsString();
-
-        web::json::value json_return;
-        web::http::client::http_client client("http://" + coordinatorHost + ":" + coordinatorRESTPort + "/v1/nes/");
-        client.request(web::http::methods::POST, "query/execute-query-ex", msg)
-            .then([](const web::http::http_response& response) {
-                NES_INFO("get first then");
-                return response.extract_json();
-            })
-            .then([&json_return](const pplx::task<web::json::value>& task) {
-                try {
-                    NES_INFO("post execute-query-ex: set return");
-                    json_return = task.get();
-                } catch (const web::http::http_exception& e) {
-                    NES_ERROR("post execute-query-ex: error while setting return" << e.what());
-                }
-            })
-            .wait();
-
-        return json_return;
-    }
+                                        const std::string& coordinatorRESTPort = "8081");
 };
 }// namespace NES
 
