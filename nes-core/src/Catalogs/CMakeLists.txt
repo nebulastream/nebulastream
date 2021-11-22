@@ -24,4 +24,5 @@ add_source_nes(
         UdfCatalog.cpp
         JavaUdfDescriptor.cpp
         BenchmarkSourceStreamConfig.cpp
+        KFSourceStreamConfig.cpp
 )

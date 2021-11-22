@@ -26,7 +26,7 @@
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/AdaptiveKFSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/KFSourceDescriptor.hpp>
 
 #include <Network/NetworkManager.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -220,13 +220,20 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   numSourceLocalBuffers,
                                   lambdaSourceDescriptor->getGatheringMode(),
                                   successors);
-    } else if (sourceDescriptor->instanceOf<AdaptiveKFSourceDescriptor>()) {
+    } else if (sourceDescriptor->instanceOf<KFSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating adaptive KF source");
-        const AdaptiveKFSourceDescriptorPtr adptvKFSourceDescriptor = sourceDescriptor->as<AdaptiveKFSourceDescriptor>();
-        return createAdaptiveKFSource(adptvKFSourceDescriptor->getSchema(), bufferManager, queryManager,
-                                      adptvKFSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-                                      adptvKFSourceDescriptor->getNumBuffersToProcess(), adptvKFSourceDescriptor->getFrequency(),
-                                      numSourceLocalBuffers, operatorId, successors);
+        auto kfSourceDescriptor = sourceDescriptor->as<KFSourceDescriptor>();
+        return createKFSource(kfSourceDescriptor->getSchema(),
+                              kfSourceDescriptor->getMemoryArea(),
+                              kfSourceDescriptor->getMemoryAreaSize(),
+                              bufferManager,
+                              queryManager,
+                              kfSourceDescriptor->getNumBuffersToProcess(),
+                              kfSourceDescriptor->getGatheringValue(),
+                              operatorId,
+                              numSourceLocalBuffers,
+                              kfSourceDescriptor->getSourceAffinity(),
+                              successors);
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

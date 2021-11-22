@@ -17,7 +17,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Sources/AdaptiveKFSource.hpp>
+#include <Sources/KFSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
@@ -260,16 +260,23 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     successors);
 }
 
-DataSourcePtr createAdaptiveKFSource(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager,
-                                     Runtime::QueryManagerPtr queryManager, uint64_t numberOfTuplesToProducePerBuffer,
-                                     uint64_t numBuffersToProcess, uint64_t frequency, size_t numSourceLocalBuffers,
-                                     OperatorId operatorId,
-                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
-    return std::make_shared<AdaptiveKFSource>(schema, bufferManager,
-                                              queryManager, numBuffersToProcess,
-                                              numberOfTuplesToProducePerBuffer,
-                                              frequency, numSourceLocalBuffers,
-                                              operatorId, successors);
+DataSourcePtr createKFSource(const SchemaPtr& schema,
+                             const std::shared_ptr<uint8_t>& memoryArea,
+                             size_t memoryAreaSize,
+                             const Runtime::BufferManagerPtr& bufferManager,
+                             const Runtime::QueryManagerPtr& queryManager,
+                             uint64_t numBuffersToProcess,
+                             uint64_t gatheringValue,
+                             OperatorId operatorId,
+                             size_t numSourceLocalBuffers,
+                             uint64_t sourceAffinity,
+                             const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+    return std::make_shared<KFSource>(schema, memoryArea, memoryAreaSize,
+                                      bufferManager, queryManager,
+                                      numBuffersToProcess, gatheringValue,
+                                      operatorId, numSourceLocalBuffers,
+                                      DataSource::GatheringMode::FREQUENCY_MODE,
+                                      sourceAffinity, successors);
 }
 
 #ifdef ENABLE_KAFKA_BUILD
