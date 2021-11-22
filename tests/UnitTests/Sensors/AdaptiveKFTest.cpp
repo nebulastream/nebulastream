@@ -17,7 +17,6 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Sources/AdaptiveKFSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <Util/Logger.hpp>
@@ -57,11 +56,6 @@ class AdaptiveKFTest : public testing::Test {
         buffer_size = nodeEngine->getBufferManager()->getBufferSize();
         num_of_buffers = 1;
         num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
-
-        const DataSourcePtr source =
-            createAdaptiveKFSource(schema, nodeEngine->getBufferManager(),
-                                   nodeEngine->getQueryManager(), num_tuples_to_process,
-                                   num_of_buffers, 1, 12, 1, {});
 
         // Fake measurements for y with noise
         measurements = {
