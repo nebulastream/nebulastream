@@ -14,6 +14,7 @@
 
 add_subdirectory(API)
 add_subdirectory(Catalogs)
+add_subdirectory(Client)
 add_subdirectory(Common)
 add_subdirectory(Compiler)
 add_subdirectory(Components)
