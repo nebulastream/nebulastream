@@ -428,6 +428,9 @@ class KFSourceProxy : public KFSource {
   private:
     FRIEND_TEST(SourceTest, testKFSourceGetType);
     FRIEND_TEST(SourceTest, testKFSourceConstruction);
+    FRIEND_TEST(SourceTest, testKFSourceReadCSVWrongPath);
+    FRIEND_TEST(SourceTest, testKFSourceReadCSVCorrectPath);
+    FRIEND_TEST(SourceTest, testKFSourceReadCSVInputClosedAfterRead);
 };
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
@@ -1807,6 +1810,44 @@ TEST_F(SourceTest, testKFSourceConstruction) {
     ASSERT_EQ(kfSource.memoryAreaSize, this->bufferAreaSize);
     ASSERT_TRUE(kfSource.memoryArea && kfSource.memoryAreaSize > 0);
     ASSERT_EQ(kfSource.sourceAffinity, this->sourceAffinity);
+    ASSERT_FALSE(kfSource.fileInput.is_open());
+}
+
+TEST_F(SourceTest, testKFSourceReadCSVWrongPath) {
+    auto memAreaCast = static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea);
+    KFSourceProxy kfSource(this->schema,
+                           memAreaCast,
+                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
+                           this->nodeEngine->getQueryManager(), 0, 1000,
+                           this->operatorId, this->numSourceLocalBuffersDefault,
+                           DataSource::GatheringMode::FREQUENCY_MODE,
+                           this->sourceAffinity, {});
+    ASSERT_FALSE(kfSource.loadCsvInMemory(this->wrong_filepath));
+}
+
+TEST_F(SourceTest, testKFSourceReadCSVCorrectPath) {
+    auto memAreaCast = static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea);
+    KFSourceProxy kfSource(this->schema,
+                           memAreaCast,
+                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
+                           this->nodeEngine->getQueryManager(), 0, 1000,
+                           this->operatorId, this->numSourceLocalBuffersDefault,
+                           DataSource::GatheringMode::FREQUENCY_MODE,
+                           this->sourceAffinity, {});
+    ASSERT_TRUE(kfSource.loadCsvInMemory(this->path_to_file));
+}
+
+TEST_F(SourceTest, testKFSourceReadCSVInputClosedAfterRead) {
+    auto memAreaCast = static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea);
+    KFSourceProxy kfSource(this->schema,
+                           memAreaCast,
+                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
+                           this->nodeEngine->getQueryManager(), 0, 1000,
+                           this->operatorId, this->numSourceLocalBuffersDefault,
+                           DataSource::GatheringMode::FREQUENCY_MODE,
+                           this->sourceAffinity, {});
+    ASSERT_TRUE(kfSource.loadCsvInMemory(this->path_to_file));
+    ASSERT_FALSE(kfSource.fileInput.is_open());
 }
 
 TEST_F(SourceTest, testMemorySource) {

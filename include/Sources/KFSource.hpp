@@ -19,6 +19,7 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <fstream>
 
 namespace NES {
 
@@ -72,7 +73,14 @@ class KFSource : public GeneratorSource, public Runtime::BufferRecycler {
     void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
     void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
 
+    /**
+     * @brief read a csv from path and load it in memory as buffers.
+     * @return true if success, false otherwise
+     */
+    bool loadCsvInMemory(std::string path);
+
   protected:
+    std::ifstream fileInput;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t bufferSize;
