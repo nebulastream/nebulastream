@@ -14,10 +14,13 @@
     limitations under the License.
 */
 
+#include <API/AttributeField.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/KFSource.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 
 namespace NES {
 
@@ -66,6 +69,34 @@ void KFSource::open() {
 std::optional<Runtime::TupleBuffer> KFSource::receiveData() {
     // TODO: read from memory and emit buffer
     return bufferManager->getBufferBlocking();
+}
+
+bool KFSource::loadCsvInMemory(std::string path) {
+    NES_DEBUG("KFSource: Opening path " << path);
+    // TODO: if c++17, change to std::filesystem::path path{ "dir/file/path" };
+    char* filePath = realpath(path.c_str(), nullptr);
+    fileInput.open(filePath);
+    NES_DEBUG("CSVSource::CSVSource: read buffer");
+    fileInput.seekg(0, std::ifstream::end);
+    auto const reportedFileSize = fileInput.tellg();
+    if (fileInput.bad() || reportedFileSize == -1) {
+        return false;
+    }
+    size_t fileSize = static_cast<decltype(fileSize)>(reportedFileSize);
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    std::vector<PhysicalTypePtr> physicalTypes;
+    for (const auto& field : schema->fields) {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+    }
+    auto inputParser = std::make_shared<CSVParser>(schema->getSchemaSizeInBytes(), schema->getSize(), physicalTypes, ",");
+    fileInput.seekg(0, std::ifstream::beg);
+    // auto tuplesPerBuffer = bufferSize / tupleSize;
+    // uint64_t tupleCount = 0;
+    std::string line;
+    std::getline(fileInput, line); // skip header
+    fileInput.close();
+    return true;
 }
 
 }//namespace NES
