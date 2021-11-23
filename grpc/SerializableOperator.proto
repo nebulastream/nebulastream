@@ -479,7 +479,6 @@ message SerializableOperator{
       enum JoinType{
         INNER_JOIN = 0;
         CARTESIAN_PRODUCT = 1;
-        ALL_POSSIBILITIES = 2;
       }
       JoinType jointype = 1;
     }
