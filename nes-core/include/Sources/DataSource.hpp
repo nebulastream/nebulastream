@@ -28,8 +28,9 @@
 #include <mutex>
 #include <optional>
 #include <thread>
-#ifdef ENABLE_ADAPTIVE
+#ifdef ENABLE_ADAPTIVE_BUILD
 #include <Util/CircularBuffer.hpp>
+#include <Util/KalmanFilter.hpp>
 #endif
 
 namespace NES {

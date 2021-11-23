@@ -75,7 +75,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
                 CsvSourceDescriptor::create(csvSourcePtr->getSchema(), csvSourcePtr->getSourceConfigPtr());
             return csvSourceDescriptor;
         }
-        case ADAPTIVE_KF_SOURCE: {
+        case KF_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Adaptive KF source");
             const AdaptiveKFSourcePtr adaptiveKfSourcePtr = std::dynamic_pointer_cast<AdaptiveKFSource>(dataSource);
             const SourceDescriptorPtr adaptiveKfSourceDescriptor =
