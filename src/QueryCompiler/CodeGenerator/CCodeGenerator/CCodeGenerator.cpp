@@ -1110,7 +1110,7 @@ bool CCodeGenerator::generateCodeForCEPIterationOperator(uint64_t minIteration,
         getCEPIterationOperatorHandler(context, context->code->varDeclarationExecutionContext, index);
     // creates the following line of code
     // auto CEPOperatorHandler = pipelineExecutionContext.getOperatorHandler<CEP::CEPOperatorHandler>(0);
-    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: got CEPOperatorHadnler");
+    NES_DEBUG("CCodeGenerator::generateCodeForCEPIteration: got CEPOperatorHandler");
 
     // for each tuple: call addTuple on CEPOperatorCounter to count occurrences of events
     auto updateCounter = VarRef(CEPOperatorHandlerDeclaration).accessPtr(call("incrementCounter"));
@@ -1680,7 +1680,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     if (buildSide == QueryCompilation::JoinBuildSide::Left) {
         auto joinKeyFieldName = joinDef->getLeftJoinKey()->getFieldName();
         keyVariableDeclaration =
-            VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName);
+            VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName + "leftKey");
 
         NES_ASSERT2_FMT(recordHandler->hasAttribute(joinKeyFieldName),
                         "join key is not defined on input tuple << " << joinKeyFieldName);
