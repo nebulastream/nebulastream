@@ -1183,4 +1183,69 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
+
+/**
+ * Test of Notification from Worker to Coordinator of a failed Query.
+ * ToDo: Should be moved to Unit Test ? Open a grpc folder there?
+ */
+TEST_F(QueryDeploymentTest, testGrpcNotifyQueryFailure) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart);
+    NES_INFO("QueryDeploymentTest: Worker started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    std::string outputFilePath1 = "test1.out";
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath1
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    auto globalQueryPlan = crd->getGlobalQueryPlan(); //necessary?
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    QueryId subQueryId; // how get the ID of subquery?
+    uint64_t workerId = wrk->getWorkerId();
+    uint64_t operatorId; //how get the operator ID?
+    std::string errormsg = "Query failed.";
+    bool successOfNotifyingQueryFailure = wrk->notifyQueryFailure(queryId, subQueryId, workerId, operatorId, errormsg);
+
+    EXPECT_TRUE(successOfNotifyingQueryFailure);
+    // Protobuf element überprüfen? how?
+    // request.queryId == queryId ??
+    // EXPECT_EQ()
+
+
+    
+    // stop coordinator and worker
+
+    NES_INFO("QueryDeploymentTest: Stop worker");
+    bool retStopWrk = wrk->stop(true);
+    EXPECT_TRUE(retStopWrk);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+}
+
 }// namespace NES
