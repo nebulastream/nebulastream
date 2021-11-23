@@ -28,6 +28,9 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+#ifdef ENABLE_ADAPTIVE
+#include <Util/CircularBuffer.hpp>
+#endif
 
 namespace NES {
 
@@ -41,7 +44,6 @@ enum SourceType {
     SENSE_SOURCE,
     DEFAULT_SOURCE,
     NETWORK_SOURCE,
-    ADAPTIVE_KF_SOURCE,
     KF_SOURCE,
     MONITORING_SOURCE,
     MEMORY_SOURCE,
@@ -62,7 +64,7 @@ enum SourceType {
 class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
   public:
-    enum GatheringMode { FREQUENCY_MODE, INGESTION_RATE_MODE };
+    enum GatheringMode { FREQUENCY_MODE, INGESTION_RATE_MODE, KF_MODE };
 
     /**
      * @brief public constructor for data source
@@ -278,6 +280,11 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     * @brief running routine with a fix ingestion rate
     */
     virtual void runningRoutineWithIngestionRate();
+
+    /**
+    * @brief running routine with an adaptive rate, KF strategy
+    */
+    virtual void runningRoutineWithKF();
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

@@ -52,9 +52,11 @@ DataSource::GatheringMode DataSource::getGatheringModeFromString(const std::stri
     }
     if (mode == "ingestionrate") {
         return GatheringMode::INGESTION_RATE_MODE;
-    } else {
-        NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
     }
+    if (mode == "adaptive") {
+        return GatheringMode::KF_MODE;
+    }
+    NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
 }
 
 DataSource::DataSource(SchemaPtr pSchema,
@@ -230,6 +232,8 @@ void DataSource::runningRoutine() {
         runningRoutineWithFrequency();
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         runningRoutineWithIngestionRate();
+    } else if (gatheringMode == GatheringMode::KF_MODE) {
+        runningRoutineWithKF();
     }
 }
 
@@ -412,6 +416,62 @@ void DataSource::runningRoutineWithFrequency() {
     bufferManager->destroy();
     queryManager.reset();
     NES_DEBUG("DataSource " << operatorId << " end running");
+}
+
+void DataSource::runningRoutineWithKF() {
+    NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
+    std::string thName = "DataSrc-" + std::to_string(operatorId);
+    setThreadName(thName.c_str());
+
+    auto ts = std::chrono::system_clock::now();
+    auto zeroSecInMillis = std::chrono::milliseconds(0);
+    std::chrono::milliseconds lastTimeStampMillis = std::chrono::duration_cast<std::chrono::milliseconds>(ts.time_since_epoch());
+    uint64_t cnt = 0;
+
+    if (numBuffersToProcess == 0) {
+        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+                  "the source is empty");
+    } else {
+        NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
+    }
+    open();
+
+    while (this->isRunning()) {
+        auto tsNow = std::chrono::system_clock::now();
+        std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
+
+        if (gatheringInterval == zeroSecInMillis
+            || (lastTimeStampMillis != nowInMillis
+                && (nowInMillis - lastTimeStampMillis <= this->gatheringInterval
+                    || (nowInMillis - lastTimeStampMillis % this->gatheringInterval).count() == 0))) {
+            lastTimeStampMillis = nowInMillis;
+            if (cnt < numBuffersToProcess) {
+                auto optBuf = this->receiveData();
+                if (optBuf.has_value()) {
+                    auto& buf = optBuf.value();
+                    // TODO: add KF update and predict here
+                    NES_DEBUG("DataSource " << this->operatorId << " string=" << this->toString()
+                                                << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
+                                                << " iteration=" << cnt);
+
+                    emitWorkFromSource(buf);
+                    cnt++;
+                }
+            }
+            NES_DEBUG("DataSource::runningRoutine running " << this);
+        } else {
+            NES_DEBUG("DataSource::runningRoutine sleep " << this);
+            std::this_thread::sleep_for(this->gatheringInterval);
+            continue;
+        }
+    }
+    close();
+    // inject reconfiguration task containing end of stream
+    NES_DEBUG("DataSource " << operatorId << ": Data Source add end of stream. Gracefully= " << wasGracefullyStopped);
+    queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
+    bufferManager->destroy();
+    queryManager.reset();
+    NES_DEBUG("DataSource " << this->operatorId << ": end running");
 }
 
 // debugging
