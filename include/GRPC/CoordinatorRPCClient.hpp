@@ -130,8 +130,6 @@ class CoordinatorRPCClient {
      * @return bool indicating success
      */
     bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg);
-    // schiebe nach Coordinator Client
-    // no need of address
 
   private:
     uint64_t workerId;
