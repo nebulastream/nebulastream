@@ -1235,7 +1235,7 @@ TEST_F(QueryDeploymentTest, testGrpcNotifyQueryFailure) {
     // EXPECT_EQ()
 
 
-    
+
     // stop coordinator and worker
 
     NES_INFO("QueryDeploymentTest: Stop worker");
