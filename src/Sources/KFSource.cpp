@@ -49,6 +49,20 @@ KFSource::KFSource(SchemaPtr schema,
     this->sourceAffinity = sourceAffinity;
     this->bufferSize = this->localBufferManager->getBufferSize();
 
+    //if the memory area is smaller than a buffer
+    if (memoryAreaSize <= bufferSize) {
+        numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schema->getSchemaSizeInBytes()));
+    } else {
+        //if the memory area spans multiple buffers
+        auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->schema->getSchemaSizeInBytes();
+        auto numberOfTuplesPerBuffer = std::floor(double(bufferSize) / double(this->schema->getSchemaSizeInBytes()));
+        if (restTuples > numberOfTuplesPerBuffer) {
+            numberOfTuplesToProduce = numberOfTuplesPerBuffer;
+        } else {
+            numberOfTuplesToProduce = restTuples;
+        }
+    }
+
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 

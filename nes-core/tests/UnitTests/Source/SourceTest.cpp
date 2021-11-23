@@ -1776,9 +1776,12 @@ TEST_F(SourceTest, testKFSourceConstruction) {
     ASSERT_EQ(kfSource.getGatheringIntervalCount(), 1000u);
     ASSERT_EQ(kfSource.memoryArea, memAreaCast);
     ASSERT_EQ(kfSource.memoryAreaSize, this->bufferAreaSize);
-    ASSERT_TRUE(kfSource.memoryArea && kfSource.memoryAreaSize > 0);
     ASSERT_EQ(kfSource.sourceAffinity, this->sourceAffinity);
     ASSERT_FALSE(kfSource.fileInput.is_open());
+    ASSERT_TRUE(kfSource.bufferSize > 0);
+    ASSERT_TRUE(kfSource.bufferSize > 0);
+    ASSERT_TRUE(kfSource.numberOfTuplesToProduce > 0);
+    ASSERT_TRUE(kfSource.memoryArea && kfSource.memoryAreaSize > 0);
 }
 
 TEST_F(SourceTest, testKFSourceReadCSVWrongPath) {
