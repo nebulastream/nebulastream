@@ -16,9 +16,11 @@
 
 #include <gtest/gtest.h>
 
-#include <Client/CPPClient.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <client/include/CPPClient.hpp>
+
 #include <unistd.h>
 
 using namespace std;
@@ -52,7 +54,6 @@ class CPPClientTest : public testing::Test {
 TEST_F(CPPClientTest, DeployQueryTest) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -77,9 +78,9 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     // Register query
-    SourceConfigPtr sourceConfig;
-    sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceConfig("");
+    CSVSourceConfigPtr sourceConfig;
+    sourceConfig = CSVSourceConfig::create();
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");

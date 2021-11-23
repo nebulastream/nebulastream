@@ -19,6 +19,7 @@
 
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Util/Logger.hpp>
 
 #include <cpprest/http_client.h>
 
