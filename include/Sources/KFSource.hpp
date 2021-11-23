@@ -84,6 +84,8 @@ class KFSource : public GeneratorSource, public Runtime::BufferRecycler {
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t bufferSize;
+    uint64_t numberOfTuplesToProduce;
+    uint64_t currentPositionInBytes;
     Runtime::TupleBuffer numaLocalMemoryArea;
 };
 
