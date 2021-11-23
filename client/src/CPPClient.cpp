@@ -14,15 +14,16 @@
     limitations under the License.
 */
 
-#include <Client/CPPClient.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <SerializableQueryPlan.pb.h>
+#include <client/include/CPPClient.hpp>
 
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-CPPClient::CPPClient() { NES::setupLogging("nesClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG")); }
+CPPClient::CPPClient() { /*NES::setupLogging("nesClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG")); */
+}
 
 web::json::value CPPClient::deployQuery(const QueryPlanPtr& queryPlan,
                                         const std::string& coordinatorHost,
@@ -30,11 +31,12 @@ web::json::value CPPClient::deployQuery(const QueryPlanPtr& queryPlan,
     SubmitQueryRequest request;
     auto serializedQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan, true);
-    std::string msg = request.SerializeAsString();
-    auto &context = *request.mutable_context();
+    auto& context = *request.mutable_context();
     auto bottomUpPlacement = google::protobuf::Any();
     bottomUpPlacement.set_value("BottomUp");
     context["placement"] = bottomUpPlacement;
+
+    std::string msg = request.SerializeAsString();
 
     web::json::value json_return;
     web::http::client::http_client client("http://" + coordinatorHost + ":" + coordinatorRESTPort + "/v1/nes/");
