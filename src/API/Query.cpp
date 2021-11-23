@@ -109,7 +109,6 @@ Seq::Seq(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), o
     //last, define the artificial attributes as key attributes
     onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
     onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
-
 }
 
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
@@ -117,8 +116,8 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
     std::vector<std::string> sourceNameLeft;
     std::vector<std::string> sourceNameRight;
-    sourceNameLeft.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
-    sourceNameRight.emplace_back(originalQuery.getQueryPlan()->getSourceConsumed());
+    sourceNameLeft.emplace_back(originalQuery.getQueryPlan()->getSourceConsumed());
+    sourceNameRight.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
     std::string streamNameLeft = sourceNameLeft[0] + "$" + timestamp;
     std::string streamNameRight = sourceNameRight[0] + "$" + timestamp;
     NES_DEBUG("ExpressionItem for Left stream " << streamNameLeft);
@@ -128,7 +127,7 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
 }
 
 //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
-std::string keyAssignmentRight(){
+std::string keyAssignmentRight() {
     //first, get unique ids for the key attributes
     auto cepRightId = Util::getNextOperatorId();
     //second, create a unique name for both key attributes
@@ -136,12 +135,12 @@ std::string keyAssignmentRight(){
     return cepRightKey;
 }
 
-std::string keyAssignmentLeft(){
+std::string keyAssignmentLeft() {
     //first, get unique ids for the key attributes
     auto cepLeftId = Util::getNextOperatorId();
     //second, create a unique name for both key attributes
     std::string cepLeftKey = "cep_leftkey" + std::to_string(cepLeftId);
-   return cepLeftKey;
+    return cepLeftKey;
 }
 }// namespace CEPOperatorBuilder
 
