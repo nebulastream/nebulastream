@@ -38,7 +38,6 @@
 #endif
 #endif
 #include <utility>
-#include <zconf.h>
 namespace NES {
 
 std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {

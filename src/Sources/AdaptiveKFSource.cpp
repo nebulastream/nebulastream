@@ -66,7 +66,7 @@ uint64_t AdaptiveKFSource::getNumberOfTuplesToProducePerBuffer() const { return 
 
 uint64_t AdaptiveKFSource::getFrequency() const { return frequency; }
 
-SourceType AdaptiveKFSource::getType() const { return ADAPTIVE_KF_SOURCE; }
+SourceType AdaptiveKFSource::getType() const { return KF_SOURCE; }
 
 void AdaptiveKFSource::sampleSourceAndFillBuffer(Runtime::TupleBuffer& buf) {
     NES_DEBUG("AdaptiveKFSource::sampleSourceAndFillBuffer called on " << operatorId);
