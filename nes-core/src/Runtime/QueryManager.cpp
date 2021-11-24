@@ -1172,5 +1172,6 @@ uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
 bool QueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
 
 uint64_t QueryManager::getNextTaskId() { return ++taskIdCounter; }
+uint64_t QueryManager::getNumberOfWorkerThreads() { return numThreads; }
 
 }// namespace NES::Runtime
