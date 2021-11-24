@@ -93,8 +93,9 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     Query query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
 
-    web::json::value postJsonReturn = cppClient.deployQuery(query.getQueryPlan(), "localhost", std::to_string(restPort));
+    web::json::value postJsonReturn = cppClient.deployQuery(queryPlan, "localhost", std::to_string(restPort));
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
     EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
@@ -111,17 +112,10 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     EXPECT_TRUE(insertedQueryPlan->getQueryId() != queryPlan->getQueryId());
     EXPECT_TRUE(insertedQueryPlan->getQuerySubPlanId() != queryPlan->getQuerySubPlanId());
 
-    stopWorker(*wrk1);
-    stopCoordinator(*crd);
-    /*EXPECT_TRUE(postJsonReturn.has_field("queryId"));
-    EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
-    NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-    NES_INFO("RESTEndpointTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");*/
 }
 
 }// namespace NES
