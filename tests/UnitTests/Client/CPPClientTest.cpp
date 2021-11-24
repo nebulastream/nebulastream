@@ -98,13 +98,30 @@ TEST_F(CPPClientTest, DeployQueryTest) {
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
     EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
+
+    EXPECT_TRUE(postJsonReturn.has_field("queryId"));
+    EXPECT_TRUE(crd->getQueryCatalog()->queryExists(postJsonReturn.at("queryId").as_integer()));
+
+    auto insertedQueryPlan =
+        crd->getQueryCatalog()->getQueryCatalogEntry(postJsonReturn.at("queryId").as_integer())->getInputQueryPlan();
+    // Expect that the query id and query sub plan id from the deserialized query plan are valid
+    EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
+    EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
+    // Since the deserialization acquires the next queryId and querySubPlanId from the PlanIdGenerator, the deserialized Id should not be the same with the original Id
+    EXPECT_TRUE(insertedQueryPlan->getQueryId() != queryPlan->getQueryId());
+    EXPECT_TRUE(insertedQueryPlan->getQuerySubPlanId() != queryPlan->getQuerySubPlanId());
+
+    stopWorker(*wrk1);
+    stopCoordinator(*crd);
+    /*EXPECT_TRUE(postJsonReturn.has_field("queryId"));
+    EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
     NES_INFO("RESTEndpointTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("RESTEndpointTest: Test finished");
+    NES_INFO("RESTEndpointTest: Test finished");*/
 }
 
 }// namespace NES
