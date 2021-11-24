@@ -43,6 +43,7 @@ class SimplePatternTest : public testing::Test {
     CoordinatorConfigPtr coConf;
     WorkerConfigPtr wrkConf;
     CSVSourceConfigPtr srcConf;
+    CSVSourceConfigPtr srcConf1;
 
     static void SetUpTestCase() {
         NES::setupLogging("SimplePatternTest.log", NES::LOG_DEBUG);
@@ -55,6 +56,7 @@ class SimplePatternTest : public testing::Test {
         coConf = CoordinatorConfig::create();
         wrkConf = WorkerConfig::create();
         srcConf = CSVSourceConfig::create();
+        srcConf1 = CSVSourceConfig::create();
 
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);
@@ -493,7 +495,7 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
 TEST_F(SimplePatternTest, testOrPattern) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    srcConf1->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -537,13 +539,13 @@ TEST_F(SimplePatternTest, testOrPattern) {
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
 
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->setPhysicalStreamName("test_stream_R2000073");
-    srcConf->setLogicalStreamName("QnV1");
+    srcConf1->setSourceType("CSVSource");
+    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf1->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf1->setPhysicalStreamName("test_stream_R2000073");
+    srcConf1->setLogicalStreamName("QnV1");
     //register physical stream R2000073
-    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf1);
     wrk2->registerPhysicalStream(conf73);
 
     std::string outputFilePath = "testOrPatternWithTestStream.out";
