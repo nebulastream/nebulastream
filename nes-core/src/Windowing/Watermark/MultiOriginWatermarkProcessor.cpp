@@ -27,8 +27,10 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
     return std::make_shared<MultiOriginWatermarkProcessor>(numberOfOrigins);
 }
 
-void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId origenId) {
-    std::unique_lock lock(watermarkLatch);
+std::tuple<uint64_t, uint64_t>
+MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId origenId) {
+    std::lock_guard<std::recursive_mutex> lock(watermarkLatch);
+    auto oldWatermark = getCurrentWatermark();
     // insert new local watermark processor if the id is not present in the map
     if (localWatermarkProcessor.find(origenId) == localWatermarkProcessor.end()) {
         localWatermarkProcessor[origenId] = std::make_unique<WatermarkProcessor>();
@@ -37,10 +39,12 @@ void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumb
                     "The watermark processor maintains watermarks from " << localWatermarkProcessor.size()
                                                                          << " origins but we only expected  " << numberOfOrigins);
     localWatermarkProcessor[origenId]->updateWatermark(ts, sequenceNumber);
+    auto currentWatermark = getCurrentWatermark();
+    return {oldWatermark, currentWatermark};
 }
 
 WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const {
-    std::unique_lock lock(watermarkLatch);
+    std::lock_guard<std::recursive_mutex> lock(watermarkLatch);
     // check if we already registered each expected origin in the local watermark processor map
     if (localWatermarkProcessor.size() != numberOfOrigins) {
         return 0;

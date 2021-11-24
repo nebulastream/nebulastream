@@ -62,8 +62,9 @@ class MultiOriginWatermarkProcessor {
     /**
      * @brief Processes a watermark barrier.
      * @param watermarkBarrier
+     * @returns tuple of oldWatermark and newWatermark
      */
-    void updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId origin);
+    std::tuple<uint64_t, uint64_t> updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId origin);
 
     /**
      * @brief Returns the visible watermark across all origins.
@@ -72,7 +73,7 @@ class MultiOriginWatermarkProcessor {
     [[nodiscard]] WatermarkTs getCurrentWatermark() const;
 
   private:
-    mutable std::mutex watermarkLatch;
+    mutable std::recursive_mutex watermarkLatch;
     const uint64_t numberOfOrigins;
     // The watermark processor maintains a local watermark processor for each origin.
     std::map<uint64_t, std::unique_ptr<WatermarkProcessor>> localWatermarkProcessor;
