@@ -168,6 +168,18 @@ class NesWorker {
      */
     [[nodiscard]] bool isWorkerRunning() const noexcept;
 
+    /**
+     * @brief Method to let the Coordinator know that a Query failed
+     * @param queryId
+     * @param subQueryId
+     * @param workerId
+     * @param operatorId
+     * @param errormsg
+     * @return true if Notification was successful, false otherwise
+     */
+    bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg);
+
+
     uint64_t getWorkerId();
 
   private:
