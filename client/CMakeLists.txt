@@ -187,23 +187,23 @@ endif ()
 
 # Set Sources and Headers
 add_subdirectory(src)
-get_source_nes(nes_SOURCE_FILES)
-get_header_nes(nes_HEADER_FILES)
+get_source_nes_client(nes_SOURCE_FILES)
+get_header_nes_client(nes_HEADER_FILES)
 
 # Set NES Lib
 file(GLOB LIBNES "../cmake-build-debug/libnes.*")
 message("Found libnes: " ${LIBNES})
 
 # Add Library
-add_library(nesClient SHARED ${nes_SOURCE_FILES} ${nes_HEADERS_FILES})
-target_include_directories(nesClient PUBLIC "../" "../include")
-target_link_libraries(nesClient PUBLIC ${LIBNES})
+add_library(nes_client SHARED ${nes_SOURCE_FILES} ${nes_HEADERS_FILES})
+target_include_directories(nes_client PUBLIC "../" "../include")
+target_link_libraries(nes_client PUBLIC ${LIBNES})
 if (GRPC_LIBRARIES)
-    target_link_libraries(nesClient PRIVATE ${GRPC_LIBRARIES})
+    target_link_libraries(nes_client PRIVATE ${GRPC_LIBRARIES})
 endif ()
 
 #Change to alter behaviour of cpack and installation directory of deb package
-install(TARGETS nesClient
+install(TARGETS nes_client
         COMPONENT nesLibrary
         DESTINATION lib)
 
@@ -225,9 +225,9 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
 INCLUDE(CPack)
 
 #Other configurations
-project_enable_clang_format()
-if (CMAKE_CROSSCOMPILING)
-    project_enable_emulated_tests()
-endif ()
-project_enable_release()
-project_enable_version()
+#project_enable_clang_format()
+#if (CMAKE_CROSSCOMPILING)
+#    project_enable_emulated_tests()
+#endif ()
+#project_enable_release()
+#project_enable_version()

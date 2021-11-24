@@ -553,6 +553,10 @@ if (GRPC_LIBRARIES)
     target_link_libraries(nesWorker PRIVATE ${GRPC_LIBRARIES})
 endif ()
 
+# Add client
+add_subdirectory(client)
+
+# Add tests with command
 if (NES_ENABLES_TESTS)
     # Add tests with command
     enable_testing()
