@@ -29,7 +29,6 @@
 #include <optional>
 #include <thread>
 #ifdef ENABLE_ADAPTIVE_BUILD
-#include <Util/CircularBuffer.hpp>
 #include <Util/KalmanFilter.hpp>
 #endif
 
@@ -286,6 +285,13 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     * @brief running routine with an adaptive rate, KF strategy
     */
     virtual void runningRoutineWithKF();
+#ifdef ENABLE_ADAPTIVE_BUILD
+    /**
+     * @brief the KF associated with a source.
+     * We use default values for initialization.
+     */
+    KalmanFilter kFilter;
+#endif
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

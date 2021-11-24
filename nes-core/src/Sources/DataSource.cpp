@@ -68,7 +68,9 @@ DataSource::DataSource(SchemaPtr pSchema,
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
-
+#ifdef ENABLE_ADAPTIVE_BUILD
+    this->kFilter.setDefaultValues();
+#endif
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");

@@ -14,10 +14,11 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_KALMANFILTER_H_
-#define INCLUDE_KALMANFILTER_H_
+#ifndef NES_INCLUDE_UTIL_KALMAN_FILTER_HPP_
+#define NES_INCLUDE_UTIL_KALMAN_FILTER_HPP_
 
 #include <Eigen/Dense>
+#include <Util/CircularBuffer.hpp>
 
 namespace NES {
 
@@ -29,8 +30,9 @@ class KalmanFilter {
                           Eigen::MatrixXd H,
                           Eigen::MatrixXd Q,
                           Eigen::MatrixXd R,
-                          Eigen::MatrixXd P);
-    KalmanFilter();
+                          Eigen::MatrixXd P,
+                          const uint64_t errorWindowSize = 10);
+    explicit KalmanFilter(const uint64_t errorWindowSize = 10);
 
     void init();// all zeroes
     void init(const Eigen::VectorXd& initialState);
@@ -48,8 +50,11 @@ class KalmanFilter {
     Eigen::MatrixXd getError() { return P; }
     Eigen::MatrixXd getInnovationError() { return innovationError; }
     double getEstimationError() { return estimationError; }
+    uint64_t getTheta() { return theta; }
+    float getLambda() { return lambda; }
+    void setLambda(float newLambda);
 
-  private:
+  protected:
     int m, n;// system model dimensions
 
     /**
@@ -74,8 +79,38 @@ class KalmanFilter {
     double currentTime;
     double estimationError;// eq. 8
 
+    /**
+     * @brief control units for changing the new
+     * frequency. Theta (θ) is static according
+     * to the paper in Jain et al.
+     */
+    uint64_t theta = 2; // θ = 2 in all experiments
+    float lambda = 0.6; // λ = 0.6 in most experiments
+
+    /**
+     * @brief _e_ constant, used to calculate
+     * magnitude of change for the new
+     * frequency estimation.
+     */
+    const double eulerConstant = std::exp(1.0);
+
+    /**
+     * @brief buffer of residual error from KF
+     */
+    CircularBuffer<long> kfErrorWindow;
+
+    /**
+     * Error calculation using the window of previous
+     * values.
+     * @return the current estimation error, weighted
+     * by recency and size.
+     */
+    float totalEstimationErrorDivider;
+    long calculateTotalEstimationError(); // eq. 9
+    void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calc. once)
+
 };// class KalmanFilter
 
 }// namespace NES
 
-#endif /* INCLUDE_KALMANFILTER_H_ */
+#endif // NES_INCLUDE_UTIL_KALMAN_FILTER_HPP_

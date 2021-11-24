@@ -18,16 +18,21 @@
 #include <ctime>
 
 namespace NES {
-KalmanFilter::KalmanFilter(){};
+KalmanFilter::KalmanFilter(const uint64_t errorWindowSize)
+    : kfErrorWindow(errorWindowSize) {
+        this->calculateTotalEstimationErrorDivider(errorWindowSize);
+};
 
 KalmanFilter::KalmanFilter(double timeStep,
                            const Eigen::MatrixXd F,
                            const Eigen::MatrixXd H,
                            const Eigen::MatrixXd Q,
                            const Eigen::MatrixXd R,
-                           const Eigen::MatrixXd P)
+                           const Eigen::MatrixXd P,
+                           const uint64_t errorWindowSize)
     : m(H.rows()), n(F.rows()), F(F), H(H), Q(Q), R(R), P0(P), I(n, n), xHat(n), xHatNew(n), innovationError(n),
-      timeStep(timeStep) {
+      timeStep(timeStep), kfErrorWindow(errorWindowSize) {
+    this->calculateTotalEstimationErrorDivider(errorWindowSize);
     I.setIdentity();
 }
 
@@ -113,6 +118,27 @@ void KalmanFilter::update(const Eigen::VectorXd& measuredValues, double newTimeS
     this->F = F;
     timeStep = newTimeStep;
     this->update(measuredValues);
+}
+
+void KalmanFilter::setLambda(float newLambda) {
+    this->lambda = newLambda;
+}
+
+long KalmanFilter::calculateTotalEstimationError() {
+    long j = 1;// eq. 9 iterator
+    long totalError = 0;
+    for (auto errorValue : kfErrorWindow) {
+        totalError += (errorValue / j);
+        ++j;
+    }
+    return totalError / totalEstimationErrorDivider;
+}
+
+void KalmanFilter::calculateTotalEstimationErrorDivider(int size) {
+    totalEstimationErrorDivider = 0;
+    for (int i = 1; i <= size; ++i) {
+        totalEstimationErrorDivider += (1.0 / i);
+    }
 }
 
 }// namespace NES
