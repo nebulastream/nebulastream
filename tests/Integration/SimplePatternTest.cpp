@@ -470,10 +470,12 @@ TEST_F(SimplePatternTest, testSeqPattern) {
  * Here, we test if we can use and operator for patterns and create complex events with it
  */
 //TODO Ariane issue 2303
-TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
+TEST_F(SimplePatternTest, DIASBLED_testMultiAndPattern) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
+    srcConf1->resetSourceOptions();
+    srcConf2->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -529,32 +531,45 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
 
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->setPhysicalStreamName("test_stream_R2000073");
-    srcConf->setLogicalStreamName("QnV1");
+    srcConf2->setSourceType("CSVSource");
+    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf2->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf2->setPhysicalStreamName("test_stream_R2000073");
+    srcConf2->setLogicalStreamName("QnV1");
     //register physical stream R2000073
-    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf2);
     wrk2->registerPhysicalStream(conf73);
 
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->setPhysicalStreamName("test_stream_R200000");
-    srcConf->setLogicalStreamName("QnV2");
-    //register physical stream R2000073
-    PhysicalStreamConfigPtr conf701 = PhysicalStreamConfig::create(srcConf);
+    srcConf1->setSourceType("CSVSource");
+    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    srcConf1->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf1->setPhysicalStreamName("test_stream_R20000702");
+    srcConf1->setLogicalStreamName("QnV2");
+    //register physical stream R20000702
+    PhysicalStreamConfigPtr conf701 = PhysicalStreamConfig::create(srcConf1);
     wrk3->registerPhysicalStream(conf701);
 
     std::string outputFilePath = "testMultiAndPatternWithTestStream.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("SimplePatternTest: Submit andWith pattern");
-//Pattern
+//Pattern - 2
+  /*  std::string query =
+        R"(Query::from("QnV").filter(Attribute("velocity") > 60).andWith(Query::from("QnV1").filter(Attribute("velocity") > 60))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + "\"));";*/
+
+    //Pattern - 3
+  /*  std::string query =
+        R"(Query::from("QnV").filter(Attribute("velocity") > 60).andWith(Query::from("QnV1").filter(Attribute("velocity") > 60))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).andWith(Query::from("QnV2").filter(Attribute("velocity") > 60))
+.window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + "\"));";*/
+
+    //Join
     std::string query =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 50).andWith(Query::from("QnV1").filter(Attribute("velocity") > 60))
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).andWith(Query::from("QnV2").filter(Attribute("velocity") > 10))
+        R"(Query::from("QnV").filter(Attribute("velocity") > 60).map(Attribute("key")=1).joinWith(Query::from("QnV1").filter(Attribute("velocity") > 60).map(Attribute("key")=1)).where(Attribute("key")).equalsTo(Attribute("key"))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).joinWith(Query::from("QnV2").filter(Attribute("velocity") > 60).map(Attribute("key")=1)).where(Attribute("key")).equalsTo(Attribute("key"))
 .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(10))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
