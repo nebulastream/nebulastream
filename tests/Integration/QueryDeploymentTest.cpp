@@ -1223,21 +1223,19 @@ TEST_F(QueryDeploymentTest, testGrpcNotifyQueryFailure) {
     auto globalQueryPlan = crd->getGlobalQueryPlan(); //necessary?
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    QueryId subQueryId; // how get the ID of subquery?
+    QueryId subQueryId = 1; // how get the ID of subquery?
     uint64_t workerId = wrk->getWorkerId();
-    uint64_t operatorId; //how get the operator ID?
+    uint64_t operatorId = 1; //how get the operator ID?
     std::string errormsg = "Query failed.";
     bool successOfNotifyingQueryFailure = wrk->notifyQueryFailure(queryId, subQueryId, workerId, operatorId, errormsg);
 
     EXPECT_TRUE(successOfNotifyingQueryFailure);
-    // Protobuf element überprüfen? how?
+
+    // should i also check Protobuf element? how?
     // request.queryId == queryId ??
     // EXPECT_EQ()
 
-
-
     // stop coordinator and worker
-
     NES_INFO("QueryDeploymentTest: Stop worker");
     bool retStopWrk = wrk->stop(true);
     EXPECT_TRUE(retStopWrk);

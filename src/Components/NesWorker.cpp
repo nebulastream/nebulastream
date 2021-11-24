@@ -375,6 +375,15 @@ bool NesWorker::waitForConnect() const {
     return false;
 }
 
+bool NesWorker::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg){
+    bool con = waitForConnect();
+    NES_DEBUG("connected= " << con);
+    NES_ASSERT(con, "Connection failed");
+    bool success = coordinatorRpcClient->notifyQueryFailure(queryId, subQueryId, workerId, operatorId, errormsg);
+    NES_DEBUG("NesWorker::notifyQueryFailure success=" << success);
+    return success;
+}
+
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
 }// namespace NES
