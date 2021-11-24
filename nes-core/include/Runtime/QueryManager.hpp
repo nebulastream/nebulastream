@@ -260,6 +260,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     uint64_t getQueryId(uint64_t querySubPlanId) const;
 
     size_t getCurrentTaskSum();
+    uint64_t getNumberOfWorkerThreads();
 
   private:
     friend class ThreadPool;
