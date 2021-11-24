@@ -156,7 +156,7 @@ endif ()
 set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
 # Set Optimization Flags
-#set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare")
+set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare")
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fcoroutines-ts -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNES_RELEASE_MODE=1")
@@ -197,7 +197,8 @@ message("Found libnes: " ${LIBNES})
 # Add Library
 add_library(nes_client SHARED ${nes_SOURCE_FILES} ${nes_HEADERS_FILES})
 target_include_directories(nes_client PUBLIC "../" "../include")
-target_link_libraries(nes_client PUBLIC ${LIBNES})
+target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(nes_client PUBLIC ${LIBRARIES} nes)
 if (GRPC_LIBRARIES)
     target_link_libraries(nes_client PRIVATE ${GRPC_LIBRARIES})
 endif ()
@@ -223,11 +224,3 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CP
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/triggers")
 set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
 INCLUDE(CPack)
-
-#Other configurations
-#project_enable_clang_format()
-#if (CMAKE_CROSSCOMPILING)
-#    project_enable_emulated_tests()
-#endif ()
-#project_enable_release()
-#project_enable_version()
