@@ -39,6 +39,7 @@ class AdaptiveKFTest : public testing::Test {
     uint64_t num_of_buffers;
     uint64_t num_tuples_to_process;
     std::vector<double> measurements;
+    float defaultEstimationErrorDivider = 2.9289684;
 
     static void SetUpTestCase() {
         NES::setupLogging("AdaptiveKFTest.log", NES::LOG_DEBUG);
@@ -72,6 +73,16 @@ class AdaptiveKFTest : public testing::Test {
     }
 
     void TearDown() override { NES_INFO("Tear down AdaptiveKFTest class."); }
+};
+
+class KFProxy : public KalmanFilter {
+  public:
+    KFProxy() : KalmanFilter(){};
+    KFProxy(uint64_t errorWindowSize) : KalmanFilter(errorWindowSize){};
+
+  private:
+    FRIEND_TEST(AdaptiveKFTest, kfErrorDividerDefaultSizeTest);
+    FRIEND_TEST(AdaptiveKFTest, kfErrorDividerCustomSizeTest);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
@@ -206,5 +217,52 @@ TEST_F(AdaptiveKFTest, kfInnovationErrorChangeTest) {
         auto newInnovError = kalmanFilter.getInnovationError();
         ASSERT_TRUE(oldInnovError(0) != newInnovError(0));
     }
+}
+
+TEST_F(AdaptiveKFTest, kfLambdaChangeTest) {
+
+    // empty filter
+    KalmanFilter kalmanFilter;
+    kalmanFilter.setDefaultValues();
+
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
+    initialState << 0, measurements[0], -9.81;
+    kalmanFilter.init(initialState);
+
+    auto oldLambda = kalmanFilter.getLambda();
+    kalmanFilter.setLambda(0.1);
+    ASSERT_NE(oldLambda, kalmanFilter.getLambda());
+}
+
+TEST_F(AdaptiveKFTest, kfErrorDividerDefaultSizeTest) {
+    // default filter
+    KFProxy kfProxy;
+    kfProxy.setDefaultValues();
+    auto errorDivider = kfProxy.totalEstimationErrorDivider;
+    ASSERT_NE(errorDivider, 0);
+    ASSERT_NEAR(errorDivider, this->defaultEstimationErrorDivider, 0.01);
+}
+
+TEST_F(AdaptiveKFTest, kfErrorDividerCustomSizeTest) {
+    // window of 1
+    KFProxy kfProxy{1};
+    kfProxy.setDefaultValues();
+    auto errorDivider = kfProxy.totalEstimationErrorDivider;
+    ASSERT_NE(errorDivider, 0);
+    ASSERT_NEAR(errorDivider, 1, 0.01);
+
+    // window of 0
+    KFProxy kfProxy1{0};
+    kfProxy1.setDefaultValues();
+    errorDivider = kfProxy1.totalEstimationErrorDivider;
+    ASSERT_EQ(errorDivider, 0);
+
+    // window of 50
+    KFProxy kfProxy2{50};
+    kfProxy2.setDefaultValues();
+    errorDivider = kfProxy2.totalEstimationErrorDivider;
+    ASSERT_NE(errorDivider, 0);
+    ASSERT_NEAR(errorDivider, 4.5, 0.1);
 }
 }// namespace NES
