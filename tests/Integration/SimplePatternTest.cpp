@@ -470,7 +470,7 @@ TEST_F(SimplePatternTest, testSeqPattern) {
  * Here, we test if we can use and operator for patterns and create complex events with it
  */
 //TODO Ariane issue 2303
-TEST_F(SimplePatternTest, DIASBLED_testMultiAndPattern) {
+TEST_F(SimplePatternTest, testMultiAndPattern) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -486,6 +486,7 @@ TEST_F(SimplePatternTest, DIASBLED_testMultiAndPattern) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
+    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -496,6 +497,7 @@ TEST_F(SimplePatternTest, DIASBLED_testMultiAndPattern) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
+    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -506,6 +508,7 @@ TEST_F(SimplePatternTest, DIASBLED_testMultiAndPattern) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
+    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
@@ -554,24 +557,24 @@ TEST_F(SimplePatternTest, DIASBLED_testMultiAndPattern) {
 
     NES_INFO("SimplePatternTest: Submit andWith pattern");
 //Pattern - 2
-  /*  std::string query =
+  /*std::string query =
         R"(Query::from("QnV").filter(Attribute("velocity") > 60).andWith(Query::from("QnV1").filter(Attribute("velocity") > 60))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";*/
 
     //Pattern - 3
-  /*  std::string query =
+     std::string query =
         R"(Query::from("QnV").filter(Attribute("velocity") > 60).andWith(Query::from("QnV1").filter(Attribute("velocity") > 60))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).andWith(Query::from("QnV2").filter(Attribute("velocity") > 60))
-.window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";*/
+.window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(10))).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + "\"));";
 
     //Join
-    std::string query =
+   /* std::string query =
         R"(Query::from("QnV").filter(Attribute("velocity") > 60).map(Attribute("key")=1).joinWith(Query::from("QnV1").filter(Attribute("velocity") > 60).map(Attribute("key")=1)).where(Attribute("key")).equalsTo(Attribute("key"))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).joinWith(Query::from("QnV2").filter(Attribute("velocity") > 60).map(Attribute("key")=1)).where(Attribute("key")).equalsTo(Attribute("key"))
 .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(10))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";
+        + outputFilePath + "\"));";*/
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
