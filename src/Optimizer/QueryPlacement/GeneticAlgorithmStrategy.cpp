@@ -463,7 +463,6 @@ GeneticAlgorithmStrategy::getOptimizedPlacement(std::vector<Placement> populatio
             if(offspring2.cost >= (double) RAND_MAX)
                 offspring2 = tempOffspring2;    */
 
-
             if (!placementAlreadyExists(offspringPopulation, offspring1)) {
                 auto pos = std::find_if(offspringPopulation.begin(), offspringPopulation.end(), [offspring1](auto s) {
                     return s.cost > offspring1.cost;
@@ -544,17 +543,14 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::mutate(GeneticAlgo
     srand(time(0));
     for(uint32_t i = 0; i < numOfGenesToMutate; i++) {
         double r = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
-        uint32_t mutationOperatorIdx = (uint32_t) RAND_MAX;
+        //uint32_t mutationOperatorIdx = (uint32_t) RAND_MAX %queryOperators.size();
         if (r < mutationProbability) {
-            mutationOperatorIdx = rand() % queryOperators.size();
-            uint32_t attempt = 0;  // We try 3 times to get an operator other than a source operator
-            while (attempt < 3 && (mutationOperatorIdx >= (uint32_t) RAND_MAX
-                   || (find(sourceOperators.begin(), sourceOperators.end(), queryOperators.at(mutationOperatorIdx))
-                       != sourceOperators.end()))) {
-                mutationOperatorIdx = rand() % queryOperators.size();
-            }
-            if(mutationOperatorIdx >= (uint32_t) RAND_MAX)
+            uint32_t mutationOperatorIdx = (uint32_t) (1 + rand() % (queryOperators.size()-2));
+
+            if(find(sourceOperators.begin(), sourceOperators.end(), queryOperators.at(mutationOperatorIdx))
+!=              sourceOperators.end())
                 return placement;
+
             //find the node where the operator to mutate is placed in
             uint32_t mutationNodeIdx = (uint32_t) RAND_MAX;
             for (uint32_t i = 0; i < topologyNodes.size(); i++) {
@@ -563,7 +559,8 @@ GeneticAlgorithmStrategy::Placement GeneticAlgorithmStrategy::mutate(GeneticAlgo
                     break;
                 }
             }
-            if (mutationNodeIdx == RAND_MAX)
+            if (find(sourceOperators.begin(), sourceOperators.end(), queryOperators.at(mutationOperatorIdx))
+                != sourceOperators.end() || mutationOperatorIdx == 0)
                 return placement;
             //move the operator from the old node to the new one
             uint32_t newMutationNodeIdx = rand() % topologyNodes.size();
@@ -765,7 +762,8 @@ double GeneticAlgorithmStrategy::getCost(Placement placement, QueryPlanPtr query
     uint32_t numOfStreamsToConsider = sourceOperators.size();
 
     while(numOfStreamsToConsider > 0){
-        double currentStreamCost = 1.0;
+        double currentStreamCost = 0.0;
+        double inputDMF = 1.0;
         auto currentOperator = sourceOperators[numOfStreamsToConsider-1]->as<OperatorNode>();
         uint32_t currentOperatorId = currentOperator->getId();
         uint32_t currentOperatorIdx = mapOfSourceOperatorIdToSourceOperatorIdx[currentOperatorId];
@@ -773,6 +771,7 @@ double GeneticAlgorithmStrategy::getCost(Placement placement, QueryPlanPtr query
         while(!placement.chromosome[currentOperatorNodeIdx * numOfOperators + currentOperatorIdx]){
             currentOperatorNodeIdx += 1;
         }
+
         while(topologyNodes[currentOperatorNodeIdx] != topology->getRoot()){
             auto parentOperator = currentOperator->getParents()[0]->as<OperatorNode>();
             uint32_t parentOperatorIdx = currentOperatorIdx;
@@ -783,34 +782,24 @@ double GeneticAlgorithmStrategy::getCost(Placement placement, QueryPlanPtr query
             }
 
             uint32_t parentOperatorNodeIdx = currentOperatorNodeIdx;
-            uint32_t distance = 1;
+            uint32_t distance = 0;
             while(!placement.chromosome[parentOperatorNodeIdx * numOfOperators + parentOperatorIdx]){
                 parentOperatorNodeIdx -= 1;
                 distance += 1;
             }
-            if(topologyNodes[parentOperatorNodeIdx] != topology->getRoot()){
-                double DMFCurrentOperator = 1.0;
-                double DMFParentOperator = 1.0;
-                if (currentOperator->checkIfPropertyExist("DMF")) {
-                    // obtain the dmf property
-                    DMFCurrentOperator = std::any_cast<double>(currentOperator->getProperty("DMF"));
-                }
-                if (parentOperator->checkIfPropertyExist("DMF")) {
-                    // obtain the dmf property
-                    DMFParentOperator = std::any_cast<double>(parentOperator->getProperty("DMF"));
-                }
-                if(DMFParentOperator > DMFCurrentOperator){
-                    currentStreamCost *= (DMFParentOperator+DMFParentOperator/distance);
 
-                }
-                else if(DMFParentOperator < DMFCurrentOperator){
-                    currentStreamCost *=   DMFParentOperator * distance;
-                }
-                else if(DMFParentOperator == DMFCurrentOperator ){
-                    currentStreamCost *=   DMFParentOperator * distance;
-                }
+            double DMFCurrentOperator = 1.0;
+            double DMFParentOperator = 1.0;
+            if (currentOperator->checkIfPropertyExist("DMF")) {
+                // obtain the dmf property
+                DMFCurrentOperator = std::any_cast<double>(currentOperator->getProperty("DMF"));
             }
-
+            if (parentOperator->checkIfPropertyExist("DMF")) {
+                // obtain the dmf property
+                DMFParentOperator = std::any_cast<double>(parentOperator->getProperty("DMF"));
+            }
+            currentStreamCost +=  inputDMF*DMFCurrentOperator*distance;
+            inputDMF*= DMFCurrentOperator;
             currentOperator = parentOperator;
             currentOperatorIdx = parentOperatorIdx;
             currentOperatorNodeIdx = parentOperatorNodeIdx;

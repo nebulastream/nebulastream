@@ -76,8 +76,8 @@ class GeneticAlgorithmBenchmark : public testing::Test {
         topology->setAsRoot(rootNode);
         streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
         LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
-        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                             "->addField(\"value\", BasicType::UINT64);";
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32);";
+
         std::string streamName = "car";
         streamCatalog->addLogicalStream(streamName, schema);
         SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -111,46 +111,43 @@ class GeneticAlgorithmBenchmark : public testing::Test {
 
 TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFixedTopologyWithDynamicQuery) {
 
-    std::list<int> listOfInts({10});
+    std::list<int> listOfInts({2});
     std::map<int, std::vector<long>> counts;
     int SourcePerMiddle = 2;
-    int repetitions = 1;
+    int repetitions = 5;
 
-    setupTopologyAndStreamCatalogForGA(3,SourcePerMiddle);
-    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("GeneticAlgorithm",
-                                                                              globalExecutionPlan,
-                                                                              topology,
-                                                                              typeInferencePhase,
-                                                                              streamCatalog);
     std::ofstream outfile;
     outfile.open ("benchmark.txt");
-    outfile << "Writing benchmark for testPlacingQueryWithGeneticAlgorithmStrategyFixedTopologyWithDynamicQuery.\n";
-    outfile << "The topology is:\n"<<topology->toString();
     outfile.close();
-
     for(int n : listOfInts) {
-
-
+        setupTopologyAndStreamCatalogForGA(8,SourcePerMiddle);
+        GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+        auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("GeneticAlgorithm",
+                                                                                  globalExecutionPlan,
+                                                                                  topology,
+                                                                                  typeInferencePhase,
+                                                                                  streamCatalog);
         Query query = Query::from("car");
         for(int i = 0; i < n; i+=2){
             query.filter(Attribute("id") < n-i);
         }
         for(int i = 1; i < n; i+=2){
             std::string num = std::to_string(i);
-            query.map(Attribute("value"+num) = Attribute("value") * 2);
+            query.map(Attribute("value"+num) = Attribute("id") * 2);
         }
         query.sink(PrintSinkDescriptor::create());
 
         std::vector<long> counts_n;
-        outfile.open("benchmark.txt", std::ios_base::app);
+        outfile.open ("benchmark.txt", std::ios_base::app);
+        outfile << "Writing benchmark for testPlacingQueryWithGeneticAlgorithmStrategyFixedTopologyWithDynamicQuery.\n";
+        outfile << "The topology is:\n"<<topology->toString();
         outfile << "Current N: " << n << "\n";
         outfile.close();
-        bool queryWritten = false;
+
         for(int j = 0; j < repetitions; j++) {
             outfile.open("benchmark.txt", std::ios_base::app);
-            outfile << "Repetition Number: " << j << "\n";
+            outfile << "\n\nRepetition Number: " << j+1 << "\n";
             outfile.close();
             QueryPlanPtr testQueryPlan = query.getQueryPlan();
             QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -164,13 +161,6 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFi
             auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
             topologySpecificQueryRewrite->execute(testQueryPlan);
             typeInferencePhase->execute(testQueryPlan);
-            if(!queryWritten){
-                outfile.open("benchmark.txt", std::ios_base::app);
-                outfile << "The Query Plan is: \n" << testQueryPlan->toString();
-                outfile.close();
-                queryWritten = true;
-            }
-           // UtilityFunctions::assignPropertiesToQueryOperators(testQueryPlan, properties);
 
             auto start = std::chrono::high_resolution_clock::now();
             ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(testQueryPlan));
@@ -181,7 +171,7 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFi
             globalExecutionPlan->removeQuerySubPlans(queryId);
         }
         counts.insert(std::make_pair(n, counts_n));
-        //properties.clear();
+
     }
     outfile.open("benchmark.txt", std::ios_base::app);
     for (auto& [n, counts_n] : counts) {
@@ -197,6 +187,91 @@ TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGeneticAlgorithmStrategyFi
 
         NES_INFO("N: " << n << ", median: " << median << ", measures: " << ss.str());
         outfile << "N: " << n << ", median: " << median << ", measures: " << ss.str()<<"\n";
+    }
+    outfile.close();
+}
+
+TEST_F(GeneticAlgorithmBenchmark, testPlacingQueryWithGAStrategyFixedQueryWithDynamicTopologyWidth) {
+    std::list<int> listOfInts( {10});
+
+    int repetitions = 1;
+    int SourcePerMiddle = 2;
+    std::map<int, std::vector<long>> counts;
+
+    uint32_t numOfOperators = 20;
+    // Prepare the query
+    Query query = Query::from("car");
+    for(uint32_t i = 0; i < numOfOperators; i+=2){
+        query.filter(Attribute("id") < numOfOperators-i);
+    }
+    for(uint32_t i = 1; i < numOfOperators; i+=2){
+        std::string num = std::to_string(i);
+        query.map(Attribute("value"+num) = Attribute("id") * 2);
+    }
+    query.sink(PrintSinkDescriptor::create());
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    std::ofstream outfile;
+    outfile.open ("benchmark.txt");
+    outfile.close();
+    for(int n : listOfInts) {
+
+        //setupTopologyAndStreamCatalogForGA(n);
+        setupTopologyAndStreamCatalogForGA(n, SourcePerMiddle);
+        GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+        auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("GeneticAlgorithm",
+                                                                                  globalExecutionPlan,
+                                                                                  topology,
+                                                                                  typeInferencePhase,
+                                                                                  streamCatalog);
+        // Execute optimization phases prior to placement
+        auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+        queryPlan = queryReWritePhase->execute(queryPlan);
+        typeInferencePhase->execute(queryPlan);
+
+        auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+        topologySpecificQueryRewrite->execute(queryPlan);
+        typeInferencePhase->execute(queryPlan);
+
+        outfile.open ("benchmark.txt", std::ios_base::app);
+        outfile << "\n\nWriting benchmark for testPlacingQueryWithGAStrategyFixedQueryWithDynamicTopologyWidth.\n";
+        outfile << "The Query Plan is: \n" << queryPlan->toString();
+        outfile << "The topology is:\n"<<topology->toString();
+        outfile.close();
+
+        std::vector<long> counts_n;
+        for(int j = 0; j < repetitions; j++) {
+            outfile.open ("benchmark.txt", std::ios_base::app);
+            outfile << "\n\n\nRepetition Number: " << j+1 << "\n\n";
+            outfile.close();
+            auto start = std::chrono::high_resolution_clock::now();
+            ASSERT_TRUE(placementStrategy->updateGlobalExecutionPlan(queryPlan));
+            auto stop = std::chrono::high_resolution_clock::now();
+            long count = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+            //NES_DEBUG("Solved Placement for " << num_operators << " Operators, " << n << " Sources and " << n * 2 + 1 << " Topology nodes");
+            NES_DEBUG("Found Solution in " << count << "ms");
+            counts_n.push_back(count);
+            globalExecutionPlan->removeQuerySubPlans(queryId);
+        }
+        counts.insert(std::make_pair(n, counts_n));
+    }
+    outfile.open ("benchmark.txt", std::ios_base::app);
+    for (auto& [n, counts_n] : counts) {
+        std::sort(counts_n.begin(), counts_n.end());
+        long median = counts_n[counts_n.size() / 2];
+        if (counts_n.size() % 2 == 0) {
+            median = (median + counts_n[(counts_n.size() - 1) / 2]) / 2;
+        }
+        std::stringstream ss;
+        for (auto& count : counts_n) {
+            ss << count << ", ";
+        }
+
+        NES_INFO("N: " << n << ", median: " << median << ", measures: " << ss.str());
+        outfile <<"\nN: " << n+2 << ", median: " << median << ", measures: " << ss.str() << "\n";
     }
     outfile.close();
 }
