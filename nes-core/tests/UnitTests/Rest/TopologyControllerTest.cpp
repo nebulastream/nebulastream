@@ -16,13 +16,13 @@
 
 #include <gtest/gtest.h>
 
+#define _TURN_OFF_PLATFORM_STRING // undef U from cpprest
 #include <REST/Controller/TopologyController.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>
 #include <memory>
-#include <utility>
 
 namespace NES {
 
