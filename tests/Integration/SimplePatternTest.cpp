@@ -44,6 +44,7 @@ class SimplePatternTest : public testing::Test {
     WorkerConfigPtr wrkConf;
     CSVSourceConfigPtr srcConf;
     CSVSourceConfigPtr srcConf1;
+    CSVSourceConfigPtr srcConf2;
 
     static void SetUpTestCase() {
         NES::setupLogging("SimplePatternTest.log", NES::LOG_DEBUG);
@@ -57,6 +58,7 @@ class SimplePatternTest : public testing::Test {
         wrkConf = WorkerConfig::create();
         srcConf = CSVSourceConfig::create();
         srcConf1 = CSVSourceConfig::create();
+        srcConf2 = CSVSourceConfig::create();
 
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);
@@ -358,6 +360,7 @@ TEST_F(SimplePatternTest, testSeqPattern) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
+    srcConf2->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -401,16 +404,16 @@ TEST_F(SimplePatternTest, testSeqPattern) {
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
 
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->setPhysicalStreamName("test_stream_R2000073");
-    srcConf->setLogicalStreamName("QnV1");
+    srcConf2->setSourceType("CSVSource");
+    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf2->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf2->setPhysicalStreamName("test_stream_R2000073");
+    srcConf2->setLogicalStreamName("QnV1");
     //register physical stream R2000073
-    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf);
+    PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf2);
     wrk2->registerPhysicalStream(conf73);
 
-    std::string outputFilePath = "testAndPatternWithTestStream.out";
+    std::string outputFilePath = "testSeqPatternWithTestStream.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("SimplePatternTest: Submit seqWith pattern");
