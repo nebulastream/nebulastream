@@ -106,7 +106,7 @@ class KalmanFilter {
      * by recency and size.
      */
     float totalEstimationErrorDivider;
-    long calculateTotalEstimationError(); // eq. 9
+    float calculateTotalEstimationError(); // eq. 9
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calc. once)
 
 };// class KalmanFilter
