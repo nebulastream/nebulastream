@@ -14,25 +14,15 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-import "google/protobuf/any.proto";
-import "SerializableOperator.proto";
-package NES;
+#ifndef NES_LINEAGETYPE_H
+#define NES_LINEAGETYPE_H
+#include <unordered_map>
 
-/*
-The serializable wrapper definition for query plan
- */
-message SerializableQueryPlan{
-  map<uint64, SerializableOperator> operatorMap = 1;
-  repeated uint64 rootOperatorIds = 2;
-  uint64 queryId = 3;
-  uint64 querySubPlanId = 4;
-  uint64 faultTolerance = 5;
-  uint64 lineage = 6;
-}
+namespace NES {
+enum class LineageType : std::int8_t { IN_MEMORY = 0, PERSISTENT = 1, REMOTE = 2, INVALID = 3 };
 
-message SubmitQueryRequest {
-  SerializableQueryPlan queryPlan = 1;
-  map<string, google.protobuf.Any> context = 2;
-  string queryString = 3;
+static std::unordered_map<std::string, LineageType> const stringToLineageTypeMap = {{"IN_MEMORY", LineageType::IN_MEMORY},
+                                                                            {"PERSISTENT", LineageType::PERSISTENT},
+                                                                            {"REMOTE", LineageType::REMOTE}};
 }
+#endif//NES_LINEAGETYPE_H

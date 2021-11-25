@@ -20,6 +20,8 @@
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Util/FaultToleranceType.hpp>
+#include <Util/LineageType.hpp>
 #include <memory>
 #include <set>
 #include <vector>
@@ -227,6 +229,30 @@ class QueryPlan {
      */
     void setSourceConsumed(const std::string& sourceName);
 
+    /**
+     * @brief Get current fault-tolerance flag
+     * @return FaultToleranceType: type of fault-tolerance for a given query
+     */
+    FaultToleranceType getFaultToleranceType() const;
+
+    /**
+     * @brief Set current lineage flag
+     * @param LineageType: type of lineage for a given query
+     */
+    void setLineageType(LineageType lineageType);
+
+    /**
+     * @brief Get current lineage flag
+     * @return LineageType: type of lineage for a given query
+     */
+    LineageType getLineageType() const;
+
+    /**
+     * @brief Set current fault-tolerance flag
+     * @param FaultToleranceType: type of fault-tolerance for a given query
+     */
+    void setFaultToleranceType(FaultToleranceType faultToleranceType);
+
   private:
     /**
      * @brief Creates a new query plan with a query id, a query sub plan id and a vector of root operators.
@@ -249,6 +275,8 @@ class QueryPlan {
 
     std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
+    FaultToleranceType faultToleranceType;
+    LineageType lineageType;
     QuerySubPlanId querySubPlanId;
     std::string sourceConsumed;
 };

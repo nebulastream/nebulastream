@@ -60,11 +60,14 @@ class QueryService {
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : query in string form.
      * @param placementStrategyName : name of the placement strategy to be used.
+     * @param faultTolerance : fault-tolerance guarantee for the given query.
+     * @param lineage : lineage type for the given query.
      * @return queryId : query id of the valid input query.
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    uint64_t validateAndQueueAddRequest(const std::string& queryString, const std::string& placementStrategyName);
+    uint64_t validateAndQueueAddRequest(const std::string& queryString, const std::string& placementStrategyName,
+                                        const FaultToleranceType faultTolerance, const LineageType lineage);
 
     /**
      * @deprecated NOT TO BE USED
@@ -72,27 +75,33 @@ class QueryService {
      * @param queryString : Query string
      * @param queryPtr : Query Object
      * @param placementStrategyName : Name of the placement strategy
+     * @param faultTolerance : fault-tolerance guarantee for the given query.
+     * @param lineage : lineage type for the given query.
      * @return query id
      */
-    uint64_t addQueryRequest(const std::string& queryString, Query query, const std::string& placementStrategyName);
+    uint64_t addQueryRequest(const std::string& queryString, Query query, const std::string& placementStrategyName, FaultToleranceType faultTolerance, LineageType lineage);
 
     /**
      * @brief This method is used for submitting the queries directly to the system.
      * @param queryPlan : Query Plan Pointer Object
      * @param placementStrategyName : Name of the placement strategy
+     * @param faultTolerance : fault-tolerance guarantee for the given query.
+     * @param lineage : lineage type for the given query.
      * @return query id
      */
-    uint64_t addQueryRequest(const QueryPlanPtr& queryPlan, const std::string& placementStrategyName);
+    uint64_t addQueryRequest(const QueryPlanPtr& queryPlan, const std::string& placementStrategyName, FaultToleranceType faultTolerance, LineageType lineage);
 
     /**
      * @brief
      * @param queryString
      * @param queryPlan : Query Plan Pointer Object
      * @param placementStrategyName : Name of the placement strategy
+     * @param faultTolerance : fault-tolerance guarantee for the given query.
+     * @param lineage : lineage type for the given query.
      * @return query id
      */
     uint64_t
-    addQueryRequest(const std::string& queryString, const QueryPlanPtr& queryPlan, const std::string& placementStrategyName);
+    addQueryRequest(const std::string& queryString, const QueryPlanPtr& queryPlan, const std::string& placementStrategyName, FaultToleranceType faultTolerance, LineageType lineage);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

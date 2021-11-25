@@ -260,11 +260,25 @@ QueryPlanPtr QueryPlan::copy() {
     operatorIdToOperatorMap.clear();
     auto newQueryPlan = QueryPlan::create(queryId, INVALID_QUERY_ID, duplicateRootOperators);
     newQueryPlan->setSourceConsumed(sourceConsumed);
+    newQueryPlan->setFaultToleranceType(faultToleranceType);
+    newQueryPlan->setLineageType(lineageType);
     return newQueryPlan;
 }
 
 std::string QueryPlan::getSourceConsumed() const { return sourceConsumed; }
 
 void QueryPlan::setSourceConsumed(const std::string& sourceName) { sourceConsumed = sourceName; }
+
+FaultToleranceType QueryPlan::getFaultToleranceType() const { return faultToleranceType; }
+
+void QueryPlan::setFaultToleranceType(FaultToleranceType faultToleranceType) {
+    QueryPlan::faultToleranceType = faultToleranceType;
+}
+
+LineageType QueryPlan::getLineageType() const { return lineageType; }
+
+void QueryPlan::setLineageType(LineageType lineageType) {
+    QueryPlan::lineageType = lineageType;
+}
 
 }// namespace NES

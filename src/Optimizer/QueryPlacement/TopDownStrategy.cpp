@@ -85,7 +85,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
             "TopDownStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
 
         NES_DEBUG("TopDownStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
-        return runTypeInferencePhase(queryId);
+        return runTypeInferencePhase(queryId, queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
     } catch (Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }

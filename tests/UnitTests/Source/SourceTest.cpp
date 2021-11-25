@@ -1396,7 +1396,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
-    auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
@@ -1595,7 +1595,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
-    auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     sleep(2);
@@ -1672,7 +1672,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
-    auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     sleep(2);

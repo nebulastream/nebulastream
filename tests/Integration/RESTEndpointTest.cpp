@@ -117,7 +117,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
 
     NES_INFO("RESTEndpointTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
@@ -320,7 +320,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
 
     NES_INFO("RESTEndpointTest: Submit query");
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 

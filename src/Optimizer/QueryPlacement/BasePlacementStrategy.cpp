@@ -335,7 +335,7 @@ void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNo
     }
 }
 
-bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
+bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType) {
     NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     for (const auto& executionNode : executionNodes) {
@@ -343,6 +343,8 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
         const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
         for (const auto& querySubPlan : querySubPlans) {
             typeInferencePhase->execute(querySubPlan);
+            querySubPlan->setFaultToleranceType(faultToleranceType);
+            querySubPlan->setLineageType(lineageType);
         }
     }
     return true;
