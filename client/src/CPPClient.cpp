@@ -22,7 +22,8 @@
 
 namespace NES {
 
-CPPClient::CPPClient() { /*NES::setupLogging("nesClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG")); */
+CPPClient::CPPClient() {
+    NES::setupLogging("nesClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 }
 
 web::json::value CPPClient::deployQuery(const QueryPlanPtr& queryPlan,
