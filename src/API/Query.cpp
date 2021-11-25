@@ -90,6 +90,8 @@ And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), o
     originalQuery.map(Attribute(cepLeftKey) = 1);
     subQueryRhs.map(Attribute(cepRightKey) = 1);
     //last, define the artificial attributes as key attributes
+    NES_DEBUG("Query: add name cepLeftKey " << cepLeftKey);
+    NES_DEBUG("Query: add name cepRightKey " << cepRightKey);
     onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
     onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
 }
