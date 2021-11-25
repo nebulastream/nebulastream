@@ -22,20 +22,20 @@
 
 namespace NES {
 
-CPPClient::CPPClient() {
+CPPClient::CPPClient(const std::string& coordinatorHost, const std::string& coordinatorRESTPort)
+    : coordinatorHost(coordinatorHost), coordinatorRESTPort(coordinatorRESTPort) {
     NES::setupLogging("nesClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 }
 
-web::json::value CPPClient::deployQuery(const QueryPlanPtr& queryPlan,
-                                        const std::string& coordinatorHost,
-                                        const std::string& coordinatorRESTPort) {
+int64_t CPPClient::submitQuery(const QueryPlanPtr& queryPlan, const std::string& placement) {
     SubmitQueryRequest request;
     auto serializedQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan, true);
+
     auto& context = *request.mutable_context();
-    auto bottomUpPlacement = google::protobuf::Any();
-    bottomUpPlacement.set_value("BottomUp");
-    context["placement"] = bottomUpPlacement;
+    auto placement_buffer = google::protobuf::Any();
+    placement_buffer.set_value(placement);
+    context["placement"] = placement_buffer;
 
     std::string msg = request.SerializeAsString();
 
@@ -43,19 +43,23 @@ web::json::value CPPClient::deployQuery(const QueryPlanPtr& queryPlan,
     web::http::client::http_client client("http://" + coordinatorHost + ":" + coordinatorRESTPort + "/v1/nes/");
     client.request(web::http::methods::POST, "query/execute-query-ex", msg)
         .then([](const web::http::http_response& response) {
-            NES_INFO("get first then");
             return response.extract_json();
         })
         .then([&json_return](const pplx::task<web::json::value>& task) {
+            NES_INFO("CPPClient::submitQuery: recieved response");
             try {
-                NES_INFO("post execute-query-ex: set return");
                 json_return = task.get();
             } catch (const web::http::http_exception& e) {
-                NES_ERROR("post execute-query-ex: error while setting return" << e.what());
+                NES_ERROR("CPPClient::submitQuery: error while setting return: " << e.what());
             }
         })
         .wait();
-
-    return json_return;
+    int64_t queryId = -1;
+    try {
+        queryId = json_return.at("queryId").as_integer();
+    } catch (const web::json::json_exception& e) {
+        NES_ERROR("CPPClient::submitQuery: error while parsing queryId: " << e.what());
+    }
+    return queryId;
 }
 }// namespace NES

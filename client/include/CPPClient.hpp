@@ -30,17 +30,23 @@ namespace NES {
  */
 class CPPClient {
   public:
-    CPPClient();
+    /* @brief constructor of the client
+     * @param coordinator host e.g. 127.0.0.1
+     * @param coordinator REST port e.g. 8081
+     */
+    CPPClient(const std::string& coordinatorHost = "127.0.0.1", const std::string& coordinatorRESTPort = "8081");
 
     /*
      * @brief Deploy a query to the coordinator
      * @param query plan to deploy
-     * @param coordinator host e.g. 127.0.0.1
-     * @param coordinator REST port e.g. 8081
+     * @param operator placement e.g. "BottomUp" or "TopDown"
+     * @return query id of deployed query. -1 if deployment failed
      */
-    static web::json::value deployQuery(const QueryPlanPtr& queryPlan,
-                                        const std::string& coordinatorHost = "127.0.0.1",
-                                        const std::string& coordinatorRESTPort = "8081");
+    int64_t submitQuery(const QueryPlanPtr& queryPlan, const std::string& placement = "BottomUp");
+
+  private:
+    const std::string& coordinatorHost;
+    const std::string& coordinatorRESTPort;
 };
 }// namespace NES
 

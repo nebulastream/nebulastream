@@ -43,8 +43,6 @@ class CPPClientTest : public testing::Test {
         dataPort += 10;
         restPort += 10;
     }
-
-    CPPClient cppClient;
 };
 
 /**
@@ -95,16 +93,12 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     Query query = Query::from("default_logical");
     auto queryPlan = query.getQueryPlan();
 
-    web::json::value postJsonReturn = cppClient.deployQuery(queryPlan, "localhost", std::to_string(restPort));
+    CPPClient client = CPPClient("localhost", std::to_string(restPort));
+    int64_t queryId = client.submitQuery(queryPlan, "ButtomUp");
 
-    EXPECT_TRUE(postJsonReturn.has_field("queryId"));
-    EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
+    EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
 
-    EXPECT_TRUE(postJsonReturn.has_field("queryId"));
-    EXPECT_TRUE(crd->getQueryCatalog()->queryExists(postJsonReturn.at("queryId").as_integer()));
-
-    auto insertedQueryPlan =
-        crd->getQueryCatalog()->getQueryCatalogEntry(postJsonReturn.at("queryId").as_integer())->getInputQueryPlan();
+    auto insertedQueryPlan = crd->getQueryCatalog()->getQueryCatalogEntry(queryId)->getInputQueryPlan();
     // Expect that the query id and query sub plan id from the deserialized query plan are valid
     EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
     EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
@@ -112,10 +106,8 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     EXPECT_TRUE(insertedQueryPlan->getQueryId() != queryPlan->getQueryId());
     EXPECT_TRUE(insertedQueryPlan->getQuerySubPlanId() != queryPlan->getQuerySubPlanId());
 
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
+    EXPECT_TRUE(wrk1->stop(true));
+    EXPECT_TRUE(crd->stopCoordinator(true));
 }
 
 }// namespace NES
