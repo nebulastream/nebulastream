@@ -27,10 +27,11 @@ enum class FaultToleranceType : std::int8_t {
     INVALID = 4
 };
 
-static std::unordered_map<std::string, FaultToleranceType> const stringToFaultToleranceTypeMap = {{"NONE", FaultToleranceType::NONE},
-                                                                            {"AT_MOST", FaultToleranceType::AT_MOST},
-                                                                            {"AT_LEAST", FaultToleranceType::AT_LEAST},
-                                                                            {"EXACTLY", FaultToleranceType::EXACTLY}};
-}
+static std::unordered_map<std::string, FaultToleranceType> const stringToFaultToleranceTypeMap = {
+    {"NONE", FaultToleranceType::NONE},
+    {"AT_MOST", FaultToleranceType::AT_MOST},
+    {"AT_LEAST", FaultToleranceType::AT_LEAST},
+    {"EXACTLY", FaultToleranceType::EXACTLY}};
+}// namespace NES
 
 #endif//NES_FAULTTOLERANCETYPE_H

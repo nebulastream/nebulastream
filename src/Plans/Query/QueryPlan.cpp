@@ -277,8 +277,6 @@ void QueryPlan::setFaultToleranceType(FaultToleranceType faultToleranceType) {
 
 LineageType QueryPlan::getLineageType() const { return lineageType; }
 
-void QueryPlan::setLineageType(LineageType lineageType) {
-    QueryPlan::lineageType = lineageType;
-}
+void QueryPlan::setLineageType(LineageType lineageType) { QueryPlan::lineageType = lineageType; }
 
 }// namespace NES

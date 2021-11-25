@@ -22,7 +22,7 @@ namespace NES {
 enum class LineageType : std::int8_t { IN_MEMORY = 0, PERSISTENT = 1, REMOTE = 2, INVALID = 3 };
 
 static std::unordered_map<std::string, LineageType> const stringToLineageTypeMap = {{"IN_MEMORY", LineageType::IN_MEMORY},
-                                                                            {"PERSISTENT", LineageType::PERSISTENT},
-                                                                            {"REMOTE", LineageType::REMOTE}};
-}
+                                                                                    {"PERSISTENT", LineageType::PERSISTENT},
+                                                                                    {"REMOTE", LineageType::REMOTE}};
+}// namespace NES
 #endif//NES_LINEAGETYPE_H

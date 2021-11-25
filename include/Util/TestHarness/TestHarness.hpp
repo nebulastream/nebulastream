@@ -269,7 +269,11 @@ class TestHarness {
          * @return output string
          */
     template<typename T>
-    std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, std::string faultTolerance, std::string lineage, uint64_t testTimeout = 60) {
+    std::vector<T> getOutput(uint64_t numberOfContentToExpect,
+                             std::string placementStrategyName,
+                             std::string faultTolerance,
+                             std::string lineage,
+                             uint64_t testTimeout = 60) {
         uint64_t sourceCount = 0;
         for (const TestHarnessWorker& worker : testHarnessWorkers) {
             if (worker.type == TestHarnessWorker::CSVSource || worker.type == TestHarnessWorker::MemorySource) {
@@ -330,7 +334,10 @@ class TestHarness {
         if (lineageIterator == stringToLineageTypeMap.end()) {
             NES_THROW_RUNTIME_ERROR("TestHarness: unable to identify lineage type");
         }
-        QueryId queryId = queryService->validateAndQueueAddRequest(queryString, std::move(placementStrategyName), faultToleranceIterator->second, lineageIterator->second);
+        QueryId queryId = queryService->validateAndQueueAddRequest(queryString,
+                                                                   std::move(placementStrategyName),
+                                                                   faultToleranceIterator->second,
+                                                                   lineageIterator->second);
 
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");

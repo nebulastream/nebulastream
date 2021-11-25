@@ -19,8 +19,8 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>

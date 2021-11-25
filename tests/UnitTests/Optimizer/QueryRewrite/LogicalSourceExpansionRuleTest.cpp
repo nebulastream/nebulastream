@@ -19,13 +19,13 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
