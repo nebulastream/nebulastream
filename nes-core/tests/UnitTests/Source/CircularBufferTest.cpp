@@ -39,6 +39,7 @@ class CircularBufferTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down CircularBufferTest test class." << std::endl; }
 
     uint64_t testCapacity = 3;
+    uint64_t zeroCapacity = 0;
     int testValue = 1;
 };
 

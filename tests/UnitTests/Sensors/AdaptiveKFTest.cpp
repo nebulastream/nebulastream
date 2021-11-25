@@ -83,6 +83,8 @@ class KFProxy : public KalmanFilter {
   private:
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerDefaultSizeTest);
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerCustomSizeTest);
+    FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorEmptyWindowTest);
+    FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorFilledWindowTest);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
@@ -256,7 +258,7 @@ TEST_F(AdaptiveKFTest, kfErrorDividerCustomSizeTest) {
     KFProxy kfProxy1{0};
     kfProxy1.setDefaultValues();
     errorDivider = kfProxy1.totalEstimationErrorDivider;
-    ASSERT_EQ(errorDivider, 0);
+    ASSERT_EQ(errorDivider, 1);
 
     // window of 50
     KFProxy kfProxy2{50};
@@ -264,5 +266,43 @@ TEST_F(AdaptiveKFTest, kfErrorDividerCustomSizeTest) {
     errorDivider = kfProxy2.totalEstimationErrorDivider;
     ASSERT_NE(errorDivider, 0);
     ASSERT_NEAR(errorDivider, 4.5, 0.1);
+}
+
+TEST_F(AdaptiveKFTest, kfEstimationErrorEmptyWindowTest) {
+    // default filter
+    KFProxy kfProxy{0};
+    kfProxy.setDefaultValues();
+    ASSERT_EQ(kfProxy.calculateTotalEstimationError(), 0);
+
+    // window of 1
+    KFProxy kfProxy1{1};
+    kfProxy.setDefaultValues();
+    ASSERT_EQ(kfProxy1.calculateTotalEstimationError(), 0);
+
+    // window of 50
+    KFProxy kfProxy2{50};
+    kfProxy2.setDefaultValues();
+    ASSERT_EQ(kfProxy2.calculateTotalEstimationError(), 0);
+}
+
+TEST_F(AdaptiveKFTest, kfEstimationErrorFilledWindowTest) {
+    // default filter w/ window of 1
+    KFProxy kfProxy{1};
+    kfProxy.setDefaultValues();
+    kfProxy.kfErrorWindow.push(2);
+    ASSERT_EQ(kfProxy.calculateTotalEstimationError(), 2);
+    kfProxy.kfErrorWindow.push(0); // will replace 2
+    ASSERT_EQ(kfProxy.calculateTotalEstimationError(), 0);
+
+    // window of 2
+    KFProxy kfProxy2{2};
+    kfProxy2.setDefaultValues();
+    long value = 0;
+    while (!kfProxy2.kfErrorWindow.full()) {
+        kfProxy2.kfErrorWindow.push(value);
+        value++;
+    }
+    ASSERT_NE(kfProxy2.calculateTotalEstimationError(), 0);
+    ASSERT_NEAR(kfProxy2.calculateTotalEstimationError(), 0.6, 0.1);
 }
 }// namespace NES

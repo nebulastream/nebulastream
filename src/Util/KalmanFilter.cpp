@@ -124,9 +124,9 @@ void KalmanFilter::setLambda(float newLambda) {
     this->lambda = newLambda;
 }
 
-long KalmanFilter::calculateTotalEstimationError() {
-    long j = 1;// eq. 9 iterator
-    long totalError = 0;
+float KalmanFilter::calculateTotalEstimationError() {
+    float j = 1;// eq. 9 iterator
+    float totalError = 0;
     for (auto errorValue : kfErrorWindow) {
         totalError += (errorValue / j);
         ++j;
@@ -135,7 +135,7 @@ long KalmanFilter::calculateTotalEstimationError() {
 }
 
 void KalmanFilter::calculateTotalEstimationErrorDivider(int size) {
-    totalEstimationErrorDivider = 0;
+    totalEstimationErrorDivider = size > 0 ? 0 : 1;
     for (int i = 1; i <= size; ++i) {
         totalEstimationErrorDivider += (1.0 / i);
     }
