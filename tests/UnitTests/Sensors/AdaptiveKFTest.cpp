@@ -110,7 +110,7 @@ TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
     }
 
     // error has changed and P != P0
-    EXPECT_NE(initialError, kalmanFilter.getError());
+    ASSERT_NE(initialError, kalmanFilter.getError());
 }
 
 TEST_F(AdaptiveKFTest, kfStateChangeTest) {
@@ -136,7 +136,7 @@ TEST_F(AdaptiveKFTest, kfStateChangeTest) {
         // get current xHat, update, assert NE with new one
         auto oldXHat = kalmanFilter.getState();
         kalmanFilter.update(y);
-        EXPECT_NE(oldXHat, kalmanFilter.getState());
+        ASSERT_NE(oldXHat, kalmanFilter.getState());
     }
 }
 
@@ -161,7 +161,7 @@ TEST_F(AdaptiveKFTest, kfStateChangeEmptyInitialStateTest) {
         // get current xHat, update, assert NE with new one
         auto oldXHat = kalmanFilter.getState();
         kalmanFilter.update(y);
-        EXPECT_NE(oldXHat, kalmanFilter.getState());
+        ASSERT_NE(oldXHat, kalmanFilter.getState());
     }
 }
 
@@ -188,7 +188,7 @@ TEST_F(AdaptiveKFTest, kfStepChangeTest) {
         // get current step, update, assert NE with new one
         auto oldStep = kalmanFilter.getCurrentStep();
         kalmanFilter.update(y);
-        EXPECT_NE(oldStep, kalmanFilter.getCurrentStep());
+        ASSERT_NE(oldStep, kalmanFilter.getCurrentStep());
     }
 }
 
@@ -217,7 +217,7 @@ TEST_F(AdaptiveKFTest, kfInnovationErrorChangeTest) {
         auto oldInnovError = kalmanFilter.getInnovationError();
         kalmanFilter.update(y);
         auto newInnovError = kalmanFilter.getInnovationError();
-        ASSERT_TRUE(oldInnovError(0) != newInnovError(0));
+        ASSERT_NE(oldInnovError(0), newInnovError(0));
     }
 }
 
