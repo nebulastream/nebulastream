@@ -148,6 +148,7 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
     struct Record {
         uint64_t test$key;
         uint64_t test$value;
+        uint64_t payload;
         uint64_t test$ts;
     };
     uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
