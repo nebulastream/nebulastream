@@ -92,7 +92,7 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     streamCatalog->addPhysicalStream("default_logical", sce);
 
-    Query query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    Query query = Query::from("default_logical");
     auto queryPlan = query.getQueryPlan();
 
     web::json::value postJsonReturn = cppClient.deployQuery(queryPlan, "localhost", std::to_string(restPort));
