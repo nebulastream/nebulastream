@@ -49,7 +49,7 @@ bool ManualPlacementStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryP
     // apply the placement from the specified binary mapping
     assignMappingToTopology(topology, queryPlan, this->binaryMapping);
     addNetworkSourceAndSinkOperators(queryPlan);
-    return runTypeInferencePhase(queryPlan->getQueryId());
+    return runTypeInferencePhase(queryPlan->getQueryId(), queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
 }
 
 void ManualPlacementStrategy::setBinaryMapping(PlacementMatrix userDefinedBinaryMapping) {

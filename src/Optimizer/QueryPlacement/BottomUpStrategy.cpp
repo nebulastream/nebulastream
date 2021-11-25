@@ -83,7 +83,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
                   << queryId);
 
         NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
-        return runTypeInferencePhase(queryId);
+        return runTypeInferencePhase(queryId, queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
     } catch (Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }

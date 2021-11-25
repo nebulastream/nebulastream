@@ -136,9 +136,19 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     }
 
                     std::string optimizationStrategyName = req.at("strategyName").as_string();
+                    std::string faultToleranceString = req.at("faultTolerance").as_string();
+                    std::string lineageString = req.at("lineage").as_string();
+                    auto faultToleranceIterator = stringToFaultToleranceTypeMap.find(faultToleranceString);
+                    if (faultToleranceIterator == stringToFaultToleranceTypeMap.end()) {
+                        throw "QueryController: Enable to find given fault tolerance type";
+                    }
+                    auto lineageIterator = stringToLineageTypeMap.find(lineageString);
+                    if (lineageIterator == stringToLineageTypeMap.end()) {
+                        throw "QueryController: Enable to find given lineage type";
+                    }
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
+                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName, faultToleranceIterator->second, lineageIterator->second);
 
                     //Prepare the response
                     web::json::value restResponse{};
@@ -174,11 +184,23 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     // decode protobuf message into c++ obj repr
                     SerializableQueryPlan* queryPlanSerialized = protobufMessage->mutable_queryplan();
                     QueryPlanPtr queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(queryPlanSerialized));
+
+                    std::string* queryString = protobufMessage->mutable_querystring();
                     auto* context = protobufMessage->mutable_context();
                     std::string placementStrategy = context->at("placement").value();
-                    std::string* queryString = protobufMessage->mutable_querystring();
+                    std::string faultToleranceString = context->at("faultTolerance").value();
+                    std::string lineageString = context->at("lineage").value();
 
-                    QueryId queryId = queryService->addQueryRequest(*queryString, queryPlan, placementStrategy);
+                    auto faultToleranceIterator = stringToFaultToleranceTypeMap.find(faultToleranceString);
+                    if (faultToleranceIterator == stringToFaultToleranceTypeMap.end()) {
+                        throw "QueryController: Enable to find given fault tolerance type";
+                    }
+                    auto lineageIterator = stringToLineageTypeMap.find(lineageString);
+                    if (lineageIterator == stringToLineageTypeMap.end()) {
+                        throw "QueryController: Enable to find given lineage type";
+                    }
+
+                    QueryId queryId = queryService->addQueryRequest(*queryString, queryPlan, placementStrategy, faultToleranceIterator->second, lineageIterator->second);
 
                     web::json::value restResponse{};
                     restResponse["queryId"] = web::json::value::number(queryId);

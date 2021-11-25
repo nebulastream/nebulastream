@@ -19,6 +19,8 @@
 
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Util/FaultToleranceType.hpp>
+#include <Util/LineageType.hpp>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -126,9 +128,11 @@ class BasePlacementStrategy {
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id
      * @param queryId: the input query id
+     * @param faultToleranceType: fault-tolerance type
+     * @param lineageType: lineage type
      * @return true if successful else false
      */
-    bool runTypeInferencePhase(QueryId queryId);
+    bool runTypeInferencePhase(QueryId queryId, FaultToleranceType faultToleranceType, LineageType lineageType);
 
     /**
      * @brief assign binary matrix representation of placement mapping to the topology

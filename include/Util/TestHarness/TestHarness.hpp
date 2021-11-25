@@ -263,11 +263,13 @@ class TestHarness {
          * @brief execute the test based on the given operator, pushed elements, and number of workers,
          * then return the result of the query execution
          * @param placementStrategyName: placement strategy name
+         * @param faultTolerance: chosen fault tolerance guarantee
+         * @param lineage: chosen lineage type
          * @param numberOfContentToExpect: total number of tuple expected in the query result
          * @return output string
          */
     template<typename T>
-    std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, uint64_t testTimeout = 60) {
+    std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, std::string faultTolerance, std::string lineage, uint64_t testTimeout = 60) {
         uint64_t sourceCount = 0;
         for (const TestHarnessWorker& worker : testHarnessWorkers) {
             if (worker.type == TestHarnessWorker::CSVSource || worker.type == TestHarnessWorker::MemorySource) {
@@ -320,7 +322,15 @@ class TestHarness {
         //register query
         std::string queryString =
             queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-        QueryId queryId = queryService->validateAndQueueAddRequest(queryString, std::move(placementStrategyName));
+        auto faultToleranceIterator = stringToFaultToleranceTypeMap.find(faultTolerance);
+        if (faultToleranceIterator == stringToFaultToleranceTypeMap.end()) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: unable to identify fault tolerance guarantee");
+        }
+        auto lineageIterator = stringToLineageTypeMap.find(lineage);
+        if (lineageIterator == stringToLineageTypeMap.end()) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: unable to identify lineage type");
+        }
+        QueryId queryId = queryService->validateAndQueueAddRequest(queryString, std::move(placementStrategyName), faultToleranceIterator->second, lineageIterator->second);
 
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");

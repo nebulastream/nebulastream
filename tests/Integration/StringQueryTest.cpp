@@ -136,7 +136,7 @@ TEST_F(StringQueryTest, conditionOnAttribute) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "112"}, {1, "222"}, {4, "333"}, {2, "112"}, {1, "555"}, {1, "666"}};
-    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
+    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -166,7 +166,7 @@ TEST_F(StringQueryTest, DISABLED_neqOnChars) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "222"}, {4, "333"}, {1, "555"}, {1, "666"}};
-    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
+    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -196,7 +196,7 @@ TEST_F(StringQueryTest, eqOnCharsMultipleReturn) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "112"}, {2, "112"}};
-    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
+    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -227,7 +227,7 @@ TEST_F(StringQueryTest, eqOnString) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "113"}};
-    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
+    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -258,7 +258,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntNotComparator) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "111"}, {1, "222"}, {1, "444"}, {1, "555"}, {1, "667"}};
-    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
+    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::Not(::testing::UnorderedElementsAreArray(expectedOutput)));
@@ -290,7 +290,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnInt) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "111"}, {1, "222"}, {1, "444"}, {1, "555"}, {1, "666"}};
-    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
+    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -322,7 +322,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntSame) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Schema_t> expectedOutput{{1, "234"}, {1, "234"}, {1, "234"}, {1, "234"}, {1, "234"}};
-    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
+    std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -352,7 +352,7 @@ TEST_F(StringQueryTest, testHarnessUtilizeOneStruct) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
     std::vector<Car> expectedOutput = {{1, 2}, {1, 4}, {1, 9}, {1, 8}, {1, 9}};
-    std::vector<Car> actualOutput = testHarness.getOutput<Car>(expectedOutput.size(), "BottomUp");
+    std::vector<Car> actualOutput = testHarness.getOutput<Car>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

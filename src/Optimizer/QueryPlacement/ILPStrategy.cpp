@@ -173,7 +173,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     placeOperators(queryPlan, z3Model, placementVariables);
 
     // 9. Run the type inference phase and return the status
-    return runTypeInferencePhase(queryPlan->getQueryId());
+    return runTypeInferencePhase(queryPlan->getQueryId(), queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
 }
 
 std::vector<NodePtr> ILPStrategy::findPathToRoot(NodePtr sourceNode) {
