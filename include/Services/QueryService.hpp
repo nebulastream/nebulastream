@@ -66,8 +66,10 @@ class QueryService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    uint64_t validateAndQueueAddRequest(const std::string& queryString, const std::string& placementStrategyName,
-                                        const FaultToleranceType faultTolerance, const LineageType lineage);
+    uint64_t validateAndQueueAddRequest(const std::string& queryString,
+                                        const std::string& placementStrategyName,
+                                        const FaultToleranceType faultTolerance,
+                                        const LineageType lineage);
 
     /**
      * @deprecated NOT TO BE USED
@@ -79,7 +81,11 @@ class QueryService {
      * @param lineage : lineage type for the given query.
      * @return query id
      */
-    uint64_t addQueryRequest(const std::string& queryString, Query query, const std::string& placementStrategyName, FaultToleranceType faultTolerance, LineageType lineage);
+    uint64_t addQueryRequest(const std::string& queryString,
+                             Query query,
+                             const std::string& placementStrategyName,
+                             FaultToleranceType faultTolerance,
+                             LineageType lineage);
 
     /**
      * @brief This method is used for submitting the queries directly to the system.
@@ -89,7 +95,10 @@ class QueryService {
      * @param lineage : lineage type for the given query.
      * @return query id
      */
-    uint64_t addQueryRequest(const QueryPlanPtr& queryPlan, const std::string& placementStrategyName, FaultToleranceType faultTolerance, LineageType lineage);
+    uint64_t addQueryRequest(const QueryPlanPtr& queryPlan,
+                             const std::string& placementStrategyName,
+                             FaultToleranceType faultTolerance,
+                             LineageType lineage);
 
     /**
      * @brief
@@ -100,8 +109,11 @@ class QueryService {
      * @param lineage : lineage type for the given query.
      * @return query id
      */
-    uint64_t
-    addQueryRequest(const std::string& queryString, const QueryPlanPtr& queryPlan, const std::string& placementStrategyName, FaultToleranceType faultTolerance, LineageType lineage);
+    uint64_t addQueryRequest(const std::string& queryString,
+                             const QueryPlanPtr& queryPlan,
+                             const std::string& placementStrategyName,
+                             FaultToleranceType faultTolerance,
+                             LineageType lineage);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

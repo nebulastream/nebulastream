@@ -25,8 +25,8 @@ The serializable wrapper definition for query plan
 message SerializableQueryPlan{
   map<uint64, SerializableOperator> operatorMap = 1;
   repeated uint64 rootOperatorIds = 2;
-  uint64 queryId = 3;
-  uint64 querySubPlanId = 4;
+  optional uint64 queryId = 3;
+  optional uint64 querySubPlanId = 4;
   uint64 faultTolerance = 5;
   uint64 lineage = 6;
 }
@@ -34,5 +34,5 @@ message SerializableQueryPlan{
 message SubmitQueryRequest {
   SerializableQueryPlan queryPlan = 1;
   map<string, google.protobuf.Any> context = 2;
-  string queryString = 3;
+  optional string queryString = 3;
 }

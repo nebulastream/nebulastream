@@ -21,9 +21,9 @@
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #include <API/Expressions/Expressions.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -218,7 +218,6 @@ std::string keyAssignmentRight();
  */
 class Query {
   public:
-
     Query(const Query&);
 
     virtual ~Query() = default;
@@ -348,7 +347,6 @@ class Query {
 
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
-
 
   protected:
     // query plan containing the operators.

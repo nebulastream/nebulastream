@@ -49,8 +49,10 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog,
 
 QueryService::~QueryService() { NES_DEBUG("~QueryService()"); }
 
-uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString, const std::string& placementStrategyName,
-                                                  const FaultToleranceType faultTolerance, const LineageType lineage) {
+uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString,
+                                                  const std::string& placementStrategyName,
+                                                  const FaultToleranceType faultTolerance,
+                                                  const LineageType lineage) {
 
     NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
@@ -118,7 +120,11 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
     return false;
 }
 
-uint64_t QueryService::addQueryRequest(const std::string& queryString, Query query, const std::string& placementStrategyName, FaultToleranceType faultTolerance, LineageType lineage) {
+uint64_t QueryService::addQueryRequest(const std::string& queryString,
+                                       Query query,
+                                       const std::string& placementStrategyName,
+                                       FaultToleranceType faultTolerance,
+                                       LineageType lineage) {
     NES_INFO("QueryService: Queuing the query for the execution");
     auto queryPlan = query.getQueryPlan();
     queryPlan->setFaultToleranceType(faultTolerance);
@@ -132,7 +138,10 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString, Query que
     throw Exception("QueryService: unable to create query catalog entry");
 }
 
-uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan, const std::string& placementStrategyName, FaultToleranceType faultTolerance, LineageType lineage) {
+uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan,
+                                       const std::string& placementStrategyName,
+                                       FaultToleranceType faultTolerance,
+                                       LineageType lineage) {
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery("", queryPlan, placementStrategyName);
     queryPlan->setFaultToleranceType(faultTolerance);
     queryPlan->setLineageType(lineage);
@@ -146,7 +155,9 @@ uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan, const std:
 
 uint64_t QueryService::addQueryRequest(const std::string& queryString,
                                        const QueryPlanPtr& queryPlan,
-                                       const std::string& placementStrategyName, FaultToleranceType faultTolerance, LineageType lineage) {
+                                       const std::string& placementStrategyName,
+                                       FaultToleranceType faultTolerance,
+                                       LineageType lineage) {
 
     // assign the id for the query and individual operators
     assignQueryAndOperatorIds(queryPlan);

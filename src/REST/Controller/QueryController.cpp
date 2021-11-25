@@ -148,7 +148,10 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     }
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName, faultToleranceIterator->second, lineageIterator->second);
+                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery,
+                                                                               optimizationStrategyName,
+                                                                               faultToleranceIterator->second,
+                                                                               lineageIterator->second);
 
                     //Prepare the response
                     web::json::value restResponse{};
@@ -200,7 +203,11 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         throw "QueryController: Enable to find given lineage type";
                     }
 
-                    QueryId queryId = queryService->addQueryRequest(*queryString, queryPlan, placementStrategy, faultToleranceIterator->second, lineageIterator->second);
+                    QueryId queryId = queryService->addQueryRequest(*queryString,
+                                                                    queryPlan,
+                                                                    placementStrategy,
+                                                                    faultToleranceIterator->second,
+                                                                    lineageIterator->second);
 
                     web::json::value restResponse{};
                     restResponse["queryId"] = web::json::value::number(queryId);
