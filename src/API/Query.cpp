@@ -81,7 +81,6 @@ namespace CEPOperatorBuilder {
 And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to and with to add virtual key to originalQuery");
     //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
-
     //here, we add artificial key attributes to the streams in order to reuse the join-logic later
     //first, get unique ids for the key attributes
     auto cepLeftId = Util::getNextOperatorId();
@@ -256,23 +255,9 @@ Query& Query::andWith(const Query& subQueryRhs,
 
 Query& Query::orWith(Query& subQueryRhs) {
     NES_DEBUG("Query: add map operator that add the original stream name to the left and right side streams of the OR ");
-    //TODO: outcommented code would map stream name to Operator, fails due to schema mismatch (ArrayType of different length) Thus, 1 and 2 replace for now the different origins.
-    /*
-    std::vector<std::string> sourceNameLeft;
-    std::vector<std::string> sourceNameRight;
-    //get all source names of the left side and merge them
-    sourceNameLeft.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
-    std::sort(sourceNameLeft.begin(), sourceNameLeft.end());
-    std::string streamNameLeft = std::accumulate(sourceNameLeft.begin(), sourceNameLeft.end(), std::string("-"));
-    NES_DEBUG("Query: Source Names of the Left stream " << streamNameLeft);
-    //get all source names of the right side and merge them
-    sourceNameRight.emplace_back(this->getQueryPlan()->getSourceConsumed());
-    std::sort(sourceNameRight.begin(), sourceNameRight.end());
-    std::string streamNameRight = std::accumulate(sourceNameRight.begin(), sourceNameRight.end(), std::string("-"));
-    NES_DEBUG("Query: Source Names of the Right stream " << streamNameLeft);
-    */
+    //TODO: issue #2349 add real stream name as origin to the tuples.
     std::string attName = "StreamName";
-    //3. map the attributes with value streamNameLeft and streamNameRight to the left and right stream
+    //map the attributes with value streamNameLeft and streamNameRight to the left and right stream
     this->map(Attribute(attName, INT8) = 1);
     subQueryRhs.map(Attribute(attName, INT8) = 2);
     NES_DEBUG("Query: finally we translate the OR into a union OP ");
