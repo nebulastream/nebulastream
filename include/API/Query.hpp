@@ -339,21 +339,6 @@ class Query {
                    Windowing::WindowTypePtr const& windowType);
 
     /**
-     * @new change: Now it's private, because we don't want the user to have access to it.
-     * We call it only internal as a last step during the OR operation
-     * @brief This methods adds the joinType to the join operator and calls join function to add the operator to a query
-     * @param subQueryRhs subQuery to be composed
-     * @param onLeftKey key attribute of the left stream
-     * @param onLeftKey key attribute of the right stream
-     * @param windowType Window definition.
-     * @return the query
-     */
-    Query& orWith(const Query& subQueryRhs,
-                   ExpressionItem onLeftKey,
-                   ExpressionItem onRightKey,
-                   Windowing::WindowTypePtr const& windowType);
-
-    /**
      * We call it only internal as a last step during the Join/AND operation
      * @brief This methods add the join operator to a query
      * @param subQueryRhs subQuery to be joined
