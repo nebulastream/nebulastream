@@ -177,7 +177,7 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
                         NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
-                    NES_TRACE("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/'
+                    NES_DEBUG("MQTTSource::fillBuffer: Tuples processed for current buffer: " << tupleCount << '/'
                                                                                               << tuplesThisPass);
                     tupleCount++;
                 } else if (!client->is_connected()) {// message is a nullptr. Check if still connected to broker.
@@ -189,10 +189,19 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
                 client->subscribe(topic, qualityOfService)->wait_for(readTimeoutInMs);
                 connected = true;
             }
-        } catch (const mqtt::exception& exc) {
-            NES_ERROR("MQTTSource::fillBuffer: " << exc.what());
         } catch (...) {
-            NES_ERROR("MQTTSource::fillBuffer: Error other than mqtt::exception.");
+            auto exceptionPtr = std::current_exception();
+            try {
+                if (exceptionPtr) {
+                    std::rethrow_exception(exceptionPtr);
+                }
+            } catch (const mqtt::exception& error) {
+                NES_ERROR("MQTTSource::fillBuffer: " << error.what());
+                return false;
+            } catch (std::exception& error) {
+                NES_ERROR("MQTTSource::fillBuffer: General Error: " << error.what());
+                return false;
+            }
         }
 
         // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
@@ -239,8 +248,8 @@ bool MQTTSource::connect() {
                 client->subscribe(topic, qualityOfService)->wait();
             }
             connected = client->is_connected();
-        } catch (const mqtt::exception& exc) {
-            NES_WARNING("MQTTSource::connect: " << exc);
+        } catch (const mqtt::exception& error) {
+            NES_WARNING("MQTTSource::connect: " << error);
             connected = false;
             return connected;
         }

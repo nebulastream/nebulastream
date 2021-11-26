@@ -173,7 +173,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 }
 
 // Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
-TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
+TEST_F(MQTTSourceTest, testDeployOneWorkerWithMQTTSourceConfig) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
 
@@ -218,12 +218,12 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
     srcConf->setSourceType("MQTTSource");
-    srcConf->setUrl("ws://127.0.0.1:9001");
+    srcConf->setUrl("ws://127.0.0.1:9002");
     srcConf->setClientId("testClients");
     srcConf->setUserName("testUser");
-    srcConf->setTopic("demoTownSensorData");
+    srcConf->setTopic("demoCityHospital_1");
     srcConf->setQos(2);
-    srcConf->setCleanSession(false);
+    srcConf->setCleanSession(true);
     srcConf->setFlushIntervalMS(2000);
     srcConf->setNumberOfBuffersToProduce(10000);
     srcConf->setPhysicalStreamName("test_stream");
