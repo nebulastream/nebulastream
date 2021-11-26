@@ -1693,7 +1693,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         auto joinKeyFieldName = joinDef->getRightJoinKey()->getFieldName();
 
         keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(joinDef->getRightJoinKey()->getStamp()),
-                                                             joinDef->getRightJoinKey()->getFieldName());
+                                                             joinDef->getRightJoinKey()->getFieldName() + "rightKey");
 
         NES_ASSERT(recordHandler->hasAttribute(joinKeyFieldName), "join key is not defined on iput tuple");
 
