@@ -240,7 +240,6 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
 
     std::vector<NodePtr> parents = testNode->getParents();
     std::vector<NodePtr> updatedParents;
-    //remove all parents that are marked for maintenance
     for (auto& parent: parents){
         if(!parent->as<TopologyNode>()->getMaintenanceFlag()){
             updatedParents.push_back(parent);
@@ -437,7 +436,6 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
 
         NES_TRACE("Topology: Add parent of the the node under consideration to the deque for further processing.");
         for (const auto& parent : candidateNode->getParents()) {
-            //if node isnt marked for maintennance, add to processing queue
             if(!parent->as<TopologyNode>()->getMaintenanceFlag())
                 nodesToProcess.push_back(parent);
         }
@@ -487,7 +485,6 @@ TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyN
 
         NES_TRACE("Topology: Add children of the the node under consideration to the deque for further processing.");
         for (const auto& child : candidateNode->getChildren()) {
-            //if node isnt marked for maintenance, add to processing queue
             if(!child->as<TopologyNode>()->getMaintenanceFlag()) {
                 nodesToProcess.push_back(child);
             }
@@ -591,7 +588,6 @@ TopologyNodePtr Topology::findTopologyNodeByIdInSubgraphHelper(TopologyNodePtr s
         if (sourceNode->getId() == id) {
             return sourceNode;
         }
-
         // not equal
         for (auto& currentNode : sourceNode->getParents()) {
             resultNode = findTopologyNodeByIdInSubgraphHelper(currentNode->as<TopologyNode>(), id);
