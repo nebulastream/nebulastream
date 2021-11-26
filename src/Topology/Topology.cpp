@@ -239,13 +239,21 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
     }
 
     std::vector<NodePtr> parents = testNode->getParents();
-    if (parents.empty()) {
+    std::vector<NodePtr> updatedParents;
+    //remove all parents that are marked for maintenance
+    for (auto& parent: parents){
+        if(!parent->as<TopologyNode>()->getMaintenanceFlag()){
+            updatedParents.push_back(parent);
+        }
+    }
+
+    if (updatedParents.empty()) {
         NES_WARNING("Topology: reached end of the tree but destination node not found.");
         return nullptr;
     }
 
     TopologyNodePtr foundNode = nullptr;
-    for (auto& parent : parents) {
+    for (auto& parent : updatedParents) {
         TopologyNodePtr foundInParent = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
         if (foundInParent) {
             NES_TRACE("Topology: found the destination node as the parent of the physical node.");
@@ -429,7 +437,9 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
 
         NES_TRACE("Topology: Add parent of the the node under consideration to the deque for further processing.");
         for (const auto& parent : candidateNode->getParents()) {
-            nodesToProcess.push_back(parent);
+            //if node isnt marked for maintennance, add to processing queue
+            if(!parent->as<TopologyNode>()->getMaintenanceFlag())
+                nodesToProcess.push_back(parent);
         }
     }
 
@@ -477,7 +487,10 @@ TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyN
 
         NES_TRACE("Topology: Add children of the the node under consideration to the deque for further processing.");
         for (const auto& child : candidateNode->getChildren()) {
-            nodesToProcess.push_back(child);
+            //if node isnt marked for maintenance, add to processing queue
+            if(!child->as<TopologyNode>()->getMaintenanceFlag()) {
+                nodesToProcess.push_back(child);
+            }
         }
     }
     NES_WARNING("Topology: Unable to find a common child topology node for the input topology nodes.");
@@ -560,6 +573,33 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(std::vector<TopologyNode
     }
 
     return findNodesBetween(commonAncestorForChildren, commonChildForParents);
+}
+TopologyNodePtr Topology::findTopologyNodeByIdInSubGraph(uint64_t id, std::vector<TopologyNodePtr> sourceNodes) {
+    TopologyNodePtr found = nullptr;
+    for(const auto&sourceNode : sourceNodes){
+        found = findTopologyNodeByIdInSubgraphHelper(sourceNode, id);
+        if(found){
+            break;
+        }
+    }
+    return found;
+}
+
+TopologyNodePtr Topology::findTopologyNodeByIdInSubgraphHelper(TopologyNodePtr sourceNode, uint64_t id){
+        // DFS
+        TopologyNodePtr resultNode = nullptr;
+        if (sourceNode->getId() == id) {
+            return sourceNode;
+        }
+
+        // not equal
+        for (auto& currentNode : sourceNode->getParents()) {
+            resultNode = findTopologyNodeByIdInSubgraphHelper(currentNode->as<TopologyNode>(), id);
+            if (resultNode) {
+                break;
+            }
+        }
+        return resultNode;
 }
 
 }// namespace NES
