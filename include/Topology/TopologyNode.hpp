@@ -77,6 +77,19 @@ class TopologyNode : public Node {
      */
     uint32_t getDataPort() const;
 
+    /**
+     * @brief Get maintenance flag where 1 represents marked for maintenance
+     * @return bool
+     */
+    bool getMaintenanceFlag() const;
+
+    /**
+     * @brief sets maintenance flag where 1 represents marked for maintenance
+     * @param flag
+     */
+    void setMaintenanceFlag(bool flag);
+
+
     std::string toString() const override;
 
     /**
@@ -140,6 +153,7 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t resources;
     uint16_t usedResources;
+    bool maintenanceFlag;
 
     /**
      * @brief A field to store a map of node properties

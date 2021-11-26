@@ -21,7 +21,7 @@
 namespace NES {
 
 TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources)
-    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0) {}
+    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),maintenanceFlag(false) {}
 
 TopologyNodePtr
 TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
@@ -35,6 +35,10 @@ uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
 uint16_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
+
+bool TopologyNode::getMaintenanceFlag() const {return maintenanceFlag;};
+
+void TopologyNode::setMaintenanceFlag(bool flag) { maintenanceFlag=flag; }
 
 void TopologyNode::increaseResources(uint16_t freedCapacity) {
     NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
