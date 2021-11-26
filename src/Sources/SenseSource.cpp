@@ -32,7 +32,7 @@ namespace NES {
 SenseSource::SenseSource(SchemaPtr schema,
                          Runtime::BufferManagerPtr bufferManager,
                          Runtime::QueryManagerPtr queryManager,
-                         std::string udsf,
+                         std::string udfs,
                          OperatorId operatorId,
                          size_t numSourceLocalBuffers,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -43,7 +43,7 @@ SenseSource::SenseSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  DataSource::GatheringMode::FREQUENCY_MODE,
                  std::move(successors)),
-      udsf(std::move(udsf)) {}
+      udfs(std::move(udfs)) {}
 
 std::optional<Runtime::TupleBuffer> SenseSource::receiveData() {
     NES_DEBUG("SenseSource::receiveData called");
@@ -55,7 +55,7 @@ std::optional<Runtime::TupleBuffer> SenseSource::receiveData() {
 
 std::string SenseSource::toString() const {
     std::stringstream ss;
-    ss << "SenseSource(SCHEMA(" << schema->toString() << "), UDSF=" << udsf << endl;
+    ss << "SenseSource(SCHEMA(" << schema->toString() << "), UDFS=" << udfs << endl;
     return ss.str();
 }
 
@@ -63,6 +63,6 @@ void SenseSource::fillBuffer(Runtime::TupleBuffer&) {}
 
 SourceType SenseSource::getType() const { return SENSE_SOURCE; }
 
-const string& SenseSource::getUdsf() const { return udsf; }
+const string& SenseSource::getUdfs() const { return udfs; }
 
 }// namespace NES

@@ -95,8 +95,28 @@ std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_share
 CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
 #ifdef __APPLE__
     libNesPath = detail::recursiveFindFileReverse(detail::getExecutablePath(), "libnes.dylib");
-    NES_ASSERT2_FMT(std::filesystem::is_regular_file(libNesPath), "Invalid libnes.dylib file found at " << libNesPath);
-    NES_DEBUG("Library libnes.dylib found at: " << libNesPath.parent_path());
+
+    if (std::filesystem::is_regular_file(libNesPath)) {
+        NES_DEBUG("Library libnes.dylib found at: " << libNesPath.parent_path());
+        return;
+    } else {
+        NES_DEBUG("Invalid libnes.dylib file found at " << libNesPath << ". Searching next in DYLD_LIBRARY_PATH.");
+
+        std::stringstream dyld_string(std::getenv("DYLD_LIBRARY_PATH"));
+        std::string path;
+
+        while (std::getline(dyld_string, path, ':')) {
+            if (path == "") {
+                continue;
+            }
+            libNesPath = detail::recursiveFindFileReverse(path, "libnes.dylib");
+            if (std::filesystem::is_regular_file(libNesPath)) {
+                NES_DEBUG("Library libnes.dylib found at: " << libNesPath.parent_path());
+                return;
+            }
+        }
+        NES_FATAL_ERROR("No valid libnes.dylib found in executable path or DYLD_LIBRARY_PATH.");
+    }
 #endif
 }
 

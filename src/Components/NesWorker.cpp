@@ -16,7 +16,7 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -45,7 +45,7 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
+NesWorker::NesWorker(const Configurations::WorkerConfigPtr& workerConfig, NesNodeType type)
     : conf(PhysicalStreamConfig::createEmpty()), coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
       localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
       workerToCoreMapping(workerConfig->getWorkerPinList()->getValue()),
@@ -59,7 +59,8 @@ NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
       queryCompilerCompilationStrategy(workerConfig->getQueryCompilerCompilationStrategy()->getValue()),
       queryCompilerPipeliningStrategy(workerConfig->getQueryCompilerPipeliningStrategy()->getValue()),
       queryCompilerOutputBufferOptimizationLevel(workerConfig->getQueryCompilerOutputBufferAllocationStrategy()->getValue()),
-      enableNumaAwareness(workerConfig->isNumaAware()), type(type) {
+      enableNumaAwareness(workerConfig->isNumaAware()), enableMonitoring(workerConfig->getEnableMonitoring()->getValue()),
+      type(type) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }
@@ -151,8 +152,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   queryCompilerPipeliningStrategy,
                                                                   queryCompilerOutputBufferOptimizationLevel);
         NES_DEBUG("NesWorker: Node engine started successfully");
-        monitoringAgent = MonitoringAgent::create();
-        NES_DEBUG("NesWorker: MonitoringAgent configured with default values");
+        monitoringAgent = MonitoringAgent::create(enableMonitoring);
+        NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << enableMonitoring);
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
         throw Exception("NesWorker error while starting node engine");
@@ -247,7 +248,7 @@ bool NesWorker::connect() {
 
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
     std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
-    auto staticStats = MetricUtils::staticNesStats().measure();
+    auto staticStats = monitoringAgent->getStaticNesMetrics();
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
     bool successPRCRegister = false;

@@ -18,9 +18,9 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -32,6 +32,8 @@
 using namespace std;
 
 namespace NES {
+
+using namespace Configurations;
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
@@ -61,7 +63,7 @@ class AssignWatermarkTest : public testing::Test {
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     crdConf = CoordinatorConfig::create();
     crdConf->setRpcPort(rpcPort);
@@ -70,9 +72,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     wrkConf = WorkerConfig::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
-    srcConf = SourceConfig::create();
-    srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
     srcConf->setPhysicalStreamName("test_stream");
@@ -158,7 +158,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     crdConf = CoordinatorConfig::create();
     crdConf->setRpcPort(rpcPort);
@@ -167,9 +167,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     wrkConf = WorkerConfig::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
-    srcConf = SourceConfig::create();
-    srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
     srcConf->setPhysicalStreamName("test_stream");
@@ -277,7 +275,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     crdConf = CoordinatorConfig::create();
     crdConf->setRpcPort(rpcPort);
@@ -286,9 +284,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     wrkConf = WorkerConfig::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
-    srcConf = SourceConfig::create();
-    srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
     srcConf->setPhysicalStreamName("test_stream");
@@ -377,7 +373,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     crdConf = CoordinatorConfig::create();
     crdConf->setRpcPort(rpcPort);
@@ -386,9 +382,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     wrkConf = WorkerConfig::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
-    srcConf = SourceConfig::create();
-    srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setFilePath("../tests/test_data/window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
     srcConf->setPhysicalStreamName("test_stream");

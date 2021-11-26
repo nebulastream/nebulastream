@@ -20,6 +20,8 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cpprest/http_msg.h>
+#include <cpprest/json.h>
 #include <utility>
 #include <vector>
 
@@ -33,7 +35,7 @@ void TopologyController::handleGet(const std::vector<utility::string_t>& paths, 
     //TODO: ignore nodes marked for maintenance
     topology->print();
     if (paths.size() == 1) {
-        web::json::value topologyJson = Util::getTopologyAsJson(topology->getRoot());
+        web::json::value topologyJson = getTopologyAsJson(topology);
         successMessageImpl(message, topologyJson);
         return;
     }
@@ -51,7 +53,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
                     NES_DEBUG("TopologyController::handlePost:addParent: userRequest: " << payload);
-                    json::value req = json::value::parse(payload);
+                    web::json::value req = web::json::value::parse(payload);
                     NES_DEBUG("TopologyController::handlePost:addParent: Json Parse Value: " << req);
                     uint64_t childId = std::stoull(req.at("childId").as_string());
                     uint64_t parentId = std::stoull(req.at("parentId").as_string());
@@ -85,8 +87,8 @@ bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysic
                     }
 
                     //Prepare the response
-                    json::value result{};
-                    result["Success"] = json::value::boolean(added);
+                    web::json::value result{};
+                    result["Success"] = web::json::value::boolean(added);
                     successMessageImpl(message, result);
                     return;
                 } catch (const std::exception& exc) {
@@ -113,7 +115,7 @@ bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysic
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
                     NES_DEBUG("TopologyController::handlePost:removeParent: userRequest: " << payload);
-                    json::value req = json::value::parse(payload);
+                    web::json::value req = web::json::value::parse(payload);
                     NES_DEBUG("TopologyController::handlePost:removeParent: Json Parse Value: " << req);
                     uint64_t childId = std::stoull(req.at("childId").as_string());
                     uint64_t parentId = std::stoull(req.at("parentId").as_string());
@@ -148,8 +150,8 @@ bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysic
                     }
 
                     //Prepare the response
-                    json::value result{};
-                    result["Success"] = json::value::boolean(added);
+                    web::json::value result{};
+                    result["Success"] = web::json::value::boolean(added);
                     successMessageImpl(message, result);
                     return;
                 } catch (const std::exception& exc) {
@@ -220,5 +222,52 @@ bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysic
         resourceNotFoundImpl(message);
     }
     return;
+}
+
+web::json::value TopologyController::getTopologyAsJson(TopologyPtr topo) {
+    NES_INFO("TopologyController: getting topology as JSON");
+
+    web::json::value topologyJson{};
+    auto root = topo->getRoot();
+    std::deque<TopologyNodePtr> parentToAdd{std::move(root)};
+    std::deque<TopologyNodePtr> childToAdd;
+
+    std::vector<web::json::value> nodes = {};
+    std::vector<web::json::value> edges = {};
+
+    while (!parentToAdd.empty()) {
+        // Current topology node to add to the JSON
+        TopologyNodePtr currentNode = parentToAdd.front();
+        web::json::value currentNodeJsonValue{};
+
+        parentToAdd.pop_front();
+        // Add properties for current topology node
+        currentNodeJsonValue["id"] = web::json::value::number(currentNode->getId());
+        currentNodeJsonValue["available_resources"] = web::json::value::number(currentNode->getAvailableResources());
+        currentNodeJsonValue["ip_address"] = web::json::value::string(currentNode->getIpAddress());
+
+        for (const auto& child : currentNode->getChildren()) {
+            // Add edge information for current topology node
+            web::json::value currentEdgeJsonValue{};
+            currentEdgeJsonValue["source"] = web::json::value::number(child->as<TopologyNode>()->getId());
+            currentEdgeJsonValue["target"] = web::json::value::number(currentNode->getId());
+            edges.push_back(currentEdgeJsonValue);
+
+            childToAdd.push_back(child->as<TopologyNode>());
+        }
+
+        if (parentToAdd.empty()) {
+            parentToAdd.insert(parentToAdd.end(), childToAdd.begin(), childToAdd.end());
+            childToAdd.clear();
+        }
+
+        nodes.push_back(currentNodeJsonValue);
+    }
+    NES_INFO("TopologyController: no more topology node to add");
+
+    // add `nodes` and `edges` JSON array to the final JSON result
+    topologyJson["nodes"] = web::json::value::array(nodes);
+    topologyJson["edges"] = web::json::value::array(edges);
+    return topologyJson;
 }
 }// namespace NES

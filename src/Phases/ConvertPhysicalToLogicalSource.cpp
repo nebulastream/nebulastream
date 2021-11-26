@@ -98,13 +98,8 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             NES_INFO("ConvertPhysicalToLogicalSource: Creating MQTT source");
             const MQTTSourcePtr mqttSourcePtr = std::dynamic_pointer_cast<MQTTSource>(dataSource);
             const SourceDescriptorPtr mqttSourceDescriptor = MQTTSourceDescriptor::create(mqttSourcePtr->getSchema(),
-                                                                                          mqttSourcePtr->getServerAddress(),
-                                                                                          mqttSourcePtr->getClientId(),
-                                                                                          mqttSourcePtr->getUser(),
-                                                                                          mqttSourcePtr->getTopic(),
-                                                                                          mqttSourcePtr->getInputFormat(),
-                                                                                          mqttSourcePtr->getQualityOfService(),
-                                                                                          mqttSourcePtr->getCleanSession());
+                                                                                          mqttSourcePtr->getSourceConfig(),
+                                                                                          mqttSourcePtr->getInputFormat());
             return mqttSourceDescriptor;
         }
 #endif
@@ -124,7 +119,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             NES_INFO("ConvertPhysicalToLogicalSource: Creating sense source");
             const SenseSourcePtr senseSourcePtr = std::dynamic_pointer_cast<SenseSource>(dataSource);
             const SourceDescriptorPtr senseSourceDescriptor =
-                SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdsf());
+                SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdfs());
             return senseSourceDescriptor;
         }
         case MEMORY_SOURCE: {

@@ -18,7 +18,8 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>
@@ -30,6 +31,7 @@
 
 using namespace std;
 using namespace NES;
+using namespace Configurations;
 
 class StreamCatalogServiceTest : public testing::Test {
   public:
@@ -96,9 +98,9 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
 
     std::string physicalStreamName = "testStream";
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("testCSV.csv");
+    sourceConfig->setFilePath("testCSV.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("physical_test");

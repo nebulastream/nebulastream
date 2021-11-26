@@ -18,6 +18,7 @@
 #define NES_INCLUDE_REST_CONTROLLER_MONITORING_CONTROLLER_HPP_
 
 #include <REST/Controller/BaseController.hpp>
+#include <REST/CpprestForwardedRefs.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
 

@@ -20,12 +20,17 @@
 #pragma clang diagnostic pop
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
+
 using namespace std;
 
 namespace NES {
+
+using namespace Configurations;
 
 class AllowedLatenessTest : public testing::Test {
   public:
@@ -40,29 +45,26 @@ class AllowedLatenessTest : public testing::Test {
 
     void SetUp() override {
         // window-out-of-order.csv contains 12 rows
-        SourceConfigPtr outOfOrderSourceConfig = SourceConfig::create();
-        outOfOrderSourceConfig->setSourceType("CSVSource");
-        outOfOrderSourceConfig->setSourceConfig("../tests/test_data/window-out-of-order.csv");
-        outOfOrderSourceConfig->setSourceFrequency(1);
-        outOfOrderSourceConfig->setNumberOfTuplesToProducePerBuffer(2);
-        outOfOrderSourceConfig->setNumberOfBuffersToProduce(6);
-        outOfOrderSourceConfig->setPhysicalStreamName("outOfOrderPhysicalSource");
-        outOfOrderSourceConfig->setLogicalStreamName("OutOfOrderStream");
-        outOfOrderSourceConfig->setSkipHeader(false);
+        SourceConfigPtr outOfOrderSourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+        outOfOrderSourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window-out-of-order.csv");
+        outOfOrderSourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
+        outOfOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
+        outOfOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(6);
+        outOfOrderSourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("outOfOrderPhysicalSource");
+        outOfOrderSourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("OutOfOrderStream");
+        outOfOrderSourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
 
         outOfOrderConf = PhysicalStreamConfig::create(outOfOrderSourceConfig);
 
-        SourceConfigPtr inOrderSourceConfig = SourceConfig::create();
+        SourceConfigPtr inOrderSourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
         // window-out-of-order.csv contains 12 rows
-        inOrderSourceConfig = SourceConfig::create();
-        inOrderSourceConfig->setSourceType("CSVSource");
-        inOrderSourceConfig->setSourceConfig("../tests/test_data/window-in-order.csv");
-        inOrderSourceConfig->setSourceFrequency(1);
-        inOrderSourceConfig->setNumberOfTuplesToProducePerBuffer(2);
-        inOrderSourceConfig->setNumberOfBuffersToProduce(6);
-        inOrderSourceConfig->setPhysicalStreamName("inOrderPhysicalSource");
-        inOrderSourceConfig->setLogicalStreamName("inOrderStream");
-        inOrderSourceConfig->setSkipHeader(false);
+        inOrderSourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window-in-order.csv");
+        inOrderSourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
+        inOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
+        inOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(6);
+        inOrderSourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("inOrderPhysicalSource");
+        inOrderSourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("inOrderStream");
+        inOrderSourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
 
         inOrderConf = PhysicalStreamConfig::create(inOrderSourceConfig);
 

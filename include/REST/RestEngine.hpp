@@ -21,8 +21,8 @@
 #include <xlocale.h>
 #endif
 #include <REST/Controller/BaseController.hpp>
+#include <REST/CpprestForwardedRefs.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
-#include <cpprest/details/http_server.h>
 #include <cpprest/http_listener.h>
 #include <pplx/pplxtasks.h>
 #include <string>
@@ -101,13 +101,13 @@ class RestEngine {
 
     ~RestEngine();
 
-    void handleGet(http_request request);
-    void handlePost(http_request request);
-    void handleDelete(http_request request);
-    void handlePut(http_request request);
-    void handlePatch(http_request request);
-    void handleHead(http_request request);
-    void handleTrace(http_request request);
+    void handleGet(web::http::http_request request);
+    void handlePost(web::http::http_request request);
+    void handleDelete(web::http::http_request request);
+    void handlePut(web::http::http_request request);
+    void handlePatch(web::http::http_request request);
+    void handleHead(web::http::http_request request);
+    void handleTrace(web::http::http_request request);
 
     /**
     * @brief handle preflight request (complex HTTP request)
@@ -115,8 +115,8 @@ class RestEngine {
     * @description A preflight request is sent as a response to a DELETE request,
     *              the response allows the DELETE fetch request of our UI(localhost:3000)
     */
-    static void handlePreflightOptions(const http_request& request);
-    void handleMerge(http_request request);
+    static void handlePreflightOptions(const web::http::http_request& request);
+    void handleMerge(web::http::http_request request);
     void initRestOpHandlers();
     void setEndpoint(const std::string& value);
     [[nodiscard]] std::string endpoint() const;
@@ -124,21 +124,21 @@ class RestEngine {
     pplx::task<void> shutdown();
     static std::vector<utility::string_t> splitPath(const utility::string_t& path);
 
-    static pplx::task<void> returnDefaultNotImplementedReply(const http::method& method, http_request& request);
+    static pplx::task<void> returnDefaultNotImplementedReply(const web::http::method& method, web::http::http_request& request);
 
-    static json::value responseNotImpl(const http::method& method, utility::string_t path);
+    static web::json::value responseNotImpl(const web::http::method& method, utility::string_t path);
 
     /**
         * @brief Get the URI path from the request
         * @param request : the user request
         * @return the path from the request
     */
-    static utility::string_t getPath(http_request& request);
+    static utility::string_t getPath(web::http::http_request& request);
 
     /**
     * @brief creates a UnknownEndpointResponse using BadRequestImpl
     */
-    static void returnDefaultUnknownEndpointResponse(http_request request);
+    static void returnDefaultUnknownEndpointResponse(web::http::http_request request);
 
   protected:
     web::http::experimental::listener::http_listener _listener;// main micro service network endpoint

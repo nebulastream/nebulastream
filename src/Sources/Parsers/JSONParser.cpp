@@ -18,6 +18,7 @@
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cpprest/json.h>
 #include <string>
 #include <utility>
 

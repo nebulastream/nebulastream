@@ -62,11 +62,11 @@ void MonitoringController::handleGet(const std::vector<utility::string_t>& path,
                 } catch (std::runtime_error& ex) {
                     std::string errorMsg = ex.what();
                     NES_ERROR("MonitoringController: GET metrics error: " + errorMsg);
-                    message.reply(status_codes::BadRequest, ex.what());
+                    message.reply(web::http::status_codes::BadRequest, ex.what());
                 }
             } else {
                 NES_DEBUG("MonitoringController: GET metrics for " + strNodeId + " invalid");
-                message.reply(status_codes::BadRequest, "The provided node ID " + path[2] + " is not valid.");
+                message.reply(web::http::status_codes::BadRequest, "The provided node ID " + path[2] + " is not valid.");
             }
             return;
         }
@@ -84,7 +84,7 @@ void MonitoringController::handlePost(const std::vector<utility::string_t>& path
                 try {
                     std::string userRequest(body.begin(), body.end());
                     NES_DEBUG("MonitoringController: handlePost -metrics: userRequest: " + userRequest);
-                    json::value req = json::value::parse(userRequest);
+                    web::json::value req = web::json::value::parse(userRequest);
 
                     std::string endpoint = req.at("endpoint").as_string();
 
@@ -109,11 +109,12 @@ void MonitoringController::handlePost(const std::vector<utility::string_t>& path
                                     successMessageImpl(message, metricPlain);
                                 } catch (std::runtime_error& ex) {
                                     NES_ERROR("MonitoringController: POST metrics error: " << ex.what());
-                                    message.reply(status_codes::BadRequest, ex.what());
+                                    message.reply(web::http::status_codes::BadRequest, ex.what());
                                 }
                             } else {
                                 NES_DEBUG("MonitoringController: POST metrics for " + strNodeId + " invalid");
-                                message.reply(status_codes::BadRequest, "The provided node ID " + strNodeId + " is not valid.");
+                                message.reply(web::http::status_codes::BadRequest,
+                                              "The provided node ID " + strNodeId + " is not valid.");
                             }
                             return;
                         }//otherwise get metrics from all nodes via prometheus
@@ -128,7 +129,7 @@ void MonitoringController::handlePost(const std::vector<utility::string_t>& path
                     }
                 } catch (const std::exception& exc) {
                     NES_ERROR("MonitoringController: Exception occurred during handlePost -metrics: " << exc.what());
-                    message.reply(status_codes::BadRequest, exc.what());
+                    message.reply(web::http::status_codes::BadRequest, exc.what());
                     return;
                 } catch (...) {
                     RuntimeUtils::printStackTrace();

@@ -20,9 +20,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -53,7 +52,6 @@ class BenchmarkSourceIntegrationTest : public testing::Test {
 TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -164,7 +162,6 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -277,7 +274,6 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);

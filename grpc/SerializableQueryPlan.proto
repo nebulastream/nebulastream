@@ -15,6 +15,7 @@
 */
 
 syntax = "proto3";
+import "google/protobuf/any.proto";
 import "SerializableOperator.proto";
 package NES;
 
@@ -24,12 +25,12 @@ The serializable wrapper definition for query plan
 message SerializableQueryPlan{
   map<uint64, SerializableOperator> operatorMap = 1;
   repeated uint64 rootOperatorIds = 2;
-  uint64 queryId = 3;
-  uint64 querySubPlanId = 4;
+  optional uint64 queryId = 3;
+  optional uint64 querySubPlanId = 4;
 }
 
 message SubmitQueryRequest {
   SerializableQueryPlan queryPlan = 1;
-  string placement = 2;
-  string queryString = 3;
+  map<string, google.protobuf.Any> context = 2;
+  optional string queryString = 3;
 }

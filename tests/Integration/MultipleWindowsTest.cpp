@@ -18,6 +18,7 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -28,6 +29,8 @@
 using namespace std;
 
 namespace NES {
+
+using namespace Configurations;
 
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
@@ -50,7 +53,7 @@ class MultipleWindowsTest : public testing::Test {
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -85,7 +88,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("test_stream");
@@ -134,7 +137,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -182,7 +185,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("test_stream");
@@ -240,7 +243,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
 TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -275,7 +278,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setNumberOfBuffersToProduce(1);
     srcConf->setPhysicalStreamName("test_stream");
@@ -334,7 +337,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
 TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -378,7 +381,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setNumberOfBuffersToProduce(1);
     srcConf->setPhysicalStreamName("test_stream");
@@ -442,7 +445,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -477,7 +480,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(10);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("test_stream");
@@ -544,7 +547,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -590,7 +593,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(5);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("test_stream");
@@ -654,7 +657,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
 TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -697,7 +700,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(10);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("test_stream");
@@ -800,7 +803,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
      */
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -860,7 +863,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
 
     //register physical stream
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setSourceFrequency(1);
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(2);
@@ -966,7 +969,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
      */
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -1026,7 +1029,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
 
     //register physical stream
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setSourceFrequency(1);
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(2);

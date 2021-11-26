@@ -44,15 +44,15 @@ TEST_F(TopologyControllerTest, testAddParentTopologyWhenChildParentAreEqual) {
     uint64_t childId = 2;
     std::string body = R"({"parentId":")" + std::to_string(parentId) + R"(", "childId":")" + std::to_string(childId) + "\"}";
 
-    http_request msg(web::http::methods::POST);
+    web::http::http_request msg(web::http::methods::POST);
     msg.set_body(body, "text/plain; charset=utf-8");
 
-    http_response httpResponse;
+    web::http::http_response httpResponse;
     web::json::value response;
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "addParent"}, msg);
     msg.get_response()
-        .then([&httpResponse](const pplx::task<http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -86,15 +86,15 @@ TEST_F(TopologyControllerTest, testAddParentTopologyWhenChildIsAbsent) {
 
     std::string body = R"({"parentId":")" + std::to_string(parentId) + R"(", "childId":")" + std::to_string(childId) + "\"}";
 
-    http_request msg(web::http::methods::POST);
+    web::http::http_request msg(web::http::methods::POST);
     msg.set_body(body, "text/plain; charset=utf-8");
 
-    http_response httpResponse;
+    web::http::http_response httpResponse;
     web::json::value response;
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "addParent"}, msg);
     msg.get_response()
-        .then([&httpResponse](const pplx::task<http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -128,15 +128,15 @@ TEST_F(TopologyControllerTest, testAddParentTopologyWhenParentIsAbsent) {
 
     std::string body = R"({"parentId":")" + std::to_string(parentId) + R"(", "childId":")" + std::to_string(childId) + "\"}";
 
-    http_request msg(web::http::methods::POST);
+    web::http::http_request msg(web::http::methods::POST);
     msg.set_body(body, "text/plain; charset=utf-8");
 
-    http_response httpResponse;
+    web::http::http_response httpResponse;
     web::json::value response;
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "addParent"}, msg);
     msg.get_response()
-        .then([&httpResponse](const pplx::task<http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -165,15 +165,15 @@ TEST_F(TopologyControllerTest, testRemoveParentTopologyWhenChildParentAreEqual) 
     uint64_t childId = 2;
     std::string body = R"({"parentId":")" + std::to_string(parentId) + R"(", "childId":")" + std::to_string(childId) + "\"}";
 
-    http_request msg(web::http::methods::POST);
+    web::http::http_request msg(web::http::methods::POST);
     msg.set_body(body, "text/plain; charset=utf-8");
 
-    http_response httpResponse;
+    web::http::http_response httpResponse;
     web::json::value response;
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "removeParent"}, msg);
     msg.get_response()
-        .then([&httpResponse](const pplx::task<http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -207,15 +207,15 @@ TEST_F(TopologyControllerTest, testRemoveParentTopologyWhenChildIsAbsent) {
 
     std::string body = R"({"parentId":")" + std::to_string(parentId) + R"(", "childId":")" + std::to_string(childId) + "\"}";
 
-    http_request msg(web::http::methods::POST);
+    web::http::http_request msg(web::http::methods::POST);
     msg.set_body(body, "text/plain; charset=utf-8");
 
-    http_response httpResponse;
+    web::http::http_response httpResponse;
     web::json::value response;
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "removeParent"}, msg);
     msg.get_response()
-        .then([&httpResponse](const pplx::task<http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {
@@ -249,15 +249,15 @@ TEST_F(TopologyControllerTest, testRemoveParentTopologyWhenParentIsAbsent) {
 
     std::string body = R"({"parentId":")" + std::to_string(parentId) + R"(", "childId":")" + std::to_string(childId) + "\"}";
 
-    http_request msg(web::http::methods::POST);
+    web::http::http_request msg(web::http::methods::POST);
     msg.set_body(body, "text/plain; charset=utf-8");
 
-    http_response httpResponse;
+    web::http::http_response httpResponse;
     web::json::value response;
 
     topologyController->handlePost(std::vector<utility::string_t>{"topology", "removeParent"}, msg);
     msg.get_response()
-        .then([&httpResponse](const pplx::task<http_response>& task) {
+        .then([&httpResponse](const pplx::task<web::http::http_response>& task) {
             try {
                 httpResponse = task.get();
             } catch (const web::http::http_exception& e) {

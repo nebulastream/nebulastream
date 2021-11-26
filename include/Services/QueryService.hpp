@@ -19,7 +19,6 @@
 
 #include <API/Query.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <cpprest/json.h>
 
 namespace NES::Optimizer {
 class SyntacticQueryValidation;
@@ -110,6 +109,8 @@ class QueryService {
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     bool enableSemanticQueryValidation;
+
+    void assignQueryAndOperatorIds(QueryPlanPtr queryPlan);
 };
 
 };// namespace NES

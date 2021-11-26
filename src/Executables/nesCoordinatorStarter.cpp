@@ -25,7 +25,7 @@
  ********************************************************/
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -67,17 +67,20 @@ int main(int argc, const char* argv[]) {
     }
     NES::setLogLevel(NES::getDebugLevelFromString(coordinatorConfig->getLogLevel()->getValue()));
 
-    NES_INFO("start coordinator with RestIp=" << coordinatorConfig->getRestIp()->getValue()
-                                              << " restPort=" << coordinatorConfig->getRestPort()->getValue()
-                                              << " coordinatorIp=" << coordinatorConfig->getCoordinatorIp()->getValue()
-                                              << " with rpc port " << coordinatorConfig->getRpcPort()->getValue()
-                                              << " numberOfThreads=" << coordinatorConfig->getNumWorkerThreads()->getValue()
-                                              << " numberOfSlots=" << coordinatorConfig->getNumberOfSlots()->getValue());
+    NES_INFO("start coordinator with " << coordinatorConfig->toString());
 
     NES_INFO("creating coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
 
-    crd->startCoordinator(/**blocking**/ true);//blocking call
-    crd->stopCoordinator(true);
+    try {
+        crd->startCoordinator(/**blocking**/ true);//blocking call
+        crd->stopCoordinator(true);
+    } catch (std::exception& exp) {
+        NES_ERROR("Problem with coordinator:  << " << exp.what());
+        return 1;
+    } catch (...) {
+        NES_ERROR("Unknown exception was thrown");
+        throw;
+    }
     NES_INFO("coordinator started");
 }

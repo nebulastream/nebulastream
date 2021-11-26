@@ -22,6 +22,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include <limits>
 
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -74,7 +75,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
         const auto floatStamp = DataType::as<Float>(stamp);
         ASSERT_EQ(floatStamp->getBits(), 32);
         ASSERT_EQ(floatStamp->lowerBound, -100);
-        ASSERT_EQ(floatStamp->upperBound, MAXFLOAT);
+        ASSERT_EQ(floatStamp->upperBound, std::numeric_limits<float>::max());
     }
 
     // decrease upper bound
@@ -93,7 +94,7 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
         ASSERT_TRUE(stamp->isFloat());
         const auto floatStamp = DataType::as<Float>(stamp);
         ASSERT_EQ(floatStamp->getBits(), 32);
-        ASSERT_EQ(floatStamp->lowerBound, -MAXFLOAT);
+        ASSERT_EQ(floatStamp->lowerBound, std::numeric_limits<float>::lowest());
         ASSERT_EQ(floatStamp->upperBound, 100);
     }
 

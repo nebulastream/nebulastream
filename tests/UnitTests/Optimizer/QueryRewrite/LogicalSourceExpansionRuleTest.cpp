@@ -19,12 +19,13 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
@@ -35,6 +36,7 @@
 #include <iostream>
 
 using namespace NES;
+using namespace Configurations;
 
 class LogicalSourceExpansionRuleTest : public testing::Test {
 
@@ -60,8 +62,7 @@ void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceConfig("");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");

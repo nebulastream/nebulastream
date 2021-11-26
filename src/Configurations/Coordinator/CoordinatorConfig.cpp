@@ -15,7 +15,7 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
@@ -23,6 +23,8 @@
 #include <utility>
 
 namespace NES {
+
+namespace Configurations {
 
 CoordinatorConfigPtr CoordinatorConfig::create() { return std::make_shared<CoordinatorConfig>(CoordinatorConfig()); }
 
@@ -54,6 +56,7 @@ CoordinatorConfig::CoordinatorConfig() {
 
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
+    enableMonitoring = ConfigOption<bool>::create("enableMonitoring", true, "Enable monitoring");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -112,6 +115,9 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
                 && config["enableSemanticQueryValidation"].As<std::string>() != "\n") {
                 setEnableSemanticQueryValidation(config["enableSemanticQueryValidation"].As<bool>());
             }
+            if (!config["enableMonitoring"].As<std::string>().empty() && config["enableMonitoring"].As<std::string>() != "\n") {
+                setEnableMonitoring(config["enableMonitoring"].As<bool>());
+            }
             if (!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<std::string>() != "\n") {
                 setNumWorkerThreads(config["numWorkerThreads"].As<uint32_t>());
             }
@@ -159,6 +165,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setQueryMergerRule(it->second);
             } else if (it->first == "--enableSemanticQueryValidation" && !it->second.empty()) {
                 setEnableSemanticQueryValidation((it->second == "true"));
+            } else if (it->first == "--enableMonitoring" && !it->second.empty()) {
+                setEnableMonitoring((it->second == "true"));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -186,6 +194,27 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setQueryBatchSize(queryBatchSize->getDefaultValue());
     setQueryMergerRule(queryMergerRule->getDefaultValue());
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
+    setEnableMonitoring(enableMonitoring->getDefaultValue());
+}
+
+std::string CoordinatorConfig::toString() {
+    std::stringstream ss;
+    ss << restPort->toStringNameCurrentValue();
+    ss << rpcPort->toStringNameCurrentValue();
+    ss << dataPort->toStringNameCurrentValue();
+    ss << restIp->toStringNameCurrentValue();
+    ss << coordinatorIp->toStringNameCurrentValue();
+    ss << numberOfSlots->toStringNameCurrentValue();
+    ss << logLevel->toStringNameCurrentValue();
+    ss << numberOfBuffersInGlobalBufferManager->toStringNameCurrentValue();
+    ss << numberOfBuffersPerWorker->toStringNameCurrentValue();
+    ss << numberOfBuffersInSourceLocalBufferPool->toStringNameCurrentValue();
+    ss << bufferSizeInBytes->toStringNameCurrentValue();
+    ss << numWorkerThreads->toStringNameCurrentValue();
+    ss << queryBatchSize->toStringNameCurrentValue();
+    ss << queryMergerRule->toStringNameCurrentValue();
+    ss << enableSemanticQueryValidation->toStringNameCurrentValue();
+    return ss.str();
 }
 
 StringConfigOption CoordinatorConfig::getRestIp() { return restIp; }
@@ -253,5 +282,11 @@ BoolConfigOption CoordinatorConfig::getEnableSemanticQueryValidation() { return 
 void CoordinatorConfig::setEnableSemanticQueryValidation(bool enableSemanticQueryValidation) {
     CoordinatorConfig::enableSemanticQueryValidation->setValue(enableSemanticQueryValidation);
 }
+BoolConfigOption CoordinatorConfig::getEnableMonitoring() { return enableMonitoring; }
 
+void CoordinatorConfig::setEnableMonitoring(bool enableMonitoring) {
+    CoordinatorConfig::enableMonitoring->setValue(enableMonitoring);
+}
+
+}// namespace Configurations
 }// namespace NES

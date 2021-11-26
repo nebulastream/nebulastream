@@ -48,29 +48,26 @@ namespace NES {
 MQTTSource::MQTTSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       std::string const& serverAddress,
-                       std::string const& clientId,
-                       std::string user,
-                       std::string topic,
+                       const Configurations::MQTTSourceConfigPtr& sourceConfig,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-                       SourceDescriptor::InputFormat inputFormat,
-                       MQTTSourceDescriptor::ServiceQualities qualityOfService,
-                       bool cleanSession,
-                       long bufferFlushIntervalMs)
-    : DataSource(schema,
+                       SourceDescriptor::InputFormat inputFormat)
+    : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),
                  operatorId,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(executableSuccessors)),
-      connected(false), serverAddress(serverAddress), clientId(clientId), user(std::move(user)), topic(std::move(topic)),
-      inputFormat(inputFormat), tupleSize(schema->getSchemaSizeInBytes()), qualityOfService(qualityOfService),
-      cleanSession(cleanSession), bufferFlushIntervalMs(bufferFlushIntervalMs),
-      readTimeoutInMs((bufferFlushIntervalMs > 0) ? bufferFlushIntervalMs : 100) {
+      connected(false), serverAddress(sourceConfig->getUrl()->getValue()), clientId(sourceConfig->getClientId()->getValue()),
+      user(sourceConfig->getUserName()->getValue()), topic(sourceConfig->getTopic()->getValue()), inputFormat(inputFormat),
+      tupleSize(schema->getSchemaSizeInBytes()),
+      qualityOfService(MQTTSourceDescriptor::ServiceQualities(sourceConfig->getQos()->getValue())),
+      cleanSession(sourceConfig->getCleanSession()->getValue()),
+      bufferFlushIntervalMs(sourceConfig->getFlushIntervalMS()->getValue()),
+      readTimeoutInMs(sourceConfig->getFlushIntervalMS()->getValue() > 0 ? sourceConfig->getFlushIntervalMS()->getValue() : 100) {
       NES_DEBUG("In MQTT constr");
       NES_ERROR("MQTTSource: number of buffers: " << numSourceLocalBuffers);
 
@@ -78,11 +75,10 @@ MQTTSource::MQTTSource(SchemaPtr schema,
         uint32_t randomizeClientId = random();
         this->clientId = (clientId + std::to_string(randomizeClientId));
     }
-        NES_DEBUG("establ conn mqtt client");
-        NES_DEBUG("ServerAddress: " << serverAddress <<" ClientId: " << clientId);
-        client = std::make_shared<mqtt::async_client>(serverAddress, this->clientId);
-        NES_DEBUG("conn est mqtt client");
-        //init physical types
+
+    client = std::make_shared<mqtt::async_client>(serverAddress, this->clientId);
+
+    //init physical types
     std::vector<std::string> schemaKeys;
     std::string fieldName;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -122,10 +118,9 @@ MQTTSource::~MQTTSource() {
 }
 
 std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
-    //NES_DEBUG("MQTTSource  " << this << ": receiveData ");
-//    auto ts1 = std::chrono::system_clock::now();
-//    auto time1 = std::chrono::duration_cast<std::chrono::nanoseconds>(ts1.time_since_epoch()).count();
-      auto buffer = bufferManager->getBufferBlocking();
+    NES_DEBUG("MQTTSource  " << this << ": receiveData ");
+
+    auto buffer = bufferManager->getBufferBlocking();
     if (connect()) {
         if (!fillBuffer(buffer)) {
             NES_ERROR("MQTTSource::receiveData: Failed to fill the TupleBuffer.");
@@ -138,9 +133,6 @@ std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }
-//    auto ts2 = std::chrono::system_clock::now();
-//    auto time2 = std::chrono::duration_cast<std::chrono::nanoseconds>(ts2.time_since_epoch()).count();
-//    std::cout << "BWT: " <<(time2-time1) <<std::endl;
     return buffer;
 }
 
@@ -163,7 +155,7 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
-    //NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
+    NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
 
     uint64_t tupleCount = 0;
     auto flushIntervalTimerStart = std::chrono::system_clock::now();
@@ -179,7 +171,7 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
             // If connected is false, constantly check if we are reconnected again and if so, resubscribe.
             if (connected) {
                 // Using try_consume_message_for(), because it is non-blocking.
-                auto message = client->consume_message();//client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
+                auto message = client->try_consume_message_for(std::chrono::milliseconds(readTimeoutInMs));
                 if (message) {// Check if message was received correctly (not nullptr)
                     NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
                     receivedMessageString = message->get_payload_str();
@@ -212,7 +204,7 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= bufferFlushIntervalMs)) {
-            //NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG("MQTTSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }//end of while
@@ -314,6 +306,12 @@ uint64_t MQTTSource::getTuplesThisPass() const { return tuplesThisPass; }
 bool MQTTSource::getCleanSession() const { return cleanSession; }
 
 std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const { return physicalTypes; }
+
+const Configurations::MQTTSourceConfigPtr& MQTTSource::getSourceConfig() const { return sourceConfig; }
+
+void MQTTSource::setSourceConfig(const Configurations::MQTTSourceConfigPtr& sourceConfig) {
+    MQTTSource::sourceConfig = sourceConfig;
+}
 
 }// namespace NES
 #endif

@@ -17,6 +17,7 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
+#include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
@@ -207,7 +208,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     {
         auto source = ZmqSourceDescriptor::create(schema, "localhost", 42);
         auto* serializedSourceDescriptor =
-            OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+            OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
@@ -226,7 +227,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     {
         auto source = BinarySourceDescriptor::create(schema, "localhost");
         auto* serializedSourceDescriptor =
-            OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+            OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
@@ -234,7 +235,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     {
         auto source = CsvSourceDescriptor::create(schema, "testStream", "localhost", ",", 0, 10, 10, false);
         auto* serializedSourceDescriptor =
-            OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+            OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
         std::string json_string;
@@ -247,7 +248,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     {
         auto source = DefaultSourceDescriptor::create(schema, 55, 42);
         auto* serializedSourceDescriptor =
-            OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+            OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
@@ -255,7 +256,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     {
         auto source = LogicalStreamSourceDescriptor::create("localhost");
         auto* serializedSourceDescriptor =
-            OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+            OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
@@ -263,7 +264,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     {
         auto source = SenseSourceDescriptor::create(schema, "senseusf");
         auto* serializedSourceDescriptor =
-            OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+            OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
@@ -272,7 +273,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         Network::NesPartition nesPartition{1, 22, 33, 44};
         auto source = Network::NetworkSourceDescriptor::create(schema, nesPartition);
         auto* serializedSourceDescriptor =
-            OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
+            OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
         EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
@@ -677,4 +678,28 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
         }
         EXPECT_TRUE(found);
     }
+}
+
+TEST_F(SerializationUtilTest, testSerializeDeserializeCilentOriginatedQueryPlan) {
+
+    auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
+
+    auto serializedQueryPlan = new SerializableQueryPlan();
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan, true);
+
+    auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
+
+    // Expect that the root operator from the original and deserialized query plan are the same
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
+
+    // Expect that the child of the root operator from the original and deserialized query plan are the same
+    // i.e., the source operator from  original and deserialized query plan are the same
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->equal(
+        queryPlan->getRootOperators()[0]->getChildren()[0]));
+
+    // Expect that the id of operators in the deserialized query plan are different to the original query plan, because the initial IDs are client-generated and NES should provide its own IDs
+    EXPECT_FALSE(queryPlan->getRootOperators()[0]->getId() == deserializedQueryPlan->getRootOperators()[0]->getId());
+    EXPECT_FALSE(queryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId()
+                 == deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperatorNode>()->getId());
 }

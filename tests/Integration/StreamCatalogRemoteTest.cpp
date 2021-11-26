@@ -18,15 +18,18 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/DefaultSourceConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
 
 using namespace std;
 namespace NES {
+
+using namespace Configurations;
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
@@ -47,7 +50,7 @@ class StreamCatalogRemoteTest : public testing::Test {
 TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -93,7 +96,7 @@ TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
 TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -150,7 +153,7 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
 TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -202,7 +205,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
 TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -240,7 +243,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
 TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -260,7 +263,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(2);
     sourceConfig->setPhysicalStreamName("physical_test");
@@ -289,7 +292,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
 TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -320,7 +323,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     bool success = wrk->registerLogicalStream("testStream", testSchemaFileName);
     EXPECT_TRUE(success);
 
-    sourceConfig->setSourceConfig("");
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(2);
     sourceConfig->setPhysicalStreamName("physical_test");
@@ -348,7 +351,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
 TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    DefaultSourceConfigPtr sourceConfig = DefaultSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -388,7 +391,7 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
 TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    DefaultSourceConfigPtr sourceConfig = DefaultSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);

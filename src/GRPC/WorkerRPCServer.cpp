@@ -114,16 +114,18 @@ WorkerRPCServer::RegisterMonitoring(ServerContext*, const MonitoringRegistration
 Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
     try {
         NES_DEBUG("WorkerRPCServer::GetMonitoringData: Got request");
-        auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
-        monitoringAgent->getMetricsFromPlan(buf);
-
-        // add buffer to the reply object
-        reply->set_buffer(buf.getBuffer(), monitoringAgent->getSchema()->getSchemaSizeInBytes());
-        return Status::OK;
+        auto buf = nodeEngine->getBufferManager()->getUnpooledBuffer(monitoringAgent->getSchema()->getSchemaSizeInBytes());
+        if (buf.has_value()) {
+            monitoringAgent->getMetricsFromPlan(buf.value());
+            // add buffer to the reply object
+            reply->set_buffer(buf.value().getBuffer(), monitoringAgent->getSchema()->getSchemaSizeInBytes());
+            return Status::OK;
+        }
+        NES_THROW_RUNTIME_ERROR("WorkerRPCServer: Error getting unpooled buffer.");
     } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: " << ex.what());
-        return Status::CANCELLED;
     }
+    return Status::CANCELLED;
 }
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
     NES_DEBUG("WorkerRPCServer::BeginBuffer request recieved");

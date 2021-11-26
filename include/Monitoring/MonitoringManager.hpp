@@ -45,6 +45,7 @@ using GroupedMetricValuesPtr = std::shared_ptr<GroupedMetricValues>;
 class MonitoringManager {
   public:
     MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology);
+    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
     ~MonitoringManager();
 
     /**
@@ -98,6 +99,7 @@ class MonitoringManager {
     MetricStorePtr metricStore;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
+    bool enableMonitoring;
 };
 
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;

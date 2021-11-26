@@ -18,8 +18,8 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -49,7 +49,6 @@ class WorkerCoordinatorStarterTest : public testing::Test {
 TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -86,7 +85,6 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
 TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -129,7 +127,6 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
 TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -165,7 +162,6 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -201,7 +197,6 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -237,7 +232,6 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
 TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -277,7 +271,6 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
 TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);

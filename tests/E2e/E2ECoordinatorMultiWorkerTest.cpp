@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -152,20 +152,22 @@ namespace NES {
                                                TestUtils::dataPort(dataPort),
                                                TestUtils::coordinatorPort(rpcPort),
                                                TestUtils::sourceType("CSVSource"),
-                                               TestUtils::sourceConfig("../tests/test_data/QnV_short.csv"),
+                                               TestUtils::csvSourceFilePath("../tests/test_data/QnV_short.csv"),
                                                TestUtils::physicalStreamName("test_stream1"),
                                                TestUtils::logicalStreamName("QnV"),
                                                TestUtils::numberOfBuffersToProduce(1),
+                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
                                                TestUtils::sourceFrequency(1000)});
 
         auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 6),
                                                TestUtils::dataPort(dataPort + 2),
                                                TestUtils::coordinatorPort(rpcPort),
                                                TestUtils::sourceType("CSVSource"),
-                                               TestUtils::sourceConfig("../tests/test_data/QnV_short.csv"),
+                                               TestUtils::csvSourceFilePath("../tests/test_data/QnV_short.csv"),
                                                TestUtils::physicalStreamName("test_stream2"),
                                                TestUtils::logicalStreamName("QnV"),
                                                TestUtils::numberOfBuffersToProduce(1),
+                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
                                                TestUtils::sourceFrequency(1000)});
 
         EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
@@ -229,20 +231,22 @@ namespace NES {
                                                TestUtils::dataPort(dataPort),
                                                TestUtils::coordinatorPort(rpcPort),
                                                TestUtils::sourceType("CSVSource"),
-                                               TestUtils::sourceConfig("../tests/test_data/QnV_short_R2000073.csv"),
+                                               TestUtils::csvSourceFilePath("../tests/test_data/QnV_short_R2000073.csv"),
                                                TestUtils::physicalStreamName("test_stream1"),
                                                TestUtils::logicalStreamName("QnV"),
                                                TestUtils::numberOfBuffersToProduce(1),
+                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
                                                TestUtils::sourceFrequency(1000)});
 
         auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 6),
                                                TestUtils::dataPort(dataPort + 2),
                                                TestUtils::coordinatorPort(rpcPort),
                                                TestUtils::sourceType("CSVSource"),
-                                               TestUtils::sourceConfig("../tests/test_data/QnV_short_R2000070.csv"),
+                                               TestUtils::csvSourceFilePath("../tests/test_data/QnV_short_R2000070.csv"),
                                                TestUtils::physicalStreamName("test_stream2"),
                                                TestUtils::logicalStreamName("QnV"),
                                                TestUtils::numberOfBuffersToProduce(1),
+                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
                                                TestUtils::sourceFrequency(1000)});
 
         EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
@@ -322,7 +326,7 @@ namespace NES {
                                                TestUtils::dataPort(dataPort),
                                                TestUtils::coordinatorPort(rpcPort),
                                                TestUtils::sourceType("CSVSource"),
-                                               TestUtils::sourceConfig("../tests/test_data/window.csv"),
+                                               TestUtils::csvSourceFilePath("../tests/test_data/window.csv"),
                                                TestUtils::physicalStreamName("test_stream_1"),
                                                TestUtils::logicalStreamName("window"),
                                                TestUtils::numberOfBuffersToProduce(1),
@@ -333,7 +337,7 @@ namespace NES {
                                                TestUtils::dataPort(dataPort + 2),
                                                TestUtils::coordinatorPort(rpcPort),
                                                TestUtils::sourceType("CSVSource"),
-                                               TestUtils::sourceConfig("../tests/test_data/window.csv"),
+                                               TestUtils::csvSourceFilePath("../tests/test_data/window.csv"),
                                                TestUtils::physicalStreamName("test_stream_2"),
                                                TestUtils::logicalStreamName("window"),
                                                TestUtils::numberOfBuffersToProduce(1),

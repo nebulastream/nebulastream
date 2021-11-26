@@ -12,5 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(ConfigOptions)
+add_subdirectory(Coordinator)
+add_subdirectory(Worker)
+add_subdirectory(Sources)
 

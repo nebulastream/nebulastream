@@ -17,10 +17,11 @@
 #ifndef NES_INCLUDE_REST_CONTROLLER_BASE_CONTROLLER_HPP_
 #define NES_INCLUDE_REST_CONTROLLER_BASE_CONTROLLER_HPP_
 
+#include <REST/CpprestForwardedRefs.hpp>
 #include <cpprest/http_msg.h>
-
-using namespace web;
-using namespace http;
+#include <map>
+#include <string>
+#include <vector>
 
 namespace NES {
 
@@ -36,62 +37,62 @@ class BaseController {
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    virtual void handleGet(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     /**
      * @brief Handle the put request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    virtual void handlePut(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handlePut(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     /**
      * @brief Handle the post request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    virtual void handlePost(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     /**
      * @brief Handle the delete request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    virtual void handleDelete(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     /**
      * @brief Handle the patch request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    virtual void handlePatch(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handlePatch(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     /**
      * @brief Handle the head request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    virtual void handleHead(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleHead(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     /**
      * @brief Handle trace request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    virtual void handleTrace(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleTrace(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     /**
      * @brief Handle unionWith request from the user
      * @param path : the resource path the user wanted to get
      * @param request : the message from the user
      */
-    virtual void handleMerge(const std::vector<utility::string_t>& path, http_request& request);
+    virtual void handleMerge(const std::vector<utility::string_t>& path, web::http::http_request& request);
 
     /**
      * @brief set http response options
      * @param request : the message from the user
      */
-    static void handleOptions(const http_request& request);
+    static void handleOptions(const web::http::http_request& request);
 
     static void internalServerErrorImpl(const web::http::http_request& message);
 
@@ -99,11 +100,11 @@ class BaseController {
     static void noContentImpl(const web::http::http_request& message);
 
     template<typename T,
-             std::enable_if_t<std::is_same<T, std::string>::value || std::is_same<T, web::json::value>::value, bool> = true>
+             std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
     static void successMessageImpl(const web::http::http_request& request, const T& result) {
-        http_response response(status_codes::OK);
-        response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-        response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+        web::http::http_response response(web::http::status_codes::OK);
+        response.headers().add("Access-Control-Allow-Origin", "*");
+        response.headers().add("Access-Control-Allow-Headers", "Content-Type");
         response.set_body(result);
         request.reply(response);
     }
@@ -115,12 +116,12 @@ class BaseController {
      * @param detail The detailed error message.
      */
     template<typename T,
-             std::enable_if_t<std::is_same<T, std::string>::value || std::is_same<T, web::json::value>::value, bool> = true>
+             std::enable_if_t<std::is_same<T, utility::string_t>::value || std::is_same<T, web::json::value>::value, bool> = true>
     static void badRequestImpl(const web::http::http_request& request, const T& detail) {
         // Returns error with http code 400 to indicate bad user request
-        http_response response(status_codes::BadRequest);
-        response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-        response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+        web::http::http_response response(web::http::status_codes::BadRequest);
+        response.headers().add("Access-Control-Allow-Origin", "*");
+        response.headers().add("Access-Control-Allow-Headers", "Content-Type");
 
         // Inform REST users with reason of the error
         response.set_body(detail);
@@ -134,7 +135,7 @@ class BaseController {
      * @param request : the user request
      * @return a map containing parameter keys and values
      */
-    static std::map<utility::string_t, utility::string_t> getParameters(http_request& request);
+    static std::map<utility::string_t, utility::string_t> getParameters(web::http::http_request& request);
 };
 }// namespace NES
 #endif// NES_INCLUDE_REST_CONTROLLER_BASE_CONTROLLER_HPP_

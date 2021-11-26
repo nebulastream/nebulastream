@@ -19,13 +19,16 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Sources/DefaultSourceConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
 namespace NES {
+
+using namespace Configurations;
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
@@ -50,7 +53,7 @@ class MultiWorkerTest : public testing::Test {
 TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -83,7 +86,7 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
 TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -129,7 +132,7 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
 TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -175,7 +178,7 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
 TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -226,7 +229,7 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
 TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -269,7 +272,7 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
 TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -320,7 +323,7 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
 TEST_F(MultiWorkerTest, testMultipleWorker) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);

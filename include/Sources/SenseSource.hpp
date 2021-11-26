@@ -35,7 +35,7 @@ class SenseSource : public DataSource {
     explicit SenseSource(SchemaPtr schema,
                          Runtime::BufferManagerPtr bufferManager,
                          Runtime::QueryManagerPtr queryManager,
-                         std::string udsf,
+                         std::string udfs,
                          OperatorId operatorId,
                          size_t numSourceLocalBuffers,
                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
@@ -66,10 +66,10 @@ class SenseSource : public DataSource {
     /**
      * @brief Get UDFs for sense
      */
-    const std::string& getUdsf() const;
+    const std::string& getUdfs() const;
 
   private:
-    std::string udsf;
+    std::string udfs;
 };
 
 using SenseSourcePtr = std::shared_ptr<SenseSource>;

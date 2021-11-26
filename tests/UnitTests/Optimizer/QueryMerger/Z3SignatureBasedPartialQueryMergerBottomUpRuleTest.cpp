@@ -19,6 +19,7 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -40,6 +41,7 @@
 #include <z3++.h>
 
 using namespace NES;
+using namespace Configurations;
 
 class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public testing::Test {
 
@@ -67,7 +69,7 @@ class Z3SignatureBasedPartialQueryMergerBottomUpRuleTest : public testing::Test 
         streamCatalog->addLogicalStream("bike", schema);
         streamCatalog->addLogicalStream("truck", schema);
 
-        SourceConfigPtr sourceConfig = SourceConfig::create();
+        SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
         sourceConfig->setSourceFrequency(0);
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setPhysicalStreamName("test2");

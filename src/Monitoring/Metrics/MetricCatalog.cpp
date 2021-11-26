@@ -37,7 +37,7 @@ bool MetricCatalog::add(MetricValueType type, const Metric&& metric) {
         return false;
     }
     metricValueTypeToMetricMap.insert(std::pair<MetricValueType, Metric>(type, metric));
-    return false;
+    return true;
 }
 
 }// namespace NES

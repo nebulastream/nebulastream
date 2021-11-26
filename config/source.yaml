@@ -1,55 +1,94 @@
 # ~~~ Configurations for the Data Source ~~~
 
 # ~~ Source Handling ~~
-# Set the source type (available options: No_Source, DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
-sourceType: NoSource
 
-# Set source configuration. Options depend on source type.
-# DefaultSource: NoConfig (not needed)
-# CSVSource: String with path to CSV file.
-# MQTTSource: String set up as follows: "url;clientId;userId;topic;dataType;QoS;cleanSession"
-#            url to connect to broker
-#            clientId needed to connect to broker, system will add random number to it, to make sure it is unique per connection
-#            userId string with user name
-#            topic to connect to for data collection
-#            inputFormat data format that we receive, currently only JSON and CSV (only ',' as delimiter) implemented
-#            qos Quality of Service (0 = at most once delivery, 1 = at least once delivery, 2 = exactly once delivery)
-#            cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-#            bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
-# OPCSource (ToDo: Make source available): String set up as follows: "url;namespaceIndex;identifier;user;pwd"
-#            where the url is a string containing the full OPC server url,
-#            namespaceIndex is a uint16_t providing the namespace Index for the nodeId,
-#            identifier is a string containing the nodeId identifier,
-#            user is a string containing the user name for server authentication ToDo: Implement server authentication.
-#            pwd is a string containing the password for server authentication
-# ZMQSource (ToDo: Make source available): String set up as: "host;port"
-#            where host is a string containing the zmq host's ip address
-#            and port is a uint16_t containing the zmq port
-# KafkaSource (ToDo: Make source available): String set up as follows: "brokers;topic;groupId;autoCommit;kafkaConnectTimeout"
-#            where brokers is a string containing the broker's ip address,
-#            topic is a string containing the topic,
-#            groupId is a string containing the groupId,
-#            autoCommit is a boolean value where 1 equals true, and 0 equals false,
-#            kafkaConnectTimeout is a uint16_t providing the time out for the connection
-# BinarySource: String with path to binary file.
-# SenseSource (ToDo: Make source available): String with udsf inside
-# YSBSource: NoConfig (not needed)
-sourceConfig: NoConfig
-
-# Set sampling frequency of source
-sourceFrequency: 1
-
-# Skip first line of the file
-skipHeader: false
-
-# Set number of buffers to produce
+# Set number of buffers to produce, i.e. how often the read csv file is repeated
 numberOfBuffersToProduce: 1
 
 # Set number of tuples to produce per buffer
-numberOfTuplesToProducePerBuffer: 0
+numberOfTuplesToProducePerBuffer: 1
 
 # Set physical stream name
 physicalStreamName: default_stream_phy
 
 # Set logical stream name where this stream is added to
 logicalStreamName: default_stream_log
+
+# Set sampling frequency of source
+sourceFrequency: 1
+
+# Set storage layout, true = row layout, false = column layout
+rowLayout: true
+
+# Set input data format
+inputFormat: JSON
+
+# Set the source type (available options: NoSource, DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
+#                                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
+#                                         BinarySource (ToDo: Make source available))
+# NoSource: The worker will create a default source but no physical stream will be associated with it
+sourceType: NoSource
+
+# DefaultSource: A simple source with default data created inside NES, useful for testing
+# numberOfBuffersToProduce defines how often the default data is repeated for this source
+DefaultSource:
+
+# SenseSource: Creates a Sense source
+SenseSource:
+  # Set user defined function
+  - udfs:
+
+# CSVSource and its needed configuration params
+# This source reads data from a csv file
+# numberOfBuffersToProduce defines how often the csv file is repeated
+CSVSource:
+  # Set file path
+  - filePath:
+  # Skip first line of the file
+    skipHeader: false
+
+# BinarySource: read from a binary source file
+BinarySource:
+  # Set file path
+  - filePath:
+
+# MQTTSource: Connect to an MQTT broker and read data from there
+MQTTSource:
+  # Set url to connect to
+  - url:
+  # Set clientId
+    clientId:
+  # Set userName
+    userName:
+  # Set topic to listen to
+    topic:
+  # set quality of service
+    qos: 2
+  # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+    cleanSession: true
+  # set tupleBuffer flush interval in milliseconds
+    flushIntervalMS: -1
+
+# KafkaSource: Connect to a kafka broker and read data form there
+KafkaSource:
+  # Set kafka broker string
+  - brokers:
+  # Set auto commit, boolean value where 1 equals true, and 0 equals false
+    autoCommit: 1
+  # Set groupId
+    groupId:
+  # Set topic to listen to
+    topic:
+  # Set connection time out for source
+    connectionTimeout: 10
+
+# OPCSource: connect to an OPC server and read data from there
+OPCSource:
+  # Set namespaceIndex for node, needed for: OPCSource
+  - namespaceIndex:
+  # Set node identifier, needed for: OPCSource
+    nodeIdentifier:
+  # Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
+    userName:
+  # Set password, needed for: OPCSource
+    password:

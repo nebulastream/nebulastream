@@ -948,12 +948,12 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                           Execution::SuccessorExecutablePipeline executable,
                                           uint32_t numaNode) {
-    NES_TRACE("Add Work for executable");
+    NES_TRACE("Add Work for executable=" << numaNode);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     NES_DEBUG("Using numaNode =" << numaNode);
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if ((*nextPipeline)->isRunning()) {
-            NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
+            NES_DEBUG("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer << " numaNode=" << numaNode);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
             taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
@@ -995,7 +995,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 }
 //#define LIGHT_WEIGHT_STATISTICS
 void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
-    NES_TRACE("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
+    NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
     if (task.isReconfiguration()) {
         return;
     }

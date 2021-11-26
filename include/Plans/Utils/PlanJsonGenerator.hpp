@@ -18,7 +18,12 @@
 #define NES_INCLUDE_PLANS_UTILS_PLAN_JSON_GENERATOR_HPP_
 
 #include <Plans/Query/QueryId.hpp>
-#include <cpprest/json.h>
+
+namespace web {
+namespace json {
+class value;
+}// namespace json
+}// namespace web
 
 namespace NES {
 

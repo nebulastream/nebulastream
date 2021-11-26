@@ -24,6 +24,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -36,6 +37,8 @@ using namespace NES::Runtime;
 using namespace NES::Runtime::Execution;
 
 namespace NES {
+
+using namespace Configurations;
 
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
@@ -80,7 +83,7 @@ class MillisecondIntervalTest : public testing::Test {
   public:
     CoordinatorConfigPtr crdConf;
     WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
+    CSVSourceConfigPtr srcConf;
 
     static void SetUpTestCase() {
         NES::setupLogging("MillisecondIntervalTest.log", NES::LOG_DEBUG);
@@ -104,9 +107,9 @@ class MillisecondIntervalTest : public testing::Test {
         wrkConf = WorkerConfig::create();
         wrkConf->setCoordinatorPort(rpcPort);
 
-        srcConf = SourceConfig::create();
+        srcConf = CSVSourceConfig::create();
         srcConf->setSourceType("DefaultSource");
-        srcConf->setSourceConfig("../tests/test_data/exdra.csv");
+        srcConf->setFilePath("../tests/test_data/exdra.csv");
         srcConf->setSourceFrequency(550);
         srcConf->setNumberOfTuplesToProducePerBuffer(1);
         srcConf->setNumberOfBuffersToProduce(3);

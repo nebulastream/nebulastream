@@ -16,8 +16,8 @@
 
 #include <gtest/gtest.h>
 
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
@@ -36,9 +36,12 @@
 #include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
+#include <cpprest/json.h>
 #include <memory>
 
 namespace NES {
+
+using namespace Configurations;
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case

@@ -17,14 +17,11 @@
 #include <gtest/gtest.h>
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
@@ -34,6 +31,9 @@
 using namespace std;
 
 namespace NES {
+
+using namespace Configurations;
+
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
@@ -419,10 +419,9 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     std::string query = R"(Query::from("testStream").filter(Attribute("val1") < 3).project(Attribute("val3")))";
     TestHarness testHarness = TestHarness(query);
 
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
     srcConf->resetSourceOptions();
-    srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/testCSV.csv");
+    srcConf->setFilePath("../tests/test_data/testCSV.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("testStream");
@@ -499,10 +498,9 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query);
 
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
     srcConf->resetSourceOptions();
-    srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("test_stream");
@@ -663,10 +661,9 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
         .filter(Attribute("id") < 10).window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query);
 
-    SourceConfigPtr srcConf = SourceConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
     srcConf->resetSourceOptions();
-    srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setFilePath("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(5);
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("test_stream");

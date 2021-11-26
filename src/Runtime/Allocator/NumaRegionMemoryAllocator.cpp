@@ -22,6 +22,11 @@
 #endif
 #include <cstring>
 #include <errno.h>
+
+// The above code requires `--privileged` to be executed on a docker container.
+// Furthermore, OS limits for mmapping and memory locking should be configured appropriately
+// to allow memory allocations
+
 namespace NES::Runtime {
 
 void* NumaRegionMemoryAllocator::do_allocate(size_t sizeInBytes, size_t) {

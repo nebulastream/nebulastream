@@ -28,29 +28,13 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Sources/MQTTSourceConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
-
-#ifndef SERVERADDRESS
-#define SERVERADDRESS "tcp://127.0.0.1:1883"
-#endif
-
-#ifndef CLIENTID
-#define CLIENTID "nes-mqtt-test-client"
-#endif
-
-#ifndef TOPIC
-#define TOPIC "v1/devices/me/telemetry"
-#endif
-
-#ifndef USER
-#define USER "rfRqLGZRChg8eS30PEeR"
-#endif
 
 #ifndef OPERATORID
 #define OPERATORID 1
@@ -67,18 +51,6 @@
 
 #ifndef INPUTFORMAT
 #define INPUTFORMAT SourceDescriptor::InputFormat::JSON
-#endif
-
-#ifndef QOS
-#define QOS MQTTSourceDescriptor::ServiceQualities::atLeastOnce
-#endif
-
-#ifndef CLEANSESSION
-#define CLEANSESSION false
-#endif
-
-#ifndef BUFFERFLUSHINTERVALMS
-#define BUFFERFLUSHINTERVALMS -1
 #endif
 
 static uint64_t restPort = 8081;
@@ -121,6 +93,7 @@ class MQTTSourceTest : public testing::Test {
     Runtime::QueryManagerPtr queryManager;
     SchemaPtr test_schema;
     uint64_t buffer_size{};
+    MQTTSourceConfigPtr srcConf = MQTTSourceConfig::create();
 };
 
 /**
@@ -131,17 +104,11 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
-                                       SERVERADDRESS,
-                                       CLIENTID,
-                                       USER,
-                                       TOPIC,
+                                       srcConf,
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
-                                       INPUTFORMAT,
-                                       QOS,
-                                       CLEANSESSION,
-                                       BUFFERFLUSHINTERVALMS);
+                                       INPUTFORMAT);
 
     SUCCEED();
 }
@@ -151,20 +118,22 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
  */
 TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 
+    MQTTSourceConfigPtr mqttConfig = srcConf->as<MQTTSourceConfig>();
+    mqttConfig->setUrl("tcp://127.0.0.1:1883");
+    mqttConfig->setCleanSession(false);
+    mqttConfig->setClientId("nes-mqtt-test-client");
+    mqttConfig->setUserName("rfRqLGZRChg8eS30PEeR");
+    mqttConfig->setTopic("v1/devices/me/telemetry");
+    mqttConfig->setQos(1);
+
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
-                                       SERVERADDRESS,
-                                       CLIENTID,
-                                       USER,
-                                       TOPIC,
+                                       mqttConfig,
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
-                                       INPUTFORMAT,
-                                       QOS,
-                                       CLEANSESSION,
-                                       BUFFERFLUSHINTERVALMS);
+                                       INPUTFORMAT);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER ), SERVERADDRESS=tcp://127.0.0.1:1883, "
                            "CLIENTID=nes-mqtt-test-client, "
@@ -187,17 +156,11 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
-                                       SERVERADDRESS,
-                                       CLIENTID,
-                                       USER,
-                                       TOPIC,
+                                       srcConf,
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
-                                       INPUTFORMAT,
-                                       QOS,
-                                       CLEANSESSION,
-                                       BUFFERFLUSHINTERVALMS);
+                                       INPUTFORMAT);
     auto tuple_buffer = mqttSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
@@ -213,7 +176,6 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -256,14 +218,16 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     wrk1->registerLogicalStream("stream", testSchemaFileName);
 
     srcConf->setSourceType("MQTTSource");
-    //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat; 5 = qualityOfService; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
-    srcConf->setSourceConfig("ws://127.0.0.1:9001;testClients;testUser;demoTownSensorData;JSON;2;false;20000");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setUrl("ws://127.0.0.1:9001");
+    srcConf->setClientId("testClients");
+    srcConf->setUserName("testUser");
+    srcConf->setTopic("demoTownSensorData");
+    srcConf->setQos(2);
+    srcConf->setCleanSession(false);
+    srcConf->setFlushIntervalMS(2000);
     srcConf->setNumberOfBuffersToProduce(10000);
-    srcConf->setSourceFrequency(1);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("stream");
-    srcConf->setSkipHeader(true);
     //register physical stream
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(streamConf);

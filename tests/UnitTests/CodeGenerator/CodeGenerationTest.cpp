@@ -40,7 +40,6 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/DynamicColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -59,8 +58,6 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/SharedPointerGen.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
-#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 
 using std::cout;
 using std::endl;

@@ -18,12 +18,9 @@
 #define NES_INCLUDE_PLANS_GLOBAL_EXECUTION_GLOBAL_EXECUTION_PLAN_HPP_
 
 #include <Plans/Query/QueryId.hpp>
-#include <cpprest/json.h>
 #include <map>
 #include <memory>
 #include <vector>
-
-using namespace web;
 
 namespace NES {
 

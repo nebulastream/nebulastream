@@ -17,11 +17,14 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 #include <Common/DataTypes/DataTypeFactory.hpp>
 namespace NES {
+
+using namespace Configurations;
 
 class TestHarnessUtilTest : public testing::Test {
   public:
@@ -523,11 +526,10 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     // 4,3,6
     //register physical stream
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setSourceConfig("../tests/test_data/testCSV.csv");
+    sourceConfig->setFilePath("../tests/test_data/testCSV.csv");
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(1);
@@ -578,11 +580,10 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     // 4,3,6
     //register physical stream
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setSourceConfig("../tests/test_data/testCSV.csv");
+    sourceConfig->setFilePath("../tests/test_data/testCSV.csv");
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(1);

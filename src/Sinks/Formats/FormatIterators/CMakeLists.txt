@@ -14,4 +14,5 @@
 
 add_source_nes(
         FormatIterator.cpp
+        Iterator.cpp
 )

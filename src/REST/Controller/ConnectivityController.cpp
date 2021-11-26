@@ -15,10 +15,8 @@
 */
 
 #include <REST/Controller/ConnectivityController.hpp>
-#include <REST/RestEngine.hpp>
-#include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
-#include <Util/Logger.hpp>
+#include <cpprest/json.h>
 
 namespace NES {
 
@@ -26,8 +24,8 @@ ConnectivityController::ConnectivityController() = default;
 
 void ConnectivityController::handleGet(const std::vector<utility::string_t>& path, web::http::http_request& message) {
     if (path[1] == "check") {
-        json::value result{};
-        result["success"] = json::value::boolean(true);
+        web::json::value result{};
+        result["success"] = web::json::value::boolean(true);
         successMessageImpl(message, result);
     } else {
         resourceNotFoundImpl(message);

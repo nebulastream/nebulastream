@@ -91,13 +91,13 @@
 
 namespace NES {
 
-SerializableOperator OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode) {
+SerializableOperator OperatorSerializationUtil::serializeOperator(const OperatorNodePtr& operatorNode, bool isClientOriginated) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator " << operatorNode->toString());
     SerializableOperator serializedOperator = SerializableOperator();
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // serialize source operator
         NES_TRACE("OperatorSerializationUtil:: serialize to SourceLogicalOperatorNode");
-        auto sourceDetails = serializeSourceOperator(operatorNode->as<SourceLogicalOperatorNode>());
+        auto sourceDetails = serializeSourceOperator(operatorNode->as<SourceLogicalOperatorNode>(), isClientOriginated);
         serializedOperator.mutable_details()->PackFrom(sourceDetails);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         // serialize sink operator
@@ -889,10 +889,10 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     //    }
 }
 SerializableOperator_SourceDetails
-OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator) {
+OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator, bool isClientOriginated) {
     auto sourceDetails = SerializableOperator_SourceDetails();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
-    serializeSourceSourceDescriptor(sourceDescriptor, &sourceDetails);
+    serializeSourceDescriptor(sourceDescriptor, &sourceDetails, isClientOriginated);
     return sourceDetails;
 }
 
@@ -910,8 +910,9 @@ OperatorNodePtr OperatorSerializationUtil::deserializeSinkOperator(SerializableO
 }
 
 SerializableOperator_SourceDetails*
-OperatorSerializationUtil::serializeSourceSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
-                                                           SerializableOperator_SourceDetails* sourceDetails) {
+OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor,
+                                                     SerializableOperator_SourceDetails* sourceDetails,
+                                                     bool isClientOriginated) {
 
     // serialize a source descriptor and all its properties depending of its type
     NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with =" << sourceDescriptor->toString());
@@ -934,11 +935,30 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(const SourceDescripto
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
         auto mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
+        auto* serializedSourceConfig = new SerializableSourceConfig();
+        serializedSourceConfig->set_numberofbufferstoproduce(
+            mqttSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
+        serializedSourceConfig->set_numberoftuplestoproduceperbuffer(
+            mqttSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
+        serializedSourceConfig->set_physicalstreamname(
+            mqttSourceDescriptor->getSourceConfig()->getPhysicalStreamName()->getValue());
+        serializedSourceConfig->set_logicalstreamname(
+            mqttSourceDescriptor->getSourceConfig()->getLogicalStreamName()->getValue());
+        serializedSourceConfig->set_sourcefrequency(mqttSourceDescriptor->getSourceConfig()->getSourceFrequency()->getValue());
+        serializedSourceConfig->set_rowlayout(mqttSourceDescriptor->getSourceConfig()->getRowLayout()->getValue());
+        serializedSourceConfig->set_flushintervalms(mqttSourceDescriptor->getSourceConfig()->getFlushIntervalMS()->getValue());
+        serializedSourceConfig->set_inputformat(mqttSourceDescriptor->getSourceConfig()->getInputFormat()->getValue());
+        serializedSourceConfig->set_sourcetype(mqttSourceDescriptor->getSourceConfig()->getSourceType()->getValue());
+        auto* mqttSerializedSourceConfig = new SerializableMQTTSourceConfig();
+        mqttSerializedSourceConfig->set_clientid(mqttSourceDescriptor->getSourceConfig()->getClientId()->getValue());
+        mqttSerializedSourceConfig->set_url(mqttSourceDescriptor->getSourceConfig()->getUrl()->getValue());
+        mqttSerializedSourceConfig->set_username(mqttSourceDescriptor->getSourceConfig()->getUserName()->getValue());
+        mqttSerializedSourceConfig->set_topic(mqttSourceDescriptor->getSourceConfig()->getTopic()->getValue());
+        mqttSerializedSourceConfig->set_qos(mqttSourceDescriptor->getSourceConfig()->getQos()->getValue());
+        mqttSerializedSourceConfig->set_cleansession(mqttSourceDescriptor->getSourceConfig()->getCleanSession()->getValue());
+        serializedSourceConfig->set_allocated_serializablemqttsourceconfig(mqttSerializedSourceConfig);
         auto mqttSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
-        mqttSerializedSourceDescriptor.set_serveraddress(mqttSourceDescriptor->getServerAddress());
-        mqttSerializedSourceDescriptor.set_clientid(mqttSourceDescriptor->getClientId());
-        mqttSerializedSourceDescriptor.set_topic(mqttSourceDescriptor->getTopic());
-        mqttSerializedSourceDescriptor.set_user(mqttSourceDescriptor->getUser());
+        mqttSerializedSourceDescriptor.set_allocated_sourceconfig(serializedSourceConfig);
         mqttSerializedSourceDescriptor.set_inputformat(
             (SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor_InputFormat)
                 mqttSourceDescriptor->getInputFormat());
@@ -1048,9 +1068,12 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(const SourceDescripto
         auto logicalStreamSerializedSourceDescriptor =
             SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
-        // serialize source schema
-        SchemaSerializationUtil::serializeSchema(logicalStreamSourceDescriptor->getSchema(),
-                                                 logicalStreamSerializedSourceDescriptor.mutable_sourceschema());
+
+        if (!isClientOriginated) {
+            // serialize source schema
+            SchemaSerializationUtil::serializeSchema(logicalStreamSourceDescriptor->getSchema(),
+                                                     logicalStreamSerializedSourceDescriptor.mutable_sourceschema());
+        }
         sourceDetails->mutable_sourcedescriptor()->PackFrom(logicalStreamSerializedSourceDescriptor);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << sourceDescriptor->toString());
@@ -1080,19 +1103,14 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor>()) {
         // de-serialize mqtt source descriptor
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as MQTTSourceDescriptor");
-        auto mqttSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
-        serializedSourceDescriptor.UnpackTo(&mqttSerializedSourceDescriptor);
+        auto* mqttSerializedSourceDescriptor = new SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
+        serializedSourceDescriptor.UnpackTo(mqttSerializedSourceDescriptor);
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor.release_sourceschema());
+        auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->release_sourceschema());
         auto ret = MQTTSourceDescriptor::create(
             schema,
-            mqttSerializedSourceDescriptor.serveraddress(),
-            mqttSerializedSourceDescriptor.clientid(),
-            mqttSerializedSourceDescriptor.user(),
-            mqttSerializedSourceDescriptor.topic(),
-            (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor.inputformat(),
-            MQTTSourceDescriptor::ServiceQualities(mqttSerializedSourceDescriptor.qualityofservice()),
-            mqttSerializedSourceDescriptor.cleansession());
+            (const Configurations::MQTTSourceConfigPtr&) mqttSerializedSourceDescriptor->sourceconfig(),
+            (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor->inputformat());
         return ret;
     }
 #endif
@@ -1178,11 +1196,17 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto logicalStreamSerializedSourceDescriptor =
             SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&logicalStreamSerializedSourceDescriptor);
+
         // de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
         SourceDescriptorPtr logicalStreamSourceDescriptor =
             LogicalStreamSourceDescriptor::create(logicalStreamSerializedSourceDescriptor.streamname());
-        logicalStreamSourceDescriptor->setSchema(schema);
+        // check if the schema is set
+        if (logicalStreamSerializedSourceDescriptor.has_sourceschema()) {
+            auto schema =
+                SchemaSerializationUtil::deserializeSchema(logicalStreamSerializedSourceDescriptor.release_sourceschema());
+            logicalStreamSourceDescriptor->setSchema(schema);
+        }
+
         return logicalStreamSourceDescriptor;
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type " << serializedSourceDescriptor.type_url());

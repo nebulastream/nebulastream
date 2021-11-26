@@ -40,8 +40,8 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -59,6 +59,8 @@ using grpc::Status;
 
 namespace NES {
 
+using namespace Configurations;
+
 NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig, WorkerConfigPtr workerConfigInput)
     : NesCoordinator(coordinatorConfig) {
     workerConfig = workerConfigInput;
@@ -72,12 +74,13 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
       numberOfBuffersInGlobalBufferManager(coordinatorConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
       numberOfBuffersPerWorker(coordinatorConfig->getNumberOfBuffersPerWorker()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(coordinatorConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
-      bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()) {
+      bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()),
+      enableMonitoring(coordinatorConfig->getEnableMonitoring()->getValue()) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     topology = Topology::create();
     workerRpcClient = std::make_shared<WorkerRPCClient>();
-    monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology);
+    monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, enableMonitoring);
 
     // TODO make compiler backend configurable
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -221,6 +224,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
         workerConfig->setNumberOfBuffersPerWorker(numberOfBuffersPerWorker);
         workerConfig->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
+        workerConfig->setEnableMonitoring(enableMonitoring);
     }
 
     worker = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);

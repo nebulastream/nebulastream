@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_SERVICES_MONITORING_SERVICE_HPP_
 #define NES_INCLUDE_SERVICES_MONITORING_SERVICE_HPP_
 
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
-#include <cpprest/json.h>
 #include <memory>
 
 namespace NES {
@@ -44,6 +44,8 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 class MonitoringService {
   public:
     explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology);
+    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
+
     ~MonitoringService();
 
     /**
@@ -82,7 +84,7 @@ class MonitoringService {
      * @param the monitoring plan
      * @return the metrics as plain string
      */
-    utf8string requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port);
+    std::string requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port);
 
     /**
      * @brief Requests from a remote worker node its monitoring data via prometheus node exporter. Warning: It assumes the default port 9100, otherwise
@@ -101,6 +103,7 @@ class MonitoringService {
   private:
     MonitoringManagerPtr monitoringManager;
     TopologyPtr topology;
+    bool enableMonitoring;
 };
 
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;

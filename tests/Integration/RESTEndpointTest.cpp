@@ -20,8 +20,10 @@
 #include "SerializableQueryPlan.pb.h"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <Services/QueryService.hpp>
@@ -33,6 +35,8 @@
 using namespace std::string_literals;
 
 namespace NES {
+
+using namespace Configurations;
 
 class RESTEndpointTest : public testing::Test {
   protected:
@@ -167,7 +171,8 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
 
-    QueryPlanPtr queryPlan = QueryPlan::create();
+    auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
 
     //make a Protobuff object
     SubmitQueryRequest request;
@@ -175,7 +180,6 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
     //convert it to string for the request function
     request.set_querystring("");
-    request.set_placement("");
 
     std::string msg = request.SerializeAsString();
 
@@ -195,9 +199,6 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
         })
         .wait();
 
-    EXPECT_TRUE(postJsonReturn.has_field("queryId"));
-
-    stopWorker(*wrk1);
     stopCoordinator(*crd);
 }
 
@@ -211,9 +212,9 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     /* REGISTER QUERY */
-    SourceConfigPtr sourceConfig;
-    sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceConfig("");
+    CSVSourceConfigPtr sourceConfig;
+    sourceConfig = CSVSourceConfig::create();
+    sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");
@@ -231,9 +232,13 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     //make a Protobuff object
     SubmitQueryRequest request;
     auto serializedQueryPlan = request.mutable_queryplan();
-    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
+    QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan, true);
     request.set_querystring("default_logical");
-    request.set_placement("");
+    auto& context = *request.mutable_context();
+
+    auto bottomUpPlacement = google::protobuf::Any();
+    bottomUpPlacement.set_value("BottomUp");
+    context["placement"] = bottomUpPlacement;
 
     std::string msg = request.SerializeAsString();
 
@@ -255,6 +260,18 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
     EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
+
+    EXPECT_TRUE(postJsonReturn.has_field("queryId"));
+    EXPECT_TRUE(crd->getQueryCatalog()->queryExists(postJsonReturn.at("queryId").as_integer()));
+
+    auto insertedQueryPlan =
+        crd->getQueryCatalog()->getQueryCatalogEntry(postJsonReturn.at("queryId").as_integer())->getInputQueryPlan();
+    // Expect that the query id and query sub plan id from the deserialized query plan are valid
+    EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
+    EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
+    // Since the deserialization acquires the next queryId and querySubPlanId from the PlanIdGenerator, the deserialized Id should not be the same with the original Id
+    EXPECT_TRUE(insertedQueryPlan->getQueryId() != queryPlan->getQueryId());
+    EXPECT_TRUE(insertedQueryPlan->getQuerySubPlanId() != queryPlan->getQuerySubPlanId());
 
     stopWorker(*wrk1);
     stopCoordinator(*crd);

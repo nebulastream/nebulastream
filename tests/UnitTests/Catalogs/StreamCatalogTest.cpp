@@ -19,7 +19,8 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <iostream>
 
@@ -31,6 +32,7 @@
 
 using namespace std;
 using namespace NES;
+using namespace Configurations;
 std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                          "->addField(\"value\", BasicType::UINT64);";
 const std::string defaultLogicalStreamName = "default_logical";
@@ -49,7 +51,7 @@ class StreamCatalogTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        sourceConfig = SourceConfig::create();
+        sourceConfig = SourceConfigFactory::createSourceConfig();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
@@ -142,7 +144,6 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     sourceConfig->resetSourceOptions();
-    sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");
@@ -201,8 +202,6 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     sourceConfig->resetSourceOptions();
-    sourceConfig->setSourceType("Sensor");
-    sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");

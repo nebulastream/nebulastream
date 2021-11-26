@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_COMPONENTS_NES_COORDINATOR_HPP_
 #define NES_INCLUDE_COMPONENTS_NES_COORDINATOR_HPP_
 
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/ErrorListener.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
@@ -33,6 +33,9 @@ namespace grpc {
 class Server;
 }
 namespace NES {
+
+using namespace Configurations;
+
 class NESRequestQueue;
 using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
 
@@ -235,6 +238,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     GlobalQueryPlanPtr globalQueryPlan;
     WorkerConfigPtr workerConfig;
     Catalogs::UdfCatalogPtr udfCatalog;
+    bool enableMonitoring;
 };
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 

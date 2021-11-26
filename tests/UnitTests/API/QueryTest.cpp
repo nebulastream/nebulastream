@@ -18,7 +18,8 @@
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -49,6 +50,8 @@
 
 namespace NES {
 
+using namespace Configurations;
+
 class QueryTest : public testing::Test {
   public:
     SourceConfigPtr sourceConfig;
@@ -61,8 +64,7 @@ class QueryTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
 
-        sourceConfig = SourceConfig::create();
-        sourceConfig->setSourceConfig("");
+        sourceConfig = SourceConfigFactory::createSourceConfig();
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setNumberOfBuffersToProduce(3);
         sourceConfig->setPhysicalStreamName("test2");

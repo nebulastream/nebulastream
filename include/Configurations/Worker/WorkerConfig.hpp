@@ -22,6 +22,8 @@
 
 namespace NES {
 
+namespace Configurations {
+
 class WorkerConfig;
 using WorkerConfigPtr = std::shared_ptr<WorkerConfig>;
 
@@ -59,6 +61,11 @@ class WorkerConfig {
      * @brief resets all options to default values
      */
     void resetWorkerOptions();
+
+    /**
+     * @brief prints the current worker configuration (name: current value)
+     */
+    std::string toString();
 
     /**
      * @brief gets a ConfigOption object with localWorkerIp
@@ -237,9 +244,19 @@ class WorkerConfig {
     [[nodiscard]] const StringConfigOption& getWorkerPinList() const;
     void setWorkerPinList(std::string list);
 
+    /**
+    * @brief getter/setter for numa awareness
+    * @return
+    */
     [[nodiscard]] bool isNumaAware() const;
-
     void setNumaAware(bool status);
+
+    /**
+    * @brief getter/setter to check if monitoring is enabled
+    * @return
+    */
+    BoolConfigOption getEnableMonitoring();
+    void setEnableMonitoring(bool enableMonitoring);
 
   private:
     StringConfigOption localWorkerIp;
@@ -261,13 +278,15 @@ class WorkerConfig {
     StringConfigOption queryCompilerPipeliningStrategy;
     // indicates, which output buffer allocation strategy should be used.
     StringConfigOption queryCompilerOutputBufferOptimizationLevel;
-    /// numa awarness
+    // numa awareness
     BoolConfigOption numaAwareness;
+    // enable monitoring
+    BoolConfigOption enableMonitoring;
 
     StringConfigOption sourcePinList;
     StringConfigOption workerPinList;
 };
-
+}// namespace Configurations
 }// namespace NES
 
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_WORKER_CONFIG_HPP_

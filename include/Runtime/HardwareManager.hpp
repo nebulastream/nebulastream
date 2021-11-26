@@ -20,6 +20,7 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace NES::Runtime {
@@ -30,12 +31,12 @@ namespace NES::Runtime {
 class HardwareManager {
 
   public:
-    struct NumaDescriptor;
+    class NumaDescriptor;
     /**
      * @brief Descriptor for a single core
      */
     struct CpuDescriptor {
-        friend struct NumaDescriptor;
+        friend class NumaDescriptor;
 
       public:
         explicit CpuDescriptor(uint16_t coreId = -1, uint16_t cpuId = -1) : coreId(coreId), cpuId(cpuId) {
@@ -66,10 +67,18 @@ class HardwareManager {
     /**
      * @brief Descriptor for a single numa node
      */
-    struct NumaDescriptor {
+    class NumaDescriptor {
       public:
-        explicit NumaDescriptor(uint32_t node_id) : nodeId(node_id), physicalCpus() {
+        explicit NumaDescriptor(uint32_t node_id = -1) : nodeId(node_id), physicalCpus() {
             // nop
+        }
+
+        NumaDescriptor(const NumaDescriptor& other) { *this = other; }
+
+        NumaDescriptor& operator=(const NumaDescriptor& other) {
+            nodeId = other.nodeId;
+            physicalCpus = std::map<uint16_t, CpuDescriptor>(other.physicalCpus.begin(), other.physicalCpus.end());
+            return *this;
         }
 
         /**
@@ -85,7 +94,10 @@ class HardwareManager {
             }
         }
 
-        const uint32_t nodeId;
+        uint32_t getNodeId() const { return nodeId; }
+
+      private:
+        uint32_t nodeId;
         std::map<uint16_t, CpuDescriptor> physicalCpus;
     };
 
@@ -135,7 +147,7 @@ class HardwareManager {
 #ifdef NES_ENABLE_NUMA_SUPPORT
     std::vector<NumaRegionMemoryAllocatorPtr> numaRegions;
 #endif
-    std::vector<NumaDescriptor> cpuMapping;
+    std::unordered_map<uint64_t, NumaDescriptor> cpuMapping;
     /// number of numa regions
     uint32_t numaNodesCount = 0;
     /// number of physical cores

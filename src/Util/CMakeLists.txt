@@ -20,6 +20,7 @@ add_source_nes(
         StacktraceLoader.cpp
         ThreadNaming.cpp
         BufferSequenceNumber.cpp
+        TestUtils.cpp
 )
 if (NES_USE_MQTT)
     add_source_nes(

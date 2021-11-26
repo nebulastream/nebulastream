@@ -26,22 +26,17 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Windowing/Watermark/WatermarkStrategy.hpp>
-
-#include <Operators/LogicalOperators/Windowing/WindowOperatorNode.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
-#include <cstdarg>
 #include <iostream>
+#include <numeric>
 
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
@@ -86,7 +81,6 @@ namespace CEPOperatorBuilder {
 And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to and with to add virtual key to originalQuery");
     //TODO that is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
-
     //here, we add artificial key attributes to the streams in order to reuse the join-logic later
     //first, get unique ids for the key attributes
     auto cepLeftId = Util::getNextOperatorId();
@@ -257,6 +251,17 @@ Query& Query::andWith(const Query& subQueryRhs,
     NES_DEBUG("Query: add JoinType to AND Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
+}
+
+Query& Query::orWith(Query& subQueryRhs) {
+    NES_DEBUG("Query: add map operator that add the original stream name to the left and right side streams of the OR ");
+    //TODO: issue #2349 add real stream name as origin to the tuples.
+    std::string attName = "StreamName";
+    //map the attributes with value streamNameLeft and streamNameRight to the left and right stream
+    this->map(Attribute(attName, INT8) = 1);
+    subQueryRhs.map(Attribute(attName, INT8) = 2);
+    NES_DEBUG("Query: finally we translate the OR into a union OP ");
+    return Query::unionWith(subQueryRhs);
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {

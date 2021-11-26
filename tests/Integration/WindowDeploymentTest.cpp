@@ -23,9 +23,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -33,12 +32,16 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/Array.hpp>
 #include <iostream>
 
 using namespace std;
 
 namespace NES {
+
+using namespace Configurations;
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
@@ -66,7 +69,7 @@ class WindowDeploymentTest : public testing::Test {
 TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -90,11 +93,10 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/exdra.csv");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("exdra");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/exdra.csv");
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("exdra");
 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
@@ -149,7 +151,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
 TEST_F(WindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -307,14 +309,13 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
@@ -362,14 +363,13 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Minutes(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
@@ -420,14 +420,13 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(1);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
@@ -464,7 +463,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -511,13 +510,12 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
@@ -580,14 +578,13 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts"), Seconds()), Minutes(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
@@ -635,14 +632,13 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(1);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
@@ -696,14 +692,13 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
@@ -746,14 +741,13 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(1);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
@@ -796,14 +790,13 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(1))).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
@@ -847,14 +840,13 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(1);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
@@ -880,7 +872,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
 TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -913,13 +905,12 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(5);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(5);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(sourceConfig);
@@ -958,7 +949,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
 TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -1000,13 +991,12 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(5);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(5);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     //register physical stream
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(sourceConfig);
@@ -1047,7 +1037,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
 TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -1080,13 +1070,12 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     out.close();
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(6);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("windowStream");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(6);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("windowStream");
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(sourceConfig);
@@ -1127,7 +1116,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
 TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -1169,13 +1158,12 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     out.close();
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("windowStream");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("windowStream");
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(sourceConfig);
@@ -1236,14 +1224,13 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     testHarness.addNonSourceWorker();
@@ -1278,7 +1265,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -1356,13 +1343,12 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("window");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
@@ -1809,15 +1795,14 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("id")).apply(Max(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setLogicalStreamName("car");
-    sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
-    sourceConfig->setNumberOfBuffersToProduce(1);
-    sourceConfig->setSkipHeader(false);
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
+    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("car");
+    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("car");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(28);
+    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
+    sourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, carSchema);

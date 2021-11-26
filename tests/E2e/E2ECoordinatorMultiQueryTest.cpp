@@ -263,8 +263,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
                                           TestUtils::coordinatorPort(rpcPort),
                                           TestUtils::logicalStreamName("QnV"),
                                           TestUtils::sourceType("CSVSource"),
-                                          TestUtils::sourceConfig("../tests/test_data/QnV_short.csv"),
+                                          TestUtils::csvSourceFilePath("../tests/test_data/QnV_short.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
+                                          TestUtils::numberOfTuplesToProducePerBuffer(0),
                                           TestUtils::sourceFrequency(1000),
                                           TestUtils::physicalStreamName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
@@ -365,7 +366,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
                                           TestUtils::coordinatorPort(rpcPort),
                                           TestUtils::logicalStreamName("window"),
                                           TestUtils::sourceType("CSVSource"),
-                                          TestUtils::sourceConfig("../tests/test_data/window.csv"),
+                                          TestUtils::csvSourceFilePath("../tests/test_data/window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::sourceFrequency(1000),
@@ -467,7 +468,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                                           TestUtils::coordinatorPort(rpcPort),
                                           TestUtils::logicalStreamName("window"),
                                           TestUtils::sourceType("CSVSource"),
-                                          TestUtils::sourceConfig("../tests/test_data/window.csv"),
+                                          TestUtils::csvSourceFilePath("../tests/test_data/window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::sourceFrequency(1000),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),

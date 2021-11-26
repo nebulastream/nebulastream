@@ -36,11 +36,8 @@ class WorkerContext {
   private:
     /// the id of this worker context (unique per thread).
     uint32_t workerId;
-
     std::unordered_map<Network::OperatorId, Network::OutputChannelPtr> channels;
-
     LocalBufferPoolPtr localBufferPool;
-
     uint32_t numaNode = 0;
 
   public:

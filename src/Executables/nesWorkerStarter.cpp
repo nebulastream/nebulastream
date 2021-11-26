@@ -26,8 +26,8 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -36,6 +36,7 @@
 #include <thread>
 #include <unistd.h>
 using namespace NES;
+using namespace Configurations;
 using std::cout;
 using std::endl;
 using std::string;
@@ -50,16 +51,12 @@ const string logo = "/********************************************************\n
                     " *\n"
                     " ********************************************************/";
 
-// TODO handle proper configuration properly
 int main(int argc, char** argv) {
     std::cout << logo << std::endl;
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("NoSource");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
 
     std::map<string, string> commandLineParams;
 
@@ -70,41 +67,44 @@ int main(int argc, char** argv) {
     }
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");
-    auto sourceConfigPath = commandLineParams.find("--sourceConfigPath");
 
     if (workerConfigPath != commandLineParams.end()) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
-    if (sourceConfigPath != commandLineParams.end()) {
-        sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
-    }
+
     if (argc >= 1) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
-        sourceConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
+
+    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig(commandLineParams, argc);
+
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
 
-    NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort()->getValue() << " localport="
-                                                  << workerConfig->getDataPort()->getValue() << " pid=" << getpid()
-                                                  << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
+    NES_INFO("NESWORKERSTARTER: Start with " << workerConfig->toString());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
     //register phy stream if necessary
     if (sourceConfig->getSourceType()->getValue() != "NoSource") {
         NES_INFO("start with dedicated source=" << sourceConfig->getSourceType()->getValue() << "\n");
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+        PhysicalStreamConfigPtr physicalStreamConfig = PhysicalStreamConfig::create(sourceConfig);
 
-        NES_INFO("NESWORKERSTARTER: Source Config type = "
-                 << sourceConfig->getSourceType()->getValue() << " Config = " << sourceConfig->getSourceConfig()->getValue()
-                 << " physicalStreamName = " << sourceConfig->getPhysicalStreamName()->getValue()
-                 << " logicalStreamName = " << sourceConfig->getLogicalStreamName()->getValue());
+        NES_INFO("NESWORKERSTARTER: Source Config: " << sourceConfig->toString());
 
-        wrk->setWithRegister(conf);
+        wrk->setWithRegister(physicalStreamConfig);
     } else if (workerConfig->getParentId()->getValue() != "-1") {
         NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());
         wrk->setWithParent(workerConfig->getParentId()->getValue());
     }
-    wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
-    wrk->stop(/**force*/ true);
+
+try {
+        wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
+        wrk->stop(/**force*/ true);
+    } catch (std::exception& exp) {
+        NES_ERROR("Problem with worker:  << " << exp.what());
+        return 1;
+    } catch (...) {
+        NES_ERROR("Unknown exception was thrown");
+        throw;
+    }
     NES_INFO("worker started");
 }

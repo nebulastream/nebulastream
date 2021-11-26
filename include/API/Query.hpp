@@ -203,9 +203,16 @@ class Query {
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
      * @param subQueryRhs
-     * @return object where where() function is defined and can be called by user
+     * @return object where the window() function is defined and can be called by user
      */
     CEPOperatorBuilder::And andWith(Query& subQueryRhs);
+
+    /**
+     * @brief can be called on the original query with the query to be composed with and sets this query in the class Or.
+     * @param subQueryRhs
+     * @return the query (pushed to union with)
+     */
+    Query& orWith(Query& subQuery);
 
     /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.

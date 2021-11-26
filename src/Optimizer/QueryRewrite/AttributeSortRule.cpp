@@ -35,10 +35,8 @@
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <numeric>
 #include <utility>
 
 namespace NES::Optimizer {

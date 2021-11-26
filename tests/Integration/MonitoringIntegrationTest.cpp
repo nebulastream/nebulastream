@@ -16,21 +16,17 @@
 
 #include <gtest/gtest.h>
 
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Worker/WorkerConfig.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/IntCounter.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 
@@ -41,6 +37,7 @@
 #include <Components/NesWorker.hpp>
 #include <Monitoring/MetricValues/GroupedMetricValues.hpp>
 #include <Services/MonitoringService.hpp>
+#include <cpprest/json.h>
 #include <cstdint>
 #include <memory>
 
@@ -76,7 +73,6 @@ class MonitoringIntegrationTest : public testing::Test {
 TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -158,10 +154,9 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJson) {
+TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEnabled) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -228,6 +223,97 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJson) {
 
         EXPECT_TRUE(json.has_field("TotalCPUJiffies"));
         EXPECT_TRUE(json["TotalCPUJiffies"].as_double() >= 1);
+
+        EXPECT_TRUE(json.has_field("CpuPeriodUS"));
+        EXPECT_TRUE(json.has_field("CpuQuotaUS"));
+        EXPECT_TRUE(json.has_field("IsMoving"));
+        EXPECT_TRUE(json.has_field("HasBattery"));
+    }
+
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    bool retStopWrk2 = wrk2->stop(false);
+    EXPECT_TRUE(retStopWrk2);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDisabled) {
+    // TODO Refactor this once #2239 is solved.
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    bool monitoring = false;
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    crdConf->setEnableMonitoring(monitoring);
+    wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setEnableMonitoring(monitoring);
+
+    cout << "start coordinator" << endl;
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0ull);
+    cout << "coordinator started successfully" << endl;
+
+    cout << "start worker 1" << endl;
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart1);
+    cout << "worker1 started successfully" << endl;
+
+    cout << "start worker 2" << endl;
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart2);
+    cout << "worker2 started successfully" << endl;
+
+    bool retConWrk1 = wrk1->connect();
+    EXPECT_TRUE(retConWrk1);
+    cout << "worker 1 connected " << endl;
+
+    bool retConWrk2 = wrk2->connect();
+    EXPECT_TRUE(retConWrk2);
+    cout << "worker 2 connected " << endl;
+
+    // requesting the monitoring data
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto plan = MonitoringPlan::create(metrics);
+    auto schema = plan->createSchema();
+    EXPECT_TRUE(schema->getSize() > 1);
+
+    auto const nodeNumber = static_cast<std::size_t>(3U);
+    auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
+    NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
+
+    EXPECT_EQ(jsons.size(), nodeNumber);
+    auto rootId = crd->getTopology()->getRoot()->getId();
+    NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
+    auto emptyStaticNesMetrics = StaticNesMetrics{};
+
+    for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
+        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
+                 + std::to_string(port + 10));
+        auto json = jsons[std::to_string(i)];
+        EXPECT_TRUE(json.has_field("staticNesMetrics"));
+        json = json["staticNesMetrics"];
+
+        EXPECT_TRUE(json.has_field("TotalMemory"));
+        EXPECT_TRUE(json["TotalMemory"].as_double() == emptyStaticNesMetrics.totalMemoryBytes);
+
+        EXPECT_TRUE(json.has_field("CpuCoreNum"));
+        EXPECT_TRUE(json["CpuCoreNum"].as_double() == emptyStaticNesMetrics.cpuCoreNum);
+
+        EXPECT_TRUE(json.has_field("TotalCPUJiffies"));
+        EXPECT_TRUE(json["TotalCPUJiffies"].as_double() == emptyStaticNesMetrics.totalCPUJiffies);
 
         EXPECT_TRUE(json.has_field("CpuPeriodUS"));
         EXPECT_TRUE(json.has_field("CpuQuotaUS"));

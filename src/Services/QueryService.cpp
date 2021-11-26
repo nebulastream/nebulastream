@@ -25,6 +25,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
@@ -139,6 +140,10 @@ uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan, const std:
 uint64_t QueryService::addQueryRequest(const std::string& queryString,
                                        const QueryPlanPtr& queryPlan,
                                        const std::string& placementStrategyName) {
+
+    // assign the id for the query and individual operators
+    assignQueryAndOperatorIds(queryPlan);
+
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
@@ -146,6 +151,18 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
         return queryPlan->getQueryId();
     }
     throw Exception("QueryService: unable to create query catalog entry");
+}
+
+void QueryService::assignQueryAndOperatorIds(QueryPlanPtr queryPlan) {
+    // Set the queryId
+    queryPlan->setQueryId(PlanIdGenerator::getNextQueryId());
+
+    // Iterate over all operators in the query and replace the client-provided ID
+    auto queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto itr = queryPlanIterator.begin(); itr != QueryPlanIterator::end(); ++itr) {
+        auto visitingOp = (*itr)->as<OperatorNode>();
+        visitingOp->setId(Util::getNextOperatorId());
+    }
 }
 
 }// namespace NES

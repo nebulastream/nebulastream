@@ -14,7 +14,21 @@
 cmake_minimum_required(VERSION 3.20.0)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v6)
+set(VCPKG_BINARY_VERSION v7)
+
+# Activate self hosting, such that the compiler from the dependencies is taken
+option(NES_SELF_HOSTING "use self hosting compiler" ON)
+# Enable native mtune/march for optimizations
+option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
+# Enable local dependency building (this may take a long time)
+option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
+option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
+option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
+option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
+option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" ON)
+option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
+option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
+option(ENABLE_CLANG_TIDY OFF)
 
 # for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
 # The system architecture is normally set in CMAKE_HOST_PROCESSOR,
@@ -49,7 +63,23 @@ set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 # check if prebuild dependencies are already downloaded
 if (CMAKE_TOOLCHAIN_FILE)
     message(STATUS "Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
+elseif(NES_BUILD_DEPENDENCIES_LOCAL)
+    message(STATUS "Build Dependencies locally")
+    include(FetchContent)
+    FetchContent_Declare(
+            nesdebs
+            GIT_REPOSITORY  https://github.com/nebulastream/nebulastream-dependencies.git
+            #GIT_TAG ${VCPKG_BINARY_VERSION}
+            GIT_TAG  origin/fix-VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS
+    )
+    FetchContent_Populate(nesdebs)
+    set(CMAKE_TOOLCHAIN_FILE ${nesdebs_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
+            CACHE STRING "CMake toolchain file")
+    set(VCPKG_MANIFEST_DIR ${nesdebs_SOURCE_DIR} CACHE STRING "vcpkg manifest dir")
+    set(VCPKG_OVERLAY_TRIPLETS ${nesdebs_SOURCE_DIR}/custom-triplets/ CACHE STRING "CMake toolchain file")
+    set(NES_DEPENDENCIES_BINARY_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/vcpkg_installed/${VCPKG_TARGET_TRIPLET})
 else ()
+    message(STATUS "Use prebuild dependencies")
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
     IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
         message(STATUS "NES dependencies do not exist!")
@@ -63,28 +93,20 @@ else ()
     # set toolchain file to use prebuild dependencies only if no toolchain file is already set.
     message(STATUS "Set toolchain file for prebuild dir.")
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/scripts/buildsystems/vcpkg.cmake")
+    set(NES_DEPENDENCIES_BINARY_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET})
+endif ()
 
-    # In combination with prebuild binaries, NES supports self hosting its compilation with the clang binary.
-    # This could be handy if the build environment has no recent compiler.
-    if (NES_SELF_HOSTING)
-        message(STATUS "Self-host compilation of NES")
-        set(CMAKE_C_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang-12")
-        set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang++")
-    else ()
-        message(STATUS "Use system compiler")
-    endif ()
+# NES supports self hosting its compilation with the local clang binary.
+if (NES_SELF_HOSTING)
+    message(STATUS "Self-host compilation of NES from ${NES_DEPENDENCIES_BINARY_ROOT}")
+    set(CMAKE_C_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang-12")
+    set(CMAKE_CXX_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang++")
+else ()
+    message(STATUS "Use system compiler")
 endif ()
 
 project(NES CXX)
-option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
-option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
-option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
-option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" ON)
-option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
-option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
-option(ENABLE_CLANG_TIDY OFF)
-option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
-
+set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
 if (POLICY CMP0004)

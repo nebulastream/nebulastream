@@ -29,13 +29,18 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/http_client.h>
+#include <cpprest/json.h>
 #include <utility>
 
 namespace NES {
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology) : topology(topology) {
-    NES_DEBUG("MonitoringService: Initializing");
-    monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology);
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology)
+    : MonitoringService(workerClient, topology, true) {}
+
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enable)
+    : topology(topology), enableMonitoring(enable) {
+    NES_DEBUG("MonitoringService: Initializing with monitoring=" << enable);
+    monitoringManager = std::make_shared<MonitoringManager>(workerClient, topology, enableMonitoring);
 }
 
 MonitoringService::~MonitoringService() { NES_DEBUG("MonitoringService: Shutting down"); }
@@ -98,7 +103,7 @@ web::json::value MonitoringService::requestNewestMonitoringDataFromMetricStoreAs
     return metricsJson;
 }
 
-utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port) {
+std::string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port) {
     NES_DEBUG("MonitoringService: Requesting monitoring data from worker id= " + std::to_string(nodeId));
     TopologyNodePtr node = topology->findNodeWithId(nodeId);
 
@@ -106,7 +111,7 @@ utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t
         auto nodeIp = node->getIpAddress();
         auto address = "http://" + nodeIp + ":" + std::to_string(port) + "/metrics";
 
-        utf8string metricsReturn;
+        std::string metricsReturn;
         web::http::client::http_client clientQ1(address);
         NES_INFO("MonitoringService: Executing metric request to prometheus node exporter on " + address);
         clientQ1.request(web::http::methods::GET)
@@ -139,5 +144,4 @@ web::json::value MonitoringService::requestMonitoringDataFromAllNodesViaPromethe
 }
 
 const MonitoringManagerPtr MonitoringService::getMonitoringManager() const { return monitoringManager; }
-
 }// namespace NES

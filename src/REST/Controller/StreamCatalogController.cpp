@@ -20,6 +20,8 @@
 #include <REST/runtime_utils.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>
+#include <cpprest/details/basic_types.h>
+#include <cpprest/http_msg.h>
 #include <utility>
 
 namespace NES {
@@ -35,14 +37,14 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
     if (path[1] == "allLogicalStream") {
         const std::map<std::string, std::string>& allLogicalStreamAsString = streamCatalog->getAllLogicalStreamAsString();
 
-        json::value result{};
+        web::json::value result{};
         if (allLogicalStreamAsString.empty()) {
             NES_DEBUG("No Logical Stream Found");
             resourceNotFoundImpl(request);
             return;
         }
         for (auto const& [key, val] : allLogicalStreamAsString) {
-            result[key] = json::value::string(val);
+            result[key] = web::json::value::string(val);
         }
         successMessageImpl(request, result);
         return;
@@ -52,8 +54,8 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
         auto param = parameters.find("logicalStreamName");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
         }
 
@@ -64,17 +66,17 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
             const std::vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(logicalStreamName);
 
             //Prepare the response
-            json::value result{};
+            web::json::value result{};
             if (allPhysicalStream.empty()) {
                 NES_DEBUG("No Physical Stream Found");
                 resourceNotFoundImpl(request);
                 return;
             }
-            std::vector<json::value> allStream = {};
+            std::vector<web::json::value> allStream = {};
             for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
-                allStream.push_back(json::value::string(physicalStream->toString()));
+                allStream.push_back(web::json::value::string(physicalStream->toString()));
             }
-            result["Physical Streams"] = json::value::array(allStream);
+            result["Physical Streams"] = web::json::value::array(allStream);
             successMessageImpl(request, result);
             return;
 
@@ -94,8 +96,8 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
         auto param = parameters.find("logicalStreamName");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find logical stream name for the GET schema request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter logicalStreamName must be provided");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter logicalStreamName must be provided");
             badRequestImpl(request, errorResponse);
         }
         try {
@@ -137,7 +139,7 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                     //Prepare Input query from user string
                     std::string payload(body.begin(), body.end());
                     NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: userRequest: " << payload);
-                    json::value req = json::value::parse(payload);
+                    web::json::value req = web::json::value::parse(payload);
                     NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Json Parse Value: " << req);
                     std::string streamName = req.at("streamName").as_string();
                     std::string schema = req.at("schema").as_string();
@@ -147,8 +149,8 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                     NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Successfully added new logical Stream ?"
                               << added);
                     //Prepare the response
-                    json::value result{};
-                    result["Success"] = json::value::boolean(added);
+                    web::json::value result{};
+                    result["Success"] = web::json::value::boolean(added);
                     successMessageImpl(message, result);
                     return;
                 } catch (const std::exception& exc) {
@@ -177,8 +179,8 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
 
                     if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
                         NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: invalid Protobuf message");
-                        json::value errorResponse{};
-                        errorResponse["detail"] = json::value::string("Invalid Protobuf message");
+                        web::json::value errorResponse{};
+                        errorResponse["detail"] = web::json::value::string("Invalid Protobuf message");
                         badRequestImpl(message, errorResponse);
                         return;
                     }
@@ -195,8 +197,8 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                               << added);
 
                     //forward return value to client
-                    json::value result{};
-                    result["Success"] = json::value::boolean(added);
+                    web::json::value result{};
+                    result["Success"] = web::json::value::boolean(added);
                     successMessageImpl(message, result);
                     return;
 
@@ -224,7 +226,7 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                     //Prepare Input query from user string
                     std::string userRequest(body.begin(), body.end());
                     NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: userRequest: " << userRequest);
-                    json::value req = json::value::parse(userRequest);
+                    web::json::value req = web::json::value::parse(userRequest);
 
                     std::string streamName = req.at("streamName").as_string();
                     std::string schema = req.at("schema").as_string();
@@ -233,8 +235,8 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
 
                     if (updated) {
                         //Prepare the response
-                        json::value result{};
-                        result["Success"] = json::value::boolean(updated);
+                        web::json::value result{};
+                        result["Success"] = web::json::value::boolean(updated);
                         successMessageImpl(message, result);
                     } else {
                         NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: unable to find stream "
@@ -270,8 +272,8 @@ void StreamCatalogController::handleDelete(const std::vector<utility::string_t>&
         auto param = parameters.find("streamName");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
-            json::value errorResponse{};
-            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
         }
 
@@ -282,9 +284,9 @@ void StreamCatalogController::handleDelete(const std::vector<utility::string_t>&
             bool added = streamCatalog->removeLogicalStream(streamName);
 
             //Prepare the response
-            json::value result{};
+            web::json::value result{};
             if (added) {
-                result["Success"] = json::value::boolean(added);
+                result["Success"] = web::json::value::boolean(added);
                 successMessageImpl(request, result);
             } else {
                 throw std::invalid_argument("Could not remove logical stream " + streamName);

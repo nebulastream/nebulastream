@@ -23,6 +23,8 @@
 
 namespace NES {
 
+namespace Configurations {
+
 class CoordinatorConfig;
 using CoordinatorConfigPtr = std::shared_ptr<CoordinatorConfig>;
 
@@ -56,6 +58,11 @@ class CoordinatorConfig {
      * @brief resets all options to default values
      */
     void resetCoordinatorOptions();
+
+    /**
+     * @brief prints the current coordinator configuration (name: current value)
+     */
+    std::string toString();
 
     /**
      * @brief gets a ConfigOption object with restIp
@@ -222,10 +229,22 @@ class CoordinatorConfig {
     BoolConfigOption getEnableSemanticQueryValidation();
 
     /**
-     * @brief Set the value for enableing SemanticQueryValidation
+     * @brief Set the value for enabling SemanticQueryValidation
      * @param enableSemanticQueryValidation: enable or disable semantic validation
      */
     void setEnableSemanticQueryValidation(bool enableSemanticQueryValidation);
+
+    /**
+     * @brief Get the value for enabling monitoring.
+     * @return monitoring config option
+     */
+    BoolConfigOption getEnableMonitoring();
+
+    /**
+     * Set the value for enabling monitoring.
+     * @param enableMonitoring enable or disable monitoring.
+     */
+    void setEnableMonitoring(bool enableMonitoring);
 
   private:
     /**
@@ -246,11 +265,13 @@ class CoordinatorConfig {
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
     StringConfigOption queryMergerRule;
+    BoolConfigOption enableMonitoring;
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;
 };
 
+}// namespace Configurations
 }// namespace NES
 
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_COORDINATOR_CONFIG_HPP_

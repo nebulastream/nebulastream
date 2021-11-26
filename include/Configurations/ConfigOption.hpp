@@ -27,6 +27,8 @@
 
 namespace NES {
 
+namespace Configurations {
+
 /**
  * @brief Template for a ConfigOption object
  * @tparam T template parameter, depends on ConfigOptions
@@ -49,6 +51,16 @@ class ConfigOption {
         ss << "Description: " << description << "\n";
         ss << "Value: " << value << "\n";
         ss << "Default Value: " << defaultValue << "\n";
+        return ss.str();
+    }
+
+    /**
+     * @brief converts config object to human readable form, only prints name and current value
+     * @return Name: current Value of config object
+     */
+    std::string toStringNameCurrentValue() {
+        std::stringstream ss;
+        ss << name << ": " << value << "\n";
         return ss.str();
     }
 
@@ -112,14 +124,18 @@ class ConfigOption {
      * @param value the value of the object
      * @param description default value of the object
      */
-    ConfigOption(std::string name, T value, std::string description)
+    explicit ConfigOption(std::string name, T value, std::string description)
         : name(std::move(name)), description(std::move(description)), value(value), defaultValue(value) {}
+
+    ConfigOption(std::string name, T value, T defaultValue, std::string description)
+        : name(std::move(name)), description(std::move(description)), value(value), defaultValue(defaultValue) {}
 
     std::string name;
     std::string description;
     T value;
     T defaultValue;
 };
+}// namespace Configurations
 }// namespace NES
 
 #endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTION_HPP_

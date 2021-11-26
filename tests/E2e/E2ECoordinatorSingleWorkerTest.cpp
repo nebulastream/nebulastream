@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -268,7 +269,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::dataPort(dataPort),
                                           TestUtils::coordinatorPort(rpcPort),
                                           TestUtils::sourceType("CSVSource"),
-                                          TestUtils::sourceConfig("../tests/test_data/exdra.csv"),
+                                          TestUtils::csvSourceFilePath("../tests/test_data/exdra.csv"),
                                           TestUtils::physicalStreamName("test_stream"),
                                           TestUtils::logicalStreamName("exdra"),
                                           TestUtils::numberOfBuffersToProduce(1),
@@ -366,7 +367,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
                                           TestUtils::dataPort(dataPort),
                                           TestUtils::coordinatorPort(rpcPort),
                                           TestUtils::sourceType("CSVSource"),
-                                          TestUtils::sourceConfig("../tests/test_data/window.csv"),
+                                          TestUtils::csvSourceFilePath("../tests/test_data/window.csv"),
                                           TestUtils::physicalStreamName("test_stream"),
                                           TestUtils::logicalStreamName("window"),
                                           TestUtils::numberOfBuffersToProduce(1),
@@ -427,7 +428,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
                                           TestUtils::dataPort(dataPort),
                                           TestUtils::coordinatorPort(rpcPort),
                                           TestUtils::sourceType("CSVSource"),
-                                          TestUtils::sourceConfig("../tests/test_data/window.csv"),
+                                          TestUtils::csvSourceFilePath("../tests/test_data/window.csv"),
                                           TestUtils::physicalStreamName("test_stream"),
                                           TestUtils::logicalStreamName("window"),
                                           TestUtils::numberOfBuffersToProduce(1),

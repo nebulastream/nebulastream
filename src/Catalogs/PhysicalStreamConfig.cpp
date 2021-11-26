@@ -16,7 +16,11 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Sources/DefaultSourceConfig.hpp>
+#include <Configurations/Sources/MQTTSourceConfig.hpp>
+#include <Configurations/Sources/SenseSourceConfig.hpp>
+#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
@@ -28,121 +32,82 @@
 #include <utility>
 namespace NES {
 
-PhysicalStreamConfigPtr PhysicalStreamConfig::create(const SourceConfigPtr& sourceConfig) {
+PhysicalStreamConfigPtr PhysicalStreamConfig::create(const Configurations::SourceConfigPtr& sourceConfig) {
     return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(sourceConfig));
 }
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::createEmpty() {
-    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(SourceConfig::create()));
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(Configurations::DefaultSourceConfig::create()));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(const SourceConfigPtr& sourceConfig)
-    : sourceType(sourceConfig->getSourceType()->getValue()), sourceConfig(sourceConfig->getSourceConfig()->getValue()),
-      sourceFrequency(sourceConfig->getSourceFrequency()->getValue()),
+PhysicalStreamConfig::PhysicalStreamConfig(const Configurations::SourceConfigPtr& sourceConfig)
+    : sourceConfig(sourceConfig),
       numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()),
       numberOfBuffersToProduce(sourceConfig->getNumberOfBuffersToProduce()->getValue()),
       physicalStreamName(sourceConfig->getPhysicalStreamName()->getValue()),
-      logicalStreamName(sourceConfig->getLogicalStreamName()->getValue()), skipHeader(sourceConfig->getSkipHeader()->getValue()) {
-    NES_INFO("PhysicalStreamConfig: Created source with config: " << this->toString());
+      logicalStreamName(sourceConfig->getLogicalStreamName()->getValue()), sourceType(sourceConfig->getSourceType()->getValue()) {
+    NES_INFO("PhysicalStreamConfig: Created source with config: " << sourceConfig->toString());
 };
 
 std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;
-    ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig << " sourceFrequency=" << sourceFrequency.count()
-       << "ms"
-       << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
-       << " numberOfBuffersToProduce=" << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
-       << " logicalStreamName=" << logicalStreamName;
+    ss << sourceConfig->toString();
     return ss.str();
 }
 
+Configurations::SourceConfigPtr PhysicalStreamConfig::getSourceConfig() const { return sourceConfig; }
+std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+std::string PhysicalStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
+uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
+uint32_t PhysicalStreamConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 std::string PhysicalStreamConfig::getSourceType() { return sourceType; }
 
-std::string PhysicalStreamConfig::getSourceConfig() const { return sourceConfig; }
-
-std::chrono::milliseconds PhysicalStreamConfig::getSourceFrequency() const { return sourceFrequency; }
-
-uint32_t PhysicalStreamConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
-
-uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
-
-std::string PhysicalStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
-
-std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
-
-bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
-
 SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
-    auto* config = this;
-    auto streamName = config->getLogicalStreamName();
-
-    // Pick the first element from the catalog entry and identify the type to create appropriate source type
     // todo add handling for support of multiple physical streams.
-    std::string type = config->getSourceType();
-    std::string conf = config->getSourceConfig();
-    std::chrono::milliseconds frequency = config->getSourceFrequency();
-    uint64_t numBuffers = config->getNumberOfBuffersToProduce();
-
-    bool const newSkipHeader = config->getSkipHeader();
-    uint64_t newNumberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
-
-    if (type == "DefaultSource") {
+    if (sourceConfig->getSourceType()->getValue() == "DefaultSource") {
         NES_DEBUG("PhysicalStreamConfig: create default source for one buffer");
-        return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency.count());
+        return DefaultSourceDescriptor::create(schema,
+                                               sourceConfig->getLogicalStreamName()->getValue(),
+                                               sourceConfig->getNumberOfBuffersToProduce()->getValue(),
+                                               std::chrono::milliseconds(sourceConfig->getSourceFrequency()->getValue()).count());
     }
-    if (type == "CSVSource") {
-        NES_DEBUG("PhysicalStreamConfig: create CSV source for " << conf << " buffers");
+    if (sourceConfig->getSourceType()->getValue() == "CSVSource") {
+        NES_DEBUG("PhysicalStreamConfig: create CSV source for "
+                  << sourceConfig->as<Configurations::CSVSourceConfig>()->getFilePath()->getValue() << " buffers");
         return CsvSourceDescriptor::create(schema,
-                                           streamName,
-                                           conf,
+                                           sourceConfig->getLogicalStreamName()->getValue(),
+                                           sourceConfig->as<Configurations::CSVSourceConfig>()->getFilePath()->getValue(),
                                            /**delimiter*/ ",",
-                                           newNumberOfTuplesToProducePerBuffer,
-                                           numBuffers,
-                                           frequency.count(),
-                                           newSkipHeader);
-    } else if (type == "SenseSource") {
-        NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs " << conf);
-        return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
+                                           sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue(),
+                                           sourceConfig->getNumberOfBuffersToProduce()->getValue(),
+                                           std::chrono::milliseconds(sourceConfig->getSourceFrequency()->getValue()).count(),
+                                           sourceConfig->as<Configurations::CSVSourceConfig>()->getSkipHeader()->getValue());
+    } else if (sourceConfig->getSourceType()->getValue() == "SenseSource") {
+        NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs "
+                  << sourceConfig->as<Configurations::SenseSourceConfig>()->getUdfs()->getValue());
+        return SenseSourceDescriptor::create(
+            schema,
+            sourceConfig->getLogicalStreamName()->getValue(),
+            /**udfs*/ sourceConfig->as<Configurations::SenseSourceConfig>()->getUdfs()->getValue());
 #ifdef ENABLE_MQTT_BUILD
-        NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: " << conf << ".");
-    } else if (type == "MQTTSource") {
-        std::vector<std::string> mqttConfig = Util::splitWithStringDelimiter<std::string>(conf, ";");
+    } else if (sourceConfig->getSourceType()->getValue() == "MQTTSource") {
+        NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: " << sourceConfig->toString());
 
         //init inputFormat to default value (JSON). Only flat JSON and CSV format implemented currently
-        SourceDescriptor::InputFormat inputFormat = MQTTSourceDescriptor::JSON;
-        if (strcasecmp(mqttConfig[4].c_str(), "JSON") == 0) {
-            inputFormat = SourceDescriptor::InputFormat::JSON;
-        } else if (strcasecmp(mqttConfig[4].c_str(), "CSV") == 0) {
-            inputFormat = SourceDescriptor::InputFormat::CSV;
+        SourceDescriptor::InputFormat inputFormatEnum = MQTTSourceDescriptor::JSON;
+        if (strcasecmp(sourceConfig->getInputFormat()->getValue().c_str(), "JSON") == 0) {
+            inputFormatEnum = SourceDescriptor::InputFormat::JSON;
+        } else if (strcasecmp(sourceConfig->getInputFormat()->getValue().c_str(), "CSV") == 0) {
+            inputFormatEnum = SourceDescriptor::InputFormat::CSV;
         }
 
-        //Places in mqttConfig provide:
-        //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat (conversion to enum above)
-        //5 = qualityOfService (conversion to enum above); 6 = cleanSession; 7 = bufferFlushIntervalMs
-        long bufferFlushIntervalMs = -1;
-        if (mqttConfig.size() > 7) {
-            bufferFlushIntervalMs = std::stol(mqttConfig[7]);
-        }
-        return MQTTSourceDescriptor::create(schema,
-                                            mqttConfig[0],
-                                            mqttConfig[1],
-                                            mqttConfig[2],
-                                            mqttConfig[3],
-                                            inputFormat,
-                                            MQTTSourceDescriptor::ServiceQualities(stoi(mqttConfig[5])),
-                                            (strcasecmp("true", mqttConfig[6].c_str()) == 0),
-                                            bufferFlushIntervalMs);
+        return MQTTSourceDescriptor::create(schema, sourceConfig->as<Configurations::MQTTSourceConfig>(), inputFormatEnum);
 #endif
     } else {
-        NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
+        NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + sourceConfig->getSourceType()->getValue()
+                                + " not supported");
         return nullptr;
     }
 }
-void PhysicalStreamConfig::setSourceFrequency(uint32_t sf) {
-    PhysicalStreamConfig::sourceFrequency = std::chrono::milliseconds(sf);
-}
-void PhysicalStreamConfig::setNumberOfTuplesToProducePerBuffer(uint32_t n) {
-    PhysicalStreamConfig::numberOfTuplesToProducePerBuffer = n;
-}
-void PhysicalStreamConfig::setNumberOfBuffersToProduce(uint32_t n) { PhysicalStreamConfig::numberOfBuffersToProduce = n; }
+
 }// namespace NES
