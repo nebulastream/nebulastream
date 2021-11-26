@@ -213,6 +213,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     */
     std::vector<QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
+    /**
+    * @brief method to return the query statistics
+    * @return vector of queryStatistics
+    */
+    std::vector<QueryStatisticsPtr> getQueryStatistics();
+
     Network::PartitionManagerPtr getPartitionManager();
 
     ///// Network Callback //////
