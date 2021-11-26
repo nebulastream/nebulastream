@@ -87,7 +87,6 @@ MemorySource::MemorySource(SchemaPtr schema,
 
 std::optional<Runtime::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
-
     if (memoryAreaSize > bufferSize) {
         if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > memoryAreaSize) {
             if (numBuffersToProcess != 0) {

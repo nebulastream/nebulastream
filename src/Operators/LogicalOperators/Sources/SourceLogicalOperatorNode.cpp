@@ -39,7 +39,7 @@ bool SourceLogicalOperatorNode::equal(NodePtr const& rhs) const {
 
 std::string SourceLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SOURCE(" << id << "," << sourceDescriptor->getStreamName() << ", " << sourceDescriptor->toString() << ")";
+    ss << "SOURCE(" << id << "," << sourceDescriptor->getStreamName() << "," << sourceDescriptor->toString() << ")";
     return ss.str();
 }
 

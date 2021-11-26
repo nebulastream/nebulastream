@@ -98,11 +98,6 @@ void BenchmarkSource::open() {
 void BenchmarkSource::runningRoutine() {
     open();
 
-    for(size_t i = 0; i < 10; i++)
-    {
-        std::cout << "source sleep" << std::endl;
-        sleep(1);
-    }
     NES_INFO("Going to produce " << numberOfTuplesToProduce);
     std::cout << "Going to produce " << numberOfTuplesToProduce << std::endl;
 
