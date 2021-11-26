@@ -21,3 +21,7 @@ docker/executableImage/resources/NebulaStream*.deb
 
 # Python virtual environment
 venv
+
+# Visual Studio Code Folders
+.cache
+.vscode
