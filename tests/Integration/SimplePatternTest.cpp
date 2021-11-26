@@ -138,9 +138,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    //TODO Patternname waiting for String support in map operator
-
-    string expectedContent = "+----------------------------------------------------+\n"
+   string expectedContent = "+----------------------------------------------------+\n"
                              "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
                              "+----------------------------------------------------+\n"
                              "|R2000073|1543624020000|102.629631|8|\n"
@@ -433,10 +431,6 @@ TEST_F(SimplePatternTest, testSeqPattern) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("SimplePatternTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     string expectedContent =
         "+----------------------------------------------------+\n"
         "|QnV1QnV$start:UINT64|QnV1QnV$end:UINT64|QnV1QnV$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:"
@@ -455,6 +449,9 @@ TEST_F(SimplePatternTest, testSeqPattern) {
     NES_DEBUG("contents=" << content);
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
+    NES_INFO("SimplePatternTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -466,7 +463,7 @@ TEST_F(SimplePatternTest, testSeqPattern) {
     EXPECT_TRUE(retStopCord);
 }
 
-/* 4.Test
+/* 5.Test
  * Here, we test if we can use and operator for patterns and create complex events with it
  */
 //TODO Ariane issue 2303
@@ -476,6 +473,7 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     srcConf->resetSourceOptions();
     srcConf1->resetSourceOptions();
     srcConf2->resetSourceOptions();
+
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -514,7 +512,10 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     EXPECT_TRUE(retStart3);
     NES_INFO("SimplePatternTest: Worker3 started successfully");
 
-    //register logical stream qnv
+    std::string outputFilePath = "testMultiAndPatternWithTestStream.out";
+    remove(outputFilePath.c_str());
+
+    //register logical streams qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
     std::string testSchemaFileName = "QnV.hpp";
@@ -527,7 +528,8 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
 
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfTuplesToProducePerBuffer(2);
+  //  srcConf->setNumberOfBuffersToProduce(1);
     srcConf->setPhysicalStreamName("test_stream_R2000070");
     srcConf->setLogicalStreamName("QnV");
     //register physical stream R2000070
@@ -536,7 +538,8 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
 
     srcConf2->setSourceType("CSVSource");
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf2->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf2->setNumberOfTuplesToProducePerBuffer(2);
+  //  srcConf2->setNumberOfBuffersToProduce(1);
     srcConf2->setPhysicalStreamName("test_stream_R2000073");
     srcConf2->setLogicalStreamName("QnV1");
     //register physical stream R2000073
@@ -545,26 +548,28 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
 
     srcConf1->setSourceType("CSVSource");
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf1->setNumberOfTuplesToProducePerBuffer(2);
+   // srcConf1->setNumberOfBuffersToProduce(1);
     srcConf1->setPhysicalStreamName("test_stream_R20000702");
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R20000702
     PhysicalStreamConfigPtr conf701 = PhysicalStreamConfig::create(srcConf1);
     wrk3->registerPhysicalStream(conf701);
 
-    std::string outputFilePath = "testMultiAndPatternWithTestStream.out";
-    remove(outputFilePath.c_str());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("SimplePatternTest: Submit andWith pattern");
+  //  Pattern - 1 ANDS - 34 result tuple
+  std::string query1 =
+        R"(Query::from("QnV")
+        .andWith(Query::from("QnV1").filter(Attribute("velocity") > 60))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
+        .sink(FileSinkDescriptor::create(")"
+        + outputFilePath + "\"));";
 
-  /*  Pattern - 2 ANDS - 34 result tuple
-  std::string query =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 60).andWith(Query::from("QnV1").filter(Attribute("velocity") > 60))
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";*/
-
-
-     std::string query =
+  // Pattern - 2 ANDs
+     std::string query2 =
         R"(Query::from("QnV").filter(Attribute("velocity") > 75)
         .andWith(Query::from("QnV1").filter(Attribute("velocity") > 70))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
@@ -573,7 +578,8 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
-/* std::string query =
+     // join query equivalent to query2
+   std::string queryjoin =
         R"(Query::from("QnV").filter(Attribute("velocity") > 75).map(Attribute("key1")=1)
         .joinWith(Query::from("QnV1").filter(Attribute("velocity") > 70)
         .map(Attribute("key2")=1)).where(Attribute("key1")).equalsTo(Attribute("key2"))
@@ -582,18 +588,14 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
         .map(Attribute("key3")=1)).where(Attribute("key1")).equalsTo(Attribute("key3"))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";*/
+        + outputFilePath + "\"));";
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+   std::string query = query2;
+
+   QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -626,8 +628,7 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
-
-/* 5.Test
+/* 6.Test
  * Here, we test if we can use and operator for patterns and create complex events with it
  */
 TEST_F(SimplePatternTest, testOrPattern) {
