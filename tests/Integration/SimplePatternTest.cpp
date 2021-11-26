@@ -590,7 +590,7 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
-   std::string query = query2;
+   std::string query = query1;
 
    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -612,6 +612,7 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     NES_DEBUG("contents=" << content);
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
     NES_INFO("SimplePatternTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
