@@ -184,6 +184,12 @@ class Topology {
     std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
                                                   std::vector<TopologyNodePtr> destinationNodes);
 
+    /**
+    * Looks for the TopologyNode with id in the vector of sourceNodes and their parents
+    * @param sourceNodes
+    * @param id
+    * @return nullptr if node isnt found, otherwise TopologyNodePtr
+    */
     TopologyNodePtr findTopologyNodeByIdInSubGraph(uint64_t id, std::vector<TopologyNodePtr> sourceNodes);
 
   private:
@@ -201,7 +207,7 @@ class Topology {
     find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
 
     /**
-     * Looks for the TopologyNode with id in the sourceNode and its parents
+     * Looks for the TopologyNode with id in the sourceNode and its parents by performing a Depth First Search
      * @param sourceNode
      * @param id
      * @return nullptr if node isnt found, otherwise TopologyNodePtr
