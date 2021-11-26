@@ -428,6 +428,31 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     return queryStatistics;
 }
 
+std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics() {
+    std::unique_lock lock(engineMutex);
+    std::vector<QueryStatisticsPtr> queryStatistics;
+
+//    NES_DEBUG("QueryManager: Check if query is registered");
+//    auto foundQuerySubPlanIds = queryIdToQuerySubPlanIds.find(queryId);
+//    NES_DEBUG("Founded members = " << foundQuerySubPlanIds->second.size());
+//    if (foundQuerySubPlanIds == queryIdToQuerySubPlanIds.end()) {
+//        NES_ERROR("QueryManager::getQueryStatistics: query does not exists " << queryId);
+//        return queryStatistics;
+//    }
+    for(auto& plan : queryIdToQuerySubPlanIds)
+    {
+        NES_DEBUG("QueryManager: Extracting query execution ids for the input query " << plan.first);
+        std::vector<QuerySubPlanId> querySubPlanIds = plan.second;
+        for (auto querySubPlanId : querySubPlanIds) {
+            NES_DEBUG("querySubPlanId=" << querySubPlanId << " stat="
+                                        << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
+            queryStatistics.emplace_back(queryManager->getQueryStatistics(querySubPlanId));
+        }
+    }
+
+    return queryStatistics;
+}
+
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor) {
