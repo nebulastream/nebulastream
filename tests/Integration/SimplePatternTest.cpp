@@ -138,7 +138,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-   string expectedContent = "+----------------------------------------------------+\n"
+    string expectedContent = "+----------------------------------------------------+\n"
                              "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|\n"
                              "+----------------------------------------------------+\n"
                              "|R2000073|1543624020000|102.629631|8|\n"
@@ -490,27 +490,25 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
-    wrkConf->resetWorkerOptions();
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("SimplePatternTest: Worker2 started successfully");
-
-    wrkConf->resetWorkerOptions();
-    NES_INFO("QueryDeploymentTest: Start worker 3");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 30);
-    wrkConf->setDataPort(port + 31);
-    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart3);
-    NES_INFO("SimplePatternTest: Worker3 started successfully");
+//    NES_INFO("QueryDeploymentTest: Start worker 2");
+//    wrkConf->setCoordinatorPort(port);
+//    wrkConf->setRpcPort(port + 20);
+//    wrkConf->setDataPort(port + 21);
+//    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("SimplePatternTest: Worker2 started successfully");
+//
+//    NES_INFO("QueryDeploymentTest: Start worker 3");
+//    wrkConf->setCoordinatorPort(port);
+//    wrkConf->setRpcPort(port + 30);
+//    wrkConf->setDataPort(port + 31);
+//    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
+//    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+//    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart3);
+//    NES_INFO("SimplePatternTest: Worker3 started successfully");
 
     std::string outputFilePath = "testMultiAndPatternWithTestStream.out";
     remove(outputFilePath.c_str());
@@ -523,13 +521,13 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     out << qnv;
     out.close();
     wrk1->registerLogicalStream("QnV", testSchemaFileName);
-    wrk2->registerLogicalStream("QnV1", testSchemaFileName);
-    wrk3->registerLogicalStream("QnV2", testSchemaFileName);
+    wrk1->registerLogicalStream("QnV1", testSchemaFileName);
+//    wrk3->registerLogicalStream("QnV2", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(2);
-  //  srcConf->setNumberOfBuffersToProduce(1);
+    srcConf->setNumberOfBuffersToProduce(1);
     srcConf->setPhysicalStreamName("test_stream_R2000070");
     srcConf->setLogicalStreamName("QnV");
     //register physical stream R2000070
@@ -539,37 +537,37 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     srcConf2->setSourceType("CSVSource");
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(2);
-  //  srcConf2->setNumberOfBuffersToProduce(1);
+    srcConf2->setNumberOfBuffersToProduce(1);
     srcConf2->setPhysicalStreamName("test_stream_R2000073");
     srcConf2->setLogicalStreamName("QnV1");
     //register physical stream R2000073
     PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf2);
-    wrk2->registerPhysicalStream(conf73);
+    wrk1->registerPhysicalStream(conf73);
 
-    srcConf1->setSourceType("CSVSource");
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(2);
-   // srcConf1->setNumberOfBuffersToProduce(1);
-    srcConf1->setPhysicalStreamName("test_stream_R20000702");
-    srcConf1->setLogicalStreamName("QnV2");
-    //register physical stream R20000702
-    PhysicalStreamConfigPtr conf701 = PhysicalStreamConfig::create(srcConf1);
-    wrk3->registerPhysicalStream(conf701);
+//    srcConf1->setSourceType("CSVSource");
+//    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+//    srcConf1->setNumberOfTuplesToProducePerBuffer(2);
+//     srcConf1->setNumberOfBuffersToProduce(1);
+//    srcConf1->setPhysicalStreamName("test_stream_R20000702");
+//    srcConf1->setLogicalStreamName("QnV2");
+//    //register physical stream R20000702
+//    PhysicalStreamConfigPtr conf701 = PhysicalStreamConfig::create(srcConf1);
+//    wrk3->registerPhysicalStream(conf701);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("SimplePatternTest: Submit andWith pattern");
-  //  Pattern - 1 ANDS - 34 result tuple
-  std::string query1 =
+    //  Pattern - 1 ANDS - 34 result tuple
+    std::string query1 =
         R"(Query::from("QnV")
         .andWith(Query::from("QnV1").filter(Attribute("velocity") > 60))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
-  // Pattern - 2 ANDs
-     std::string query2 =
+    // Pattern - 2 ANDs
+    std::string query2 =
         R"(Query::from("QnV").filter(Attribute("velocity") > 75)
         .andWith(Query::from("QnV1").filter(Attribute("velocity") > 70))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
@@ -578,8 +576,8 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
-     // join query equivalent to query2
-   std::string queryjoin =
+    // join query equivalent to query2
+    std::string queryjoin =
         R"(Query::from("QnV").filter(Attribute("velocity") > 75).map(Attribute("key1")=1)
         .joinWith(Query::from("QnV1").filter(Attribute("velocity") > 70)
         .map(Attribute("key2")=1)).where(Attribute("key1")).equalsTo(Attribute("key2"))
@@ -590,20 +588,31 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
-   std::string query = query1;
+    std::string query = query1;
 
-   QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnVQnV1QnV2$start:UINT64|QnVQnV1QnV2$end:UINT64|QnVQnV1QnV2$key:INT32|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$key1:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$key2:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$key3:INT32|\n"
+        "|QnVQnV1QnV2$start:UINT64|QnVQnV1QnV2$end:UINT64|QnVQnV1QnV2$key:INT32|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$"
+        "key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$key1:INT32|QnV1$"
+        "sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$key2:INT32|QnV2$sensor_id:CHAR["
+        "8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$key3:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
-        "|1543624800000|1543625100000|1|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000073|1543624860000|70.111115|8|1|R2000070|1543624980000|90.000000|9|1|\n"
+        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|"
+        "1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
+        "|1543624800000|1543625100000|1|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000073|"
+        "1543624860000|70.111115|8|1|R2000070|1543624980000|90.000000|9|1|\n"
         "+----------------------------------------------------+";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    NES_INFO("QueryDeploymentTest: Remove query");
+
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -611,20 +620,17 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
     NES_DEBUG("contents=" << content);
 
-    EXPECT_EQ(removeRandomKey(content), expectedContent);
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-    NES_INFO("SimplePatternTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    //    EXPECT_EQ(removeRandomKey(content), expectedContent);
+    //    NES_INFO("SimplePatternTest: Remove query");
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop(false);
-    EXPECT_TRUE(retStopWrk2);
-
-    bool retStopWrk3 = wrk3->stop(false);
-    EXPECT_TRUE(retStopWrk3);
+//    bool retStopWrk2 = wrk2->stop(false);
+//    EXPECT_TRUE(retStopWrk2);
+//
+//    bool retStopWrk3 = wrk3->stop(false);
+//    EXPECT_TRUE(retStopWrk3);
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
@@ -827,7 +833,6 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern2) {
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
-
     srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
     srcConf1->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
@@ -835,7 +840,6 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern2) {
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
     srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
-
 
     srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
     srcConf2->as<CSVSourceConfig>()->setSourceFrequency(1);
@@ -859,7 +863,6 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern2) {
         R"(Query::from("QnV").filter(Attribute("velocity") > 60).andWith(Query::from("QnV1").filter(Attribute("velocity") > 60))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";*/
-
 
     std::string query =
         R"(Query::from("window1").filter(Attribute("win1") < 20)
@@ -891,10 +894,15 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern2) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnVQnV1QnV2$start:UINT64|QnVQnV1QnV2$end:UINT64|QnVQnV1QnV2$key:INT32|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$key1:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$key2:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$key3:INT32|\n"
+        "|QnVQnV1QnV2$start:UINT64|QnVQnV1QnV2$end:UINT64|QnVQnV1QnV2$key:INT32|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$"
+        "key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$key1:INT32|QnV1$"
+        "sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$key2:INT32|QnV2$sensor_id:CHAR["
+        "8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$key3:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
-        "|1543624800000|1543625100000|1|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000073|1543624860000|70.111115|8|1|R2000070|1543624980000|90.000000|9|1|\n"
+        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|"
+        "1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
+        "|1543624800000|1543625100000|1|1543624800000|1543625100000|1|R2000070|1543624980000|90.000000|9|1|R2000073|"
+        "1543624860000|70.111115|8|1|R2000070|1543624980000|90.000000|9|1|\n"
         "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
