@@ -21,7 +21,7 @@
 
 using namespace z3;
 namespace NES {
-class DISABLED_Z3ValidationTest : public testing::Test {
+class Z3ValidationTest : public testing::Test {
   public:
     void SetUp() override {
         NES::setupLogging("Z3ValidationTest.log", NES::LOG_DEBUG);
@@ -38,7 +38,7 @@ class DISABLED_Z3ValidationTest : public testing::Test {
    @brief: Demonstration of how Z3 can be used to prove validity of
    De Morgan's Duality Law: {e not(x and y) <-> (not x) or ( not y) }
 */
-TEST_F(DISABLED_Z3ValidationTest, deMorganDualityValidation) {
+TEST_F(Z3ValidationTest, deMorganDualityValidation) {
     NES_INFO("De-Morgan Example");
 
     // create a context
@@ -67,7 +67,7 @@ TEST_F(DISABLED_Z3ValidationTest, deMorganDualityValidation) {
 /**
    @brief Validate for <tt>x > 1 and y > 1 that y + x > 1 </tt>.
 */
-TEST_F(DISABLED_Z3ValidationTest, evaluateValidBinomialEquation) {
+TEST_F(Z3ValidationTest, evaluateValidBinomialEquation) {
 
     // create a context
     std::shared_ptr<context> c = std::make_shared<context>();
@@ -90,7 +90,7 @@ TEST_F(DISABLED_Z3ValidationTest, evaluateValidBinomialEquation) {
 /**
    @brief Validate for <tt>x > 1 and y > 1 that y + x > 1 </tt>.
 */
-TEST_F(DISABLED_Z3ValidationTest, evaluateValidBinssomialEquation) {
+TEST_F(Z3ValidationTest, evaluateValidBinssomialEquation) {
 
     // create a context
     context c;
@@ -120,7 +120,7 @@ TEST_F(DISABLED_Z3ValidationTest, evaluateValidBinssomialEquation) {
 /**
    @brief Validate for <tt>x > 1 and y > 1 that y + x < 1 </tt>.
 */
-TEST_F(DISABLED_Z3ValidationTest, evaluateInvalidBinomialEquation) {
+TEST_F(Z3ValidationTest, evaluateInvalidBinomialEquation) {
 
     // create a context
     context c;
@@ -161,7 +161,7 @@ TEST_F(DISABLED_Z3ValidationTest, evaluateInvalidBinomialEquation) {
 /**
    @brief Validate for <tt>(x==y and y==x) == (y==x and x==y) </tt>.
 */
-TEST_F(DISABLED_Z3ValidationTest, equalityChecks) {
+TEST_F(Z3ValidationTest, equalityChecks) {
     context c;
     expr x = c.int_const("x");
     expr y = c.int_const("y");
@@ -180,7 +180,7 @@ TEST_F(DISABLED_Z3ValidationTest, equalityChecks) {
 /**
    @brief Validate that <tt>(x>=y) != (y>=x) </tt>.
 */
-TEST_F(DISABLED_Z3ValidationTest, unequalityChecks) {
+TEST_F(Z3ValidationTest, unequalityChecks) {
     context c;
     expr x = c.int_const("x");
     expr y = c.int_const("y");
