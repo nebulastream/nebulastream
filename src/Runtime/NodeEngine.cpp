@@ -457,17 +457,20 @@ Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitio
 
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor) {
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
-
-    //we have to decide where many cases
-    // 1.) if we specify a build-in source like default source, then we have only one config but call this for each source
-    // 2.) if we have really two sources, then we would have two real configurations here
-    if (configs.size() > 1) {
-        NES_ASSERT(!configs.empty(), "no config for Lambda source");
-        auto conf = configs.back();
-        configs.pop_back();
-        return conf->build(sourceDescriptor->getSchema());
+    //search for right config
+    auto streamName = sourceDescriptor->getStreamName();
+    bool found = false;
+    for(auto conf : configs)
+    {
+        if(conf->getLogicalStreamName() == streamName)
+        {
+            NES_DEBUG("config for stream " << streamName);
+            found = true;
+            return conf->build(sourceDescriptor->getSchema());
+        }
     }
-    NES_ASSERT(configs[0], "physical source config is not specified");
+
+    NES_ASSERT(found, "no config for the stream was found");
     return configs[0]->build(sourceDescriptor->getSchema());
 }
 
