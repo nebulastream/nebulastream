@@ -305,11 +305,29 @@ Query& Query::seqWith(const Query& subQueryRhs,
 
 Query& Query::orWith(Query& subQueryRhs) {
     NES_DEBUG("Query: add map operator that add the original stream name to the left and right side streams of the OR ");
-    //TODO: issue #2349 add real stream name as origin to the tuples.
+    std::vector<std::string> sourceNameLeft;
+    std::vector<std::string> sourceNameRight;
+    //get all source names of the left side and merge them
+    sourceNameLeft.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
+    std::sort(sourceNameLeft.begin(), sourceNameLeft.end());
+    std::string streamNameLeft = std::accumulate(sourceNameLeft.begin(), sourceNameLeft.end(), std::string("-"));
+    NES_DEBUG("Query: Source Names of the Left stream " << streamNameLeft);
+    //get all source names of the right side and merge them
+    sourceNameRight.emplace_back(this->getQueryPlan()->getSourceConsumed());
+    std::sort(sourceNameRight.begin(), sourceNameRight.end());
+    std::string streamNameRight = std::accumulate(sourceNameRight.begin(), sourceNameRight.end(), std::string("-"));
+    NES_DEBUG("Query: Source Names of the Right stream " << streamNameLeft);
     std::string attName = "StreamName";
+    uint64_t arraySize = 1;
+    if(streamNameLeft.length() > streamNameRight.length()) {
+        arraySize += streamNameLeft.length();
+    }
+    else {
+        arraySize += streamNameRight.length();
+    }
     //map the attributes with value streamNameLeft and streamNameRight to the left and right stream
-    this->map(Attribute(attName, INT8) = 1);
-    subQueryRhs.map(Attribute(attName, INT8) = 2);
+    this->map(Attribute(attName, arraySize) = streamNameLeft);
+    subQueryRhs.map(Attribute(attName, arraySize) = streamNameRight);
     NES_DEBUG("Query: finally we translate the OR into a union OP ");
     return Query::unionWith(subQueryRhs);
 }
