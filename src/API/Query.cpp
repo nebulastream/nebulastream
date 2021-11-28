@@ -308,15 +308,15 @@ Query& Query::orWith(Query& subQueryRhs) {
     std::vector<std::string> sourceNameLeft;
     std::vector<std::string> sourceNameRight;
     //get all source names of the left side and merge them
-    sourceNameLeft.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
+    sourceNameLeft.emplace_back(this->getQueryPlan()->getSourceConsumed());
     std::sort(sourceNameLeft.begin(), sourceNameLeft.end());
     std::string streamNameLeft = std::accumulate(sourceNameLeft.begin(), sourceNameLeft.end(), std::string("-"));
     NES_DEBUG("Query: Source Names of the Left stream " << streamNameLeft);
     //get all source names of the right side and merge them
-    sourceNameRight.emplace_back(this->getQueryPlan()->getSourceConsumed());
+    sourceNameRight.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
     std::sort(sourceNameRight.begin(), sourceNameRight.end());
     std::string streamNameRight = std::accumulate(sourceNameRight.begin(), sourceNameRight.end(), std::string("-"));
-    NES_DEBUG("Query: Source Names of the Right stream " << streamNameLeft);
+    NES_DEBUG("Query: Source Names of the Right stream " << streamNameRight);
     std::string attName = "StreamName";
     uint64_t arraySize = 1;
     if(streamNameLeft.length() > streamNameRight.length()) {
