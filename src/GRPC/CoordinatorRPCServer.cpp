@@ -193,12 +193,7 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*, const QueryFailu
     try {
         NES_DEBUG("CoordinatorRPCServer::notifyQueryFailure: failure message received");
 
-        /* TODO implement here what happens with received Query that failed
-         *
-         * add "request" as an QueryFailureNotification* object as method parameter
-         * uint64_t queryId = request->queryid();
-         * etc
-         */
+        // TODO implement here what happens with received Query that failed
 
         reply->set_success(true);
         return Status::OK;

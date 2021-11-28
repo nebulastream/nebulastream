@@ -38,7 +38,6 @@ service CoordinatorRPCService {
 
   rpc ReplaceParent (ReplaceParentRequest) returns (ReplaceParentReply) {}
 
-  // hier!!
   rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
 }
 
@@ -136,7 +135,7 @@ message RemoveParentRequest {
 message RemoveParentReply {
   bool success = 1;
 }
-// hier
+
 message QueryFailureNotification{
   uint64 queryId = 1;
   uint64 subQueryId = 2;

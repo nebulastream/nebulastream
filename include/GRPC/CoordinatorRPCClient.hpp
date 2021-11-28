@@ -121,7 +121,7 @@ class CoordinatorRPCClient {
     uint64_t getId() const;
 
     /**
-     * @brief method to let the Coordinator know of the Failure of a query
+     * @brief method to let the Coordinator know of the failure of a query
      * @param queryId: Query Id of failed Query
      * @param subQueryId: subQuery Id of failed Query
      * @param workerId: workerId where the Query failed
