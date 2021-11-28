@@ -678,14 +678,14 @@ TEST_F(SimplePatternTest, testOrPattern) {
     std::ofstream out(testSchemaFileName);
     out << qnv;
     out.close();
-    wrk1->registerLogicalStream("QnV", testSchemaFileName);
-    wrk2->registerLogicalStream("QnV1", testSchemaFileName);
+    wrk1->registerLogicalStream("QnV1", testSchemaFileName);
+    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setPhysicalStreamName("test_stream_R2000070");
-    srcConf->setLogicalStreamName("QnV");
+    srcConf->setLogicalStreamName("QnV1");
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
@@ -694,7 +694,7 @@ TEST_F(SimplePatternTest, testOrPattern) {
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
     srcConf1->setNumberOfTuplesToProducePerBuffer(0);
     srcConf1->setPhysicalStreamName("test_stream_R2000073");
-    srcConf1->setLogicalStreamName("QnV1");
+    srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
     PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf1);
     wrk2->registerPhysicalStream(conf73);
@@ -705,7 +705,7 @@ TEST_F(SimplePatternTest, testOrPattern) {
     NES_INFO("SimplePatternTest: Submit orWith pattern");
 
     std::string query =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 100).orWith(Query::from("QnV1").filter(Attribute("velocity") > 100))
+        R"(Query::from("QnV1").filter(Attribute("velocity") > 100).orWith(Query::from("QnV2").filter(Attribute("velocity") > 100))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
