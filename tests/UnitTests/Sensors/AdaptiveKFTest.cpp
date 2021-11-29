@@ -87,6 +87,7 @@ class KFProxy : public KalmanFilter {
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerCustomSizeTest);
     FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorEmptyWindowTest);
     FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorFilledWindowTest);
+    FRIEND_TEST(AdaptiveKFTest, kfErrorDividerTest);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
@@ -274,6 +275,21 @@ TEST_F(AdaptiveKFTest, kfUpdateWithTimestepTest) {
     ASSERT_NE(initialTs, kfProxy.initialTimestamp);
     ASSERT_EQ(kfProxy.initialTimestamp, newTs);
     ASSERT_EQ(kfProxy.currentTime, kfProxy.initialTimestamp);
+}
+
+TEST_F(AdaptiveKFTest, kfErrorDividerTest) {
+    // window of 2
+    KFProxy kfProxy{2};
+    kfProxy.setDefaultValues();
+    auto errorDivider = kfProxy.totalEstimationErrorDivider;
+    ASSERT_NE(errorDivider, 0);
+    ASSERT_NEAR(errorDivider, 1.5, 0.01);
+
+    // 10, then 20, error should be (20/1 + 10/2) / (1/1 + 1/2) = 16.667
+    kfProxy.kfErrorWindow.push(10);
+    kfProxy.kfErrorWindow.push(20);
+    auto totalEstError = kfProxy.calculateTotalEstimationError();
+    ASSERT_NEAR(totalEstError, 16.66, 0.01);
 }
 
 TEST_F(AdaptiveKFTest, kfErrorDividerDefaultSizeTest) {
