@@ -305,4 +305,31 @@ TEST_F(AdaptiveKFTest, kfEstimationErrorFilledWindowTest) {
     ASSERT_NE(kfProxy2.calculateTotalEstimationError(), 0);
     ASSERT_NEAR(kfProxy2.calculateTotalEstimationError(), 0.6, 0.1);
 }
+
+TEST_F(AdaptiveKFTest, kfSimpleInitTest) {
+    // default filter w/ window of 1
+    KFProxy kfProxy;
+    kfProxy.init();
+
+    // initial values are zero and size is defaulted to 3 in init
+    ASSERT_EQ(kfProxy.getState().size(), 3);
+    for (int i = 0; i < kfProxy.getState().size(); ++i) {
+        ASSERT_EQ(kfProxy.getState()[i], 0);
+    }
+}
+
+TEST_F(AdaptiveKFTest, kfInitWithStateTest) {
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(2);
+    initialState << 0, measurements[0];
+
+    // default filter w/ window of 1
+    KFProxy kfProxy;
+    kfProxy.init(initialState);
+
+    // initial values from previous step and size is 3
+    ASSERT_EQ(kfProxy.getState().size(), 2);
+    ASSERT_EQ(kfProxy.getState()[0], 0);
+    ASSERT_EQ(kfProxy.getState()[1], measurements[0]);
+}
 }// namespace NES
