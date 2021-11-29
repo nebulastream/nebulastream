@@ -92,6 +92,7 @@ class LookFreeWatermarkProcessor {
             auto logIndex = getLogIndex(sequenceNumber);
             log[logIndex] = {ts, sequenceNumber};
         }
+        return currentWatermarkTuple.load().ts;
     }
 
   private:
