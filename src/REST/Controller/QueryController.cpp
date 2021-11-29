@@ -134,10 +134,19 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     } else {
                         NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query, use 'userQuery'.");
                     }
-
                     std::string optimizationStrategyName = req.at("strategyName").as_string();
-                    std::string faultToleranceString = req.at("faultTolerance").as_string();
-                    std::string lineageString = req.at("lineage").as_string();
+                    std::string faultToleranceString = "";
+                    std::string lineageString = "";
+                    if (req.has_field("faultTolerance")) {
+                        faultToleranceString = req.at("faultTolerance").as_string();
+                    } else {
+                        faultToleranceString = "NONE";
+                    }
+                    if (req.has_field("lineage")) {
+                        lineageString = req.at("lineage").as_string();
+                    } else {
+                        lineageString = "IN_MEMORY";
+                    }
                     auto faultToleranceIterator = stringToFaultToleranceTypeMap.find(faultToleranceString);
                     if (faultToleranceIterator == stringToFaultToleranceTypeMap.end()) {
                         throw "QueryController: Enable to find given fault tolerance type";
