@@ -381,8 +381,8 @@ void DataSource::runningRoutineWithFrequency() {
                 NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
                                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
-                                                       << " orgID=" << this->operatorId
-                          << " content=" << Util::prettyPrintTupleBuffer(buf, schema));
+                                                       << " orgID=" << this->operatorId);
+                NES_TRACE("DataSource produced buffer content=" << Util::prettyPrintTupleBuffer(buf, schema));
 
                 emitWorkFromSource(buf);
                 ++cnt;
