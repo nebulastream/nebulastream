@@ -36,7 +36,7 @@
 namespace NES::Experimental {
 
 /**
- * @brief Implements a log free watermark processor for a single origin.
+ * @brief Implements a lock free watermark processor for a single origin.
  * It processes all watermark updates from one specific origin and applies all updates in sequential order.
  * @assumptions This watermark processor assumes strictly monotonic update sequence numbers.
  * @assumption This watermark processor maintains a fixed size log of inflight watermark updates.
