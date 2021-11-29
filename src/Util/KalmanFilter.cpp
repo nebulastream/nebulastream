@@ -46,7 +46,7 @@ void KalmanFilter::init(const Eigen::VectorXd& initialState) {
     this->xHat = initialState;
 }
 
-void KalmanFilter::init(double initialTimestamp, const Eigen::VectorXd& initialState) {
+void KalmanFilter::init(const Eigen::VectorXd& initialState, double initialTimestamp) {
     this->setDefaultValues();
     this->xHat = initialState;
     this->initialTimestamp = initialTimestamp;

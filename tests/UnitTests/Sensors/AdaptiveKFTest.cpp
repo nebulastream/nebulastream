@@ -81,6 +81,8 @@ class KFProxy : public KalmanFilter {
     KFProxy(uint64_t errorWindowSize) : KalmanFilter(errorWindowSize){};
 
   private:
+    FRIEND_TEST(AdaptiveKFTest, kfUpdateNoTimestepTest);
+    FRIEND_TEST(AdaptiveKFTest, kfUpdateWithTimestepTest);
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerDefaultSizeTest);
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerCustomSizeTest);
     FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorEmptyWindowTest);
@@ -235,6 +237,43 @@ TEST_F(AdaptiveKFTest, kfLambdaChangeTest) {
     auto oldLambda = kalmanFilter.getLambda();
     kalmanFilter.setLambda(0.1);
     ASSERT_NE(oldLambda, kalmanFilter.getLambda());
+}
+
+TEST_F(AdaptiveKFTest, kfUpdateNoTimestepTest) {
+    // empty filter
+    KFProxy kfProxy;
+    kfProxy.setDefaultValues();
+
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
+    initialState << 0, measurements[0], -9.81;
+    kfProxy.init(initialState);
+
+    // start measurements vector
+    Eigen::VectorXd y(1);
+    auto oldStep = kfProxy.getCurrentStep();
+    ASSERT_EQ(oldStep, kfProxy.initialTimestamp);
+    kfProxy.update(y);
+    auto newStep = kfProxy.getCurrentStep();
+    ASSERT_NE(newStep, kfProxy.initialTimestamp);
+    ASSERT_NEAR(newStep - oldStep, kfProxy.timeStep, 0.01);
+}
+
+TEST_F(AdaptiveKFTest, kfUpdateWithTimestepTest) {
+    // empty filter
+    KFProxy kfProxy;
+    kfProxy.setDefaultValues();
+    auto initialTs = kfProxy.initialTimestamp;
+
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
+    sleep(1);
+    auto newTs = std::time(nullptr);
+    kfProxy.init(initialState, newTs);
+
+    ASSERT_NE(initialTs, kfProxy.initialTimestamp);
+    ASSERT_EQ(kfProxy.initialTimestamp, newTs);
+    ASSERT_EQ(kfProxy.currentTime, kfProxy.initialTimestamp);
 }
 
 TEST_F(AdaptiveKFTest, kfErrorDividerDefaultSizeTest) {

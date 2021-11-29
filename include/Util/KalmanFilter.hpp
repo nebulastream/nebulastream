@@ -36,7 +36,7 @@ class KalmanFilter {
 
     void init();// all zeroes
     void init(const Eigen::VectorXd& initialState);
-    void init(double initialTimestamp, const Eigen::VectorXd& initialState);
+    void init(const Eigen::VectorXd& initialState, double initialTimestamp);
     void setDefaultValues();// create artificial initial values
 
     void update(const Eigen::VectorXd& measuredValues);                    // same timestep
