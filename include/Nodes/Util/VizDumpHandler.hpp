@@ -73,7 +73,7 @@ class VizNode {
     /**
      * @brief Add properties to the node
      */
-    void addProperty(const std::tuple<std::string, std::string>&);
+    void addProperty(const std::tuple<std::string, std::string, std::string>&);
 
     /**
      * @brief Serialize the edge to the nezviz format.
@@ -83,7 +83,7 @@ class VizNode {
     std::string id;
     std::string label;
     std::string parent;
-    std::vector<std::tuple<std::string, std::string>> properties;
+    std::vector<std::tuple<std::string, std::string, std::string>> properties;
 };
 
 /**
