@@ -195,18 +195,19 @@ class Seq {
     ExpressionNodePtr onLeftKey;
     ExpressionNodePtr onRightKey;
 };
-//TODO these two methods below are a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
-/**
+//TODO the 2 methods below are a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
+     /**
      * @brief: this function creates a virtual key for the left side of the binary operator
      * @return the unique name of the key
      */
 std::string keyAssignmentLeft();
 
-/**
+     /**
      * @brief: this function creates a virtual key for the right side of the binary operator
      * @return the unique name of the key
      */
 std::string keyAssignmentRight();
+
 }//namespace CEPOperatorBuilder
 
 /**
