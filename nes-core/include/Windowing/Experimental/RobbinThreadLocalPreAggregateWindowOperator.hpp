@@ -35,7 +35,6 @@
 #include <atomic>
 namespace NES::Experimental {
 
-
 /**
  * @brief Implements a log free watermark processor for a single origin.
  * It processes all watermark updates from one specific origin and applies all updates in sequential order.
@@ -59,15 +58,20 @@ namespace NES::Experimental {
  */
 template<uint64_t logSize = 100>
 class LookFreeWatermarkProcessor {
+    struct WatermarkTuple {
+      public:
+        WatermarkTs ts;
+        SequenceNumber sequenceNumber;
+    };
 
   public:
     WatermarkTs updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber) {
         // A new sequence number has to be greater than the currentWatermarkTuple.sequenceNumber.
-        assert(sequenceNumber > currentWatermarkTuple.sequenceNumber);
+        assert(sequenceNumber > currentWatermarkTuple.load().sequenceNumber);
 
         // We currently assume that the diff between sequence number and current sequence number will not exceed the log size.
         // Otherwise, we would override content in the log
-        assert(sequenceNumber - currentWatermarkTuple.sequenceNumber < logSize);
+        assert(sequenceNumber - currentWatermarkTuple.load().sequenceNumber < logSize);
 
         // Check if we got the next valid sequence number.
         // Only a single thread can have a matching sequence number, thus we know that no other thread can access the true case,
@@ -76,7 +80,8 @@ class LookFreeWatermarkProcessor {
             WatermarkTuple nextWatermarkTuple = {ts, sequenceNumber};
             // We first process the log to check if we can actually can apply multiple updates in one step.
             // We apply updates from the log as long as the value contains the next expected sequence number.
-            while(readWatermarkTuple(nextWatermarkTuple.sequenceNumber + 1).sequenceNumber == nextWatermarkTuple.sequenceNumber + 1){
+            while (readWatermarkTuple(nextWatermarkTuple.sequenceNumber + 1).sequenceNumber
+                   == nextWatermarkTuple.sequenceNumber + 1) {
                 nextWatermarkTuple = readWatermarkTuple(sequenceNumber + 1);
             };
             // Set the watermark ts and sequence number atomically
@@ -90,18 +95,12 @@ class LookFreeWatermarkProcessor {
     }
 
   private:
-    struct WatermarkTuple {
-        WatermarkTs ts;
-        SequenceNumber sequenceNumber;
-    };
-
-    WatermarkTuple& readWatermarkTuple(SequenceNumber sequenceNumber) { return log[getLogIndex(sequenceNumber)].load(); }
+    WatermarkTuple readWatermarkTuple(SequenceNumber sequenceNumber) { return log[getLogIndex(sequenceNumber)].load(); }
 
     uint64_t getLogIndex(SequenceNumber sequenceNumber) { return sequenceNumber % logSize; }
 
     std::array<std::atomic<WatermarkTuple>, logSize> log;
     std::atomic<WatermarkTuple> currentWatermarkTuple;
-    static_assert(std::atomic<WatermarkTuple>::is_always_lock_free());
 };
 
 /**
@@ -198,7 +197,7 @@ class ThreadLocalWindowHandler : public Windowing::AbstractWindowHandler {
 
     Windowing::WindowManagerPtr getWindowManager() override { return NES::Windowing::WindowManagerPtr(); }
 
-    std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> getWatermarkProcessor() { return watermarkProcessor; }
+    std::shared_ptr<LookFreeWatermarkProcessor<>> getWatermarkProcessor() { return lockFreeWatermarkProcessor; }
 
     std::string toString() override { return std::string(); }
 
@@ -206,6 +205,7 @@ class ThreadLocalWindowHandler : public Windowing::AbstractWindowHandler {
     std::vector<SliceStore> threadLocalSliceStore;
     GlobalSliceStore globalSliceStore;
     std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> threadWatermarkProcessor;
+    std::shared_ptr<LookFreeWatermarkProcessor<>> lockFreeWatermarkProcessor;
 };
 
 class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::ExecutablePipelineStage {
@@ -279,9 +279,8 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
             // update the global watermark, and merge all local slides.
             auto watermarkProcessor = windowHandler->getWatermarkProcessor();
             // the watermark update is an atomic process and returns the last and the current watermark.
-            auto [_, newGlobalWatermark] = watermarkProcessor->updateWatermark(currentWatermark,
-                                                                               inputTupleBuffer.getSequenceNumber(),
-                                                                               inputTupleBuffer.getOriginId());
+            auto [_, newGlobalWatermark] =
+                watermarkProcessor->updateWatermark(currentWatermark, inputTupleBuffer.getSequenceNumber());
             // check if the current max watermark is larger than the thread local watermark
             if (threadLocalSliceStore.lastThreadLocalWatermark < newGlobalWatermark) {
                 // push the local slices to the global slice store.
