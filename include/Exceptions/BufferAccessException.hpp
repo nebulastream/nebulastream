@@ -33,15 +33,6 @@ class BufferAccessException : public NesRuntimeException {
      * @param message The exception message.
      */
     explicit BufferAccessException(const std::string& message);
-    /**
-     * @brief Return the exception message without the stack trace.
-     * @return The original exception message without the stack trace.
-     *
-     * NesRuntimeException automatically includes the stack trace at the time when the exception was constructed.
-     * However, the error message is also returned to clients which submit UDFs over the REST API.
-     * These clients should not receive the stack trace information.
-     */
-    [[nodiscard]] const std::string& getMessage() const { return message; }
 
   private:
     const std::string message;

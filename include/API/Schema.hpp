@@ -97,9 +97,8 @@ class Schema {
 
     /**
      * @brief Replaces a field, which is already part of the schema.
-     * @param name
-     * @param type
-     * @return
+     * @param name of the field we want to replace
+     * @param DataTypePtr
      */
     void replaceField(const std::string& name, const DataTypePtr& type);
 
@@ -203,7 +202,8 @@ class Schema {
     void clear();
 
     /**
-    * @brief Is empty
+    * @brief Is checks if the schema is empty (if it has no fields).
+    * @return true if empty
     */
     bool empty();
 

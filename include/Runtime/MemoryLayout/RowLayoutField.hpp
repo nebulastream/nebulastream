@@ -37,6 +37,7 @@ class RowLayoutField {
 
   public:
     /**
+     *  Factory to create a RowLayoutField for a specific memory layout and a specific tuple buffer.
      * @param fieldIndex
      * @param layoutBuffer
      * @tparam boundaryChecks if true will check if access is allowed
