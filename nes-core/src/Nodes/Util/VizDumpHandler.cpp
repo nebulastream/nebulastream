@@ -27,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include <utility>
+#include <boost/stacktrace.hpp>
 
 namespace NES {
 
@@ -58,7 +59,7 @@ std::string detail::VizGraph::serialize() {
 detail::VizNode::VizNode(std::string id, std::string label, std::string parent)
     : id(std::move(id)), label(std::move(label)), parent(std::move(parent)) {}
 
-void detail::VizNode::addProperty(const std::tuple<std::string, std::string>& item) { properties.emplace_back(item); }
+void detail::VizNode::addProperty(const std::tuple<std::string, std::string, std::string>& item) { properties.emplace_back(item); }
 
 detail::VizNode::VizNode(std::string id, std::string label) : VizNode(std::move(id), std::move(label), "") {}
 
@@ -76,7 +77,7 @@ std::string detail::VizNode::serialize() {
     ss << "\"properties\":[";
     for (auto& tuple : properties) {
         auto quotedValue = Util::escapeJson(std::get<1>(tuple));
-        ss << "{\"" << std::get<0>(tuple) << "\":\"" << quotedValue << "\"}";
+        ss << "{\"" << std::get<0>(tuple) << "\":\"" << quotedValue << "\", \"type\" :\"" << std::get<2>(tuple) << "\"}";
         if (&properties.back() != &tuple) {
             ss << ",";
         }
@@ -132,7 +133,7 @@ void VizDumpHandler::dump(QueryPlanPtr queryPlan, const std::string& parent, det
         for (const auto& child : operatorNode->getChildren()) {
             auto childOperator = child->as<OperatorNode>();
             auto edgeId = std::to_string(operatorNode->getId()) + "_" + std::to_string(childOperator->getId());
-            auto vizEdge = detail::VizEdge(edgeId, std::to_string(operatorNode->getId()), std::to_string(childOperator->getId()));
+            auto vizEdge = detail::VizEdge(edgeId, std::to_string(childOperator->getId()), std::to_string(operatorNode->getId()));
             graph.edges.emplace_back(vizEdge);
         }
     }
@@ -150,7 +151,7 @@ void VizDumpHandler::dump(std::string scope, std::string name, QueryCompilation:
         for (const auto& successor : pipeline->getSuccessors()) {
             auto successorId = "p_" + std::to_string(successor->getPipelineId());
             auto edgeId = currentId + "_" + successorId;
-            auto vizEdge = detail::VizEdge(edgeId, currentId, successorId);
+            auto vizEdge = detail::VizEdge(edgeId, successorId,  currentId);
             graph.edges.emplace_back(vizEdge);
         }
     }
@@ -171,11 +172,17 @@ void VizDumpHandler::writeToFile(const std::string& scope, const std::string& na
     outputFile.close();
 }
 void VizDumpHandler::extractNodeProperties(detail::VizNode& node, const OperatorNodePtr& operatorNode) {
-    //node.addProperty({"NodeSourceLocation", operatorNode->getNodeSourceLocation()});
+    node.addProperty({"StackTrace", operatorNode->getNodeSourceLocation(), "stacktrace"});
+    // node.addProperty({"StackTrace", to_string(boost::stacktrace::stacktrace())});
+    node.addProperty({"ClassName", typeid(operatorNode).name(), ""});
     if (operatorNode->instanceOf<QueryCompilation::ExecutableOperator>()) {
         auto executableOperator = operatorNode->as<QueryCompilation::ExecutableOperator>();
         auto code = executableOperator->getExecutablePipelineStage()->getCodeAsString();
-        node.addProperty({"OperatorCode", code});
+        node.addProperty({"OperatorCode", code, "code"});
+    } else if (operatorNode->instanceOf<UnaryOperatorNode>()) {
+        auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
+        node.addProperty({"InputSchema", unaryOperator->getInputSchema()->toString(), ""});
+        node.addProperty({"OutputSchema", unaryOperator->getOutputSchema()->toString(), ""});
     }
 }
 
