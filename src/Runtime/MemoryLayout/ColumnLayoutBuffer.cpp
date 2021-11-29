@@ -22,7 +22,7 @@ namespace NES::Runtime::MemoryLayouts {
 ColumnLayoutTupleBuffer::ColumnLayoutTupleBuffer(TupleBuffer tupleBuffer,
                                                  uint64_t capacity,
                                                  std::shared_ptr<ColumnLayout> dynamicColLayout,
-                                                 std::vector<COL_OFFSET_SIZE> columnOffsets)
+                                                 std::vector<uint64_t> columnOffsets)
     : MemoryLayoutTupleBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)),
       dynamicColLayout(std::move(dynamicColLayout)), basePointer(tupleBuffer.getBuffer<uint8_t>()) {}
 

@@ -75,5 +75,4 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* seriali
     }
     return deserializedSchema;
 }
-
 }// namespace NES

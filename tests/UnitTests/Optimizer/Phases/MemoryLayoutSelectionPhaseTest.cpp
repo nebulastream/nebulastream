@@ -104,9 +104,8 @@ class TestSink : public SinkMedium {
     /**
      * @brief Factory to create a new TestSink.
      * @param expectedBuffer number of buffers expected this sink should receive.
-     * @return
+     * @return TupleBuffer
      */
-
     TupleBuffer get(uint64_t index) {
         std::unique_lock lock(m);
         return resultBuffers[index];

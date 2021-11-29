@@ -158,7 +158,6 @@ bool isSamePhysicalType(PhysicalTypePtr physicalType) {
     }
     return false;
 }
-
 }// namespace NES::PhysicalTypes
 
 #endif//NES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_

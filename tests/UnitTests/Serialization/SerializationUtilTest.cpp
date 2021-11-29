@@ -581,7 +581,6 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
 }
 
 TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
-
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);

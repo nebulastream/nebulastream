@@ -30,12 +30,6 @@ RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(buffe
     }
 }
 
-/**
- *
- * @param schema
- * @param bufferSize
- * @return
- */
 std::shared_ptr<RowLayout> RowLayout::create(SchemaPtr schema, uint64_t bufferSize) {
     return std::make_shared<RowLayout>(schema, bufferSize);
 }

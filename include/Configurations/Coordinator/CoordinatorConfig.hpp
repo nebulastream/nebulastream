@@ -29,7 +29,6 @@ namespace Configurations {
 
 class CoordinatorConfig;
 using CoordinatorConfigPtr = std::shared_ptr<CoordinatorConfig>;
-
 using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
 using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;

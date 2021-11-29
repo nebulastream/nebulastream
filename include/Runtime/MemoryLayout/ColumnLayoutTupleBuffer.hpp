@@ -25,8 +25,6 @@
 
 namespace NES::Runtime::MemoryLayouts {
 
-using COL_OFFSET_SIZE = uint64_t;
-
 /**
  * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
  * Additionally, it adds a std::vector of columnOffsets which is useful for calcOffset(). As the name suggests, it is a columnar storage and as such it serializes all fields.
@@ -38,7 +36,7 @@ class ColumnLayoutTupleBuffer : public MemoryLayoutTupleBuffer {
     ColumnLayoutTupleBuffer(TupleBuffer tupleBuffer,
                             uint64_t capacity,
                             std::shared_ptr<ColumnLayout> dynamicColLayout,
-                            std::vector<COL_OFFSET_SIZE> columnOffsets);
+                            std::vector<uint64_t> columnOffsets);
 
     /**
      * @return retrieves the field sizes of the column layout
@@ -139,7 +137,7 @@ class ColumnLayoutTupleBuffer : public MemoryLayoutTupleBuffer {
                               uint64_t recordIndex,
                               const std::vector<NES::Runtime::MemoryLayouts::FIELD_SIZE>& fieldSizes);
 
-    const std::vector<COL_OFFSET_SIZE> columnOffsets;
+    const std::vector<uint64_t> columnOffsets;
     const std::shared_ptr<ColumnLayout> dynamicColLayout;
     const uint8_t* basePointer;
 };
