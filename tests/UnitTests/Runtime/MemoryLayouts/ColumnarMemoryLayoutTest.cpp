@@ -185,11 +185,11 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
     }
 
     auto field0 = ColumnLayoutField<uint8_t, true>::create(0, columnLayout, tupleBuffer);
-    auto field1 = ColumnLayoutField<uint16_t, true>::create(1,  columnLayout, tupleBuffer);
-    auto field2 = ColumnLayoutField<uint32_t, true>::create(2,  columnLayout, tupleBuffer);
-    ASSERT_THROW((ColumnLayoutField<uint8_t, true>::create(3,  columnLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint16_t, true>::create(4,  columnLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create(5,  columnLayout, tupleBuffer)), NES::NesRuntimeException);
+    auto field1 = ColumnLayoutField<uint16_t, true>::create(1, columnLayout, tupleBuffer);
+    auto field2 = ColumnLayoutField<uint32_t, true>::create(2, columnLayout, tupleBuffer);
+    ASSERT_THROW((ColumnLayoutField<uint8_t, true>::create(3, columnLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint16_t, true>::create(4, columnLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create(5, columnLayout, tupleBuffer)), NES::NesRuntimeException);
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -229,12 +229,12 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         bindedColumnLayout->pushRecord<true>(writeRecord);
     }
 
-    auto field0 = ColumnLayoutField<uint8_t, false>::create(0,  columnLayout, tupleBuffer);
-    auto field1 = ColumnLayoutField<uint16_t, false>::create(1,  columnLayout, tupleBuffer);
-    auto field2 = ColumnLayoutField<uint32_t, false>::create(2,  columnLayout, tupleBuffer);
+    auto field0 = ColumnLayoutField<uint8_t, false>::create(0, columnLayout, tupleBuffer);
+    auto field1 = ColumnLayoutField<uint16_t, false>::create(1, columnLayout, tupleBuffer);
+    auto field2 = ColumnLayoutField<uint32_t, false>::create(2, columnLayout, tupleBuffer);
 
     try {
-        ColumnLayoutField<uint32_t, false>::create(3,  columnLayout, tupleBuffer);
+        ColumnLayoutField<uint32_t, false>::create(3, columnLayout, tupleBuffer);
     } catch (NES::NesRuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
@@ -242,7 +242,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
     }
 
     try {
-        ColumnLayoutField<uint32_t, false>::create(4,  columnLayout, tupleBuffer);
+        ColumnLayoutField<uint32_t, false>::create(4, columnLayout, tupleBuffer);
     } catch (NES::NesRuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
@@ -250,7 +250,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
     }
 
     try {
-        ColumnLayoutField<uint32_t, false>::create(5,  columnLayout, tupleBuffer);
+        ColumnLayoutField<uint32_t, false>::create(5, columnLayout, tupleBuffer);
     } catch (NES::NesRuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
@@ -312,7 +312,6 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         EXPECT_TRUE(true);
     }
 }
-
 
 TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout) {
     SchemaPtr schema =

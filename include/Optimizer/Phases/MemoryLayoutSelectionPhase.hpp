@@ -84,8 +84,7 @@ class MemoryLayoutSelectionPhase {
 
 static const std::map<std::string, MemoryLayoutSelectionPhase::MemoryLayoutPolicy> stringToMemoryLayoutPolicy{
     {"FORCE_ROW_LAYOUT", MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT},
-    {"FORCE_COLUMN_LAYOUT", MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT}
-};
+    {"FORCE_COLUMN_LAYOUT", MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_COLUMN_LAYOUT}};
 
 }// namespace NES::Optimizer
 

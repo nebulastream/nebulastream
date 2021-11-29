@@ -19,7 +19,8 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-BufferAccessException::BufferAccessException(const std::string& message)     : NesRuntimeException(message, NES::Runtime::collectAndPrintStacktrace()) {
+BufferAccessException::BufferAccessException(const std::string& message)
+    : NesRuntimeException(message, NES::Runtime::collectAndPrintStacktrace()) {
     NES_ERROR(message);
 }
-}
+}// namespace NES

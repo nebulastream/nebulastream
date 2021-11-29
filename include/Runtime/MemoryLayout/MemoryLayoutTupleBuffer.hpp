@@ -65,6 +65,6 @@ class MemoryLayoutTupleBuffer {
     uint64_t capacity;
     uint64_t numberOfRecords = 0;
 };
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts
 
 #endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_LAYOUT_BUFFER_HPP_

@@ -21,6 +21,7 @@
 #pragma clang diagnostic pop
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/ExecutableType/Array.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfig.hpp>
@@ -29,7 +30,6 @@
 #include <Configurations/Worker/WorkerConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Common/ExecutableType/Array.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>

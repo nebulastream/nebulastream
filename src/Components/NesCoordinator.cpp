@@ -43,6 +43,7 @@
 #include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Configurations/Worker/WorkerConfig.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>
@@ -50,7 +51,6 @@
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
-#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -98,7 +98,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     globalQueryPlan = GlobalQueryPlan::create();
 
     auto memoryLayoutPolicyString = coordinatorConfig->getMemoryLayoutPolicy()->getValue();
-    if(!Optimizer::stringToMemoryLayoutPolicy.contains(memoryLayoutPolicyString)){
+    if (!Optimizer::stringToMemoryLayoutPolicy.contains(memoryLayoutPolicyString)) {
         NES_FATAL_ERROR("Unrecognized MemoryLayoutPolicy Detected " << memoryLayoutPolicyString);
     }
     auto memoryLayoutPolicy = Optimizer::stringToMemoryLayoutPolicy.find(memoryLayoutPolicyString)->second;

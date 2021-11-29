@@ -55,7 +55,7 @@ class DynamicField {
      * @return Pointer type
      */
     template<class Type>
-    requires IsNesType<Type> && std::is_pointer<Type>::value inline Type read() const {
+    requires IsNesType<Type>&& std::is_pointer<Type>::value inline Type read() const {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
             throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
                                         + " but accessed as " + typeid(Type).name());
@@ -223,11 +223,11 @@ class DynamicTupleBuffer {
      *    ```
      */
     class TupleIterator : public std::iterator<std::input_iterator_tag,// iterator_category
-                                                DynamicTuple,           // value_type
-                                                DynamicTuple,           // difference_type
-                                                DynamicTuple*,          // pointer
-                                                DynamicTuple            // reference
-                                                > {
+                                               DynamicTuple,           // value_type
+                                               DynamicTuple,           // difference_type
+                                               DynamicTuple*,          // pointer
+                                               DynamicTuple            // reference
+                                               > {
       public:
         /**
          * @brief Constructor to create a new TupleIterator

@@ -17,11 +17,11 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_COORDINATOR_CONFIG_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_COORDINATOR_CONFIG_HPP_
 
+#include <Configurations/ConfigOption.hpp>
+#include <iostream>
 #include <map>
 #include <string>
 #include <thread>
-#include <iostream>
-#include <Configurations/ConfigOption.hpp>
 
 namespace NES {
 

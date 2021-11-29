@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_HPP_
 #define NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_HPP_
 
+#include <Common/ExecutableType/NESType.hpp>
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -24,7 +25,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <Common/ExecutableType/NESType.hpp>
 
 namespace NES::ExecutableTypes {
 /**
@@ -379,7 +379,7 @@ Array(std::array<J, size> &&) -> Array<J, size>;
 /// c-style array
 template<typename J>
 Array(J const& array) -> Array<std::decay_t<decltype(array[0])>, std::extent<J>::value>;
-}// namespace NES::QueryCompilation
+}// namespace NES::ExecutableTypes
 
 /**
  * Specialize the std::hash for NES Array data type

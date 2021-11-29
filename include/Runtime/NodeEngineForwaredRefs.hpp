@@ -128,7 +128,7 @@ using ColumnLayoutBufferPtr = std::shared_ptr<ColumnLayoutTupleBuffer>;
 class RowLayoutTupleBuffer;
 using RowLayoutTupleBufferPtr = std::shared_ptr<RowLayoutTupleBuffer>;
 
-}// namespace DynamicMemoryLayout
+}// namespace MemoryLayouts
 
 }// namespace Runtime
 

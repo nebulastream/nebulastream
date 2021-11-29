@@ -60,15 +60,15 @@ CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& b
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
     output.user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 0, layout, buf)[0];
-    output.nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 1,  layout, buf)[0];
-    output.system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 2,  layout, buf)[0];
-    output.idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 3,  layout, buf)[0];
-    output.iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 4,  layout, buf)[0];
-    output.irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 5,  layout, buf)[0];
-    output.softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 6,  layout, buf)[0];
-    output.steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 7,  layout, buf)[0];
-    output.guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 8,  layout, buf)[0];
-    output.guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 9,  layout, buf)[0];
+    output.nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 1, layout, buf)[0];
+    output.system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 2, layout, buf)[0];
+    output.idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 3, layout, buf)[0];
+    output.iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 4, layout, buf)[0];
+    output.irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 5, layout, buf)[0];
+    output.softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 6, layout, buf)[0];
+    output.steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 7, layout, buf)[0];
+    output.guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 8, layout, buf)[0];
+    output.guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 9, layout, buf)[0];
 
     return output;
 }

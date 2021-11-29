@@ -57,7 +57,10 @@ CoordinatorConfig::CoordinatorConfig() {
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
     enableMonitoring = ConfigOption<bool>::create("enableMonitoring", true, "Enable monitoring");
-    memoryLayoutPolicy = ConfigOption<std::string>::create("memoryLayoutPolicy", "FORCE_ROW_LAYOUT", "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]");
+    memoryLayoutPolicy = ConfigOption<std::string>::create(
+        "memoryLayoutPolicy",
+        "FORCE_ROW_LAYOUT",
+        "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -122,7 +125,8 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             if (!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<std::string>() != "\n") {
                 setNumWorkerThreads(config["numWorkerThreads"].As<uint32_t>());
             }
-            if (!config["memoryLayoutPolicy"].As<std::string>().empty() && config["memoryLayoutPolicy"].As<std::string>() != "\n") {
+            if (!config["memoryLayoutPolicy"].As<std::string>().empty()
+                && config["memoryLayoutPolicy"].As<std::string>() != "\n") {
                 setMemoryLayoutPolicy(config["memoryLayoutPolicy"].As<std::string>());
             }
         } catch (std::exception& e) {
@@ -301,9 +305,7 @@ void CoordinatorConfig::setMemoryLayoutPolicy(std::string memoryLayoutPolicy) {
     this->memoryLayoutPolicy->setValue(std::move(memoryLayoutPolicy));
 }
 
-StringConfigOption CoordinatorConfig::getMemoryLayoutPolicy() {
-    return memoryLayoutPolicy;
-}
+StringConfigOption CoordinatorConfig::getMemoryLayoutPolicy() { return memoryLayoutPolicy; }
 
 }// namespace Configurations
 }// namespace NES

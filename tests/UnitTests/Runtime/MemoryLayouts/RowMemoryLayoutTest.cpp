@@ -59,7 +59,6 @@ TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest) {
     ASSERT_NE(rowLayout, nullptr);
 }
 
-
 TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest) {
     SchemaPtr schema =
         Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
@@ -127,7 +126,6 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord) 
 
     ASSERT_EQ(bindedRowLayout->getNumberOfRecords(), NUM_TUPLES);
 }
-
 
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple) {
     SchemaPtr schema =
@@ -259,6 +257,5 @@ TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout) {
     ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t5", rowLayout, tupleBuffer)), NES::NesRuntimeException);
     ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t6", rowLayout, tupleBuffer)), NES::NesRuntimeException);
 }
-
 
 }// namespace NES::Runtime::MemoryLayouts
