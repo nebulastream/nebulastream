@@ -47,8 +47,7 @@ uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) 
     }
     if (tupleIndex >= getCapacity()) {
         throw BufferAccessException("tuple index: " + std::to_string(tupleIndex)
-                                    + " is larger the maximal capacity in the memory layout "
-                                    + std::to_string(getCapacity()));
+                                    + " is larger the maximal capacity in the memory layout " + std::to_string(getCapacity()));
     }
 
     auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex];

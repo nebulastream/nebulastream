@@ -230,8 +230,8 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
     auto query = TestQuery::from(DefaultSourceDescriptor::create(inputSchema, numbersOfBufferToProduce, frequency))
-        .filter(Attribute("default_logical$f1") < 10)
-        .map(Attribute("default_logical$f1") = Attribute("default_logical$f1") * 42)
+                     .filter(Attribute("default_logical$f1") < 10)
+                     .map(Attribute("default_logical$f1") = Attribute("default_logical$f1") * 42)
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 

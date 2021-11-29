@@ -64,7 +64,6 @@ class ExecutableSliceAggregationTriggerAction
         : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(executableWindowAggregation), id(id) {
 
         this->windowSchema = outputSchema;
-
     }
 
     bool doAction(Runtime::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,

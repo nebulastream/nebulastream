@@ -194,7 +194,6 @@ TEST_F(SerializationUtilTest, schemaSerializationTest) {
     auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
     auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(serializedSchema.get());
     EXPECT_TRUE(deserializedSchema->equals(schema));
-
 }
 
 TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout) {

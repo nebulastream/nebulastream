@@ -176,7 +176,7 @@ TEST_F(DynamicMemoryLayoutTest, accessArrayPointerDynamicBufferTest) {
     auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
 
     for (uint64_t t = 0; t < buffer.getCapacity(); t++) {
-        auto *value = buffer[t][0].read<int64_t*>();
+        auto* value = buffer[t][0].read<int64_t*>();
         for (int i = 0; i < 10; i++) {
             value[i] = i;
         }
@@ -202,15 +202,15 @@ TEST_F(DynamicMemoryLayoutTest, accessFixedCharDynamicBufferTest) {
     auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
 
     for (uint64_t t = 0; t < buffer.getCapacity(); t++) {
-        auto *value = buffer[t][0].read<char*>();
-        std::string str ("Test");
+        auto* value = buffer[t][0].read<char*>();
+        std::string str("Test");
         str.copy(value, 4, 0);
     }
     buffer.setNumberOfTuples(buffer.getCapacity());
 
     for (auto tuple : buffer) {
         auto* arrayPtr = tuple[0].read<char*>();
-        std::string str ("Test");
+        std::string str("Test");
         str.compare(arrayPtr);
     }
 }

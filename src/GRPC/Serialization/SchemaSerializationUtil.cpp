@@ -59,12 +59,12 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* seriali
 
     // Deserialize layoutType
     switch (serializedSchema->layouttype()) {
-        case SerializableSchema_MemoryLayoutType_ROW_LAYOUT:{
+        case SerializableSchema_MemoryLayoutType_ROW_LAYOUT: {
             deserializedSchema->setLayoutType(Schema::ROW_LAYOUT);
             NES_DEBUG("SchemaSerializationUtil:: deserialized row Layout");
             break;
         };
-        case SerializableSchema_MemoryLayoutType_COL_LAYOUT:{
+        case SerializableSchema_MemoryLayoutType_COL_LAYOUT: {
             deserializedSchema->setLayoutType(Schema::COLUMNAR_LAYOUT);
             NES_DEBUG("SchemaSerializationUtil:: deserialized columnar Layout");
             break;

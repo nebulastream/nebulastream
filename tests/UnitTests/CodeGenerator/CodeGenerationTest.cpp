@@ -160,9 +160,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto varDeclN = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)),
                                                     "n",
                                                     DataTypeFactory::createFixedCharValue(vals));
-        EXPECT_EQ(
-            varDeclN.getCode(),
-            "NES::ExecutableTypes::Array<char, 12> n = NES::ExecutableTypes::Array {'a', 'b', 'c', static_cast<char>(0)}");
+        EXPECT_EQ(varDeclN.getCode(),
+                  "NES::ExecutableTypes::Array<char, 12> n = NES::ExecutableTypes::Array {'a', 'b', 'c', static_cast<char>(0)}");
 
         auto varDeclO = VariableDeclaration::create(
             tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())),
@@ -561,8 +560,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     NES_INFO(Util::prettyPrintTupleBuffer(outputBuffer, recordSchema));
 
     /* check result for correctness */
-    auto sumGeneratedCode =
-        Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, layout, outputBuffer)[0];
+    auto sumGeneratedCode = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, layout, outputBuffer)[0];
     auto sum = 0;
     for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         sum += recordIndexFieldsInput[recordIndex];

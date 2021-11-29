@@ -138,7 +138,7 @@ class RowLayoutTupleBuffer : public MemoryLayoutTupleBuffer {
 
 template<size_t I, typename... Ts>
 typename std::enable_if<(I < sizeof...(Ts)), void>::type RowLayoutTupleBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
-                                                                                                         uint8_t* address) {
+                                                                                                       uint8_t* address) {
     // Get current type of tuple and cast address to this type pointer
     *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (address)) = std::get<I>(tup);
 
@@ -147,7 +147,8 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type RowLayoutTupleBuffer::c
 }
 
 template<size_t I, typename... Ts>
-typename std::enable_if<(I == sizeof...(Ts)), void>::type RowLayoutTupleBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup, const uint8_t* address) {
+typename std::enable_if<(I == sizeof...(Ts)), void>::type RowLayoutTupleBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
+                                                                                                        const uint8_t* address) {
     // Finished iterating through tuple via template recursion. So all that is left is to do a simple return.
     // As we are not using any variable, we need to have them set void otherwise the compiler will throw an unused variable error.
     ((void) address);
@@ -164,7 +165,7 @@ RowLayoutTupleBuffer::copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, const ui
 
 template<size_t I, typename... Ts>
 typename std::enable_if<(I < sizeof...(Ts)), void>::type RowLayoutTupleBuffer::copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup,
-                                                                                                           uint8_t* address) {
+                                                                                                         uint8_t* address) {
     // Get current type of tuple and cast address to this type pointer
     std::get<I>(tup) = *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (address));
 
@@ -214,6 +215,6 @@ std::tuple<Types...> RowLayoutTupleBuffer::readRecord(uint64_t recordIndex) {
     return retTuple;
 }
 
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts
 
 #endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_BUFFER_HPP_

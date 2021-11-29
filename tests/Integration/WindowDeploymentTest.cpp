@@ -32,9 +32,9 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 
+#include <Common/ExecutableType/Array.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Configurations/Sources/SourceConfigFactory.hpp>
-#include <Common/ExecutableType/Array.hpp>
 #include <iostream>
 
 using namespace std;

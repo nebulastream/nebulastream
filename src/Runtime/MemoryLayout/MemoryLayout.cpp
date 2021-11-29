@@ -43,7 +43,7 @@ MemoryLayout::MemoryLayout(uint64_t bufferSize, SchemaPtr schema) : bufferSize(b
 
 std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& fieldName) const {
     auto nameFieldIt = nameFieldIndexMap.find(fieldName);
-    if(!nameFieldIndexMap.contains(fieldName)){
+    if (!nameFieldIndexMap.contains(fieldName)) {
         return std::nullopt;
     }
     return std::optional<uint64_t>(nameFieldIt->second);

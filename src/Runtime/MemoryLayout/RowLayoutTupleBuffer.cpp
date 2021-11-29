@@ -21,9 +21,9 @@
 namespace NES::Runtime::MemoryLayouts {
 
 RowLayoutTupleBuffer::RowLayoutTupleBuffer(TupleBuffer tupleBuffer,
-                                               uint64_t capacity,
-                                               std::shared_ptr<RowLayout> dynamicRowLayout)
+                                           uint64_t capacity,
+                                           std::shared_ptr<RowLayout> dynamicRowLayout)
     : MemoryLayoutTupleBuffer(tupleBuffer, capacity), dynamicRowLayout(std::move(dynamicRowLayout)),
       basePointer(tupleBuffer.getBuffer<uint8_t>()) {}
 
-}// namespace NES::Runtime::DynamicMemoryLayout
+}// namespace NES::Runtime::MemoryLayouts
