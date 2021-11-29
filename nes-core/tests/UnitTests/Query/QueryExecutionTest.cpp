@@ -614,6 +614,8 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    request->enableDump();
+    request->enableDebugging();
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();

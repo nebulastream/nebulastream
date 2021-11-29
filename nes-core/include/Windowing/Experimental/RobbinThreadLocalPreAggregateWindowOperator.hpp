@@ -51,8 +51,8 @@ class KeyedSlice {
     KeyedSlice(uint64_t start, uint64_t end) : start(start), end(end){};
     const uint64_t start;
     const uint64_t end;
-    uint64_t numberOfMerges = 0;
     robin_hood::unordered_flat_map<uint64_t, uint64_t> map;
+    //robin_hood::unordered_flat_map<uint64_t, uint64_t> map;
 };
 
 // A slice store, which contains a set of slices
@@ -113,7 +113,7 @@ class ThreadLocalWindowHandler : public Windowing::AbstractWindowHandler {
     ThreadLocalWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                              uint64_t sliceSize,
                              uint64_t numberOfThreads)
-        : AbstractWindowHandler(windowDefinition), globalSliceStore(sliceSize) {
+        : AbstractWindowHandler(windowDefinition), sliceSize(sliceSize), globalSliceStore(sliceSize) {
 
         for (uint64_t i = 0; i < numberOfThreads; i++) {
             threadLocalSliceStore.emplace_back(sliceSize);
@@ -133,6 +133,7 @@ class ThreadLocalWindowHandler : public Windowing::AbstractWindowHandler {
 
     std::string toString() override { return std::string(); }
 
+    const uint64_t sliceSize;
     std::vector<SliceStore> threadLocalSliceStore;
     GlobalSliceStore globalSliceStore;
     std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> threadWatermarkProcessor;
@@ -202,7 +203,11 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
 
             slice.map[key] = slice.map[key] + inputTuples[recordIndex].test$value;
         };
-        if (currentWatermark > threadLocalSliceStore.lastThreadLocalWatermark) {
+
+        // We now have to check if the current watermark shifts the global watermark
+        // Check if the current watermark is part of a later slice then the last watermark.
+        auto lastLocalWatermark = threadLocalSliceStore.lastThreadLocalWatermark;
+        if (currentWatermark / windowHandler->sliceSize > lastLocalWatermark / windowHandler->sliceSize) {
             // update the global watermark, and merge all local slides.
             auto watermarkProcessor = windowHandler->getWatermarkProcessor();
             // the watermark update is an atomic process and returns the last and the current watermark.
