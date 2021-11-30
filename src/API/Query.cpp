@@ -116,12 +116,8 @@ Seq::Seq(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), o
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     NES_DEBUG("Sequence enters window function");
     auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
-    std::vector<std::string> sourceNameLeft;
-    std::vector<std::string> sourceNameRight;
-    sourceNameLeft.emplace_back(originalQuery.getQueryPlan()->getSourceConsumed());
-    sourceNameRight.emplace_back(subQueryRhs.getQueryPlan()->getSourceConsumed());
-    std::string streamNameLeft = sourceNameLeft[0] + "$" + timestamp;
-    std::string streamNameRight = sourceNameRight[0] + "$" + timestamp;
+    std::string streamNameLeft = originalQuery.getQueryPlan()->getSourceConsumed() + "$" + timestamp;
+    std::string streamNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed() + "$" + timestamp;
     NES_DEBUG("ExpressionItem for Left stream " << streamNameLeft);
     NES_DEBUG("ExpressionItem for Right stream " << streamNameRight);
     return originalQuery.seqWith(subQueryRhs, onLeftKey, onRightKey, windowType)
@@ -303,7 +299,6 @@ Query& Query::seqWith(const Query& subQueryRhs,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
     NES_DEBUG("Query: add JoinType to SEQ Operator");
-
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
