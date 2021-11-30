@@ -18,6 +18,7 @@ add_source_nes(
         SinkMedium.cpp
         PrintSink.cpp
         NullOutputSink.cpp
+        MaterializedViewSink.cpp
 )
 
 if(NES_USE_KAFKA)

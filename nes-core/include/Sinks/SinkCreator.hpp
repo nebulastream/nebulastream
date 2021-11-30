@@ -210,6 +210,15 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               std::chrono::milliseconds waitTime,
                               uint8_t retryTimes = 5);
 
+/**
+ * @brief TODO
+ */
+DataSinkPtr createMaterializedViewSink(const SchemaPtr& schema,
+                                       Runtime::NodeEnginePtr const& nodeEngine,
+                                       QuerySubPlanId parentPlanId,
+                                       Runtime::BufferManagerPtr bufferManager,
+                                       Experimental::MaterializedViewPtr mView);
+
 #ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief create kafka sink
