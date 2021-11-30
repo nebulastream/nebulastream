@@ -306,11 +306,11 @@ Query& Query::seqWith(const Query& subQueryRhs,
 Query& Query::orWith(Query& subQueryRhs) {
     NES_DEBUG("Query: add map operator that add the original stream name to the left and right side streams of the OR ");
     //get source names
-    auto streamNameLeft =  this->getQueryPlan()->getSourceConsumed();
-    auto streamNameRight =  subQueryRhs.getQueryPlan()->getSourceConsumed();
-    auto maxLength = std::max(streamNameRight.length(),streamNameLeft.length());
-    streamNameLeft.resize(maxLength,'_');
-    streamNameRight.resize(maxLength,'_');
+    auto streamNameLeft = this->getQueryPlan()->getSourceConsumed();
+    auto streamNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
+    auto maxLength = std::max(streamNameRight.length(), streamNameLeft.length());
+    streamNameLeft.resize(maxLength, '_');
+    streamNameRight.resize(maxLength, '_');
     //map the attributes with value streamNameLeft and streamNameRight to the left and right stream
     this->map(Attribute("StreamName") = streamNameLeft);
     subQueryRhs.map(Attribute("StreamName") = streamNameRight);
