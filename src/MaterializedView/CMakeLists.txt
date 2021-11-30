@@ -13,14 +13,5 @@
 # limitations under the License.
 
 add_source_nes(
-        FileSinkDescriptor.cpp
-        SinkLogicalOperatorNode.cpp
-        KafkaSinkDescriptor.cpp
-        ZmqSinkDescriptor.cpp
-        PrintSinkDescriptor.cpp
-        NetworkSinkDescriptor.cpp
-        OPCSinkDescriptor.cpp
-        MQTTSinkDescriptor.cpp
-        NullOutputSinkDescriptor.cpp
-        MaterializedViewSinkDescriptor.cpp
+        MaterializedView.cpp
 )

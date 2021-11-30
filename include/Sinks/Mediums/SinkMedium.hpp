@@ -25,7 +25,17 @@
 
 namespace NES {
 
-enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK, OPC_SINK, MQTT_SINK, NULL_SINK };
+enum SinkMediumTypes {
+    ZMQ_SINK,
+    PRINT_SINK,
+    KAFKA_SINK,
+    FILE_SINK,
+    NETWORK_SINK,
+    OPC_SINK,
+    MQTT_SINK,
+    NULL_SINK,
+    MATERIALIZED_VIEW_SINK
+};
 /**
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe

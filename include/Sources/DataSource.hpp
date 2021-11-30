@@ -45,7 +45,8 @@ enum SourceType {
     YSB_SOURCE,
     MEMORY_SOURCE,
     MQTT_SOURCE,
-    LAMBDA_SOURCE
+    LAMBDA_SOURCE,
+    MATERIALIZED_VIEW_SOURCE
 };
 
 /**
