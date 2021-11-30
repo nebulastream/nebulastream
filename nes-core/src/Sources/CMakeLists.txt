@@ -25,6 +25,7 @@ add_source_nes(
         MemorySource.cpp
         LambdaSource.cpp
         BenchmarkSource.cpp
+        MaterializedViewSource.cpp
 )
 add_subdirectory(Parsers)
 

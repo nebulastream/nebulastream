@@ -25,6 +25,7 @@
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
+#include <Sinks/Mediums/MaterializedViewSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
@@ -141,6 +142,15 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   numOfProducers,
                                                   waitTime,
                                                   retryTimes);
+}
+
+DataSinkPtr createMaterializedViewSink(const SchemaPtr& schema,
+                                       Runtime::NodeEnginePtr const& nodeEngine,
+                                       QuerySubPlanId parentPlanId,
+                                       Runtime::BufferManagerPtr bufferManager,
+                                       Experimental::MaterializedViewPtr mView) {
+    SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_shared<Experimental::MaterializedViewSink>(format, parentPlanId, bufferManager, mView);
 }
 
 #ifdef ENABLE_KAFKA_BUILD
