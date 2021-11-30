@@ -19,9 +19,10 @@
 #include <unordered_map>
 
 namespace NES {
-enum class LineageType : std::int8_t { IN_MEMORY = 0, PERSISTENT = 1, REMOTE = 2, INVALID = 3 };
+enum class LineageType : std::int8_t { NONE = 0, IN_MEMORY = 1, PERSISTENT = 2, REMOTE = 3, INVALID = 4 };
 
-static std::unordered_map<std::string, LineageType> const stringToLineageTypeMap = {{"IN_MEMORY", LineageType::IN_MEMORY},
+static std::unordered_map<std::string, LineageType> const stringToLineageTypeMap = {{"NONE", LineageType::NONE},
+                                                                                    {"IN_MEMORY", LineageType::IN_MEMORY},
                                                                                     {"PERSISTENT", LineageType::PERSISTENT},
                                                                                     {"REMOTE", LineageType::REMOTE}};
 }// namespace NES

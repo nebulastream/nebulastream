@@ -135,17 +135,13 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query, use 'userQuery'.");
                     }
                     std::string optimizationStrategyName = req.at("strategyName").as_string();
-                    std::string faultToleranceString = "";
-                    std::string lineageString = "";
+                    std::string faultToleranceString = "NONE";
+                    std::string lineageString = "NONE";
                     if (req.has_field("faultTolerance")) {
                         faultToleranceString = req.at("faultTolerance").as_string();
-                    } else {
-                        faultToleranceString = "NONE";
                     }
                     if (req.has_field("lineage")) {
                         lineageString = req.at("lineage").as_string();
-                    } else {
-                        lineageString = "IN_MEMORY";
                     }
                     auto faultToleranceIterator = stringToFaultToleranceTypeMap.find(faultToleranceString);
                     if (faultToleranceIterator == stringToFaultToleranceTypeMap.end()) {
@@ -200,8 +196,14 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     std::string* queryString = protobufMessage->mutable_querystring();
                     auto* context = protobufMessage->mutable_context();
                     std::string placementStrategy = context->at("placement").value();
-                    std::string faultToleranceString = context->at("faultTolerance").value();
-                    std::string lineageString = context->at("lineage").value();
+                    std::string faultToleranceString = "NONE";
+                    std::string lineageString = "NONE";
+                    if (context->contains("faultTolerance")) {
+                        faultToleranceString = context->at("faultTolerance").value();
+                    }
+                    if (context->contains("lineage")) {
+                        lineageString = context->at("lineage").value();
+                    }
 
                     auto faultToleranceIterator = stringToFaultToleranceTypeMap.find(faultToleranceString);
                     if (faultToleranceIterator == stringToFaultToleranceTypeMap.end()) {
