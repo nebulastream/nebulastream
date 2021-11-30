@@ -18,6 +18,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_NESTYPE_HPP_
 
 #include <type_traits>
+#include <cstdint>
 
 namespace NES {
 /**
