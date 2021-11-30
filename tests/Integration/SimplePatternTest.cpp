@@ -490,25 +490,25 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
-//    NES_INFO("QueryDeploymentTest: Start worker 2");
-//    wrkConf->setCoordinatorPort(port);
-//    wrkConf->setRpcPort(port + 20);
-//    wrkConf->setDataPort(port + 21);
-//    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
-//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart2);
-//    NES_INFO("SimplePatternTest: Worker2 started successfully");
-//
-//    NES_INFO("QueryDeploymentTest: Start worker 3");
-//    wrkConf->setCoordinatorPort(port);
-//    wrkConf->setRpcPort(port + 30);
-//    wrkConf->setDataPort(port + 31);
-//    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
-//    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-//    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart3);
-//    NES_INFO("SimplePatternTest: Worker3 started successfully");
+    //    NES_INFO("QueryDeploymentTest: Start worker 2");
+    //    wrkConf->setCoordinatorPort(port);
+    //    wrkConf->setRpcPort(port + 20);
+    //    wrkConf->setDataPort(port + 21);
+    //    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
+    //    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    //    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    //    EXPECT_TRUE(retStart2);
+    //    NES_INFO("SimplePatternTest: Worker2 started successfully");
+    //
+    //    NES_INFO("QueryDeploymentTest: Start worker 3");
+    //    wrkConf->setCoordinatorPort(port);
+    //    wrkConf->setRpcPort(port + 30);
+    //    wrkConf->setDataPort(port + 31);
+    //    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
+    //    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    //    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    //    EXPECT_TRUE(retStart3);
+    //    NES_INFO("SimplePatternTest: Worker3 started successfully");
 
     std::string outputFilePath = "testMultiAndPatternWithTestStream.out";
     remove(outputFilePath.c_str());
@@ -596,14 +596,22 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     //so far from join
-    string expectedContent ="+----------------------------------------------------+\n"
-                             "|QnVQnV1QnV2$start:UINT64|QnVQnV1QnV2$end:UINT64|QnVQnV1QnV2$key:INT32|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$key1:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$key2:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$key3:INT32|\n"
-                             "+----------------------------------------------------+\n"
-                             "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
-                             "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|R2000070|1543622640000|70.222221|7|1|\n"
-                             "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
-                             "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622580000|73.166664|5|1|R2000070|1543622640000|70.222221|7|1|\n"
-                             "+----------------------------------------------------+";
+    string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|QnVQnV1QnV2$start:UINT64|QnVQnV1QnV2$end:UINT64|QnVQnV1QnV2$key:INT32|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$"
+        "key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$key1:INT32|QnV1$"
+        "sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$key2:INT32|QnV2$sensor_id:CHAR["
+        "8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$key3:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|"
+        "1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
+        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|"
+        "1543622580000|73.166664|5|1|R2000070|1543622640000|70.222221|7|1|\n"
+        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622640000|70.222221|7|1|R2000073|"
+        "1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
+        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622640000|70.222221|7|1|R2000073|"
+        "1543622580000|73.166664|5|1|R2000070|1543622640000|70.222221|7|1|\n"
+        "+----------------------------------------------------+";
 
     //EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
     NES_INFO("QueryDeploymentTest: Remove query");
@@ -623,11 +631,11 @@ TEST_F(SimplePatternTest, DISABLED_testMultiAndPattern) {
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-//    bool retStopWrk2 = wrk2->stop(false);
-//    EXPECT_TRUE(retStopWrk2);
-//
-//    bool retStopWrk3 = wrk3->stop(false);
-//    EXPECT_TRUE(retStopWrk3);
+    //    bool retStopWrk2 = wrk2->stop(false);
+    //    EXPECT_TRUE(retStopWrk2);
+    //
+    //    bool retStopWrk3 = wrk3->stop(false);
+    //    EXPECT_TRUE(retStopWrk3);
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
