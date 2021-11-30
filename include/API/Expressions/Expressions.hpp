@@ -97,12 +97,5 @@ ExpressionItem Attribute(std::string name);
  */
 ExpressionItem Attribute(std::string name, BasicType type);
 
-/**
- * @brief Attribute(name, type) allows the user to create a char field with a specific length
- * Field("f1", Int) < 10.
- * @param fieldName, type
- */
-ExpressionItem Attribute(std::string fieldName, uint64_t length);
-
 }//end of namespace NES
 #endif// NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
