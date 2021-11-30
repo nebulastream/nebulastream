@@ -172,6 +172,7 @@ class MockDataSource : public DataSource {
         };
     MOCK_METHOD(void, runningRoutineWithFrequency, ());
     MOCK_METHOD(void, runningRoutineWithIngestionRate, ());
+    MOCK_METHOD(void, runningRoutineWithKF, ());
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
     MOCK_METHOD(SourceType, getType, (), (const));
@@ -237,6 +238,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValueWithTooSmallIngestionRate);
+    FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
 using DataSourceProxyPtr = std::shared_ptr<DataSourceProxy>;
@@ -695,6 +697,19 @@ TEST_F(SourceTest, testDataSourceRunningRoutineIngestion) {
     mDataSource.runningRoutine();
 }
 
+TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
+    MockDataSource mDataSource(this->schema,
+                               this->nodeEngine->getBufferManager(),
+                               this->nodeEngine->getQueryManager(),
+                               this->operatorId,
+                               this->numSourceLocalBuffersDefault,
+                               DataSource::GatheringMode::KF_MODE,
+                               {});
+    ON_CALL(mDataSource, runningRoutineWithKF()).WillByDefault(Return());
+    EXPECT_CALL(mDataSource, runningRoutineWithKF()).Times(Exactly(1));
+    mDataSource.runningRoutine();
+}
+
 TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
@@ -755,6 +770,51 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = true;
     mDataSource->gatheringIngestionRate = 11;
+    auto fakeBuf = mDataSource->getRecyclableBuffer();
+    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
+    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
+    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
+    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
+                                                                         this->queryId,
+                                                                         {mDataSource},
+                                                                         {sink},
+                                                                         {pipeline},
+                                                                         this->nodeEngine->getQueryManager(),
+                                                                         this->nodeEngine->getBufferManager());
+    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
+        mDataSource->running = false;
+        return;
+    }));
+    mDataSource->runningRoutine();
+    EXPECT_FALSE(mDataSource->running);
+    EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
+}
+
+TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
+    // create executable stage
+    auto executableStage = std::make_shared<MockedExecutablePipeline>();
+    // create sink
+    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    // get mocked pipeline to add to source
+    auto pipeline = this->createExecutablePipeline(executableStage, sink);
+    // mock query manager for passing addEndOfStream
+    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema,
+                                                           this->nodeEngine->getBufferManager(),
+                                                           this->nodeEngine->getQueryManager(),
+                                                           this->operatorId,
+                                                           this->numSourceLocalBuffersDefault,
+                                                           DataSource::GatheringMode::KF_MODE,
+                                                           {pipeline});
+    mDataSource->numBuffersToProcess = 1;
+    mDataSource->running = true;
+    mDataSource->wasGracefullyStopped = true;
+    mDataSource->gatheringIngestionRate = 1;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
