@@ -39,6 +39,7 @@ class AdaptiveKFTest : public testing::Test {
     uint64_t num_of_buffers;
     uint64_t num_tuples_to_process;
     std::vector<double> measurements;
+    std::vector<double> measurementsWithLargeMagnitude;
     float defaultEstimationErrorDivider = 2.9289684;
 
     static void SetUpTestCase() {
@@ -70,6 +71,10 @@ class AdaptiveKFTest : public testing::Test {
             1.86967808173, 1.18073207847, 1.10729605087, 0.916168349913, 0.678547664519,
             0.562381751596, 0.355468474885, -0.155607486619, -0.287198661013, -0.602973173813
         };
+
+        measurementsWithLargeMagnitude = {
+            10.0, 100.0, 1000.0, 10000.0, 100000.0
+        };
     }
 
     void TearDown() override { NES_INFO("Tear down AdaptiveKFTest class."); }
@@ -88,6 +93,7 @@ class KFProxy : public KalmanFilter {
     FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorEmptyWindowTest);
     FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorFilledWindowTest);
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerTest);
+    FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalTest);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
@@ -331,7 +337,7 @@ TEST_F(AdaptiveKFTest, kfEstimationErrorEmptyWindowTest) {
 
     // window of 1
     KFProxy kfProxy1{1};
-    kfProxy.setDefaultValues();
+    kfProxy1.setDefaultValues();
     ASSERT_EQ(kfProxy1.calculateTotalEstimationError(), 0);
 
     // window of 50
@@ -386,5 +392,24 @@ TEST_F(AdaptiveKFTest, kfInitWithStateTest) {
     ASSERT_EQ(kfProxy.getState().size(), 2);
     ASSERT_EQ(kfProxy.getState()[0], 0);
     ASSERT_EQ(kfProxy.getState()[1], measurements[0]);
+}
+
+TEST_F(AdaptiveKFTest, kfNewGatheringIntervalTest) {
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
+    initialState << 0, measurements[0], -9.81;
+
+    // empty filter
+    KFProxy kfProxy{2};
+    kfProxy.init(initialState);
+    auto oldFrequency = kfProxy.frequency;
+
+    kfProxy.kfErrorWindow.push(0);
+    kfProxy.kfErrorWindow.push(1);
+    ASSERT_NE(kfProxy.calculateTotalEstimationError(), 0);
+    ASSERT_NEAR(kfProxy.calculateTotalEstimationError(), 0.6, 0.1);
+
+    auto newFrequency = kfProxy.decideNewGatheringInterval();
+    ASSERT_EQ(oldFrequency, newFrequency);
 }
 }// namespace NES

@@ -15,6 +15,7 @@
 */
 
 #include <Util/KalmanFilter.hpp>
+#include <cmath>
 #include <ctime>
 
 namespace NES {
@@ -104,7 +105,7 @@ void KalmanFilter::update(const Eigen::VectorXd& measuredValues) {
     // update estimation error, eq.8
     this->estimationError =
         std::sqrt(((innovationError * measuredValues.inverse()) * (innovationError * measuredValues.inverse())).trace());
-
+    this->kfErrorWindow.emplace(this->estimationError); // store result in error window
     // update timestep
     currentTime += timeStep;
 }
@@ -139,6 +140,17 @@ void KalmanFilter::calculateTotalEstimationErrorDivider(int size) {
     for (int i = 1; i <= size; ++i) {
         totalEstimationErrorDivider += (1.0 / i);
     }
+}
+
+uint64_t KalmanFilter::decideNewGatheringInterval() {
+    // eq. 10
+    auto powerOfEuler = (this->calculateTotalEstimationError() + lambda) / lambda;
+    auto newFreqCandidate = frequency + (theta * (1 - std::pow(eulerConstant, powerOfEuler)));
+    if (newFreqCandidate >= freqLastReceived - (freqRange / 2) &&
+        newFreqCandidate <= freqLastReceived + (freqRange / 2)) { // eq. 7
+        frequency = newFreqCandidate;
+    }
+    return frequency;
 }
 
 }// namespace NES
