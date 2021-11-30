@@ -80,6 +80,15 @@ class KalmanFilter {
     double estimationError;// eq. 8
 
     /**
+     * @brief used to give lower/upper bounds on freq.
+     * Paper is not clear on the magnitude (size) of
+     * the range, this can be determined in tests later.
+     */
+    uint64_t freqRange{2};   // freq +- 2
+    uint64_t frequency{1};       // currently in use
+    uint64_t freqLastReceived{1};// from coordinator
+
+    /**
      * @brief control units for changing the new
      * frequency. Theta (θ) is static according
      * to the paper in Jain et al.
@@ -108,6 +117,7 @@ class KalmanFilter {
     float totalEstimationErrorDivider;
     float calculateTotalEstimationError(); // eq. 9
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calc. once)
+    uint64_t decideNewGatheringInterval();// eq. 7 and 10 in the paper
 
 };// class KalmanFilter
 
