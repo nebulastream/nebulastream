@@ -127,7 +127,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override {
-        AbstractWindowHandler::postReconfigurationCallback(task);;
+        AbstractWindowHandler::postReconfigurationCallback(task);
+        ;
 
         // TODO switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {

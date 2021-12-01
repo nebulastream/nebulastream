@@ -20,8 +20,7 @@
 
 namespace NES {
 
-NESRequestQueue::NESRequestQueue(uint64_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {
-}
+NESRequestQueue::NESRequestQueue(uint64_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {}
 
 bool NESRequestQueue::add(const NESRequestPtr& request) {
     std::unique_lock<std::mutex> lock(requestMutex);

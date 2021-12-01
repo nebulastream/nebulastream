@@ -139,7 +139,8 @@ void PartitionManager::clear() {
         }
     }
     for (auto&& [partition, metadata] : consumerPartitions) {
-        NES_ASSERT2_FMT(metadata.count() == 0, "PartitionManager: Consumer Partition " << partition << " is still alive: " << metadata.count());
+        NES_ASSERT2_FMT(metadata.count() == 0,
+                        "PartitionManager: Consumer Partition " << partition << " is still alive: " << metadata.count());
     }
     NES_INFO("PartitionManager: Clearing registered partitions");
     producerPartitions.clear();
@@ -178,7 +179,9 @@ bool PartitionManager::registerSubpartitionProducer(NesPartition partition, Node
     return (*it).second.count() == 0;
 }
 
-bool PartitionManager::addSubpartionEventListener(NesPartition partition, NodeLocation receiverLocation, Runtime::RuntimeEventListenerPtr eventListener) {
+bool PartitionManager::addSubpartionEventListener(NesPartition partition,
+                                                  NodeLocation receiverLocation,
+                                                  Runtime::RuntimeEventListenerPtr eventListener) {
     std::unique_lock lock(producerPartitionsMutex);
     //check if partition is present
     if (auto it = producerPartitions.find(partition); it == producerPartitions.end()) {
@@ -229,8 +232,6 @@ void PartitionManager::pinSubpartitionProducer(NesPartition partition) {
     }
 }
 
-PartitionManager::~PartitionManager() {
-    clear();
-}
+PartitionManager::~PartitionManager() { clear(); }
 
 }// namespace NES::Network

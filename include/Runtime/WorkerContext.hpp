@@ -86,7 +86,6 @@ class WorkerContext {
      */
     uint32_t decreaseObjectRefCnt(void* object);
 
-
     /**
      * @brief get the numa node of the current worker
      * @return current numa Node

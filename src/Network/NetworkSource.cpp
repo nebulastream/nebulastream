@@ -108,15 +108,15 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                                                                              localBufferManager,
                                                                              waitTime,
                                                                              retryTimes);
-//            NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
+            //            NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             if (channel == nullptr) {
                 NES_DEBUG("NetworkSource: reconfigure() cannot get event channel " << nesPartition.toString() << " on Thread "
-                                                                            << Runtime::NesThread::getId());
-                return; // partition was deleted on the other side of the channel.. no point in waiting for a channel
+                                                                                   << Runtime::NesThread::getId());
+                return;// partition was deleted on the other side of the channel.. no point in waiting for a channel
             }
             workerContext.storeEventOnlyChannel(nesPartition.getOperatorId(), std::move(channel));
             NES_DEBUG("NetworkSource: reconfigure() stored event-channel " << nesPartition.toString() << " Thread "
-                                                                        << Runtime::NesThread::getId());
+                                                                           << Runtime::NesThread::getId());
             break;
         }
         case Runtime::Destroy:
@@ -140,7 +140,8 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
         case Runtime::Destroy:
         case Runtime::HardEndOfStream:
         case Runtime::SoftEndOfStream: {
-            NES_DEBUG("NetworkSource: postReconfigurationCallback(): unregistering SubpartitionConsumer " << nesPartition.toString());
+            NES_DEBUG("NetworkSource: postReconfigurationCallback(): unregistering SubpartitionConsumer "
+                      << nesPartition.toString());
             networkManager->unregisterSubpartitionConsumer(nesPartition);
             return;
         }

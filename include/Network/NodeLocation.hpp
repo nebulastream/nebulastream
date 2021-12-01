@@ -27,7 +27,7 @@ class NodeLocation {
   public:
     explicit NodeLocation(NodeId nodeId, std::string hostname, uint32_t port)
         : nodeId(nodeId), hostname(std::move(hostname)), port(port) {
-         NES_ASSERT2_FMT(this->hostname.size() > 0, "Empty string passed on " << nodeId);
+        NES_ASSERT2_FMT(this->hostname.size() > 0, "Empty string passed on " << nodeId);
     }
 
     NodeLocation(const NodeLocation& other) : nodeId(other.nodeId), hostname(other.hostname), port(other.port) {}

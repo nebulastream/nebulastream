@@ -80,7 +80,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             workerContext.storeNetworkChannel(nesPartition.getOperatorId(), std::move(channel));
             workerContext.setObjectRefCnt(this, task.getUserData<uint32_t>());
             NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread "
-                                                                      << Runtime::NesThread::getId() << " ref cnt " << task.getUserData<uint32_t>());
+                                                                      << Runtime::NesThread::getId() << " ref cnt "
+                                                                      << task.getUserData<uint32_t>());
             break;
         }
         case Runtime::HardEndOfStream:
