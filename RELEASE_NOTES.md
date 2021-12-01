@@ -4,6 +4,9 @@
 ## Breaking Changes:
 ## Components:
 ### - Stream Processing
+1. Make NES numa-aware #2135
+2. Introduce Benchmark source #2252
+3. Introduce basic set of stateful and stateless benchmarks #1900 #1828 
 ### - Complex Event Processing
 ### - Rest-API
 ### - Optimizer
