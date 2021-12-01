@@ -33,21 +33,15 @@ WorkerContext::WorkerContext(uint32_t workerId,
 
 uint32_t WorkerContext::getId() const { return workerId; }
 
-uint32_t WorkerContext::getNumaNode() const {
-    return numaNode;
-}
+uint32_t WorkerContext::getNumaNode() const { return numaNode; }
 
 void WorkerContext::setObjectRefCnt(void* object, uint32_t refCnt) {
     objectRefCounters[reinterpret_cast<uintptr_t>(object)] = refCnt;
 }
 
-uint32_t WorkerContext::increaseObjectRefCnt(void* object) {
-    return objectRefCounters[reinterpret_cast<uintptr_t>(object)]++;
-}
+uint32_t WorkerContext::increaseObjectRefCnt(void* object) { return objectRefCounters[reinterpret_cast<uintptr_t>(object)]++; }
 
-uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
-    return objectRefCounters[reinterpret_cast<uintptr_t>(object)]--;
-}
+uint32_t WorkerContext::decreaseObjectRefCnt(void* object) { return objectRefCounters[reinterpret_cast<uintptr_t>(object)]--; }
 
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 

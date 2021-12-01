@@ -130,11 +130,14 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
 }
 
 void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
-    NES_DEBUG("Going to reconfigure pipeline " << pipelineId << " belonging to query id: " << querySubPlanId << " stage id: " << pipelineId);
+    NES_DEBUG("Going to reconfigure pipeline " << pipelineId << " belonging to query id: " << querySubPlanId
+                                               << " stage id: " << pipelineId);
     Reconfigurable::reconfigure(task, context);
     switch (task.getType()) {
         case Initialize: {
-            NES_ASSERT2_FMT(isRunning(), "Going to reconfigure a non-running pipeline " << pipelineId << " belonging to query id: " << querySubPlanId << " stage id: " << pipelineId);
+            NES_ASSERT2_FMT(isRunning(),
+                            "Going to reconfigure a non-running pipeline "
+                                << pipelineId << " belonging to query id: " << querySubPlanId << " stage id: " << pipelineId);
             auto refCnt = task.getUserData<uint32_t>();
             context.setObjectRefCnt(this, refCnt);
             break;
@@ -224,7 +227,6 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                     NES_DEBUG("Going to triggering reconfig whole plan belonging to subplanId: "
                               << querySubPlanId << " stage id: " << pipelineId << " got EndOfStream on last pipeline");
                 }
-
 
             } else {
                 NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: "

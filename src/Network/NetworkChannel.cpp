@@ -19,7 +19,7 @@
 #include <Runtime/BufferManager.hpp>
 
 namespace NES::Network {
-static constexpr int DEFAULT_LINGER_VALUE = 60 * 1000; // 60s as linger time: http://api.zeromq.org/2-1:zmq-setsockopt
+static constexpr int DEFAULT_LINGER_VALUE = 60 * 1000;// 60s as linger time: http://api.zeromq.org/2-1:zmq-setsockopt
 namespace detail {
 template<typename T>
 std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& zmqContext,
@@ -52,7 +52,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         zmqSocket.connect(socketAddr);
         int i = 0;
         constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::kEventOnlyChannel
-                                                         : Network::Messages::ChannelType::kDataChannel;
+                                                                   : Network::Messages::ChannelType::kDataChannel;
 
         while (i < retryTimes) {
 
@@ -77,9 +77,9 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     // check if server responds with a ServerReadyMessage
                     // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
                     if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition())) {
-                        NES_ERROR(channelName << ": Connection failed with server "
-                                  << socketAddr << " for " << channelId.getNesPartition().toString()
-                                  << "->Wrong server ready message! Reason: Partitions are not matching");
+                        NES_ERROR(channelName << ": Connection failed with server " << socketAddr << " for "
+                                              << channelId.getNesPartition().toString()
+                                              << "->Wrong server ready message! Reason: Partitions are not matching");
                         break;
                     }
                     NES_INFO(channelName << ": Connection established with server " << socketAddr << " for " << channelId);
@@ -111,7 +111,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     return nullptr;
                 }
             }
-            std::this_thread::sleep_for(backOffTime); // TODO make this async
+            std::this_thread::sleep_for(backOffTime);// TODO make this async
             backOffTime *= 2;
             NES_INFO(channelName << ": Connection with server failed! Reconnecting attempt " << i);
             i++;

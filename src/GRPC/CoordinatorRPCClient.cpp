@@ -38,7 +38,6 @@ CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address) : address
     workerId = SIZE_MAX;
 }
 
-
 bool CoordinatorRPCClient::registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& conf) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf->toString() << " workerID=" << workerId);
 

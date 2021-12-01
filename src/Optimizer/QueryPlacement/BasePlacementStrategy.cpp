@@ -338,7 +338,6 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
             NES_TRACE("BasePlacementStrategy: Skipping network source and sink operator for the parent operator as all children "
                       "operators are not processed");
         }
-
     }
 }
 

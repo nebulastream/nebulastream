@@ -59,9 +59,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
     /**
      * @brief Closes the underlying network connection
      */
-    void close() {
-        inherited::close(canSendEvent && !canSendData);
-    }
+    void close() { inherited::close(canSendEvent && !canSendData); }
 
     /**
      * @brief Creates an output channe instance with the given parameters
@@ -106,9 +104,7 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
     /**
      * @brief Closes the underlying network connection
      */
-    void close() {
-        inherited::close(canSendEvent && !canSendData);
-    }
+    void close() { inherited::close(canSendEvent && !canSendData); }
 
     /**
      * @brief Creates an output channe instance with the given parameters

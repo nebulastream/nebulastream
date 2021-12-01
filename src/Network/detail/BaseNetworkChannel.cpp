@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
+#include <Network/NetworkMessage.hpp>
 #include <Network/ZmqUtils.hpp>
 #include <Network/detail/BaseNetworkChannel.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Network/NetworkMessage.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES::Network::detail {
@@ -26,8 +26,7 @@ BaseNetworkChannel::BaseNetworkChannel(zmq::socket_t&& zmqSocket,
                                        std::string&& address,
                                        Runtime::BufferManagerPtr&& bufferManager)
     : socketAddr(std::move(address)), zmqSocket(std::move(zmqSocket)), channelId(channelId),
-      bufferManager(std::move(bufferManager)) {
-}
+      bufferManager(std::move(bufferManager)) {}
 
 void BaseNetworkChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR(errorMsg.getErrorTypeAsString()); }
 

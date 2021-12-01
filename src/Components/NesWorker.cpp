@@ -65,9 +65,7 @@ NesWorker::NesWorker(const Configurations::WorkerConfigPtr& workerConfig, NesNod
     NES_DEBUG("NesWorker: constructed");
 }
 
-NesWorker::~NesWorker() {
-    stop(true);
-}
+NesWorker::~NesWorker() { stop(true); }
 
 bool NesWorker::setWithRegister(PhysicalStreamConfigPtr conf) {
     withRegisterStream = true;

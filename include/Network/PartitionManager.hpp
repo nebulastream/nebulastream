@@ -21,9 +21,9 @@
 #include <Network/NodeLocation.hpp>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 namespace NES {
 class DataEmitter;
@@ -52,8 +52,6 @@ enum class PartitionRegistrationStatus : uint8_t {
  */
 class PartitionManager {
   public:
-
-
   private:
     /**
      * @brief Helper class to store a partition's ref cnt and data emitter
@@ -229,7 +227,8 @@ class PartitionManager {
      * @param eventListener
      * @return
      */
-    bool addSubpartionEventListener(NesPartition partition, NodeLocation nodeLocation, Runtime::RuntimeEventListenerPtr eventListener);
+    bool
+    addSubpartionEventListener(NesPartition partition, NodeLocation nodeLocation, Runtime::RuntimeEventListenerPtr eventListener);
 
     /**
      * @brief Retrieve event listener for partition

@@ -23,9 +23,9 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -69,7 +69,8 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
-    DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 0);
+    DataSinkPtr zmqSink =
+        ConvertLogicalToPhysicalSink::createDataSink(testSink->getId(), sinkDescriptor, schema, nodeEngine, testPlan, 0);
     EXPECT_EQ(zmqSink->toString(), "ZMQ_SINK(SCHEMA(), HOST=127.0.0.1, PORT=2000)");
 }
 #ifdef ENABLE_KAFKA_BUILD

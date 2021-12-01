@@ -51,12 +51,7 @@ enum class MessageType : uint8_t {
 };
 
 /// this enum defines the errors that can occur in the network stack logic
-enum class ErrorType : uint8_t {
-    kPartitionNotRegisteredError,
-    kUnknownError,
-    kUnknownPartitionError,
-    kDeletedPartitionError
-};
+enum class ErrorType : uint8_t { kPartitionNotRegisteredError, kUnknownError, kUnknownPartitionError, kDeletedPartitionError };
 
 enum class ChannelType : uint8_t { kDataChannel, kEventOnlyChannel };
 

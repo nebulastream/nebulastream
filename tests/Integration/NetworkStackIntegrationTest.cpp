@@ -116,7 +116,6 @@ class TestSink : public SinkMedium {
     std::promise<uint64_t> completed;
 };
 
-
 void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
     auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, buf);
     auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, buf);
@@ -317,12 +316,14 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                           nodeLocation,
                                                           64);
             EXPECT_TRUE(source->start());
-            EXPECT_EQ(nodeEngine->getPartitionManager()->isConsumerRegistered(nesPartition), PartitionRegistrationStatus::Registered);
+            EXPECT_EQ(nodeEngine->getPartitionManager()->isConsumerRegistered(nesPartition),
+                      PartitionRegistrationStatus::Registered);
             completed.get_future().get();
             EXPECT_TRUE(source->stop());
             auto rt = Runtime::ReconfigurationMessage(-1, Runtime::Destroy, source);
             source->postReconfigurationCallback(rt);
-            EXPECT_EQ(nodeEngine->getPartitionManager()->isConsumerRegistered(nesPartition), PartitionRegistrationStatus::Deleted);
+            EXPECT_EQ(nodeEngine->getPartitionManager()->isConsumerRegistered(nesPartition),
+                      PartitionRegistrationStatus::Deleted);
         });
 
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
