@@ -1,4 +1,4 @@
-# NebulaStream 0.1.0 (In-Progress) Release Notes
+# NebulaStream 0.2.0 (In-Progress) Release Notes
 
 ## Introduction:
 ## Breaking Changes:
