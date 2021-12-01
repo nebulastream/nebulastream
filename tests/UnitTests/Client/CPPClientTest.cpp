@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 
+#include <API/Query.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
