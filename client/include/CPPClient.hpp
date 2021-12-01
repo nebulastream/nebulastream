@@ -17,13 +17,10 @@
 #ifndef NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 #define NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 
-#include <API/Query.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Util/Logger.hpp>
-
-#include <cpprest/http_client.h>
-
 namespace NES {
+
+class QueryPlan;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 /**
  * @brief CPP client to deploy queries over the REST API
