@@ -27,6 +27,9 @@ Add a mapping for the three binary Simple Event Algebra Operators AND [1815], SE
     - `--queryCompilerPipeliningStrategy` Selects the pipelining strategy, i.e. operator  fusion or operator at a time.
     - `--queryCompilerOutputBufferOptimizationLevel` Selects the buffer optimization level
 ### - Fault Tolerance
+1. Add a node storage unit, which temporary stores all tuple buffers that “flow” through it. [2203](https://github.com/nebulastream/nebulastream/issues/2203)
+2. Add a lineage data structure that keep track of a mapping between old and new tuple buffer ids. [2264](https://github.com/nebulastream/nebulastream/issues/2264)
+3. Add fault tolerance and lineage flags to the query context, by default these flags are disabled. [2298](https://github.com/nebulastream/nebulastream/issues/2298)
 ### - Monitoring
 ### - Build Management
 1. Add Folly as default dependency [#2194](https://github.com/nebulastream/nebulastream/issues/2194)
