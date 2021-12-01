@@ -15,6 +15,10 @@ Add a mapping for the three binary Simple Event Algebra Operators AND [1815], SE
    - OR to Union (+map() function for source information, to note that the map() is only there for convenience but might be helpful for more complex patterns)  
 ### - Rest-API
 ### - Optimizer
+Extended support for Multi-Query Optimization.
+   - Added support for identifying partial sharing using different strategies [2136](https://github.com/nebulastream/nebulastream/issues/2136)
+   - Added a hybrid approach for merging queries [2183](https://github.com/nebulastream/nebulastream/issues/2183) 
+
 ### - Runtime
 1. Add new `DynamicTupleBuffer` abstraction to operate on tuple buffers, without knowledge of the underling memory layout.
 2. Add experimental support for columnar layouts [2081](https://github.com/nebulastream/nebulastream/tree/2081-queryoptimizer-phase-choose-mem-layout).
