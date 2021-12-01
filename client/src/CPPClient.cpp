@@ -14,11 +14,13 @@
     limitations under the License.
 */
 
+#include <API/Query.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <SerializableQueryPlan.pb.h>
+#include <Util/Logger.hpp>
 #include <client/include/CPPClient.hpp>
 
-#include <Util/Logger.hpp>
+#include <cpprest/http_client.h>
 
 namespace NES {
 
