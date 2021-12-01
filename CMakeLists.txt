@@ -646,6 +646,7 @@ INCLUDE(CPack)
 
 #Other configurations
 project_enable_clang_format()
+project_enable_fixguards()
 if (CMAKE_CROSSCOMPILING)
     project_enable_emulated_tests()
 endif ()
