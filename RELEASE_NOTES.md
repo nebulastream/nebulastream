@@ -9,6 +9,10 @@
 ### - Stream Processing
 1. Make NES numa-aware #2135
 ### - Complex Event Processing
+Add a mapping for the three binary Simple Event Algebra Operators AND [1815], SEQ [1817] and OR [1816] to the available Analytical Stream Processing Operators
+   - AND to Cartesian Product (akka joinWith + map() for keys currently) 
+   - SEQ to Cartesian Product (akka joinWith + map() for keys currently) + filter() on timestamp for order of events 
+   - OR to Union (+map() function for source information, to note that the map() is only there for convenience but might be helpful for more complex patterns)  
 ### - Rest-API
 ### - Optimizer
 ### - Runtime
