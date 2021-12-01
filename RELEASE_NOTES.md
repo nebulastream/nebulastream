@@ -32,5 +32,8 @@ Add a mapping for the three binary Simple Event Algebra Operators AND [1815], SE
 1. Add Folly as default dependency [#2194](https://github.com/nebulastream/nebulastream/issues/2194)
 2. Add CMAKE flag to build dependencies locally [#2313](https://github.com/nebulastream/nebulastream/issues/2313)
    -DNES_BUILD_DEPENDENCIES_LOCAL=1
+3. [#2115](https://github.com/nebulastream/nebulastream/issues/2115) Build NebulaStream on ARM Macs
 ### - UDF Support
+1. [#2079](https://github.com/nebulastream/nebulastream/issues/2079) [#2080](https://github.com/nebulastream/nebulastream/issues/2080) Public API to register Java UDFs in the NES coordinator
+2. [#117](https://github.com/nebulastream/nebulastream-java-client/issues/117) Register Java UDFs from the Java client
 ### - Network Stack
