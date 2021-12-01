@@ -4,6 +4,25 @@
 ## Breaking Changes:
 ## Components:
 ### - Benchmarking
+### - Stream Processing
+### - Complex Event Processing
+### - Rest-API
+### - Optimizer
+### - Runtime
+### - Query Compiler
+### - Fault Tolerance
+### - Monitoring
+### - Build Management
+### - UDF Support
+### - Network Stack
+
+# NebulaStream 0.1.0 Release Notes
+## Introduction:
+In this release we improved several components of NebulaStream.
+In the following you can find a detailed list of changes.
+
+## Components:
+### - Benchmarking
 1. Introduce Benchmark source #2252
 2. Introduce basic set of stateful and stateless benchmarks #1900 #1828 
 ### - Stream Processing
