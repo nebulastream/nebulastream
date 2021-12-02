@@ -412,4 +412,65 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalTest) {
     auto newFrequency = kfProxy.decideNewGatheringInterval();
     ASSERT_EQ(oldFrequency, newFrequency);
 }
+
+TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
+    // update two times, compare between 1st and 2nd update
+
+    // keep last 2 error values
+    KalmanFilter kalmanFilter{2};
+    kalmanFilter.setDefaultValues();
+
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
+    initialState << 0, measurements[0], measurements[1];
+    kalmanFilter.init(initialState);
+    ASSERT_EQ(initialState, kalmanFilter.getState());
+
+    // start measurements vector
+    Eigen::VectorXd y(1);
+    y << measurements[2]; // 1.2913511148
+    kalmanFilter.update(y); // update once, this has a huge error due to starting vals
+    y << measurements[3]; // 1.48485250951, somewhat "similar"
+    kalmanFilter.update(y);
+    auto oldEstimationError = kalmanFilter.getEstimationError();
+
+    // update 2nd time, compare between 1st and 2nd update
+    y << -0.287; // didn't expect this, chief!
+    kalmanFilter.update(y);
+    auto newEstimationError = kalmanFilter.getEstimationError();
+
+    // assert that error grew when value is "unusual"
+    ASSERT_NE(newEstimationError, oldEstimationError);
+    ASSERT_GT(newEstimationError, oldEstimationError);
+}
+
+TEST_F(AdaptiveKFTest, kfUpdateSmallerNewMeasurementTest) {
+    // keep last 2 error values
+    KalmanFilter kalmanFilter{2};
+    kalmanFilter.setDefaultValues();
+
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
+    initialState << 0, measurements[0], measurements[1];
+    kalmanFilter.init(initialState);
+    ASSERT_EQ(initialState, kalmanFilter.getState());
+
+    // start measurements vector
+    Eigen::VectorXd y(1);
+    y << measurements[0];
+
+    auto oldEstimationError = kalmanFilter.getEstimationError();
+
+    // predict and update
+    kalmanFilter.update(y);
+
+    // get new estimation error
+    auto newEstimationError = kalmanFilter.getEstimationError();
+    ASSERT_NE(oldEstimationError, newEstimationError);
+
+    // assert that error grows the same as the difference oldValue, newValue
+    ASSERT_NE(y[0], initialState[2]);
+    ASSERT_LT(y[0], initialState[2]);
+    ASSERT_GT(newEstimationError, oldEstimationError);
+}
 }// namespace NES
