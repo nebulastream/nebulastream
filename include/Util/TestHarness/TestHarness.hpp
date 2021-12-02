@@ -326,18 +326,18 @@ class TestHarness {
         //register query
         std::string queryString =
             queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-        auto faultToleranceIterator = stringToFaultToleranceTypeMap.find(faultTolerance);
-        if (faultToleranceIterator == stringToFaultToleranceTypeMap.end()) {
+        auto faultToleranceMode = stringToFaultToleranceTypeMap(faultTolerance);
+        if (faultToleranceMode == FaultToleranceType::INVALID) {
             NES_THROW_RUNTIME_ERROR("TestHarness: unable to identify fault tolerance guarantee");
         }
-        auto lineageIterator = stringToLineageTypeMap.find(lineage);
-        if (lineageIterator == stringToLineageTypeMap.end()) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: unable to identify lineage type");
+        auto lineageMode = stringToLineageTypeMap(lineage);
+        if (lineageMode == LineageType::INVALID) {
+            throw "TestHarness: Enable to find given lineage type";
         }
         QueryId queryId = queryService->validateAndQueueAddRequest(queryString,
                                                                    std::move(placementStrategyName),
-                                                                   faultToleranceIterator->second,
-                                                                   lineageIterator->second);
+                                                                   faultToleranceMode,
+                                                                   lineageMode);
 
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");

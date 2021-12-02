@@ -239,7 +239,7 @@ class QueryPlan {
      * @brief Set current lineage flag
      * @param LineageType: type of lineage for a given query
      */
-    void setLineageType(LineageType lineageType);
+    void setLineageType(LineageType lineageType = LineageType::NONE);
 
     /**
      * @brief Get current lineage flag
@@ -251,7 +251,7 @@ class QueryPlan {
      * @brief Set current fault-tolerance flag
      * @param FaultToleranceType: type of fault-tolerance for a given query
      */
-    void setFaultToleranceType(FaultToleranceType faultToleranceType);
+    void setFaultToleranceType(FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
   private:
     /**
