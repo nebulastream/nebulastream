@@ -170,14 +170,14 @@ class NesWorker {
 
     /**
      * @brief Method to let the Coordinator know that a Query failed
-     * @param queryId
-     * @param subQueryId
-     * @param workerId
-     * @param operatorId
-     * @param errormsg
+     * @param queryId of the failed query
+     * @param subQueryId of the failed query
+     * @param workerId of the worker that handled the failed query
+     * @param operatorId of failed query
+     * @param errorMsg to describe the reason of the failure
      * @return true if Notification was successful, false otherwise
      */
-    bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg);
+    bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
 
 
     uint64_t getWorkerId();

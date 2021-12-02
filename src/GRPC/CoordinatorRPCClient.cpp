@@ -268,7 +268,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     return false;
 }
 
-bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg) {
+bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg) {
 
     // create & fill the protobuf
     QueryFailureNotification request;
@@ -276,7 +276,7 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId, uint64_t subQuer
     request.set_subqueryid(subQueryId);
     request.set_workerid(workerId);
     request.set_operatorid(operatorId);
-    request.set_errormsg(errormsg);
+    request.set_errormsg(errorMsg);
 
     QueryFailureNotificationReply reply;
 
