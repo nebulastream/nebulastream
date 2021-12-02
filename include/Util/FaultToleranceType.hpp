@@ -20,18 +20,14 @@
 
 namespace NES {
 enum class FaultToleranceType : std::int8_t {
-    NONE = 0,    ///No fault-tolerance
-    AT_MOST = 1, ///At-most-once guarantee: some tuple buffers might be dropped
-    AT_LEAST = 2,///At-least-once guarantee: some tuple buffers might be processed twice
-    EXACTLY = 3, ///Exactly-once guarantee: all tuple buffers are processed once
+    NONE = 0,         ///No fault-tolerance
+    AT_MOST_ONCE = 1, ///At-most-once guarantee: some tuple buffers might be dropped
+    AT_LEAST_ONCE = 2,///At-least-once guarantee: some tuple buffers might be processed twice
+    EXACTLY_ONCE = 3, ///Exactly-once guarantee: all tuple buffers are processed once
     INVALID = 4
 };
 
-static std::unordered_map<std::string, FaultToleranceType> const stringToFaultToleranceTypeMap = {
-    {"NONE", FaultToleranceType::NONE},
-    {"AT_MOST", FaultToleranceType::AT_MOST},
-    {"AT_LEAST", FaultToleranceType::AT_LEAST},
-    {"EXACTLY", FaultToleranceType::EXACTLY}};
+FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranceMode);
 }// namespace NES
 
 #endif//NES_FAULTTOLERANCETYPE_H

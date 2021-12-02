@@ -21,6 +21,8 @@ add_source_nes(
         ThreadNaming.cpp
         BufferSequenceNumber.cpp
         TestUtils.cpp
+        FaultToleranceType.cpp
+        LineageType.cpp
 )
 if (NES_USE_MQTT)
     add_source_nes(

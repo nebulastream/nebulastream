@@ -68,8 +68,8 @@ class QueryService {
      */
     uint64_t validateAndQueueAddRequest(const std::string& queryString,
                                         const std::string& placementStrategyName,
-                                        const FaultToleranceType faultTolerance,
-                                        const LineageType lineage);
+                                        const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                        const LineageType lineage = LineageType::NONE);
 
     /**
      * @deprecated NOT TO BE USED
@@ -84,8 +84,8 @@ class QueryService {
     uint64_t addQueryRequest(const std::string& queryString,
                              Query query,
                              const std::string& placementStrategyName,
-                             FaultToleranceType faultTolerance,
-                             LineageType lineage);
+                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                             const LineageType lineage = LineageType::NONE);
 
     /**
      * @brief This method is used for submitting the queries directly to the system.
@@ -97,8 +97,8 @@ class QueryService {
      */
     uint64_t addQueryRequest(const QueryPlanPtr& queryPlan,
                              const std::string& placementStrategyName,
-                             FaultToleranceType faultTolerance,
-                             LineageType lineage);
+                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                             const LineageType lineage = LineageType::NONE);
 
     /**
      * @brief
@@ -112,8 +112,8 @@ class QueryService {
     uint64_t addQueryRequest(const std::string& queryString,
                              const QueryPlanPtr& queryPlan,
                              const std::string& placementStrategyName,
-                             FaultToleranceType faultTolerance,
-                             LineageType lineage);
+                             const FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                             const LineageType lineage = LineageType::NONE);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.

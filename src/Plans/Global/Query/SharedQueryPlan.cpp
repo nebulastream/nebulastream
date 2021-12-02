@@ -33,6 +33,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     //Create a new query plan
     this->queryPlan = QueryPlan::create();
     this->queryPlan->setFaultToleranceType(queryPlan->getFaultToleranceType());
+    this->queryPlan->setLineageType(queryPlan->getLineageType());
     auto rootOperators = queryPlan->getRootOperators();
     for (const auto& rootOperator : rootOperators) {
         this->queryPlan->addRootOperator(rootOperator);
@@ -132,7 +133,7 @@ std::vector<QueryId> SharedQueryPlan::getQueryIds() { return queryIds; }
 QueryPlanPtr SharedQueryPlan::getQueryPlan() { return queryPlan; }
 
 bool SharedQueryPlan::addQueryIdAndSinkOperators(const QueryPlanPtr& queryPlan) {
-    // TODO Handling Fault-Tolerance in case of query merging
+    // TODO Handling Fault-Tolerance in case of query merging [#2327]
     auto queryId = queryPlan->getQueryId();
     queryIds.emplace_back(queryId);
     for (const auto& sinkOperator : queryPlan->getRootOperators()) {

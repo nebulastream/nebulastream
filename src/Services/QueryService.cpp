@@ -123,8 +123,8 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
 uint64_t QueryService::addQueryRequest(const std::string& queryString,
                                        Query query,
                                        const std::string& placementStrategyName,
-                                       FaultToleranceType faultTolerance,
-                                       LineageType lineage) {
+                                       const FaultToleranceType faultTolerance,
+                                       const LineageType lineage) {
     NES_INFO("QueryService: Queuing the query for the execution");
     auto queryPlan = query.getQueryPlan();
     queryPlan->setFaultToleranceType(faultTolerance);
@@ -140,8 +140,8 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
 
 uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan,
                                        const std::string& placementStrategyName,
-                                       FaultToleranceType faultTolerance,
-                                       LineageType lineage) {
+                                       const FaultToleranceType faultTolerance,
+                                       const LineageType lineage) {
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery("", queryPlan, placementStrategyName);
     queryPlan->setFaultToleranceType(faultTolerance);
     queryPlan->setLineageType(lineage);
@@ -156,8 +156,8 @@ uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan,
 uint64_t QueryService::addQueryRequest(const std::string& queryString,
                                        const QueryPlanPtr& queryPlan,
                                        const std::string& placementStrategyName,
-                                       FaultToleranceType faultTolerance,
-                                       LineageType lineage) {
+                                       const FaultToleranceType faultTolerance,
+                                       const LineageType lineage) {
 
     // assign the id for the query and individual operators
     assignQueryAndOperatorIds(queryPlan);

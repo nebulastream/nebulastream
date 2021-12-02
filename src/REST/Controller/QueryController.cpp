@@ -33,6 +33,8 @@
 
 namespace NES {
 
+const std::string DEFAULT_TOLERANCE_TYPE = "NONE";
+
 QueryController::QueryController(QueryServicePtr queryService,
                                  QueryCatalogPtr queryCatalog,
                                  TopologyPtr topology,
@@ -135,28 +137,28 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         NES_ERROR("QueryController: handlePost -execute-query: Wrong key word for user query, use 'userQuery'.");
                     }
                     std::string optimizationStrategyName = req.at("strategyName").as_string();
-                    std::string faultToleranceString = "NONE";
-                    std::string lineageString = "NONE";
+                    std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
+                    std::string lineageString = DEFAULT_TOLERANCE_TYPE;
                     if (req.has_field("faultTolerance")) {
-                        faultToleranceString = req.at("faultTolerance").as_string();
+                        std::string faultToleranceString = req.at("faultTolerance").as_string();
                     }
                     if (req.has_field("lineage")) {
                         lineageString = req.at("lineage").as_string();
                     }
-                    auto faultToleranceIterator = stringToFaultToleranceTypeMap.find(faultToleranceString);
-                    if (faultToleranceIterator == stringToFaultToleranceTypeMap.end()) {
+                    auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
+                    if (faultToleranceMode == FaultToleranceType::INVALID) {
                         throw "QueryController: Enable to find given fault tolerance type";
                     }
-                    auto lineageIterator = stringToLineageTypeMap.find(lineageString);
-                    if (lineageIterator == stringToLineageTypeMap.end()) {
+                    auto lineageMode = stringToLineageTypeMap(lineageString);
+                    if (lineageMode == LineageType::INVALID) {
                         throw "QueryController: Enable to find given lineage type";
                     }
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
                     QueryId queryId = queryService->validateAndQueueAddRequest(userQuery,
                                                                                optimizationStrategyName,
-                                                                               faultToleranceIterator->second,
-                                                                               lineageIterator->second);
+                                                                               faultToleranceMode,
+                                                                               lineageMode);
 
                     //Prepare the response
                     web::json::value restResponse{};
@@ -196,8 +198,8 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                     std::string* queryString = protobufMessage->mutable_querystring();
                     auto* context = protobufMessage->mutable_context();
                     std::string placementStrategy = context->at("placement").value();
-                    std::string faultToleranceString = "NONE";
-                    std::string lineageString = "NONE";
+                    std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
+                    std::string lineageString = DEFAULT_TOLERANCE_TYPE;
                     if (context->contains("faultTolerance")) {
                         faultToleranceString = context->at("faultTolerance").value();
                     }
@@ -205,20 +207,20 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
                         lineageString = context->at("lineage").value();
                     }
 
-                    auto faultToleranceIterator = stringToFaultToleranceTypeMap.find(faultToleranceString);
-                    if (faultToleranceIterator == stringToFaultToleranceTypeMap.end()) {
-                        throw "QueryController: Enable to find given fault tolerance type";
+                    auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
+                    if (faultToleranceMode == FaultToleranceType::INVALID) {
+                        throw Exception("QueryController: Enable to find given fault tolerance type");
                     }
-                    auto lineageIterator = stringToLineageTypeMap.find(lineageString);
-                    if (lineageIterator == stringToLineageTypeMap.end()) {
+                    auto lineageMode = stringToLineageTypeMap(lineageString);
+                    if (lineageMode == LineageType::INVALID) {
                         throw "QueryController: Enable to find given lineage type";
                     }
 
                     QueryId queryId = queryService->addQueryRequest(*queryString,
                                                                     queryPlan,
                                                                     placementStrategy,
-                                                                    faultToleranceIterator->second,
-                                                                    lineageIterator->second);
+                                                                    faultToleranceMode,
+                                                                    lineageMode);
 
                     web::json::value restResponse{};
                     restResponse["queryId"] = web::json::value::number(queryId);
