@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_SOURCES_PARSERS_JSON_PARSER_HPP_
 #define NES_INCLUDE_SOURCES_PARSERS_JSON_PARSER_HPP_
 
+#include "../../Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
 #include <Sources/Parsers/Parser.hpp>
 
 namespace NES {
@@ -38,11 +39,10 @@ class JSONParser : public Parser {
    * @param schema: data schema
    * @param rowLayout: internal row layout, row if true, otherwise column will be used
    */
-    bool writeInputTupleToTupleBuffer(std::string jsonTuple,
+    bool writeInputTupleToTupleBuffer(const std::string& jsonTuple,
                                       uint64_t tupleCount,
-                                      NES::Runtime::TupleBuffer& tupleBuffer,
-                                      SchemaPtr schema,
-                                      bool rowLayout) override;
+                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                      const SchemaPtr& schema) override;
 
   private:
     uint64_t numberOfSchemaFields;

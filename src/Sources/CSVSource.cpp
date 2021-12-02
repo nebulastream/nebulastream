@@ -18,6 +18,9 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
@@ -87,14 +90,29 @@ CSVSource::CSVSource(SchemaPtr schema,
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on " << operatorId);
-    auto buffer = this->bufferManager->getBufferBlocking();
-    fillBuffer(buffer);
-    NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+    auto tupleBuffer = this->bufferManager->getBufferBlocking();
+    if (rowLayout){
+        Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->bufferManager->getBufferSize());
+        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, tupleBuffer);
+        fillBuffer(buffer);
+        NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
 
-    if (buffer.getNumberOfTuples() == 0) {
-        return std::nullopt;
+        if (buffer.getNumberOfTuples() == 0) {
+            return std::nullopt;
+        }
+        return buffer.getBuffer();
+    } else {
+        Runtime::MemoryLayouts::ColumnLayoutPtr layoutPtr = Runtime::MemoryLayouts::ColumnLayout::create(schema, this->bufferManager->getBufferSize());
+        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, tupleBuffer);
+        fillBuffer(buffer);
+        NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+
+        if (buffer.getNumberOfTuples() == 0) {
+            return std::nullopt;
+        }
+        return buffer.getBuffer();
     }
-    return buffer;
+
 }
 
 std::string CSVSource::toString() const {
@@ -105,7 +123,7 @@ std::string CSVSource::toString() const {
     return ss.str();
 }
 
-void CSVSource::fillBuffer(Runtime::TupleBuffer& buffer) {
+void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     NES_DEBUG("CSVSource::fillBuffer: start at pos=" << currentPositionInFile << " fileSize=" << fileSize);
     if (this->fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");
@@ -117,10 +135,10 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buffer) {
     uint64_t generatedTuplesThisPass = 0;
     //fill buffer maximally
     if (numberOfTuplesToProducePerBuffer == 0) {
-        generatedTuplesThisPass = buffer.getBufferSize() / tupleSize;
+        generatedTuplesThisPass = buffer.getBuffer().getBufferSize() / tupleSize;
     } else {
         generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
-        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBufferSize(), "Wrong parameters");
+        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
     }
     NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generatedTuplesThisPass << " of size=" << tupleSize);
 
@@ -154,7 +172,7 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buffer) {
         NES_TRACE("CSVSource line=" << tupleCount << " val=" << line);
         // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
 
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, rowLayout);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema);
         tupleCount++;
     }//end of while
 
@@ -163,7 +181,7 @@ void CSVSource::fillBuffer(Runtime::TupleBuffer& buffer) {
     generatedTuples += tupleCount;
     generatedBuffers++;
     NES_TRACE("CSVSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << currentPositionInFile);
-    NES_TRACE("CSVSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer, schema));
+    NES_TRACE("CSVSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }

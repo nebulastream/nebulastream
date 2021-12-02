@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include "../../../include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger.hpp>
@@ -23,15 +24,14 @@
 
 namespace NES {
 
-CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string const& delimiter)
+CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string  delimiter)
     : Parser(physicalTypes), numberOfSchemaFields(numberOfSchemaFields), physicalTypes(std::move(physicalTypes)),
-      delimiter(delimiter) {}
+      delimiter(std::move(delimiter)) {}
 
-bool CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine,
+bool CSVParser::writeInputTupleToTupleBuffer(const std::string& csvInputLine,
                                              uint64_t tupleCount,
-                                             NES::Runtime::TupleBuffer& tupleBuffer,
-                                             SchemaPtr schema,
-                                             bool rowLayout) {
+                                             Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                             const SchemaPtr& schema) {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount: " << tupleCount);
 
     std::vector<std::string> values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
@@ -39,11 +39,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(std::string csvInputLine,
     // iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++) {
         auto field = physicalTypes[j];
-        if (rowLayout == true) {
-            writeFieldValueToTupleBufferRowLayout(values[j], j, tupleBuffer, false, schema, tupleCount);
-        } else {
-            writeFieldValueToTupleBufferColumnLayout(values[j], j, tupleBuffer, false, schema, tupleCount);
-        }
+            writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, false, schema, tupleCount);
     }
     return true;
 }

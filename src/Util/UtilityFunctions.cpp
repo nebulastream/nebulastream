@@ -174,7 +174,7 @@ std::string Util::prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const Sch
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema) {
+std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto* buffer = tbuffer.getBuffer<char>();
