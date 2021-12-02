@@ -443,34 +443,4 @@ TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
     ASSERT_NE(newEstimationError, oldEstimationError);
     ASSERT_GT(newEstimationError, oldEstimationError);
 }
-
-TEST_F(AdaptiveKFTest, kfUpdateSmallerNewMeasurementTest) {
-    // keep last 2 error values
-    KalmanFilter kalmanFilter{2};
-    kalmanFilter.setDefaultValues();
-
-    // initial state estimations, values can be random
-    Eigen::VectorXd initialState(3);
-    initialState << 0, measurements[0], measurements[1];
-    kalmanFilter.init(initialState);
-    ASSERT_EQ(initialState, kalmanFilter.getState());
-
-    // start measurements vector
-    Eigen::VectorXd y(1);
-    y << measurements[0];
-
-    auto oldEstimationError = kalmanFilter.getEstimationError();
-
-    // predict and update
-    kalmanFilter.update(y);
-
-    // get new estimation error
-    auto newEstimationError = kalmanFilter.getEstimationError();
-    ASSERT_NE(oldEstimationError, newEstimationError);
-
-    // assert that error grows the same as the difference oldValue, newValue
-    ASSERT_NE(y[0], initialState[2]);
-    ASSERT_LT(y[0], initialState[2]);
-    ASSERT_GT(newEstimationError, oldEstimationError);
-}
 }// namespace NES
