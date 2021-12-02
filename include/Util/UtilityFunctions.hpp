@@ -190,7 +190,7 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
     * @brief this method creates a string from the content of a tuple buffer
     * @return string of the buffer content
     */
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer& tbuffer, const SchemaPtr& schema);
+std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /**
     * @brief this method creates a string from the content of a tuple buffer

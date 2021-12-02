@@ -44,11 +44,10 @@ class Parser {//: public Runtime::Reconfigurable
    * @param schema: data schema
    * @param rowLayout: internal row layout, row if true, otherwise column will be used
    */
-    virtual bool writeInputTupleToTupleBuffer(std::string inputTuple,
+    virtual bool writeInputTupleToTupleBuffer(const std::string& inputTuple,
                                               uint64_t tupleCount,
-                                              NES::Runtime::TupleBuffer& tupleBuffer,
-                                              SchemaPtr schema,
-                                              bool rowLayout) = 0;
+                                              Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                              const SchemaPtr& schema) = 0;
 
     /**
    * @brief casts a value in string format to the correct type and writes it to the TupleBuffer
@@ -59,28 +58,12 @@ class Parser {//: public Runtime::Reconfigurable
    * @param schema: the schema the data are supposed to have
    * @param tupleCount: current tuple count, i.e. how many tuples have already been produced
    */
-    void writeFieldValueToTupleBufferRowLayout(std::string value,
-                                               uint64_t schemaFieldIndex,
-                                               NES::Runtime::TupleBuffer& tupleBuffer,
-                                               bool json,
-                                               SchemaPtr schema,
-                                               uint64_t tupleCount);
-
-    /**
-   * @brief casts a value in string format to the correct type and writes it to the TupleBuffer using column layout
-   * @param inputString: string value that is cast to the PhysicalType and written to the TupleBuffer
-   * @param schemaFieldIndex: field/attribute that is currently processed
-   * @param buffer: the TupleBuffer to which the value is written
-   * @param json: denotes whether input comes from JSON for correct parsing
-   * @param schema: the schema the data are supposed to have
-   * @param tupleCount: current tuple count, i.e. how many tuples have already been produced
-   */
-    void writeFieldValueToTupleBufferColumnLayout(std::basic_string<char> inputString,
-                                                  uint64_t schemaFieldIndex,
-                                                  Runtime::TupleBuffer& tupleBuffer,
-                                                  bool json,
-                                                  SchemaPtr schema,
-                                                  uint64_t tupleCount);
+    void writeFieldValueToTupleBuffer(std::string value,
+                                      uint64_t schemaFieldIndex,
+                                      Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                      bool json,
+                                      const SchemaPtr& schema,
+                                      uint64_t tupleCount);
 
   private:
     std::vector<PhysicalTypePtr> physicalTypes;

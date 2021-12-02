@@ -934,7 +934,9 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
                                  {});
     csvDataSource.fileEnded = true;
     auto buf = this->GetEmptyBuffer();
-    csvDataSource.fillBuffer(*buf);
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    csvDataSource.fillBuffer(buffer);
     EXPECT_EQ(buf->getNumberOfTuples(), 0u);
 }
 
@@ -959,7 +961,9 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
     auto buf = this->GetEmptyBuffer();
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0u);
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
-    csvDataSource.fillBuffer(*buf);
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    csvDataSource.fillBuffer(buffer);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 1u);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 1u);
 }
@@ -986,7 +990,9 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
     auto buf = this->GetEmptyBuffer();
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 0u);
     ASSERT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 0u);
-    csvDataSource.fillBuffer(*buf);
+    std::shared_ptr<Runtime::MemoryLayouts::ColumnLayout> layoutPtr = Runtime::MemoryLayouts::ColumnLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    csvDataSource.fillBuffer(buffer);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedTuples(), 1u);
     EXPECT_EQ(csvDataSource.getNumberOfGeneratedBuffers(), 1u);
 }
@@ -1011,7 +1017,9 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
                                  {});
     auto buf = this->GetEmptyBuffer();
     try {
-        csvDataSource.fillBuffer(*buf);
+        Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+        csvDataSource.fillBuffer(buffer);
     } catch (std::invalid_argument const& err) {// 1/2 throwables from stoull
         // TODO: is the "overwrite" of the message a good thing?
         // EXPECT_EQ(err.what(),std::string("Invalid argument"));
@@ -1044,7 +1052,9 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
                                  {});
     auto buf = this->GetEmptyBuffer();
     try {
-        csvDataSource.fillBuffer(*buf);
+        Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+        csvDataSource.fillBuffer(buffer);
     } catch (std::invalid_argument const& err) {// 1/2 throwables from stoull
         // TODO: is the "overwrite" of the message a good thing?
         // EXPECT_EQ(err.what(),std::string("Invalid argument"));
@@ -1075,7 +1085,9 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
                                  this->numSourceLocalBuffersDefault,
                                  {});
     auto buf = this->GetEmptyBuffer();
-    csvDataSource.fillBuffer(*buf);
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<ysbRecord>();
     EXPECT_STREQ(content->ad_type, "banner78");
     EXPECT_TRUE((!strcmp(content->event_type, "view") || !strcmp(content->event_type, "click")
@@ -1102,7 +1114,9 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
                                  this->numSourceLocalBuffersDefault,
                                  {});
     auto buf = this->GetEmptyBuffer();
-    csvDataSource.fillBuffer(*buf);
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<ysbRecord>();
     EXPECT_STREQ(content->ad_type, "banner78");
     EXPECT_TRUE((!strcmp(content->event_type, "view") || !strcmp(content->event_type, "click")
@@ -1133,8 +1147,10 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
     ASSERT_FALSE(csvDataSource.fileEnded);
     ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
-        csvDataSource.fillBuffer(*buf);
+        csvDataSource.fillBuffer(buffer);
         EXPECT_NE(buf->getNumberOfTuples(), 0u);
         EXPECT_TRUE(buf.has_value());
         for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
@@ -1175,8 +1191,10 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
     ASSERT_FALSE(csvDataSource.fileEnded);
     ASSERT_FALSE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {// relative to file size
-        csvDataSource.fillBuffer(*buf);
+        csvDataSource.fillBuffer(buffer);
         EXPECT_NE(buf->getNumberOfTuples(), 0u);
         EXPECT_TRUE(buf.has_value());
         for (uint64_t i = 0; i < buf->getNumberOfTuples(); i++) {
@@ -1217,8 +1235,10 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
     ASSERT_FALSE(csvDataSource.fileEnded);
     ASSERT_TRUE(csvDataSource.loopOnFile);
     auto buf = this->GetEmptyBuffer();
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     while (csvDataSource.getNumberOfGeneratedBuffers() < expectedNumberOfBuffers) {
-        csvDataSource.fillBuffer(*buf);
+        csvDataSource.fillBuffer(buffer);
     }
     EXPECT_FALSE(csvDataSource.fileEnded);
     EXPECT_TRUE(csvDataSource.loopOnFile);
@@ -1257,7 +1277,9 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                  {});
 
     auto buf = this->GetEmptyBuffer();
-    csvDataSource.fillBuffer(*buf);
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyIntTypeRecord>();
 
     // number is in the expected range
@@ -1320,7 +1342,9 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
                                  {});
 
     auto buf = this->GetEmptyBuffer();
-    csvDataSource.fillBuffer(*buf);
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyFloatTypeRecord>();
     EXPECT_LE(content->float64_entry, std::numeric_limits<double>::max());
     EXPECT_GE(content->float64_entry, std::numeric_limits<double>::min());
@@ -1358,7 +1382,9 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
                                  {});
 
     auto buf = this->GetEmptyBuffer();
-    csvDataSource.fillBuffer(*buf);
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
+    csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyBooleanTypeRecord>();
     EXPECT_FALSE(content->false_entry);
     EXPECT_TRUE(content->true_entry);

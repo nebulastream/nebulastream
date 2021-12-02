@@ -30,11 +30,10 @@ JSONParser::JSONParser(uint64_t numberOfSchemaFields,
     : Parser(physicalTypes), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
       physicalTypes(std::move(physicalTypes)) {}
 
-bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
+bool JSONParser::writeInputTupleToTupleBuffer(const std::string& jsonTuple,
                                               uint64_t tupleCount,
-                                              NES::Runtime::TupleBuffer& tupleBuffer,
-                                              SchemaPtr schema,
-                                              bool rowLayout) {
+                                              Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
+                                              const SchemaPtr& schema) {
     NES_TRACE("JSONParser::parseJSONMessage: Current TupleCount: " << tupleCount);
 
     std::vector<std::string> helperToken;
@@ -56,11 +55,7 @@ bool JSONParser::writeInputTupleToTupleBuffer(std::string jsonTuple,
             return false;
         }
 
-        if (rowLayout == true) {
-            writeFieldValueToTupleBufferRowLayout(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
-        } else {
-            writeFieldValueToTupleBufferColumnLayout(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
-        }
+        writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, true, schema, tupleCount);
     }
     return true;
 }
