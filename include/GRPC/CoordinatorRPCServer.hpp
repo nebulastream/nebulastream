@@ -18,7 +18,6 @@
 #define NES_INCLUDE_GRPC_COORDINATOR_RPC_SERVER_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
-#include <WorkerRPCService.grpc.pb.h>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
@@ -28,7 +27,6 @@
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
-//using grpc::ClientContext;
 using grpc::Status;
 
 namespace NES {
@@ -136,8 +134,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     /**
      * @brief RPC Call to notify the failure of a query
      * @param context
-     * @param request
-     * @param reply
+     * @param request that is sent from worker to the coordinator and filled with information of the failed query (Ids of query, worker, etc. and error message)
+     * @param reply that is sent back from the coordinator to the worker to confirm that notification was successful
      * @return success
      */
     Status NotifyQueryFailure(ServerContext* context, const QueryFailureNotification* request, QueryFailureNotificationReply* reply) override;

@@ -141,7 +141,7 @@ message QueryFailureNotification{
   uint64 subQueryId = 2;
   uint64 workerId = 3;
   uint64 operatorId = 4;
-  string errormsg = 5;
+  string errorMsg = 5;
 }
 
 message QueryFailureNotificationReply{

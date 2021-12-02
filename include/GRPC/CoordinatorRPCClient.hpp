@@ -18,11 +18,10 @@
 #define NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
-#include <CoordinatorRPCService.pb.h>
-
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
+
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -126,10 +125,10 @@ class CoordinatorRPCClient {
      * @param subQueryId: subQuery Id of failed Query
      * @param workerId: workerId where the Query failed
      * @param operatorId: operator Id of failed Query
-     * @param errormsg: more information about failure of the Query
+     * @param errorMsg: more information about failure of the Query
      * @return bool indicating success
      */
-    bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errormsg);
+    bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
 
   private:
     uint64_t workerId;
