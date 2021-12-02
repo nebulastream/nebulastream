@@ -209,11 +209,11 @@ void QueryController::handlePost(const std::vector<utility::string_t>& path, web
 
                     auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
                     if (faultToleranceMode == FaultToleranceType::INVALID) {
-                        throw Exception("QueryController: Enable to find given fault tolerance type");
+                        throw Exception("QueryController: unable to find given fault tolerance type");
                     }
                     auto lineageMode = stringToLineageTypeMap(lineageString);
                     if (lineageMode == LineageType::INVALID) {
-                        throw "QueryController: Enable to find given lineage type";
+                        throw Exception("QueryController: unable to find given lineage type");
                     }
 
                     QueryId queryId = queryService->addQueryRequest(*queryString,
