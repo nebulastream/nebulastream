@@ -332,7 +332,7 @@ class TestHarness {
         }
         auto lineageMode = stringToLineageTypeMap(lineage);
         if (lineageMode == LineageType::INVALID) {
-            throw "TestHarness: Enable to find given lineage type";
+            NES_THROW_RUNTIME_ERROR("TestHarness: unable to find given lineage type");
         }
         QueryId queryId = queryService->validateAndQueueAddRequest(queryString,
                                                                    std::move(placementStrategyName),
