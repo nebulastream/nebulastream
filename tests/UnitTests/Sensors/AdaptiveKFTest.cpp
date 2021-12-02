@@ -414,33 +414,41 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalTest) {
 }
 
 TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
-    // update two times, compare between 1st and 2nd update
+    // update two filters once with the same value
+    // compare errors after one "normal" and one "abnormal" value
 
     // keep last 2 error values
-    KalmanFilter kalmanFilter{2};
-    kalmanFilter.setDefaultValues();
+    KalmanFilter kfNormal{2}; // normal
+    KalmanFilter kfAbnormal{2};// abnormal
 
-    // initial state estimations, values can be random
+    // initial state estimations, values are the same up to this point
     Eigen::VectorXd initialState(3);
     initialState << 0, measurements[0], measurements[1];
-    kalmanFilter.init(initialState);
-    ASSERT_EQ(initialState, kalmanFilter.getState());
+    kfNormal.init(initialState);
+    kfAbnormal.init(initialState);
+    ASSERT_EQ(initialState, kfNormal.getState());
+    ASSERT_EQ(initialState, kfAbnormal.getState());
+    ASSERT_EQ(kfNormal.getState(), kfAbnormal.getState());
 
     // start measurements vector
     Eigen::VectorXd y(1);
     y << measurements[2]; // 1.2913511148
-    kalmanFilter.update(y); // update once, this has a huge error due to starting vals
-    y << measurements[3]; // 1.48485250951, somewhat "similar"
-    kalmanFilter.update(y);
-    auto oldEstimationError = kalmanFilter.getEstimationError();
+    kfNormal.update(y); // update once, this has a huge error due to starting vals
+    kfAbnormal.update(y);
+    ASSERT_EQ(kfNormal.getEstimationError(), kfAbnormal.getEstimationError());
 
-    // update 2nd time, compare between 1st and 2nd update
+    // update 1st filter, normal value (similar to first update)
+    y << measurements[3]; // 1.48485250951, somewhat "normal"
+    kfNormal.update(y);
+    auto normalEstimationError = kfNormal.getEstimationError();
+
+    // update 2nd filter, abnormal value (very different from first update)
     y << -0.287; // didn't expect this, chief!
-    kalmanFilter.update(y);
-    auto newEstimationError = kalmanFilter.getEstimationError();
+    kfAbnormal.update(y);
+    auto abnormalEstimationError = kfAbnormal.getEstimationError();
 
-    // assert that error grew when value is "unusual"
-    ASSERT_NE(newEstimationError, oldEstimationError);
-    ASSERT_GT(newEstimationError, oldEstimationError);
+    // assert that error is bigger when value is "abnormal"
+    ASSERT_NE(abnormalEstimationError, normalEstimationError);
+    ASSERT_GT(abnormalEstimationError, normalEstimationError);
 }
 }// namespace NES
