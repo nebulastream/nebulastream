@@ -251,6 +251,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t nextPeriodStartTime = 0;
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
+    uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 10;
     while (running) {
         //create as many tuples as requested and then sleep
         auto startPeriod =
@@ -258,7 +259,7 @@ void DataSource::runningRoutineWithIngestionRate() {
         uint64_t buffersProcessedCnt = 0;
 
         //produce buffers until limit for this second or for all perionds is reached or source is topped
-        while (buffersProcessedCnt < gatheringIngestionRate && running && processedOverallBufferCnt < numBuffersToProcess) {
+        while (buffersProcessedCnt < buffersToProducePer100Ms && running && processedOverallBufferCnt < numBuffersToProcess) {
             auto optBuf = receiveData();
 
             if (optBuf.has_value()) {
@@ -280,7 +281,7 @@ void DataSource::runningRoutineWithIngestionRate() {
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         //next point in time when to start producing again
-        nextPeriodStartTime = uint64_t(startPeriod + (1000));
+        nextPeriodStartTime = uint64_t(startPeriod + (100));
         NES_DEBUG("DataSource: startTimeSendBuffers=" << startPeriod << " endTimeSendBuffers=" << endPeriod
                                                       << " nextPeriodStartTime=" << nextPeriodStartTime);
 
@@ -302,11 +303,16 @@ void DataSource::runningRoutineWithIngestionRate() {
                 std::this_thread::sleep_for(std::chrono::milliseconds(nextPeriodStartTime - curTime));
             }
         }
-        NES_DEBUG("DataSource: Done with period " << curPeriod
+        NES_DEBUG("DataSource: Done with period " << curPeriod++
                                                   << " "
-                                                     "and buffers="
-                                                  << processedOverallBufferCnt << " sleepCnt=" << sleepCnt);
-    }
+                                                     "and overall buffers="
+                                                  << processedOverallBufferCnt << " sleepCnt=" << sleepCnt
+                                                  <<  " startPeriod=" << startPeriod
+                                                  << " endPeriod=" << endPeriod
+                                                  << " nextPeriodStartTime=" << nextPeriodStartTime
+                                                  << " curTime=" << curTime
+                                                  );
+    }//end of while
 
     // inject reconfiguration task containing end of stream
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
