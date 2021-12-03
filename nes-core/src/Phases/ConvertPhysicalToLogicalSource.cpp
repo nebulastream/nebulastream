@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Sources/AdaptiveKFSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -27,7 +26,6 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
-#include <Sources/AdaptiveKFSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
@@ -74,16 +72,6 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             const SourceDescriptorPtr csvSourceDescriptor =
                 CsvSourceDescriptor::create(csvSourcePtr->getSchema(), csvSourcePtr->getSourceConfigPtr());
             return csvSourceDescriptor;
-        }
-        case KF_SOURCE: {
-            NES_INFO("ConvertPhysicalToLogicalSource: Creating Adaptive KF source");
-            const AdaptiveKFSourcePtr adaptiveKfSourcePtr = std::dynamic_pointer_cast<AdaptiveKFSource>(dataSource);
-            const SourceDescriptorPtr adaptiveKfSourceDescriptor =
-                AdaptiveKFSourceDescriptor::create(adaptiveKfSourcePtr->getSchema(),
-                                                   adaptiveKfSourcePtr->getNumberOfTuplesToProducePerBuffer(),
-                                                   adaptiveKfSourcePtr->getNumBuffersToProcess(),
-                                                   adaptiveKfSourcePtr->getFrequency());
-            return adaptiveKfSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD
         case KAFKA_SOURCE: {
