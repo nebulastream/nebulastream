@@ -19,6 +19,7 @@
 
 #include <Eigen/Dense>
 #include <Util/CircularBuffer.hpp>
+#include <chrono>
 
 namespace NES {
 
@@ -84,9 +85,9 @@ class KalmanFilter {
      * Paper is not clear on the magnitude (size) of
      * the range, this can be determined in tests later.
      */
-    uint64_t freqRange{2};   // freq +- 2
-    uint64_t frequency{1};       // currently in use
-    uint64_t freqLastReceived{1};// from coordinator
+    std::chrono::milliseconds freqRange{2000}; // allowed to change by 6s
+    std::chrono::milliseconds frequency{1000}; // currently in use
+    std::chrono::milliseconds freqLastReceived{1000}; // from coordinator
 
     /**
      * @brief control units for changing the new
@@ -117,7 +118,14 @@ class KalmanFilter {
     float totalEstimationErrorDivider;
     float calculateTotalEstimationError(); // eq. 9
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calc. once)
-    uint64_t decideNewGatheringInterval();// eq. 7 and 10 in the paper
+
+    /**
+     * @brief calculate new gathering interval using euler number
+     * as the smoothing part. The new proposed gathering interval
+     * has to stay inside the original frequency range.
+     * @return a new gathering interval that we can sleep on
+     */
+    std::chrono::milliseconds decideNewGatheringInterval(); // eq. 7 and 10
 
 };// class KalmanFilter
 

@@ -142,15 +142,17 @@ void KalmanFilter::calculateTotalEstimationErrorDivider(int size) {
     }
 }
 
-uint64_t KalmanFilter::decideNewGatheringInterval() {
+std::chrono::milliseconds KalmanFilter::decideNewGatheringInterval() {
     // eq. 10
     auto powerOfEuler = (this->calculateTotalEstimationError() + lambda) / lambda;
-    auto newFreqCandidate = frequency + (theta * (1 - std::pow(eulerConstant, powerOfEuler)));
-    if (newFreqCandidate >= freqLastReceived - (freqRange / 2) &&
-        newFreqCandidate <= freqLastReceived + (freqRange / 2)) { // eq. 7
-        frequency = newFreqCandidate;
+    auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
+    auto newFreqCandidate = this->frequency.count() + thetaPart;
+    if (newFreqCandidate >= freqLastReceived.count() - (freqRange.count() / 2) &&
+        newFreqCandidate <= freqLastReceived.count() + (freqRange.count() / 2)) { // eq. 7
+        // remove fractional part from double
+        this->frequency = std::chrono::milliseconds((int) trunc(newFreqCandidate));
     }
-    return frequency;
+    return this->frequency;
 }
 
 }// namespace NES
