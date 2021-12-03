@@ -55,6 +55,21 @@ class KalmanFilter {
     float getLambda() { return lambda; }
     void setLambda(float newLambda);
 
+    // frequency related setters
+    // needed if we want to set freq/ranger after init
+    void setFrequency(std::chrono::milliseconds frequencyInMillis) {
+        frequency = frequencyInMillis;
+        freqLastReceived = frequencyInMillis;
+    }
+    void setFrequencyRange(std::chrono::milliseconds frequencyRange) {
+        freqRange = frequencyRange;
+    }
+    void setFrequencyWithRange(std::chrono::milliseconds frequencyInMillis,
+                               std::chrono::milliseconds frequencyRange) {
+        setFrequency(frequencyInMillis);
+        setFrequencyRange(frequencyRange);
+    }
+
   protected:
     int m, n;// system model dimensions
 
