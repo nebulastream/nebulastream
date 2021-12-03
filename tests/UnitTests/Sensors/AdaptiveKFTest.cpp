@@ -94,6 +94,7 @@ class KFProxy : public KalmanFilter {
     FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorFilledWindowTest);
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerTest);
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalTest);
+    FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalMillisTest);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
@@ -394,7 +395,7 @@ TEST_F(AdaptiveKFTest, kfInitWithStateTest) {
     ASSERT_EQ(kfProxy.getState()[1], measurements[0]);
 }
 
-TEST_F(AdaptiveKFTest, kfNewGatheringIntervalTest) {
+TEST_F(AdaptiveKFTest, kfNewGatheringIntervalMillisTest) {
     // initial state estimations, values can be random
     Eigen::VectorXd initialState(3);
     initialState << 0, measurements[0], -9.81;
@@ -410,7 +411,8 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalTest) {
     ASSERT_NEAR(kfProxy.calculateTotalEstimationError(), 0.6, 0.1);
 
     auto newFrequency = kfProxy.decideNewGatheringInterval();
-    ASSERT_EQ(oldFrequency, newFrequency);
+    ASSERT_NE(oldFrequency.count(), newFrequency.count());
+    ASSERT_GT(oldFrequency.count(), newFrequency.count());
 }
 
 TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
