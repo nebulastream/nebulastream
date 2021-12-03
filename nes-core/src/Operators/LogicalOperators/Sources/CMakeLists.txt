@@ -28,6 +28,5 @@ add_source_nes(
         MQTTSourceDescriptor.cpp
         LambdaSourceDescriptor.cpp
         BenchmarkSourceDescriptor.cpp
-        AdaptiveKFSourceDescriptor.cpp
         KFSourceDescriptor.cpp
 )
