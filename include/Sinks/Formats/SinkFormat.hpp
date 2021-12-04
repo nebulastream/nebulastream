@@ -19,8 +19,8 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
-
 #include <fstream>
+#include <optional>
 /**
  * @brief this class covers the different output formats that we offer in NES
  */
