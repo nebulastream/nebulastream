@@ -22,6 +22,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <optional>
 
 namespace NES {
 

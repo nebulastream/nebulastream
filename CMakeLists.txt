@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 cmake_minimum_required(VERSION 3.20.0)
+include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v7)
@@ -22,6 +23,9 @@ option(NES_SELF_HOSTING "use self hosting compiler" ON)
 option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
 # Enable local dependency building (this may take a long time)
 option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
+# Enable prebuild dependencies only if NES_BUILD_DEPENDENCIES_LOCAL is OFF and CMAKE_TOOLCHAIN_FILE is not set.
+cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies" ON "NOT NES_BUILD_NATIVE; NOT CMAKE_TOOLCHAIN_FILE" OFF)
+
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
@@ -36,75 +40,10 @@ option(ENABLE_CLANG_TIDY OFF)
 # at this point because we want to use a custom toolchain file.
 execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 
-if(APPLE)
-    if (NES_HOST_PROCESSOR MATCHES "x86_64")
-        set(VCPKG_TARGET_TRIPLET x64-osx-nes)
-    elseif(NES_HOST_PROCESSOR MATCHES "arm64")
-        set(VCPKG_TARGET_TRIPLET arm64-osx-nes)
-    endif()
-elseif(UNIX AND NOT APPLE)
-    if (NES_HOST_PROCESSOR MATCHES "x86_64")
-        set(VCPKG_TARGET_TRIPLET x64-linux-nes)
-    elseif(NES_HOST_PROCESSOR MATCHES "arm64" OR NES_HOST_PROCESSOR MATCHES "aarch64")
-        set(VCPKG_TARGET_TRIPLET arm64-linux-nes)
-    endif()
-endif()
 
-function(download_file url filename hash_type hash)
-    message("Download: ${url}")
-    if (NOT EXISTS ${filename})
-        file(DOWNLOAD ${url} ${filename}
-                TIMEOUT 0)
-    endif ()
-endfunction(download_file)
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
-
-# check if prebuild dependencies are already downloaded
-if (CMAKE_TOOLCHAIN_FILE)
-    message(STATUS "Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
-elseif(NES_BUILD_DEPENDENCIES_LOCAL)
-    message(STATUS "Build Dependencies locally")
-    include(FetchContent)
-    FetchContent_Declare(
-            nesdebs
-            GIT_REPOSITORY  https://github.com/nebulastream/nebulastream-dependencies.git
-            #GIT_TAG ${VCPKG_BINARY_VERSION}
-            GIT_TAG  origin/fix-VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS
-    )
-    FetchContent_Populate(nesdebs)
-    set(CMAKE_TOOLCHAIN_FILE ${nesdebs_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
-            CACHE STRING "CMake toolchain file")
-    set(VCPKG_MANIFEST_DIR ${nesdebs_SOURCE_DIR} CACHE STRING "vcpkg manifest dir")
-    set(VCPKG_OVERLAY_TRIPLETS ${nesdebs_SOURCE_DIR}/custom-triplets/ CACHE STRING "CMake toolchain file")
-    set(NES_DEPENDENCIES_BINARY_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/vcpkg_installed/${VCPKG_TARGET_TRIPLET})
-else ()
-    message(STATUS "Use prebuild dependencies")
-    set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
-    IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
-        message(STATUS "NES dependencies do not exist!")
-        download_file(https://github.com/nebulastream/dependencies/releases/download/${VCPKG_BINARY_VERSION}/${BINARY_NAME}.7z
-                ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z
-                SHA1 074e7a34c486d8956562b65a247d908ee097fb07
-                )
-        file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-    endif ()
-
-    # set toolchain file to use prebuild dependencies only if no toolchain file is already set.
-    message(STATUS "Set toolchain file for prebuild dir.")
-    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/scripts/buildsystems/vcpkg.cmake")
-    set(NES_DEPENDENCIES_BINARY_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET})
-endif ()
-
-# NES supports self hosting its compilation with the local clang binary.
-if (NES_SELF_HOSTING)
-    message(STATUS "Self-host compilation of NES from ${NES_DEPENDENCIES_BINARY_ROOT}")
-    set(CMAKE_C_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang-12")
-    set(CMAKE_CXX_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang++")
-else ()
-    message(STATUS "Use system compiler")
-endif ()
-
+include(cmake/ImportDependencies.cmake)
 project(NES CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
@@ -170,7 +109,7 @@ else (NES_LOGGING_LEVEL)
 endif (NES_LOGGING_LEVEL)
 # Set Optimization Flags
 set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare")
-set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fcoroutines-ts -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
+set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNES_RELEASE_MODE=1")
 include(cmake/Sanitizers.cmake)
@@ -261,15 +200,6 @@ if (CMAKE_ENABLE_JEMALLOC)
     include_directories(${JEMALLOC_INCLUDE_DIRS})
     set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
 endif ()
-# lcryto is required for asio to communicate
-if(APPLE)
-    find_library(SSL_LIB libssl.a REQUIRED)
-    find_library(CRYPTO_LIB libcrypto.a REQUIRED)
-    set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
-endif()
-if(UNIX AND NOT APPLE)
-    set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
-endif()
 
 # Numa awareness
 find_package(NUMA)
@@ -383,6 +313,17 @@ set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
 
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
+
+# lcryto is required for asio to communicate
+if(APPLE)
+    find_library(SSL_LIB libssl.a REQUIRED)
+    find_library(CRYPTO_LIB libcrypto.a REQUIRED)
+    set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
+endif()
+if(UNIX AND NOT APPLE)
+    find_package(OpenSSL REQUIRED)
+    set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
+endif()
 
 # C++ REST SDK
 find_package(cpprestsdk CONFIG REQUIRED)

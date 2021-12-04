@@ -20,6 +20,7 @@
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <memory>
 #include <unordered_map>
+#include <optional>
 
 namespace NES {
 

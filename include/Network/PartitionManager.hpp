@@ -19,6 +19,7 @@
 
 #include <Network/NesPartition.hpp>
 #include <map>
+#include <memory>
 #include <shared_mutex>
 #include <unordered_map>
 
