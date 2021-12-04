@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_MONITORING_METRIC_VALUES_GROUPED_METRIC_VALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRIC_VALUES_GROUPED_METRIC_VALUES_HPP_
-
+#include <optional>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>

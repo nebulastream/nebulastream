@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 macro(add_source PROP_NAME SOURCE_FILES)
     set(SOURCE_FILES_ABSOLUTE)
     foreach (it ${SOURCE_FILES})
@@ -133,3 +134,10 @@ macro(get_nes_log_level_value NES_LOGGING_VALUE)
         set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -Werror=unused-variable -Werror=unused-parameter -DNES_LOGGING_TRACE_LEVEL=1")
     endif ()
 endmacro(get_nes_log_level_value NES_LOGGING_VALUE)
+
+function(download_file url filename hash_type hash)
+    message("Download: ${url}")
+    if (NOT EXISTS ${filename})
+        file(DOWNLOAD ${url} ${filename} TIMEOUT 0)
+    endif ()
+endfunction(download_file)

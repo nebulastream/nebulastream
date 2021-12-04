@@ -26,6 +26,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
+#include <optional>
 
 namespace NES {
 
