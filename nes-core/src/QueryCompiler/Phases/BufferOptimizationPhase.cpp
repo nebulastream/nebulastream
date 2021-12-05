@@ -60,7 +60,7 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         return operatorPipeline;
     }
 
-    // If we can't modify the input we cant optimize the buffer access.
+    // If we can't modify the input we can't optimize the buffer access.
     if (isReadOnlyInput(operatorPipeline)) {
         NES_DEBUG("BufferOptimizationPhase: No optimization is possible as input is read only.");
         return operatorPipeline;
