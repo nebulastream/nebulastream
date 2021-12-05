@@ -29,7 +29,7 @@ namespace NES {
  * @brief Util class to measure the time of NES components and sub-components
  * using snapshots
  */
-template<typename TimeUnit = std::chrono::nanoseconds, typename PrintTimeUnit = std::milli, typename ClockType = std::chrono::high_resolution_clock>
+template<typename TimeUnit = std::chrono::nanoseconds, typename PrintTimeUnit = std::milli, typename PrintTimePrecision = double, typename ClockType = std::chrono::high_resolution_clock>
 class Timer {
   public:
     class Snapshot {
@@ -138,10 +138,10 @@ class Timer {
      * @brief overwrites insert string operator
      */
     friend std::ostream& operator<<(std::ostream& str, const Timer& t) {
-        std::chrono::duration<double, PrintTimeUnit> printDuration = t.runtime;
+        std::chrono::duration<PrintTimePrecision, PrintTimeUnit> printDuration = t.runtime;
         str << "overall runtime: " << printDuration.count() << getTimeUnitString();
         for (auto& s : t.getSnapshots()) {
-            str << Timer<TimeUnit>::printHelper(std::string(), s);
+            str << Timer<TimeUnit, PrintTimeUnit, PrintTimePrecision>::printHelper(std::string(), s);
         }
         return str;
     };
@@ -152,7 +152,7 @@ class Timer {
      */
     static std::string printHelper(std::string str, Snapshot s) {
         std::ostringstream ostr;
-        std::chrono::duration<double, PrintTimeUnit> printDuration = s.runtime;
+        std::chrono::duration<PrintTimePrecision, PrintTimeUnit> printDuration = s.runtime;
         ostr << str << '\n' << s.name + ":\t" << printDuration.count() << getTimeUnitString();
 
         for (auto& c : s.children) {
