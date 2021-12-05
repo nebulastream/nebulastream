@@ -158,7 +158,7 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
     EXPECT_EQ(sinkOperators.size(), 1U);
 
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
-    EXPECT_EQ(sinkOperators.size(), 1U);
+    EXPECT_TRUE(sinkOptr->getSinkDescriptor()->instanceOf<PrintSinkDescriptor>());
 }
 
 TEST_F(QueryTest, testQuerySlidingWindow) {
