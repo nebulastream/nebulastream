@@ -29,7 +29,7 @@ namespace NES {
  * @brief Util class to measure the time of NES components and sub-components
  * using snapshots
  */
-template<typename TimeUnit = std::chrono::nanoseconds, typename ClockType = std::chrono::high_resolution_clock>
+template<typename TimeUnit = std::chrono::nanoseconds, typename PrintTimeUnit = std::milli, typename ClockType = std::chrono::high_resolution_clock>
 class Timer {
   public:
     class Snapshot {
@@ -138,7 +138,8 @@ class Timer {
      * @brief overwrites insert string operator
      */
     friend std::ostream& operator<<(std::ostream& str, const Timer& t) {
-        str << "overall runtime: " << t.getRuntime() << getTimeUnitString();
+        std::chrono::duration<double, PrintTimeUnit> printDuration = t.runtime;
+        str << "overall runtime: " << printDuration.count() << getTimeUnitString();
         for (auto& s : t.getSnapshots()) {
             str << Timer<TimeUnit>::printHelper(std::string(), s);
         }
@@ -151,7 +152,9 @@ class Timer {
      */
     static std::string printHelper(std::string str, Snapshot s) {
         std::ostringstream ostr;
-        ostr << str << '\n' << s.name + ":\t" << s.getRuntime() << getTimeUnitString();
+        std::chrono::duration<double, PrintTimeUnit> printDuration = s.runtime;
+        ostr << str << '\n' << s.name + ":\t" << printDuration.count() << getTimeUnitString();
+
         for (auto& c : s.children) {
             ostr << printHelper(str, c);
         }
@@ -159,16 +162,16 @@ class Timer {
     }
 
     /**
-     * @brief helper function to return a time unit literal string based on TimeUnit
+     * @brief helper function to return a time unit literal string based on PrintTimeUnit
      */
     static std::string getTimeUnitString() {
-        if constexpr (std::is_same_v<TimeUnit, std::chrono::nanoseconds>) {
+        if constexpr (std::is_same_v<PrintTimeUnit, std::nano>) {
             return " ns";
-        } else if constexpr (std::is_same_v<TimeUnit, std::chrono::microseconds>) {
+        } else if constexpr (std::is_same_v<PrintTimeUnit, std::micro>) {
             return " µs";
-        } else if constexpr (std::is_same_v<TimeUnit, std::chrono::milliseconds>) {
+        } else if constexpr (std::is_same_v<PrintTimeUnit, std::milli>) {
             return " ms";
-        } else if constexpr (std::is_same_v<TimeUnit, std::chrono::seconds>) {
+        } else if constexpr (std::is_same_v<PrintTimeUnit, std::ratio<1>>) {
             return " s";
         } else {
             return " time units";
