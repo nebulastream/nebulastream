@@ -48,7 +48,7 @@ class CompilationResult {
 
   private:
     const std::shared_ptr<DynamicObject> dynamicObject;
-    Timer<std::chrono::nanoseconds, std::milli, std::chrono::high_resolution_clock> timer;
+    Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock> timer;
 };
 
 }// namespace NES::Compiler

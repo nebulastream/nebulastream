@@ -63,7 +63,7 @@ class QueryCompilationResult {
     explicit QueryCompilationResult(std::exception_ptr exception);
     std::optional<Runtime::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
     std::optional<std::exception_ptr> exception;
-    std::optional<Timer<std::chrono::nanoseconds, std::milli, std::chrono::high_resolution_clock>> timer;
+    std::optional<Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock>> timer;
 };
 }// namespace QueryCompilation
 }// namespace NES
