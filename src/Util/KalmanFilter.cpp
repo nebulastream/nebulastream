@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#include <Runtime/TupleBuffer.hpp>
+#include <Sensors/Values/SingleSensor.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <cmath>
 #include <ctime>
@@ -142,7 +144,7 @@ void KalmanFilter::calculateTotalEstimationErrorDivider(int size) {
     }
 }
 
-std::chrono::milliseconds KalmanFilter::decideNewGatheringInterval() {
+std::chrono::milliseconds KalmanFilter::getNewFrequency() {
     // eq. 10
     auto powerOfEuler = (this->calculateTotalEstimationError() + lambda) / lambda;
     auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
@@ -153,6 +155,15 @@ std::chrono::milliseconds KalmanFilter::decideNewGatheringInterval() {
         this->frequency = std::chrono::milliseconds((int) trunc(newFreqCandidate));
     }
     return this->frequency;
+}
+
+void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
+    // TODO: make the size of the vector configurable
+    Eigen::VectorXd valueVector(1);
+    if (tupleBuffer.isValid()) {
+        valueVector << tupleBuffer.getBuffer<Sensors::SingleSensor>()->sensedValue;
+        this->update(valueVector);
+    }
 }
 
 }// namespace NES

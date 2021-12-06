@@ -437,6 +437,9 @@ void DataSource::runningRoutineWithKF() {
     }
     open();
 
+    this->kFilter.setFrequency(this->gatheringInterval);
+    this->kFilter.setFrequencyRange(std::chrono::milliseconds{7 * this->gatheringInterval.count()});
+
     while (this->isRunning()) {
         auto tsNow = std::chrono::system_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
@@ -450,7 +453,8 @@ void DataSource::runningRoutineWithKF() {
                 auto optBuf = this->receiveData();
                 if (optBuf.has_value()) {
                     auto& buf = optBuf.value();
-                    // TODO: add KF update and predict here
+                    this->kFilter.updateFromTupleBuffer(buf);
+                    this->gatheringInterval = this->kFilter.getNewFrequency();
                     NES_DEBUG("DataSource " << this->operatorId << " string=" << this->toString()
                                                 << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                 << " iteration=" << cnt);
