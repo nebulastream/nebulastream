@@ -644,6 +644,9 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/triggers")
 set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
 INCLUDE(CPack)
 
+# macros for guard once
+include(cmake/GuardOnce.cmake)
+
 #Other configurations
 project_enable_clang_format()
 project_enable_fixguards()
