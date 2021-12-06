@@ -45,6 +45,7 @@ class KalmanFilter {
     void update(const Eigen::VectorXd& measuredValues,
                 double newTimeStep,
                 const Eigen::MatrixXd& A);// update using new timestep and dynamics
+    void updateFromTupleBuffer(Runtime::TupleBuffer& buffer);
 
     double getCurrentStep() { return currentTime; }
     Eigen::VectorXd getState() { return xHat; }
@@ -69,6 +70,14 @@ class KalmanFilter {
         setFrequency(frequencyInMillis);
         setFrequencyRange(frequencyRange);
     }
+
+    /**
+     * @brief calculate new gathering interval using euler number
+     * as the smoothing part. The new proposed gathering interval
+     * has to stay inside the original frequency range.
+     * @return a new gathering interval that we can sleep on
+     */
+    std::chrono::milliseconds getNewFrequency(); // eq. 7 and 10
 
   protected:
     int m, n;// system model dimensions
@@ -100,7 +109,7 @@ class KalmanFilter {
      * Paper is not clear on the magnitude (size) of
      * the range, this can be determined in tests later.
      */
-    std::chrono::milliseconds freqRange{2000}; // allowed to change by 6s
+    std::chrono::milliseconds freqRange{8000}; // allowed to change by +4s/-4s
     std::chrono::milliseconds frequency{1000}; // currently in use
     std::chrono::milliseconds freqLastReceived{1000}; // from coordinator
 
@@ -133,14 +142,6 @@ class KalmanFilter {
     float totalEstimationErrorDivider;
     float calculateTotalEstimationError(); // eq. 9
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calc. once)
-
-    /**
-     * @brief calculate new gathering interval using euler number
-     * as the smoothing part. The new proposed gathering interval
-     * has to stay inside the original frequency range.
-     * @return a new gathering interval that we can sleep on
-     */
-    std::chrono::milliseconds decideNewGatheringInterval(); // eq. 7 and 10
 
 };// class KalmanFilter
 

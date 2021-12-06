@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Components/NesCoordinator.hpp>
+
 #include <REST/Controller/TopologyController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Topology/Topology.hpp>

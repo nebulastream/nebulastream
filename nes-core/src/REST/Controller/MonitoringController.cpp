@@ -21,10 +21,8 @@
 #include <Util/Logger.hpp>
 
 #include <REST/runtime_utils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <cpprest/http_client.h>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace NES {

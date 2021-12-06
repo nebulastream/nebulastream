@@ -410,7 +410,7 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalMillisTest) {
     ASSERT_NE(kfProxy.calculateTotalEstimationError(), 0);
     ASSERT_NEAR(kfProxy.calculateTotalEstimationError(), 0.6, 0.1);
 
-    auto newFrequency = kfProxy.decideNewGatheringInterval();
+    auto newFrequency = kfProxy.getNewFrequency();
     ASSERT_NE(oldFrequency.count(), newFrequency.count());
     ASSERT_GT(oldFrequency.count(), newFrequency.count());
 }
