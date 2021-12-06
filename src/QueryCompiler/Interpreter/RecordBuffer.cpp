@@ -20,7 +20,6 @@
 #include <QueryCompiler/Interpreter/Values/NesInt64.hpp>
 #include <QueryCompiler/Interpreter/Values/NesIntU8.hpp>
 #include <QueryCompiler/Interpreter/Values/NesMemoryAddress.hpp>
-#include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 namespace NES::QueryCompilation {

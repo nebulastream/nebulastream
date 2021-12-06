@@ -17,6 +17,7 @@
 
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 #include <QueryCompiler/Interpreter/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Interpreter/Operators/OperatorContext.hpp>

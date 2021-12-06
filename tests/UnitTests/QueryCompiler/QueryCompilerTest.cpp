@@ -38,6 +38,7 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/IR/Node.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -381,5 +382,6 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
 
     ASSERT_FALSE(result->hasError());
 }
+
 
 }// namespace NES

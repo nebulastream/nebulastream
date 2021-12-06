@@ -21,7 +21,7 @@
 #include <QueryCompiler/Interpreter/Operators/OperatorContext.hpp>
 #include <QueryCompiler/Interpreter/ForwardDeclaration.hpp>
 #include <QueryCompiler/Interpreter/RecordBuffer.hpp>
-#include <Runtime/MemoryLayout/DynamicLayoutBuffer.hpp>
+
 namespace NES::QueryCompilation {
 class Expression;
 using ExpressionPtr = std::shared_ptr<Expression>;
@@ -35,6 +35,7 @@ class EmitOperatorState : public OperatorState {
     RecordBufferPtr buffer;
     NesInt32Ptr currentIndex;
 };
+
 class EmitOperator : public ExecutableOperator {
   public:
     EmitOperator(SchemaPtr outputSchema);

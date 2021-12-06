@@ -489,7 +489,7 @@ add_subdirectory(src)
 # Add Library
 get_source_nes(nes_SOURCE_FILES)
 get_header_nes(nes_HEADER_FILES)
-add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
+add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS} include/QueryCompiler/IR/Node.hpp include/QueryCompiler/IR/IfNode.hpp include/QueryCompiler/IR/LoopNode.hpp include/QueryCompiler/IR/ReadNode.hpp include/QueryCompiler/IR/WriteNode.hpp include/QueryCompiler/IR/Expressions/AddNode.hpp include/QueryCompiler/IR/Expressions/SubNode.hpp include/QueryCompiler/IR/Expressions/DivNode.hpp include/QueryCompiler/IR/Expressions/MulNode.hpp include/QueryCompiler/IR/Expressions/BinaryAndNode.hpp include/QueryCompiler/IR/Expressions/BinaryOrNode.hpp include/QueryCompiler/IR/Expressions/LogicAndNode.hpp include/QueryCompiler/IR/Expressions/LogicOrNode.hpp include/QueryCompiler/IR/Expressions/LogicLessThenNode.hpp include/QueryCompiler/IR/Expressions/LogicEqualsNode.hpp include/QueryCompiler/IR/Expressions/NegateNode.hpp src/QueryCompiler/IR/Node.cpp include/QueryCompiler/IR/Expressions/BinaryNode.hpp include/QueryCompiler/IR/Block.hpp include/QueryCompiler/IR/InvokeNode.hpp)
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})

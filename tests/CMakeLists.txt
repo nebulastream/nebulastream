@@ -117,7 +117,7 @@ target_link_libraries(translate-physical-operator-tests nes ${GTEST_LIBRARIES})
 add_test(NAME translate-physical-operator-tests COMMAND translate-physical-operator-tests)
 
 ### AddScanAndEmitPhase Test ###
-add_executable(add-scan-and-emit-phase-tests "UnitTests/QueryCompiler/AddScanAndEmitPhaseTest.cpp")
+add_executable(add-scan-and-emit-phase-tests "UnitTests/QueryCompiler/AddScanAndEmitPhaseTest.cpp" UnitTests/QueryCompiler/IRTest.cpp)
 target_link_libraries(add-scan-and-emit-phase-tests nes ${GTEST_LIBRARIES})
 add_test(NAME add-scan-and-emit-phase-tests COMMAND add-scan-and-emit-phase-tests)
 

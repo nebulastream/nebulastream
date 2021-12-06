@@ -19,8 +19,10 @@
 #include <QueryCompiler/Interpreter/Operators/FilterOperator.hpp>
 #include <QueryCompiler/Interpreter/Operators/OperatorContext.hpp>
 namespace NES::QueryCompilation {
+
 FilterOperator::FilterOperator(ExecutableOperatorPtr next, ExpressionPtr expression)
     : ExecutableOperator(next), expression(expression) {}
+
 void FilterOperator::execute(RecordPtr record, ExecutionContextPtr ctx) const {
     if (expression->execute(record)) {
         next->execute(record, ctx);

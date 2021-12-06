@@ -199,7 +199,7 @@ class TupleBuffer {
     [[nodiscard]] inline uint64_t getBufferSize() const noexcept { return size; }
 
     /// @brief get the number of tuples stored.
-    [[nodiscard]] constexpr uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
+    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
 
     /// @brief set the number of tuples stored.
     inline void setNumberOfTuples(uint64_t numberOfTuples) noexcept { controlBlock->setNumberOfTuples(numberOfTuples); }

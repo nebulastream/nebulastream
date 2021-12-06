@@ -28,8 +28,6 @@
 #include <QueryCompiler/Interpreter/Values/NesInt32.hpp>
 #include <QueryCompiler/Interpreter/Values/NesInt64.hpp>
 #include <QueryCompiler/Interpreter/Values/NesMemoryAddress.hpp>
-#include <Runtime/MemoryLayout/DynamicMemoryLayout.hpp>
-#include <Runtime/MemoryLayout/PhysicalFieldUtil.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
@@ -37,19 +35,19 @@ namespace NES::QueryCompilation {
 
 EmitOperator::EmitOperator(SchemaPtr outputSchema) : ExecutableOperator(nullptr), outputSchema(outputSchema) {}
 
-void EmitOperator::execute(RecordPtr record, ExecutionContextPtr ctx) const {
-    auto localState = ctx->getThreadLocalOperator<EmitOperatorState>(shared_from_this());
-    auto physicalFieldFactory = DefaultPhysicalTypeFactory();
-    int64_t fieldOffset = 0;
-    for (uint64_t i = 0; i < outputSchema->fields.size(); i++) {
-        auto field = outputSchema->fields[i];
-        auto value = record->read(field->getName());
-        auto physicalType = physicalFieldFactory.getPhysicalType(field->getDataType());
-        auto offset = (localState->currentIndex * localState->recordSize) + fieldOffset;
-        auto buf = localState->buffer->getBufferAddress();
-        value->write(std::dynamic_pointer_cast<NesMemoryAddress>(buf + offset));
-        fieldOffset = fieldOffset + physicalType->size();
-    }
+void EmitOperator::execute(RecordPtr , ExecutionContextPtr ) const {
+   // auto localState = ctx->getThreadLocalOperator<EmitOperatorState>(shared_from_this());
+   // auto physicalFieldFactory = DefaultPhysicalTypeFactory();
+   // int64_t fieldOffset = 0;
+    //for (uint64_t i = 0; i < outputSchema->fields.size(); i++) {
+        //auto field = outputSchema->fields[i];
+        //auto value = record->read(field->getName());
+        //auto physicalType = physicalFieldFactory.getPhysicalType(field->getDataType());
+        //auto offset = (localState->currentIndex * localState->recordSize) + fieldOffset;
+        //auto buf = localState->buffer->getBufferAddress();
+        //value->write(std::dynamic_pointer_cast<NesMemoryAddress>(buf + offset));
+        //fieldOffset = fieldOffset + physicalType->size();
+    //}
 
     //NES_DEBUG("Emit Record: " << record);
     //std::cout << record << std::endl;
