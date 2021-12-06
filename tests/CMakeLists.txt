@@ -45,7 +45,7 @@ target_link_libraries(udf-test nes ${GTEST_LIBRARIES})
 add_test(NAME udf-test COMMAND udf-test)
 
 add_executable(cppclient-test "UnitTests/Client/CPPClientTest.cpp")
-target_link_libraries(cppclient-test nes_client ${GTEST_LIBRARIES})
+target_link_libraries(cppclient-test nes_client nes ${GTEST_LIBRARIES})
 add_test(NAME cppclient-test COMMAND cppclient-test)
 
 add_executable(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
