@@ -358,8 +358,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");//2
 
-    for (int i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, 1}, 2);
+    for (uint32_t i = 0; i < 10; ++i) {
+        testHarness = testHarness.pushElement<Test>({1, i}, 2); // fills record store of source with id 0-9
     }
 
     testHarness.validate().setupTopology();
@@ -372,7 +372,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
         bool operator==(Output const& rhs) const { return (id == rhs.id && value == rhs.value); }
     };
 
-    std::vector<Output> expectedOutput = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}};
+    std::vector<Output> expectedOutput = {{1, 0}, {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5}, {1, 6}, {1, 7}, {1, 8}, {1, 9}};
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
 
