@@ -23,6 +23,22 @@
 
 namespace NES {
 
+/**
+ * @brief A Kalman Filter with functionality to update
+ * a frequency, based on the error level during (or after)
+ * an update.
+ *
+ * The KF does a predict-and-update step, where internal
+ * state is updated. The last W error levels are kept
+ * in-memory, so that they also contribute to the
+ * decision-making process.
+ *
+ * This implementation keeps the terminology and
+ * the variable names consistent with the most readily
+ * available knowledge resource for KFs, which is wikipedia.
+ * The reason is that the original paper is old, so there's
+ * lots of names for the different steps and variables.
+ */
 class KalmanFilter {
 
   public:
@@ -35,18 +51,21 @@ class KalmanFilter {
                           const uint64_t errorWindowSize = 10);
     explicit KalmanFilter(const uint64_t errorWindowSize = 10);
 
+    // initialization methods, empty, only 1 state, only 1 state + timestamp
     void init();// all zeroes
     void init(const Eigen::VectorXd& initialState);
     void init(const Eigen::VectorXd& initialState, double initialTimestamp);
     void setDefaultValues();// create artificial initial values
 
-    void update(const Eigen::VectorXd& measuredValues);                    // same timestep
+    // update methods, 1 value vector, 1 value vector + diff. timestep
+    void update(const Eigen::VectorXd& measuredValues); // same timestep
     void update(const Eigen::VectorXd& measuredValues, double newTimeStep);// update with timestep
     void update(const Eigen::VectorXd& measuredValues,
                 double newTimeStep,
                 const Eigen::MatrixXd& A);// update using new timestep and dynamics
-    void updateFromTupleBuffer(Runtime::TupleBuffer& buffer);
+    void updateFromTupleBuffer(Runtime::TupleBuffer& buffer);// directly feed a buffer to the filter
 
+    // simple setters/getters for individual fields
     double getCurrentStep() { return currentTime; }
     Eigen::VectorXd getState() { return xHat; }
     Eigen::MatrixXd getError() { return P; }
@@ -57,7 +76,7 @@ class KalmanFilter {
     void setLambda(float newLambda);
 
     // frequency related setters
-    // needed if we want to set freq/ranger after init
+    // needed to set freq/ranger after init
     void setFrequency(std::chrono::milliseconds frequencyInMillis) {
         frequency = frequencyInMillis;
         freqLastReceived = frequencyInMillis;
@@ -99,6 +118,7 @@ class KalmanFilter {
     Eigen::VectorXd xHat, xHatNew;
     Eigen::VectorXd innovationError;// eq. 3
 
+    // time-related members
     double timeStep;
     double initialTimestamp;
     double currentTime;
