@@ -82,7 +82,7 @@ WorkerConfig::WorkerConfig() {
 
     numaAwareness = ConfigOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
 
-    enableMonitoring = ConfigOption<bool>::create("enableMonitoring", true, "Enable monitoring");
+    enableMonitoring = ConfigOption<bool>::create("enableMonitoring", false, "Enable monitoring");
 }
 
 void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
