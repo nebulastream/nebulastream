@@ -209,6 +209,23 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
+ * @brief create a table source
+ * @param schema of the source
+ * @param bufferManager
+ * @param queryManager
+ * @param operatorId
+ * @param numBuffersToProcess
+ * @param successors
+ * @return
+ */
+DataSourcePtr createTableSource(const SchemaPtr& schema,
+                                 const Runtime::BufferManagerPtr& bufferManager,
+                                 const Runtime::QueryManagerPtr& queryManager,
+                                 OperatorId operatorId,
+                                 size_t numSourceLocalBuffers,
+                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+
+/**
  * @brief create a benchmark source
  * @param schema of the source
  * @param bufferManager

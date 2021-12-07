@@ -22,6 +22,7 @@
 #include <Sources/KafkaSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MemorySource.hpp>
+#include <Sources/TableSource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -143,6 +144,20 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                           gatheringMode,
                                           sourceAffinity,
                                           taskQueueId,
+                                          successors);
+}
+
+DataSourcePtr createTableSource(const SchemaPtr& schema,
+                                 const Runtime::BufferManagerPtr& bufferManager,
+                                 const Runtime::QueryManagerPtr& queryManager,
+                                 OperatorId operatorId,
+                                 size_t numSourceLocalBuffers,
+                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+    return std::make_shared<TableSource>(schema,
+                                          bufferManager,
+                                          queryManager,
+                                          operatorId,
+                                          numSourceLocalBuffers,
                                           successors);
 }
 

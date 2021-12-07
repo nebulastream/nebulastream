@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/TableSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
@@ -190,6 +191,15 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   memorySourceDescriptor->getGatheringMode(),
                                   memorySourceDescriptor->getSourceAffinity(),
                                   memorySourceDescriptor->getTaskQueueId(),
+                                  successors);
+    } else if (sourceDescriptor->instanceOf<TableSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
+        auto tableSourceDescriptor = sourceDescriptor->as<TableSourceDescriptor>();
+        return createTableSource(tableSourceDescriptor->getSchema(),
+                                  bufferManager,
+                                  queryManager,
+                                  operatorId,
+                                  numSourceLocalBuffers,
                                   successors);
     } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");

@@ -185,7 +185,7 @@ class TestUtils {
         NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
         auto start_timestamp = std::chrono::system_clock::now();
 
-        NES_DEBUG("TestUtils: Keep checking the status of query " << queryId << " untill a fixed time out");
+        NES_DEBUG("TestUtils: Keep checking the status of query " << queryId << " until a fixed time out");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
             if (!queryCatalogEntry) {
