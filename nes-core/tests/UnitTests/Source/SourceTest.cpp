@@ -47,7 +47,6 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
-#include <Sources/KFSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
 #include <Util/TestUtils.hpp>
@@ -388,32 +387,6 @@ class MonitoringSourceProxy : public MonitoringSource {
                            operatorId,
                            numSourceLocalBuffers,
                            successors){};
-};
-
-class KFSourceProxy : public KFSource {
-  public:
-    KFSourceProxy(SchemaPtr schema,
-                  const std::shared_ptr<uint8_t>& memoryArea,
-                  size_t memoryAreaSize,
-                  Runtime::BufferManagerPtr bufferManager,
-                  Runtime::QueryManagerPtr queryManager,
-                  uint64_t numBuffersToProcess,
-                  uint64_t gatheringValue,
-                  OperatorId operatorId,
-                  size_t numSourceLocalBuffers,
-                  GatheringMode gatheringMode,
-                  uint64_t sourceAffinity,
-                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-        : KFSource(schema, memoryArea, memoryAreaSize,
-                   bufferManager, queryManager, numBuffersToProcess,
-                   gatheringValue, operatorId, numSourceLocalBuffers,
-                   gatheringMode, sourceAffinity, successors){};
-  private:
-    FRIEND_TEST(SourceTest, testKFSourceGetType);
-    FRIEND_TEST(SourceTest, testKFSourceConstruction);
-    FRIEND_TEST(SourceTest, testKFSourceReadCSVWrongPath);
-    FRIEND_TEST(SourceTest, testKFSourceReadCSVCorrectPath);
-    FRIEND_TEST(SourceTest, testKFSourceReadCSVInputClosedAfterRead);
 };
 
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext {
@@ -1811,74 +1784,6 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
 
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 2UL);
-}
-
-TEST_F(SourceTest, testKFSourceGetType) {
-    KFSourceProxy kfSource(this->schema,
-                           static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea),
-                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
-                           this->nodeEngine->getQueryManager(), 0, 1,
-                           this->operatorId, this->numSourceLocalBuffersDefault,
-                           DataSource::GatheringMode::FREQUENCY_MODE,
-                           this->sourceAffinity, {});
-    ASSERT_EQ(kfSource.getType(), SourceType::KF_SOURCE);
-}
-
-TEST_F(SourceTest, testKFSourceConstruction) {
-    auto memAreaCast = static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea);
-    KFSourceProxy kfSource(this->schema,
-                           memAreaCast,
-                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
-                           this->nodeEngine->getQueryManager(), 0, 1000,
-                           this->operatorId, this->numSourceLocalBuffersDefault,
-                           DataSource::GatheringMode::FREQUENCY_MODE,
-                           this->sourceAffinity, {});
-    ASSERT_EQ(kfSource.getGatheringIntervalCount(), 1000u);
-    ASSERT_EQ(kfSource.memoryArea, memAreaCast);
-    ASSERT_EQ(kfSource.memoryAreaSize, this->bufferAreaSize);
-    ASSERT_EQ(kfSource.sourceAffinity, this->sourceAffinity);
-    ASSERT_FALSE(kfSource.fileInput.is_open());
-    ASSERT_TRUE(kfSource.bufferSize > 0);
-    ASSERT_TRUE(kfSource.bufferSize > 0);
-    ASSERT_TRUE(kfSource.numberOfTuplesToProduce > 0);
-    ASSERT_TRUE(kfSource.memoryArea && kfSource.memoryAreaSize > 0);
-}
-
-TEST_F(SourceTest, testKFSourceReadCSVWrongPath) {
-    auto memAreaCast = static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea);
-    KFSourceProxy kfSource(this->schema,
-                           memAreaCast,
-                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
-                           this->nodeEngine->getQueryManager(), 0, 1000,
-                           this->operatorId, this->numSourceLocalBuffersDefault,
-                           DataSource::GatheringMode::FREQUENCY_MODE,
-                           this->sourceAffinity, {});
-    ASSERT_FALSE(kfSource.loadCsvInMemory(this->wrong_filepath));
-}
-
-TEST_F(SourceTest, testKFSourceReadCSVCorrectPath) {
-    auto memAreaCast = static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea);
-    KFSourceProxy kfSource(this->schema,
-                           memAreaCast,
-                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
-                           this->nodeEngine->getQueryManager(), 0, 1000,
-                           this->operatorId, this->numSourceLocalBuffersDefault,
-                           DataSource::GatheringMode::FREQUENCY_MODE,
-                           this->sourceAffinity, {});
-    ASSERT_TRUE(kfSource.loadCsvInMemory(this->path_to_file));
-}
-
-TEST_F(SourceTest, testKFSourceReadCSVInputClosedAfterRead) {
-    auto memAreaCast = static_cast<const std::shared_ptr<uint8_t>>(this->singleMemoryArea);
-    KFSourceProxy kfSource(this->schema,
-                           memAreaCast,
-                           this->bufferAreaSize, this->nodeEngine->getBufferManager(),
-                           this->nodeEngine->getQueryManager(), 0, 1000,
-                           this->operatorId, this->numSourceLocalBuffersDefault,
-                           DataSource::GatheringMode::FREQUENCY_MODE,
-                           this->sourceAffinity, {});
-    ASSERT_TRUE(kfSource.loadCsvInMemory(this->path_to_file));
-    ASSERT_FALSE(kfSource.fileInput.is_open());
 }
 
 TEST_F(SourceTest, testMemorySource) {
