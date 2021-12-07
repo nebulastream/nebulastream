@@ -19,6 +19,8 @@
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
+#include <cinttypes>
+#include <string>
 
 namespace NES {
 enum class LineageType : std::int8_t {

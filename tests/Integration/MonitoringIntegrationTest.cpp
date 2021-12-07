@@ -75,8 +75,10 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     WorkerConfigPtr wrkConf = WorkerConfig::create();
 
     crdConf->setRpcPort(rpcPort);
+    crdConf->setEnableMonitoring(true);
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setEnableMonitoring(true);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -159,8 +161,10 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
     WorkerConfigPtr wrkConf = WorkerConfig::create();
 
     crdConf->setRpcPort(rpcPort);
+    crdConf->setEnableMonitoring(true);
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setEnableMonitoring(true);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
