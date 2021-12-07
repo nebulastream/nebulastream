@@ -56,10 +56,13 @@ TEST_F(CPPClientTest, DeployQueryTest) {
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+    //coordinatorConfig->setEnableMonitoring(false);
     workerConfig->setCoordinatorPort(rpcPort);
+   // workerConfig->setEnableMonitoring(false);
 
     NES_INFO("DeployQueryTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0U);
     NES_INFO("DeployQueryTest: Coordinator started successfully");

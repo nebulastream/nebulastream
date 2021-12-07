@@ -11,33 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-cmake_minimum_required(VERSION 3.20.0)
-
-set(CMAKE_VERBOSE_MAKEFILE OFF)
-
-# Set Optimization Flags
-set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare")
-set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fcoroutines-ts -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNES_RELEASE_MODE=1")
-
-# C++ Standard
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set Sources and Headers
 add_subdirectory(src)
 get_source_nes_client(nes_client_SOURCE_FILES)
 get_header_nes_client(nes_client_HEADER_FILES)
 
-# Set NES Lib
-file(GLOB LIBNES "../cmake-build-debug/libnes.*")
-message("Found libnes: " ${LIBNES})
-
 # Add Library
 add_library(nes_client SHARED ${nes_client_SOURCE_FILES} ${nes_client_HEADER_FILES})
-target_include_directories(nes_client PUBLIC "../" "../include")
-target_link_libraries(nes_client PUBLIC nes)
+target_include_directories(nes_client PUBLIC "include")
+#target_include_directories(nes_client PUBLIC "../" "../include")
+target_link_libraries(nes_client PRIVATE nes)
 
 #Change to alter behaviour of cpack and installation directory of deb package
 install(TARGETS nes_client
