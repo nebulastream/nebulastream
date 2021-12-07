@@ -251,30 +251,6 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   uint8_t retryTimes,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
-/**
- * @brief function to create an adaptive KF source (Jain et al.)
- * @param schema
- * @param bufferManager
- * @param queryManager
- * @param numberOfTuplesToProducePerBuffer
- * @param numBuffersToProcess
- * @param frequency
- * @param endlessRepeat
- * @param operatorId
- * @return
- */
-DataSourcePtr createKFSource(const SchemaPtr& schema,
-                             const std::shared_ptr<uint8_t>& memoryArea,
-                             size_t memoryAreaSize,
-                             const Runtime::BufferManagerPtr& bufferManager,
-                             const Runtime::QueryManagerPtr& queryManager,
-                             uint64_t numBuffersToProcess,
-                             uint64_t gatheringValue,
-                             OperatorId operatorId,
-                             size_t numSourceLocalBuffers,
-                             uint64_t sourceAffinity,
-                             const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
-
 #ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief Create kafka source
