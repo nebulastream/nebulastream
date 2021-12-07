@@ -25,7 +25,7 @@
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
-#include <Sources/SourcesForwaredRefs.hpp>
+#include "../../Sources/SourcesForwardedRefs.hpp"
 #include <atomic>
 #include <future>
 #include <map>
