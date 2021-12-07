@@ -23,7 +23,7 @@
 #include <Exceptions/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstring>
 #include <ostream>

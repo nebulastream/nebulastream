@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_BASE_EXECUTABLE_JOIN_ACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_BASE_EXECUTABLE_JOIN_ACTION_HPP_
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateVariable.hpp>
 #include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>

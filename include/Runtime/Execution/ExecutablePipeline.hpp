@@ -18,7 +18,7 @@
 #define NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_PIPELINE_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/ExecutionResult.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <memory>

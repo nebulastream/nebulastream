@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_
 #define NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 namespace NES::Runtime {
 enum class NumaAwarenessFlag { ENABLED, DISABLED };
 /**

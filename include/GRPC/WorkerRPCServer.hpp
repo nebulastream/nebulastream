@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_GRPC_WORKER_RPC_SERVER_HPP_
 #define NES_INCLUDE_GRPC_WORKER_RPC_SERVER_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>

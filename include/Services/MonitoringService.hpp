@@ -18,7 +18,7 @@
 #define NES_INCLUDE_SERVICES_MONITORING_SERVICE_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 
 namespace NES {

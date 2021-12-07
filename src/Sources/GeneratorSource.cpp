@@ -30,6 +30,4 @@ std::string GeneratorSource::toString() const {
 
 SourceType GeneratorSource::getType() const { return TEST_SOURCE; }
 
-GeneratorSource::~GeneratorSource() { NES_DEBUG("~GeneratorSource"); }
-
 }// namespace NES

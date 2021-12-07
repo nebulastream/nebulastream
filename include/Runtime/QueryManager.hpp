@@ -23,7 +23,7 @@
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
@@ -147,9 +147,9 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::string getQueryManagerStatistics();
 
     /**
-     * @brief
-     * @param id
-     * @return
+     * @brief Provides the QEP object for an id
+     * @param id the plan to lookup
+     * @return the QEP or null, if not found
      */
     Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(QuerySubPlanId id) const;
 
@@ -166,7 +166,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful stop the query gracefully or not
      * @return bool indicating success
      */
-    bool stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful = false);
+    [[nodiscard]] bool stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful = false);
 
     /**
     * @brief method to fail a query

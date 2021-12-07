@@ -20,14 +20,16 @@
 #include <Network/NesPartition.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
+/**
+ * @brief This is a network location of a nes node. It contains a node id, an ip address, and port for data transfer.
+ */
 class NodeLocation {
   public:
     explicit NodeLocation(NodeId nodeId, std::string hostname, uint32_t port)
         : nodeId(nodeId), hostname(std::move(hostname)), port(port) {
-        NES_ASSERT2_FMT(this->hostname.size() > 0, "Empty string passed on " << nodeId);
+        NES_ASSERT2_FMT(this->hostname.size() > 0, "Empty hostname passed on " << nodeId);
     }
 
     NodeLocation(const NodeLocation& other) : nodeId(other.nodeId), hostname(other.hostname), port(other.port) {}
@@ -39,18 +41,34 @@ class NodeLocation {
         return *this;
     }
 
+    /**
+     * @brief Returns the zmq uri for connection
+     * @return the zmq uri for connection
+     */
     [[nodiscard]] std::string createZmqURI() const { return "tcp://" + hostname + ":" + std::to_string(port); }
 
+    /**
+     * @brief Return the node id
+     * @return the node id
+     */
     [[nodiscard]] NodeId getNodeId() const { return nodeId; }
 
+    /**
+     * @brief Returns the hostname
+     * @return the hostname
+     */
     [[nodiscard]] const std::string& getHostname() const { return hostname; }
 
+    /**
+     * @brief Returns the port
+     * @return the port
+     */
     [[nodiscard]] uint32_t getPort() const { return port; }
 
     /**
      * @brief The equals operator for the NodeLocation.
-     * @param lhs
-     * @param rhs
+     * @param lhs left node location
+     * @param rhs right node location
      * @return true, if they are equal, else false
      */
     friend bool operator==(const NodeLocation& lhs, const NodeLocation& rhs) {
@@ -62,6 +80,5 @@ class NodeLocation {
     std::string hostname;
     uint32_t port;
 };
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 #endif// NES_INCLUDE_NETWORK_NODE_LOCATION_HPP_

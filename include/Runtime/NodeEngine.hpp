@@ -20,10 +20,11 @@
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
+#include <Network/NetworkForwardRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/BufferStorage.hpp>
 #include <Runtime/ErrorListener.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -42,12 +43,6 @@ using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
 }// namespace NES
 
-namespace NES::Network {
-class NetworkManager;
-using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
-class PartitionManager;
-using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
-}// namespace NES::Network
 namespace NES::Runtime {
 
 /**
@@ -110,21 +105,21 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param new query plan
      * @return true if succeeded, else false
      */
-    bool deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
+    [[nodiscard]] bool deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
 
     /**
      * @brief undeploy stops and undeploy a query
      * @param queryId to undeploy
      * @return true if succeeded, else false
      */
-    bool undeployQuery(QueryId queryId);
+    [[nodiscard]] bool undeployQuery(QueryId queryId);
 
     /**
      * @brief registers a query
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
+    [[nodiscard]] bool registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
 
     /**
      * @brief registers a query
@@ -133,14 +128,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param operatorTree: query sub plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
+    [[nodiscard]] bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief ungregisters a query
      * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQuery(QueryId queryId);
+    [[nodiscard]] bool unregisterQuery(QueryId queryId);
 
     /**
      * @brief method to start a already deployed query
@@ -148,7 +143,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param queryId to start
      * @return bool indicating success
      */
-    bool startQuery(QueryId queryId);
+    [[nodiscard]] bool startQuery(QueryId queryId);
 
     /**
      * @brief method to stop a query
@@ -156,13 +151,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param graceful hard or soft termination
      * @return bool indicating success
      */
-    bool stopQuery(QueryId queryId, bool graceful = false);
+    [[nodiscard]] bool stopQuery(QueryId queryId, bool graceful = false);
 
     /**
      * @brief release all resource of the node engine
      * @param withError true if the node engine stopped with an error
      */
-    bool stop(bool markQueriesAsFailed = false);
+    [[nodiscard]] bool stop(bool markQueriesAsFailed = false);
 
     /**
      * @brief getter of query manager

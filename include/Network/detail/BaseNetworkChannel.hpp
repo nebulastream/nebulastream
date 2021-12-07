@@ -29,11 +29,21 @@ using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
 namespace NES::Network::detail {
 
+/**
+ * @brief This is the base class for a network channel with support to connection init and close.
+ */
 class BaseNetworkChannel {
   public:
     static constexpr bool canSendData = false;
     static constexpr bool canSendEvent = false;
 
+    /**
+     * @brief Creates a new BaseNetworkChannel
+     * @param zmqSocket zmq socket connection
+     * @param channelId the id of the channel
+     * @param address remote address
+     * @param bufferManager the buffer manager
+     */
     explicit BaseNetworkChannel(zmq::socket_t&& zmqSocket,
                                 ChannelId channelId,
                                 std::string&& address,
@@ -46,7 +56,8 @@ class BaseNetworkChannel {
     void onError(Messages::ErrorMessage& errorMsg);
 
     /**
-     * Close the outchannel and send EndOfStream message to consumer
+     * Close the channel and send EndOfStream message to consumer
+     * @param isEventOnly whether the channel is for events only
      */
     void close(bool isEventOnly);
 

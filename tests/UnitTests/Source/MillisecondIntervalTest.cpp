@@ -122,8 +122,7 @@ class MillisecondIntervalTest : public testing::Test {
     }
 
     void TearDown() override {
-        nodeEngine->stop();
-        nodeEngine = nullptr;
+        ASSERT_TRUE(nodeEngine->stop());
         NES_INFO("Tear down MillisecondIntervalTest test case.");
     }
 

@@ -19,7 +19,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <benchmark/benchmark.h>
 

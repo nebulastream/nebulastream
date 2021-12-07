@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_BASE_EXECUTABLE_WINDOW_ACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_BASE_EXECUTABLE_WINDOW_ACTION_HPP_
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>

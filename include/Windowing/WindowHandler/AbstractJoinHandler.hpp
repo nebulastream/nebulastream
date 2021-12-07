@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_HANDLER_ABSTRACT_JOIN_HANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_HANDLER_ABSTRACT_JOIN_HANDLER_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>

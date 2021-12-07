@@ -18,7 +18,7 @@
 #define NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLE_PIPELINE_STAGE_HPP_
 
 #include <Runtime/ExecutionResult.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::Execution {
 

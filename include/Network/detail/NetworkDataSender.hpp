@@ -21,12 +21,21 @@
 #include <Runtime/BufferManager.hpp>
 namespace NES::Network::detail {
 
+/**
+ * @brief Mixin to add sendBuffer semantics to the BaseChannelType
+ * @tparam BaseChannelType the base channel type
+ */
 template<typename BaseChannelType>
 class NetworkDataSender : public BaseChannelType {
   public:
     static constexpr bool canSendData = true;
     static constexpr bool canSendEvent = false || BaseChannelType::canSendEvent;
 
+    /**
+     * @brief Forwarding ctor: it forwards the args to the base class
+     * @tparam Args the arguments types
+     * @param args the arguments
+     */
     template<typename... Args>
     NetworkDataSender(Args&&... args) : BaseChannelType(std::forward<Args>(args)...) {}
 

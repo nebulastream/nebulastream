@@ -18,6 +18,7 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Network/NetworkChannel.hpp>
 
 namespace NES::Runtime {
 
@@ -31,6 +32,10 @@ WorkerContext::WorkerContext(uint32_t workerId,
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
 }
 
+WorkerContext::~WorkerContext() {
+    localBufferPool->destroy();
+}
+
 uint32_t WorkerContext::getId() const { return workerId; }
 
 uint32_t WorkerContext::getNumaNode() const { return numaNode; }
@@ -41,7 +46,17 @@ void WorkerContext::setObjectRefCnt(void* object, uint32_t refCnt) {
 
 uint32_t WorkerContext::increaseObjectRefCnt(void* object) { return objectRefCounters[reinterpret_cast<uintptr_t>(object)]++; }
 
-uint32_t WorkerContext::decreaseObjectRefCnt(void* object) { return objectRefCounters[reinterpret_cast<uintptr_t>(object)]--; }
+uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
+    auto ptr = reinterpret_cast<uintptr_t>(object);
+    if (auto it = objectRefCounters.find(ptr); it != objectRefCounters.end()) {
+        auto val = it->second--;
+        if (val == 1) {
+            objectRefCounters.erase(it);
+        }
+        return val;
+    }
+    return 0;
+}
 
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 

@@ -23,12 +23,21 @@
 
 namespace NES::Network::detail {
 
+/**
+ * @brief Mixin to add event sending semantics to a base channel
+ * @tparam BaseChannelType the type of the base channel
+ */
 template<typename BaseChannelType>
 class NetworkEventSender : public BaseChannelType {
   public:
     static constexpr bool canSendData = false || BaseChannelType::canSendData;
     static constexpr bool canSendEvent = true;
 
+    /**
+     * @brief Forwarding ctor: it forwards the args to the base class
+     * @tparam Args the arguments types
+     * @param args the arguments
+     */
     template<typename... Args>
     NetworkEventSender(Args&&... args) : BaseChannelType(std::forward<Args>(args)...) {}
 
@@ -38,11 +47,10 @@ class NetworkEventSender : public BaseChannelType {
         auto buffer = *optBuffer;
         auto* event = new (buffer.getBuffer()) Event(std::forward<Arguments>(args)...);
         buffer.setNumberOfTuples(sizeof(Event));
-        return sendEventImpl(std::move(buffer), event->getEventType());
+        return sendEvent(std::move(buffer), event->getEventType());
     }
 
-  private:
-    bool sendEventImpl(Runtime::TupleBuffer&& inputBuffer, Runtime::EventType eventType) {
+    bool sendEvent(Runtime::TupleBuffer&& inputBuffer, Runtime::EventType eventType) {
         auto payloadSize = inputBuffer.getNumberOfTuples();
         auto* ptr = inputBuffer.getBuffer<uint8_t>();
         if (payloadSize == 0) {

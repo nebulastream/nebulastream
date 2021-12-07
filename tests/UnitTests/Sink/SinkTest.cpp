@@ -18,6 +18,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <Network/NetworkChannel.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -74,8 +75,7 @@ class SinkTest : public testing::Test {
         std::remove(path_to_csv_file.c_str());
         std::remove(path_to_bin_file.c_str());
         std::remove(path_to_osfile_file.c_str());
-        nodeEngine->stop();
-        nodeEngine = nullptr;
+        ASSERT_TRUE(nodeEngine->stop());
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};

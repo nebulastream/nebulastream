@@ -31,7 +31,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         uint8_t retryTimes) {
     // TODO create issue to make the network channel allocation async
     // TODO currently, we stall the worker threads
-    // TODO as a result, this kills performance of running if we submit a new query
+    // TODO as a result, this kills performance of running queries if we submit a new query
     std::chrono::seconds backOffTime = waitTime;
     constexpr auto nameHelper = []() {
         if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
@@ -47,13 +47,11 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         NES_DEBUG(channelName << ": Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
         zmqSocket.set(zmq::sockopt::linger, linger);
-        //zmqSocket.setsockopt(ZMQ_IDENTITY, &channelId, sizeof(ChannelId));
         zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
         zmqSocket.connect(socketAddr);
         int i = 0;
-        constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::kEventOnlyChannel
-                                                                   : Network::Messages::ChannelType::kDataChannel;
-
+        constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::EventOnlyChannel
+                                                                   : Network::Messages::ChannelType::DataChannel;
         while (i < retryTimes) {
 
             sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, channelId, mode);
@@ -69,7 +67,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
             }
 
             switch (recvHeader->getMsgType()) {
-                case Messages::MessageType::kServerReady: {
+                case Messages::MessageType::ServerReady: {
                     zmq::message_t recvMsg;
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
@@ -85,7 +83,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     NES_INFO(channelName << ": Connection established with server " << socketAddr << " for " << channelId);
                     return std::make_unique<T>(std::move(zmqSocket), channelId, std::move(socketAddr), std::move(bufferManager));
                 }
-                case Messages::MessageType::kErrorMessage: {
+                case Messages::MessageType::ErrorMessage: {
                     // if server receives a message that an error occurred
                     zmq::message_t errorEnvelope;
                     auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
@@ -140,6 +138,10 @@ NetworkChannel::NetworkChannel(zmq::socket_t&& zmqSocket,
     NES_DEBUG("Initializing NetworkChannel " << channelId);
 }
 
+NetworkChannel::~NetworkChannel() { close(); }
+
+void NetworkChannel::close() { inherited::close(canSendEvent && !canSendData); }
+
 NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
                                          std::string&& socketAddr,
                                          NesPartition nesPartition,
@@ -163,6 +165,10 @@ EventOnlyNetworkChannel::EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,
     : inherited(std::move(zmqSocket), channelId, std::move(address), std::move(bufferManager)) {
     NES_DEBUG("Initializing EventOnlyNetworkChannel " << channelId);
 }
+
+EventOnlyNetworkChannel::~EventOnlyNetworkChannel() { close(); }
+
+void EventOnlyNetworkChannel::close() { inherited::close(canSendEvent && !canSendData); }
 
 EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(std::shared_ptr<zmq::context_t> const& zmqContext,
                                                            std::string&& socketAddr,

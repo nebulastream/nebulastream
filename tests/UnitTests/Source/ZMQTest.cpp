@@ -64,8 +64,7 @@ class ZMQTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        nodeEngine->stop();
-        nodeEngine.reset();
+        ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("Setup ZMQTest test case.");
     }
 

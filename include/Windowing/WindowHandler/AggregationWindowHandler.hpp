@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_HANDLER_AGGREGATION_WINDOW_HANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_HANDLER_AGGREGATION_WINDOW_HANDLER_HPP_
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -128,7 +128,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override {
         AbstractWindowHandler::postReconfigurationCallback(task);
-        ;
+
 
         // TODO switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {

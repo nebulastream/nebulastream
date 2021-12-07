@@ -19,7 +19,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/CEPForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>

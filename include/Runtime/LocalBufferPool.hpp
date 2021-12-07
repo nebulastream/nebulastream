@@ -19,7 +19,7 @@
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -96,6 +96,7 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
     std::deque<detail::MemorySegment*> exclusiveBuffers;
 #else
     folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
+    std::atomic<uint32_t> exclusiveBufferCount;
 #endif
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     std::vector<detail::MemorySegment*> allSegments;

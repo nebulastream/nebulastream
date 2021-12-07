@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_MEMORY_LAYOUT_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <map>
 #include <optional>
 #include <vector>

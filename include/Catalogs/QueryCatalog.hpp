@@ -37,6 +37,8 @@ namespace NES {
  */
 class QueryCatalog {
   public:
+    QueryCatalog() = default;
+
     /**
      * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.
      * @param queryString: a user query in string form

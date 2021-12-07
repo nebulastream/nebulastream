@@ -24,6 +24,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
+#include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
@@ -86,7 +87,7 @@ class ProjectionTest : public testing::Test {
     /* Will be called before a test is executed. */
     void TearDown() override {
         NES_DEBUG("ProjectionTest: Tear down ProjectionTest test case.");
-        nodeEngine->stop();
+        ASSERT_TRUE(nodeEngine->stop());
         nodeEngine = nullptr;
     }
 
@@ -286,7 +287,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    std::cout << "plan=" << queryPlan->toString() << std::endl;
+
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
@@ -296,33 +297,36 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
-    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
-    fillBuffer(buffer, memoryLayout);
-    plan->setup();
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start(nodeEngine->getStateManager());
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
-    plan->getPipelines()[0]->execute(buffer, workerContext);
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
+        auto memoryLayout =
+            Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
+        fillBuffer(buffer, memoryLayout);
+        plan->setup();
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+        plan->start(nodeEngine->getStateManager());
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
-    // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+        plan->getPipelines()[0]->execute(buffer, workerContext);
 
-    auto resultBuffer = testSink->get(0);
-    // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+        // This plan should produce one output buffer
+        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
-    auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        // id
-        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+        auto resultBuffer = testSink->get(0);
+        // The output buffer should contain 5 tuple;
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+
+        auto resultLayout =
+            Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+        auto resultRecordIndexFields =
+            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
+        for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+            // id
+            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+        }
     }
-
-    testSink->cleanupBuffers();
-    buffer.release();
-    plan->stop();
+    testSink->shutdown();
+    ASSERT_TRUE(plan->stop());
 }
 
 TEST_F(ProjectionTest, projectionQueryWrongField) {
@@ -352,7 +356,6 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    std::cout << "plan=" << queryPlan->toString() << std::endl;
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
@@ -362,33 +365,37 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
-    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
-    fillBuffer(buffer, memoryLayout);
-    plan->setup();
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start(nodeEngine->getStateManager());
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
-    plan->getPipelines()[0]->execute(buffer, workerContext);
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
+        auto memoryLayout =
+            Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
+        fillBuffer(buffer, memoryLayout);
+        plan->setup();
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+        plan->start(nodeEngine->getStateManager());
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
-    // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+        plan->getPipelines()[0]->execute(buffer, workerContext);
 
-    auto resultBuffer = testSink->get(0);
-    // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+        // This plan should produce one output buffer
+        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
-    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        // id
-        EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
+        auto resultBuffer = testSink->get(0);
+        // The output buffer should contain 5 tuple;
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+
+        auto resultLayout =
+            Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+        auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
+        auto resultRecordIndexFields =
+            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
+        for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+            // id
+            EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
+        }
     }
-
-    testSink->cleanupBuffers();
-    plan->stop();
+    testSink->shutdown();
+    ASSERT_TRUE(plan->stop());
 }
 
 TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
@@ -418,7 +425,6 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    std::cout << "plan=" << queryPlan->toString() << std::endl;
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
@@ -428,36 +434,40 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1U);
-    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
-    fillBuffer(buffer, memoryLayout);
-    plan->setup();
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start(nodeEngine->getStateManager());
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
-    plan->getPipelines()[0]->execute(buffer, workerContext);
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
+        auto memoryLayout =
+            Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
+        fillBuffer(buffer, memoryLayout);
+        plan->setup();
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+        plan->start(nodeEngine->getStateManager());
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
 
-    // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+        plan->getPipelines()[0]->execute(buffer, workerContext);
 
-    auto resultBuffer = testSink->get(0);
-    // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+        // This plan should produce one output buffer
+        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
-    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
-    auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, resultLayout, resultBuffer);
+        auto resultBuffer = testSink->get(0);
+        // The output buffer should contain 5 tuple;
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        // id
-        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
-        EXPECT_EQ(resultFields01[recordIndex], 8);
+        auto resultLayout =
+            Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+        auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
+        auto resultRecordIndexFields =
+            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
+        auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, resultLayout, resultBuffer);
+
+        for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+            // id
+            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+            EXPECT_EQ(resultFields01[recordIndex], 8);
+        }
     }
-
-    testSink->cleanupBuffers();
-    plan->stop();
+    testSink->shutdown();
+    ASSERT_TRUE(plan->stop());
 }
 
 TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
@@ -553,13 +563,12 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    std::cout << " plan=" << queryPlan->toString() << std::endl;
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
     auto plan = result->getExecutableQueryPlan();
-    nodeEngine->registerQueryInNodeEngine(plan);
-    nodeEngine->startQuery(0);
+    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
     testSink->completed.get_future().get();
@@ -567,33 +576,30 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     // get result buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
-    auto resultBuffer = testSink->get(0);
+    if (auto resultBuffer = testSink->get(0); !!resultBuffer) {
+        NES_DEBUG("ProjectionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+        //TODO 1 Tuple im result buffer in 312 2 results?
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1ULL);
 
-    NES_DEBUG("ProjectionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
-    //TODO 1 Tuple im result buffer in 312 2 results?
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1ULL);
+        auto resultLayout =
+            Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, nodeEngine->getBufferManager()->getBufferSize());
+        auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, resultLayout, resultBuffer);
+        auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, resultLayout, resultBuffer);
+        auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, resultLayout, resultBuffer);
+        auto valueFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(3, resultLayout, resultBuffer);
 
-    auto resultLayout =
-        Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, nodeEngine->getBufferManager()->getBufferSize());
-    auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, resultLayout, resultBuffer);
-    auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, resultLayout, resultBuffer);
-    auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, resultLayout, resultBuffer);
-    auto valueFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(3, resultLayout, resultBuffer);
-
-    for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
-        // start
-        EXPECT_EQ(startFields[recordIndex], 0ULL);
-        // end
-        EXPECT_EQ(endFields[recordIndex], 10ULL);
-        // key
-        EXPECT_EQ(keyFields[recordIndex], 1ULL);
-        // value
-        EXPECT_EQ(valueFields[recordIndex], 10ULL);
+        for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
+            // start
+            EXPECT_EQ(startFields[recordIndex], 0ULL);
+            // end
+            EXPECT_EQ(endFields[recordIndex], 10ULL);
+            // key
+            EXPECT_EQ(keyFields[recordIndex], 1ULL);
+            // value
+            EXPECT_EQ(valueFields[recordIndex], 10ULL);
+        }
     }
-
-    nodeEngine->stopQuery(0);
-    testSink->cleanupBuffers();
-    testSink->cleanupBuffers();
+    ASSERT_TRUE(nodeEngine->stopQuery(0));
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
@@ -723,42 +729,38 @@ TEST_F(ProjectionTest, mergeQuery) {
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 3U);
-    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
-    fillBuffer(buffer, memoryLayout);
-    // TODO do not rely on sleeps
     Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 64};
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
+        auto memoryLayout =
+            Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
+        fillBuffer(buffer, memoryLayout);
+        // TODO do not rely on sleeps
 
-    plan->setup();
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start(nodeEngine->getStateManager());
-    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    plan->getPipelines()[0]->execute(buffer, workerContext);
+        plan->setup();
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+        plan->start(nodeEngine->getStateManager());
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+        plan->getPipelines()[0]->execute(buffer, workerContext);
 
-    // ingest test data
-    //plan->setup();
-    //plan->start(nodeEngine->getStateManager());
-    //auto stage_0 = plan->getPipeline(0);
-    //auto stage_1 = plan->getPipeline(1);
+        // This plan should produce one output buffer
+        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
 
-    // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+        auto resultBuffer = testSink->get(0);
+        // The output buffer should contain 5 tuple;
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
 
-    auto resultBuffer = testSink->get(0);
-    // The output buffer should contain 5 tuple;
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10ULL);
+        auto resultLayout =
+            Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+        auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
+        auto resultRecordIndexFields =
+            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
+        auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, resultLayout, resultBuffer);
 
-    auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
-    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto resultRecordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, resultLayout, resultBuffer);
-    auto resultFields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, resultLayout, resultBuffer);
-
-    for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
-        std::cout << "cmp first=" << resultRecordIndexFields[recordIndex] << " seconds=" << recordIndex * 2 << std::endl;
-        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex * 2);
+        for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
+            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex * 2);
+        }
     }
-
-    testSink->cleanupBuffers();
-    plan->stop();
-    plan->stop();
+    ASSERT_TRUE(plan->stop()); // simulate stop request from first source
+    ASSERT_TRUE(plan->stop()); // simulate stop request from second source
+    testSink->shutdown();
 }

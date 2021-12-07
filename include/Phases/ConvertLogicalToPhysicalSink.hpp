@@ -20,7 +20,7 @@
 #include <Network/NetworkMessage.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 namespace NES {
 

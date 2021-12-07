@@ -18,7 +18,7 @@
 #define NES_INCLUDE_MONITORING_METRIC_VALUES_STATIC_NES_METRICS_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES {
 

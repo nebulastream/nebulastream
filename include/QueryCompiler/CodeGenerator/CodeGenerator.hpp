@@ -25,7 +25,7 @@
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>

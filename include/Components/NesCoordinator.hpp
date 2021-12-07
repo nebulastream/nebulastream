@@ -20,7 +20,7 @@
 #include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/ErrorListener.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>

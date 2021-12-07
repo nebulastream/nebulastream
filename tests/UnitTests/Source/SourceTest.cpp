@@ -476,8 +476,7 @@ class SourceTest : public testing::Test {
     }
 
     void TearDown() override {
-        nodeEngine->stop();
-        nodeEngine = nullptr;
+        ASSERT_TRUE(nodeEngine->stop());
     }
 
     std::optional<Runtime::TupleBuffer> GetEmptyBuffer() { return this->nodeEngine->getBufferManager()->getBufferNoBlocking(); }

@@ -16,7 +16,7 @@
 #ifndef NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_PROVIDER_HPP_
 #define NES_INCLUDE_RUNTIME_ABSTRACT_BUFFER_PROVIDER_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <chrono>
 #include <cstddef>
 #include <optional>

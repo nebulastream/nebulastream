@@ -219,7 +219,7 @@ void ExecutableQueryPlan::destroy() {
 }
 
 void ExecutableQueryPlan::onEvent(BaseEvent&) {
-    // nop
+    // nop :: left on purpose -> fill this in when you want to support events
 }
 
 }// namespace NES::Runtime::Execution

@@ -17,7 +17,7 @@
 #define NES_INCLUDE_QUERY_COMPILER_PHASES_TRANSLATIONS_DATA_SOURCE_PROVIDER_HPP_
 #include <Operators/OperatorId.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 namespace NES {
 namespace QueryCompilation {
 

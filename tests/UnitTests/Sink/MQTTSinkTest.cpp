@@ -15,10 +15,10 @@
 */
 #ifdef ENABLE_MQTT_BUILD
 #include <gtest/gtest.h>
-#include <memory>
 
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Network/NetworkChannel.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -29,6 +29,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <memory>
 #include <random>
 
 using namespace NES;
@@ -71,8 +72,7 @@ class MQTTTSinkTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        nodeEngine->stop();
-        nodeEngine.reset();
+        ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("Setup MQTT test case.");
     }
 

@@ -41,12 +41,11 @@ class TestSink : public SinkMedium {
         return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
     }
 
-    bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContext&) override {
+    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext&) override {
         std::unique_lock lock(m);
-        NES_DEBUG("TestSink: TestSink: got buffer " << input_buffer);
-        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::prettyPrintTupleBuffer(input_buffer, getSchemaPtr()));
+        NES_DEBUG("TestSink: PrettyPrintTupleBuffer" << Util::prettyPrintTupleBuffer(inputBuffer, getSchemaPtr()));
 
-        resultBuffers.emplace_back(std::move(input_buffer));
+        resultBuffers.emplace_back(std::move(inputBuffer));
         if (resultBuffers.size() == expectedBuffer) {
             completed.set_value(true);
         } else if (resultBuffers.size() > expectedBuffer) {
@@ -70,12 +69,6 @@ class TestSink : public SinkMedium {
 
     std::string toString() const override { return "Test_Sink"; }
 
-    ~TestSink() override {
-        NES_DEBUG("~TestSink()");
-        std::unique_lock lock(m);
-        cleanupBuffers();
-    };
-
     uint32_t getNumberOfResultBuffers() {
         std::unique_lock lock(m);
         return resultBuffers.size();
@@ -83,9 +76,18 @@ class TestSink : public SinkMedium {
 
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-    void cleanupBuffers() { resultBuffers.clear(); }
+  private:
+    void cleanupBuffers() {
+        NES_DEBUG("TestSink: cleanupBuffers()");
+        resultBuffers.clear();
+    }
 
-    void shutdown() override {}
+  public:
+    void shutdown() override {
+        NES_DEBUG("TestSink: shutdown()");
+        std::unique_lock lock(m);
+        cleanupBuffers();
+    }
 
     mutable std::recursive_mutex m;
     uint64_t expectedBuffer;

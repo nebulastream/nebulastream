@@ -18,6 +18,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkManager.hpp>
+#include <Network/PartitionManager.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -639,7 +640,7 @@ void assertKiller() {
                          numberOfBuffersPerWorker) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override {
-            stop(false);
+            ASSERT_TRUE(stop(false));
             EXPECT_TRUE(strcmp(exception->what(),
                                "Failed assertion on false error message: this will fail now with a NesRuntimeException")
                         == 0);
@@ -688,7 +689,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
             NES_ERROR(str);
             EXPECT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
             completedPromise.set_value(true);
-            stop(true);
+            ASSERT_TRUE(stop(true));
         }
     };
     class FailingTextExecutablePipeline : public ExecutablePipelineStage {

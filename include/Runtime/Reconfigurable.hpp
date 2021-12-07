@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
 #define NES_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/ReconfigurationType.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>

@@ -17,33 +17,33 @@
 #include <gtest/gtest.h>
 
 #include <API/QueryAPI.hpp>
+#include <API/Schema.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Network/NetworkChannel.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
+#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <map>
-#include <utility>
-#include <vector>
-
-#include <API/Schema.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Util/Logger.hpp>
-#include <Windowing/Runtime/WindowManager.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
-#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <cstdlib>
 #include <iostream>
+#include <map>
+#include <utility>
+#include <vector>
 
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
