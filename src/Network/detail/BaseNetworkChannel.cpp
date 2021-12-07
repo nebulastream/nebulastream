@@ -35,9 +35,9 @@ void BaseNetworkChannel::close(bool isEventOnly) {
         return;
     }
     if (isEventOnly) {
-        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId, Messages::ChannelType::kEventOnlyChannel);
+        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId, Messages::ChannelType::EventOnlyChannel);
     } else {
-        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId, Messages::ChannelType::kDataChannel);
+        sendMessage<Messages::EndOfStreamMessage>(zmqSocket, channelId, Messages::ChannelType::DataChannel);
     }
     zmqSocket.close();
     NES_DEBUG("Socket(" << socketAddr << ") closed for " << channelId << (isEventOnly ? " Event" : " Data"));

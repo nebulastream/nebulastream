@@ -19,7 +19,7 @@
 
 #include <REST/Controller/BaseController.hpp>
 #include <REST/CpprestForwardedRefs.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 
 namespace NES {

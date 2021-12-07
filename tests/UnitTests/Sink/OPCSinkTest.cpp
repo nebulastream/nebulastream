@@ -56,7 +56,7 @@ class OPCSinkTest : public testing::Test {
         NES_DEBUG("OPCSINKTEST::SetUp() OPCSinkTest cases set up.");
         test_schema = Schema::create()->addField("var", UINT32);
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = Runtime::create("127.0.0.1", 31337, conf);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, conf);
     }
 
     /* Will be called after a test is executed. */

@@ -20,7 +20,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <deque>

@@ -17,38 +17,25 @@
 #ifndef NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_
 #define NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_
 
-#include <Network/NesPartition.hpp>
-#include <Network/NodeLocation.hpp>
+#include <Network/NetworkForwardRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Network/PartitionRegistrationStatus.hpp>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <vector>
 
-namespace NES {
-class DataEmitter;
-using DataEmitterPtr = std::shared_ptr<DataEmitter>;
-namespace Runtime {
-class RuntimeEventListener;
-using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
-}// namespace Runtime
-namespace Network {
-class NetworkSource;
-using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
-
-enum class PartitionRegistrationStatus : uint8_t {
-    /// a partition is registered, i.e., its counter is > 0
-    Registered,
-    /// a partition was registered but got deleted, i.e., its counter is == 0
-    Deleted,
-    /// a partition was never registered
-    NotFound,
-};
+namespace NES::Network {
 
 /**
  * @brief this class keeps track of all ready partitions (and their subpartitions)
  * It keeps track of the ref cnt for each partition and associated data emitter
- * A data emitter is notified once there is data for its partition
+ * A data emitter is notified once there is data for its partition.
+ * Pinning a partition for a Consumer/Producer means increasing its reference counter to n:
+ * Consumer: there are n "listeners" that are to consume the data of a partition
+ * Producer: there are n "emitters" that are to produce the data for a partition
+ * When the reference counter reaches 0, it means that none requires a partition.
  */
 class PartitionManager {
   public:
@@ -80,13 +67,13 @@ class PartitionManager {
         void unpin();
 
         /**
-         * @brief
+         * @brief Attach event listener for a partition
          */
         void registerEventListener(Runtime::RuntimeEventListenerPtr eventListener);
 
         /**
-         * @brief
-         * @return
+         * @brief Returns attached event listener for a partition
+         * @return the attached event listener for a partition
          */
         Runtime::RuntimeEventListenerPtr getEventListener() const;
 
@@ -174,7 +161,7 @@ class PartitionManager {
      * @param the partition
      * @return a PartitionRegistrationStatus
      */
-    PartitionRegistrationStatus isConsumerRegistered(NesPartition partition) const;
+    PartitionRegistrationStatus getConsumerRegistrationStatus(NesPartition partition) const;
 
     /**
      * @brief Registers a subpartition in the PartitionManager. If the subpartition does not exist a new entry is
@@ -212,7 +199,7 @@ class PartitionManager {
      * @param the partition
      * @return a PartitionRegistrationStatus
      */
-    PartitionRegistrationStatus isProducerRegistered(NesPartition partition) const;
+    PartitionRegistrationStatus getProducerRegistrationStatus(NesPartition partition) const;
 
     /**
      * @brief Returns the data emitter of a partition
@@ -222,18 +209,18 @@ class PartitionManager {
     DataEmitterPtr getDataEmitter(NesPartition partition);
 
     /**
-     * @brief
+     * @brief This method adds a new event listener for a partition
      * @param partition
      * @param eventListener
-     * @return
+     * @return true if successful
      */
     bool
-    addSubpartionEventListener(NesPartition partition, NodeLocation nodeLocation, Runtime::RuntimeEventListenerPtr eventListener);
+    addSubpartitionEventListener(NesPartition partition, NodeLocation nodeLocation, Runtime::RuntimeEventListenerPtr eventListener);
 
     /**
-     * @brief Retrieve event listener for partition
-     * @param partition
-     * @return
+     * @brief Retrieve event listener for a partition
+     * @param partition the partition to lookup
+     * @return the event listener for a partition
      */
     Runtime::RuntimeEventListenerPtr getEventListener(NesPartition partition) const;
 
@@ -249,7 +236,6 @@ class PartitionManager {
     mutable std::recursive_mutex consumerPartitionsMutex;
 };
 using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 
 #endif// NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_

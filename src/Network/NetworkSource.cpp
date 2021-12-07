@@ -15,6 +15,7 @@
 */
 
 #include <Network/NesPartition.hpp>
+#include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
@@ -57,6 +58,7 @@ SourceType NetworkSource::getType() const { return NETWORK_SOURCE; }
 
 std::string NetworkSource::toString() const { return "NetworkSource: " + nesPartition.toString(); }
 
+// this is necessary to use std::visit below (see example: https://en.cppreference.com/w/cpp/utility/variant/visit)
 namespace detail {
 template<class... Ts>
 struct overloaded : Ts... {
@@ -108,7 +110,6 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                                                                              localBufferManager,
                                                                              waitTime,
                                                                              retryTimes);
-            //            NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             if (channel == nullptr) {
                 NES_DEBUG("NetworkSource: reconfigure() cannot get event channel " << nesPartition.toString() << " on Thread "
                                                                                    << Runtime::NesThread::getId());
@@ -154,7 +155,5 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
 void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runtime::QueryManagerPtr&) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
-
-void NetworkSource::emitWork(Runtime::TupleBuffer& buffer) { DataSource::emitWork(buffer); }
 
 }// namespace NES::Network

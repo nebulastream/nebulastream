@@ -15,6 +15,7 @@
 */
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
+#include <Network/NetworkChannel.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>

@@ -56,7 +56,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 
     void TearDown() override {
         NES_INFO("TearDown ConvertLogicalToPhysicalSourceTest test instance.");
-        engine->stop();
+        ASSERT_TRUE(engine->stop());
         engine.reset();
     }
 };

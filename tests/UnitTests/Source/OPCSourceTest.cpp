@@ -54,7 +54,7 @@ class OPCSourceTest : public testing::Test {
         test_schema = Schema::create()->addField("var", UINT32);
 
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = Runtime::create("127.0.0.1", 31337, conf);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, conf);
 
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();

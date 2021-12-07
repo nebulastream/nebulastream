@@ -18,6 +18,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/NetworkChannel.hpp>
+#include <Network/PartitionManager.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
@@ -26,7 +27,7 @@
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -150,8 +151,8 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
     ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionConsumerCounter(nesPartition), 1UL);
     EXPECT_TRUE(networkSource->stop());
     netManager->unregisterSubpartitionConsumer(nesPartition);
-    ASSERT_EQ(nodeEngine->getPartitionManager()->isConsumerRegistered(nesPartition), PartitionRegistrationStatus::Deleted);
-    nodeEngine->stop();
+    ASSERT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition), PartitionRegistrationStatus::Deleted);
+    ASSERT_TRUE(nodeEngine->stop());
 }
 
 TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
@@ -293,7 +294,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         }
 
         void onServerError(Network::Messages::ErrorMessage ex) override {
-            if (ex.getErrorType() != Messages::ErrorType::kPartitionNotRegisteredError) {
+            if (ex.getErrorType() != Messages::ErrorType::PartitionNotRegisteredError) {
                 completed.set_exception(make_exception_ptr(runtime_error("Error")));
             }
         }
@@ -316,13 +317,13 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                           nodeLocation,
                                                           64);
             EXPECT_TRUE(source->start());
-            EXPECT_EQ(nodeEngine->getPartitionManager()->isConsumerRegistered(nesPartition),
+            EXPECT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
                       PartitionRegistrationStatus::Registered);
             completed.get_future().get();
             EXPECT_TRUE(source->stop());
             auto rt = Runtime::ReconfigurationMessage(-1, Runtime::Destroy, source);
             source->postReconfigurationCallback(rt);
-            EXPECT_EQ(nodeEngine->getPartitionManager()->isConsumerRegistered(nesPartition),
+            EXPECT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
                       PartitionRegistrationStatus::Deleted);
         });
 
@@ -370,13 +371,12 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
     auto const bf = bufferCnt.load();
     ASSERT_TRUE(bf > 0);
     ASSERT_EQ(static_cast<std::size_t>(bf), numSendingThreads * totalNumBuffer);
-    ASSERT_EQ(nodeEngine->getPartitionManager()->isConsumerRegistered(nesPartition), PartitionRegistrationStatus::Deleted);
-    nodeEngine->stop();
+    ASSERT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition), PartitionRegistrationStatus::Deleted);
+    ASSERT_TRUE(nodeEngine->stop());
     nodeEngine = nullptr;
 }
 
 TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
-    //    std::promise<bool> completed;
 
     SchemaPtr schema = Schema::create()
                            ->addField("test$id", DataTypeFactory::createInt64())
@@ -506,8 +506,7 @@ struct TestEvent {
 TEST_F(NetworkStackIntegrationTest, testSendEvent) {
     std::promise<bool> completedProm;
 
-    std::atomic<bool> bufferReceived = false;
-    bool completed = false;
+    std::atomic<bool> eventReceived = false;
     auto nesPartition = NesPartition(1, 22, 333, 444);
 
     try {
@@ -526,6 +525,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
             void onEvent(NesPartition, Runtime::BaseEvent& event) override {
                 eventReceived = event.getEventType() == Runtime::EventType::kCustomEvent
                     && dynamic_cast<Runtime::CustomEventWrapper&>(event).data<detail::TestEvent>()->testValue() == 123;
+                ASSERT_TRUE(eventReceived);
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
@@ -540,20 +540,20 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
             NetworkManager::create(0,
                                    "127.0.0.1",
                                    31339,
-                                   ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
+                                   ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(eventReceived, completedProm)),
                                    buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
             void emitWork(TupleBuffer&) override {}
         };
-        std::thread t([&netManager, &nesPartition, &completedProm, &completed] {
+        std::thread t([&netManager, &nesPartition, &completedProm] {
             // register the incoming channel
             sleep(3);// intended stalling to simulate latency
             auto nodeLocation = NodeLocation(0, "127.0.0.1", 31339);
             netManager->registerSubpartitionConsumer(nesPartition, nodeLocation, std::make_shared<DataEmitterImpl>());
             auto future = completedProm.get_future();
             if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
-                completed = future.get();
+                ASSERT_TRUE(future.get());
             } else {
                 NES_ERROR("NetworkStackIntegrationTest: Receiving thread timed out!");
             }
@@ -576,8 +576,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
     } catch (...) {
         FAIL();
     }
-    ASSERT_EQ(bufferReceived, true);
-    ASSERT_EQ(completed, true);
+    ASSERT_TRUE(eventReceived.load());
 }
 
 TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
@@ -743,7 +742,8 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
     ASSERT_TRUE(nodeEngineSender->startQuery(builderGeneratorQEP->getQueryId()));
     ASSERT_TRUE(nodeEngineReceiver->startQuery(builderReceiverQEP->getQueryId()));
 
-    networkSink->completed.get_future().wait();
+    auto future = networkSink->completed.get_future();
+    ASSERT_TRUE(future.get());
 
     ASSERT_TRUE(nodeEngineSender->undeployQuery(builderGeneratorQEP->getQueryId()));
     ASSERT_TRUE(nodeEngineReceiver->undeployQuery(builderReceiverQEP->getQueryId()));

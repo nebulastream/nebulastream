@@ -18,7 +18,7 @@
 #define NES_INCLUDE_GRPC_WORKER_RPC_CLIENT_HPP_
 
 #include <Plans/Query/QueryId.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>
@@ -66,6 +66,8 @@ class WorkerRPCClient {
 
         std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
     };
+
+    WorkerRPCClient() = default;
 
     void AsyncCompleteRpc();
 
@@ -153,7 +155,6 @@ class WorkerRPCClient {
      */
     static bool checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
 
-  private:
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 

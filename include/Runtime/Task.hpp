@@ -18,7 +18,7 @@
 #define NES_INCLUDE_RUNTIME_TASK_HPP_
 
 #include <Runtime/ExecutionResult.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <limits>
 #include <memory>

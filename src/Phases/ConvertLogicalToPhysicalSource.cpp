@@ -33,7 +33,7 @@
 #include <Util/Logger.hpp>
 
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 #ifdef NES_ENABLE_NUMA_SUPPORT
 #if defined(__linux__)

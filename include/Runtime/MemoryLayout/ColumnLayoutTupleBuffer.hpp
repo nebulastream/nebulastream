@@ -19,7 +19,7 @@
 
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstdint>
 #include <utility>
 

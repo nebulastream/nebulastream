@@ -16,8 +16,9 @@
 
 #ifndef NES_TESTS_UTIL_DUMMY_SINK_HPP_
 #define NES_TESTS_UTIL_DUMMY_SINK_HPP_
-
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <memory>
+#include <string>
 namespace NES {
 class DummySink : public SinkDescriptor {
   public:

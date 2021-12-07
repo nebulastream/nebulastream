@@ -20,6 +20,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Network/NetworkChannel.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
@@ -120,6 +121,11 @@ class TestPipelineExecutionContext : public Runtime::Execution::PipelineExecutio
             std::move(operatorHandlers)){
             // nop
         };
+
+
+    ~TestPipelineExecutionContext() {
+        buffers.clear();
+    }
 
     std::vector<TupleBuffer> buffers;
 };
@@ -414,26 +420,26 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* prepare input and output tuple buffer */
     auto schema = Schema::create()->addField("i64", DataTypeFactory::createUInt64());
     source->open();
-    auto buffer = source->receiveData().value();
-
-    /* execute Stage */
-    NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
     auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                        std::vector<Runtime::Execution::OperatorHandlerPtr>());
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     stage->setup(*queryContext);
     stage->start(*queryContext);
-    stage->execute(buffer, *queryContext, wctx);
-    auto resultBuffer = queryContext->buffers[0];
-
-    /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
-    EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
-    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, nodeEngine->getBufferManager()->getBufferSize());
-    std::cout << Runtime::MemoryLayouts::DynamicTupleBuffer(layout, resultBuffer);
-    auto firstFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, layout, resultBuffer);
-    for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
-        EXPECT_EQ(firstFields[recordIndex], 1UL);
+    if (auto buffer = source->receiveData().value(); !!buffer) {
+        /* execute Stage */
+        NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
+        stage->execute(buffer, *queryContext, wctx);
+        if (auto resultBuffer = queryContext->buffers[0]; !!resultBuffer) {
+            /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
+            EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
+            auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, nodeEngine->getBufferManager()->getBufferSize());
+            auto firstFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, layout, resultBuffer);
+            for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
+                EXPECT_EQ(firstFields[recordIndex], 1UL);
+            }
+        }
     }
+    queryContext.reset();
 }
 /**
  * @brief This test generates a predicate, which filters elements in the input buffer
@@ -490,6 +496,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
         EXPECT_EQ(resultData[i].id, i);
         EXPECT_EQ(resultData[i].value, i * 2);
     }
+    queryContext.reset();
 }
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
@@ -846,24 +853,24 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     source->open();
     auto optVal = source->receiveData();
     NES_ASSERT(optVal.has_value(), "invalid buffer");
-    auto inputBuffer = *optVal;
+    if (auto inputBuffer = *optVal; !!inputBuffer) {
 
-    /* execute Stage */
+        /* execute Stage */
 
-    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                       std::vector<Runtime::Execution::OperatorHandlerPtr>());
-    cout << "inputBuffer=" << Util::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
-    stage->setup(*queryContext);
-    stage->start(*queryContext);
-    stage->execute(inputBuffer, *queryContext, wctx);
+        auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                           std::vector<Runtime::Execution::OperatorHandlerPtr>());
+        Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
+        stage->setup(*queryContext);
+        stage->start(*queryContext);
+        stage->execute(inputBuffer, *queryContext, wctx);
 
-    auto resultBuffer = queryContext->buffers[0];
+        auto resultBuffer = queryContext->buffers[0];
 
-    /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3UL);
+        /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3UL);
+        queryContext.reset();
+    }
 
-    NES_INFO(Util::prettyPrintTupleBuffer(resultBuffer, inputSchema));
 }
 
 /**
@@ -1595,7 +1602,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
 TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
-
+    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = QueryCompilation::CCodeGenerator::create();
@@ -1629,8 +1636,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
 
     cepOperatorHandler->start(queryContext, nodeEngine->getStateManager(), 0);
 
-    cout << "inputBuffer=" << Util::prettyPrintTupleBuffer(inputBuffer, inputSchema) << endl;
-    Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
+
     stage->setup(*queryContext);
     stage->start(*queryContext);
     stage->execute(inputBuffer, *queryContext, wctx);

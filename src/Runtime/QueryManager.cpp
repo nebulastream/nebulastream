@@ -209,15 +209,16 @@ void QueryManager::destroy() {
     // 1. attempt transition from Running -> Stopped
     auto expected = Running;
 
+    bool successful = true;
     if (queryManagerStatus.compare_exchange_strong(expected, Stopped)) {
         std::unique_lock lock(queryMutex);
         auto copyOfRunningQeps = runningQEPs;
         lock.unlock();
         for (auto& [_, qep] : copyOfRunningQeps) {
-            stopQuery(qep, false);
+            successful &= stopQuery(qep, false);
         }
     }
-
+    NES_ASSERT2_FMT(successful, "Cannot stop running queries upon query manager destruction");
     // 2. attempt transition from Stopped -> Destroyed
     expected = Stopped;
     if (queryManagerStatus.compare_exchange_strong(expected, Destroyed)) {
@@ -480,14 +481,12 @@ void QueryManager::poisonWorkers() {
 bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful) {
     NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId() << " graceful=" << graceful);
     bool ret = true;
-    //    std::unique_lock lock(queryMutex);
-    // here im using COW to avoid keeping the lock for long
-    // however, this is not a long-term fix
-    // because it wont lead to correct behaviour
-    // under heavy query deployment ops
+
     auto sources = qep->getSources();
+    auto sinks = qep->getSinks();
     auto copiedSources = std::vector(sources.begin(), sources.end());
-    //    lock.unlock();
+    auto copiedSinks = std::vector(sinks.begin(), sinks.end());
+
 
     switch (qep->getStatus()) {
         case Execution::Finished:

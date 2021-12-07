@@ -17,15 +17,12 @@
 #ifndef NES_INCLUDE_NETWORK_NETWORK_SOURCE_HPP_
 #define NES_INCLUDE_NETWORK_NETWORK_SOURCE_HPP_
 
-#include <Network/NesPartition.hpp>
-#include <Network/NodeLocation.hpp>
+#include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES::Network {
-class NetworkManager;
-using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
 
 /**
  * @brief this class provide a zmq as data source
@@ -84,21 +81,15 @@ class NetworkSource : public DataSource {
     static void runningRoutine(const Runtime::BufferManagerPtr&, const Runtime::QueryManagerPtr&);
 
     /**
-     * @brief
-     * @param buffer
-     */
-    void emitWork(Runtime::TupleBuffer& buffer) override;
-
-    /**
-     * @brief
-     * @param message
-     * @param context
+     * @brief This method is invoked when the source receives a reconfiguration message.
+     * @param message the reconfiguration message
+     * @param context thread context
      */
     void reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) override;
 
     /**
-     * @brief
-     * @param message
+     * @brief This method is invoked when the source receives a reconfiguration message.
+     * @param message the reconfiguration message
      */
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
@@ -110,7 +101,6 @@ class NetworkSource : public DataSource {
     const std::chrono::seconds waitTime;
     const uint8_t retryTimes;
 };
-using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
 
 }// namespace NES::Network
 

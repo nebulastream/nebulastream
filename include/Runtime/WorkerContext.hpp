@@ -18,9 +18,9 @@
 #define NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_
 
 #include <Network/NesPartition.hpp>
-#include <Network/NetworkChannel.hpp>
+#include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/NesThread.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -53,6 +53,9 @@ class WorkerContext {
                            uint64_t numberOfBuffersPerWorker,
                            uint32_t numaNode = 0);
 
+
+    ~WorkerContext();
+
     /**
      * @brief Allocates a new tuple buffer.
      * @return TupleBuffer
@@ -66,23 +69,23 @@ class WorkerContext {
     uint32_t getId() const;
 
     /**
-     * @brief
-     * @param object
-     * @param refCnt
+     * @brief Sets the ref counter for a generic object using its pointer address as lookup
+     * @param object the object that we want to track
+     * @param refCnt the initial ref cnt
      */
     void setObjectRefCnt(void* object, uint32_t refCnt);
 
     /**
-     * @brief
-     * @param object
-     * @return
+     * @brief Increase the ref cnt of a given object
+     * @param object the object that we want to ref count
+     * @return the prev ref cnt
      */
     uint32_t increaseObjectRefCnt(void* object);
 
     /**
-     * @brief
-     * @param object
-     * @return
+     * @brief Reduces by one the ref cnt. It deletes the object as soon as ref cnt reaches 0.
+     * @param object the object that we want to ref count
+     * @return the prev ref cnt
      */
     uint32_t decreaseObjectRefCnt(void* object);
 

@@ -20,7 +20,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <functional>
 #include <map>
 #include <string>

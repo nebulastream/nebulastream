@@ -25,9 +25,9 @@
  */
 namespace NES {
 
-class NesNetworkError : public std::runtime_error {
+class NesNetworkException : public std::runtime_error {
   public:
-    explicit NesNetworkError(NES::Network::Messages::ErrMessage& msg) : msg(msg), std::runtime_error("") {}
+    explicit NesNetworkException(NES::Network::Messages::ErrMessage& msg) : msg(msg), std::runtime_error("") {}
 
     const NES::Network::Messages::ErrMessage& getErrorMessage() const { return msg; }
 

@@ -36,25 +36,53 @@ static constexpr nes_magic_number_t NES_NETWORK_MAGIC_NUMBER = 0xBADC0FFEE;
 
 enum class MessageType : uint8_t {
     /// message type that the client uses to announce itself to the server
-    kClientAnnouncement,
+    ClientAnnouncement,
     /// message type that the servers uses to reply to the client regarding the availability
     /// of a partition
-    kServerReady,
+    ServerReady,
     /// message type of a data buffer
-    kDataBuffer,
+    DataBuffer,
     /// type of a message that contains an error
-    kErrorMessage,
+    ErrorMessage,
     /// type of a message that marks a stream subpartition as finished, i.e., no more records are expected
-    kEndOfStream,
+    EndOfStream,
     /// message type of an event buffer
-    kEventBuffer,
+    EventBuffer,
 };
 
 /// this enum defines the errors that can occur in the network stack logic
-enum class ErrorType : uint8_t { kPartitionNotRegisteredError, kUnknownError, kUnknownPartitionError, kDeletedPartitionError };
+enum class ErrorType : uint8_t {
+    /// error raised when requesting a partition that is not registered
+    PartitionNotRegisteredError,
+    /// error raised when a data/event buffer arrives for a partition that is not known on the current node
+    UnknownPartitionError,
+    /// error raised when requesting a partition that has been previously deleted
+    DeletedPartitionError,
+    /// error raised when there is no known reason
+    UnknownError,
+};
 
-enum class ChannelType : uint8_t { kDataChannel, kEventOnlyChannel };
+enum class ChannelType : uint8_t {
+    /// data channel: allows sending data and event buffers
+    DataChannel,
+    /// event-only channel: allows sending event buffers only
+    EventOnlyChannel
+};
 
+/*
+    This is how a NES Network Message looks like on the wire
+
+    +------------------+-----------------+-----------------------+
+    |  Zmq Routing Id  |  MessageHeader  |   OPTIONAL subclass   |
+    |   NesChannelId   |    13 bytes     |   of ExchangeMessage  |
+    |     8 bytes      |                 |     has var size      |
+    +------------------+-----------------+-----------------------+
+
+ */
+
+/**
+ * @brief this is the pramble of each message that is sent via the network
+ */
 class MessageHeader {
   public:
     explicit MessageHeader(MessageType msgType, uint32_t msgLength)
@@ -67,11 +95,17 @@ class MessageHeader {
     [[nodiscard]] uint32_t getMsgLength() const { return msgLength; }
 
   private:
+    /// this is a magic number that we use as checksum
     const nes_magic_number_t magicNumber;
+    /// type of the message that follows as payload
     const MessageType msgType;
+    /// size of the payload message
     const uint32_t msgLength;
 };
 
+/**
+ * @brief This is the base class for all messages that can be sent in NES
+ */
 class ExchangeMessage {
   public:
     explicit ExchangeMessage(ChannelId channelId) : channelId(std::move(channelId)) {}
@@ -82,9 +116,12 @@ class ExchangeMessage {
     const ChannelId channelId;
 };
 
+/**
+ * @brief This message is sent when a client announces itself to a server. It's the first message that is sent.
+ */
 class ClientAnnounceMessage : public ExchangeMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = MessageType::kClientAnnouncement;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::ClientAnnouncement;
 
     explicit ClientAnnounceMessage(ChannelId channelId, ChannelType mode) : ExchangeMessage(channelId), mode(mode) {}
 
@@ -94,36 +131,45 @@ class ClientAnnounceMessage : public ExchangeMessage {
     ChannelType mode;
 };
 
+/**
+ * @brief This message is sent back to a client when a server is ready to receive data.
+ */
 class ServerReadyMessage : public ExchangeMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = MessageType::kServerReady;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::ServerReady;
 
     explicit ServerReadyMessage(ChannelId channelId) : ExchangeMessage(channelId) {
         // nop
     }
 };
 
+/**
+ * @brief This message is sent to notify end-of-stream.
+ */
 class EndOfStreamMessage : public ExchangeMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = MessageType::kEndOfStream;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::EndOfStream;
 
     explicit EndOfStreamMessage(ChannelId channelId, ChannelType channelType, bool graceful = true)
         : ExchangeMessage(channelId), channelType(channelType), graceful(graceful) {}
 
     [[nodiscard]] bool isGraceful() const { return graceful; }
 
-    [[nodiscard]] bool isDataChannel() const { return channelType == ChannelType::kDataChannel; }
+    [[nodiscard]] bool isDataChannel() const { return channelType == ChannelType::DataChannel; }
 
-    [[nodiscard]] bool isEventChannel() const { return channelType == ChannelType::kEventOnlyChannel; }
+    [[nodiscard]] bool isEventChannel() const { return channelType == ChannelType::EventOnlyChannel; }
 
   private:
     ChannelType channelType;
     bool graceful;
 };
 
+/**
+ * @brief This message represent an error that is sent from the client to the server or vice versa.
+ */
 class ErrorMessage : public ExchangeMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = MessageType::kErrorMessage;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::ErrorMessage;
 
     explicit ErrorMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), errorCode(error) {
         // nop
@@ -132,9 +178,9 @@ class ErrorMessage : public ExchangeMessage {
     [[nodiscard]] ErrorType getErrorType() const { return errorCode; }
 
     [[nodiscard]] std::string getErrorTypeAsString() const {
-        if (errorCode == ErrorType::kPartitionNotRegisteredError) {
+        if (errorCode == ErrorType::PartitionNotRegisteredError) {
             return "PartitionNotRegisteredError";
-        } else if (errorCode == ErrorType::kDeletedPartitionError) {
+        } else if (errorCode == ErrorType::DeletedPartitionError) {
             return "DeletedPartitionError";
         }
         return "UnknownError";
@@ -144,21 +190,24 @@ class ErrorMessage : public ExchangeMessage {
      * @brief this checks if the message contains a PartitionNotRegisteredError
      * @return true if the message contains a PartitionNotRegisteredError
      */
-    [[nodiscard]] bool isPartitionNotFound() const { return errorCode == ErrorType::kPartitionNotRegisteredError; }
+    [[nodiscard]] bool isPartitionNotFound() const { return errorCode == ErrorType::PartitionNotRegisteredError; }
 
     /**
      * @brief this checks if the message contains a DeletedPartitionError
      * @return true if the message contains a DeletedPartitionError
      */
-    [[nodiscard]] bool isPartitionDeleted() const { return errorCode == ErrorType::kDeletedPartitionError; }
+    [[nodiscard]] bool isPartitionDeleted() const { return errorCode == ErrorType::DeletedPartitionError; }
 
   private:
     const ErrorType errorCode;
 };
 
+/**
+ * @brief This is the payload with tuples
+ */
 class DataBufferMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = MessageType::kDataBuffer;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::DataBuffer;
 
     explicit inline DataBufferMessage(uint32_t payloadSize,
                                       uint32_t numOfRecords,
@@ -177,25 +226,18 @@ class DataBufferMessage {
     uint64_t const sequenceNumber;
 };
 
+/**
+ * @brief This a payload message with an event
+ */
 class EventBufferMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = MessageType::kEventBuffer;
+    static constexpr MessageType MESSAGE_TYPE = MessageType::EventBuffer;
 
     explicit inline EventBufferMessage(Runtime::EventType eventType, uint32_t payloadSize) noexcept
         : eventType(eventType), payloadSize(payloadSize) {}
 
     Runtime::EventType const eventType;
     uint32_t const payloadSize;
-};
-
-class NesNetworkError : public std::runtime_error {
-  public:
-    explicit NesNetworkError(ErrorMessage& msg) : std::runtime_error(msg.getErrorTypeAsString()), msg(msg) {}
-
-    [[nodiscard]] const ErrorMessage& getErrorMessage() const { return msg; }
-
-  private:
-    const ErrorMessage msg;
 };
 
 }// namespace Messages

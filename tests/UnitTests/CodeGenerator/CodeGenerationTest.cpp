@@ -22,6 +22,7 @@
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
+#include <Network/NetworkChannel.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>
@@ -44,7 +45,7 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -91,7 +92,7 @@ class CodeGenerationTest : public testing::Test {
     /* Will be called before a test is executed. */
     void TearDown() override {
         std::cout << "Tear down CodeGenerationTest test case." << std::endl;
-        nodeEngine->stop();
+        ASSERT_TRUE(nodeEngine->stop());
     }
 
     /* Will be called after all tests in this class are finished. */

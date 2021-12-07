@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_REST_REST_SERVER_HPP_
 #define NES_INCLUDE_REST_REST_SERVER_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 #include <string>
 

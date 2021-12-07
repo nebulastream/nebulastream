@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_SINKS_FORMATS_SINK_FORMAT_HPP_
 #define NES_INCLUDE_SINKS_FORMATS_SINK_FORMAT_HPP_
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
 

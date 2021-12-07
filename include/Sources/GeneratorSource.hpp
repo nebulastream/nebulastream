@@ -68,7 +68,6 @@ class GeneratorSource : public DataSource {
     std::string toString() const override;
     SourceType getType() const override;
 
-    ~GeneratorSource() override;
 };
 
 }// namespace NES

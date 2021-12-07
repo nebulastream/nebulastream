@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_RUNTIME_NODE_ENGINE_FORWARED_REFS_HPP_
 #define NES_INCLUDE_RUNTIME_NODE_ENGINE_FORWARED_REFS_HPP_
+
 #include <memory>
 #include <string>
 #include <variant>
@@ -46,7 +47,13 @@ using DataSinkPtr = std::shared_ptr<SinkMedium>;
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
+class DataEmitter;
+using DataEmitterPtr = std::shared_ptr<DataEmitter>;
+
 namespace Runtime {
+
+class RuntimeEventListener;
+using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<BufferStorage>;

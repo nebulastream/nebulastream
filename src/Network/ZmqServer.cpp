@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Network/ZmqUtils.hpp>
@@ -205,7 +206,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                 NES_THROW_RUNTIME_ERROR("ZmqServer(" << this->hostname << ":" << this->port << "):  Stream is corrupted");
             }
             switch (msgHeader->getMsgType()) {
-                case MessageType::kClientAnnouncement: {
+                case MessageType::ClientAnnouncement: {
                     // if server receives announcement, that a client wants to send buffers
                     zmq::message_t outIdentityEnvelope;
                     zmq::message_t clientAnnouncementEnvelope;
@@ -233,7 +234,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                                returnMessage);
                     break;
                 }
-                case MessageType::kDataBuffer: {
+                case MessageType::DataBuffer: {
                     // if server receives a tuple buffer
                     zmq::message_t bufferHeaderMsg;
                     auto optRecvStatus = dispatcherSocket.recv(bufferHeaderMsg, kZmqRecvDefault);
@@ -262,7 +263,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     exchangeProtocol.onBuffer(*nesPartition, buffer);
                     break;
                 }
-                case MessageType::kEventBuffer: {
+                case MessageType::EventBuffer: {
                     zmq::message_t bufferHeaderMsg;
                     auto optRecvStatus = dispatcherSocket.recv(bufferHeaderMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
@@ -288,12 +289,12 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     }
                     break;
                 }
-                case MessageType::kErrorMessage: {
+                case MessageType::ErrorMessage: {
                     // if server receives a message that an error occured
                     NES_FATAL_ERROR("ZmqServer(" << this->hostname << ":" << this->port << "):  ErrorMessage not supported yet");
                     break;
                 }
-                case MessageType::kEndOfStream: {
+                case MessageType::EndOfStream: {
                     // if server receives a message that the stream did terminate
                     zmq::message_t eosEnvelope;
                     auto optRetSize = dispatcherSocket.recv(eosEnvelope, kZmqRecvDefault);

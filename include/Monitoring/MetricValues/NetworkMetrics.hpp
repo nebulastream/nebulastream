@@ -19,7 +19,7 @@
 
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES {
 

@@ -32,11 +32,11 @@ option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 
 if (NOT CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
-    message(FATAL_ERROR "Not supported for now")
+    message(FATAL_ERROR "Disabling CMAKE_USE_LATCH_FREE_BUFFER_MANAGER is not supported for now, please enable it")
 endif()
 
 if (NOT CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    message(FATAL_ERROR "Not supported for now")
+    message(FATAL_ERROR "Disabling CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE is not supported for now, please enable it")
 endif()
 
 # for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
@@ -149,9 +149,10 @@ if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
 
-if(NES_COMPUTE_COVERAGE) # this is an experimental feature; do not rely on it yet
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-endif()
+# this is an experimental feature; do not rely on it yet
+#if(NES_COMPUTE_COVERAGE)
+#    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+#endif()
 
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     message(STATUS "use CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")

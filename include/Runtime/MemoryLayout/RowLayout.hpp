@@ -18,7 +18,7 @@
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_ROW_LAYOUT_HPP_
 
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {

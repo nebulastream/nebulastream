@@ -18,7 +18,7 @@
 #define NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_VALUES_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <string>
 
 namespace NES {

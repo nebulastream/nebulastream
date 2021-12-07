@@ -17,18 +17,18 @@
 #ifndef NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_
 #define NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_
 
-#include <Network/NesPartition.hpp>
-#include <Network/NodeLocation.hpp>
+#include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/Events.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>
 
 namespace NES {
 namespace Network {
-class NetworkManager;
-using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
 
+/**
+ * @brief This represent a sink operator that acts as a connecting API between query processing and network stack.
+ */
 class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     using inherited0 = SinkMedium;
     using inherited1 = Runtime::RuntimeEventListener;

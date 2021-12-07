@@ -147,7 +147,7 @@ void PartitionManager::clear() {
     consumerPartitions.clear();
 }
 
-PartitionRegistrationStatus PartitionManager::isConsumerRegistered(NesPartition partition) const {
+PartitionRegistrationStatus PartitionManager::getConsumerRegistrationStatus(NesPartition partition) const {
     //check if partition is present
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end()) {
@@ -156,7 +156,7 @@ PartitionRegistrationStatus PartitionManager::isConsumerRegistered(NesPartition 
     return PartitionRegistrationStatus::NotFound;
 }
 
-PartitionRegistrationStatus PartitionManager::isProducerRegistered(NesPartition partition) const {
+PartitionRegistrationStatus PartitionManager::getProducerRegistrationStatus(NesPartition partition) const {
     //check if partition is present
     std::unique_lock lock(producerPartitionsMutex);
     if (auto it = producerPartitions.find(partition); it != producerPartitions.end()) {
@@ -179,7 +179,7 @@ bool PartitionManager::registerSubpartitionProducer(NesPartition partition, Node
     return (*it).second.count() == 0;
 }
 
-bool PartitionManager::addSubpartionEventListener(NesPartition partition,
+bool PartitionManager::addSubpartitionEventListener(NesPartition partition,
                                                   NodeLocation receiverLocation,
                                                   Runtime::RuntimeEventListenerPtr eventListener) {
     std::unique_lock lock(producerPartitionsMutex);

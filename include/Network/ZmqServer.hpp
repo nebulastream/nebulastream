@@ -17,9 +17,7 @@
 #ifndef NES_INCLUDE_NETWORK_ZMQ_SERVER_HPP_
 #define NES_INCLUDE_NETWORK_ZMQ_SERVER_HPP_
 
-#include <Network/ExchangeProtocol.hpp>
-#include <Network/NesPartition.hpp>
-#include <Network/PartitionManager.hpp>
+#include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <atomic>
 #include <future>

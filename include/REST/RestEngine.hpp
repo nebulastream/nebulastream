@@ -22,7 +22,7 @@
 #endif
 #include <REST/Controller/BaseController.hpp>
 #include <REST/CpprestForwardedRefs.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <cpprest/http_listener.h>
 #include <pplx/pplxtasks.h>
 #include <string>

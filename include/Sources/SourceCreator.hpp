@@ -29,7 +29,6 @@
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #ifdef ENABLE_OPC_BUILD
-#include <Network/NodeLocation.hpp>
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/client_subscriptions.h>
@@ -37,10 +36,6 @@
 #endif
 
 namespace NES {
-namespace Network {
-class NetworkManager;
-using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
-}// namespace Network
 /**
  * @brief function to create a test source which produces 10 tuples within one buffer with value one based on a schema
  * @param schema of the data source

@@ -21,6 +21,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
+#include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Runtime/HardwareManager.hpp>
@@ -28,7 +29,7 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <State/StateManager.hpp>
@@ -168,7 +169,6 @@ TEST_F(NetworkStackTest, startCloseChannel) {
     try {
         // start zmqServer
         std::promise<bool> completed;
-        std::vector<int> v(0);
 
         class InternalListener : public Network::ExchangeProtocolListener {
           public:
@@ -410,7 +410,7 @@ TEST_F(NetworkStackTest, testPartitionManager) {
     partitionManager->unregisterSubpartitionConsumer(partition1Copy);
     ASSERT_EQ(*partitionManager->getSubpartitionConsumerCounter(partition1Copy), 1UL);
     partitionManager->unregisterSubpartitionConsumer(partition1Copy);
-    ASSERT_EQ(partitionManager->isConsumerRegistered(partition1), PartitionRegistrationStatus::Deleted);
+    ASSERT_EQ(partitionManager->getConsumerRegistrationStatus(partition1), PartitionRegistrationStatus::Deleted);
 }
 
 TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
@@ -437,7 +437,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
                     serverError.set_value(true);
                 }
                 NES_INFO("NetworkStackTest: Server error called!");
-                ASSERT_EQ(errorMsg.getErrorType(), Messages::ErrorType::kPartitionNotRegisteredError);
+                ASSERT_EQ(errorMsg.getErrorType(), Messages::ErrorType::PartitionNotRegisteredError);
             }
 
             void onChannelError(Messages::ErrorMessage errorMsg) override {
@@ -446,7 +446,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
                     channelError.set_value(true);
                 }
                 NES_INFO("NetworkStackTest: Channel error called!");
-                ASSERT_EQ(errorMsg.getErrorType(), Messages::ErrorType::kPartitionNotRegisteredError);
+                ASSERT_EQ(errorMsg.getErrorType(), Messages::ErrorType::PartitionNotRegisteredError);
             }
 
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
@@ -623,7 +623,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                 : nesPartition(nesPartition), completed(completed), bufferCnt(bufferCnt) {}
 
             void onServerError(Messages::ErrorMessage ex) override {
-                if (ex.getErrorType() != Messages::ErrorType::kPartitionNotRegisteredError) {
+                if (ex.getErrorType() != Messages::ErrorType::PartitionNotRegisteredError) {
                     completed.set_exception(make_exception_ptr(runtime_error("Error")));
                 }
             }
@@ -666,7 +666,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             auto nodeLocation = NodeLocation(0, "127.0.0.1", 31337);
             netManager->registerSubpartitionConsumer(nesPartition, nodeLocation, std::make_shared<DataEmitterImpl>());
             EXPECT_TRUE(completed.get_future().get());
-            ASSERT_FALSE(pManager->isConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Deleted);
+            ASSERT_FALSE(pManager->getConsumerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Deleted);
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });
 

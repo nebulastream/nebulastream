@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_RUNTIME_EXECUTION_PIPELINE_EXECUTION_CONTEXT_HPP_
 #define NES_INCLUDE_RUNTIME_EXECUTION_PIPELINE_EXECUTION_CONTEXT_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>

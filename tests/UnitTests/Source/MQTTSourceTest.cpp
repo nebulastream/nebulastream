@@ -80,8 +80,7 @@ class MQTTSourceTest : public testing::Test {
 
     /* Will be called after a test is executed. */
     void TearDown() override {
-        nodeEngine->stop();
-        nodeEngine.reset();
+        ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("MQTTSOURCETEST::TearDown() Tear down MQTTSourceTest");
     }
 

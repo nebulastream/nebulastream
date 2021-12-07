@@ -17,23 +17,21 @@
 #ifndef NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_
 #define NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_
 
+#include <Network/NetworkForwardRefs.hpp>
 #include <Network/detail/BaseNetworkChannel.hpp>
 #include <Network/detail/NetworkDataSender.hpp>
 #include <Network/detail/NetworkEventSender.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES {
 namespace Network {
 
 class ExchangeProtocol;
 
-class NetworkChannel;
-using NetworkChannelPtr = std::unique_ptr<NetworkChannel>;
-class EventOnlyNetworkChannel;
-using EventOnlyNetworkChannelPtr = std::unique_ptr<EventOnlyNetworkChannel>;
-
 /**
- * @brief This class is not thread-safe.
+ * @brief This class represent the network channel for data transfer that NES uses to send data among nodes.
+ * This class can send data and event packets.
+ * This class is not thread-safe.
  */
 class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSender<detail::BaseNetworkChannel>> {
     using inherited = detail::NetworkEventSender<detail::NetworkDataSender<detail::BaseNetworkChannel>>;
@@ -42,6 +40,13 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
     static constexpr bool canSendData = inherited::canSendData;
     static constexpr bool canSendEvent = inherited::canSendEvent;
 
+    /**
+     * @brief Creates a network channel instance with the given parameters
+     * @param zmqContext the local zmq server context
+     * @param channelId the remote nes channel id to connect to
+     * @param address the socket address of the remote server
+     * @param bufferManager the buffer manager
+     */
     explicit NetworkChannel(zmq::socket_t&& zmqSocket,
                             ChannelId channelId,
                             std::string&& address,
@@ -50,7 +55,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
     /**
      * @brief close the output channel and release resources
      */
-    ~NetworkChannel() { close(); }
+    ~NetworkChannel();
 
     NetworkChannel(const NetworkChannel&) = delete;
 
@@ -59,17 +64,18 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
     /**
      * @brief Closes the underlying network connection
      */
-    void close() { inherited::close(canSendEvent && !canSendData); }
+    void close();
 
     /**
-     * @brief Creates an output channe instance with the given parameters
+     * @brief Creates a network channel instance with the given parameters
      * @param zmqContext the local zmq server context
      * @param address the ip address of the remote server
      * @param nesPartition the remote nes partition to connect to
      * @param protocol the protocol implementation
+     * @param bufferManager the buffer manager
      * @param waitTime the backoff time in case of failure when connecting
      * @param retryTimes the number of retries before the methods will raise error
-     * @return
+     * @return the network channel or nullptr on error
      */
     static NetworkChannelPtr create(const std::shared_ptr<zmq::context_t>& zmqContext,
                                     std::string&& socketAddr,
@@ -81,12 +87,21 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
 };
 
 /**
- * @brief This class is not thread-safe.
+ * @brief This class represent the network channel for event transfer that NES uses to send events among nodes.
+ * This class can send only event packets.
+ * This class is not thread-safe.
  */
 class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNetworkChannel> {
     using inherited = detail::NetworkEventSender<detail::BaseNetworkChannel>;
 
   public:
+    /**
+     * @brief Creates a network channel for events-only instance with the given parameters
+     * @param zmqContext the local zmq server context
+     * @param channelId the remote nes channel id to connect to
+     * @param address the socket address of the remote server
+     * @param bufferManager the buffer manager
+     */
     explicit EventOnlyNetworkChannel(zmq::socket_t&& zmqSocket,
                                      ChannelId channelId,
                                      std::string&& address,
@@ -95,7 +110,7 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
     /**
      * @brief close the output channel and release resources
      */
-    ~EventOnlyNetworkChannel() { close(); }
+    ~EventOnlyNetworkChannel();
 
     EventOnlyNetworkChannel(const NetworkChannel&) = delete;
 
@@ -104,17 +119,17 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
     /**
      * @brief Closes the underlying network connection
      */
-    void close() { inherited::close(canSendEvent && !canSendData); }
+    void close();
 
     /**
-     * @brief Creates an output channe instance with the given parameters
+     * @brief Creates a networkf channel instance for event transmission with the given parameters
      * @param zmqContext the local zmq server context
      * @param address the ip address of the remote server
      * @param nesPartition the remote nes partition to connect to
      * @param protocol the protocol implementation
      * @param waitTime the backoff time in case of failure when connecting
      * @param retryTimes the number of retries before the methods will raise error
-     * @return
+     * @return the network channel or nullptr on error
      */
     static EventOnlyNetworkChannelPtr create(const std::shared_ptr<zmq::context_t>& zmqContext,
                                              std::string&& socketAddr,

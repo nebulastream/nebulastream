@@ -199,12 +199,12 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId query
                                                                    const TopologyNodePtr& sinkTopologyNode) {
     NES_DEBUG("BasePlacementStrategy: create Network Source operator");
     NES_ASSERT2_FMT(sinkTopologyNode, "Invalid sink node while placing query " << queryId);
-    Network::NodeLocation nodeLocation(sinkTopologyNode->getId(),
+    Network::NodeLocation upstreamNodeLocation(sinkTopologyNode->getId(),
                                        sinkTopologyNode->getIpAddress(),
                                        sinkTopologyNode->getDataPort());
     const Network::NesPartition nesPartition = Network::NesPartition(queryId, operatorId, 0, 0);
     return LogicalOperatorFactory::createSourceOperator(
-        Network::NetworkSourceDescriptor::create(std::move(inputSchema), nesPartition, nodeLocation),
+        Network::NetworkSourceDescriptor::create(std::move(inputSchema), nesPartition, upstreamNodeLocation),
         operatorId);
 }
 

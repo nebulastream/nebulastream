@@ -18,6 +18,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/NetworkManager.hpp>
+#include <Network/PartitionManager.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -81,7 +82,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
 
 NodeEngine::~NodeEngine() {
     NES_DEBUG("Destroying Runtime()");
-    stop();
+    NES_ASSERT(stop(), "Cannot stop node engine");
 }
 
 bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
@@ -372,11 +373,11 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
 
     switch (err.getErrorType()) {
-        case Network::Messages::ErrorType::kPartitionNotRegisteredError: {
+        case Network::Messages::ErrorType::PartitionNotRegisteredError: {
             NES_WARNING("Runtime: Unable to find the NES Partition " << err.getChannelId());
             break;
         }
-        case Network::Messages::ErrorType::kDeletedPartitionError: {
+        case Network::Messages::ErrorType::DeletedPartitionError: {
             NES_WARNING("Runtime: Requesting deleted NES Partition " << err.getChannelId());
             break;
         }
@@ -389,11 +390,11 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
 
 void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
     switch (err.getErrorType()) {
-        case Network::Messages::ErrorType::kPartitionNotRegisteredError: {
+        case Network::Messages::ErrorType::PartitionNotRegisteredError: {
             NES_WARNING("Runtime: Unable to find the NES Partition " << err.getChannelId());
             break;
         }
-        case Network::Messages::ErrorType::kDeletedPartitionError: {
+        case Network::Messages::ErrorType::DeletedPartitionError: {
             NES_WARNING("Runtime: Requesting deleted NES Partition " << err.getChannelId());
             break;
         }

@@ -19,7 +19,7 @@
 
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <utility>
 
 namespace NES::Runtime::MemoryLayouts {

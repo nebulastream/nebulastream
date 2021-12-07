@@ -45,7 +45,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
     }
 
     void TearDown() override {
-        nodeEngine->stop();
+        ASSERT_TRUE(nodeEngine->stop());
         nodeEngine.reset();
     }
 

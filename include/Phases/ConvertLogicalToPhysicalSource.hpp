@@ -18,7 +18,7 @@
 #define NES_INCLUDE_PHASES_CONVERT_LOGICAL_TO_PHYSICAL_SOURCE_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/DataSource.hpp>
 
 namespace NES {

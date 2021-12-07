@@ -17,7 +17,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOW_HANDLER_WINDOW_OPERATOR_HANDLER_HPP_
 
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 namespace NES::Windowing {

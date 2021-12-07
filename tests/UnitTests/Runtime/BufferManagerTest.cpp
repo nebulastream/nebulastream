@@ -20,7 +20,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <cstdlib>

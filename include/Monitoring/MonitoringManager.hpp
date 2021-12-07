@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
 #define NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 #include <unordered_map>
 #include <vector>

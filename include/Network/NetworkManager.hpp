@@ -18,22 +18,15 @@
 #define NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_
 
 #include <Network/ExchangeProtocol.hpp>
-#include <Network/NesPartition.hpp>
-#include <Network/NetworkChannel.hpp>
-#include <Network/NodeLocation.hpp>
-#include <Network/PartitionManager.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <Network/NetworkForwardRefs.hpp>
+#include <Network/PartitionRegistrationStatus.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
 
-namespace NES {
-
-namespace Network {
-
-class ZmqServer;
-class NetworkChannel;
+namespace NES::Network {
 
 /**
  * @brief The NetworkManager manages creation and deletion of subpartition producer and consumer.
@@ -49,12 +42,12 @@ class NetworkManager {
      * @param numServerThread
      * @return the shared_ptr object
      */
-    static std::shared_ptr<NetworkManager> create(uint64_t nodeEngineId,
-                                                  const std::string& hostname,
-                                                  uint16_t port,
-                                                  Network::ExchangeProtocol&& exchangeProtocol,
-                                                  const Runtime::BufferManagerPtr& bufferManager,
-                                                  uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+    static NetworkManagerPtr create(uint64_t nodeEngineId,
+                                    const std::string& hostname,
+                                    uint16_t port,
+                                    Network::ExchangeProtocol&& exchangeProtocol,
+                                    const Runtime::BufferManagerPtr& bufferManager,
+                                    uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
      * @brief Creates a new network manager object, which comprises of a zmq server and an exchange protocol
@@ -87,7 +80,7 @@ class NetworkManager {
      */
     bool registerSubpartitionConsumer(const NesPartition& nesPartition,
                                       const NodeLocation& senderLocation,
-                                      const std::shared_ptr<DataEmitter>& emitter) const;
+                                      const DataEmitterPtr& emitter) const;
 
     /**
      * @brief This method is called on the receiver side to remove a SubpartitionConsumer.
@@ -125,7 +118,7 @@ class NetworkManager {
      * @param nesPartition indicates the partition
      * @param waitTime time in seconds to wait until a retry is called
      * @param retryTimes times to retry a connection
-     * @return
+     * @return the data network channel
      */
     NetworkChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation,
                                                    const NesPartition& nesPartition,
@@ -141,7 +134,7 @@ class NetworkManager {
      * @param nesPartition indicates the partition
      * @param waitTime time in seconds to wait until a retry is called
      * @param retryTimes times to retry a connection
-     * @return
+     * @return the event-only network channel
      */
     EventOnlyNetworkChannelPtr registerSubpartitionEventProducer(const NodeLocation& nodeLocation,
                                                                  const NesPartition& nesPartition,
@@ -165,20 +158,18 @@ class NetworkManager {
     void destroy();
 
     /**
-     * @brief Returns the location of the network manager
+     * @brief Returns the FQDN of the network manager
      * @return the network location of the network manager
      */
     NodeLocation getServerLocation() const;
 
   private:
     NodeLocation nodeLocation;
-    std::shared_ptr<ZmqServer> server;
+    ZmqServerPtr server;
     ExchangeProtocol exchangeProtocol;
-    std::shared_ptr<PartitionManager> partitionManager{nullptr};
+    PartitionManagerPtr partitionManager{nullptr};
 };
-using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
 
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 
 #endif// NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_

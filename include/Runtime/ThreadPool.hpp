@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_RUNTIME_THREAD_POOL_HPP_
 #define NES_INCLUDE_RUNTIME_THREAD_POOL_HPP_
 
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <iostream>
 #include <thread>
 #include <vector>
