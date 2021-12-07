@@ -626,6 +626,11 @@ add_executable(string-query-test "Integration/StringQueryTest.cpp")
 target_link_libraries(string-query-test nes ${GTEST_LIBRARIES})
 add_test(NAME string-query-test COMMAND string-query-test)
 
+# gRPC Tests
+add_executable(grpc-test "UnitTests/gRPC/grpcTests.cpp")
+target_link_libraries(grpc-test nes ${GTEST_LIBRARIES})
+add_test(NAME grpc-test COMMAND grpc-test)
+
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
 add_executable(e2e-coordinator-single-worker-test "E2e/E2ECoordinatorSingleWorkerTest.cpp")
