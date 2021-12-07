@@ -30,9 +30,9 @@ namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
-uint64_t rpcPort = 1200;
-uint64_t dataPort = 1400;
-uint64_t restPort = 8000;
+uint64_t rpcPort = 1289;
+uint64_t dataPort = 1489;
+uint64_t restPort = 8089;
 
 class CPPClientTest : public testing::Test {
   protected:
