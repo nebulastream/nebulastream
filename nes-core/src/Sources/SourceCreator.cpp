@@ -17,12 +17,10 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Sources/KFSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
-#include <Sources/GeneratorSource.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MemorySource.hpp>
@@ -258,25 +256,6 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     waitTime,
                                                     retryTimes,
                                                     successors);
-}
-
-DataSourcePtr createKFSource(const SchemaPtr& schema,
-                             const std::shared_ptr<uint8_t>& memoryArea,
-                             size_t memoryAreaSize,
-                             const Runtime::BufferManagerPtr& bufferManager,
-                             const Runtime::QueryManagerPtr& queryManager,
-                             uint64_t numBuffersToProcess,
-                             uint64_t gatheringValue,
-                             OperatorId operatorId,
-                             size_t numSourceLocalBuffers,
-                             uint64_t sourceAffinity,
-                             const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
-    return std::make_shared<KFSource>(schema, memoryArea, memoryAreaSize,
-                                      bufferManager, queryManager,
-                                      numBuffersToProcess, gatheringValue,
-                                      operatorId, numSourceLocalBuffers,
-                                      DataSource::GatheringMode::FREQUENCY_MODE,
-                                      sourceAffinity, successors);
 }
 
 #ifdef ENABLE_KAFKA_BUILD
