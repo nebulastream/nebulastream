@@ -56,7 +56,7 @@ CoordinatorConfig::CoordinatorConfig() {
 
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
-    enableMonitoring = ConfigOption<bool>::create("enableMonitoring", true, "Enable monitoring");
+    enableMonitoring = ConfigOption<bool>::create("enableMonitoring", false, "Enable monitoring");
     memoryLayoutPolicy = ConfigOption<std::string>::create(
         "memoryLayoutPolicy",
         "FORCE_ROW_LAYOUT",
