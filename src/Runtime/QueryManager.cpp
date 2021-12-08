@@ -487,7 +487,6 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
     auto copiedSources = std::vector(sources.begin(), sources.end());
     auto copiedSinks = std::vector(sinks.begin(), sinks.end());
 
-
     switch (qep->getStatus()) {
         case Execution::Finished:
         case Execution::Stopped: {

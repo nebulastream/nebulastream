@@ -18,10 +18,10 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/NetworkChannel.hpp>
-#include <Network/PartitionManager.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
+#include <Network/PartitionManager.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Runtime/HardwareManager.hpp>
@@ -151,7 +151,8 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
     ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionConsumerCounter(nesPartition), 1UL);
     EXPECT_TRUE(networkSource->stop());
     netManager->unregisterSubpartitionConsumer(nesPartition);
-    ASSERT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition), PartitionRegistrationStatus::Deleted);
+    ASSERT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
+              PartitionRegistrationStatus::Deleted);
     ASSERT_TRUE(nodeEngine->stop());
 }
 
@@ -371,7 +372,8 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
     auto const bf = bufferCnt.load();
     ASSERT_TRUE(bf > 0);
     ASSERT_EQ(static_cast<std::size_t>(bf), numSendingThreads * totalNumBuffer);
-    ASSERT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition), PartitionRegistrationStatus::Deleted);
+    ASSERT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
+              PartitionRegistrationStatus::Deleted);
     ASSERT_TRUE(nodeEngine->stop());
     nodeEngine = nullptr;
 }

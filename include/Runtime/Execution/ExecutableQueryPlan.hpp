@@ -21,9 +21,9 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwaredRefs.hpp>
 #include <atomic>

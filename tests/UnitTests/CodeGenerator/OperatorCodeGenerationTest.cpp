@@ -122,10 +122,7 @@ class TestPipelineExecutionContext : public Runtime::Execution::PipelineExecutio
             // nop
         };
 
-
-    ~TestPipelineExecutionContext() {
-        buffers.clear();
-    }
+    ~TestPipelineExecutionContext() { buffers.clear(); }
 
     std::vector<TupleBuffer> buffers;
 };
@@ -870,7 +867,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3UL);
         queryContext.reset();
     }
-
 }
 
 /**
@@ -1635,7 +1631,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
         std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), context->getOperatorHandlers());
 
     cepOperatorHandler->start(queryContext, nodeEngine->getStateManager(), 0);
-
 
     stage->setup(*queryContext);
     stage->start(*queryContext);

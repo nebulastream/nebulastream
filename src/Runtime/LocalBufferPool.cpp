@@ -25,8 +25,7 @@ LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
                                  size_t numberOfReservedBuffers)
     : bufferManager(bufferManager),
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-      exclusiveBuffers(numberOfReservedBuffers),
-      exclusiveBufferCount(numberOfReservedBuffers),
+      exclusiveBuffers(numberOfReservedBuffers), exclusiveBufferCount(numberOfReservedBuffers),
 #endif
       numberOfReservedBuffers(numberOfReservedBuffers) {
 
@@ -58,7 +57,7 @@ void LocalBufferPool::destroy() {
     NES_DEBUG("Destroying LocalBufferPool");
     std::unique_lock lock(mutex);
     if (bufferManager == nullptr) {
-        return; // already destroyed
+        return;// already destroyed
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     if (numberOfReservedBuffers != exclusiveBuffers.size()) {

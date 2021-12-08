@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_HANDLER_ABSTRACT_WINDOW_HANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_HANDLER_ABSTRACT_WINDOW_HANDLER_HPP_
 
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>

@@ -24,8 +24,8 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
 #include <list>

@@ -475,9 +475,7 @@ class SourceTest : public testing::Test {
         NES_INFO("Setup SourceTest test class.");
     }
 
-    void TearDown() override {
-        ASSERT_TRUE(nodeEngine->stop());
-    }
+    void TearDown() override { ASSERT_TRUE(nodeEngine->stop()); }
 
     std::optional<Runtime::TupleBuffer> GetEmptyBuffer() { return this->nodeEngine->getBufferManager()->getBufferNoBlocking(); }
 

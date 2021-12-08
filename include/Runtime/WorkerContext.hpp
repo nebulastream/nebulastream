@@ -53,7 +53,6 @@ class WorkerContext {
                            uint64_t numberOfBuffersPerWorker,
                            uint32_t numaNode = 0);
 
-
     ~WorkerContext();
 
     /**
