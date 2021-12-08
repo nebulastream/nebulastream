@@ -46,7 +46,7 @@ class ZmqServer {
      * @param exchangeProtocol
      */
     explicit ZmqServer(std::string hostname,
-                       uint16_t port,
+                       uint16_t requestedPort,
                        uint16_t numNetworkThreads,
                        ExchangeProtocol& exchangeProtocol,
                        Runtime::BufferManagerPtr bufferManager);
@@ -71,9 +71,18 @@ class ZmqServer {
 
     /**
      * Checks if the server is running
-     * @return
+     * @return true if running
      */
     [[nodiscard]] bool isServerRunning() const { return isRunning; }
+
+    /**
+     * Returns the current server port
+     * @return the current server port
+     */
+    [[nodiscard]] uint16_t getServerPort() const { return currentPort.load(); }
+
+
+    void getServerSocketInfo(std::string& hostname, uint16_t& port);
 
   private:
     /**
@@ -101,7 +110,10 @@ class ZmqServer {
     void messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& barrier, int index);
 
     const std::string hostname;
-    const uint16_t port;
+    /// this is the port from the configuration: can be 0
+    const uint16_t requestedPort;
+    /// this is the port that the server actually binds to: cant be 0
+    std::atomic<uint16_t> currentPort;
     const uint16_t numNetworkThreads;
 
     std::shared_ptr<zmq::context_t> zmqContext;

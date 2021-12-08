@@ -26,6 +26,7 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <Network/NetworkManager.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -44,22 +45,22 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig)
-    : workerConfig(std::move(workerConfig)), coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
-      localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
-      workerToCoreMapping(workerConfig->getWorkerPinList()->getValue()),
-      queuePinList(workerConfig->getQueuePinList()->getValue()),
-      coordinatorPort(workerConfig->getCoordinatorPort()->getValue()), localWorkerRpcPort(workerConfig->getRpcPort()->getValue()),
-      localWorkerZmqPort(workerConfig->getDataPort()->getValue()), numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()),
-      numberOfBuffersInGlobalBufferManager(workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
-      numberOfBuffersPerWorker(workerConfig->getNumberOfBuffersPerWorker()->getValue()),
-      numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
-      bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
-      queryCompilerCompilationStrategy(workerConfig->getQueryCompilerCompilationStrategy()->getValue()),
-      queryCompilerPipeliningStrategy(workerConfig->getQueryCompilerPipeliningStrategy()->getValue()),
-      queryCompilerOutputBufferOptimizationLevel(workerConfig->getQueryCompilerOutputBufferAllocationStrategy()->getValue()),
-      enableNumaAwareness(workerConfig->isNumaAware()), enableMonitoring(workerConfig->getEnableMonitoring()->getValue()) {
+NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
+    : workerConfig(std::move(workerConfig)), coordinatorIp(this->workerConfig->getCoordinatorIp()->getValue()),
+      localWorkerIp(this->workerConfig->getLocalWorkerIp()->getValue()),
+      workerToCoreMapping(this->workerConfig->getWorkerPinList()->getValue()),
+      queuePinList(this->workerConfig->getQueuePinList()->getValue()),
+      coordinatorPort(this->workerConfig->getCoordinatorPort()->getValue()), localWorkerRpcPort(this->workerConfig->getRpcPort()->getValue()),
+      localWorkerZmqPort(this->workerConfig->getDataPort()->getValue()), numberOfSlots(this->workerConfig->getNumberOfSlots()->getValue()),
+      numWorkerThreads(this->workerConfig->getNumWorkerThreads()->getValue()),
+      numberOfBuffersInGlobalBufferManager(this->workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
+      numberOfBuffersPerWorker(this->workerConfig->getNumberOfBuffersPerWorker()->getValue()),
+      numberOfBuffersInSourceLocalBufferPool(this->workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
+      bufferSizeInBytes(this->workerConfig->getBufferSizeInBytes()->getValue()),
+      queryCompilerCompilationStrategy(this->workerConfig->getQueryCompilerCompilationStrategy()->getValue()),
+      queryCompilerPipeliningStrategy(this->workerConfig->getQueryCompilerPipeliningStrategy()->getValue()),
+      queryCompilerOutputBufferOptimizationLevel(this->workerConfig->getQueryCompilerOutputBufferAllocationStrategy()->getValue()),
+      enableNumaAwareness(this->workerConfig->isNumaAware()), enableMonitoring(this->workerConfig->getEnableMonitoring()->getValue()) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }
@@ -97,15 +98,16 @@ void NesWorker::handleRpcs(WorkerRPCServer& service) {
     }
 }
 
-void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
+void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>& portPromise) {
     WorkerRPCServer service(nodeEngine, monitoringAgent);
     ServerBuilder builder;
-    builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials());
+    int actualRpcPort;
+    builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials(), &actualRpcPort);
     builder.RegisterService(&service);
     completionQueue = builder.AddCompletionQueue();
     rpcServer = builder.BuildAndStart();
-    prom->set_value(true);
-    NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress);
+    portPromise->set_value(actualRpcPort);
+    NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress << ":" << actualRpcPort);
     //this call is already blocking
     handleRpcs(service);
     rpcServer->Wait();
@@ -149,16 +151,17 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     rpcAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
-    NES_DEBUG("NesWorker: startWorkerRPCServer for accepting messages for address=" << rpcAddress);
-    std::shared_ptr<std::promise<bool>> promRPC = std::make_shared<std::promise<bool>>();
+    NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address=" << rpcAddress << ":" << localWorkerRpcPort.load());
+    std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
         NES_DEBUG("NesWorker: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
         NES_DEBUG("NesWorker: buildAndStartGRPCServer: end listening");
     }));
-    promRPC->get_future().get();
-    NES_DEBUG("NesWorker:buildAndStartGRPCServer: ready");
+    localWorkerRpcPort.store(promRPC->get_future().get());
+    rpcAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort.load());
+    NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address=" << rpcAddress << ":" << localWorkerRpcPort.load());
 
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
@@ -241,7 +244,11 @@ bool NesWorker::connect() {
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
     bool successPRCRegister =
-        coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, staticStats);
+        coordinatorRpcClient->registerNode(localWorkerIp,
+                                           localWorkerRpcPort.load(),
+                                           nodeEngine->getNetworkManager()->getServerDataPort(),
+                                           numberOfSlots,
+                                           staticStats);
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {

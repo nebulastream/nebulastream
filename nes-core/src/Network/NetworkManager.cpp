@@ -26,11 +26,12 @@ NetworkManager::NetworkManager(uint64_t nodeEngineId,
                                ExchangeProtocol&& exchangeProtocol,
                                const Runtime::BufferManagerPtr& bufferManager,
                                uint16_t numServerThread)
-    : nodeLocation(nodeEngineId, hostname, port),
+    : nodeLocation(),
       server(std::make_unique<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)),
       exchangeProtocol(std::move(exchangeProtocol)), partitionManager(this->exchangeProtocol.getPartitionManager()) {
 
     if (bool const success = server->start(); success) {
+        nodeLocation = NodeLocation(nodeEngineId, hostname, server->getServerPort());
         NES_INFO("NetworkManager: Server started successfully");
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkManager: Server failed to start on " << hostname << ":" << port);
@@ -63,7 +64,13 @@ PartitionRegistrationStatus NetworkManager::isPartitionProducerRegistered(const 
     return partitionManager->getProducerRegistrationStatus(nesPartition);
 }
 
-NodeLocation NetworkManager::getServerLocation() const { return nodeLocation; }
+NodeLocation NetworkManager::getServerLocation() const {
+    return nodeLocation;
+}
+
+uint16_t NetworkManager::getServerDataPort() const {
+    return server->getServerPort();
+}
 
 bool NetworkManager::registerSubpartitionConsumer(const NesPartition& nesPartition,
                                                   const NodeLocation& senderLocation,

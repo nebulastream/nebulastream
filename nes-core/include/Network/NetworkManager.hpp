@@ -161,6 +161,12 @@ class NetworkManager {
      */
     NodeLocation getServerLocation() const;
 
+    /**
+     * @brief Returns the server data port
+     * @return the server data port
+     */
+    uint16_t getServerDataPort() const;
+
   private:
     NodeLocation nodeLocation;
     ZmqServerPtr server;
