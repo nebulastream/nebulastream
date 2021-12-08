@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Util/Logger.hpp>
+#include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
 #include <atomic>
@@ -200,6 +201,79 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
         thread.join();
     }
     ASSERT_EQ(watermarkManager->getCurrentWatermark(), std::get<0>(watermarkBarriers.back()));
+}
+
+TEST_F(WatermarkManagerTest, singleThreadLockFreeWatermarkUpdaterTest) {
+    auto updates = 10000;
+    auto watermarkManager = std::make_shared<Experimental::LockFreeWatermarkProcessor<>>();
+    // preallocate watermarks for each transaction
+    std::vector<std::tuple<WatermarkTs, SequenceNumber>> watermarkBarriers;
+    for (int i = 1; i <= updates; i++) {
+        watermarkBarriers.emplace_back(/*ts*/ i,
+                                       /*sequence number*/ i);
+    }
+    for (auto i = 0; i < updates; i++) {
+        auto currentWatermarkBarrier = watermarkBarriers[i];
+        auto oldWatermark = watermarkManager->getCurrentWatermark();
+        ASSERT_LT(oldWatermark, std::get<0>(currentWatermarkBarrier));
+        watermarkManager->updateWatermark(std::get<0>(currentWatermarkBarrier), std::get<1>(currentWatermarkBarrier));
+        ASSERT_LE(watermarkManager->getCurrentWatermark(), std::get<0>(currentWatermarkBarrier));
+    }
+    ASSERT_EQ(watermarkManager->getCurrentWatermark(), std::get<0>(watermarkBarriers.back()));
+}
+
+TEST_F(WatermarkManagerTest, concurrentLockFreeWatermarkUpdaterTest) {
+    const auto updates = 100000;
+    const auto threadsCount = 10;
+    auto watermarkManager = std::make_shared<Experimental::LockFreeWatermarkProcessor<>>();
+
+    // preallocate watermarks for each transaction
+    std::vector<std::tuple<WatermarkTs, SequenceNumber>> watermarkBarriers;
+    for (int i = 1; i <= updates * threadsCount; i++) {
+        watermarkBarriers.emplace_back(/*ts*/ i,
+                                       /*sequence number*/ i);
+    }
+    std::atomic<uint64_t> globalUpdateCounter = 0;
+    std::vector<std::thread> threads;
+    threads.reserve(threadsCount);
+    for (int threadId = 0; threadId < threadsCount; threadId++) {
+        threads.emplace_back(thread([&watermarkManager, &watermarkBarriers, &globalUpdateCounter]() {
+            // each thread processes a particular update
+            for (auto i = 0; i < updates; i++) {
+                auto currentWatermark = watermarkBarriers[globalUpdateCounter++];
+                auto oldWatermark = watermarkManager->getCurrentWatermark();
+                // check if the watermark manager does not return a watermark higher than the current one
+                ASSERT_LT(oldWatermark, std::get<0>(currentWatermark));
+                watermarkManager->updateWatermark(std::get<0>(currentWatermark), std::get<1>(currentWatermark));
+                // check that the watermark manager returns a watermark that is <= to the max watermark
+                auto globalCurrentWatermark = watermarkManager->getCurrentWatermark();
+                auto maxCurrentWatermark = watermarkBarriers[globalUpdateCounter - 1];
+                ASSERT_LE(globalCurrentWatermark, std::get<0>(maxCurrentWatermark));
+            }
+        }));
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    ASSERT_EQ(watermarkManager->getCurrentWatermark(), std::get<0>(watermarkBarriers.back()));
+}
+
+TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterOutofOrderTest) {
+
+    class Slice {
+      public:
+        Slice(uint64_t start) : start(start){}
+        uint64_t start;
+    };
+    auto vec = std::vector<std::unique_ptr<Slice>>();
+
+    vec.emplace_back(std::make_unique<Slice>(10));
+    vec.emplace_back(std::make_unique<Slice>(12));
+    auto& s = vec[0];
+    std::cout << s->start << std::endl;
+    auto s2 = std::move(vec[0]);
+    std::cout << s2->start << std::endl;
 }
 
 }// namespace NES
