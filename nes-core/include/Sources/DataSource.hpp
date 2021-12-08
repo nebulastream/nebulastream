@@ -64,7 +64,7 @@ enum SourceType {
 class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
   public:
-    enum GatheringMode { FREQUENCY_MODE, INGESTION_RATE_MODE, KF_MODE };
+    enum GatheringMode { FREQUENCY_MODE, INGESTION_RATE_MODE, ADAPTIVE_MODE };
 
     /**
      * @brief public constructor for data source
