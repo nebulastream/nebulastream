@@ -53,7 +53,7 @@ DataSource::GatheringMode DataSource::getGatheringModeFromString(const std::stri
         return GatheringMode::INGESTION_RATE_MODE;
     }
     if (mode == "adaptive") {
-        return GatheringMode::KF_MODE;
+        return GatheringMode::ADAPTIVE_MODE;
     }
     NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
 }
@@ -233,7 +233,7 @@ void DataSource::runningRoutine() {
         runningRoutineWithFrequency();
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         runningRoutineWithIngestionRate();
-    } else if (gatheringMode == GatheringMode::KF_MODE) {
+    } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
         runningRoutineWithKF();
     }
 }

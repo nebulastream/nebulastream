@@ -678,7 +678,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
                                this->nodeEngine->getQueryManager(),
                                this->operatorId,
                                this->numSourceLocalBuffersDefault,
-                               DataSource::GatheringMode::KF_MODE,
+                               DataSource::GatheringMode::ADAPTIVE_MODE,
                                {});
     ON_CALL(mDataSource, runningRoutineWithKF()).WillByDefault(Return());
     EXPECT_CALL(mDataSource, runningRoutineWithKF()).Times(Exactly(1));
@@ -784,7 +784,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           DataSource::GatheringMode::KF_MODE,
+                                                           DataSource::GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -829,7 +829,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdate) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           DataSource::GatheringMode::KF_MODE,
+                                                           DataSource::GatheringMode::ADAPTIVE_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 2;
     mDataSource->running = true;
