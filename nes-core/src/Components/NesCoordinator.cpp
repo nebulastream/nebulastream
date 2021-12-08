@@ -249,7 +249,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->setEnableMonitoring(enableMonitoring);
     }
 
-    worker = std::make_shared<NesWorker>(workerConfig);
+    auto workerConfigCopy = workerConfig;
+    worker = std::make_shared<NesWorker>(std::move(workerConfigCopy));
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //Start rest that accepts queries form the outsides

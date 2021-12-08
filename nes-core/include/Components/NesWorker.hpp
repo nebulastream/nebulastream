@@ -42,7 +42,7 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig);
+    explicit NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig);
 
     /**
      * @brief default dtor
@@ -160,7 +160,7 @@ class NesWorker {
     /**
      * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
      */
-    void buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom);
+    void buildAndStartGRPCServer(const std::shared_ptr<std::promise<int>>& prom);
 
     /**
      * @brief helper method to ensure client is connected before calling rpc functions
@@ -187,7 +187,7 @@ class NesWorker {
     std::string workerToCoreMapping;
     std::string queuePinList;
     uint16_t coordinatorPort;
-    uint16_t localWorkerRpcPort;
+    std::atomic<uint16_t> localWorkerRpcPort;
     uint16_t localWorkerZmqPort;
     uint16_t numberOfSlots;
     uint16_t numWorkerThreads;

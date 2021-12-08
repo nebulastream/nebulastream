@@ -25,6 +25,9 @@ namespace NES::Network {
  */
 class NodeLocation {
   public:
+
+    explicit NodeLocation() = default;
+
     explicit NodeLocation(NodeId nodeId, std::string hostname, uint32_t port)
         : nodeId(nodeId), hostname(std::move(hostname)), port(port) {
         NES_ASSERT2_FMT(this->hostname.size() > 0, "Empty hostname passed on " << nodeId);
@@ -37,6 +40,10 @@ class NodeLocation {
         hostname = other.hostname;
         port = other.port;
         return *this;
+    }
+
+    [[nodiscard]] constexpr auto operator!() const noexcept -> bool {
+        return hostname.empty() && port == 0 && nodeId == 0;
     }
 
     /**
