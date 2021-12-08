@@ -325,7 +325,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
         }
     }
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     ASSERT_TRUE(plan->stop());
 }
 
@@ -394,7 +394,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
         }
     }
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     ASSERT_TRUE(plan->stop());
 }
 
@@ -466,7 +466,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
             EXPECT_EQ(resultFields01[recordIndex], 8);
         }
     }
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     ASSERT_TRUE(plan->stop());
 }
 
@@ -763,5 +763,5 @@ TEST_F(ProjectionTest, mergeQuery) {
     }
     ASSERT_TRUE(plan->stop());// simulate stop request from first source
     ASSERT_TRUE(plan->stop());// simulate stop request from second source
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
