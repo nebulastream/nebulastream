@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_HANDLER_JOIN_OPERATOR_HANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_HANDLER_JOIN_OPERATOR_HANDLER_HPP_
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 namespace NES::Join {
 

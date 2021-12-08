@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
+#include <Network/NetworkChannel.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Network/NetworkChannel.hpp>
 
 namespace NES::Runtime {
 
@@ -32,9 +32,7 @@ WorkerContext::WorkerContext(uint32_t workerId,
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
 }
 
-WorkerContext::~WorkerContext() {
-    localBufferPool->destroy();
-}
+WorkerContext::~WorkerContext() { localBufferPool->destroy(); }
 
 uint32_t WorkerContext::getId() const { return workerId; }
 

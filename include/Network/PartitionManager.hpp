@@ -18,8 +18,8 @@
 #define NES_INCLUDE_NETWORK_PARTITION_MANAGER_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Network/PartitionRegistrationStatus.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -214,8 +214,9 @@ class PartitionManager {
      * @param eventListener
      * @return true if successful
      */
-    bool
-    addSubpartitionEventListener(NesPartition partition, NodeLocation nodeLocation, Runtime::RuntimeEventListenerPtr eventListener);
+    bool addSubpartitionEventListener(NesPartition partition,
+                                      NodeLocation nodeLocation,
+                                      Runtime::RuntimeEventListenerPtr eventListener);
 
     /**
      * @brief Retrieve event listener for a partition

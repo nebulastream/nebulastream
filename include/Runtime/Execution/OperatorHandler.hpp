@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_RUNTIME_EXECUTION_OPERATOR_HANDLER_HPP_
 #define NES_INCLUDE_RUNTIME_EXECUTION_OPERATOR_HANDLER_HPP_
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 

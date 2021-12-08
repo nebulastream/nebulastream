@@ -761,7 +761,7 @@ TEST_F(ProjectionTest, mergeQuery) {
             EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex * 2);
         }
     }
-    ASSERT_TRUE(plan->stop()); // simulate stop request from first source
-    ASSERT_TRUE(plan->stop()); // simulate stop request from second source
+    ASSERT_TRUE(plan->stop());// simulate stop request from first source
+    ASSERT_TRUE(plan->stop());// simulate stop request from second source
     testSink->shutdown();
 }

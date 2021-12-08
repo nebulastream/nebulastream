@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
 #define NES_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
 
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/ReconfigurationType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES {

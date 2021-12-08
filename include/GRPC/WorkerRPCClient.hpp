@@ -154,7 +154,6 @@ class WorkerRPCClient {
      * @return true if all calls returned
      */
     static bool checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
-
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 

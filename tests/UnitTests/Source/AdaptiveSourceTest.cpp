@@ -16,8 +16,8 @@
 
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/AdaptiveSource.hpp>
 #include <Util/UtilityFunctions.hpp>

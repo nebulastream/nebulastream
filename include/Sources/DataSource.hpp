@@ -21,8 +21,8 @@
 #include <Operators/OperatorId.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <atomic>
 #include <chrono>
 #include <mutex>

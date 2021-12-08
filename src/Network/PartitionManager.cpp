@@ -180,8 +180,8 @@ bool PartitionManager::registerSubpartitionProducer(NesPartition partition, Node
 }
 
 bool PartitionManager::addSubpartitionEventListener(NesPartition partition,
-                                                  NodeLocation receiverLocation,
-                                                  Runtime::RuntimeEventListenerPtr eventListener) {
+                                                    NodeLocation receiverLocation,
+                                                    Runtime::RuntimeEventListenerPtr eventListener) {
     std::unique_lock lock(producerPartitionsMutex);
     //check if partition is present
     if (auto it = producerPartitions.find(partition); it == producerPartitions.end()) {
