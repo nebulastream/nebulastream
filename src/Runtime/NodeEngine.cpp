@@ -70,6 +70,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
     networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*) {
         // nop
     }));
+    materializedViewManager = make_shared<Experimental::MaterializedView::MaterializedViewManager>(Experimental::MaterializedView::MaterializedViewManager());
     if (!this->queryManager->startThreadPool(numberOfBuffersPerWorker)) {
         NES_ERROR("Runtime: error while start thread pool");
         throw Exception("Error while start thread pool");
@@ -336,6 +337,8 @@ Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManag
 QueryCompilation::QueryCompilerPtr NodeEngine::getCompiler() { return queryCompiler; }
 
 HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManager; }
+
+Experimental::MaterializedView::MaterializedViewManagerPtr NodeEngine::getMaterializedViewManager() const { return materializedViewManager; }
 
 Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);

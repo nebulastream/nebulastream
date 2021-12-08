@@ -26,6 +26,7 @@
 #include <Runtime/ErrorListener.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
 #include <pthread.h>
@@ -259,6 +260,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     HardwareManagerPtr getHardwareManager() const;
 
+    /**
+     * TODO:
+     */
+    Experimental::MaterializedView::MaterializedViewManagerPtr getMaterializedViewManager() const;
+
   private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
@@ -271,6 +277,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
     Network::NetworkManagerPtr networkManager;
+    Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::atomic<bool> isRunning{};
     BufferStoragePtr bufferStorage;
     mutable std::recursive_mutex engineMutex;

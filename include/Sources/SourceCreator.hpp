@@ -1,3 +1,4 @@
+
 /*
     Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
@@ -23,6 +24,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/MemorySource.hpp>
+#include <Sources/MaterializedViewSource.hpp>
 #include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -254,6 +256,24 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   Network::NesPartition nesPartition,
                                   size_t numSourceLocalBuffers,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+/**
+ *  TODO
+ * @param schema
+ * @param mView
+ * @param bufferManager
+ * @param queryManager
+ * @param operatorId
+ * @param numSourceLocalBuffers
+ * @param successors
+ * @return
+ */
+DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
+                                           const Runtime::BufferManagerPtr bufferManager,
+                                           const Runtime::QueryManagerPtr queryManager,
+                                           const OperatorId operatorId,
+                                           const size_t numSourceLocalBuffers,
+                                           const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                                           const Experimental::MaterializedView::MaterializedViewPtr view);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

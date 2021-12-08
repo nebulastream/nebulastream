@@ -20,7 +20,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
-namespace NES::Experimental {
+namespace NES::Experimental::MaterializedView {
 
 /**
  * @brief ***
@@ -31,17 +31,15 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
     /**
      * @brief ***
      */
-    static SinkDescriptorPtr create(uint64_t mViewId, Schema schema);
-    MaterializedViewSinkDescriptor(uint64_t mViewId, Schema schema);
+    static SinkDescriptorPtr create(size_t viewId);
+    MaterializedViewSinkDescriptor(size_t viewId);
     std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
-    uint64_t getMViewId();
-    Schema getSchema();
+    size_t getViewId();
 
   private:
-    Schema schema;
-    uint64_t mViewId;
+    size_t viewId;
 };
 using MaterializedViewSinkDescriptorPtr = std::shared_ptr<MaterializedViewSinkDescriptor>;
-}// namespace NES::Experimental
+}// namespace NES::Experimental::MaterializedView
 #endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SINKS_MATERIALIZED_VIEW_SINK_DESCRIPTOR_HPP_

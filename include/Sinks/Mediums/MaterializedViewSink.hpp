@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MATERIALIZEDVIEW_MATERIALIZEDVIEWSINK_HPP_
-#define NES_INCLUDE_MATERIALIZEDVIEW_MATERIALIZEDVIEWSINK_HPP_
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZED_VIEW_SINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZED_VIEW_SINK_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -25,7 +25,7 @@
 #include <MaterializedView/MaterializedView.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
-namespace NES::Experimental {
+namespace NES::Experimental::MaterializedView {
 
 /**
  * @brief this class provides a materialized view sink
@@ -35,10 +35,9 @@ class MaterializedViewSink : public SinkMedium {
     /**
      * @brief Default constructor
      */
-    MaterializedViewSink(SinkFormatPtr format,
-                         QuerySubPlanId parentPlanId,
-                         Runtime::BufferManagerPtr bufferManager,
-                         MaterializedViewPtr mView);
+    MaterializedViewSink(MaterializedViewPtr view,
+                         SinkFormatPtr format,
+                         QuerySubPlanId parentPlanId);
 
     /**
      * @brief Default destructor
@@ -76,11 +75,21 @@ class MaterializedViewSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
+    /**
+     * TODO
+     */
+     size_t getViewId();
+
+     /**
+      * TODO
+      */
+     Runtime::BufferManagerPtr getBufferManager();
+
   private:
     Runtime::BufferManagerPtr localBufferManager;
-    MaterializedViewPtr mView;
+    MaterializedViewPtr view;
 };
 using MaterializedViewSinkPtr = std::shared_ptr<MaterializedViewSink>;
-}// namespace NES::Experimental
+}// namespace NES::Experimental::MaterializedView
 
-#endif//NES_INCLUDE_MATERIALIZEDVIEW_MATERIALIZEDVIEWSINK_HPP_
+#endif//NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZED_VIEW_SINK_HPP_

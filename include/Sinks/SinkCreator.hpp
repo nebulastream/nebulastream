@@ -1,3 +1,4 @@
+
 /*
     Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
@@ -212,11 +213,10 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
 /**
  * @brief TODO
  */
-DataSinkPtr createMaterializedViewSink(const SchemaPtr& schema,
-                                       Runtime::NodeEnginePtr const& nodeEngine,
+DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
+                                       const Runtime::NodeEnginePtr& nodeEngine,
                                        QuerySubPlanId parentPlanId,
-                                       Runtime::BufferManagerPtr bufferManager,
-                                       Experimental::MaterializedViewPtr mView);
+                                       size_t viewId);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

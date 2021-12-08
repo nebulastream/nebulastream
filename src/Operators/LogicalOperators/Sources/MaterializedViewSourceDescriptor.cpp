@@ -18,27 +18,18 @@
 #include <Sources/DataSource.hpp>
 #include <utility>
 
-namespace NES::Experimental {
+namespace NES::Experimental::MaterializedView {
 
 MaterializedViewSourceDescriptor::MaterializedViewSourceDescriptor(SchemaPtr schema,
-                                                                   std::shared_ptr<uint8_t> memArea,
-                                                                   size_t memAreaSize,
-                                                                   uint64_t numBuffersToProcess,
                                                                    uint64_t mViewId)
-    : SourceDescriptor(std::move(schema)), memArea(std::move(memArea)), memAreaSize(memAreaSize),
-      numBuffersToProcess(numBuffersToProcess), mViewId(mViewId) {
-    NES_ASSERT(this->memArea != nullptr && this->memAreaSize > 0, "invalid memory area");
-}
+    : SourceDescriptor(std::move(schema)), mViewId(mViewId) {}
 
-std::shared_ptr<MaterializedViewSourceDescriptor>
+SourceDescriptorPtr
 MaterializedViewSourceDescriptor::create(const SchemaPtr& schema,
-                                         const std::shared_ptr<uint8_t>& memArea,
-                                         size_t memAreaSize,
-                                         uint64_t numBuffersToProcess,
                                          uint64_t mViewId) {
-    NES_ASSERT(memArea != nullptr && memAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
-    return std::make_shared<MaterializedViewSourceDescriptor>(schema, memArea, memAreaSize, numBuffersToProcess, mViewId);
+    return std::make_shared<MaterializedViewSourceDescriptor>(MaterializedViewSourceDescriptor(std::move(schema),
+                                                                                               std::move(mViewId)));
 }
 std::string MaterializedViewSourceDescriptor::toString() { return "MaterializedViewSourceDescriptor"; }
 
@@ -50,8 +41,9 @@ bool MaterializedViewSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return schema == otherMemDescr->schema;
 }
 
-std::shared_ptr<uint8_t> MaterializedViewSourceDescriptor::getMemArea() { return memArea; }
-size_t MaterializedViewSourceDescriptor::getMemAreaSize() const { return memAreaSize; }
-uint64_t MaterializedViewSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
+//std::shared_ptr<uint8_t> MaterializedViewSourceDescriptor::getMemArea() { return memArea; }
+//size_t MaterializedViewSourceDescriptor::getMemAreaSize() const { return memAreaSize; }
+//uint64_t MaterializedViewSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
+SchemaPtr MaterializedViewSourceDescriptor::getSchema() const { return schema; }
 uint64_t MaterializedViewSourceDescriptor::getMViewId() const { return mViewId; }
-}// namespace NES::Experimental
+}// namespace NES::Experimental::MaterializedView

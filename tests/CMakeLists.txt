@@ -494,6 +494,11 @@ add_executable(millisecond-interval-tests "UnitTests/Source/MillisecondIntervalT
 target_link_libraries(millisecond-interval-tests nes ${GTEST_LIBRARIES})
 add_test(NAME millisecond-interval-tests COMMAND millisecond-interval-tests)
 
+### Materialized View Tests ###
+add_executable(materialized-view-tests "UnitTests/MaterializedView/MaterializedViewTest.cpp")
+target_link_libraries(materialized-view-tests nes ${GTEST_LIBRARIES})
+add_test(NAME materialized-view-tests COMMAND materialized-view-tests)
+
 ### Binary Operator Sort Rule Tests ###
 add_executable(binary-operator-sort-rule-tests "UnitTests/Optimizer/QueryRewrite/BinaryOperatorSortRuleTest.cpp")
 target_link_libraries(binary-operator-sort-rule-tests nes ${GTEST_LIBRARIES})

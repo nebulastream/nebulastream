@@ -285,6 +285,10 @@ message SerializableOperator{
       uint32 retryTimes = 4;
     }
 
+    message SerializableMaterializedViewSinkDescriptor {
+      uint64 viewId = 1;
+    }
+
     google.protobuf.Any sinkDescriptor = 1;
   }
 
