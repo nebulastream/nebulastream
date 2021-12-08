@@ -25,6 +25,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Phases/ConvertPhysicalToLogicalSource.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
@@ -36,6 +37,7 @@
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <Sources/MaterializedViewSource.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -115,6 +117,15 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             const SourceDescriptorPtr senseSourceDescriptor =
                 SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdfs());
             return senseSourceDescriptor;
+        }
+        case MATERIALIZED_VIEW_SOURCE: {
+            NES_INFO("ConvertPhysicalToLogicalSource: Creating materialized view source");
+            const Experimental::MaterializedView::MaterializedViewSourcePtr materializedViewSourcePtr =
+                    std::dynamic_pointer_cast<Experimental::MaterializedView::MaterializedViewSource>(dataSource);
+            const SourceDescriptorPtr materializedViewSourceDescriptor =
+                    Experimental::MaterializedView::MaterializedViewSourceDescriptor::create(materializedViewSourcePtr->getSchema(),
+                                                             materializedViewSourcePtr->getViewId());
+            return materializedViewSourceDescriptor;
         }
         case MEMORY_SOURCE: {
             NES_ASSERT(false, "not supported because MemorySouce must be used only for local development or testing");

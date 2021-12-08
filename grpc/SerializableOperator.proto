@@ -280,6 +280,10 @@ message SerializableOperator{
       uint64 uniqueNetworkSinkDescriptorId = 5;
     }
 
+    message SerializableMaterializedViewSinkDescriptor {
+      uint64 viewId = 1;
+    }
+
     google.protobuf.Any sinkDescriptor = 1;
   }
 

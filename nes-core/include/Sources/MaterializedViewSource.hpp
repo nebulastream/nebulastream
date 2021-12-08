@@ -20,53 +20,62 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
 
-namespace NES::Experimental {
+namespace NES::Experimental::MaterializedView {
+
 /**
  * @brief ....
  */
-class MaterializedViewSource : public GeneratorSource {
+class MaterializedViewSource : public DataSource {
   public:
-    /** TODO
-     * @brief The constructor of a materialized view source
-     * @param schema the schema of the source
-     * @param mView
-     * @param bufferManager valid pointer to the buffer manager
-     * @param queryManager valid pointer to the query manager
-     * @param
-     * @param operatorId the valid id of the source
-     */
-    explicit MaterializedViewSource(SchemaPtr schema,
-                                    MaterializedViewPtr mView,
-                                    Runtime::BufferManagerPtr bufferManager,
-                                    Runtime::QueryManagerPtr queryManager,
-                                    uint64_t numBuffersToProcess,
-                                    OperatorId operatorId,
-                                    size_t numSourceLocalBuffers,
-                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+
+    /// @brief default constructor
+    MaterializedViewSource(SchemaPtr schema,
+                           Runtime::BufferManagerPtr bufferManager,
+                           Runtime::QueryManagerPtr queryManager,
+                           OperatorId operatorId,
+                           size_t numSourceLocalBuffers,
+                           GatheringMode gatheringMode,
+                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                           MaterializedViewPtr view) : DataSource(std::move(schema),
+                                                                  std::move(bufferManager),
+                                                                  std::move(queryManager),
+                                                                  operatorId,
+                                                                  numSourceLocalBuffers,
+                                                                  gatheringMode,
+                                                                  std::move(successors)),
+                                                                  view(view) {};
+
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
      */
-    std::optional<Runtime::TupleBuffer> receiveData() override;
+    std::optional<Runtime::TupleBuffer> receiveData() override {
+        return view->getData();
+    };
 
     /**
      * @brief Provides a string representation of the source
      * @return The string representation of the source
      */
-    std::string toString() const override;
+    std::string toString() const override {
+        return "MaterializedViewSource";
+    };
 
     /**
      * @brief Provides the type of the source
      * @return the type of the source
      */
-    SourceType getType() const override;
+    SourceType getType() const override {
+        return MATERIALIZED_VIEW_SOURCE;
+    };
+
+    /// @brief
+    size_t getViewId() {
+        return view->getId();
+    }
 
   private:
-    MaterializedViewPtr mView;
-    uint64_t numberOfTuplesToProduce;
-    uint64_t currentPositionInBytes;
-    uint64_t schemaSize;
-    uint64_t bufferSize;
+    MaterializedViewPtr view;
 };
 using MaterializedViewSourcePtr = std::shared_ptr<MaterializedViewSource>;
 }// namespace NES::Experimental

@@ -31,6 +31,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -39,6 +40,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -1385,6 +1387,13 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
             NES_ERROR("serializeSinkDescriptor: format not supported");
         }
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+    } else if (sinkDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
+        NES_TRACE("OperatorSerializationUtil:: serialized MaterializedViewSinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor");
+        auto materializedViewSinkDescriptor = sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor();
+        serializedSinkDescriptor.set_viewid(materializedViewSinkDescriptor->getViewId());
+        sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - " << sinkDescriptor->toString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");
@@ -1470,6 +1479,12 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         return FileSinkDescriptor::create(serializedSinkDescriptor.filepath(),
                                           serializedSinkDescriptor.sinkformat(),
                                           serializedSinkDescriptor.append() ? "APPEND" : "OVERWRITE");
+    } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor>()) {
+        // de-serialize materialized view sink descriptor
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor();
+        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
+        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MaterializedViewSinkDescriptor");
+        return Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(serializedSinkDescriptor.viewid());
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type " << sinkDetails->DebugString());
         throw std::invalid_argument("Unknown Sink Descriptor Type");

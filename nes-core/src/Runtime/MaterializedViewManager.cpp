@@ -13,21 +13,40 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-namespace NES::Experimental {
+/*#include <Runtime/MaterializedViewManager.hpp>
 #include <MaterializedView/MaterializedView.hpp>
+#include <MaterializedView/TupleStorage.hpp>
 #include <map>
+#include <string>
+#include <cstdint>
+#include <cstring>
+#include <sstream>
 
-MaterializedViewPtr MaterializedViewManager::getMViewById(uint64_t mViewId) { return mViewMap.get(mViewId); }
+namespace NES::Experimental::MaterializedView {
 
-uint64_t MaterializedViewManager::createMView() {
-    MaterializedViewPtr mView;
-    return mViewMap.insert(std::make_pair(nextQueryId++, mView));
+
+void MaterializedViewManager::createMView(Schema schema, uint64_t memAreaSize){
+    MaterializedViewPtr mView =
+            std::make_shared<MaterializedView>(MaterializedView(nextViewId, memAreaSize, schema));
+    mViewMap.insert(std::make_pair(nextViewId++, mView));
 }
 
-bool deleteMView(uint64_t queryId) {
+MaterializedViewPtr MaterializedViewManager::getMViewById(uint64_t mViewId) {
+    auto it = mViewMap.find(mViewId);
+    if (it != mViewMap.end()){
+        return it->second;
+    } else {
+        // TODO: invalid operands to binary expression ('const char [70]' and 'int')
+        //NES_DEBUG("MaterializedViewManager::getMViewById: no materialized view with id: " << mViewId);
+        return nullptr;
+    }
+}
+
+bool MaterializedViewManager::deleteMView(uint64_t queryId) {
     if (mViewMap.erase(queryId) == 1) {
         return true;
     }
     return false;
 }
-}// namespace NES::Experimental
+}// namespace NES::Experimental::MaterializedView
+ */

@@ -30,6 +30,7 @@ add_source_nes(
         LocalBufferPool.cpp
         NodeEngineFactory.cpp
         HardwareManager.cpp
+        MaterializedViewManager.cpp
         Allocator/NumaRegionMemoryAllocator.cpp
         Allocator/NesDefaultMemoryAllocator.cpp
 )

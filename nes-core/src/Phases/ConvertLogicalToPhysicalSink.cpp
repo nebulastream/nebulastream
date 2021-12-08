@@ -25,6 +25,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -143,6 +144,13 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  numOfProducers,
                                  networkSinkDescriptor->getWaitTime(),
                                  networkSinkDescriptor->getRetryTimes());
+    } else if (sinkDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating materialized view sink");
+        auto materializedViewSinkDescriptor = sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
+        return createMaterializedViewSink(schema,
+                                          nodeEngine,
+                                          querySubPlanId,
+                                          materializedViewSinkDescriptor->getViewId());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
         throw std::invalid_argument("Unknown Sink Descriptor Type");
