@@ -311,7 +311,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
                 }
             }
             ASSERT_TRUE(plan->stop());
-            testSink->shutdown();// wont be called by runtime as no runtime support in this test
+            testSink->cleanupBuffers();// wont be called by runtime as no runtime support in this test
             ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
         }
     }
@@ -381,7 +381,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
         }
     }
     ASSERT_TRUE(plan->stop());
-    testSink->shutdown();// need to be called manually here
+    testSink->cleanupBuffers();// need to be called manually here
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
@@ -482,7 +482,7 @@ TEST_F(QueryExecutionTest, arithmeticOperatorsQuery) {
         EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, outputSchema));
     }
     ASSERT_TRUE(plan->stop());
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
@@ -507,7 +507,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
                                         nodeEngine->getBufferManager(),
                                         nodeEngine->getQueryManager(),
                                         /*bufferCnt*/ 2,
-                                        /*frequency*/ 1000,
+                                        /*frequency*/ 0,
                                         successors,
                                         /*varyWatermark*/ true);
         });
@@ -542,7 +542,6 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    std::cout << " plan=" << queryPlan->toString() << std::endl;
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
     auto queryCompiler = TestUtils::createTestQueryCompiler();
     auto result = queryCompiler->compileQuery(request);
@@ -552,13 +551,14 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
-    testSink->completed.get_future().get();
+    ASSERT_EQ(testSink->completed.get_future().get(), 2UL);
 
     auto resultBuffer = testSink->get(0);
 
     // 10 records, starting at ts=5 with 1ms difference each record, hence ts of the last record=14
     EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
 
+    testSink->cleanupBuffers();
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -620,7 +620,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
-    testSink->completed.get_future().get();
+    ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
 
     // get result buffer, which should contain two results.
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
@@ -648,6 +648,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
             EXPECT_EQ(valueFields[recordIndex], 10UL);
         }
     }
+    testSink->cleanupBuffers();
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(0U, testSink->getNumberOfResultBuffers());
 }
@@ -711,7 +712,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     ASSERT_TRUE(nodeEngine->startQuery(plan->getQueryId()));
 
     // wait till all buffers have been produced
-    ASSERT_TRUE(testSink->completed.get_future().get());
+    ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
 
     // get result buffer, which should contain two results.
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
@@ -741,6 +742,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
         }
     }
 
+    testSink->cleanupBuffers();
     ASSERT_TRUE(nodeEngine->stopQuery(plan->getQueryId()));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -797,7 +799,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
-    testSink->completed.get_future().get();
+    ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
 
     // get result buffer
@@ -814,6 +816,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
                                       "+----------------------------------------------------+";
         EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     }
+    testSink->cleanupBuffers();
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -870,7 +873,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
-    testSink->completed.get_future().get();
+    ASSERT_EQ(testSink->completed.get_future().get(), 2UL);
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
     // get result buffer
 
@@ -896,6 +899,8 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
                                        "+----------------------------------------------------+";
         EXPECT_EQ(expectedContent2, Util::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
     }
+
+    testSink->cleanupBuffers();
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -955,7 +960,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
-    testSink->completed.get_future().get();
+    ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
     // get result buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
@@ -973,6 +978,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
                                       "+----------------------------------------------------+";
         EXPECT_EQ(expectedContent, Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     }
+    testSink->cleanupBuffers();
     ASSERT_TRUE(nodeEngine->stopQuery(0));
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
@@ -1042,7 +1048,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
         // TODO why sleep here?
         sleep(1);
     }
-    testSink->completed.get_future().get();
+    ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
     //plan->stop();
 
     auto resultBuffer = testSink->get(0);
@@ -1148,6 +1154,6 @@ TEST_F(QueryExecutionTest, ExternalOperatorQuery) {
         }
     }
     ASSERT_TRUE(plan->stop());
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }

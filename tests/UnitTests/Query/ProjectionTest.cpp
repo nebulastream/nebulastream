@@ -571,7 +571,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
     ASSERT_TRUE(nodeEngine->startQuery(0));
 
     // wait till all buffers have been produced
-    testSink->completed.get_future().get();
+    ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
     // get result buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
@@ -599,6 +599,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
             EXPECT_EQ(valueFields[recordIndex], 10ULL);
         }
     }
+    testSink->cleanupBuffers();
     ASSERT_TRUE(nodeEngine->stopQuery(0));
 }
 
