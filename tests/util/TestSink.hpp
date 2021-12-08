@@ -47,7 +47,7 @@ class TestSink : public SinkMedium {
 
         resultBuffers.emplace_back(std::move(inputBuffer));
         if (resultBuffers.size() == expectedBuffer) {
-            completed.set_value(true);
+            completed.set_value(expectedBuffer);
         } else if (resultBuffers.size() > expectedBuffer) {
             EXPECT_TRUE(false);
         }
@@ -76,23 +76,20 @@ class TestSink : public SinkMedium {
 
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-  private:
     void cleanupBuffers() {
         NES_DEBUG("TestSink: cleanupBuffers()");
+        std::unique_lock lock(m);
         resultBuffers.clear();
     }
 
   public:
-    void shutdown() override {
-        NES_DEBUG("TestSink: shutdown()");
-        std::unique_lock lock(m);
-        cleanupBuffers();
-    }
+    void shutdown() override {}
 
     mutable std::recursive_mutex m;
     uint64_t expectedBuffer;
 
-    std::promise<bool> completed;
+    std::promise<uint64_t> completed;
+    /// this vector must be cleanup by the test -- do not rely on the engine to clean it up for you!!
     std::vector<Runtime::TupleBuffer> resultBuffers;
 };
 
