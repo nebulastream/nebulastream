@@ -28,6 +28,7 @@
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <Sources/MaterializedViewSource.hpp>
 #include <chrono>
 
 #ifdef ENABLE_OPC_BUILD
@@ -256,6 +257,23 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     waitTime,
                                                     retryTimes,
                                                     successors);
+}
+
+DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
+                                           const Runtime::BufferManagerPtr bufferManager,
+                                           const Runtime::QueryManagerPtr queryManager,
+                                           const OperatorId operatorId,
+                                           const size_t numSourceLocalBuffers,
+                                           const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                                           const Experimental::MaterializedView::MaterializedViewPtr view) {
+    return std::make_shared<Experimental::MaterializedView::MaterializedViewSource>(schema,
+                                                                  bufferManager,
+                                                                  queryManager,
+                                                                  operatorId,
+                                                                  numSourceLocalBuffers,
+                                                                  DataSource::FREQUENCY_MODE,
+                                                                  successors,
+                                                                  view);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

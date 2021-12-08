@@ -18,25 +18,66 @@
 #define NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
 
 #include <API/Schema.hpp>
+#include <MaterializedView/TupleStorage.hpp>
 #include <MaterializedView/MaterializedView.hpp>
+#include <map>
 
-namespace NES::Experimental {
+namespace NES::Experimental::MaterializedView {
+
+/// @brief supported view types
+enum ViewType { TUPLE_STORAGE };
+
+// We access friend classes private methods
+extern TupleStoragePtr createTupleStorage(size_t id);
+
 /**
- * @brief ...
+ * @brief The materialized view manager creates and managed materialized views in a hash map.
  */
+
 class MaterializedViewManager : public std::enable_shared_from_this<MaterializedViewManager> {
-    MaterializedViewManager() : nextQueryId(0){};
+public:
+    MaterializedViewManager() = default;
+    // TODO: WTF Rule of 5?
+    MaterializedViewManager(const MaterializedViewManager&) = default;
+    MaterializedViewManager(MaterializedViewManager&&) = default;
+    MaterializedViewManager& operator=(const MaterializedViewManager&) = default;
+    MaterializedViewManager& operator=(MaterializedViewManager&&) = default;
 
-    void getMViewById(uint64_t queryId);
+    ~MaterializedViewManager() {
+        NES_INFO("MaterializedViewManager::~MaterializedViewManager");
+        std::map<size_t, MaterializedViewPtr> empty;
+        std::swap(viewMap, empty);
+    }
 
-    void createMView(Schema schema, uint64_t memAreaSize = 64);
+    MaterializedViewPtr getView(size_t viewId) {
+        auto it = viewMap.find(viewId);
+        if (it != viewMap.end()){
+            return it->second;
+        } else {
+            return nullptr;
+        }
+    }
 
-    void deleteMView(uint64_t queryId);
+    MaterializedViewPtr createView(ViewType type){
+        MaterializedViewPtr view = nullptr;
+        if (type == TUPLE_STORAGE) {
+            view = TupleStorage::createTupleStorage(nextViewId);
+            viewMap.insert(std::make_pair(nextViewId++, view));
+        }
+        return view;
+    }
+
+    bool deleteMView(size_t viewId){
+        if (viewMap.erase(viewId) == 1) {
+            return true;
+        }
+        return false;
+    }
 
   private:
-    std::map<uint64_t, MaterializedViewPtr> mViewMap;
-    uint64_t nextQueryId;
+    std::map<size_t, MaterializedViewPtr> viewMap;
+    size_t nextViewId = 0;
 };
 using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
-}// namespace NES::Experimental
+}// namespace NES::Experimental::MaterializedView
 #endif//NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_

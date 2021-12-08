@@ -17,32 +17,24 @@
 #include <Sinks/Mediums/MaterializedViewSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
-namespace NES::Experimental {
+namespace NES::Experimental::MaterializedView {
 
-MaterializedViewSink::MaterializedViewSink(SinkFormatPtr format,
-                                           QuerySubPlanId parentPlanId,
-                                           Runtime::BufferManagerPtr bufferManager,
-                                           MaterializedViewPtr mView)
-    : SinkMedium(std::move(format), parentPlanId), localBufferManager(std::move(bufferManager)), mView(mView) {}
+MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,
+                                           SinkFormatPtr format,
+                                           QuerySubPlanId parentPlanId)
+                                           : SinkMedium(std::move(format), parentPlanId),
+                                           view(view) {}
 
-MaterializedViewSink::~MaterializedViewSink() = default;
+//MaterializedViewSink::~MaterializedViewSink() = default;
+MaterializedViewSink::~MaterializedViewSink() {
+    NES_DEBUG("~MaterializedViewSink");
+}
 
 SinkMediumTypes MaterializedViewSink::getSinkMediumType() { return MATERIALIZED_VIEW_SINK; }
 
 bool MaterializedViewSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    NES_DEBUG("MaterializedViewSink::getData: write data");
-    auto dataBuffers = sinkFormat->getData(inputBuffer);
-    auto bufferSize = localBufferManager.get()->getBufferSize();
-
-    for (auto buffer : dataBuffers) {
-        NES_DEBUG("MaterializedViewSink::getData: write buffer of size " << buffer.getNumberOfTuples());
-        if (mView.get()->getCurrentWritePosInBytes() + bufferSize > mView.get()->getMemAreaSize()) {
-            NES_DEBUG("MaterializedViewSource::receiveData: reset buffer to 0");
-            mView.get()->setCurrentWritePosInBytes(0);
-        }
-        memcpy(mView.get()->getMemArea() + mView.get()->getCurrentWritePosInBytes(), buffer.getBuffer(), bufferSize);
-        mView.get()->setCurrentWritePosInBytes(mView.get()->getCurrentWritePosInBytes() + bufferSize);
-    }
+    NES_DEBUG("MaterializedViewSink::writeData: write data");
+    view->writeData(inputBuffer);
     return true;
 }
 
@@ -54,10 +46,15 @@ std::string MaterializedViewSink::toString() const {
     return ss.str();
 }
 
+size_t MaterializedViewSink::getViewId(){
+    return view->getId();
+}
+
 void MaterializedViewSink::setup() {
     // currently not required
 }
 void MaterializedViewSink::shutdown() {
-    // currently not required
+    NES_INFO("MaterializedViewSink::shutdown()");
+    view->clear();
 }
-}// namespace NES::Experimental
+}// namespace NES::Experimental::MaterializedView

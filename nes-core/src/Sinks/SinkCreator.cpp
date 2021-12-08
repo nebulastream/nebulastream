@@ -33,6 +33,9 @@
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
+// TODO: remove
+#include <MaterializedView/TupleStorage.hpp>
+#include <MaterializedView/MaterializedView.hpp>
 
 namespace NES {
 
@@ -144,13 +147,19 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   retryTimes);
 }
 
-DataSinkPtr createMaterializedViewSink(const SchemaPtr& schema,
+DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        Runtime::NodeEnginePtr const& nodeEngine,
                                        QuerySubPlanId parentPlanId,
-                                       Runtime::BufferManagerPtr bufferManager,
-                                       Experimental::MaterializedViewPtr mView) {
+                                       size_t viewId) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<Experimental::MaterializedViewSink>(format, parentPlanId, bufferManager, mView);
+    auto view = nodeEngine->getMaterializedViewManager()->getView(viewId);
+    if (!view){
+        view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::ViewType::TUPLE_STORAGE);
+    }
+    return std::make_shared<Experimental::MaterializedView::MaterializedViewSink>(
+            view,
+            format,
+            parentPlanId);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

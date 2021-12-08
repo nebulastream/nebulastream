@@ -26,6 +26,7 @@
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 
 #include <Network/NetworkManager.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -67,6 +68,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex);
     auto queryManager = nodeEngine->getQueryManager();
     auto networkManager = nodeEngine->getNetworkManager();
+    auto materializedViewManager = nodeEngine->getMaterializedViewManager();
 
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ZMQ source");
@@ -219,6 +221,16 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   numSourceLocalBuffers,
                                   lambdaSourceDescriptor->getGatheringMode(),
                                   successors);
+    } else if (sourceDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSourceDescriptor>()){
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");
+        auto materializedViewSourceDescriptor = sourceDescriptor->as<Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
+        return createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
+                bufferManager,
+                queryManager,
+                operatorId,
+                numSourceLocalBuffers,
+                successors,
+                materializedViewManager->getView(materializedViewSourceDescriptor->getMViewId()));
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

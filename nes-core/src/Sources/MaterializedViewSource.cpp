@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Runtime/FixedSizeBufferPool.hpp>
+/*#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/internal/apex_memmove.hpp>
@@ -34,37 +34,36 @@
 #endif
 #include <utility>
 
-namespace NES::Experimental {
+namespace NES::Experimental::MaterializedView {
 
 MaterializedViewSource::MaterializedViewSource(SchemaPtr schema,
                                                MaterializedViewPtr mView,
                                                Runtime::BufferManagerPtr bufferManager,
                                                Runtime::QueryManagerPtr queryManager,
-                                               uint64_t numBuffersToProcess,
                                                OperatorId operatorId,
                                                size_t numSourceLocalBuffers,
+                                               GatheringMode gatheringMode,
                                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-    : GeneratorSource(std::move(schema),
-                      std::move(bufferManager),
-                      std::move(queryManager),
-                      numBuffersToProcess,
-                      operatorId,
-                      numSourceLocalBuffers,
-                      gatheringMode,
-                      std::move(successors)),
-      mView(mView), currentPositionInBytes(0) {
+                                               : DataSource(std::move(schema),
+                                                            std::move(bufferManager),
+                                                            std::move(queryManager),
+                                                            operatorId,
+                                                            numSourceLocalBuffers,
+                                                            gatheringMode,
+                                                            std::move(successors)),
+                                                            mView(mView), currentPositionInBytes(0) {
     const size_t memoryAreaSize = mView.get()->getMemAreaSize();
 
-    this->numBuffersToProcess = numBuffersToProcess;
+    this->numBuffersToProcess = mView->getNumStoredRecords();
 
     // Frequeny not neede here
-    /*if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
+    if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
     } else {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
-    }*/
+    }
 
     this->sourceAffinity = sourceAffinity;
     schemaSize = this->schema->getSchemaSizeInBytes();
@@ -90,7 +89,7 @@ MaterializedViewSource::MaterializedViewSource(SchemaPtr schema,
 
 std::optional<Runtime::TupleBuffer> MaterializedViewSource::receiveData() {
     NES_DEBUG("MaterializedViewSource::receiveData called on operatorId=" << operatorId);
-
+    mView->getBuffer();
     if (mView.get()->getMemAreaSize() > bufferSize) {
         if (currentPositionInBytes + numberOfTuplesToProduce * schemaSize > mView.get()->getMemAreaSize()) {
             if (numBuffersToProcess != 0) {
@@ -126,7 +125,9 @@ std::optional<Runtime::TupleBuffer> MaterializedViewSource::receiveData() {
     return buffer;
 }
 
+uint64_t MaterializedViewSource::getMViewId() const { return mView->getMViewId(); }
+
 std::string MaterializedViewSource::toString() const { return "MaterializedViewSource"; }
 
 NES::SourceType MaterializedViewSource::getType() const { return MATERIALIZED_VIEW_SOURCE; }
-}// namespace NES::Experimental
+}// namespace NES::Experimental::MaterializedView*/

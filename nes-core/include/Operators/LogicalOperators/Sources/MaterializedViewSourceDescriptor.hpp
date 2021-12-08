@@ -19,7 +19,7 @@
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES::Experimental {
+namespace NES::Experimental::MaterializedView {
 
 /**
  * @brief Descriptor defining properties used for creating a materialized view source
@@ -27,22 +27,10 @@ namespace NES::Experimental {
 class MaterializedViewSourceDescriptor : public SourceDescriptor {
   public:
     /**
-     * @brief **
-     */
-    explicit MaterializedViewSourceDescriptor(SchemaPtr schema,
-                                              std::shared_ptr<uint8_t> memoryArea,
-                                              size_t memoryAreaSize,
-                                              uint64_t numBuffersToProcess,//TODO: Really needed?
-                                              uint64_t mViewId);
-
-    /**
      * @brief Factory method ***
      */
-    static std::shared_ptr<MaterializedViewSourceDescriptor> create(const SchemaPtr& schema,
-                                                                    const std::shared_ptr<uint8_t>& memoryArea,
-                                                                    size_t memoryAreaSize,
-                                                                    uint64_t numBuffersToProcess,
-                                                                    uint64_t mViewId);
+    static SourceDescriptorPtr create(const SchemaPtr& schema,
+                                      uint64_t mViewId);
 
     /**
      * @brief Provides the string representation of the materialized view source
@@ -58,34 +46,26 @@ class MaterializedViewSourceDescriptor : public SourceDescriptor {
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
 
     /**
-     * @brief returns the shared ptr to the memory area
-     * @return the shared ptr to the memory area
-     */
-    std::shared_ptr<uint8_t> getMemArea();
-
-    /**
-     * @brief returns the size of the stored memory area
-     * @return the size of the stored memory area
-     */
-    size_t getMemAreaSize() const;
-
-    /**
-     * @brief returns number of buffer to process
-     * @return
-     */
-    uint64_t getNumBuffersToProcess() const;
-
-    /**
     * @brief returns the materialized view id
     * @return
     */
     uint64_t getMViewId() const;
 
+    /**
+     * TODO
+     * @return
+     */
+    SchemaPtr getSchema() const;
+
   private:
-    std::shared_ptr<uint8_t> memArea;
-    size_t memAreaSize;
-    uint64_t numBuffersToProcess;
+    /**
+      * @brief **
+      */
+    explicit MaterializedViewSourceDescriptor(SchemaPtr schema,
+                                              uint64_t mViewId);
+    SchemaPtr schema;
     uint64_t mViewId;
 };
-}// namespace NES::Experimental
+using MaterializedViewSourceDescriptorPtr = std::shared_ptr<MaterializedViewSourceDescriptor>;
+}// namespace NES::Experimental::MaterializedView
 #endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MATERIALIZEDVIEWSOURCDESCRIPTOR_HPP_
