@@ -66,29 +66,21 @@ class KalmanFilter {
     void updateFromTupleBuffer(Runtime::TupleBuffer& buffer);// directly feed a buffer to the filter
 
     // simple setters/getters for individual fields
-    double getCurrentStep() { return currentTime; }
-    Eigen::VectorXd getState() { return xHat; }
-    Eigen::MatrixXd getError() { return P; }
-    Eigen::MatrixXd getInnovationError() { return innovationError; }
-    double getEstimationError() { return estimationError; }
-    uint64_t getTheta() { return theta; }
-    float getLambda() { return lambda; }
+    double getCurrentStep();
+    Eigen::VectorXd getState();
+    Eigen::MatrixXd getError();
+    Eigen::MatrixXd getInnovationError();
+    double getEstimationError();
+    uint64_t getTheta();
+    float getLambda();
     void setLambda(float newLambda);
 
     // frequency related setters
     // needed to set freq/ranger after init
-    void setFrequency(std::chrono::milliseconds frequencyInMillis) {
-        frequency = frequencyInMillis;
-        freqLastReceived = frequencyInMillis;
-    }
-    void setFrequencyRange(std::chrono::milliseconds frequencyRange) {
-        freqRange = frequencyRange;
-    }
+    void setFrequency(std::chrono::milliseconds frequencyInMillis);
+    void setFrequencyRange(std::chrono::milliseconds frequencyRange);
     void setFrequencyWithRange(std::chrono::milliseconds frequencyInMillis,
-                               std::chrono::milliseconds frequencyRange) {
-        setFrequency(frequencyInMillis);
-        setFrequencyRange(frequencyRange);
-    }
+                               std::chrono::milliseconds frequencyRange);
 
     /**
      * @brief calculate new gathering interval using euler number

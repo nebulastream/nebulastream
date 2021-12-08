@@ -123,10 +123,6 @@ void KalmanFilter::update(const Eigen::VectorXd& measuredValues, double newTimeS
     this->update(measuredValues);
 }
 
-void KalmanFilter::setLambda(float newLambda) {
-    this->lambda = newLambda;
-}
-
 float KalmanFilter::calculateTotalEstimationError() {
     float j = 1;// eq. 9 iterator
     float totalError = 0;
@@ -164,6 +160,31 @@ void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
         valueVector << tupleBuffer.getBuffer<Sensors::SingleSensor>()->sensedValue;
         this->update(valueVector);
     }
+}
+
+double KalmanFilter::getCurrentStep() { return currentTime; }
+Eigen::VectorXd KalmanFilter::getState() { return xHat; }
+Eigen::MatrixXd KalmanFilter::getError() { return P; }
+Eigen::MatrixXd KalmanFilter::getInnovationError() { return innovationError; }
+double KalmanFilter::getEstimationError() { return estimationError; }
+uint64_t KalmanFilter::getTheta() { return theta; }
+float KalmanFilter::getLambda() { return lambda; }
+
+void KalmanFilter::setLambda(float newLambda) {
+    this->lambda = newLambda;
+}
+
+void KalmanFilter::setFrequency(std::chrono::milliseconds frequencyInMillis) {
+    frequency = frequencyInMillis;
+    freqLastReceived = frequencyInMillis;
+}
+void KalmanFilter::setFrequencyRange(std::chrono::milliseconds frequencyRange) {
+    freqRange = frequencyRange;
+}
+void KalmanFilter::setFrequencyWithRange(std::chrono::milliseconds frequencyInMillis,
+                           std::chrono::milliseconds frequencyRange) {
+    this->setFrequency(frequencyInMillis);
+    this->setFrequencyRange(frequencyRange);
 }
 
 }// namespace NES
