@@ -35,9 +35,14 @@ class CSVSource : public DataSource {
     /**
    * @brief constructor of CSV source
    * @param schema of the source
-   * @param path to the csv file
+   * @param bufferManager the buffer manager
+   * @param queryManager the query manager
+   * @param sourceConfigPtr points to the current source configuration object, look at sourceConfig and CSVSourceConfig for info
    * @param delimiter inside the file, default ","
-   * @param number of buffers to create
+   * @param operatorId current operator id
+   * @param numSourceLocalBuffers
+   * @param gatheringMode
+   * @param successors
    */
     explicit CSVSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,

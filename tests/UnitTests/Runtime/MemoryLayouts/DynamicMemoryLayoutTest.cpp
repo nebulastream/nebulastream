@@ -202,6 +202,7 @@ TEST_F(DynamicMemoryLayoutTest, accessFixedCharDynamicBufferTest) {
     auto buffer = DynamicTupleBuffer(columnLayout, tupleBuffer);
 
     for (uint64_t t = 0; t < buffer.getCapacity(); t++) {
+        //get the pointer and copy string into pointer to fill buffer with char*
         auto* value = buffer[t][0].read<char*>();
         std::string str("Test");
         str.copy(value, 4, 0);

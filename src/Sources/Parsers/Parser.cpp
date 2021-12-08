@@ -130,12 +130,11 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
             }
         }
     } else {// char array(string) case
-        const char* value;
+        // obtain pointer from buffer to fill with content via strcpy
+        char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
         // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
         // improve behavior with json library
-        value = (json) ? inputString.substr(1, inputString.size() - 2).c_str() : inputString.c_str();
-
-        tupleBuffer[tupleCount][schemaFieldIndex].write<const char*>(value);
+        strcpy(value, (json) ? inputString.substr(1, inputString.size() - 2).c_str() : inputString.c_str());
     }
     tupleBuffer.setNumberOfTuples(tupleCount);
 }

@@ -81,6 +81,7 @@
 
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#include "Configurations/Sources/CSVSourceConfig.hpp"
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
@@ -1127,9 +1128,25 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         serializedSourceDescriptor.UnpackTo(mqttSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->release_sourceschema());
+        auto sourceConfigPtr = Configurations::MQTTSourceConfig::create();
+        sourceConfigPtr->setSourceType(mqttSerializedSourceDescriptor.sourceconfig().sourcetype());
+        sourceConfigPtr->setInputFormat(mqttSerializedSourceDescriptor.sourceconfig().inputformat());
+        sourceConfigPtr->setRowLayout(mqttSerializedSourceDescriptor.sourceconfig().rowlayout());
+        sourceConfigPtr->setSourceFrequency(mqttSerializedSourceDescriptor.sourceconfig().sourcefrequency());
+        sourceConfigPtr->setNumberOfBuffersToProduce(mqttSerializedSourceDescriptor.sourceconfig().numberofbufferstoproduce());
+        sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(mqttSerializedSourceDescriptor.sourceconfig().numberoftuplestoproduceperbuffer());
+        sourceConfigPtr->setPhysicalStreamName(mqttSerializedSourceDescriptor.sourceconfig().physicalstreamname());
+        sourceConfigPtr->setLogicalStreamName(mqttSerializedSourceDescriptor.sourceconfig().logicalstreamname());
+        sourceConfigPtr->setFilePath(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().url());
+        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().clientid());
+        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().username());
+        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().topic());
+        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().qos());
+        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().cleansession());
+        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().flushintervalms());
         auto ret = MQTTSourceDescriptor::create(
             schema,
-            (const Configurations::MQTTSourceConfigPtr&) mqttSerializedSourceDescriptor->sourceconfig(),
+            sourceConfigPtr,
             (SourceDescriptor::InputFormat) mqttSerializedSourceDescriptor->inputformat());
         return ret;
     }
@@ -1197,8 +1214,19 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         serializedSourceDescriptor.UnpackTo(&csvSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.release_sourceschema());
+        auto sourceConfigPtr = Configurations::CSVSourceConfig::create();
+        sourceConfigPtr->setSourceType(csvSerializedSourceDescriptor.sourceconfig().sourcetype());
+        sourceConfigPtr->setInputFormat(csvSerializedSourceDescriptor.sourceconfig().inputformat());
+        sourceConfigPtr->setRowLayout(csvSerializedSourceDescriptor.sourceconfig().rowlayout());
+        sourceConfigPtr->setSourceFrequency(csvSerializedSourceDescriptor.sourceconfig().sourcefrequency());
+        sourceConfigPtr->setNumberOfBuffersToProduce(csvSerializedSourceDescriptor.sourceconfig().numberofbufferstoproduce());
+        sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(csvSerializedSourceDescriptor.sourceconfig().numberoftuplestoproduceperbuffer());
+        sourceConfigPtr->setPhysicalStreamName(csvSerializedSourceDescriptor.sourceconfig().physicalstreamname());
+        sourceConfigPtr->setLogicalStreamName(csvSerializedSourceDescriptor.sourceconfig().logicalstreamname());
+        sourceConfigPtr->setFilePath(csvSerializedSourceDescriptor.sourceconfig().serializablecsvsourceconfig().filepath());
+        sourceConfigPtr->setSkipHeader(csvSerializedSourceDescriptor.sourceconfig().serializablecsvsourceconfig().skipheader());
         auto ret = CsvSourceDescriptor::create(schema,
-                                               (const Configurations::CSVSourceConfigPtr&) csvSerializedSourceDescriptor.sourceconfig(),
+                                               sourceConfigPtr,
                                                csvSerializedSourceDescriptor.delimiter());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
