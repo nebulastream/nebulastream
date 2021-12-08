@@ -238,6 +238,8 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValueWithTooSmallIngestionRate);
     FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValue);
+    FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdate);
+    FRIEND_TEST(SourceTest, testDataSourceKFRoutineNoFrequencyUpdateUnlimitedFrequency);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
 using DataSourceProxyPtr = std::shared_ptr<DataSourceProxy>;
@@ -770,7 +772,6 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
 }
 
 TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
-    // TODO: add test for frequency change
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -810,6 +811,52 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
         return;
     }));
     mDataSource->runningRoutine();
+    EXPECT_FALSE(mDataSource->running);
+    EXPECT_TRUE(mDataSource->wasGracefullyStopped);
+    EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
+}
+
+TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdate) {
+    // create executable stage
+    auto executableStage = std::make_shared<MockedExecutablePipeline>();
+    // create sink
+    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    // get mocked pipeline to add to source
+    auto pipeline = this->createExecutablePipeline(executableStage, sink);
+    // mock query manager for passing addEndOfStream
+    DataSourceProxyPtr mDataSource = createDataSourceProxy(this->schema,
+                                                           this->nodeEngine->getBufferManager(),
+                                                           this->nodeEngine->getQueryManager(),
+                                                           this->operatorId,
+                                                           this->numSourceLocalBuffersDefault,
+                                                           DataSource::GatheringMode::KF_MODE,
+                                                           {pipeline});
+    mDataSource->numBuffersToProcess = 2;
+    mDataSource->running = true;
+    mDataSource->wasGracefullyStopped = true;
+    auto fakeBuf = mDataSource->getRecyclableBuffer();
+    ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
+    ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
+    ON_CALL(*mDataSource, receiveData()).WillByDefault(Return(fakeBuf));
+    ON_CALL(*mDataSource, emitWork(_)).WillByDefault(Return());
+    auto executionPlan = Runtime::Execution::ExecutableQueryPlan::create(this->queryId,
+                                                                         this->queryId,
+                                                                         {mDataSource},
+                                                                         {sink},
+                                                                         {pipeline},
+                                                                         this->nodeEngine->getQueryManager(),
+                                                                         this->nodeEngine->getBufferManager());
+    ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
+    ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+    auto oldFrequency = mDataSource->gatheringInterval;
+    EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
+    EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
+        mDataSource->running = false;
+        return;
+    }));
+    mDataSource->runningRoutine();
+    EXPECT_NE(oldFrequency.count(), mDataSource->gatheringInterval.count());
     EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
