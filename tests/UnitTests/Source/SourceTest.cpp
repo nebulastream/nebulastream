@@ -1089,6 +1089,13 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<ysbRecord>();
+    std::cout << content->current_ms << std::endl;
+    std::cout << content->event_type << std::endl;
+    std::cout << content->ad_type << std::endl;
+    std::cout << content->campaign_id << std::endl;
+    std::cout << content->user_id << std::endl;
+    std::cout << content->page_id << std::endl;
+    std::cout << content->ip << std::endl;
     EXPECT_STREQ(content->ad_type, "banner78");
     EXPECT_TRUE((!strcmp(content->event_type, "view") || !strcmp(content->event_type, "click")
                  || !strcmp(content->event_type, "purchase")));
@@ -1276,8 +1283,9 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                  this->numSourceLocalBuffersDefault,
                                  {});
 
+    std::cout << int_schema->toString() << std::endl;
     auto buf = this->GetEmptyBuffer();
-    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(int_schema, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyIntTypeRecord>();
@@ -1342,7 +1350,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
                                  {});
 
     auto buf = this->GetEmptyBuffer();
-    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(float_schema, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyFloatTypeRecord>();
@@ -1382,7 +1390,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
                                  {});
 
     auto buf = this->GetEmptyBuffer();
-    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->nodeEngine->getBufferManager()->getBufferSize());
+    Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(bool_schema, this->nodeEngine->getBufferManager()->getBufferSize());
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyBooleanTypeRecord>();
