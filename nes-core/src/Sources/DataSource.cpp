@@ -437,8 +437,13 @@ void DataSource::runningRoutineWithKF() {
     }
     open();
 
+    // TODO: add issue to properly parameterize frequency range and defaults
+    if (this->gatheringInterval.count() > 0) {
+        this->kFilter.setFrequencyRange(std::chrono::milliseconds{7 * this->gatheringInterval});
+    } else {
+        this->kFilter.setFrequencyRange(std::chrono::milliseconds(0));
+    }
     this->kFilter.setFrequency(this->gatheringInterval);
-    this->kFilter.setFrequencyRange(std::chrono::milliseconds{7 * this->gatheringInterval.count()});
 
     while (this->isRunning()) {
         auto tsNow = std::chrono::system_clock::now();
