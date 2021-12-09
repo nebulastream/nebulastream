@@ -171,7 +171,7 @@ class MockDataSource : public DataSource {
         };
     MOCK_METHOD(void, runningRoutineWithFrequency, ());
     MOCK_METHOD(void, runningRoutineWithIngestionRate, ());
-    MOCK_METHOD(void, runningRoutineWithKF, ());
+    MOCK_METHOD(void, runningRoutineAdaptive, ());
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
     MOCK_METHOD(std::string, toString, (), (const));
     MOCK_METHOD(SourceType, getType, (), (const));
@@ -681,8 +681,8 @@ TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
                                this->numSourceLocalBuffersDefault,
                                DataSource::GatheringMode::ADAPTIVE_MODE,
                                {});
-    ON_CALL(mDataSource, runningRoutineWithKF()).WillByDefault(Return());
-    EXPECT_CALL(mDataSource, runningRoutineWithKF()).Times(Exactly(1));
+    ON_CALL(mDataSource, runningRoutineAdaptive()).WillByDefault(Return());
+    EXPECT_CALL(mDataSource, runningRoutineAdaptive()).Times(Exactly(1));
     mDataSource.runningRoutine();
 }
 
@@ -865,7 +865,6 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdate) {
 
 // TODO: fix edge case when initial freq != 0
 TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdateNonZeroInitialFrequency) {
-    ASSERT_TRUE(false);
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink

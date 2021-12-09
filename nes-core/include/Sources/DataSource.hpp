@@ -281,10 +281,11 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     virtual void runningRoutineWithIngestionRate();
 
     /**
-    * @brief running routine with an adaptive rate, KF strategy
+    * @brief running routine with an adaptive rate (defaults to KF)
     */
-    virtual void runningRoutineWithKF();
+    virtual void runningRoutineAdaptive();
 #ifdef ENABLE_ADAPTIVE_BUILD
+    // TODO: add issue to remove the ifdef in the project
     /**
      * @brief the KF associated with a source.
      * We use default values for initialization.
