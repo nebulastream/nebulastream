@@ -75,8 +75,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         NES_DEBUG("PhysicalStreamConfig: create CSV source for " << sourceConfigPtr->as<Configurations::CSVSourceConfig>()->getFilePath()->getValue()
                                                                  << " buffers");
         return CsvSourceDescriptor::create(schema,
-                                           sourceConfigPtr->as<Configurations::CSVSourceConfig>(),
-                                           /**delimiter*/ ",");
+                                           sourceConfigPtr->as<Configurations::CSVSourceConfig>());
     } else if (sourceConfigPtr->getSourceType()->getValue() == "SenseSource") {
         NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs "
                   << sourceConfigPtr->as<Configurations::SenseSourceConfig>()->getUdfs()->getValue());

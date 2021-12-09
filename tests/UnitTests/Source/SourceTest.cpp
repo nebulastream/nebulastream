@@ -272,7 +272,6 @@ class CSVSourceProxy : public CSVSource {
                    Runtime::BufferManagerPtr bufferManager,
                    Runtime::QueryManagerPtr queryManager,
                    Configurations::CSVSourceConfigPtr sourceConfigPtr,
-                   std::string const& delimiter,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -280,7 +279,6 @@ class CSVSourceProxy : public CSVSource {
                     bufferManager,
                     queryManager,
                     sourceConfigPtr,
-                    delimiter,
                     operatorId,
                     numSourceLocalBuffers,
                     DataSource::FREQUENCY_MODE,
@@ -457,7 +455,6 @@ class SourceTest : public testing::Test {
         this->operatorId = 1;
         this->numSourceLocalBuffersDefault = 12;
         this->frequency = 1000;
-        this->delimiter = ",";
         this->wrong_filepath = "this_doesnt_exist";
         this->queryId = 1;
     }
@@ -496,7 +493,7 @@ class SourceTest : public testing::Test {
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
-    std::string path_to_file, path_to_bin_file, delimiter, wrong_filepath, path_to_file_head;
+    std::string path_to_file, path_to_bin_file, wrong_filepath, path_to_file_head;
     SchemaPtr schema, lambdaSchema;
     uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault,
         frequency, queryId;
@@ -868,7 +865,6 @@ TEST_F(SourceTest, testCSVSourceGetType) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -888,7 +884,6 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -908,7 +903,6 @@ TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -928,7 +922,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -954,7 +947,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -983,7 +975,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1011,7 +1002,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1046,7 +1036,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1080,7 +1069,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1116,7 +1104,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1147,7 +1134,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1191,7 +1177,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1235,7 +1220,6 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1278,7 +1262,6 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1344,7 +1327,6 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});
@@ -1384,7 +1366,6 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
                                  sourceConfigPtr,
-                                 this->delimiter,
                                  this->operatorId,
                                  this->numSourceLocalBuffersDefault,
                                  {});

@@ -80,6 +80,7 @@ The serializable wrapper for the csv source config object
 message SerializableCSVSourceConfig{
   string filePath = 1;
   bool skipHeader = 2;
+  string delimiter = 3;
 }
 
 /**
@@ -152,8 +153,7 @@ message SerializableOperator{
 
     message SerializableCsvSourceDescriptor {
       SerializableSourceConfig sourceConfig = 1;
-      string delimiter = 2;
-      SerializableSchema sourceSchema = 3;
+      SerializableSchema sourceSchema = 2;
     }
 
     message SerializableDefaultSourceDescriptor {

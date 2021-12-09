@@ -168,7 +168,6 @@ class MockedExecutablePipeline : public ExecutablePipelineStage {
 TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     // Related to https://github.com/nebulastream/nebulastream/issues/2035
     auto queryId = 1;
-    const std::string del = ",";
     double frequency = 550;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
@@ -199,7 +198,6 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                       this->nodeEngine->getBufferManager(),
                                       this->nodeEngine->getQueryManager(),
                                       sourceConfigPtr,
-                                      del,
                                       1,
                                       12,
                                       {pipeline});
@@ -220,7 +218,6 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
-    const std::string& del = ",";
     double frequency = 550;
     SchemaPtr schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
@@ -247,7 +244,6 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
                                                      nodeEngine->getBufferManager(),
                                                      nodeEngine->getQueryManager(),
                                                      sourceConfigPtr,
-                                                     del,
                                                      1,
                                                      12,
                                                      {});

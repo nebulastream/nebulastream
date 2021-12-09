@@ -33,12 +33,16 @@ CSVSourceConfigPtr CSVSourceConfig::create() { return std::make_shared<CSVSource
 CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceConfig(sourceConfigMap, CSV_SOURCE_CONFIG),
       filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
-      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")) {
+      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
+      delimiter(ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")) {
     NES_INFO("CSVSourceConfig: Init source config object.");
-    if (sourceConfigMap.find(CSV_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find(CSV_FILE_PATH_CONFIG)->second);
+    if (sourceConfigMap.find(CSV_SOURCE_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find(CSV_SOURCE_FILE_PATH_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("CSVSourceConfig:: no filePath defined! Please define a filePath.");
+    }
+    if (sourceConfigMap.find(CSV_SOURCE_DELIMITER_CONFIG) != sourceConfigMap.end()) {
+        delimiter->setValue(sourceConfigMap.find(CSV_SOURCE_DELIMITER_CONFIG)->second);
     }
     if (sourceConfigMap.find(CSV_SOURCE_SKIP_HEADER_CONFIG) != sourceConfigMap.end()) {
         skipHeader->setValue((sourceConfigMap.find(CSV_SOURCE_SKIP_HEADER_CONFIG)->second == "true"));
@@ -48,13 +52,15 @@ CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfig
 CSVSourceConfig::CSVSourceConfig()
     : SourceConfig(CSV_SOURCE_CONFIG),
       filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
-      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")) {
+      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
+      delimiter(ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")){
     NES_INFO("CSVSourceConfig: Init source config object with default values.");
 }
 
 void CSVSourceConfig::resetSourceOptions() {
     setFilePath(filePath->getDefaultValue());
     setSkipHeader(skipHeader->getDefaultValue());
+    setDelimiter(delimiter->getDefaultValue());
     SourceConfig::resetSourceOptions(CSV_SOURCE_CONFIG);
 }
 
@@ -62,6 +68,7 @@ std::string CSVSourceConfig::toString() {
     std::stringstream ss;
     ss << filePath->toStringNameCurrentValue();
     ss << skipHeader->toStringNameCurrentValue();
+    ss << delimiter->toStringNameCurrentValue();
     ss << SourceConfig::toString();
     return ss.str();
 }
@@ -70,9 +77,13 @@ StringConfigOption CSVSourceConfig::getFilePath() const { return filePath; }
 
 BoolConfigOption CSVSourceConfig::getSkipHeader() const { return skipHeader; }
 
+StringConfigOption CSVSourceConfig::getDelimiter() const { return delimiter; }
+
 void CSVSourceConfig::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
 
 void CSVSourceConfig::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }
+
+void CSVSourceConfig::setDelimiter(std::string delimiterValue) { delimiter->setValue(std::move(delimiterValue)); }
 
 }// namespace Configurations
 }// namespace NES

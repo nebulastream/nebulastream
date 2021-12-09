@@ -48,7 +48,6 @@ class CSVSource : public DataSource {
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
                        Configurations::CSVSourceConfigPtr sourceConfigPtr,
-                       std::string const& delimiter,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,

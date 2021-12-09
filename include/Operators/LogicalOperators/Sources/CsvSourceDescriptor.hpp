@@ -31,30 +31,20 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema,
-                                      Configurations::CSVSourceConfigPtr sourceConfigPtr,
-                                      std::string delimiter);
+                                      Configurations::CSVSourceConfigPtr sourceConfigPtr);
 
     /**
      * @brief get source config ptr with all configurations for csv source
      */
     Configurations::CSVSourceConfigPtr getSourceConfigPtr() const;
 
-    /**
-     * @brief get delimiter for the csv file
-     */
-    const std::string& getDelimiter() const;
-
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
 
   private:
-    explicit CsvSourceDescriptor(SchemaPtr schema,
-                                 Configurations::CSVSourceConfigPtr sourceConfigPtr,
-                                 std::string delimiter);
+    explicit CsvSourceDescriptor(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfigPtr);
 
     Configurations::CSVSourceConfigPtr sourceConfigPtr;
-    std::string delimiter;
-
 };
 
 using CsvSourceDescriptorPtr = std::shared_ptr<CsvSourceDescriptor>;
