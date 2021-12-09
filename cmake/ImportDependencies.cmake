@@ -44,11 +44,10 @@ elseif (UNIX AND NOT APPLE)
     elseif (NES_HOST_PROCESSOR MATCHES "arm64" OR NES_HOST_PROCESSOR MATCHES "aarch64")
         set(VCPKG_TARGET_TRIPLET arm64-linux-nes)
     endif ()
-else()
+else ()
     message(FATAL_ERROR "System not supported, currently we only support Linux and OSx")
 endif ()
 message(STATUS "Use VCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}")
-
 
 # In the following we configure vcpkg depending on the selected configuration.
 if (CMAKE_TOOLCHAIN_FILE)
@@ -78,12 +77,26 @@ else (NES_USE_PREBUILD_DEPENDENCIES)
     # Use the prebuild dependencies. To this end, we download the correct dependency file from our repository.
     message(STATUS "Use prebuild dependencies")
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
+
+    # for x68 linux we currently offer prebuild dependencies for ubuntu 18.04, 20.04, 21.10
+    if (${VCPKG_TARGET_TRIPLET} STREQUAL "x64-linux-nes")
+        get_linux_lsb_release_information()
+        message(STATUS "Linux ${LSB_RELEASE_ID_SHORT} ${LSB_RELEASE_VERSION_SHORT} ${LSB_RELEASE_CODENAME_SHORT}")
+        set(NES_SUPPORTED_UBUNTU_VERSIONS 18.04 20.04 21.10)
+        if ((NOT${LSB_RELEASE_ID_SHORT} STREQUAL "Ubuntu") OR (NOT ${LSB_RELEASE_VERSION_SHORT} IN_LIST NES_SUPPORTED_UBUNTU_VERSIONS))
+            message(FATAL_ERROR "Currently we only provide pre-build dependencies for Ubuntu: ${NES_SUPPORTED_UBUNTU_VERSIONS}. If you use a different linux please build dependencies locally with -DNES_BUILD_DEPENDENCIES_LOCAL=1")
+        endif ()
+        set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
+        set(COMPRESSED_BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-x64-linux-ubuntu-${LSB_RELEASE_VERSION_SHORT}-nes)
+    else ()
+        set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
+        set(COMPRESSED_BINARY_NAME ${BINARY_NAME})
+    endif ()
+
     IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
         message(STATUS "NES dependencies do not exist!")
-        download_file(https://github.com/nebulastream/dependencies/releases/download/${VCPKG_BINARY_VERSION}/${BINARY_NAME}.7z
-                ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z
-                SHA1 074e7a34c486d8956562b65a247d908ee097fb07
-                )
+        download_file(https://github.com/nebulastream/dependencies/releases/download/${VCPKG_BINARY_VERSION}/${COMPRESSED_BINARY_NAME}.7z
+                ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z)
         file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     endif ()
     # Set toolchain file to use prebuild dependencies.
