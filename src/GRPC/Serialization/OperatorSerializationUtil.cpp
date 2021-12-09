@@ -1129,21 +1129,21 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->release_sourceschema());
         auto sourceConfigPtr = Configurations::MQTTSourceConfig::create();
-        sourceConfigPtr->setSourceType(mqttSerializedSourceDescriptor.sourceconfig().sourcetype());
-        sourceConfigPtr->setInputFormat(mqttSerializedSourceDescriptor.sourceconfig().inputformat());
-        sourceConfigPtr->setRowLayout(mqttSerializedSourceDescriptor.sourceconfig().rowlayout());
-        sourceConfigPtr->setSourceFrequency(mqttSerializedSourceDescriptor.sourceconfig().sourcefrequency());
-        sourceConfigPtr->setNumberOfBuffersToProduce(mqttSerializedSourceDescriptor.sourceconfig().numberofbufferstoproduce());
-        sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(mqttSerializedSourceDescriptor.sourceconfig().numberoftuplestoproduceperbuffer());
-        sourceConfigPtr->setPhysicalStreamName(mqttSerializedSourceDescriptor.sourceconfig().physicalstreamname());
-        sourceConfigPtr->setLogicalStreamName(mqttSerializedSourceDescriptor.sourceconfig().logicalstreamname());
-        sourceConfigPtr->setFilePath(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().url());
-        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().clientid());
-        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().username());
-        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().topic());
-        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().qos());
-        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().cleansession());
-        sourceConfigPtr->setSkipHeader(mqttSerializedSourceDescriptor.sourceconfig().serializablemqttsourceconfig().flushintervalms());
+        sourceConfigPtr->setSourceType(mqttSerializedSourceDescriptor->sourceconfig().sourcetype());
+        sourceConfigPtr->setInputFormat(mqttSerializedSourceDescriptor->sourceconfig().inputformat());
+        sourceConfigPtr->setRowLayout(mqttSerializedSourceDescriptor->sourceconfig().rowlayout());
+        sourceConfigPtr->setSourceFrequency(mqttSerializedSourceDescriptor->sourceconfig().sourcefrequency());
+        sourceConfigPtr->setNumberOfBuffersToProduce(mqttSerializedSourceDescriptor->sourceconfig().numberofbufferstoproduce());
+        sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(mqttSerializedSourceDescriptor->sourceconfig().numberoftuplestoproduceperbuffer());
+        sourceConfigPtr->setPhysicalStreamName(mqttSerializedSourceDescriptor->sourceconfig().physicalstreamname());
+        sourceConfigPtr->setLogicalStreamName(mqttSerializedSourceDescriptor->sourceconfig().logicalstreamname());
+        sourceConfigPtr->setUrl(mqttSerializedSourceDescriptor->sourceconfig().serializablemqttsourceconfig().url());
+        sourceConfigPtr->setClientId(mqttSerializedSourceDescriptor->sourceconfig().serializablemqttsourceconfig().clientid());
+        sourceConfigPtr->setUserName(mqttSerializedSourceDescriptor->sourceconfig().serializablemqttsourceconfig().username());
+        sourceConfigPtr->setTopic(mqttSerializedSourceDescriptor->sourceconfig().serializablemqttsourceconfig().topic());
+        sourceConfigPtr->setQos(mqttSerializedSourceDescriptor->sourceconfig().serializablemqttsourceconfig().qos());
+        sourceConfigPtr->setCleanSession(mqttSerializedSourceDescriptor->sourceconfig().serializablemqttsourceconfig().cleansession());
+        sourceConfigPtr->setFlushIntervalMS(mqttSerializedSourceDescriptor->sourceconfig().serializablemqttsourceconfig().flushintervalms());
         auto ret = MQTTSourceDescriptor::create(
             schema,
             sourceConfigPtr,

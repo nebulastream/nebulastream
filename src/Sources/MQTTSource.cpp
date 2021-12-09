@@ -118,21 +118,41 @@ MQTTSource::~MQTTSource() {
 
 std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
     NES_DEBUG("MQTTSource  " << this << ": receiveData ");
+    auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto buffer = bufferManager->getBufferBlocking();
-    if (connect()) {
-        if (!fillBuffer(buffer)) {
-            NES_ERROR("MQTTSource::receiveData: Failed to fill the TupleBuffer.");
+    if (rowLayout) {
+        Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->bufferManager->getBufferSize());
+        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, tupleBuffer);
+        if (connect()) {
+            if (!fillBuffer(buffer)) {
+                NES_ERROR("MQTTSource::receiveData: Failed to fill the TupleBuffer.");
+                return std::nullopt;
+            }
+        } else {
+            NES_ERROR("MQTTSource::receiveData: Not connected!");
             return std::nullopt;
         }
+        if (buffer.getNumberOfTuples() == 0) {
+            return std::nullopt;
+        }
+        return buffer.getBuffer();
     } else {
-        NES_ERROR("MQTTSource::receiveData: Not connected!");
-        return std::nullopt;
+        Runtime::MemoryLayouts::ColumnLayoutPtr layoutPtr = Runtime::MemoryLayouts::ColumnLayout::create(schema, this->bufferManager->getBufferSize());
+        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, tupleBuffer);
+        if (connect()) {
+            if (!fillBuffer(buffer)) {
+                NES_ERROR("MQTTSource::receiveData: Failed to fill the TupleBuffer.");
+                return std::nullopt;
+            }
+        } else {
+            NES_ERROR("MQTTSource::receiveData: Not connected!");
+            return std::nullopt;
+        }
+        if (buffer.getNumberOfTuples() == 0) {
+            return std::nullopt;
+        }
+        return buffer.getBuffer();
     }
-    if (buffer.getNumberOfTuples() == 0) {
-        return std::nullopt;
-    }
-    return buffer;
 }
 
 std::string MQTTSource::toString() const {
@@ -150,10 +170,10 @@ std::string MQTTSource::toString() const {
     return ss.str();
 }
 
-bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
+bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer) {
 
     // determine how many tuples fit into the buffer
-    tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
+    tuplesThisPass = tupleBuffer.getBuffer().getBufferSize() / tupleSize;
     NES_DEBUG("MQTTSource::fillBuffer: Fill buffer with #tuples=" << tuplesThisPass << " of size=" << tupleSize);
 
     uint64_t tupleCount = 0;
@@ -175,7 +195,7 @@ bool MQTTSource::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
                     NES_TRACE("Client consume message: '" << message->get_payload_str() << "'");
                     receivedMessageString = message->get_payload_str();
                     if (!inputParser
-                             ->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer, schema, rowLayout)) {
+                             ->writeInputTupleToTupleBuffer(receivedMessageString, tupleCount, tupleBuffer, schema)) {
                         NES_ERROR("MQTTSource::getBuffer: Failed to write input tuple to TupleBuffer.");
                         return false;
                     }
