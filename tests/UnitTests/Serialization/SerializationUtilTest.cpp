@@ -250,7 +250,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         sourceConfigPtr->setNumberOfBuffersToProduce(0);
         sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(10);
         sourceConfigPtr->setSourceFrequency(10);
-        auto source = CsvSourceDescriptor::create(schema, sourceConfigPtr, ",");
+        auto source = CsvSourceDescriptor::create(schema, sourceConfigPtr);
         auto* serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);

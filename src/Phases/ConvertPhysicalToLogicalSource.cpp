@@ -71,8 +71,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             const CSVSourcePtr csvSourcePtr = std::dynamic_pointer_cast<CSVSource>(dataSource);
             const SourceDescriptorPtr csvSourceDescriptor =
                 CsvSourceDescriptor::create(csvSourcePtr->getSchema(),
-                                            csvSourcePtr->getSourceConfigPtr(),
-                                            csvSourcePtr->getDelimiter());
+                                            csvSourcePtr->getSourceConfigPtr());
             return csvSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD

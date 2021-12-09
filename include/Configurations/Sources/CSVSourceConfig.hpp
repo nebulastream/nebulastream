@@ -80,6 +80,16 @@ class CSVSourceConfig : public SourceConfig {
      */
     void setSkipHeader(bool skipHeader);
 
+    /**
+     * @brief gets a ConfigOption object with skipHeader
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getDelimiter() const;
+
+    /**
+     * @brief set the value for skipHeader with the appropriate data format
+     */
+    void setDelimiter(std::string delimiter);
+
   private:
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
@@ -92,6 +102,7 @@ class CSVSourceConfig : public SourceConfig {
     CSVSourceConfig();
     StringConfigOption filePath;
     BoolConfigOption skipHeader;
+    StringConfigOption delimiter;
 };
 }// namespace Configurations
 }// namespace NES

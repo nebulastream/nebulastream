@@ -68,7 +68,7 @@ class TestUtils {
     [[nodiscard]] static std::string sourceType(std::string sourceType) { return "--" + SOURCE_TYPE_CONFIG + "=" + sourceType; }
 
     [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) {
-        return "--" + CSV_FILE_PATH_CONFIG + "=" + filePath;
+        return "--" + CSV_SOURCE_FILE_PATH_CONFIG + "=" + filePath;
     }
 
     [[nodiscard]] static std::string dataPort(uint64_t dataPort) { return "--dataPort=" + std::to_string(dataPort); }

@@ -46,6 +46,8 @@ CSVSource:
   - filePath:
   # Skip first line of the file
     skipHeader: false
+  # Set delimiter, e.g. , or .
+    delimiter: ,
 
 # BinarySource: read from a binary source file
 BinarySource:

@@ -167,12 +167,9 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
  * @param schema of data source
  * @param bufferManager
  * @param queryManager
- * @param pathToFile
- * @param delimiter
+ * @param sourceConfigPtr
  * @param numberOfTuplesToProducePerBuffer
  * @param numBuffersToProcess
- * @param frequency
- * @param skipHeader
  * @param operatorId
  * @return a const data source pointer
  */
@@ -180,7 +177,6 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                   const Runtime::BufferManagerPtr& bufferManager,
                                   const Runtime::QueryManagerPtr& queryManager,
                                   const Configurations::CSVSourceConfigPtr& sourceConfigPtr,
-                                  const std::string& delimiter,
                                   OperatorId operatorId,
                                   size_t numSourceLocalBuffers,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);

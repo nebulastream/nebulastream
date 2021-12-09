@@ -1061,11 +1061,11 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         auto csvSerializedSourceConfig = new SerializableCSVSourceConfig();
         csvSerializedSourceConfig->set_filepath(csvSourceDescriptor->getSourceConfigPtr()->getFilePath()->getValue());
         csvSerializedSourceConfig->set_skipheader(csvSourceDescriptor->getSourceConfigPtr()->getSkipHeader()->getValue());
+        csvSerializedSourceConfig->set_delimiter(csvSourceDescriptor->getSourceConfigPtr()->getDelimiter()->getValue());
         serializedSourceConfig->set_allocated_serializablecsvsourceconfig(csvSerializedSourceConfig);
         // init serializable csv source descriptor
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         csvSerializedSourceDescriptor.set_allocated_sourceconfig(serializedSourceConfig);
-        csvSerializedSourceDescriptor.set_delimiter(csvSourceDescriptor->getDelimiter());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(csvSourceDescriptor->getSchema(),
                                                  csvSerializedSourceDescriptor.mutable_sourceschema());
@@ -1225,9 +1225,9 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         sourceConfigPtr->setLogicalStreamName(csvSerializedSourceDescriptor.sourceconfig().logicalstreamname());
         sourceConfigPtr->setFilePath(csvSerializedSourceDescriptor.sourceconfig().serializablecsvsourceconfig().filepath());
         sourceConfigPtr->setSkipHeader(csvSerializedSourceDescriptor.sourceconfig().serializablecsvsourceconfig().skipheader());
+        sourceConfigPtr->setDelimiter(csvSerializedSourceDescriptor.sourceconfig().serializablecsvsourceconfig().delimiter());
         auto ret = CsvSourceDescriptor::create(schema,
-                                               sourceConfigPtr,
-                                               csvSerializedSourceDescriptor.delimiter());
+                                               sourceConfigPtr);
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
         // de-serialize sense source descriptor

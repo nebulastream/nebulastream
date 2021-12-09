@@ -20,36 +20,32 @@
 
 namespace NES {
 
-CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema,
-                                         Configurations::CSVSourceConfigPtr sourceConfigPtr,
-                                         std::string delimiter)
-    : SourceDescriptor(std::move(schema)), sourceConfigPtr(std::move(sourceConfigPtr)), delimiter(std::move(delimiter)) {}
+CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfigPtr)
+    : SourceDescriptor(std::move(schema)), sourceConfigPtr(std::move(sourceConfigPtr)) {}
 
-SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
-                                                Configurations::CSVSourceConfigPtr sourceConfigPtr,
-                                                std::string delimiter) {
-    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema),
-                                                                     std::move(sourceConfigPtr),
-                                                                     std::move(delimiter)));
+SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfigPtr) {
+    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(sourceConfigPtr)));
 }
 
 Configurations::CSVSourceConfigPtr CsvSourceDescriptor::getSourceConfigPtr() const { return sourceConfigPtr; }
-
-const std::string& CsvSourceDescriptor::getDelimiter() const { return delimiter; }
 
 bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<CsvSourceDescriptor>()) {
         return false;
     }
     auto otherSource = other->as<CsvSourceDescriptor>();
-    return sourceConfigPtr->getFilePath()->getValue() == otherSource->getSourceConfigPtr()->getFilePath()->getValue() && delimiter == otherSource->getDelimiter()
-        && sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue() == otherSource->getSourceConfigPtr()->getNumberOfTuplesToProducePerBuffer()->getValue()
-        && sourceConfigPtr->getSourceFrequency()->getValue() == otherSource->getSourceConfigPtr()->getSourceFrequency()->getValue()
+    return sourceConfigPtr->getFilePath()->getValue() == otherSource->getSourceConfigPtr()->getFilePath()->getValue()
+        && sourceConfigPtr->getDelimiter()->getValue() == otherSource->getSourceConfigPtr()->getDelimiter()->getValue()
+        && sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()
+        == otherSource->getSourceConfigPtr()->getNumberOfTuplesToProducePerBuffer()->getValue()
+        && sourceConfigPtr->getSourceFrequency()->getValue()
+        == otherSource->getSourceConfigPtr()->getSourceFrequency()->getValue()
         && getSchema()->equals(otherSource->getSchema());
 }
 
 std::string CsvSourceDescriptor::toString() {
-    return "CsvSourceDescriptor(" + sourceConfigPtr->getFilePath()->getValue() + "," + delimiter + ", " + std::to_string(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()) + ", "
+    return "CsvSourceDescriptor(" + sourceConfigPtr->getFilePath()->getValue() + "," + sourceConfigPtr->getDelimiter()->getValue()
+        + ", " + std::to_string(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()) + ", "
         + std::to_string(std::chrono::milliseconds(sourceConfigPtr->getSourceFrequency()->getValue()).count()) + "ms)";
 }
 

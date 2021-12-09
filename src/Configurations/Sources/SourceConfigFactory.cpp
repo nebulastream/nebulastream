@@ -138,7 +138,7 @@ std::map<std::string, std::string> SourceConfigFactory::readYAMLFile(const std::
             if (!config[CSV_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>().empty()
                 && config[CSV_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
-                    std::pair<std::string, std::string>(CSV_FILE_PATH_CONFIG,
+                    std::pair<std::string, std::string>(CSV_SOURCE_FILE_PATH_CONFIG,
                                                         config[CSV_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>()));
             }
             if (!config[CSV_SOURCE_CONFIG][0][SKIP_HEADER_CONFIG].As<std::string>().empty()
@@ -146,6 +146,12 @@ std::map<std::string, std::string> SourceConfigFactory::readYAMLFile(const std::
                 configurationMap.insert(
                     std::pair<std::string, std::string>(CSV_SOURCE_SKIP_HEADER_CONFIG,
                                                         config[CSV_SOURCE_CONFIG][0][SKIP_HEADER_CONFIG].As<std::string>()));
+            }
+            if (!config[CSV_SOURCE_CONFIG][0][DELIMITER_CONFIG].As<std::string>().empty()
+                && config[CSV_SOURCE_CONFIG][0][DELIMITER_CONFIG].As<std::string>() != "\n") {
+                configurationMap.insert(
+                    std::pair<std::string, std::string>(CSV_SOURCE_DELIMITER_CONFIG,
+                                                        config[CSV_SOURCE_CONFIG][0][DELIMITER_CONFIG].As<std::string>()));
             }
             if (!config[BINARY_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>().empty()
                 && config[BINARY_SOURCE_CONFIG][0][FILE_PATH_CONFIG].As<std::string>() != "\n") {
@@ -308,14 +314,18 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
             configurationMap.insert_or_assign(SENSE_SOURCE_UDFS_CONFIG,
                                               commandLineParams.find("--" + SENSE_SOURCE_UDFS_CONFIG)->second);
         }
-        if (commandLineParams.find("--" + CSV_FILE_PATH_CONFIG) != commandLineParams.end()
-            && !commandLineParams.find("--" + CSV_FILE_PATH_CONFIG)->second.empty()) {
-            configurationMap.insert_or_assign(CSV_FILE_PATH_CONFIG, commandLineParams.find("--" + CSV_FILE_PATH_CONFIG)->second);
+        if (commandLineParams.find("--" + CSV_SOURCE_FILE_PATH_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + CSV_SOURCE_FILE_PATH_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(CSV_SOURCE_FILE_PATH_CONFIG, commandLineParams.find("--" + CSV_SOURCE_FILE_PATH_CONFIG)->second);
         }
         if (commandLineParams.find("--" + CSV_SOURCE_SKIP_HEADER_CONFIG) != commandLineParams.end()
             && !commandLineParams.find("--" + CSV_SOURCE_SKIP_HEADER_CONFIG)->second.empty()) {
             configurationMap.insert_or_assign(CSV_SOURCE_SKIP_HEADER_CONFIG,
                                               commandLineParams.find("--" + CSV_SOURCE_SKIP_HEADER_CONFIG)->second);
+        }
+        if (commandLineParams.find("--" + CSV_SOURCE_DELIMITER_CONFIG) != commandLineParams.end()
+            && !commandLineParams.find("--" + CSV_SOURCE_DELIMITER_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(CSV_SOURCE_DELIMITER_CONFIG, commandLineParams.find("--" + CSV_SOURCE_DELIMITER_CONFIG)->second);
         }
         if (commandLineParams.find("--" + MQTT_SOURCE_URL_CONFIG) != commandLineParams.end()
             && !commandLineParams.find("--" + MQTT_SOURCE_URL_CONFIG)->second.empty()) {

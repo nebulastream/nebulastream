@@ -17,10 +17,8 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
@@ -39,7 +37,6 @@ CSVSource::CSVSource(SchemaPtr schema,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
                      Configurations::CSVSourceConfigPtr sourceConfigPtr,
-                     std::string const& delimiter,
                      OperatorId operatorId,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
@@ -52,8 +49,9 @@ CSVSource::CSVSource(SchemaPtr schema,
                  gatheringMode,
                  std::move(successors)),
       sourceConfigPtr(sourceConfigPtr), filePath(sourceConfigPtr->getFilePath()->getValue()),
-      numberOfTuplesToProducePerBuffer(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()), delimiter(delimiter),
-      skipHeader(sourceConfigPtr->getSkipHeader()->getValue()), rowLayout(sourceConfigPtr->getRowLayout()->getValue()) {
+      numberOfTuplesToProducePerBuffer(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()),
+      delimiter(sourceConfigPtr->getDelimiter()->getValue()), skipHeader(sourceConfigPtr->getSkipHeader()->getValue()),
+      rowLayout(sourceConfigPtr->getRowLayout()->getValue()) {
     this->numBuffersToProcess = sourceConfigPtr->getNumberOfBuffersToProduce()->getValue();
     this->gatheringInterval = std::chrono::milliseconds(sourceConfigPtr->getSourceFrequency()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
@@ -91,8 +89,9 @@ CSVSource::CSVSource(SchemaPtr schema,
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on " << operatorId);
     auto tupleBuffer = this->bufferManager->getBufferBlocking();
-    if (rowLayout){
-        Runtime::MemoryLayouts::RowLayoutPtr layoutPtr = Runtime::MemoryLayouts::RowLayout::create(schema, this->bufferManager->getBufferSize());
+    if (rowLayout) {
+        Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
+            Runtime::MemoryLayouts::RowLayout::create(schema, this->bufferManager->getBufferSize());
         Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, tupleBuffer);
         fillBuffer(buffer);
         NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
@@ -102,7 +101,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         }
         return buffer.getBuffer();
     } else {
-        Runtime::MemoryLayouts::ColumnLayoutPtr layoutPtr = Runtime::MemoryLayouts::ColumnLayout::create(schema, this->bufferManager->getBufferSize());
+        Runtime::MemoryLayouts::ColumnLayoutPtr layoutPtr =
+            Runtime::MemoryLayouts::ColumnLayout::create(schema, this->bufferManager->getBufferSize());
         Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, tupleBuffer);
         fillBuffer(buffer);
         NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
@@ -112,7 +112,6 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         }
         return buffer.getBuffer();
     }
-
 }
 
 std::string CSVSource::toString() const {
