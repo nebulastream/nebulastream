@@ -234,7 +234,7 @@ void DataSource::runningRoutine() {
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         runningRoutineWithIngestionRate();
     } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
-        runningRoutineWithKF();
+        runningRoutineAdaptive();
     }
 }
 
@@ -419,57 +419,106 @@ void DataSource::runningRoutineWithFrequency() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
-void DataSource::runningRoutineWithKF() {
+void DataSource::runningRoutineAdaptive() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
     auto ts = std::chrono::system_clock::now();
-    auto zeroSecInMillis = std::chrono::milliseconds(0);
     std::chrono::milliseconds lastTimeStampMillis = std::chrono::duration_cast<std::chrono::milliseconds>(ts.time_since_epoch());
-    uint64_t cnt = 0;
 
+    NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType()
+                            << " frequency=" << gatheringInterval.count());
     if (numBuffersToProcess == 0) {
         NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
                   "the source is empty");
     } else {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
-    open();
 
+#ifdef ENABLE_ADAPTIVE_BUILD
+    // TODO: add issue to remove the ifdef in the project
     // TODO: add issue to properly parameterize frequency range and defaults
     this->kFilter.setFrequency(this->gatheringInterval);
     this->kFilter.setFrequencyRange(std::chrono::milliseconds{8000});
+#endif
 
-    while (this->isRunning()) {
-        auto tsNow = std::chrono::system_clock::now();
+    open();
+    uint64_t cnt = 0;
+    while (running) {
+        bool recNow = false;
+        auto tsNow = std::chrono::steady_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
 
-        if (gatheringInterval == zeroSecInMillis
-            || (lastTimeStampMillis != nowInMillis
-                && (nowInMillis - lastTimeStampMillis <= this->gatheringInterval
-                    || (nowInMillis - lastTimeStampMillis % this->gatheringInterval).count() == 0))) {
-            lastTimeStampMillis = nowInMillis;
-            if (cnt < numBuffersToProcess) {
-                auto optBuf = this->receiveData();
-                if (optBuf.has_value()) {
-                    auto& buf = optBuf.value();
-                    this->kFilter.updateFromTupleBuffer(buf);
-                    this->gatheringInterval = this->kFilter.getNewFrequency();
-                    NES_DEBUG("DataSource " << this->operatorId << " string=" << this->toString()
-                                                << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
-                                                << " iteration=" << cnt);
-
-                    emitWorkFromSource(buf);
-                    cnt++;
-                }
+        //this check checks if the gathering interval is zero or a ZMQ_Source, where we do not create a watermark-only buffer
+        NES_DEBUG("DataSource::runningRoutine will now check src type with gatheringInterval=" << gatheringInterval.count());
+        if (gatheringInterval.count() == 0 || getType() == SourceType::ZMQ_SOURCE) {// 0 means never sleep
+            NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type="
+                      << getType() << " and gatheringInterval=" << gatheringInterval.count()
+                      << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
+            if (gatheringInterval.count() == 0 || lastTimeStampMillis != nowInMillis) {
+                NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer gatheringInterval="
+                          << gatheringInterval.count() << "ms, tsNow=" << lastTimeStampMillis.count()
+                          << "ms, now=" << nowInMillis.count() << "ms");
+                recNow = true;
+                lastTimeStampMillis = nowInMillis;
+            } else {
+                NES_DEBUG("lastTimeStampMillis=" << lastTimeStampMillis.count() << "nowInMillis=" << nowInMillis.count());
             }
-            NES_DEBUG("DataSource::runningRoutine running " << this);
         } else {
-            NES_DEBUG("DataSource::runningRoutine sleep " << this);
-            std::this_thread::sleep_for(this->gatheringInterval);
+            NES_DEBUG("DataSource::runningRoutine check for interval");
+            // check each interval
+            if (nowInMillis != lastTimeStampMillis) {//we are in another interval
+                if ((nowInMillis - lastTimeStampMillis) <= gatheringInterval
+                    || ((nowInMillis - lastTimeStampMillis) % gatheringInterval).count() == 0) {//produce a regular buffer
+                    NES_DEBUG("DataSource::runningRoutine sending regular buffer");
+                    recNow = true;
+                }
+                lastTimeStampMillis = nowInMillis;
+            }
+        }
+
+        //repeat test
+        if (!recNow) {
+            std::this_thread::sleep_for(gatheringInterval);
             continue;
         }
+
+        //check if already produced enough buffer
+        if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
+            auto optBuf = receiveData();// note that receiveData might block
+            if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
+                break;
+            }
+            //this checks we received a valid output buffer
+            if (optBuf.has_value()) {
+                auto& buf = optBuf.value();
+#ifdef ENABLE_ADAPTIVE_BUILD
+                this->kFilter.updateFromTupleBuffer(buf);
+                this->gatheringInterval = this->kFilter.getNewFrequency();
+#endif
+                NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
+                                                       << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
+                                                       << " iteration=" << cnt << " operatorId=" << this->operatorId
+                                                       << " orgID=" << this->operatorId);
+                NES_TRACE("DataSource produced buffer content=" << Util::prettyPrintTupleBuffer(buf, schema));
+
+                emitWorkFromSource(buf);
+                ++cnt;
+            } else {
+                if (!wasGracefullyStopped) {
+                    NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
+                    running = false;
+                }
+                NES_DEBUG("DataSource " << operatorId << ": Thread terminating after graceful exit.");
+            }
+        } else {
+            NES_DEBUG("DataSource " << operatorId << ": Receiving thread terminated ... stopping because cnt=" << cnt
+                                    << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
+            running = false;
+            wasGracefullyStopped = true;
+        }
+        NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
     }
     close();
     // inject reconfiguration task containing end of stream
@@ -477,7 +526,7 @@ void DataSource::runningRoutineWithKF() {
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
     bufferManager->destroy();
     queryManager.reset();
-    NES_DEBUG("DataSource " << this->operatorId << ": end running");
+    NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
 // debugging
