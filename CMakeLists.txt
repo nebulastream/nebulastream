@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v7)
+set(VCPKG_BINARY_VERSION v9)
 
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
@@ -118,11 +118,11 @@ endif ()
 if (NES_LOGGING_LEVEL)
     get_nes_log_level_value(NES_LOGGING_VALUE)
 else (NES_LOGGING_LEVEL)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -Werror=unused-variable -Werror=unused-parameter -DNES_LOGGING_TRACE_LEVEL=1")
+    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_LOGGING_TRACE_LEVEL=1")
     message("---Everything will be logged")
 endif (NES_LOGGING_LEVEL)
 # Set Optimization Flags
-set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare")
+set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations ")
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNES_RELEASE_MODE=1")
@@ -385,6 +385,7 @@ if (NES_USE_ADAPTIVE)
     message("Adaptive sampling dependencies OK")
 endif (NES_USE_ADAPTIVE)
 
+
 # PAPI
 
 if (CMAKE_USE_PAPI_PROFILER)
@@ -434,7 +435,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 # LLVM
-find_package(LLVM 12.0.0 CONFIG REQUIRED)
+find_package(LLVM 13.0.0 CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")
