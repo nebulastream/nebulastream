@@ -169,6 +169,9 @@ class QueryStatistics {
      */
     std::map<uint64_t, std::vector<uint64_t>> getTsToLatencyMap();
 
+
+    void clear();
+
   private:
     std::atomic<uint64_t> processedTasks = 0;
     std::atomic<uint64_t> processedTuple = 0;

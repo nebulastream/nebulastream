@@ -122,6 +122,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto queryCompilationOptions = createQueryCompilationOptions(queryCompilerCompilationStrategy,
                                                                      queryCompilerPipeliningStrategy,
                                                                      queryCompilerOutputBufferOptimizationLevel);
+        queryCompilationOptions->setNumSourceLocalBuffers(numberOfBuffersInSourceLocalBufferPool);
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler);
         if (!compiler) {
             NES_ERROR("Runtime: error while creating compiler");

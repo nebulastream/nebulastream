@@ -62,12 +62,28 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedTuple=" << processedTuple.load();
     ss << " processedBuffers=" << processedBuffers.load();
     ss << " processedWatermarks=" << processedWatermarks.load();
-    ss << " latencySum=" << latencySum.load();
-    ss << " queueSizeSum=" << queueSizeSum.load();
-    ss << " availableGlobalBufferSum=" << availableGlobalBufferSum.load();
-    ss << " availableFixedBufferSum=" << availableFixedBufferSum.load();
+    ss << " latencyAVG=" << latencySum.load() / processedBuffers.load();
+    ss << " queueSizeAVG=" << queueSizeSum.load() / processedBuffers.load();
+    ss << " availableGlobalBufferAVG=" << availableGlobalBufferSum.load() / processedBuffers.load();
+    ss << " availableFixedBufferAVG=" << availableFixedBufferSum.load() / processedBuffers.load();
+//    ss << " latencySum=" << latencySum.load();
+//    ss << " queueSizeSum=" << queueSizeSum.load();
+//    ss << " availableGlobalBufferSum=" << availableGlobalBufferSum.load();
+//    ss << " availableFixedBufferSum=" << availableFixedBufferSum.load();
     return ss.str();
 }
+
+void QueryStatistics::clear() {
+    processedTasks = 0;
+    processedTuple = 0;
+    processedBuffers = 0;
+    processedWatermarks = 0;
+    latencySum = 0;
+    queueSizeSum = 0;
+    availableGlobalBufferSum = 0;
+    availableFixedBufferSum = 0;
+}
+
 uint64_t QueryStatistics::getQueryId() const { return queryId.load(); }
 uint64_t QueryStatistics::getSubQueryId() const { return subQueryId.load(); }
 
