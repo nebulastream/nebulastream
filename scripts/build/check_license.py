@@ -40,7 +40,7 @@ if __name__ == "__main__":
         for file in files:
             filename = os.path.join(subdir, file)
             if filename.endswith(".cpp") or filename.endswith(".hpp") or filename.endswith(".proto"):
-                with open(filename, "r") as fp:
+                with open(filename, "r", encoding="utf-8") as fp:
                     content = fp.read()
                     if not content.startswith(license_text_cpp):
                         print("File", filename, " lacks the license preamble")
