@@ -18,6 +18,7 @@ jobs:
     runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
     strategy:
+      fail-fast: false
       matrix:
         osversion: [ubuntu-18_04, ubuntu-20_04, ubuntu-21_10]
     steps:
