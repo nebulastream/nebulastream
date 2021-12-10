@@ -1015,7 +1015,6 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
 
         for (auto& bufferManager : bufferManagers) {
             statistics->incAvailableGlobalBufferSum(bufferManager->getAvailableBuffers());
-
             statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
         }
 

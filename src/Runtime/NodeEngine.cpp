@@ -428,9 +428,9 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     return queryStatistics;
 }
 
-std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics() {
+std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
     std::unique_lock lock(engineMutex);
-    std::vector<QueryStatisticsPtr> queryStatistics;
+    std::vector<QueryStatistics> queryStatistics;
 
 //    NES_DEBUG("QueryManager: Check if query is registered");
 //    auto foundQuerySubPlanIds = queryIdToQuerySubPlanIds.find(queryId);
@@ -446,7 +446,12 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics() {
         for (auto querySubPlanId : querySubPlanIds) {
             NES_DEBUG("querySubPlanId=" << querySubPlanId << " stat="
                                         << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
-            queryStatistics.emplace_back(queryManager->getQueryStatistics(querySubPlanId));
+
+            queryStatistics.push_back(queryManager->getQueryStatistics(querySubPlanId).operator*());
+            if(withReset)
+            {
+                queryManager->getQueryStatistics(querySubPlanId)->clear();
+            }
         }
     }
 
