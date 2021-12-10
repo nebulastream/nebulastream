@@ -42,7 +42,7 @@ jobs:
       - name: docker cleanup
         if: ${{ always() }}
         run: |
-          docker rm -f ${{ github.run_id }}_build
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_build
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
@@ -75,11 +75,15 @@ jobs:
       - name: Run build and test
         continue-on-error: true
         run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-      - name: docker cleanup
+          docker run --name ${{ github.run_id }}_test -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+      - name: docker cleanup build
         if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_build
+      - name: docker cleanup test
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_test
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
