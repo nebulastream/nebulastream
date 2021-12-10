@@ -4,10 +4,13 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libdwarf-dev \
   libdwarf1 \
   binutils-dev \
+  libunwind-dev \
   libdw-dev \
   libssl-dev \
   build-essential \
   clang-format \
+  libnuma-dev \
+  numactl \
   libmbedtls-dev \
   libjemalloc-dev \
   git \
@@ -18,6 +21,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   p7zip \
   doxygen \
   graphviz \
+  libbsd-dev \
   software-properties-common \
   && apt-get clean -qq
 
@@ -28,7 +32,7 @@ RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
 # docker buildx, TARGETARCH,TARGETOS available in the intermediate container during build time
-# We store new env variables for use during runtime/entrypoint
+# We store new env variables for use during Runtime/entrypoint
 # more info: https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 ARG TARGETARCH
 ARG TARGETOS

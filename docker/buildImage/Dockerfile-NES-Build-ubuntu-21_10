@@ -2,24 +2,28 @@ FROM ubuntu:21.10
 
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libdwarf-dev \
-  libdwarf1 \
-  binutils-dev \
-  libdw-dev \
-  libssl-dev \
-  build-essential \
-  clang-format \
-  libmbedtls-dev \
-  libjemalloc-dev \
-  git \
-  wget \
-  python3 \
-  libsodium-dev \
-  tar \
-  p7zip \
-  doxygen \
-  graphviz \
-  software-properties-common \
-  && apt-get clean -qq
+    libdwarf1 \
+    binutils-dev \
+    libunwind-dev \
+    libdw-dev \
+    libssl-dev \
+    build-essential \
+    clang-format \
+    libnuma-dev \
+    numactl \
+    libmbedtls-dev \
+    libjemalloc-dev \
+    git \
+    wget \
+    python3 \
+    libsodium-dev \
+    tar \
+    p7zip \
+    doxygen \
+    graphviz \
+    libbsd-dev \
+    software-properties-common \
+    && apt-get clean -qq
 
 RUN cd ${HOME} && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
     && apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main' \
