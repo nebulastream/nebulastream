@@ -17,6 +17,9 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
     runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
+    strategy:
+      matrix:
+        osversion: [Ubuntu-18_04, Ubuntu-20_04, Ubuntu-21_10]
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
@@ -28,9 +31,13 @@ jobs:
         uses: styfle/cancel-workflow-action@0.7.0
         with:
           access_token: ${{ github.token }}
+      - name: Build Docker
+        id: builddocker
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build${{ matrix.osversion }} .
       - name: Run tests
         run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
       - name: docker cleanup
         if: ${{ always() }}
         run: |
