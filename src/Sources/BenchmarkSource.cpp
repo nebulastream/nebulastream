@@ -17,7 +17,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/internal/apex_memmove.hpp>
-#ifdef __x86_64__
+#ifdef HAS_AVX
 #include <Runtime/internal/rte_memory.h>
 #endif
 #include <Sources/BenchmarkSource.hpp>
@@ -109,7 +109,7 @@ void BenchmarkSource::runningRoutine() {
                 break;
             }
             case COPY_BUFFER_SIMD_RTE: {
-#ifdef __x86_64__
+#ifdef HAS_AVX
                 buffer = bufferManager->getBufferBlocking();
                 rte_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
 #else
