@@ -15,28 +15,23 @@
 */
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/Mediums/MaterializedViewSink.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Views/MaterializedView.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
-MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view,
-                                           SinkFormatPtr format,
-                                           QuerySubPlanId parentPlanId)
-                                           : SinkMedium(std::move(format), parentPlanId),
-                                           view(view) {}
+MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view, SinkFormatPtr format, QuerySubPlanId parentPlanId)
+                                           : SinkMedium(std::move(format), parentPlanId), view(std::move(view)) {};
 
-//MaterializedViewSink::~MaterializedViewSink() = default;
-MaterializedViewSink::~MaterializedViewSink() {
-    NES_DEBUG("~MaterializedViewSink");
+// It is somehow requiered to clear the view at the sink shoutdown due to NES's memory management
+void MaterializedViewSink::shutdown() {
+    view->clear();
 }
 
-SinkMediumTypes MaterializedViewSink::getSinkMediumType() { return MATERIALIZED_VIEW_SINK; }
-
 bool MaterializedViewSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    NES_DEBUG("MaterializedViewSink::writeData: viewId=" << view->getId());
-    view->writeData(inputBuffer);
+    NES_INFO("MaterializedViewSink::writeData");
+    bool ret = view->writeData(inputBuffer);
     ++sentBuffer;
-    return true;
+    return ret;
 }
 
 std::string MaterializedViewSink::toString() const {
@@ -47,15 +42,10 @@ std::string MaterializedViewSink::toString() const {
     return ss.str();
 }
 
-size_t MaterializedViewSink::getViewId(){
-    return view->getId();
-}
+SinkMediumTypes MaterializedViewSink::getSinkMediumType() { return MATERIALIZED_VIEW_SINK; }
 
-void MaterializedViewSink::setup() {
-    // currently not required
-}
-void MaterializedViewSink::shutdown() {
-    NES_INFO("MaterializedViewSink::shutdown()");
-    view->clear();
+
+size_t MaterializedViewSink::getViewId() const {
+    return view->getId();
 }
 }// namespace NES::Experimental::MaterializedView

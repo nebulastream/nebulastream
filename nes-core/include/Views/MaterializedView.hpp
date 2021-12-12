@@ -21,20 +21,28 @@
 
 namespace NES::Experimental::MaterializedView {
 
+// forward decl.
+class MaterializedView;
+using MaterializedViewPtr = std::shared_ptr<MaterializedView>;
+
+/**
+ * @brief this class provides the interface for all materialized views.
+ * Materialized views in NES 'materialize' the result of streaming queries for further processing.
+ */
 class MaterializedView {
+
 public:
-    // TODO: Hide constructor
-    /// @brief default constructor
+    /// @brief constructor
     MaterializedView(size_t id) : id(id) {};
 
     /// @brief default deconstructor
     virtual ~MaterializedView() = default;
 
-    /// @brief
+    /// @brief returns the materialized view id
     size_t getId() {return id;}
 
     /// @brief writes a data tuple to the view
-    virtual void writeData(Runtime::TupleBuffer buffer) = 0;
+    virtual bool writeData(Runtime::TupleBuffer buffer) = 0;
 
     /// @brief recieve a data tuple from the view
     virtual std::optional<Runtime::TupleBuffer> receiveData() = 0;
@@ -44,7 +52,7 @@ public:
 
 protected:
     size_t id;
-};
-using MaterializedViewPtr = std::shared_ptr<MaterializedView>;
-}// namespace NES::Experimental::MaterializedView
+
+}; // class MaterializedView
+} // namespace NES::Experimental::MaterializedView
 #endif//NES_INCLUDE_MATERIALIZEDVIEW_MATERIALIZEDVIEW_HPP_

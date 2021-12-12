@@ -13,40 +13,54 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-/*#include <Runtime/MaterializedViewManager.hpp>
-#include <MaterializedView/MaterializedView.hpp>
-#include <MaterializedView/TupleStorage.hpp>
-#include <map>
-#include <string>
-#include <cstdint>
-#include <cstring>
-#include <sstream>
+
+#include <API/Schema.hpp>
+#include <Views/TupleView.hpp>
+#include <Views/MaterializedView.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
-
-void MaterializedViewManager::createMView(Schema schema, uint64_t memAreaSize){
-    MaterializedViewPtr mView =
-            std::make_shared<MaterializedView>(MaterializedView(nextViewId, memAreaSize, schema));
-    mViewMap.insert(std::make_pair(nextViewId++, mView));
-}
-
-MaterializedViewPtr MaterializedViewManager::getMViewById(uint64_t mViewId) {
-    auto it = mViewMap.find(mViewId);
-    if (it != mViewMap.end()){
-        return it->second;
+MaterializedViewPtr MaterializedViewManager::getView(size_t viewId) {
+    MaterializedViewPtr view = nullptr;
+    auto it = viewMap.find(viewId);
+    if (it != viewMap.end()){
+        view = it->second;
     } else {
-        // TODO: invalid operands to binary expression ('const char [70]' and 'int')
-        //NES_DEBUG("MaterializedViewManager::getMViewById: no materialized view with id: " << mViewId);
-        return nullptr;
+        NES_INFO("MaterializedViewManager::getView: no view found with id " << viewId);
+        NES_INFO("MaterializedViewManager::getView: available views: " << to_string());
+        view = nullptr;
     }
+    return view;
 }
 
-bool MaterializedViewManager::deleteMView(uint64_t queryId) {
-    if (mViewMap.erase(queryId) == 1) {
-        return true;
-    }
-    return false;
+MaterializedViewPtr MaterializedViewManager::createView(ViewType type){
+    return createView(type, nextViewId++);
 }
-}// namespace NES::Experimental::MaterializedView
- */
+
+MaterializedViewPtr MaterializedViewManager::createView(ViewType type, size_t viewId){
+    MaterializedViewPtr view = nullptr;
+    if (viewMap.find(viewId) == viewMap.end()){
+        // viewId is not present in map
+        if (type == TUPLE_VIEW) {
+            view = TupleView::createTupleView(viewId);
+            viewMap.insert(std::make_pair(viewId, view));
+        }
+    }
+    return view;
+}
+
+bool MaterializedViewManager::deleteView(size_t viewId){
+    return viewMap.erase(viewId);
+}
+
+std::string MaterializedViewManager::to_string(){
+    std::string out = "";
+    for(const auto& elem : viewMap)
+    {
+        out = out + "id: " + std::to_string(elem.first) + "\t";
+    }
+    return out;
+}
+
+} // namespace NES::Experimental::MaterializedView
