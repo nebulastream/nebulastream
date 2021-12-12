@@ -17,79 +17,67 @@
 #ifndef NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZED_VIEW_SINK_HPP_
 #define NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZED_VIEW_SINK_HPP_
 
-#include <cstdint>
-#include <memory>
-#include <sstream>
-#include <string>
-
-#include <Views/MaterializedView.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
+// forward decl.
+class MaterializedView;
+using MaterializedViewPtr = std::shared_ptr<MaterializedView>;
+class MaterializedViewSink;
+using MaterializedViewSinkPtr = std::shared_ptr<MaterializedViewSink>;
+
 /**
- * @brief this class provides a materialized view sink
+ * @brief this class provides a materialized view as a data sink
  */
 class MaterializedViewSink : public SinkMedium {
+
   public:
-    /**
-     * @brief Default constructor
-     */
-    MaterializedViewSink(MaterializedViewPtr view,
-                         SinkFormatPtr format,
-                         QuerySubPlanId parentPlanId);
+    /// @brief constructor
+    MaterializedViewSink(MaterializedViewPtr view, SinkFormatPtr format, QuerySubPlanId parentPlanId);
 
     /**
-     * @brief Default destructor
+     * @brief setup method for materialized view sink
+     * @Note required by sinkmedium but does nothing
      */
-    ~MaterializedViewSink() override;
+    void setup() override {};
 
     /**
-     * @brief setup method for mv sink
-     * @Note required due to derivation but does nothing
-     */
-    void setup() override;
-
-    /**
-     * @brief shutdown method for mv sink
-     * @Note required due to derivation but does nothing
+     * @brief shutdown method for materialized view sink
+     * @Note this will clear the views content
      */
     void shutdown() override;
 
     /**
-     * @brief method to write the content of a tuple buffer to mv
+     * @brief method to write the content of a tuple buffer to the materialized view
      * @param tuple buffer to write
+     * @param worker context currently not used
      * @return bool indicating success of the write
      */
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
 
     /**
-     * @brief override the toString method for the mv sink
-     * @return returns string describing the print sink
+     * @brief override the toString method for the materialized view sink
+     * @return returns string describing the materialized view sink
      */
     std::string toString() const override;
 
     /**
-    * @brief method to return the type of medium
-    * @return type of medium
-    */
+     * @brief method to return the type of medium
+     * @return type of medium
+     */
     SinkMediumTypes getSinkMediumType() override;
 
     /**
-     * TODO
-     */
-     size_t getViewId();
-
-     /**
-      * TODO
+      *  @brief Provides the id of the used materialized view
+      *  @return materialized view id
       */
-     Runtime::BufferManagerPtr getBufferManager();
+     size_t getViewId() const;
 
   private:
-    Runtime::BufferManagerPtr localBufferManager;
     MaterializedViewPtr view;
-};
-using MaterializedViewSinkPtr = std::shared_ptr<MaterializedViewSink>;
-}// namespace NES::Experimental::MaterializedView
+
+}; // class MaterializedViewSink
+} // namespace NES::Experimental::MaterializedView
 
 #endif//NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZED_VIEW_SINK_HPP_

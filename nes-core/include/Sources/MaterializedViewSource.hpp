@@ -16,19 +16,23 @@
 #ifndef NES_INCLUDE_SOURCES_MATERIALIZED_VIEW_SOURCE_HPP_
 #define NES_INCLUDE_SOURCES_MATERIALIZED_VIEW_SOURCE_HPP_
 
-#include <Views/MaterializedView.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Sources/GeneratorSource.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
+// Forward decl.
+class MaterializedView;
+using MaterializedViewPtr = std::shared_ptr<MaterializedView>;
+class MaterializedViewSource;
+using MaterializedViewSourcePtr = std::shared_ptr<MaterializedViewSource>;
+
 /**
- * @brief ....
+ * @brief this class provides a materialized view as a data source
  */
 class MaterializedViewSource : public DataSource {
-  public:
 
-    /// @brief default constructor
+public:
+    /// @brief constructor
     MaterializedViewSource(SchemaPtr schema,
                            Runtime::BufferManagerPtr bufferManager,
                            Runtime::QueryManagerPtr queryManager,
@@ -36,47 +40,35 @@ class MaterializedViewSource : public DataSource {
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                           MaterializedViewPtr view) : DataSource(std::move(schema),
-                                                                  std::move(bufferManager),
-                                                                  std::move(queryManager),
-                                                                  operatorId,
-                                                                  numSourceLocalBuffers,
-                                                                  gatheringMode,
-                                                                  std::move(successors)),
-                                                                  view(view) {};
+                           MaterializedViewPtr view);
 
     /**
-     * @brief This method is implemented only to comply with the API: it will crash the system if called.
-     * @return a nullopt
+     * @brief method to receive a buffer from the materialized view source
+     * @return TupleBufferPtr containing the received buffer
      */
-    std::optional<Runtime::TupleBuffer> receiveData() override {
-        return view->receiveData();
-    };
+    std::optional<Runtime::TupleBuffer> receiveData() override;
 
     /**
      * @brief Provides a string representation of the source
      * @return The string representation of the source
      */
-    std::string toString() const override {
-        return "MaterializedViewSource";
-    };
+    std::string toString() const override;
 
     /**
      * @brief Provides the type of the source
      * @return the type of the source
      */
-    SourceType getType() const override {
-        return MATERIALIZED_VIEW_SOURCE;
-    };
+    SourceType getType() const override;
 
-    /// @brief
-    size_t getViewId() {
-        return view->getId();
-    }
+    /**
+     *  @brief Provides the id of the used materialized view
+     *  @return materialized view id
+     */
+    size_t getViewId() const;
 
-  private:
+private:
     MaterializedViewPtr view;
-};
-using MaterializedViewSourcePtr = std::shared_ptr<MaterializedViewSource>;
-}// namespace NES::Experimental
+
+}; // class MaterializedViewSource
+} // namespace NES::Experimental::MaterializedView
 #endif// NES_INCLUDE_SOURCES_MATERIALIZED_VIEW_SOURCE_HPP_
