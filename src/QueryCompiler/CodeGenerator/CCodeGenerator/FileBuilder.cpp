@@ -20,8 +20,13 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
 
 namespace NES::QueryCompilation {
-FileBuilder FileBuilder::create(const std::string&) {
+FileBuilder FileBuilder::create(const std::string&, const std::vector<std::string>& headers) {
     FileBuilder builder;
+    if(!headers.empty()) {
+            for (auto i{0ul}; i < headers.size(); i++) {
+                builder.declations << headers[i] << "\n";
+            }
+    }
     builder.declations << "#include <Common/ExecutableType/Array.hpp>\n"
                           "#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>\n"
                           "#include <cstdint>\n"
