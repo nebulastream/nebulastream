@@ -75,6 +75,16 @@ class PipelineContext {
      */
     void setTrueTuplePassesFiltersIsDeclared();
 
+    /**
+     * @brief add vector of headers to requiredHeaders
+     */
+    void addHeaders(std::vector<std::string> headers);
+
+    /**
+     * @brief gets required headers for this pipeline contex
+     */
+     std::vector<std::string> getRequiredHeaders();
+
   private:
     RecordHandlerPtr recordHandler;
     std::vector<PipelineContextPtr> nextPipelines;
@@ -82,6 +92,7 @@ class PipelineContext {
     std::vector<BlockScopeStatementPtr> startScopes;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
     bool tuplePassesFiltersIsDeclared = false;
+    std::vector<std::string> requiredHeaders;
 };
 }// namespace QueryCompilation
 }// namespace NES
