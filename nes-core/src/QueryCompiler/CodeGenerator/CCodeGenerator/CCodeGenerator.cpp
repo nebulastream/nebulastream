@@ -2322,7 +2322,8 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     /* add return statement */
     functionBuilder->addStatement(code->returnStmt);
 
-    FileBuilder fileBuilder = FileBuilder::create("query.cpp");
+    //filter out duplicates before this
+    FileBuilder fileBuilder = FileBuilder::create("query.cpp",context->getRequiredHeaders());
     /* add core declarations */
     for (auto& decl : code->structDeclarationInputTuples) {
         fileBuilder.addDeclaration(decl.copy());
