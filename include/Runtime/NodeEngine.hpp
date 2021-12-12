@@ -76,6 +76,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
+                        Experimental::MaterializedView::MaterializedViewManagerPtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
@@ -216,6 +217,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     Network::PartitionManagerPtr getPartitionManager();
 
+    /**
+     * @brief getter of materialized view manager
+     * @return materialized view manager
+     */
+    Experimental::MaterializedView::MaterializedViewManagerPtr getMaterializedViewManager() const;
+
     ///// Network Callback //////
 
     /**
@@ -259,11 +266,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return the hardware manager
      */
     HardwareManagerPtr getHardwareManager() const;
-
-    /**
-     * TODO:
-     */
-    Experimental::MaterializedView::MaterializedViewManagerPtr getMaterializedViewManager() const;
 
   private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;

@@ -18,7 +18,7 @@
 #define NES_MATERIALIZEDVIEWDELTASTORAGE_HPP
 
 #include <Runtime/TupleBuffer.hpp>
-#include <MaterializedView/MaterializedView.hpp>
+#include <Views/MaterializedView.hpp>
 #include <queue>
 
 namespace NES::Experimental::MaterializedView {
@@ -42,13 +42,15 @@ class TupleStorage : public MaterializedView {
 
 public:
     /// @brief return front queue element
-    std::optional<Runtime::TupleBuffer> getData(){
+    std::optional<Runtime::TupleBuffer> receiveData(){
         std::unique_lock<std::mutex> lock(mutex);
         if(!queue.empty()){
-            auto elem = queue.back();
+            NES_INFO("TupleStorage::getData: pop element. Queue size: " << queue.size());
+            auto elem = queue.front();
             queue.pop();
             return elem;
         } else {
+            NES_INFO("TupleStorage::getData: return nullopt. Queue size: " << queue.size());
             return std::nullopt;
         }
     };
@@ -57,11 +59,11 @@ public:
     void writeData(Runtime::TupleBuffer buffer){
         std::unique_lock<std::mutex> lock(mutex);
         if (!buffer.isValid()) {
-            NES_ERROR("TupleStorage::writeData input buffer invalid");
+            NES_ERROR("TupleStorage::writeData: input buffer invalid");
             return;
         }
-        NES_INFO("TupleStorage::WriteData: write tuple" << buffer.getBufferSize());
         queue.push(buffer);
+        NES_INFO("TupleStorage::writeData: push element. Queue size: " << queue.size());
     };
 
     /// @brief standard deconstructor

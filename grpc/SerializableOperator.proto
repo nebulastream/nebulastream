@@ -116,6 +116,13 @@ message SerializableOPCSourceConfig{
 }
 
 /**
+The serializable wrapper for the materialized view source config object
+*/
+message SerializableMaterializedViewSourceConfig{
+  uint32 id = 1;
+}
+
+/**
 The serializable wrapper for the source config object
  */
 message SerializableSourceConfig{
@@ -214,6 +221,10 @@ message SerializableOperator{
     message SerializableNetworkSourceDescriptor {
       SerializableSchema sourceSchema = 1;
       NesPartition nesPartition = 2;
+    }
+
+    message SerializableMaterializedViewSourceDescriptor {
+      uint32 id = 1;
     }
 
     google.protobuf.Any sourceDescriptor = 1;

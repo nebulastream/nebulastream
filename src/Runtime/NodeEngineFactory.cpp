@@ -26,6 +26,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -100,6 +101,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
 
         auto stateManager = std::make_shared<StateManager>(nodeEngineId);
         auto bufferStorage = std::make_shared<BufferStorage>();
+        auto materializedViewManager = std::make_shared<Experimental::MaterializedView::MaterializedViewManager>();
         if (!partitionManager) {
             NES_ERROR("Runtime: error while creating partition manager");
             throw Exception("Error while creating partition manager");
@@ -115,6 +117,10 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         if (!bufferStorage) {
             NES_ERROR("Runtime: error while creating bufferStorage");
             throw Exception("Error while creating bufferStorage");
+        }
+        if (!materializedViewManager) {
+            NES_ERROR("Runtime: error while creating materializedViewMananger");
+            throw Exception("Error while creating materializedViewMananger");
         }
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -143,6 +149,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             std::move(partitionManager),
             std::move(compiler),
             std::move(stateManager),
+            std::move(materializedViewManager),
             nodeEngineId,
             numberOfBuffersInGlobalBufferManager,
             numberOfBuffersInSourceLocalBufferPool,

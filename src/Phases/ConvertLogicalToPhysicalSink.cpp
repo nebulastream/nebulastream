@@ -44,8 +44,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
         return createTextPrintSink(schema, querySubPlanId, nodeEngine, std::cout);
-    }
-    if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
+    } else if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink" << schema->toString());
         return createNullOutputSink(querySubPlanId);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {

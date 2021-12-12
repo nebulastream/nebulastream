@@ -29,7 +29,8 @@ namespace Configurations {
 /**
  * enum with config objects
  */
-enum ConfigSourceType { SenseSource, CSVSource, BinarySource, MQTTSource, KafkaSource, OPCSource, DefaultSource };
+enum ConfigSourceType { SenseSource, CSVSource, BinarySource, MQTTSource, KafkaSource, OPCSource,
+        MaterializedViewSource, DefaultSource };
 
 /**
  * enum string mapping for source config factory
@@ -40,6 +41,7 @@ static std::map<std::string, ConfigSourceType> stringToConfigSourceType{{SENSE_S
                                                                         {MQTT_SOURCE_CONFIG, MQTTSource},
                                                                         {KAFKA_SOURCE_CONFIG, KafkaSource},
                                                                         {OPC_SOURCE_CONFIG, OPCSource},
+                                                                        {MATERIALIZEDVIEW_SOURCE_CONFIG, MaterializedViewSource},
                                                                         {DEFAULT_SOURCE_CONFIG, DefaultSource},
                                                                         {NO_SOURCE_CONFIG, DefaultSource}};
 
