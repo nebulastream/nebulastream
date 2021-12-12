@@ -40,6 +40,9 @@ class Timer {
         Snapshot(std::string name, TimeUnit runtime, std::vector<Snapshot> children)
             : name(name), runtime(runtime), children(children){};
         int64_t getRuntime() { return runtime.count(); }
+        PrintTimePrecision getPrintTime() {
+            return std::chrono::duration_cast<std::chrono::duration<PrintTimePrecision, PrintTimeUnit>>(runtime).count();
+        }
 
         std::string name;
         TimeUnit runtime;
@@ -141,8 +144,7 @@ class Timer {
      * @brief overwrites insert string operator
      */
     friend std::ostream& operator<<(std::ostream& str, const Timer& t) {
-        auto printDuration = std::chrono::duration_cast<std::chrono::duration<PrintTimePrecision, PrintTimeUnit>>(t.runtime);
-        str << "overall runtime: " << printDuration.count() << getTimeUnitString();
+        str << "overall runtime: " << t.getPrintTime() << getTimeUnitString();
         for (auto& s : t.getSnapshots()) {
             str << Timer<TimeUnit, PrintTimeUnit, PrintTimePrecision>::printHelper(std::string(), s);
         }
@@ -150,13 +152,21 @@ class Timer {
     };
 
     /**
+     * @brief return timer runtime converted ConvertUnit with ConvertPrecision e.g. for printing purposes.
+     */
+    template<typename ConvertUnit = PrintTimeUnit, typename ConvertPrecision = PrintTimePrecision>
+    ConvertPrecision getPrintTime() const {
+        auto printDuration = std::chrono::duration_cast<std::chrono::duration<ConvertPrecision, ConvertUnit>>(runtime);
+        return printDuration.count();
+    }
+
+    /**
      * @brief helper function for insert string operator
      * recursively goes through the (probably) nested snapshots and prints them
      */
     static std::string printHelper(std::string str, Snapshot s) {
         std::ostringstream ostr;
-        auto printDuration = std::chrono::duration_cast<std::chrono::duration<PrintTimePrecision, PrintTimeUnit>>(s.runtime);
-        ostr << str << '\n' << s.name + ":\t" << printDuration.count() << getTimeUnitString();
+        ostr << str << '\n' << s.name + ":\t" << s.getPrintTime() << getTimeUnitString();
 
         for (auto& c : s.children) {
             ostr << printHelper(str, c);
@@ -167,14 +177,15 @@ class Timer {
     /**
      * @brief helper function to return a time unit literal string based on PrintTimeUnit
      */
+    template<typename ConvertUnit = PrintTimeUnit>
     static std::string getTimeUnitString() {
-        if constexpr (std::is_same_v<PrintTimeUnit, std::nano>) {
+        if constexpr (std::is_same_v<ConvertUnit, std::nano>) {
             return " ns";
-        } else if constexpr (std::is_same_v<PrintTimeUnit, std::micro>) {
+        } else if constexpr (std::is_same_v<ConvertUnit, std::micro>) {
             return " µs";
-        } else if constexpr (std::is_same_v<PrintTimeUnit, std::milli>) {
+        } else if constexpr (std::is_same_v<ConvertUnit, std::milli>) {
             return " ms";
-        } else if constexpr (std::is_same_v<PrintTimeUnit, std::ratio<1>>) {
+        } else if constexpr (std::is_same_v<ConvertUnit, std::ratio<1>>) {
             return " s";
         } else {
             return " time units";
