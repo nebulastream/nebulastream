@@ -30,7 +30,7 @@ class MaterializedViewSourceDescriptor : public SourceDescriptor {
      * @brief Factory method ***
      */
     static SourceDescriptorPtr create(const SchemaPtr& schema,
-                                      uint64_t mViewId);
+                                      size_t mViewId);
 
     /**
      * @brief Provides the string representation of the materialized view source
@@ -49,22 +49,15 @@ class MaterializedViewSourceDescriptor : public SourceDescriptor {
     * @brief returns the materialized view id
     * @return
     */
-    uint64_t getMViewId() const;
-
-    /**
-     * TODO
-     * @return
-     */
-    SchemaPtr getSchema() const;
+    size_t getViewId() const;
 
   private:
     /**
       * @brief **
       */
-    explicit MaterializedViewSourceDescriptor(SchemaPtr schema,
-                                              uint64_t mViewId);
+    explicit MaterializedViewSourceDescriptor(SchemaPtr schema, size_t viewId);
     SchemaPtr schema;
-    uint64_t mViewId;
+    size_t viewId;
 };
 using MaterializedViewSourceDescriptorPtr = std::shared_ptr<MaterializedViewSourceDescriptor>;
 }// namespace NES::Experimental::MaterializedView

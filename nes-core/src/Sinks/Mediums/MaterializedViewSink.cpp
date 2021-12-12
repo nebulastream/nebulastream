@@ -33,8 +33,9 @@ MaterializedViewSink::~MaterializedViewSink() {
 SinkMediumTypes MaterializedViewSink::getSinkMediumType() { return MATERIALIZED_VIEW_SINK; }
 
 bool MaterializedViewSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    NES_DEBUG("MaterializedViewSink::writeData: write data");
+    NES_DEBUG("MaterializedViewSink::writeData: viewId=" << view->getId());
     view->writeData(inputBuffer);
+    ++sentBuffer;
     return true;
 }
 

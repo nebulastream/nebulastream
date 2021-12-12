@@ -37,7 +37,7 @@ public:
     virtual void writeData(Runtime::TupleBuffer buffer) = 0;
 
     /// @brief recieve a data tuple from the view
-    virtual std::optional<Runtime::TupleBuffer> getData() = 0;
+    virtual std::optional<Runtime::TupleBuffer> receiveData() = 0;
 
     // @brief clear the materialized view
     virtual void clear() = 0;

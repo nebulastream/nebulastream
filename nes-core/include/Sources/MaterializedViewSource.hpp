@@ -16,7 +16,7 @@
 #ifndef NES_INCLUDE_SOURCES_MATERIALIZED_VIEW_SOURCE_HPP_
 #define NES_INCLUDE_SOURCES_MATERIALIZED_VIEW_SOURCE_HPP_
 
-#include <MaterializedView/MaterializedView.hpp>
+#include <Views/MaterializedView.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
 
@@ -50,7 +50,7 @@ class MaterializedViewSource : public DataSource {
      * @return a nullopt
      */
     std::optional<Runtime::TupleBuffer> receiveData() override {
-        return view->getData();
+        return view->receiveData();
     };
 
     /**

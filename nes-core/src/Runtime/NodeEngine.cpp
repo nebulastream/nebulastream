@@ -51,6 +51,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
+                       Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
@@ -58,6 +59,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
     : queryManager(std::move(queryManager)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)),
+      materializedViewManager(std::move(materializedViewManager)),
       bufferStorage(std::move(bufferStorage)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
@@ -72,7 +74,6 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
     networkManager = networkManagerCreator(std::shared_ptr<NodeEngine>(this, [](NodeEngine*) {
         // nop
     }));
-    materializedViewManager = make_shared<Experimental::MaterializedView::MaterializedViewManager>(Experimental::MaterializedView::MaterializedViewManager());
     if (!this->queryManager->startThreadPool(numberOfBuffersPerWorker)) {
         NES_ERROR("Runtime: error while start thread pool");
         throw Exception("Error while start thread pool");

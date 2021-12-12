@@ -20,11 +20,13 @@
 #include <Configurations/Sources/DefaultSourceConfig.hpp>
 #include <Configurations/Sources/MQTTSourceConfig.hpp>
 #include <Configurations/Sources/SenseSourceConfig.hpp>
+#include <Configurations/Sources/MaterializedViewSourceConfig.hpp>
 #include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <sstream>
@@ -96,6 +98,11 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
 
         return MQTTSourceDescriptor::create(schema, sourceConfig->as<Configurations::MQTTSourceConfig>(), inputFormatEnum);
 #endif
+    } else if (sourceConfig->getSourceType()->getValue() == "MaterializedViewSource") {
+        NES_DEBUG("PhysicalStreamConfig: create materialized view source with configuration: " << sourceConfig->toString());
+        return Experimental::MaterializedView::MaterializedViewSourceDescriptor::create(
+                schema,
+                sourceConfig->as<Configurations::MaterializedViewSourceConfig>()->getId()->getValue());
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + sourceConfig->getSourceType()->getValue()
                                 + " not supported");

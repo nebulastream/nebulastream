@@ -68,7 +68,6 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex);
     auto queryManager = nodeEngine->getQueryManager();
     auto networkManager = nodeEngine->getNetworkManager();
-    auto materializedViewManager = nodeEngine->getMaterializedViewManager();
 
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ZMQ source");
@@ -224,13 +223,19 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     } else if (sourceDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSourceDescriptor>()){
         NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");
         auto materializedViewSourceDescriptor = sourceDescriptor->as<Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
+        auto viewId = materializedViewSourceDescriptor->getViewId();
+        auto materializedView = nodeEngine->getMaterializedViewManager()->getView(viewId);
+        if (!materializedView){
+            materializedView = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::TUPLE_STORAGE, viewId);
+            materializedView = nodeEngine->getMaterializedViewManager()->getView(viewId);
+        }
         return createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
                 bufferManager,
                 queryManager,
                 operatorId,
                 numSourceLocalBuffers,
                 successors,
-                materializedViewManager->getView(materializedViewSourceDescriptor->getMViewId()));
+                materializedView);
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
