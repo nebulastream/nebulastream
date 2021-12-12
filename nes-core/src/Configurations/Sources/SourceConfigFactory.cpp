@@ -21,6 +21,7 @@
 #include <Configurations/Sources/MQTTSourceConfig.hpp>
 #include <Configurations/Sources/OPCSourceConfig.hpp>
 #include <Configurations/Sources/SenseSourceConfig.hpp>
+#include <Configurations/Sources/MaterializedViewSourceConfig.hpp>
 #include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -56,6 +57,7 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::stri
         case OPCSource: return OPCSourceConfig::create(configurationMap);
         case BinarySource: return BinarySourceConfig::create(configurationMap);
         case SenseSource: return SenseSourceConfig::create(configurationMap);
+        case MaterializedViewSource: return MaterializedViewSourceConfig::create(configurationMap);
         case DefaultSource: return DefaultSourceConfig::create(configurationMap);
         default:
             NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " + configurationMap.at(SOURCE_TYPE_CONFIG)
@@ -72,6 +74,7 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(std::string sourceType) 
         case OPCSource: return OPCSourceConfig::create();
         case BinarySource: return BinarySourceConfig::create();
         case SenseSource: return SenseSourceConfig::create();
+        case MaterializedViewSource: return MaterializedViewSourceConfig::create();
         case DefaultSource: return DefaultSourceConfig::create();
         default: return nullptr;
     }
@@ -400,6 +403,11 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
             && !commandLineParams.find("--" + OPC_SOURCE_PASSWORD_CONFIG)->second.empty()) {
             configurationMap.insert_or_assign(OPC_SOURCE_PASSWORD_CONFIG,
                                               commandLineParams.find("--" + OPC_SOURCE_PASSWORD_CONFIG)->second);
+        }
+        if (commandLineParams.find("--" + MATERIALIZED_VIEW_ID_CONFIG) != commandLineParams.end()
+        && !commandLineParams.find("--" + MATERIALIZED_VIEW_ID_CONFIG)->second.empty()) {
+            configurationMap.insert_or_assign(MATERIALIZED_VIEW_ID_CONFIG,
+                                              commandLineParams.find("--" + MATERIALIZED_VIEW_ID_CONFIG)->second);
         }
     } catch (std::exception& e) {
         NES_ERROR("NesWorkerConfig: Error "

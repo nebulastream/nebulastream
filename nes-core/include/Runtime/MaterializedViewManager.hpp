@@ -18,30 +18,31 @@
 #define NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
 
 #include <API/Schema.hpp>
-#include <MaterializedView/TupleStorage.hpp>
-#include <MaterializedView/MaterializedView.hpp>
+#include <Views/TupleStorage.hpp>
+#include <Views/MaterializedView.hpp>
 #include <map>
 
 namespace NES::Experimental::MaterializedView {
 
 /// @brief supported view types
 enum ViewType { TUPLE_STORAGE };
-
+// TODO: wrong use of friend specifier...
 // We access friend classes private methods
 extern TupleStoragePtr createTupleStorage(size_t id);
 
 /**
- * @brief The materialized view manager creates and managed materialized views in a hash map.
+ * @brief The materialized view manager creates and managed materialized views in a map.
  */
-
-class MaterializedViewManager : public std::enable_shared_from_this<MaterializedViewManager> {
+class MaterializedViewManager {
 public:
-    MaterializedViewManager() = default;
-    // TODO: WTF Rule of 5?
-    MaterializedViewManager(const MaterializedViewManager&) = default;
-    MaterializedViewManager(MaterializedViewManager&&) = default;
-    MaterializedViewManager& operator=(const MaterializedViewManager&) = default;
-    MaterializedViewManager& operator=(MaterializedViewManager&&) = default;
+    MaterializedViewManager() {
+        NES_INFO("Create MaterializedViewManager");
+    };
+    // TODO: Which are nessesary?
+    MaterializedViewManager(const MaterializedViewManager&) = delete;
+    MaterializedViewManager& operator=(const MaterializedViewManager&) = delete;
+    MaterializedViewManager(MaterializedViewManager&) = delete;
+    MaterializedViewManager& operator=(MaterializedViewManager&) = delete;
 
     ~MaterializedViewManager() {
         NES_INFO("MaterializedViewManager::~MaterializedViewManager");
@@ -50,31 +51,56 @@ public:
     }
 
     MaterializedViewPtr getView(size_t viewId) {
+        MaterializedViewPtr view = nullptr;
         auto it = viewMap.find(viewId);
         if (it != viewMap.end()){
-            return it->second;
+            view = it->second;
         } else {
-            return nullptr;
-        }
-    }
-
-    MaterializedViewPtr createView(ViewType type){
-        MaterializedViewPtr view = nullptr;
-        if (type == TUPLE_STORAGE) {
-            view = TupleStorage::createTupleStorage(nextViewId);
-            viewMap.insert(std::make_pair(nextViewId++, view));
+            NES_INFO("MaterializedViewManager::getView: no view found with id " << viewId);
+            NES_INFO("MaterializedViewManager::getView: available views: " << to_string());
+            view = nullptr;
         }
         return view;
     }
 
-    bool deleteMView(size_t viewId){
+    MaterializedViewPtr createView(ViewType type){
+        return createView(type, nextViewId++);
+    }
+
+    MaterializedViewPtr createView(ViewType type, size_t viewId){
+        MaterializedViewPtr view = nullptr;
+        if (viewMap.find(viewId) == viewMap.end()){
+            // viewId is not present in map
+            if (type == TUPLE_STORAGE) {
+                view = TupleStorage::createTupleStorage(viewId);
+                viewMap.insert(std::make_pair(viewId, view));
+            }
+        }
+        NES_INFO("MaterializedViewManager::getView: available views: " << to_string());
+        return view;
+    }
+
+    bool deleteView(size_t viewId){
         if (viewMap.erase(viewId) == 1) {
             return true;
         }
         return false;
     }
 
+    /// TODO overload operator
+    std::string to_string(){
+        std::string out = "";
+        for(const auto& elem : viewMap)
+        {
+            // TODO: make pretty
+            out = out + std::to_string(elem.first) + ", ";
+        }
+        return out;
+    }
   private:
+    /*TODO remove*/
+    //MaterializedViewPtr view;
+
     std::map<size_t, MaterializedViewPtr> viewMap;
     size_t nextViewId = 0;
 };

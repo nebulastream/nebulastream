@@ -22,7 +22,7 @@
 #include <sstream>
 #include <string>
 
-#include <MaterializedView/MaterializedView.hpp>
+#include <Views/MaterializedView.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES::Experimental::MaterializedView {

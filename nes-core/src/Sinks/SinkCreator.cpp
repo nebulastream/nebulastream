@@ -34,8 +34,8 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
 // TODO: remove
-#include <MaterializedView/TupleStorage.hpp>
-#include <MaterializedView/MaterializedView.hpp>
+#include <Views/TupleStorage.hpp>
+#include <Views/MaterializedView.hpp>
 
 namespace NES {
 
@@ -146,15 +146,16 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   waitTime,
                                                   retryTimes);
 }
-
+// TODO: How to give SchemaPtr&???
 DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        Runtime::NodeEnginePtr const& nodeEngine,
                                        QuerySubPlanId parentPlanId,
                                        size_t viewId) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     auto view = nodeEngine->getMaterializedViewManager()->getView(viewId);
+    NES_INFO("nodeEngine Id " << nodeEngine->getNodeEngineId());
     if (!view){
-        view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::ViewType::TUPLE_STORAGE);
+        view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::ViewType::TUPLE_STORAGE, viewId);
     }
     return std::make_shared<Experimental::MaterializedView::MaterializedViewSink>(
             view,

@@ -129,6 +129,13 @@ message SerializableSourceConfig{
     string password = 4;
   }
 
+  /**
+  The serializable wrapper for the materialized view source config object
+  */
+  message SerializableMaterializedViewSourceConfig{
+    uint32 id = 1;
+  }
+
   google.protobuf.Any specificSourceConfig = 9;
 }
 
@@ -208,6 +215,10 @@ message SerializableOperator{
       NodeLocation nodeLocation = 3;
       uint64 waitTime = 4;
       uint32 retryTimes = 5;
+    }
+
+    message SerializableMaterializedViewSourceDescriptor {
+      uint32 id = 1;
     }
 
     google.protobuf.Any sourceDescriptor = 1;
