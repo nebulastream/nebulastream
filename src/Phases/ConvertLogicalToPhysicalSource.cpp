@@ -226,10 +226,9 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");
         auto materializedViewSourceDescriptor = sourceDescriptor->as<Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
         auto viewId = materializedViewSourceDescriptor->getViewId();
-        auto materializedView = nodeEngine->getMaterializedViewManager()->getView(viewId);
-        if (!materializedView){
-            materializedView = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::TUPLE_STORAGE, viewId);
-            materializedView = nodeEngine->getMaterializedViewManager()->getView(viewId);
+        auto view = nodeEngine->getMaterializedViewManager()->getView(viewId);
+        if (!view){
+            view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::TUPLE_VIEW, viewId);
         }
         return createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
                 bufferManager,
@@ -237,7 +236,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                 operatorId,
                 numSourceLocalBuffers,
                 successors,
-                materializedView);
+                std::move(view));
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
