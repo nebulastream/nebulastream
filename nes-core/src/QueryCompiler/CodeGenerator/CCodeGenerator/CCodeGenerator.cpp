@@ -2389,7 +2389,7 @@ CCodeGenerator::compile(Compiler::JITCompilerPtr jitCompiler,
     auto enableOptimizations = compilationStrategy == QueryCompilerOptions::OPTIMIZE;
     auto request = Compiler::CompilationRequest::create(std::move(sourceCode),
                                                         "query",
-                                                        false,
+                                                        true,
                                                         false,
                                                         enableOptimizations,
                                                         enableDebugCompilation);
