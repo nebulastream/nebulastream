@@ -72,4 +72,14 @@ bool PipelineContext::getTuplePassesFiltersIsDeclared() { return this->tuplePass
 void PipelineContext::setTrueTuplePassesFiltersIsDeclared() { this->tuplePassesFiltersIsDeclared = true; }
 
 std::vector<Runtime::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() { return this->operatorHandlers; }
+
+    void PipelineContext::addHeaders(std::vector<std::string> headers) {
+        for (auto i{0ul}; i < headers.size(); ++i) {
+            requiredHeaders.push_back(headers[i]);
+        }
+    }
+
+    std::vector<std::string> PipelineContext::getRequiredHeaders() {
+        return std::vector<std::string>();
+    }
 }// namespace NES::QueryCompilation
