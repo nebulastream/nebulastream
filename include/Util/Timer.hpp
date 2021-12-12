@@ -29,7 +29,10 @@ namespace NES {
  * @brief Util class to measure the time of NES components and sub-components
  * using snapshots
  */
-template<typename TimeUnit = std::chrono::nanoseconds, typename PrintTimeUnit = std::milli, typename PrintTimePrecision = double, typename ClockType = std::chrono::high_resolution_clock>
+template<typename TimeUnit = std::chrono::nanoseconds,
+         typename PrintTimeUnit = std::milli,
+         typename PrintTimePrecision = double,
+         typename ClockType = std::chrono::high_resolution_clock>
 class Timer {
   public:
     class Snapshot {
