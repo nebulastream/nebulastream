@@ -21,6 +21,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace NES::QueryCompilation {
 
@@ -34,7 +35,7 @@ class FileBuilder {
     std::stringstream declations;
 
   public:
-    static FileBuilder create(const std::string& file_name);
+    static FileBuilder create(const std::string& file_name, const std::vector<std::string>& headers);
     FileBuilder& addDeclaration(DeclarationPtr const&);
     CodeFile build();
 };
