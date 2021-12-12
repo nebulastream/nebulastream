@@ -188,7 +188,7 @@ class Timer {
         } else if constexpr (std::is_same_v<ConvertUnit, std::ratio<1>>) {
             return " s";
         } else {
-            return " time units";
+            return " unknown time units";
         }
     }
 
