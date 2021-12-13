@@ -69,41 +69,44 @@ class KeyedSlice {
     const uint64_t start;
     const uint64_t end;
     robin_hood::unordered_flat_map<uint64_t, uint64_t> map;
+
     //robin_hood::unordered_flat_map<uint64_t, uint64_t> map;
 };
+
+using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 
 // A slice store, which contains a set of slices
 class SliceStore {
   public:
     explicit SliceStore(uint64_t sliceSize) : sliceSize(sliceSize){};
-    inline KeyedSlice& findSliceByTs(uint64_t ts) {
+    inline KeyedSlicePtr& findSliceByTs(uint64_t ts) {
 
         // create the first slice if non is existing [0 - slice size]
         if (slices.empty()) {
-            slices.emplace_back(0, sliceSize);
+            slices.emplace_back(std::make_unique<KeyedSlice>(0, sliceSize));
         }
 
         // if the last slice ends before the current event ts we have to add new slices to the end as long es we don't cover ts.
         // if the gap between last and ts is large this could create a large number of slices.
-        while (last().end <= ts) {
-            slices.emplace_back(last().end, last().end + sliceSize);
+        while (last()->end <= ts) {
+            slices.emplace_back(std::make_unique<KeyedSlice>(last()->end, last()->end + sliceSize));
         }
 
         // find the correct slice
         // calculate the slice offset by the start ts and the event ts.
-        auto diffFromStart = ts - first().start;
+        auto diffFromStart = ts - first()->start;
         auto index = diffFromStart / sliceSize;
         return slices[index];
     }
-    inline KeyedSlice& first() { return slices[0]; }
-    inline KeyedSlice& last() { return slices[slices.size() - 1]; }
-    std::vector<KeyedSlice>& getSlices() { return slices; }
+    inline KeyedSlicePtr& first() { return slices[0]; }
+    inline KeyedSlicePtr& last() { return slices[slices.size() - 1]; }
+    std::vector<KeyedSlicePtr>& getSlices() { return slices; }
     uint64_t lastThreadLocalWatermark = 0;
     uint64_t outputs = 0;
 
   private:
     uint64_t sliceSize;
-    std::vector<KeyedSlice> slices{};
+    std::vector<KeyedSlicePtr> slices{};
 };
 
 class GlobalSliceStore : public SliceStore {
@@ -206,9 +209,9 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
         auto windowHandler =
             windowOperatorHandler->getWindowHandler<ThreadLocalWindowHandler, uint64_t, uint64_t, uint64_t, uint64_t>();
 
-        auto windowManager = windowHandler->getWindowManager();
+        //  auto windowManager = windowHandler->getWindowManager();
         auto allowedLateness = 0;
-        auto workerId = workerContext.getId();
+        auto workerId = (workerContext.getId()) % pipelineExecutionContext.getNumberOfWorkerThreads();
         auto& threadLocalSliceStore = windowHandler->threadLocalSliceStore[workerId];
         auto records = inputTupleBuffer.getNumberOfTuples();
         uint64_t currentWatermark = 0;
@@ -220,10 +223,10 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
             // pre aggregate in local slice store
             auto& slice = threadLocalSliceStore.findSliceByTs(current_ts);
 
-            slice.map[key] = slice.map[key] + inputTuples[recordIndex].test$value;
+            slice->map[key] = slice->map[key] + inputTuples[recordIndex].test$value;
         };
         // only increase watermark in 10000 tuples.
-        currentWatermark = currentWatermark - (currentWatermark % 10000);
+        //currentWatermark = currentWatermark - (currentWatermark % 10000);
         // We now have to check if the current watermark shifts the global watermark
         // Check if the current watermark is part of a later slice then the last watermark.
         // update the global watermark, and merge all local slides.
@@ -232,18 +235,28 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
         auto newGlobalWatermark = watermarkProcessor->updateWatermark(currentWatermark, inputTupleBuffer.getSequenceNumber());
         // check if the current max watermark is larger than the thread local watermark
         if (threadLocalSliceStore.lastThreadLocalWatermark < newGlobalWatermark) {
+
             // push the local slices to the global slice store.
+            auto endIndex = 0;
             for (auto const& slice : threadLocalSliceStore.getSlices()) {
-                if (slice.end >= newGlobalWatermark) {
+                if (slice->end >= newGlobalWatermark) {
                     break;
                 }
+             //   std::cout << " Merge slice (" << slice->start << "-" << slice->end << ") to global" << std::endl;
                 auto lock = std::unique_lock(windowHandler->globalSliceStore.mutex);
                 // merge key space in global map
-                auto& globalSlice = windowHandler->globalSliceStore.findSliceByTs(slice.start);
-                for (auto const& [key, value] : slice.map) {
-                    globalSlice.map[key] = globalSlice.map[key] + value;
+                auto& globalSlice = windowHandler->globalSliceStore.findSliceByTs(slice->start);
+                for (auto const& [key, value] : slice->map) {
+                    globalSlice->map[key] = globalSlice->map[key] + value;
                 }
+                endIndex++;
             }
+            // drop local slices
+            if (endIndex > 0) {
+                auto& slices = threadLocalSliceStore.getSlices();
+                slices.erase(slices.begin(), std::next(slices.begin(), endIndex));
+            }
+
             threadLocalSliceStore.lastThreadLocalWatermark = newGlobalWatermark;
             threadLocalSliceStore.outputs++;
             // update the watermark to check if all threads already triggered this slice
@@ -251,6 +264,7 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
                 windowHandler->threadWatermarkProcessor->updateWatermark(newGlobalWatermark,
                                                                          threadLocalSliceStore.outputs,
                                                                          workerId);
+
             if (oldCrossThreadWatermark != newCrossThreadWatermark) {
                 // the global watermark changed and all threads put their local slices to the global state.
                 // so we can trigger all windows between the watermarks.
@@ -263,24 +277,27 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
                     auto lock = std::unique_lock(windowHandler->globalSliceStore.mutex);
                     auto resultBuffer = workerContext.allocateTupleBuffer();
                     auto resultTuples = resultBuffer.getBuffer<WindowResultRecord>();
+                    auto bufferCapacity = (resultBuffer.getBufferSize() / sizeof(WindowResultRecord));
+                    uint64_t minWindowStart = 0;
                     for (auto const& window : windows) {
+                        minWindowStart = std::max(minWindowStart, window.getStartTs());
                         // todo maybe we can infer the index directly and omit the
                         // create window aggregates, this is then the global hash-map and
                         // requires merging of all keys
                         robin_hood::unordered_flat_map<uint64_t, uint64_t> windowAggregates;
                         for (auto const& slice : windowHandler->globalSliceStore.getSlices()) {
-                            if (slice.start >= window.getStartTs() && slice.end <= window.getEndTs()) {
+                            if (slice->start >= window.getStartTs() && slice->end <= window.getEndTs()) {
                                 // append to window aggregate
-                                for (auto const& [key, value] : slice.map) {
+                                for (auto const& [key, value] : slice->map) {
                                     windowAggregates[key] = windowAggregates[key] + value;
                                 }
                             }
-                            if (slice.end > window.getEndTs()) {
+                            if (slice->end > window.getEndTs()) {
                                 break;
                             }
                         }
                         // emit window results
-
+                      //  std::cout << " Emit Window (" << window.getStartTs() << "-" << window.getEndTs() << ")" << std::endl;
                         for (auto const& [key, value] : windowAggregates) {
                             auto index = resultBuffer.getNumberOfTuples();
                             resultTuples[index].windowStart = window.getStartTs();
@@ -288,10 +305,20 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
                             resultTuples[index].key = key;
                             resultTuples[index].aggregateValue = value;
                             resultBuffer.setNumberOfTuples(index + 1);
+                            // early emitt if buffer is full
+                            if (resultBuffer.getNumberOfTuples() == bufferCapacity) {
+                                pipelineExecutionContext.emitBuffer(resultBuffer, workerContext);
+                                resultBuffer = workerContext.allocateTupleBuffer();
+                            }
                         }
                     }
-                    if (resultBuffer.getNumberOfTuples() != 0)
+                    if (resultBuffer.getNumberOfTuples() != 0) {
                         pipelineExecutionContext.emitBuffer(resultBuffer, workerContext);
+                    }
+                    auto& gloabalSlices = windowHandler->globalSliceStore.getSlices();
+                    std::erase_if(gloabalSlices, [minWindowStart](KeyedSlicePtr& slice) {
+                        return slice->end < minWindowStart;
+                    });
                 }
             }
         }
