@@ -819,6 +819,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                          std::move(partitionManager),
                          std::move(queryCompiler),
                          std::make_shared<NES::Runtime::StateManager>(0),
+                         std::make_shared<Experimental::MaterializedView::MaterializedViewManager>(),
                          0,
                          64,
                          64,
