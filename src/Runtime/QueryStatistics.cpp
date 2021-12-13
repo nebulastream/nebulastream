@@ -66,10 +66,6 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " queueSizeAVG=" << queueSizeSum.load() / processedBuffers.load();
     ss << " availableGlobalBufferAVG=" << availableGlobalBufferSum.load() / processedBuffers.load();
     ss << " availableFixedBufferAVG=" << availableFixedBufferSum.load() / processedBuffers.load();
-//    ss << " latencySum=" << latencySum.load();
-//    ss << " queueSizeSum=" << queueSizeSum.load();
-//    ss << " availableGlobalBufferSum=" << availableGlobalBufferSum.load();
-//    ss << " availableFixedBufferSum=" << availableFixedBufferSum.load();
     return ss.str();
 }
 
