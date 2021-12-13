@@ -432,13 +432,6 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
     std::unique_lock lock(engineMutex);
     std::vector<QueryStatistics> queryStatistics;
 
-//    NES_DEBUG("QueryManager: Check if query is registered");
-//    auto foundQuerySubPlanIds = queryIdToQuerySubPlanIds.find(queryId);
-//    NES_DEBUG("Founded members = " << foundQuerySubPlanIds->second.size());
-//    if (foundQuerySubPlanIds == queryIdToQuerySubPlanIds.end()) {
-//        NES_ERROR("QueryManager::getQueryStatistics: query does not exists " << queryId);
-//        return queryStatistics;
-//    }
     for(auto& plan : queryIdToQuerySubPlanIds)
     {
         NES_DEBUG("QueryManager: Extracting query execution ids for the input query " << plan.first);

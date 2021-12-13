@@ -298,10 +298,6 @@ void DataSource::runningRoutineWithIngestionRate() {
         while (curTime < nextPeriodStartTime) {
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
-//            if (nextPeriodStartTime > curTime) {
-//                sleepCnt++;
-//                std::this_thread::sleep_for(std::chrono::milliseconds(nextPeriodStartTime - curTime));
-//            }
         }
         NES_DEBUG("DataSource: Done with period " << curPeriod++
                                                   << " "
