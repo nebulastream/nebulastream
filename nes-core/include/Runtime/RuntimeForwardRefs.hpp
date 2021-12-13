@@ -141,6 +141,11 @@ using RowLayoutTupleBufferPtr = std::shared_ptr<RowLayoutTupleBuffer>;
 
 }// namespace Runtime
 
+namespace Experimental::MaterializedView {
+class MaterializedViewMananger;
+using MaterializedViewManangerPtr = std::shared_ptr<MaterializedViewMananger>;
+}// namespace Experimental::MaterializedView
+
 namespace QueryCompilation {
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
