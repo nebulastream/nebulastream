@@ -17,9 +17,10 @@
 #ifndef NES_FAULTTOLERANCETYPE_H
 #define NES_FAULTTOLERANCETYPE_H
 #include <unordered_map>
-
+#include <stdint.h>
+#include <string>
 namespace NES {
-enum class FaultToleranceType : std::int8_t {
+enum class FaultToleranceType : int8_t {
     NONE = 0,         ///No fault-tolerance
     AT_MOST_ONCE = 1, ///At-most-once guarantee: some tuple buffers might be dropped
     AT_LEAST_ONCE = 2,///At-least-once guarantee: some tuple buffers might be processed twice

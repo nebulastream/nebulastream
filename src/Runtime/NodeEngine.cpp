@@ -457,18 +457,15 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescri
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
     //search for right config
     auto streamName = sourceDescriptor->getStreamName();
-    bool found = false;
     for(auto conf : configs)
     {
         if(conf->getLogicalStreamName() == streamName)
         {
             NES_DEBUG("config for stream " << streamName);
-            found = true;
             return conf->build(sourceDescriptor->getSchema());
         }
     }
-
-    NES_ASSERT(found, "no config for the stream was found");
+    NES_THROW_RUNTIME_ERROR("no config for the stream was found");
     return configs[0]->build(sourceDescriptor->getSchema());
 }
 
