@@ -214,8 +214,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::vector<QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
 
     /**
-    * @brief method to return the query statistics
-    * @return vector of queryStatistics
+     * @brief method to return the query statistics
+     * @param withReset specifies if the statistics is deleted after reading (so we start with 0)
+     * @return vector of queryStatistics
     */
     std::vector<QueryStatistics> getQueryStatistics(bool withReset = false);
 
