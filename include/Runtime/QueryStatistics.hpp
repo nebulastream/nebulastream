@@ -169,7 +169,9 @@ class QueryStatistics {
      */
     std::map<uint64_t, std::vector<uint64_t>> getTsToLatencyMap();
 
-
+    /**
+     * clear the content of the statistics
+     */
     void clear();
 
   private:
