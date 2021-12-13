@@ -465,7 +465,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescri
             return conf->build(sourceDescriptor->getSchema());
         }
     }
-    NES_THROW_RUNTIME_ERROR("no config for the stream was found");
+    NES_WARNING("No source config found for source.");
     return configs[0]->build(sourceDescriptor->getSchema());
 }
 
