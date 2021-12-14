@@ -872,9 +872,7 @@ TEST_F(SourceTest, testCSVSourceGetType) {
 }
 
 TEST_F(SourceTest, testCSVSourceWrongFilePath) {
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->wrong_filepath);
     sourceConfig->setNumberOfBuffersToProduce(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -891,9 +889,7 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
 }
 
 TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -910,9 +906,7 @@ TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -934,9 +928,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -961,9 +953,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -988,9 +978,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1021,9 +1009,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1054,9 +1040,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1081,9 +1065,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
 }
 
 TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
@@ -1112,14 +1094,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
     // expectedNumberOfBuffers in c-tor, no looping
     uint64_t expectedNumberOfTuples = 100;
     uint64_t expectedNumberOfBuffers = 2;
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setSourceFrequency(this->frequency);
-
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1154,14 +1133,11 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
     // expectedNumberOfBuffers in c-tor, no looping
     uint64_t expectedNumberOfTuples = 100;
     uint64_t expectedNumberOfBuffers = 2;
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setSourceFrequency(this->frequency);
-
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1197,9 +1173,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
     // expectedNumberOfBuffers set 0 in c-tor, looping
     uint64_t expectedNumberOfTuples = 104;
     uint64_t expectedNumberOfBuffers = 2;
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -1239,14 +1213,11 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                ->addField("int8", INT8);
 
     std::string path_to_int_file = "../tests/test_data/every-int.csv";
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(path_to_int_file);
     sourceConfig->setNumberOfBuffersToProduce(1); // file not looping
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setSourceFrequency(this->frequency);
-
     CSVSourceProxy csvDataSource(int_schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1261,13 +1232,11 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, *buf);
     csvDataSource.fillBuffer(buffer);
     auto content = buf->getBuffer<everyIntTypeRecord>();
-
     // number is in the expected range
     EXPECT_LE(content->uint64_entry, std::numeric_limits<uint64_t>::max());
     EXPECT_GE(content->uint64_entry, std::numeric_limits<uint64_t>::min());
     // unsigned number is equal to max, no specific numbers in code
     EXPECT_EQ(content->uint64_entry, std::numeric_limits<uint64_t>::max());
-
     // number is in the expected range
     EXPECT_LE(content->int64_entry, std::numeric_limits<int64_t>::max());
     EXPECT_GE(content->int64_entry, std::numeric_limits<int64_t>::min());
@@ -1302,16 +1271,12 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
     // use custom schema and file, read once
     SchemaPtr float_schema = Schema::create()->addField("float64", FLOAT64)->addField("float32", FLOAT32);
-
     std::string path_to_float_file = "../tests/test_data/every-float.csv";
-
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     sourceConfig->setFilePath(path_to_float_file);
     sourceConfig->setNumberOfBuffersToProduce(1); // file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
     sourceConfig->setSourceFrequency(this->frequency);
-
     CSVSourceProxy csvDataSource(float_schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
