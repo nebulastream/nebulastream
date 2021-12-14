@@ -43,7 +43,6 @@ void Parser::writeFieldValueToTupleBuffer(std::string inputString,
                                           bool json,
                                           const SchemaPtr& schema,
                                           uint64_t tupleCount) {
-
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
