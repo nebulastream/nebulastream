@@ -59,6 +59,13 @@ class MQTTSourceConfig : public SourceConfig {
     std::string toString() override;
 
     /**
+     * Checks equality
+     * @param other sourceConfig ot check equality for
+     * @return true if equal, false otherwise
+     */
+    bool equal(SourceConfigPtr const& other) override;
+
+    /**
      * @brief Get url to connect
      */
     [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUrl() const;

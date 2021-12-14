@@ -57,6 +57,13 @@ class DefaultSourceConfig : public SourceConfig {
      */
     std::string toString() override;
 
+    /**
+     * Checks equality
+     * @param other sourceConfig ot check equality for
+     * @return true if equal, false otherwise
+     */
+    bool equal(SourceConfigPtr const& other) override;
+
   private:
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for configs

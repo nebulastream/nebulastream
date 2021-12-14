@@ -34,7 +34,8 @@ CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfig
     : SourceConfig(sourceConfigMap, CSV_SOURCE_CONFIG),
       filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
       skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
-      delimiter(ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")) {
+      delimiter(
+          ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")) {
     NES_INFO("CSVSourceConfig: Init source config object.");
     if (sourceConfigMap.find(CSV_SOURCE_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find(CSV_SOURCE_FILE_PATH_CONFIG)->second);
@@ -53,7 +54,8 @@ CSVSourceConfig::CSVSourceConfig()
     : SourceConfig(CSV_SOURCE_CONFIG),
       filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
       skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
-      delimiter(ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")){
+      delimiter(
+          ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")) {
     NES_INFO("CSVSourceConfig: Init source config object with default values.");
 }
 
@@ -71,6 +73,16 @@ std::string CSVSourceConfig::toString() {
     ss << delimiter->toStringNameCurrentValue();
     ss << SourceConfig::toString();
     return ss.str();
+}
+
+bool CSVSourceConfig::equal(const SourceConfigPtr& other) {
+    if (!other->instanceOf<CSVSourceConfig>()) {
+        return false;
+    }
+    auto otherSourceConfig = other->as<CSVSourceConfig>();
+    return filePath->getValue() == otherSourceConfig->filePath->getValue()
+        && skipHeader->getValue() == otherSourceConfig->skipHeader->getValue()
+        && delimiter->getValue() == otherSourceConfig->delimiter->getValue() && SourceConfig::equal(other);
 }
 
 StringConfigOption CSVSourceConfig::getFilePath() const { return filePath; }

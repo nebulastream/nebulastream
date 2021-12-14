@@ -45,5 +45,14 @@ std::string DefaultSourceConfig::toString() {
     ss << SourceConfig::toString();
     return ss.str();
 }
+
+bool DefaultSourceConfig::equal(const SourceConfigPtr& other) {
+    if (!other->instanceOf<DefaultSourceConfig>()) {
+        return false;
+    }
+    auto otherSourceConfig = other->as<DefaultSourceConfig>();
+    return SourceConfig::equal(other);
+}
+
 }// namespace Configurations
 }// namespace NES

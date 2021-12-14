@@ -61,80 +61,75 @@ message NodeLocation {
 }
 
 /**
-The serializable wrapper for the sense source config object
-*/
-message SerializableSenseSourceConfig{
-  string udsf = 1;
-}
-
-/**
-The serializable wrapper for the binary source config object
-*/
-message SerializableBinarySourceConfig{
-  string filePath = 1;
-}
-
-/**
-The serializable wrapper for the csv source config object
-*/
-message SerializableCSVSourceConfig{
-  string filePath = 1;
-  bool skipHeader = 2;
-  string delimiter = 3;
-}
-
-/**
-The serializable wrapper for the mqtt source config object
-*/
-message SerializableMQTTSourceConfig{
-  string url = 1;
-  string clientId = 2;
-  string userName = 3;
-  string topic = 4;
-  uint32 qos = 5;
-  bool cleanSession = 6;
-  float flushIntervalMS = 7;
-}
-
-/**
-The serializable wrapper for the kafka source config object
-*/
-message SerializableKafkaSourceConfig{
-  string brokers = 1;
-  uint32 autoCommit = 2;
-  string groupId = 3;
-  string topic = 4;
-  uint32 connectionTimeout = 5;
-}
-
-/**
-The serializable wrapper for the opc source config object
-*/
-message SerializableOPCSourceConfig{
-  uint32 namespaceIndex = 1;
-  string nodeIdentifier = 2;
-  string userName = 3;
-  string password = 4;
-}
-
-/**
 The serializable wrapper for the source config object
  */
 message SerializableSourceConfig{
   string sourceType = 1;
   string inputFormat = 2;
-  bool rowLayout = 3;
   uint32 sourceFrequency = 4;
   uint32 numberOfBuffersToProduce = 5;
   uint32 numberOfTuplesToProducePerBuffer = 6;
   string physicalStreamName = 7;
   string logicalStreamName = 8;
-  SerializableSenseSourceConfig serializableSenseSourceConfig = 9;
-  SerializableBinarySourceConfig serializableBinarySourceConfig = 10;
-  SerializableCSVSourceConfig serializableCSVSourceConfig = 11;
-  SerializableMQTTSourceConfig serializableMQTTSourceConfig = 12;
-  SerializableKafkaSourceConfig serializableKafkaSourceConfig = 13;
-  SerializableOPCSourceConfig serializableOPCSourceConfig = 14;
+
+  /**
+  The serializable wrapper for the sense source config object
+  */
+  message SerializableSenseSourceConfig{
+    string udsf = 1;
+  }
+
+  /**
+  The serializable wrapper for the binary source config object
+  */
+  message SerializableBinarySourceConfig{
+    string filePath = 1;
+  }
+
+  /**
+  The serializable wrapper for the csv source config object
+  */
+  message SerializableCSVSourceConfig{
+    string filePath = 1;
+    bool skipHeader = 2;
+    string delimiter = 3;
+  }
+
+  /**
+  The serializable wrapper for the mqtt source config object
+  */
+  message SerializableMQTTSourceConfig{
+    string url = 1;
+    string clientId = 2;
+    string userName = 3;
+    string topic = 4;
+    uint32 qos = 5;
+    bool cleanSession = 6;
+    float flushIntervalMS = 7;
+  }
+
+  /**
+  The serializable wrapper for the kafka source config object
+  */
+  message SerializableKafkaSourceConfig{
+    string brokers = 1;
+    uint32 autoCommit = 2;
+    string groupId = 3;
+    string topic = 4;
+    uint32 connectionTimeout = 5;
+  }
+
+  /**
+  The serializable wrapper for the opc source config object
+  */
+  message SerializableOPCSourceConfig{
+    uint32 namespaceIndex = 1;
+    string nodeIdentifier = 2;
+    string userName = 3;
+    string password = 4;
+  }
+
+  google.protobuf.Any specificSourceConfig = 9;
 }
 
 /*

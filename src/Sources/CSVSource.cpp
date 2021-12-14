@@ -50,8 +50,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                  std::move(successors)),
       sourceConfigPtr(sourceConfigPtr), filePath(sourceConfigPtr->getFilePath()->getValue()),
       numberOfTuplesToProducePerBuffer(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()),
-      delimiter(sourceConfigPtr->getDelimiter()->getValue()), skipHeader(sourceConfigPtr->getSkipHeader()->getValue()),
-      rowLayout(sourceConfigPtr->getRowLayout()->getValue()) {
+      delimiter(sourceConfigPtr->getDelimiter()->getValue()), skipHeader(sourceConfigPtr->getSkipHeader()->getValue()) {
     this->numBuffersToProcess = sourceConfigPtr->getNumberOfBuffersToProduce()->getValue();
     this->gatheringInterval = std::chrono::milliseconds(sourceConfigPtr->getSourceFrequency()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
@@ -88,30 +87,14 @@ CSVSource::CSVSource(SchemaPtr schema,
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on " << operatorId);
-    auto tupleBuffer = this->bufferManager->getBufferBlocking();
-    if (rowLayout) {
-        Runtime::MemoryLayouts::RowLayoutPtr layoutPtr =
-            Runtime::MemoryLayouts::RowLayout::create(schema, this->bufferManager->getBufferSize());
-        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, tupleBuffer);
-        fillBuffer(buffer);
-        NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+    auto buffer = allocateBuffer();
+    fillBuffer(buffer);
+    NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
 
-        if (buffer.getNumberOfTuples() == 0) {
-            return std::nullopt;
-        }
-        return buffer.getBuffer();
-    } else {
-        Runtime::MemoryLayouts::ColumnLayoutPtr layoutPtr =
-            Runtime::MemoryLayouts::ColumnLayout::create(schema, this->bufferManager->getBufferSize());
-        Runtime::MemoryLayouts::DynamicTupleBuffer buffer = Runtime::MemoryLayouts::DynamicTupleBuffer(layoutPtr, tupleBuffer);
-        fillBuffer(buffer);
-        NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
-
-        if (buffer.getNumberOfTuples() == 0) {
-            return std::nullopt;
-        }
-        return buffer.getBuffer();
+    if (buffer.getNumberOfTuples() == 0) {
+        return std::nullopt;
     }
+    return buffer.getBuffer();
 }
 
 std::string CSVSource::toString() const {
@@ -134,7 +117,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     uint64_t generatedTuplesThisPass = 0;
     //fill buffer maximally
     if (numberOfTuplesToProducePerBuffer == 0) {
-        generatedTuplesThisPass = buffer.getBuffer().getBufferSize() / tupleSize;
+        generatedTuplesThisPass = buffer.getCapacity();
     } else {
         generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
         NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");

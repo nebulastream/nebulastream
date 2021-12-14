@@ -36,15 +36,15 @@ class CsvSourceDescriptor : public SourceDescriptor {
     /**
      * @brief get source config ptr with all configurations for csv source
      */
-    Configurations::CSVSourceConfigPtr getSourceConfigPtr() const;
+    Configurations::CSVSourceConfigPtr getSourceConfig() const;
 
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
 
   private:
-    explicit CsvSourceDescriptor(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfigPtr);
+    explicit CsvSourceDescriptor(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfig);
 
-    Configurations::CSVSourceConfigPtr sourceConfigPtr;
+    Configurations::CSVSourceConfigPtr sourceConfig;
 };
 
 using CsvSourceDescriptorPtr = std::shared_ptr<CsvSourceDescriptor>;

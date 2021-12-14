@@ -61,6 +61,14 @@ std::string BinarySourceConfig::toString() {
     return ss.str();
 }
 
+bool BinarySourceConfig::equal(const SourceConfigPtr& other) {
+    if (!other->instanceOf<BinarySourceConfig>()) {
+        return false;
+    }
+    auto otherSourceConfig = other->as<BinarySourceConfig>();
+    return filePath->getValue() == otherSourceConfig->filePath->getValue() && SourceConfig::equal(other);
+}
+
 StringConfigOption BinarySourceConfig::getFilePath() const { return filePath; }
 
 void BinarySourceConfig::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }

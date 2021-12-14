@@ -61,6 +61,14 @@ std::string SenseSourceConfig::toString() {
     return ss.str();
 }
 
+bool SenseSourceConfig::equal(const SourceConfigPtr& other) {
+    if (!other->instanceOf<SenseSourceConfig>()) {
+        return false;
+    }
+    auto otherSourceConfig = other->as<SenseSourceConfig>();
+    return SourceConfig::equal(other) && udfs->getValue() == otherSourceConfig->udfs->getValue();
+}
+
 StringConfigOption SenseSourceConfig::getUdfs() const { return udfs; }
 
 void SenseSourceConfig::setUdfs(std::string udfsValue) { udfs->setValue(udfsValue); }

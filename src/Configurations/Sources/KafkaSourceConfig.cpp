@@ -105,6 +105,18 @@ std::string KafkaSourceConfig::toString() {
     return ss.str();
 }
 
+bool KafkaSourceConfig::equal(const SourceConfigPtr& other) {
+    if (!other->instanceOf<KafkaSourceConfig>()) {
+        return false;
+    }
+    auto otherSourceConfig = other->as<KafkaSourceConfig>();
+    return SourceConfig::equal(other) && brokers->getValue() == otherSourceConfig->brokers->getValue()
+        && autoCommit->getValue() == otherSourceConfig->autoCommit->getValue()
+        && groupId->getValue() == otherSourceConfig->groupId->getValue()
+        && topic->getValue() == otherSourceConfig->topic->getValue()
+        && connectionTimeout->getValue() == otherSourceConfig->connectionTimeout->getValue();
+}
+
 StringConfigOption KafkaSourceConfig::getBrokers() const { return brokers; }
 
 IntConfigOption KafkaSourceConfig::getAutoCommit() const { return autoCommit; }

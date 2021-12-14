@@ -117,10 +117,6 @@ std::map<std::string, std::string> SourceConfigFactory::readYAMLFile(const std::
                     std::pair<std::string, std::string>(LOGICAL_STREAM_NAME_CONFIG,
                                                         config[LOGICAL_STREAM_NAME_CONFIG].As<std::string>()));
             }
-            if (!config[ROW_LAYOUT_CONFIG].As<std::string>().empty() && config[ROW_LAYOUT_CONFIG].As<std::string>() != "\n") {
-                configurationMap.insert(
-                    std::pair<std::string, std::string>(ROW_LAYOUT_CONFIG, config[ROW_LAYOUT_CONFIG].As<std::string>()));
-            }
             if (!config[INPUT_FORMAT_CONFIG].As<std::string>().empty() && config[INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
                 configurationMap.insert(
                     std::pair<std::string, std::string>(INPUT_FORMAT_CONFIG, config[INPUT_FORMAT_CONFIG].As<std::string>()));
@@ -300,10 +296,6 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
         if (commandLineParams.find("--" + SOURCE_TYPE_CONFIG) != commandLineParams.end()
             && !commandLineParams.find("--" + SOURCE_TYPE_CONFIG)->second.empty()) {
             configurationMap.insert_or_assign(SOURCE_TYPE_CONFIG, commandLineParams.find("--" + SOURCE_TYPE_CONFIG)->second);
-        }
-        if (commandLineParams.find("--" + ROW_LAYOUT_CONFIG) != commandLineParams.end()
-            && !commandLineParams.find("--" + ROW_LAYOUT_CONFIG)->second.empty()) {
-            configurationMap.insert_or_assign(ROW_LAYOUT_CONFIG, commandLineParams.find("--" + ROW_LAYOUT_CONFIG)->second);
         }
         if (commandLineParams.find("--" + INPUT_FORMAT_CONFIG) != commandLineParams.end()
             && !commandLineParams.find("--" + INPUT_FORMAT_CONFIG)->second.empty()) {
