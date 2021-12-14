@@ -76,7 +76,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
-                        Experimental::MaterializedView::MaterializedViewManagerPtr&&,
+                        NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
@@ -221,7 +221,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief getter of materialized view manager
      * @return materialized view manager
      */
-    Experimental::MaterializedView::MaterializedViewManagerPtr getMaterializedViewManager() const;
+    NES::Experimental::MaterializedView::MaterializedViewManagerPtr getMaterializedViewManager() const;
 
     ///// Network Callback //////
 
@@ -279,7 +279,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
     Network::NetworkManagerPtr networkManager;
-    Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
+    NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::atomic<bool> isRunning{};
     BufferStoragePtr bufferStorage;
     mutable std::recursive_mutex engineMutex;

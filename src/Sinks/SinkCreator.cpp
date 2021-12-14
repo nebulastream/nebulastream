@@ -33,9 +33,6 @@
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
-// TODO: remove
-#include <Views/TupleView.hpp>
-#include <Views/MaterializedView.hpp>
 
 namespace NES {
 
@@ -141,6 +138,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   retryTimes);
 }
 
+namespace Experimental::MaterializedView {
+
 DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        Runtime::NodeEnginePtr const& nodeEngine,
                                        QuerySubPlanId parentPlanId,
@@ -155,6 +154,8 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
             format,
             parentPlanId);
 }
+
+} // Experimental::MaterializedView
 
 #ifdef ENABLE_KAFKA_BUILD
 DataSinkPtr

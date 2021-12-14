@@ -44,7 +44,6 @@ std::string MaterializedViewSink::toString() const {
 
 SinkMediumTypes MaterializedViewSink::getSinkMediumType() { return MATERIALIZED_VIEW_SINK; }
 
-
 uint64_t MaterializedViewSink::getViewId() const {
     return view->getId();
 }

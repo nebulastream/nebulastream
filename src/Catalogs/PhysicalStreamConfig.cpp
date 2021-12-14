@@ -109,7 +109,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         NES_DEBUG("PhysicalStreamConfig: create materialized view source with configuration: " << sourceConfig->toString());
         return Experimental::MaterializedView::MaterializedViewSourceDescriptor::create(
                 schema,
-                sourceConfig->as<Configurations::MaterializedViewSourceConfig>()->getId()->getValue());
+                sourceConfig->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->getId()->getValue());
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + sourceConfig->getSourceType()->getValue()
                                 + " not supported");
