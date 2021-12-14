@@ -110,8 +110,9 @@ class TupleBuffer {
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
     TupleBuffer& operator=(TupleBuffer const& other) noexcept {
 
-        if
-            PLACEHOLDER_UNLIKELY(this == std::addressof(other)) { return *this; }
+        if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
+            return *this;
+        }
 
         // Override the content of this with those of `other`
         auto* const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
@@ -133,8 +134,9 @@ class TupleBuffer {
 
         // Especially for rvalues, the following branch should most likely never be taken if the caller writes
         // reasonable code. Therefore, this branch is considered unlikely.
-        if
-            PLACEHOLDER_UNLIKELY(this == std::addressof(other)) { return *this; }
+        if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
+            return *this;
+        }
 
         // Swap content of this with those of `other` to let the other's destructor take care of releasing the overwritten
         // resource.

@@ -269,7 +269,6 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
               sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getPhysicalStreamName()->getValue(), sourceConfigPtr->getPhysicalStreamName()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr->getLogicalStreamName()->getValue(), sourceConfigPtr->getLogicalStreamName()->getDefaultValue());
-    EXPECT_NE(sourceConfigPtr->getRowLayout()->getValue(), sourceConfigPtr->getRowLayout()->getDefaultValue());
 
     std::string argv1[] = {"--sourceType=KafkaSource",
                            "--physicalStreamName=",
@@ -303,8 +302,6 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
               sourceConfigPtr1->as<KafkaSourceConfig>()->getPhysicalStreamName()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getLogicalStreamName()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getLogicalStreamName()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getRowLayout()->getValue(),
-              sourceConfigPtr1->as<KafkaSourceConfig>()->getRowLayout()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr1->as<KafkaSourceConfig>()->getBrokers()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getBrokers()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getAutoCommit()->getValue(),

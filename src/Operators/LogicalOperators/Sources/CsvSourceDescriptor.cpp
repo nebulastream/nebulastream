@@ -20,33 +20,27 @@
 
 namespace NES {
 
-CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfigPtr)
-    : SourceDescriptor(std::move(schema)), sourceConfigPtr(std::move(sourceConfigPtr)) {}
+CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfig)
+    : SourceDescriptor(std::move(schema)), sourceConfig(std::move(sourceConfig)) {}
 
 SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfigPtr) {
     return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(sourceConfigPtr)));
 }
 
-Configurations::CSVSourceConfigPtr CsvSourceDescriptor::getSourceConfigPtr() const { return sourceConfigPtr; }
+Configurations::CSVSourceConfigPtr CsvSourceDescriptor::getSourceConfig() const { return sourceConfig; }
 
 bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<CsvSourceDescriptor>()) {
         return false;
     }
     auto otherSource = other->as<CsvSourceDescriptor>();
-    return sourceConfigPtr->getFilePath()->getValue() == otherSource->getSourceConfigPtr()->getFilePath()->getValue()
-        && sourceConfigPtr->getDelimiter()->getValue() == otherSource->getSourceConfigPtr()->getDelimiter()->getValue()
-        && sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()
-        == otherSource->getSourceConfigPtr()->getNumberOfTuplesToProducePerBuffer()->getValue()
-        && sourceConfigPtr->getSourceFrequency()->getValue()
-        == otherSource->getSourceConfigPtr()->getSourceFrequency()->getValue()
-        && getSchema()->equals(otherSource->getSchema());
+    return sourceConfig->equal(otherSource->getSourceConfig());
 }
 
 std::string CsvSourceDescriptor::toString() {
-    return "CsvSourceDescriptor(" + sourceConfigPtr->getFilePath()->getValue() + "," + sourceConfigPtr->getDelimiter()->getValue()
-        + ", " + std::to_string(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()) + ", "
-        + std::to_string(std::chrono::milliseconds(sourceConfigPtr->getSourceFrequency()->getValue()).count()) + "ms)";
+    return "CsvSourceDescriptor(" + sourceConfig->getFilePath()->getValue() + "," + sourceConfig->getDelimiter()->getValue()
+        + ", " + std::to_string(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()) + ", "
+        + std::to_string(std::chrono::milliseconds(sourceConfig->getSourceFrequency()->getValue()).count()) + "ms)";
 }
 
 }// namespace NES

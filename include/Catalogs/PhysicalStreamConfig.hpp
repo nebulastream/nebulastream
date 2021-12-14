@@ -81,9 +81,9 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     SourceDescriptorPtr build(SchemaPtr) override;
 
   protected:
-    explicit PhysicalStreamConfig(const Configurations::SourceConfigPtr& sourceConfigPtr);
+    explicit PhysicalStreamConfig(const Configurations::SourceConfigPtr& sourceConfig);
 
-    Configurations::SourceConfigPtr sourceConfigPtr;
+    Configurations::SourceConfigPtr sourceConfig;
     uint32_t numberOfTuplesToProducePerBuffer;
     uint32_t numberOfBuffersToProduce;
     std::string physicalStreamName;

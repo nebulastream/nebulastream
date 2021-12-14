@@ -17,9 +17,6 @@ logicalStreamName: default_stream_log
 # Set sampling frequency of source
 sourceFrequency: 1
 
-# Set storage layout, true = row layout, false = column layout
-rowLayout: true
-
 # Set input data format
 inputFormat: JSON
 

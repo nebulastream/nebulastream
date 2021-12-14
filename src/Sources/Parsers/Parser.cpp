@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "../../../include/Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <API/AttributeField.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>

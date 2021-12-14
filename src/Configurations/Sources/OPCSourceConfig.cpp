@@ -89,6 +89,17 @@ std::string OPCSourceConfig::toString() {
     return ss.str();
 }
 
+bool OPCSourceConfig::equal(const SourceConfigPtr& other) {
+    if (!other->instanceOf<OPCSourceConfig>()) {
+        return false;
+    }
+    auto otherSourceConfig = other->as<OPCSourceConfig>();
+    return SourceConfig::equal(other) && namespaceIndex->getValue() == otherSourceConfig->namespaceIndex->getValue()
+        && nodeIdentifier->getValue() == otherSourceConfig->nodeIdentifier->getValue()
+        && userName->getValue() == otherSourceConfig->userName->getValue()
+        && password->getValue() == otherSourceConfig->password->getValue();
+}
+
 IntConfigOption OPCSourceConfig::getNamespaceIndex() const { return namespaceIndex; }
 
 StringConfigOption OPCSourceConfig::getNodeIdentifier() const { return nodeIdentifier; }

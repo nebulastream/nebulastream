@@ -131,6 +131,18 @@ std::string MQTTSourceConfig::toString() {
     return ss.str();
 }
 
+bool MQTTSourceConfig::equal(const SourceConfigPtr& other) {
+    if (!other->instanceOf<MQTTSourceConfig>()) {
+        return false;
+    }
+    auto otherSourceConfig = other->as<MQTTSourceConfig>();
+    return clientId->getValue() == otherSourceConfig->clientId->getValue()
+        && userName->getValue() == otherSourceConfig->userName->getValue()
+        && topic->getValue() == otherSourceConfig->topic->getValue() && qos->getValue() == otherSourceConfig->qos->getValue()
+        && cleanSession->getValue() == otherSourceConfig->cleanSession->getValue()
+        && flushIntervalMS->getValue() == otherSourceConfig->flushIntervalMS->getValue() && SourceConfig::equal(other);
+}
+
 StringConfigOption MQTTSourceConfig::getUrl() const { return url; }
 
 StringConfigOption MQTTSourceConfig::getClientId() const { return clientId; }

@@ -107,7 +107,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         return createCSVFileSource(csvSourceDescriptor->getSchema(),
                                    bufferManager,
                                    queryManager,
-                                   csvSourceDescriptor->getSourceConfigPtr(),
+                                   csvSourceDescriptor->getSourceConfig(),
                                    operatorId,
                                    numSourceLocalBuffers,
                                    successors);

@@ -74,7 +74,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
                                   Configurations::MQTTSourceConfigPtr sourceConfig,
                                   SourceDescriptor::InputFormat inputFormat);
 
-    Configurations::MQTTSourceConfigPtr sourceConfigPtr;
+    Configurations::MQTTSourceConfigPtr sourceConfig;
     SourceDescriptor::InputFormat inputFormat;
 };
 

@@ -119,7 +119,6 @@ class CSVSource : public DataSource {
     size_t fileSize;
     bool skipHeader;
     CSVParserPtr inputParser;
-    bool rowLayout;
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;

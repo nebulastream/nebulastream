@@ -33,7 +33,6 @@ const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuple
 const std::string PHYSICAL_STREAM_NAME_CONFIG = "physicalStreamName";
 const std::string SOURCE_FREQUENCY_CONFIG = "sourceFrequency";
 const std::string LOGICAL_STREAM_NAME_CONFIG = "logicalStreamName";
-const std::string ROW_LAYOUT_CONFIG = "rowLayout";
 const std::string INPUT_FORMAT_CONFIG = "inputFormat";
 const std::string SOURCE_TYPE_CONFIG = "sourceType";
 const std::string SENSE_SOURCE_UDFS_CONFIG = "SenseSourceUdfs";
@@ -133,6 +132,13 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
     virtual std::string toString();
 
     /**
+     * Checks equality
+     * @param other sourceConfig ot check equality for
+     * @return true if equal, false otherwise
+     */
+    virtual bool equal(SourceConfigPtr const& other);
+
+    /**
      * @brief gets a ConfigOption object with sourceType
      */
     [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getSourceType() const;
@@ -203,16 +209,6 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
     void setInputFormat(std::string inputFormat);
 
     /**
-     * @brief Get storage layout, true = row layout, false = column layout
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getRowLayout() const;
-
-    /**
-     * @brief Set storage layout, true = row layout, false = column layout
-     */
-    void setRowLayout(bool rowLayout);
-
-    /**
      * @brief Checks if the current Source is of type SourceConfig
      * @tparam SourceConfig
      * @return bool true if Source is of SourceConfig
@@ -246,7 +242,6 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
     StringConfigOption physicalStreamName;
     StringConfigOption logicalStreamName;
     IntConfigOption sourceFrequency;
-    BoolConfigOption rowLayout;
     StringConfigOption inputFormat;
     StringConfigOption sourceType;
 };
