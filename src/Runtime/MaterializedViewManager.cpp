@@ -21,7 +21,7 @@
 
 namespace NES::Experimental::MaterializedView {
 
-MaterializedViewPtr MaterializedViewManager::getView(size_t viewId) {
+MaterializedViewPtr MaterializedViewManager::getView(uint64_t viewId) {
     MaterializedViewPtr view = nullptr;
     auto it = viewMap.find(viewId);
     if (it != viewMap.end()){
@@ -38,7 +38,7 @@ MaterializedViewPtr MaterializedViewManager::createView(ViewType type){
     return createView(type, nextViewId++);
 }
 
-MaterializedViewPtr MaterializedViewManager::createView(ViewType type, size_t viewId){
+MaterializedViewPtr MaterializedViewManager::createView(ViewType type, uint64_t viewId){
     MaterializedViewPtr view = nullptr;
     if (viewMap.find(viewId) == viewMap.end()){
         // viewId is not present in map
@@ -50,7 +50,7 @@ MaterializedViewPtr MaterializedViewManager::createView(ViewType type, size_t vi
     return view;
 }
 
-bool MaterializedViewManager::deleteView(size_t viewId){
+bool MaterializedViewManager::deleteView(uint64_t viewId){
     return viewMap.erase(viewId);
 }
 

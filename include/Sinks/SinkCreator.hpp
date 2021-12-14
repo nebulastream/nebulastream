@@ -215,7 +215,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
 DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        const Runtime::NodeEnginePtr& nodeEngine,
                                        QuerySubPlanId parentPlanId,
-                                       size_t viewId);
+                                       uint64_t viewId);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

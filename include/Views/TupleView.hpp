@@ -34,10 +34,10 @@ class TupleView : public MaterializedView {
     friend class MaterializedViewManager;
 
     /// @brief constructor
-    TupleView(size_t id) : MaterializedView(id) {};
+    TupleView(uint64_t id) : MaterializedView(id) {};
 
     /// @brief create shared ptr
-    static TupleViewPtr createTupleView(size_t id);
+    static TupleViewPtr createTupleView(uint64_t id);
 
 public:
     /// @brief standard deconstructor

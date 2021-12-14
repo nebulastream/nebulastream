@@ -42,6 +42,6 @@ std::string MaterializedViewSource::toString() const { return "MaterializedViewS
 
 SourceType MaterializedViewSource::getType() const { return MATERIALIZED_VIEW_SOURCE; };
 
-size_t MaterializedViewSource::getViewId() const { return view->getId(); }
+uint64_t MaterializedViewSource::getViewId() const { return view->getId(); }
 
 }// namespace NES::Experimental::MaterializedView
