@@ -156,7 +156,9 @@ std::chrono::milliseconds KalmanFilter::getNewFrequency() {
 void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
     // TODO: make the size of the vector configurable
     Eigen::VectorXd valueVector(1);
+    NES_DEBUG("KalmanFilter::updateFromTupleBuffer: updating using a whole tuple buffer");
     if (tupleBuffer.isValid()) {
+        NES_DEBUG("KalmanFilter::updateFromTupleBuffer: got buffer with sensedValue" << tupleBuffer.getBuffer<Sensors::SingleSensor>()->sensedValue);
         valueVector << tupleBuffer.getBuffer<Sensors::SingleSensor>()->sensedValue;
         this->update(valueVector);
     }
