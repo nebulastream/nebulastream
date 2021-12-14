@@ -48,7 +48,7 @@ LambdaSource::LambdaSource(
                       std::move(successors)),
       generationFunction(std::move(generationFunction)) {
     NES_DEBUG("Create LambdaSource with id=" << operatorId << "func is " << (generationFunction ? "callable" : "not callable"));
-    if (this->gatheringMode == GatheringMode::FREQUENCY_MODE) {
+    if (this->gatheringMode == GatheringMode::FREQUENCY_MODE || this->gatheringMode == GatheringMode::ADAPTIVE_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     } else if (this->gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
