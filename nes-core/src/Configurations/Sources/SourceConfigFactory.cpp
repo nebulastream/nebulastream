@@ -57,7 +57,7 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::stri
         case OPCSource: return OPCSourceConfig::create(configurationMap);
         case BinarySource: return BinarySourceConfig::create(configurationMap);
         case SenseSource: return SenseSourceConfig::create(configurationMap);
-        case MaterializedViewSource: return MaterializedViewSourceConfig::create(configurationMap);
+        case MaterializedViewSource: return Experimental::MaterializedView::MaterializedViewSourceConfig::create(configurationMap);
         case DefaultSource: return DefaultSourceConfig::create(configurationMap);
         default:
             NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " + configurationMap.at(SOURCE_TYPE_CONFIG)
@@ -74,7 +74,7 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(std::string sourceType) 
         case OPCSource: return OPCSourceConfig::create();
         case BinarySource: return BinarySourceConfig::create();
         case SenseSource: return SenseSourceConfig::create();
-        case MaterializedViewSource: return MaterializedViewSourceConfig::create();
+        case MaterializedViewSource: return Experimental::MaterializedView::MaterializedViewSourceConfig::create();
         case DefaultSource: return DefaultSourceConfig::create();
         default: return nullptr;
     }

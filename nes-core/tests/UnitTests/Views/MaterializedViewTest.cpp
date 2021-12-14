@@ -132,12 +132,12 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
 
     // materialized view physical stream
     size_t viewId = 1;
-    srcConf->as<MaterializedViewSourceConfig>()->setPhysicalStreamName("MV");
-    srcConf->as<MaterializedViewSourceConfig>()->setLogicalStreamName("stream");
-    srcConf->as<MaterializedViewSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<MaterializedViewSourceConfig>()->setNumberOfBuffersToProduce(10000);
-    srcConf->as<MaterializedViewSourceConfig>()->setSourceFrequency(1);
-    srcConf->as<MaterializedViewSourceConfig>()->setId(viewId);
+    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setPhysicalStreamName("MV");
+    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setLogicalStreamName("stream");
+    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
+    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setNumberOfBuffersToProduce(10000);
+    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setSourceFrequency(1);
+    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setId(viewId);
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
     crd->getNesWorker()->registerPhysicalStream(streamConf);
 
@@ -200,7 +200,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
 
     size_t viewId = 1;
     Query maintenance_query = Query::from("stream")
-            .sink(Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(viewId));
+            .sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(viewId));
     auto maintenance_queryPlan = maintenance_query.getQueryPlan();
     maintenance_queryPlan->setQueryId(1);
     auto maintenanceQueryId = queryService->addQueryRequest(maintenance_queryPlan, "BottomUp");
@@ -212,12 +212,12 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     // Init Ad Hoc Query
     crd->getNesWorker()->registerLogicalStream("stream2", testSchemaFileName);
 
-    srcConf2->as<MaterializedViewSourceConfig>()->setPhysicalStreamName("MV");
-    srcConf2->as<MaterializedViewSourceConfig>()->setLogicalStreamName("stream2");
-    srcConf2->as<MaterializedViewSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf2->as<MaterializedViewSourceConfig>()->setNumberOfBuffersToProduce(10000);
-    srcConf2->as<MaterializedViewSourceConfig>()->setSourceFrequency(1);
-    srcConf2->as<MaterializedViewSourceConfig>()->setId(viewId);
+    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setPhysicalStreamName("MV");
+    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setLogicalStreamName("stream2");
+    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
+    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setNumberOfBuffersToProduce(10000);
+    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setSourceFrequency(1);
+    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setId(viewId);
     PhysicalStreamConfigPtr streamConf2 = PhysicalStreamConfig::create(srcConf2);
     crd->getNesWorker()->registerPhysicalStream(streamConf2);
 
