@@ -494,8 +494,11 @@ void DataSource::runningRoutineAdaptive() {
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
 #ifdef ENABLE_ADAPTIVE_BUILD
-                this->kFilter.updateFromTupleBuffer(buf);
-                this->gatheringInterval = this->kFilter.getNewFrequency();
+                // TODO: handle "continuous" case (interval == 0)
+                if (this->gatheringInterval.count() != 0) {
+                    this->kFilter.updateFromTupleBuffer(buf);
+                    this->gatheringInterval = this->kFilter.getNewFrequency();
+                }
 #endif
                 NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
                                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
