@@ -238,8 +238,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValueWithTooSmallIngestionRate);
     FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValue);
-    FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdate);
-    FRIEND_TEST(SourceTest, testDataSourceKFRoutineNoFrequencyUpdateUnlimitedFrequency);
+    FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueZeroFrequencyUpdate);
     FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdateNonZeroInitialFrequency);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
@@ -817,7 +816,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
-TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdate) {
+TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroFrequencyUpdate) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -857,13 +856,13 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdate) {
         return;
     }));
     mDataSource->runningRoutine();
-    EXPECT_NE(oldFrequency.count(), mDataSource->gatheringInterval.count());
+    EXPECT_EQ(oldFrequency.count(), mDataSource->gatheringInterval.count());
+    EXPECT_EQ(oldFrequency.count(), 0);
     EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
-// TODO: fix edge case when initial freq != 0
 TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdateNonZeroInitialFrequency) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
