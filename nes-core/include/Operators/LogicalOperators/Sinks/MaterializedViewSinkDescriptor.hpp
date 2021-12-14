@@ -31,14 +31,14 @@ class MaterializedViewSinkDescriptor : public SinkDescriptor {
     /**
      * @brief ***
      */
-    static SinkDescriptorPtr create(size_t viewId);
-    MaterializedViewSinkDescriptor(size_t viewId);
+    static SinkDescriptorPtr create(uint64_t viewId);
+    MaterializedViewSinkDescriptor(uint64_t viewId);
     std::string toString() override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
-    size_t getViewId();
+    uint64_t getViewId();
 
   private:
-    size_t viewId;
+    uint64_t viewId;
 };
 using MaterializedViewSinkDescriptorPtr = std::shared_ptr<MaterializedViewSinkDescriptor>;
 }// namespace NES::Experimental::MaterializedView

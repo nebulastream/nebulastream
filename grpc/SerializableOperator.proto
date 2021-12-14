@@ -218,7 +218,7 @@ message SerializableOperator{
     }
 
     message SerializableMaterializedViewSourceDescriptor {
-      uint32 id = 1;
+      uint64 id = 1;
     }
 
     google.protobuf.Any sourceDescriptor = 1;

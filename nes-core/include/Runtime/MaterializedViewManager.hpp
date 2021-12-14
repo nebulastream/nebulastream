@@ -39,35 +39,29 @@ public:
     /// @brief default constructor
     MaterializedViewManager() = default;
 
-    // TODO: Which are nessesary?
-    MaterializedViewManager(const MaterializedViewManager&) = delete;
-    MaterializedViewManager& operator=(const MaterializedViewManager&) = delete;
-    MaterializedViewManager(MaterializedViewManager&) = delete;
-    MaterializedViewManager& operator=(MaterializedViewManager&) = delete;
-
     /// @brief deconstructor
     ~MaterializedViewManager() = default;
 
     /// @brief retrieve the view by viewId
     /// @note returns nullptr if no view with viewId exists
-    MaterializedViewPtr getView(size_t viewId);
+    MaterializedViewPtr getView(uint64_t viewId);
 
     /// @brief create a new view by view type
     MaterializedViewPtr createView(ViewType type);
 
     /// @brief create a new view by view type and assing given id
     /// @note returns nullptr if view with given viewId exists
-    MaterializedViewPtr createView(ViewType type, size_t viewId);
+    MaterializedViewPtr createView(ViewType type, uint64_t viewId);
 
     /// @brief delete view from mananger
-    bool deleteView(size_t viewId);
+    bool deleteView(uint64_t viewId);
 
     /// @brief print managed views
     std::string to_string();
 
   private:
-    std::map<size_t, MaterializedViewPtr> viewMap;
-    size_t nextViewId = 0;
+    std::map<uint64_t, MaterializedViewPtr> viewMap;
+    uint64_t nextViewId = 0;
 
 }; // class MaterializedViewManager
 } // namespace NES::Experimental::MaterializedView

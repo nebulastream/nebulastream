@@ -150,7 +150,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
 DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        Runtime::NodeEnginePtr const& nodeEngine,
                                        QuerySubPlanId parentPlanId,
-                                       size_t viewId) {
+                                       uint64_t viewId) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     auto view = nodeEngine->getMaterializedViewManager()->getView(viewId);
     if (!view){
