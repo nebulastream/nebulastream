@@ -23,14 +23,23 @@ namespace NES {
 namespace Sensors {
 
 struct __attribute__((packed)) SingleSensor {
+    uint64_t id;
+    uint64_t payload;
+    uint64_t timestamp;
     double sensedValue;
 
     SingleSensor() {
+        id = 0;
+        payload = 0;
+        timestamp = 0;
         sensedValue = -1;
     }
 
     SingleSensor(const SingleSensor& rhs) {
-        memcpy(&sensedValue, &rhs.sensedValue, 8);
+        id = rhs.id;
+        payload = rhs.payload;
+        timestamp = rhs.timestamp;
+        sensedValue = rhs.sensedValue;
     }
 };
 
