@@ -151,8 +151,10 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
                                        QuerySubPlanId parentPlanId,
                                        uint64_t viewId) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    auto view = nodeEngine->getMaterializedViewManager()->getView(viewId);
-    if (!view){
+    Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
+    if (nodeEngine->getMaterializedViewManager()->containsView(viewId)){
+        view = nodeEngine->getMaterializedViewManager()->getView(viewId);
+    } else {
         view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::ViewType::TUPLE_VIEW, viewId);
     }
     return std::make_shared<Experimental::MaterializedView::MaterializedViewSink>(
