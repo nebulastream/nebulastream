@@ -226,7 +226,12 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");
         auto materializedViewSourceDescriptor = sourceDescriptor->as<Experimental::MaterializedView::MaterializedViewSourceDescriptor>();
         auto viewId = materializedViewSourceDescriptor->getViewId();
-        auto view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::TUPLE_VIEW, viewId);
+        Experimental::MaterializedView::MaterializedViewPtr view = nullptr;
+        if (nodeEngine->getMaterializedViewManager()->containsView(viewId)){
+            view = nodeEngine->getMaterializedViewManager()->getView(viewId);
+        } else {
+            view = nodeEngine->getMaterializedViewManager()->createView(Experimental::MaterializedView::ViewType::TUPLE_VIEW, viewId);
+        }
         return Experimental::MaterializedView::createMaterializedViewSource(materializedViewSourceDescriptor->getSchema(),
                 bufferManager,
                 queryManager,
