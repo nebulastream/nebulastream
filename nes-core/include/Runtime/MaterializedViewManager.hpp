@@ -42,15 +42,20 @@ public:
     /// @brief deconstructor
     ~MaterializedViewManager() = default;
 
+    /// @brief check if view with viewId exists
+    bool containsView(uint64_t viewId);
+
     /// @brief retrieve the view by viewId
-    /// @note returns nullptr if no view with viewId exists
+    /// @note will throw an runtime_error if view does not exist.
+    /// @note please check existance with 'containView()'
     MaterializedViewPtr getView(uint64_t viewId);
 
     /// @brief create a new view by view type
     MaterializedViewPtr createView(ViewType type);
 
     /// @brief create a new view by view type and assing given id
-    /// @note returns nullptr if view with given viewId exists
+    /// @note will throw an runtime_error if view does not exist.
+    /// @note please check existance with 'containView()'
     MaterializedViewPtr createView(ViewType type, uint64_t viewId);
 
     /// @brief delete view from mananger

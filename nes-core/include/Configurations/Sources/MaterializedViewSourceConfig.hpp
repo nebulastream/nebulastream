@@ -23,22 +23,27 @@ namespace NES {
 
 namespace Configurations {
 
+namespace Experimental::MaterializedView {
+
 class MaterializedViewSourceConfig;
 using MaterializedViewSourceConfigPtr = std::shared_ptr<MaterializedViewSourceConfig>;
 
 /**
- * @brief ...
+ * @brief Configuration object for materialized view source config
  */
 class MaterializedViewSourceConfig : public SourceConfig {
 
 public:
     /**
-     * @brief
+     * @brief create a MaterializedViewSourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return MaterializedViewSourceConfigPtr
      */
     static MaterializedViewSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief
+     * @brief create a MaterializedViewSourceConfigPtr object with default values
+     * @return MaterializedViewSourceConfigPtr
      */
     static MaterializedViewSourceConfigPtr create();
 
@@ -76,6 +81,7 @@ private:
 
     IntConfigOption id;
 };
+}// namespace Experimental::MaterializedView
 }// namespace Configurations
 }// namespace NES
 #endif //NES_MATERIALIZEDVIEWSOURCECONFIG_HPP

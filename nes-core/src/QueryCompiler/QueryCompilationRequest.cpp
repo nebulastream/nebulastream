@@ -15,8 +15,6 @@
 */
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <utility>
-// TODO Remove:
-#include <Runtime/NodeEngine.hpp>
 
 namespace NES::QueryCompilation {
 

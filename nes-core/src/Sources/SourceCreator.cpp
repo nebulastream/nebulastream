@@ -259,6 +259,7 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     successors);
 }
 
+namespace Experimental::MaterializedView {
 DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const Runtime::BufferManagerPtr bufferManager,
                                            const Runtime::QueryManagerPtr queryManager,
@@ -267,14 +268,16 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                            const Experimental::MaterializedView::MaterializedViewPtr view) {
     return std::make_shared<Experimental::MaterializedView::MaterializedViewSource>(schema,
-                                                                  bufferManager,
-                                                                  queryManager,
-                                                                  operatorId,
-                                                                  numSourceLocalBuffers,
-                                                                  DataSource::FREQUENCY_MODE,
-                                                                  successors,
-                                                                  view);
+                                                                                    bufferManager,
+                                                                                    queryManager,
+                                                                                    operatorId,
+                                                                                    numSourceLocalBuffers,
+                                                                                    DataSource::FREQUENCY_MODE,
+                                                                                    successors,
+                                                                                    view);
 }
+
+} // namespace Experimental::MaterializedView
 
 #ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema,

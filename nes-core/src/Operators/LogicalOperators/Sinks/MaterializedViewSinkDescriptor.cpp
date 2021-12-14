@@ -35,8 +35,8 @@ bool MaterializedViewSinkDescriptor::equal(SinkDescriptorPtr const& other) {
     if (!other->instanceOf<MaterializedViewSinkDescriptor>()) {
         return false;
     }
-    auto otherMemDescr = other->as<MaterializedViewSinkDescriptor>();
-    return true;
+    auto otherSinkDescriptor = other->as<MaterializedViewSinkDescriptor>();
+    return otherSinkDescriptor->getViewId() == viewId;
 }
 
 uint64_t MaterializedViewSinkDescriptor::getViewId() { return viewId; }

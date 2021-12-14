@@ -21,6 +21,8 @@ namespace NES {
 
 namespace Configurations {
 
+namespace Experimental::MaterializedView {
+
 MaterializedViewSourceConfigPtr MaterializedViewSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<MaterializedViewSourceConfig>(MaterializedViewSourceConfig(std::move(sourceConfigMap)));
 }
@@ -31,8 +33,8 @@ MaterializedViewSourceConfigPtr MaterializedViewSourceConfig::create() {
 
 MaterializedViewSourceConfig::MaterializedViewSourceConfig(std::map<std::string, std::string> sourceConfigMap)
 : SourceConfig(sourceConfigMap, MATERIALIZEDVIEW_SOURCE_CONFIG), id(ConfigOption<uint32_t>::create(MATERIALIZED_VIEW_ID_CONFIG,
-                                      1,
-                                      "id to identify the materialized view to read from")){
+                                                                                                   1,
+                                                                                                   "id to identify the materialized view to read from")){
     NES_INFO("MaterializedViewSourceConfig: Init source config object with new values.");
     if (sourceConfigMap.find(MATERIALIZED_VIEW_ID_CONFIG) != sourceConfigMap.end()) {
         id->setValue(std::stoi(sourceConfigMap.find(MATERIALIZED_VIEW_ID_CONFIG)->second));
@@ -42,8 +44,8 @@ MaterializedViewSourceConfig::MaterializedViewSourceConfig(std::map<std::string,
 }
 
 MaterializedViewSourceConfig::MaterializedViewSourceConfig() : SourceConfig(MATERIALIZEDVIEW_SOURCE_CONFIG), id(ConfigOption<uint32_t>::create(MATERIALIZED_VIEW_ID_CONFIG,
-                                      1,
-                                      "id to identify the materialized view to read from")){
+                                                                                                                                               1,
+                                                                                                                                               "id to identify the materialized view to read from")){
     NES_INFO("MaterializedViewSourceConfig: Init source config object with default values.");
 }
 
@@ -62,6 +64,6 @@ std::string MaterializedViewSourceConfig::toString() {
 IntConfigOption MaterializedViewSourceConfig::getId() const { return id; }
 
 void MaterializedViewSourceConfig::setId(uint32_t idValue) { id->setValue(idValue); }
-
+}// namespace Experimental::MaterializedView
 }// namespace Configurations
 }// namespace NES

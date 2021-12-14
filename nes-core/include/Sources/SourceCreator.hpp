@@ -251,16 +251,19 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   std::chrono::milliseconds waitTime,
                                   uint8_t retryTimes,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+
+namespace Experimental::MaterializedView {
+
 /**
- *  TODO
+ * @brief function to create a materialized view source
  * @param schema
- * @param mView
  * @param bufferManager
  * @param queryManager
  * @param operatorId
  * @param numSourceLocalBuffers
  * @param successors
- * @return
+ * @param materialized view pointer
+ * @return a const data source pointer
  */
 DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const Runtime::BufferManagerPtr bufferManager,
@@ -269,6 +272,8 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                            const size_t numSourceLocalBuffers,
                                            const std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                                            const Experimental::MaterializedView::MaterializedViewPtr view);
+
+} // namespace Experimental::MaterializedView
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

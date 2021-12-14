@@ -21,31 +21,38 @@
 
 namespace NES::Experimental::MaterializedView {
 
+bool MaterializedViewManager::containsView(uint64_t viewId) {
+    return viewMap.contains(viewId);
+}
+
 MaterializedViewPtr MaterializedViewManager::getView(uint64_t viewId) {
     MaterializedViewPtr view = nullptr;
     auto it = viewMap.find(viewId);
     if (it != viewMap.end()){
         view = it->second;
     } else {
-        NES_INFO("MaterializedViewManager::getView: no view found with id " << viewId);
-        NES_INFO("MaterializedViewManager::getView: available views: " << to_string());
-        view = nullptr;
+        NES_ERROR("MaterializedViewManager::getView: no view found with id " << viewId);
+        throw std::runtime_error("Materialized view with given id does not exist.");
     }
     return view;
 }
 
 MaterializedViewPtr MaterializedViewManager::createView(ViewType type){
-    return createView(type, nextViewId++);
+    while (!containsView(nextViewId++)) {};
+    return createView(type, nextViewId);
 }
 
 MaterializedViewPtr MaterializedViewManager::createView(ViewType type, uint64_t viewId){
     MaterializedViewPtr view = nullptr;
-    if (viewMap.find(viewId) == viewMap.end()){
-        // viewId is not present in map
+    if (!viewMap.contains(viewId)){
         if (type == TUPLE_VIEW) {
             view = TupleView::createTupleView(viewId);
             viewMap.insert(std::make_pair(viewId, view));
+        } else {
+            throw std::invalid_argument("Unknown materialized view type");
         }
+    } else {
+        throw std::runtime_error("Materialized view with given id: " + std::to_string(viewId) + " does already exist.");
     }
     return view;
 }

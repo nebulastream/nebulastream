@@ -147,7 +147,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     } else if (sinkDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating materialized view sink");
         auto materializedViewSinkDescriptor = sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
-        return createMaterializedViewSink(schema,
+        return Experimental::MaterializedView::createMaterializedViewSink(schema,
                                           nodeEngine,
                                           querySubPlan->getQuerySubPlanId(),
                                           materializedViewSinkDescriptor->getViewId());
