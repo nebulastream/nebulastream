@@ -21,7 +21,7 @@
 
 namespace NES::Experimental::MaterializedView {
 
-TupleViewPtr TupleView::createTupleView(size_t id){
+TupleViewPtr TupleView::createTupleView(uint64_t id){
     return std::shared_ptr<TupleView>(new TupleView(id));
 };
 

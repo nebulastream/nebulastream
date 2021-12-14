@@ -64,7 +64,7 @@ public:
      *  @brief Provides the id of the used materialized view
      *  @return materialized view id
      */
-    size_t getViewId() const;
+    uint64_t getViewId() const;
 
 private:
     MaterializedViewPtr view;

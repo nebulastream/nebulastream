@@ -33,13 +33,13 @@ class MaterializedView {
 
 public:
     /// @brief constructor
-    MaterializedView(size_t id) : id(id) {};
+    MaterializedView(uint64_t id) : id(id) {};
 
     /// @brief default deconstructor
     virtual ~MaterializedView() = default;
 
     /// @brief returns the materialized view id
-    size_t getId() {return id;}
+    uint64_t getId() {return id;}
 
     /// @brief writes a data tuple to the view
     virtual bool writeData(Runtime::TupleBuffer buffer) = 0;
@@ -51,7 +51,7 @@ public:
     virtual void clear() = 0;
 
 protected:
-    size_t id;
+    uint64_t id;
 
 }; // class MaterializedView
 } // namespace NES::Experimental::MaterializedView

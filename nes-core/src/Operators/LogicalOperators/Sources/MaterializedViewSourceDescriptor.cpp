@@ -20,11 +20,11 @@
 
 namespace NES::Experimental::MaterializedView {
 
-MaterializedViewSourceDescriptor::MaterializedViewSourceDescriptor(SchemaPtr schema, size_t viewId)
+MaterializedViewSourceDescriptor::MaterializedViewSourceDescriptor(SchemaPtr schema, uint64_t viewId)
 : SourceDescriptor(std::move(schema)), viewId(viewId) {}
 
 SourceDescriptorPtr
-MaterializedViewSourceDescriptor::create(const SchemaPtr& schema, size_t viewId) {
+MaterializedViewSourceDescriptor::create(const SchemaPtr& schema, uint64_t viewId) {
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<MaterializedViewSourceDescriptor>(MaterializedViewSourceDescriptor(std::move(schema), std::move(viewId)));
 }
@@ -38,5 +38,5 @@ bool MaterializedViewSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return schema == otherMemDescr->schema;
 }
 
-size_t MaterializedViewSourceDescriptor::getViewId() const { return viewId; }
+uint64_t MaterializedViewSourceDescriptor::getViewId() const { return viewId; }
 }// namespace NES::Experimental::MaterializedView
