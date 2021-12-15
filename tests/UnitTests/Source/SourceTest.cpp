@@ -235,6 +235,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
   private:
     FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
+    FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValueWithTooSmallIngestionRate);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
 using DataSourceProxyPtr = std::shared_ptr<DataSourceProxy>;
@@ -699,6 +700,7 @@ TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
+
 TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
@@ -717,7 +719,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
     mDataSource->wasGracefullyStopped = true;
-    mDataSource->gatheringIngestionRate = 1;
+    mDataSource->gatheringIngestionRate = 11;
     auto fakeBuf = mDataSource->getRecyclableBuffer();
     ON_CALL(*mDataSource, toString()).WillByDefault(Return("MOCKED SOURCE"));
     ON_CALL(*mDataSource, getType()).WillByDefault(Return(SourceType::LAMBDA_SOURCE));
@@ -1534,7 +1536,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     wrk1->registerLogicalStream("input1", testSchemaFileName);
 
     NES::AbstractPhysicalStreamConfigPtr conf1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 6, 2, "ingestionrate");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 6, 11, "ingestionrate");
     wrk1->registerPhysicalStream(conf1);
 
     std::string outputFilePath = "testIngestionRateFromQuery.out";

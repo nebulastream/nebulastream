@@ -234,6 +234,7 @@ void DataSource::runningRoutine() {
 
 void DataSource::runningRoutineWithIngestionRate() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
+    NES_ASSERT(gatheringIngestionRate >= 10, "As we generate on 100 ms base we need at least an ingestion rate of 10");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
