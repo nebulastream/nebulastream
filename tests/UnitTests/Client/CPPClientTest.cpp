@@ -98,11 +98,11 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     auto queryPlan = query.getQueryPlan();
 
     CPPClient client = CPPClient("localhost", std::to_string(restPort));
-    client.submitQuery(queryPlan, "ButtomUp");
+    uint64_t queryId = client.submitQuery(queryPlan, "ButtomUp");
 
-    /*EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
+    EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
 
-    auto insertedQueryPlan = crd->getQueryCatalog()->getQueryCatalogEntry(queryId)->getInputQueryPlan();
+    /*auto insertedQueryPlan = crd->getQueryCatalog()->getQueryCatalogEntry(queryId)->getInputQueryPlan();
     // Expect that the query id and query sub plan id from the deserialized query plan are valid
     EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
     EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
