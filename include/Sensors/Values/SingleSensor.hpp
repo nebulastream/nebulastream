@@ -24,22 +24,23 @@ namespace Sensors {
 
 struct __attribute__((packed)) SingleSensor {
     uint64_t id;
+    uint64_t value;
     uint64_t payload;
     uint64_t timestamp;
-    double sensedValue;
+
 
     SingleSensor() {
         id = 0;
+        value = -1;
         payload = 0;
         timestamp = 0;
-        sensedValue = -1;
     }
 
     SingleSensor(const SingleSensor& rhs) {
         id = rhs.id;
+        value = rhs.value;
         payload = rhs.payload;
         timestamp = rhs.timestamp;
-        sensedValue = rhs.sensedValue;
     }
 };
 
