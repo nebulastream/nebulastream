@@ -94,13 +94,13 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
     streamCatalog->addPhysicalStream("default_logical", sce);
 
-    /* Query query = Query::from("default_logical");
+    Query query = Query::from("default_logical");
     auto queryPlan = query.getQueryPlan();
 
     CPPClient client = CPPClient("localhost", std::to_string(restPort));
-    int64_t queryId = client.submitQuery(queryPlan, "ButtomUp");
+    client.submitQuery(queryPlan, "ButtomUp");
 
-    EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
+    /*EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
 
     auto insertedQueryPlan = crd->getQueryCatalog()->getQueryCatalogEntry(queryId)->getInputQueryPlan();
     // Expect that the query id and query sub plan id from the deserialized query plan are valid
