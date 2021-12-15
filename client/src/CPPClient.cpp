@@ -42,7 +42,9 @@ int64_t CPPClient::submitQuery(const QueryPlanPtr& queryPlan, const std::string&
     std::string msg = request.SerializeAsString();
 
     web::json::value json_return;
-    web::http::client::http_client client("http://" + coordinatorHost + ":" + coordinatorRESTPort + "/v1/nes/");
+    web::http::client::http_client_config cfg;
+    cfg.set_timeout(std::chrono::seconds(20));
+    web::http::client::http_client client("http://" + coordinatorHost + ":" + coordinatorRESTPort + "/v1/nes/", cfg);
     client.request(web::http::methods::POST, "query/execute-query-ex", msg)
         .then([](const web::http::http_response& response) {
             return response.extract_json();
