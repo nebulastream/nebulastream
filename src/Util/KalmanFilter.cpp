@@ -142,7 +142,8 @@ void KalmanFilter::calculateTotalEstimationErrorDivider(int size) {
 
 std::chrono::milliseconds KalmanFilter::getNewFrequency() {
     // eq. 10
-    auto powerOfEuler = (this->calculateTotalEstimationError() + lambda) / lambda;
+    auto totalEstimationError = this->calculateTotalEstimationError();
+    auto powerOfEuler = (totalEstimationError + lambda) / lambda;
     auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
     auto newFreqCandidate = this->frequency.count() + thetaPart;
     if (newFreqCandidate >= freqLastReceived.count() - (freqRange.count() / 2) &&
