@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfiguration->getLogLevel()->getValue()));
 
     NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
-    NesWorkerPtr nesWorker = std::make_shared<NesWorker>(workerConfiguration);
+    NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
 
     if (workerConfiguration->getParentId()->getValue() != 0) {
         NES_INFO("start with dedicated parent=" << workerConfiguration->getParentId()->getValue());

@@ -271,13 +271,11 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
 
     NES_INFO("MillisecondIntervalTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
     auto defaultSourceType = DefaultSourceType::create();
     defaultSourceType->setNumberOfBuffersToProduce(3);
     auto physicalSource = PhysicalSource::create("testStream", "x1", defaultSourceType);
     wrkConf->addPhysicalSource(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MillisecondIntervalTest: Worker1 started successfully");

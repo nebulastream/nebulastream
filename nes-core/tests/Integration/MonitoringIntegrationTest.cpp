@@ -70,13 +70,16 @@ class MonitoringIntegrationTest : public testing::Test {
 
 TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setEnableMonitoring(true);
     crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-    wrkConf->setEnableMonitoring(true);
+    wrkConf1->setCoordinatorPort(rpcPort);
+    wrkConf1->setEnableMonitoring(true);
+    wrkConf2->setCoordinatorPort(rpcPort);
+    wrkConf2->setEnableMonitoring(true);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -85,19 +88,13 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
@@ -156,13 +153,16 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
 
 TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEnabled) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setEnableMonitoring(true);
     crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-    wrkConf->setEnableMonitoring(true);
+    wrkConf1->setCoordinatorPort(rpcPort);
+    wrkConf1->setEnableMonitoring(true);
+    wrkConf2->setCoordinatorPort(rpcPort);
+    wrkConf2->setEnableMonitoring(true);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -171,19 +171,13 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
@@ -245,14 +239,17 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
 TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDisabled) {
     // TODO Refactor this once #2239 is solved.
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     bool monitoring = false;
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
     crdConf->setEnableMonitoring(monitoring);
-    wrkConf->setCoordinatorPort(rpcPort);
-    wrkConf->setEnableMonitoring(monitoring);
+    wrkConf1->setCoordinatorPort(rpcPort);
+    wrkConf1->setEnableMonitoring(monitoring);
+    wrkConf2->setCoordinatorPort(rpcPort);
+    wrkConf2->setEnableMonitoring(monitoring);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -262,18 +259,14 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDis
 
     cout << "start worker 1" << endl;
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;

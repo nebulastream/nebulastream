@@ -76,8 +76,6 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(1);
@@ -93,8 +91,6 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setSourceFrequency(1);
@@ -110,8 +106,6 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->setCoordinatorPort(port);
-    workerConfig3->setRpcPort(port + 30);
-    workerConfig3->setDataPort(port + 31);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType3->setSourceFrequency(1);
@@ -215,8 +209,6 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -224,9 +216,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
+    workerConfig2->setCoordinatorPort(port););
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
@@ -242,8 +232,6 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->setCoordinatorPort(port);
-    workerConfig3->setRpcPort(port + 30);
-    workerConfig3->setDataPort(port + 31);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
@@ -259,8 +247,6 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->setCoordinatorPort(port);
-    workerConfig4->setRpcPort(port + 40);
-    workerConfig4->setDataPort(port + 41);
     auto csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
@@ -365,8 +351,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
@@ -381,8 +365,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
@@ -397,8 +379,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->setCoordinatorPort(port);
-    workerConfig3->setRpcPort(port + 30);
-    workerConfig3->setDataPort(port + 31);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
@@ -413,8 +393,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->setCoordinatorPort(port);
-    workerConfig4->setRpcPort(port + 40);
-    workerConfig4->setDataPort(port + 41);
     auto csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
@@ -520,8 +498,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
@@ -536,8 +512,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
@@ -552,8 +526,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->setCoordinatorPort(port);
-    workerConfig3->setRpcPort(port + 30);
-    workerConfig3->setDataPort(port + 31);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
@@ -568,8 +540,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->setCoordinatorPort(port);
-    workerConfig4->setRpcPort(port + 40);
-    workerConfig4->setDataPort(port + 41);
     auto csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
@@ -676,8 +646,6 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
@@ -692,8 +660,6 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
@@ -708,8 +674,6 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->setCoordinatorPort(port);
-    workerConfig3->setRpcPort(port + 30);
-    workerConfig3->setDataPort(port + 31);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
@@ -821,8 +785,6 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -831,8 +793,6 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
@@ -848,8 +808,6 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->setCoordinatorPort(port);
-    workerConfig3->setRpcPort(port + 30);
-    workerConfig3->setDataPort(port + 31);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
@@ -865,8 +823,6 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->setCoordinatorPort(port);
-    workerConfig4->setRpcPort(port + 40);
-    workerConfig4->setDataPort(port + 41);
     auto csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
@@ -980,8 +936,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
@@ -996,8 +950,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
@@ -1012,8 +964,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->setCoordinatorPort(port);
-    workerConfig3->setRpcPort(port + 30);
-    workerConfig3->setDataPort(port + 31);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
@@ -1028,8 +978,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->setCoordinatorPort(port);
-    workerConfig4->setRpcPort(port + 40);
-    workerConfig4->setDataPort(port + 41);
     auto csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
@@ -1156,8 +1104,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
@@ -1172,8 +1118,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
@@ -1188,8 +1132,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->setCoordinatorPort(port);
-    workerConfig3->setRpcPort(port + 30);
-    workerConfig3->setDataPort(port + 31);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
@@ -1204,8 +1146,6 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
     workerConfig4->setCoordinatorPort(port);
-    workerConfig4->setRpcPort(port + 40);
-    workerConfig4->setDataPort(port + 41);
     auto csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);

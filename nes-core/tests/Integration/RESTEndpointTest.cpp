@@ -85,9 +85,7 @@ class RESTEndpointTest : public testing::Test {
         NES_INFO("RESTEndpointTest: Start worker " << id);
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
         workerConfig->setCoordinatorPort(coordinatorRpcPort);
-        workerConfig->setRpcPort(getNextFreePort());
-        workerConfig->setDataPort(getNextFreePort());
-        NesWorkerPtr worker = std::make_shared<NesWorker>(workerConfig);
+        NesWorkerPtr worker = std::make_shared<NesWorker>(std::move(workerConfig));
         EXPECT_TRUE(worker->start(/**blocking**/ false, /**withConnect**/ true));
         NES_INFO("RESTEndpointTest: Worker " << id << " started successfully");
         return worker;

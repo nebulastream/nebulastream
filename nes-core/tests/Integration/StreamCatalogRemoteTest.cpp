@@ -60,8 +60,6 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
@@ -105,8 +103,6 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
@@ -150,8 +146,6 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
@@ -197,8 +191,6 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);

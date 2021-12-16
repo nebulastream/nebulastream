@@ -1666,8 +1666,6 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setBufferSizeInBytes(72);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
 
     auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
@@ -1690,7 +1688,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, "ingestionrate");
     auto physicalSource = PhysicalSource::create("input1", "test_stream1", lambdaSourceType);
     wrkConf->addPhysicalSource(physicalSource);
-    auto wrk1 = std::make_shared<NES::NesWorker>(wrkConf);
+    auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
 
@@ -1888,8 +1886,6 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
 
     auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
@@ -1931,7 +1927,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     auto physicalSource2 = PhysicalSource::create("input2", "test_stream2", lambdaSourceType2);
     wrkConf->addPhysicalSource(physicalSource1);
     wrkConf->addPhysicalSource(physicalSource2);
-    auto wrk1 = std::make_shared<NES::NesWorker>(wrkConf);
+    auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
 
@@ -1983,8 +1979,6 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
 
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
 
     for (int64_t i = 0; i < 2; i++) {
         //        auto func_lamb_ptr = new std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>(lamb);
@@ -2015,7 +2009,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
         wrkConf->addPhysicalSource(physicalSource1);
     }
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MillisecondIntervalTest: Worker1 started successfully");

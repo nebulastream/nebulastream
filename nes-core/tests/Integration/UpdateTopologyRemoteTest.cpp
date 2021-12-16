@@ -54,8 +54,10 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
     coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
-    workerConfig->setNumberOfSlots(workerNumberOfSlots);
-    workerConfig->setCoordinatorPort(rpcPort);
+    workerConfig1->setNumberOfSlots(workerNumberOfSlots);
+    workerConfig1->setCoordinatorPort(rpcPort);
+    workerConfig2->setNumberOfSlots(workerNumberOfSlots);
+    workerConfig2->setCoordinatorPort(rpcPort);
 
     coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
 
@@ -65,19 +67,14 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     NES_INFO("coordinator started successfully");
 
     NES_INFO("start worker");
-    uint64_t node1RpcPort = port + 10;
     workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(node1RpcPort);
-    workerConfig->setDataPort(port + 11);
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
-    uint64_t node2RpcPort = port + 20;
+
     workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(node2RpcPort);
-    workerConfig->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -136,6 +133,8 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
     workerConfig->setNumberOfSlots(workerNumberOfSlots);
     workerConfig->setCoordinatorPort(rpcPort);
+    workerConfig2->setNumberOfSlots(workerNumberOfSlots);
+    workerConfig2->setCoordinatorPort(rpcPort);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -143,19 +142,13 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     NES_INFO("coordinator started successfully");
 
     NES_INFO("start worker");
-    uint64_t node1RpcPort = port + 10;
     workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(node1RpcPort);
-    workerConfig->setDataPort(port + 11);
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
-    uint64_t node2RpcPort = port + 20;
     workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(node2RpcPort);
-    workerConfig->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
