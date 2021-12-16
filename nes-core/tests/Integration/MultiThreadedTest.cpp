@@ -70,10 +70,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -149,10 +146,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -229,10 +223,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -313,10 +304,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -393,10 +381,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -475,10 +460,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(8);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -568,10 +550,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(8);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -680,10 +659,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(8);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -832,10 +808,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(8);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");

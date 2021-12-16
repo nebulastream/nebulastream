@@ -196,8 +196,6 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
     mqttSourceType->setUrl("ws://127.0.0.1:9002");
     mqttSourceType->setClientId("testClients");
     mqttSourceType->setUserName("testUser");
@@ -207,7 +205,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     mqttSourceType->setFlushIntervalMS(2000);
     auto physicalSource = PhysicalSource::create("stream","test_stream", mqttSourceType);
     wrkConf->addPhysicalSource(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");

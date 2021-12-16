@@ -355,8 +355,6 @@ class TestHarness {
         //Add all logical sources
         checkAndAddLogicalSources();
 
-        uint64_t nextAvailableRPCPort = coordinatorRPCPort + (testHarnessWorkerConfigurations.size() + 1) * 20;
-
         for (auto& workerConf : testHarnessWorkerConfigurations) {
 
             //Fetch the worker configuration
@@ -365,8 +363,6 @@ class TestHarness {
             //Set ports at runtime
             workerConfiguration->setCoordinatorPort(coordinatorRPCPort);
             workerConfiguration->setCoordinatorIp(coordinatorIPAddress);
-            workerConfiguration->setRpcPort(nextAvailableRPCPort);
-            workerConfiguration->setDataPort(nextAvailableRPCPort + 1);
 
             switch (workerConf->getSourceType()) {
                 case TestHarnessWorkerConfiguration::MemorySource: {
@@ -386,7 +382,7 @@ class TestHarness {
             //Add Nes Worker to the configuration.
             //Note: this is required to stop the NesWorker at the end of the test
             workerConf->setNesWorker(nesWorker);
-            nextAvailableRPCPort = nextAvailableRPCPort + 10;
+
         }
 
         topologySetupDone = true;

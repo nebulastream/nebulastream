@@ -61,8 +61,6 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
     cout << "start worker 1" << endl;
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -90,8 +88,6 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
     cout << "start worker 1" << endl;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->setCoordinatorPort(port);
-    wrkConf1->setRpcPort(port + 10);
-    wrkConf1->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -100,8 +96,6 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
     cout << "start worker 2" << endl;
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->setCoordinatorPort(port);
-    wrkConf2->setRpcPort(port + 20);
-    wrkConf2->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
@@ -133,8 +127,6 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
     cout << "start worker 1" << endl;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->setCoordinatorPort(port);
-    wrkConf1->setRpcPort(port + 10);
-    wrkConf1->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -143,8 +135,6 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
     cout << "start worker 2" << endl;
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->setCoordinatorPort(port);
-    wrkConf2->setRpcPort(port + 20);
-    wrkConf2->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
@@ -176,8 +166,6 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     cout << "start worker 1" << endl;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->setCoordinatorPort(port);
-    wrkConf1->setRpcPort(port + 10);
-    wrkConf1->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -186,8 +174,6 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     cout << "start worker 2" << endl;
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->setCoordinatorPort(port);
-    wrkConf2->setRpcPort(port + 20);
-    wrkConf2->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
@@ -224,8 +210,6 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
     cout << "start worker 1" << endl;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->setCoordinatorPort(port);
-    wrkConf1->setRpcPort(port + 10);
-    wrkConf1->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -234,8 +218,6 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
     cout << "start worker 2" << endl;
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->setCoordinatorPort(port);
-    wrkConf2->setRpcPort(port + 20);
-    wrkConf2->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
@@ -264,8 +246,6 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     cout << "start worker 1" << endl;
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     wrkConf1->setCoordinatorPort(port);
-    wrkConf1->setRpcPort(port + 10);
-    wrkConf1->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
@@ -274,8 +254,6 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     cout << "start worker 2" << endl;
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     wrkConf2->setCoordinatorPort(port);
-    wrkConf2->setRpcPort(port + 20);
-    wrkConf2->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);
@@ -315,8 +293,6 @@ TEST_F(MultiWorkerTest, testMultipleWorker) {
         cout << "start worker" << i << endl;
         auto wrkConf = WorkerConfiguration::create();
         wrkConf->setCoordinatorPort(port);
-        wrkConf->setRpcPort(port + (i + 5) * 10);
-        wrkConf->setDataPort(port + (i + 5) * 10 + 1);
         wPtrs.push_back(std::make_shared<NesWorker>(wrkConf));
         bool retStart = wPtrs[i]->start(/**blocking**/ false, /**withConnect**/ false);
         EXPECT_TRUE(retStart);

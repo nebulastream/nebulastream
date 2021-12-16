@@ -78,9 +78,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
 
     NES_INFO("QueryDeploymentTest: Start worker");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("QueryDeploymentTest: Worker started successfully");
