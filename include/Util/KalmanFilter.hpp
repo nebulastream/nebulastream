@@ -143,7 +143,7 @@ class KalmanFilter {
     /**
      * @brief buffer of residual error from KF
      */
-    CircularBuffer<long> kfErrorWindow;
+    CircularBuffer<float> kfErrorWindow;
 
     /**
      * Error calculation using the window of previous

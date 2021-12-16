@@ -100,7 +100,7 @@ class CircularBufferIterator {
  */
 template<class T,
          typename Allocator = std::allocator<T>,
-         std::enable_if_t<std::is_integral<T>::value || std::is_pointer<T>::value, int> = 0>
+         std::enable_if_t<std::is_arithmetic<T>::value || std::is_pointer<T>::value, int> = 0>
 class CircularBuffer {
   public:
     // STL-style typedefs, similar to std::deque
