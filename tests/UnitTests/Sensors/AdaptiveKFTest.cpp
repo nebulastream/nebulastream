@@ -17,7 +17,6 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include <Sources/SourceCreator.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <Util/Logger.hpp>
 
@@ -25,6 +24,8 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <filesystem>
+#include <fstream>
 #include <vector>
 
 namespace NES {
@@ -34,13 +35,9 @@ class AdaptiveKFTest : public testing::Test {
     SchemaPtr schema;
     PhysicalStreamConfigPtr streamConf;
     Runtime::NodeEnginePtr nodeEngine;
-    uint64_t tuple_size;
-    uint64_t buffer_size;
-    uint64_t num_of_buffers;
-    uint64_t num_tuples_to_process;
     std::vector<double> measurements;
-    std::vector<double> measurementsWithLargeMagnitude;
     float defaultEstimationErrorDivider = 2.9289684;
+    std::chrono::time_point<std::chrono::system_clock,std::chrono::milliseconds> now_ms;
 
     static void SetUpTestCase() {
         NES::setupLogging("AdaptiveKFTest.log", NES::LOG_DEBUG);
@@ -54,11 +51,7 @@ class AdaptiveKFTest : public testing::Test {
         streamConf = PhysicalStreamConfig::createEmpty();
         schema = Schema::create()->addField("temperature", UINT32);
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
-        tuple_size = schema->getSchemaSizeInBytes();
-        buffer_size = nodeEngine->getBufferManager()->getBufferSize();
-        num_of_buffers = 1;
-        num_tuples_to_process = num_of_buffers * (buffer_size / tuple_size);
-
+        now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
         // Fake measurements for y with noise
         measurements = {
             1.04202710058, 1.10726790452, 1.2913511148, 1.48485250951, 1.72825901034,
@@ -71,13 +64,22 @@ class AdaptiveKFTest : public testing::Test {
             1.86967808173, 1.18073207847, 1.10729605087, 0.916168349913, 0.678547664519,
             0.562381751596, 0.355468474885, -0.155607486619, -0.287198661013, -0.602973173813
         };
-
-        measurementsWithLargeMagnitude = {
-            10.0, 100.0, 1000.0, 10000.0, 100000.0
-        };
     }
 
     void TearDown() override { NES_INFO("Tear down AdaptiveKFTest class."); }
+
+    std::string getTsInRfc3339(std::chrono::milliseconds gatheringInterval = std::chrono::milliseconds{0}) {
+        if (gatheringInterval.count() > 0) {
+            now_ms += std::chrono::milliseconds(gatheringInterval.count());
+        }
+        const auto now_s = std::chrono::time_point_cast<std::chrono::seconds>(now_ms);
+        const auto millis = now_ms - now_s;
+        const auto c_now = std::chrono::system_clock::to_time_t(now_s);
+
+        std::stringstream ss;
+        ss << std::put_time(gmtime(&c_now), "%FT%T") << '.' << std::setfill('0') << std::setw(3) << millis.count() << 'Z';
+        return ss.str();
+    }
 };
 
 class KFProxy : public KalmanFilter {
@@ -95,6 +97,7 @@ class KFProxy : public KalmanFilter {
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerTest);
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalTest);
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalMillisTest);
+    FRIEND_TEST(AdaptiveKFTest, kfUpdateSameValueFrequency);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
@@ -452,5 +455,56 @@ TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
     // assert that error is bigger when value is "abnormal"
     ASSERT_NE(abnormalEstimationError, normalEstimationError);
     ASSERT_GT(abnormalEstimationError, normalEstimationError);
+}
+
+TEST_F(AdaptiveKFTest, kfUpdateSameValueFrequency) {
+
+    std::filesystem::path path{ "/home/digiou/test-results" };
+    path /= "same-value-" + this->getTsInRfc3339() + ".csv"; //put something into there
+    std::filesystem::create_directories(path.parent_path()); //add directories based on the object path (without this line it will not work)
+
+    std::ofstream ofs(path);
+    // insert header
+    ofs << "Date,Interval,MeasurementValue,IntervalDirection,ValueDirection" << std::endl;
+
+    auto startingFreq = std::chrono::milliseconds{4000};
+    auto freqRange = std::chrono::milliseconds{8000};
+    // keep last 10 error values
+    KFProxy kf{2};
+    kf.setFrequency(startingFreq);
+    kf.setFrequencyRange(freqRange);
+    // init time for experiment
+    now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+
+    // initial state, values are all the same
+    Eigen::VectorXd initialState(3);
+    initialState << measurements[0], measurements[0], measurements[0];
+    kf.init(initialState);
+    // write initial state to file
+    ofs << this->getTsInRfc3339() << ","
+        << kf.frequency.count() << ","
+        << measurements[0] << ","
+        << "first" << ","
+        << "first"
+        << std::endl;
+
+    // start measurements vector
+    Eigen::VectorXd y(1);
+    for (auto measurementIdx = 0; measurementIdx < 50; ++measurementIdx) {
+        y << measurements[0];
+        kf.update(y);
+        // get new frequency
+        auto updatedFreq = kf.getNewFrequency();
+        // write to string stream
+        ofs << this->getTsInRfc3339(updatedFreq) << ","
+            << updatedFreq.count() << ","
+            << measurements[0] << ","
+            << "same" << ","
+            << "same"
+            << std::endl;
+    }
+
+    // close file
+    ofs.close();
 }
 }// namespace NES
