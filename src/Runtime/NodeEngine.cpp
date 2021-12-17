@@ -466,6 +466,10 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescri
             conf++;
         }
     }
+    if (!retPtr) {
+        NES_WARNING("returning default config");
+        retPtr = configs[0];
+    }
     return retPtr->build(sourceDescriptor->getSchema());
 }
 
