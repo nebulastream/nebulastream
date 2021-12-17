@@ -89,7 +89,6 @@ class TopologyNode : public Node {
      */
     void setMaintenanceFlag(bool flag);
 
-
     std::string toString() const override;
 
     /**
