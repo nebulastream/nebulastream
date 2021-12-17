@@ -62,7 +62,8 @@ class AdaptiveKFTest : public testing::Test {
             2.81003612051, 2.88321849354, 2.69789264832, 2.4342229249, 2.23464791825,
             2.30278776224, 2.02069770395, 1.94393985809, 1.82498398739, 1.52526230354,
             1.86967808173, 1.18073207847, 1.10729605087, 0.916168349913, 0.678547664519,
-            0.562381751596, 0.355468474885, -0.155607486619, -0.287198661013, -0.602973173813
+            0.562381751596, 0.355468474885, 500, 900, 900,
+            -0.155607486619, -0.287198661013, -0.602973173813
         };
     }
 
@@ -98,6 +99,7 @@ class KFProxy : public KalmanFilter {
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalTest);
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalMillisTest);
     FRIEND_TEST(AdaptiveKFTest, kfUpdateSameValueFrequency);
+    FRIEND_TEST(AdaptiveKFTest, kfUpdateNewValueFrequency);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
@@ -465,7 +467,7 @@ TEST_F(AdaptiveKFTest, kfUpdateSameValueFrequency) {
 
     std::ofstream ofs(path);
     // insert header
-    ofs << "Date,Interval,MeasurementValue,IntervalDirection,ValueDirection" << std::endl;
+    ofs << "Date,Interval,DiffInterval,IntervalDirection,MeasurementValue,DiffMeasurement,ValueDirection" << std::endl;
 
     auto startingFreq = std::chrono::milliseconds{4000};
     auto freqRange = std::chrono::milliseconds{8000};
@@ -483,24 +485,111 @@ TEST_F(AdaptiveKFTest, kfUpdateSameValueFrequency) {
     // write initial state to file
     ofs << this->getTsInRfc3339() << ","
         << kf.frequency.count() << ","
+        << "+0" << ","
+        << "same" << ","
         << measurements[0] << ","
-        << "first" << ","
-        << "first"
+        << "+0" << ","
+        << "same" << ","
         << std::endl;
 
     // start measurements vector
     Eigen::VectorXd y(1);
-    for (auto measurementIdx = 0; measurementIdx < 50; ++measurementIdx) {
+    for (uint64_t measurementIdx = 0; measurementIdx < measurements.size(); ++measurementIdx) {
         y << measurements[0];
+
+        // keep previous frequency
+        auto oldFreq = kf.frequency;
         kf.update(y);
+
         // get new frequency
         auto updatedFreq = kf.getNewFrequency();
+        auto freqDirection = "same";
+        if (updatedFreq.count() - oldFreq.count() > 0) {
+            freqDirection = "increase";
+        } else if (updatedFreq.count() - oldFreq.count() < 0) {
+            freqDirection = "decrease";
+        }
+
         // write to string stream
         ofs << this->getTsInRfc3339(updatedFreq) << ","
             << updatedFreq.count() << ","
+            << (updatedFreq.count() - oldFreq.count()) << ","
+            << freqDirection << ","
             << measurements[0] << ","
+            << "0" << ","
             << "same" << ","
-            << "same"
+            << std::endl;
+    }
+
+    // close file
+    ofs.close();
+}
+
+TEST_F(AdaptiveKFTest, kfUpdateNewValueFrequency) {
+
+    std::filesystem::path path{ "/home/digiou/test-results" };
+    path /= "different-value-" + this->getTsInRfc3339() + ".csv"; //put something into there
+    std::filesystem::create_directories(path.parent_path()); //add directories based on the object path (without this line it will not work)
+
+    std::ofstream ofs(path);
+    // insert header
+    ofs << "Date,Interval,DiffInterval,IntervalDirection,MeasurementValue,DiffMeasurement,ValueDirection" << std::endl;
+
+    auto startingFreq = std::chrono::milliseconds{4000};
+    auto freqRange = std::chrono::milliseconds{8000};
+    // keep last 10 error values
+    KFProxy kf{2};
+    kf.setFrequency(startingFreq);
+    kf.setFrequencyRange(freqRange);
+    // init time for experiment
+    now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+
+    // initial state, values are all the same
+    Eigen::VectorXd initialState(3);
+    initialState << 0, measurements[0], measurements[0];
+    kf.init(initialState);
+    // write initial state to file
+    ofs << this->getTsInRfc3339() << ","
+        << kf.frequency.count() << ","
+        << "+0" << ","
+        << "same" << ","
+        << measurements[0] << ","
+        << "+0" << ","
+        << "same" << ","
+        << std::endl;
+
+    // start measurements vector
+    Eigen::VectorXd y(1);
+    for (uint64_t measurementIdx = 1; measurementIdx < measurements.size(); ++measurementIdx) {
+        y << measurements[measurementIdx];
+        auto valueDirection = "same";
+        if (measurements[measurementIdx] - measurements[measurementIdx - 1] > 0) {
+            valueDirection = "increase";
+        } else if (measurements[measurementIdx] - measurements[measurementIdx - 1] < 0) {
+            valueDirection = "decrease";
+        }
+
+        // keep previous frequency
+        auto oldFreq = kf.frequency;
+        kf.update(y);
+
+        // get new frequency
+        auto updatedFreq = kf.getNewFrequency();
+        auto freqDirection = "same";
+        if (updatedFreq.count() - oldFreq.count() > 0) {
+            freqDirection = "increase";
+        } else if (updatedFreq.count() - oldFreq.count() < 0) {
+            freqDirection = "decrease";
+        }
+
+        // write to string stream
+        ofs << this->getTsInRfc3339(updatedFreq) << ","
+            << updatedFreq.count() << ","
+            << (updatedFreq.count() - oldFreq.count()) << ","
+            << freqDirection << ","
+            << measurements[measurementIdx] << ","
+            << (measurements[measurementIdx] - measurements[measurementIdx - 1]) << ","
+            << valueDirection << ","
             << std::endl;
     }
 
