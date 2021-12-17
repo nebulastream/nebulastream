@@ -308,7 +308,8 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
         }
         if (commandLineParams.find("--" + CSV_SOURCE_FILE_PATH_CONFIG) != commandLineParams.end()
             && !commandLineParams.find("--" + CSV_SOURCE_FILE_PATH_CONFIG)->second.empty()) {
-            configurationMap.insert_or_assign(CSV_SOURCE_FILE_PATH_CONFIG, commandLineParams.find("--" + CSV_SOURCE_FILE_PATH_CONFIG)->second);
+            configurationMap.insert_or_assign(CSV_SOURCE_FILE_PATH_CONFIG,
+                                              commandLineParams.find("--" + CSV_SOURCE_FILE_PATH_CONFIG)->second);
         }
         if (commandLineParams.find("--" + CSV_SOURCE_SKIP_HEADER_CONFIG) != commandLineParams.end()
             && !commandLineParams.find("--" + CSV_SOURCE_SKIP_HEADER_CONFIG)->second.empty()) {
@@ -317,7 +318,8 @@ SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::str
         }
         if (commandLineParams.find("--" + CSV_SOURCE_DELIMITER_CONFIG) != commandLineParams.end()
             && !commandLineParams.find("--" + CSV_SOURCE_DELIMITER_CONFIG)->second.empty()) {
-            configurationMap.insert_or_assign(CSV_SOURCE_DELIMITER_CONFIG, commandLineParams.find("--" + CSV_SOURCE_DELIMITER_CONFIG)->second);
+            configurationMap.insert_or_assign(CSV_SOURCE_DELIMITER_CONFIG,
+                                              commandLineParams.find("--" + CSV_SOURCE_DELIMITER_CONFIG)->second);
         }
         if (commandLineParams.find("--" + MQTT_SOURCE_URL_CONFIG) != commandLineParams.end()
             && !commandLineParams.find("--" + MQTT_SOURCE_URL_CONFIG)->second.empty()) {
