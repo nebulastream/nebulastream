@@ -700,7 +700,6 @@ TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
-
 TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
@@ -1790,28 +1789,34 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     out.close();
     crd->getNesWorker()->registerLogicalStream("input", testSchemaFileName);
 
-    for (int64_t i = 0; i < 4; i++) {
-        auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-            struct Record {
-                uint64_t id;
-                uint64_t value;
-                uint64_t timestamp;
-            };
+    for (int64_t i = 0; i < 2; i++) {
+        //        auto func_lamb_ptr = new std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>(lamb);
+//        auto func = std::make_shared<std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)>>
+//        [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        //        auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+//        auto func = std::make_shared<std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)>>
+        auto func =
+            [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+                struct Record {
+                    uint64_t id;
+                    uint64_t value;
+                    uint64_t timestamp;
+                };
 
-            auto* records = buffer.getBuffer<Record>();
-            auto ts = time(nullptr);
-            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                records[u].id = u;
-                //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-                records[u].value = u % 10;
-                records[u].timestamp = ts;
-            }
-        };
+                auto* records = buffer.getBuffer<Record>();
+                auto ts = time(nullptr);
+                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                    records[u].id = u;
+                    //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                    records[u].value = u % 10;
+                    records[u].timestamp = ts;
+                }
+            };
 
         NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create("LambdaSource",
                                                                                            "test_stream" + std::to_string(i),
                                                                                            "input",
-                                                                                           std::move(func1),
+                                                                                           std::move(func),
                                                                                            3000000,
                                                                                            0,
                                                                                            "frequency");
