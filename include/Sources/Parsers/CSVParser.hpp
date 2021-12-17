@@ -30,7 +30,7 @@ class CSVParser : public Parser {
    * @param physicalTypes vector with physical nes data types
    * @param delimiter delimiter of input file
    */
-    CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string  delimiter);
+    CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter);
 
     /**
    * @brief takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer

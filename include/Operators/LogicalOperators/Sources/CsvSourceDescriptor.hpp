@@ -18,8 +18,8 @@
 #define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_CSV_SOURCE_DESCRIPTOR_HPP_
 
 #include <Configurations/ConfigOption.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <chrono>
 
 namespace NES {
@@ -30,8 +30,7 @@ namespace NES {
 class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      Configurations::CSVSourceConfigPtr sourceConfigPtr);
+    static SourceDescriptorPtr create(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfigPtr);
 
     /**
      * @brief get source config ptr with all configurations for csv source
