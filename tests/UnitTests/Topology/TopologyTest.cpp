@@ -527,8 +527,42 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
 }
 
 /**
- * @brief Tests if path finding function find properly ignore nodes marked for maintenance in a complex topology
- */
+ * @brief Tests if the path finding function find() properly ignores nodes marked for maintenance in a complex topology
+ * Topology:
+    PhysicalNode[id=0, ip=localhost, resourceCapacity=4, usedResource=0]
+    |--PhysicalNode[id=4, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |--PhysicalNode[id=7, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |--PhysicalNode[id=11, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |--PhysicalNode[id=10, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
+    |--PhysicalNode[id=3, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |--PhysicalNode[id=7, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |--PhysicalNode[id=11, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |--PhysicalNode[id=10, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |--PhysicalNode[id=6, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |--PhysicalNode[id=10, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
+    |--PhysicalNode[id=2, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |--PhysicalNode[id=6, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |--PhysicalNode[id=10, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |--PhysicalNode[id=5, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |--PhysicalNode[id=9, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=12, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |--PhysicalNode[id=8, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |  |--PhysicalNode[id=12, ip=localhost, resourceCapacity=4, usedResource=0]
+    |--PhysicalNode[id=1, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |--PhysicalNode[id=8, ip=localhost, resourceCapacity=4, usedResource=0]
+    |  |  |--PhysicalNode[id=12, ip=localhost, resourceCapacity=4, usedResource=0]
+*/
 TEST_F(TopologyTest, testPathFindingWithMaintenance) {
     TopologyPtr topology = Topology::create();
 
@@ -545,7 +579,7 @@ TEST_F(TopologyTest, testPathFindingWithMaintenance) {
     }
 
     topology->setAsRoot(topologyNodes.at(0));
-    //sets up Topology as in Figure 1 of Balints proposal document
+    //sets up Topology
     // link each worker with its neighbor
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
@@ -579,6 +613,8 @@ TEST_F(TopologyTest, testPathFindingWithMaintenance) {
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(10), topologyNodes.at(14));
 
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(11), topologyNodes.at(14));
+
+    topology->print();
 
     std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(12),topologyNodes.at(13),topologyNodes.at(14)};
 

@@ -185,12 +185,12 @@ class Topology {
                                                   std::vector<TopologyNodePtr> destinationNodes);
 
     /**
-    * Looks for the TopologyNode with id in the vector of sourceNodes and their parents
-    * @param sourceNodes
-    * @param id
-    * @return nullptr if node isnt found, otherwise TopologyNodePtr
+    * @brief Looks for the TopologyNode with id in the vector of sourceNodes and their parents
+    * @param sourceNodes : the source topology nodes
+    * @param id : the id of the topology node that is being searched for
+    * @return nullptr if node is not found, otherwise TopologyNodePtr
     */
-    TopologyNodePtr findTopologyNodeByIdInSubGraph(uint64_t id, std::vector<TopologyNodePtr> sourceNodes);
+    TopologyNodePtr findTopologyNodeInSubgraphById(uint64_t id, std::vector<TopologyNodePtr> sourceNodes);
 
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
@@ -207,12 +207,12 @@ class Topology {
     find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
 
     /**
-     * Looks for the TopologyNode with id in the sourceNode and its parents by performing a Depth First Search
-     * @param sourceNode
-     * @param id
-     * @return nullptr if node isnt found, otherwise TopologyNodePtr
+     * @brief Looks for TopologyNode with matching identifier in sourceNode and its parents by performing a Depth First Search
+     * @param sourceNode : a single source topology node
+     * @param id :  the id of the topology node that is being searched for
+     * @return nullptr if node is not found, otherwise TopologyNodePtr
      */
-    TopologyNodePtr findTopologyNodeByIdInSubgraphHelper(TopologyNodePtr sourceNode, uint64_t id);
+    TopologyNodePtr findTopologyNodeInParentsById(TopologyNodePtr sourceNode, uint64_t id);
 
     //TODO: At present we assume that we have only one root node
     TopologyNodePtr rootNode;

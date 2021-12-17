@@ -15,6 +15,7 @@
 */
 
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
@@ -240,6 +241,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
 
     std::vector<NodePtr> parents = testNode->getParents();
     std::vector<NodePtr> updatedParents;
+    //filters out all parents that are marked for maintenance, as these should be ignored during path finding
     for (auto& parent: parents){
         if(!parent->as<TopologyNode>()->getMaintenanceFlag()){
             updatedParents.push_back(parent);
@@ -571,10 +573,11 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(std::vector<TopologyNode
 
     return findNodesBetween(commonAncestorForChildren, commonChildForParents);
 }
-TopologyNodePtr Topology::findTopologyNodeByIdInSubGraph(uint64_t id, std::vector<TopologyNodePtr> sourceNodes) {
+TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, std::vector<TopologyNodePtr> sourceNodes) {
     TopologyNodePtr found = nullptr;
     for(const auto&sourceNode : sourceNodes){
-        found = findTopologyNodeByIdInSubgraphHelper(sourceNode, id);
+        //Perform DFS on each source node and its parents for TopologyNode with matching identifier
+        found = findTopologyNodeInParentsById(sourceNode, id);
         if(found){
             break;
         }
@@ -582,18 +585,16 @@ TopologyNodePtr Topology::findTopologyNodeByIdInSubGraph(uint64_t id, std::vecto
     return found;
 }
 
-TopologyNodePtr Topology::findTopologyNodeByIdInSubgraphHelper(TopologyNodePtr sourceNode, uint64_t id){
-        // DFS
+TopologyNodePtr Topology::findTopologyNodeInParentsById(TopologyNodePtr sourceNode, uint64_t id){
+        auto topologyIterator = NES::DepthFirstNodeIterator(sourceNode).begin();
         TopologyNodePtr resultNode = nullptr;
-        if (sourceNode->getId() == id) {
-            return sourceNode;
-        }
-        // not equal
-        for (auto& currentNode : sourceNode->getParents()) {
-            resultNode = findTopologyNodeByIdInSubgraphHelper(currentNode->as<TopologyNode>(), id);
-            if (resultNode) {
+        while(topologyIterator != NES::DepthFirstNodeIterator::end()){
+            auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+            if (currentTopologyNode->getId() == id) {
+                resultNode = currentTopologyNode;
                 break;
             }
+            ++topologyIterator;
         }
         return resultNode;
 }
