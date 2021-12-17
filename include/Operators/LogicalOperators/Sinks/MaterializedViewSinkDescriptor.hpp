@@ -23,21 +23,39 @@
 namespace NES::Experimental::MaterializedView {
 
 /**
- * @brief ***
+ * @brief Descriptor defining properties used for creating physical materialized view sink
  */
 class MaterializedViewSinkDescriptor : public SinkDescriptor {
 
   public:
     /**
-     * @brief ***
+     * @brief The factory method for the materialized view sink descriptor
+     * @param materialized view id
+     * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr create(uint64_t viewId);
-    MaterializedViewSinkDescriptor(uint64_t viewId);
+
+    /**
+     * @brief returns the string representation of the network sink
+     * @return the string representation
+     */
     std::string toString() override;
+
+    /**
+     * @brief equal method for the NetworkSinkDescriptor
+     * @param other
+     * @return true if equal, else false
+     */
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
+
+    /**
+     * @brief getter for the view id
+     * @return the used view id
+     */
     uint64_t getViewId();
 
   private:
+    MaterializedViewSinkDescriptor(uint64_t viewId);
     uint64_t viewId;
 };
 using MaterializedViewSinkDescriptorPtr = std::shared_ptr<MaterializedViewSinkDescriptor>;
