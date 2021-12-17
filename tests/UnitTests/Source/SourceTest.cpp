@@ -1770,11 +1770,11 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
-    crdConf->setNumWorkerThreads(8);
-    crdConf->setNumberOfBuffersInGlobalBufferManager(3000);
-    crdConf->setNumberOfBuffersInSourceLocalBufferPool(124);
-    crdConf->setNumberOfBuffersPerWorker(124);
-    crdConf->setBufferSizeInBytes(524288);
+    crdConf->setNumWorkerThreads(4);
+//    crdConf->setNumberOfBuffersInGlobalBufferManager(3000);
+//    crdConf->setNumberOfBuffersInSourceLocalBufferPool(124);
+//    crdConf->setNumberOfBuffersPerWorker(124);
+//    crdConf->setBufferSizeInBytes(524288);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
 
@@ -1811,13 +1811,14 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
                 }
+                return;
             };
 
         NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create("LambdaSource",
                                                                                            "test_stream" + std::to_string(i),
                                                                                            "input",
                                                                                            std::move(func),
-                                                                                           3000000,
+                                                                                           30,
                                                                                            0,
                                                                                            "frequency");
         crd->getNesWorker()->registerPhysicalStream(conf1);
