@@ -432,8 +432,7 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
     std::unique_lock lock(engineMutex);
     std::vector<QueryStatistics> queryStatistics;
 
-    for(auto& plan : queryIdToQuerySubPlanIds)
-    {
+    for (auto& plan : queryIdToQuerySubPlanIds) {
         NES_DEBUG("QueryManager: Extracting query execution ids for the input query " << plan.first);
         std::vector<QuerySubPlanId> querySubPlanIds = plan.second;
         for (auto querySubPlanId : querySubPlanIds) {
@@ -441,8 +440,7 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
                                         << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
 
             queryStatistics.push_back(queryManager->getQueryStatistics(querySubPlanId).operator*());
-            if(withReset)
-            {
+            if (withReset) {
                 queryManager->getQueryStatistics(querySubPlanId)->clear();
             }
         }
@@ -456,17 +454,19 @@ Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitio
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor) {
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
     //search for right config
+    AbstractPhysicalStreamConfigPtr retPtr;
     auto streamName = sourceDescriptor->getStreamName();
-    for(auto conf : configs)
-    {
-        if(conf->getLogicalStreamName() == streamName)
-        {
-            NES_DEBUG("config for stream " << streamName);
-            return conf->build(sourceDescriptor->getSchema());
+    for (auto conf = configs.begin(); conf != configs.end();) {
+        if (conf->get()->getLogicalStreamName() == streamName) {
+            NES_DEBUG("config for stream " << streamName << " phy stream=" << conf->get()->getPhysicalStreamName());
+            retPtr = *conf;
+            configs.erase(conf);
+            break;
+        } else {
+            conf++;
         }
     }
-    NES_WARNING("No source config found for source.");
-    return configs[0]->build(sourceDescriptor->getSchema());
+    return retPtr->build(sourceDescriptor->getSchema());
 }
 
 void NodeEngine::setConfig(const AbstractPhysicalStreamConfigPtr& config) {
