@@ -2297,7 +2297,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithCountAggregatio
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(ConcurrentWindowDeploymentTest, testLongWindow) {
+TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
