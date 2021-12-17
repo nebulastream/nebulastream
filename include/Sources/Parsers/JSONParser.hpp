@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_SOURCES_PARSERS_JSON_PARSER_HPP_
 #define NES_INCLUDE_SOURCES_PARSERS_JSON_PARSER_HPP_
 
-#include "../../Runtime/MemoryLayout/DynamicTupleBuffer.hpp"
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Sources/Parsers/Parser.hpp>
 
 namespace NES {
