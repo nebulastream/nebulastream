@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include <algorithm>
 #include <assert.h>
 #include <atomic>
 #include <memory>
@@ -25,7 +26,6 @@ namespace NES::Experimental {
  * It processes all watermark updates from one specific origin and applies all updates in sequential order.
  * @assumptions This watermark processor assumes strictly monotonic update sequence numbers.
  * @assumption This watermark processor maintains a fixed size log of inflight watermark updates.
- * #TODO add spin lock if the log is full, currently we just fail.
  *
  * Implementation details:
  * This watermark processor stores in flight updates in a fixed size log, implemented with a cycling buffer.
@@ -53,41 +53,17 @@ class LockFreeWatermarkProcessor {
     uint64_t updateWatermark(uint64_t ts, uint64_t sequenceNumber) {
         // A new sequence number has to be greater than the currentWatermarkTuple.sequenceNumber.
         assert(sequenceNumber > currentSequenceNumber);
-
-        // We currently assume that the diff between sequence number and current sequence number will not exceed the log size.
-        // Otherwise, we would override content in the log
+        // If the diff between the sequence number and the current sequence number is >= logSize we have to wait till the log has enough space.
+        // Otherwise, we would override content.
         uint64_t current = currentSequenceNumber.load();
         while (sequenceNumber - current >= logSize) {
             current = currentSequenceNumber.load();
         }
-        //assert(sequenceNumber - currentSequenceNumber < logSize);
-        /**
-        // Check if we got the next valid sequence number.
-        // Only a single thread can have a matching sequence number, thus we know that no other thread can access the true case,
-        // till we update the currentWatermarkTuple.sequenceNumber
-        if (sequenceNumber == currentSequenceNumber + 1) {
-            WatermarkTuple nextWatermarkTuple = {ts, sequenceNumber};
-            // We first process the log to check if we can actually can apply multiple updates in one step.
-            // We apply updates from the log as long as the value contains the next expected sequence number.
-            while (readWatermarkTuple(nextWatermarkTuple.sequenceNumber + 1).sequenceNumber
-                   == nextWatermarkTuple.sequenceNumber + 1) {
-                nextWatermarkTuple = readWatermarkTuple(nextWatermarkTuple.sequenceNumber + 1);
-            };
-            // Set the watermark ts and sequence number atomically
-            currentWatermarkTs = nextWatermarkTuple.ts;
-            currentSequenceNumber = nextWatermarkTuple.sequenceNumber;
-        } else {
-            // The sequence number is not the next expected.
-            // So we store it in the correct lock position.
-            auto logIndex = getLogIndex(sequenceNumber);
-            log[logIndex] = {ts, sequenceNumber};
-        }
-        */
+        // place the sequence number in the log at its designated position.
         auto logIndex = getLogIndex(sequenceNumber);
         log[logIndex] = {ts, sequenceNumber};
-
+        // process the log
         processLog();
-
         return currentWatermarkTs;
     }
 
@@ -95,7 +71,7 @@ class LockFreeWatermarkProcessor {
 
   private:
     void processLog() {
-        // get the current sequence number
+        // get the current sequence number and apply the update if we have the correct sequence number
         auto sequenceNumber = currentSequenceNumber.load();
         auto watermarkTs = currentWatermarkTs.load();
         auto nextSequenceNumber = sequenceNumber + 1;
@@ -116,6 +92,62 @@ class LockFreeWatermarkProcessor {
     std::array<WatermarkTuple, logSize> log;
     std::atomic<uint64_t> currentSequenceNumber = 0;
     std::atomic<uint64_t> currentWatermarkTs = 0;
+};
+
+class LockFreeMultiOriginWatermarkProcessor {
+  public:
+    explicit LockFreeMultiOriginWatermarkProcessor(std::vector<uint64_t> originIDs) : originIDMap(originIDs) {
+        // initialize state.
+        watermarkProcessor.resize(originIDs.size());
+        for (uint64_t index = 0; index < originIDs.size(); index++) {
+            watermarkProcessor[index] = std::make_unique<LockFreeWatermarkProcessor<>>();
+        }
+    };
+
+    /**
+     * @brief Creates a new watermark processor, for a specific number of origins.
+     * @param numberOfOrigins
+     */
+    static std::shared_ptr<LockFreeMultiOriginWatermarkProcessor> create(const std::initializer_list<uint64_t> originIDs) {
+        return std::make_shared<LockFreeMultiOriginWatermarkProcessor>(originIDs);
+    }
+
+    uint64_t updateWatermark(uint64_t ts, uint64_t sequenceNumber, uint64_t origin) {
+        auto originIndex = getOriginIdIndex(origin);
+        watermarkProcessor[originIndex]->updateWatermark(ts, sequenceNumber);
+        /**
+         * // update the watermark for this origin.
+        do {
+            // load current watermark for this origin
+            currentWatermarkTs = currentWatermarks[originIndex].load();
+            // we have to prevent that another thread updated the watermark at the same time.
+            // thus we calculate the max between our update and the  currentWatermarkTs.
+            newWatermarkTs = std::max(newWatermarkTs, currentWatermarkTs);
+        } while (!currentWatermarks[originIndex].compare_exchange_strong(currentWatermarkTs, newWatermarkTs));
+         */
+        return getCurrentWatermark();
+    }
+
+    [[nodiscard]] uint64_t getCurrentWatermark() const {
+        auto minWt = UINT64_MAX;
+        for (auto& wt : watermarkProcessor) {
+            minWt = std::min(minWt, wt->getCurrentWatermark());
+        }
+        return minWt;
+    }
+
+  private:
+    uint64_t getOriginIdIndex(uint64_t id) {
+        for (uint64_t index = 0; index < originIDMap.size(); index++) {
+            if (originIDMap[index] == id) {
+                return index;
+            }
+        }
+        assert(false);
+    }
+
+    std::vector<std::unique_ptr<LockFreeWatermarkProcessor<>>> watermarkProcessor;
+    const std::vector<uint64_t> originIDMap;
 };
 
 }// namespace NES::Experimental

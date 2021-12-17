@@ -25,6 +25,8 @@
 
 namespace NES::Runtime {
 
+class AbstractBufferProvider;
+
 /**
  * @brief A WorkerContext represents the current state of a worker thread
  * Note that it is not thread-safe per se but it is meant to be used in
@@ -58,6 +60,7 @@ class WorkerContext {
      * @return TupleBuffer
      */
     TupleBuffer allocateTupleBuffer();
+    std::shared_ptr<AbstractBufferProvider> getBufferProvider();
 
     /**
      * @brief get current worker context thread id. This is assigned by calling NesThread::getId()

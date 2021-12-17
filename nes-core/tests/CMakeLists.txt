@@ -69,6 +69,10 @@ add_executable(watermark-manager-test "UnitTests/Runtime/WatermarkManagerTest.cp
 target_link_libraries(watermark-manager-test nes-tests)
 add_test(NAME watermark-manager-test COMMAND watermark-manager-test)
 
+add_executable(lock-free-watermark-manager-test "UnitTests/Runtime/LockFreeWatermarkManagerTest.cpp")
+target_link_libraries(lock-free-watermark-manager-test nes ${GTEST_LIBRARIES})
+add_test(NAME lock-free-watermark-manager-test COMMAND lock-free-watermark-manager-test)
+
 ### Code Generation Tests ###
 add_executable(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest.cpp")
 target_link_libraries(code-generation-tests nes-tests)
