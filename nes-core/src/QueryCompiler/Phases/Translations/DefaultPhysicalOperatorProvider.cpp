@@ -46,7 +46,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
-#include <Windowing/Experimental/RobbinThreadLocalPreAggregateWindowOperator.hpp>
+#include <Windowing/Experimental/PartitionedWindowOperator.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
@@ -253,16 +253,37 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
     auto windowDefinition = windowOperator->getWindowDefinition();
 
     if (true) {
-        auto experimentalWindowOperator = std::make_shared<Experimental::RobinThreadLocalPreAggregateWindowOperator>(windowDefinition);
-        auto externalOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
-                                                                                    operatorNode->getOutputSchema(),
-                                                                                    operatorNode->getOutputSchema(),
-                                                                                    experimentalWindowOperator);
-        operatorNode->insertBetweenThisAndChildNodes(externalOperator);
+        auto windowBufferManager = std::make_shared<Runtime::BufferManager>();
+        auto windowHandler = std::make_shared<Experimental::PreAggregationWindowHandler<uint64_t, uint64_t>>(windowDefinition,
+                                                                                                             windowBufferManager,
+                                                                                                             10,
+                                                                                                             1);
+        auto windowAggregateOperator = std::make_shared<Experimental::WindowAggregateOperator>(windowHandler);
+        auto externalWindowAggregateOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
+                                                                                                   operatorNode->getOutputSchema(),
+                                                                                                   operatorNode->getOutputSchema(),
+                                                                                                   windowAggregateOperator);
+        operatorNode->insertBetweenThisAndChildNodes(externalWindowAggregateOperator);
+
+        auto mergeSliceOperator = std::make_shared<Experimental::MergeSliceWindowOperator>(windowHandler);
+        auto externalMergeSliceOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
+                                                                                              operatorNode->getOutputSchema(),
+                                                                                              operatorNode->getOutputSchema(),
+                                                                                              mergeSliceOperator);
+        externalWindowAggregateOperator->insertBetweenThisAndChildNodes(externalMergeSliceOperator);
+
+        auto preAggregateOperator = std::make_shared<Experimental::PreAggregateWindowOperator>(windowHandler);
+        auto externalPreAggregateOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
+                                                                                                operatorNode->getOutputSchema(),
+                                                                                                operatorNode->getOutputSchema(),
+                                                                                                preAggregateOperator);
+        externalMergeSliceOperator->insertBetweenThisAndChildNodes(externalPreAggregateOperator);
+
+
         operatorNode->replace(
             PhysicalOperators::PhysicalScanOperator::create(Util::getNextOperatorId(), operatorNode->getOutputSchema()));
+        return;
     }
-
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);

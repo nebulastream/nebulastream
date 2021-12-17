@@ -27,6 +27,8 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/Experimental/SliceStore.hpp>
+#include <Windowing/Experimental/PartitionedWindowOperator.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
@@ -101,6 +103,93 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 
     std::vector<TupleBuffer> buffers;
 };
+
+TEST_F(WindowManagerTest, sliceStoreTest) {
+    auto sliceStore = Experimental::SliceStore<robin_hood::unordered_map<uint64_t, uint64_t>>(1);
+    for (uint64_t i = 0; i < 99; ++i) {
+        auto& slice = sliceStore.findSliceByTs(i);
+        ASSERT_EQ(slice->start, i);
+    }
+    sliceStore.eraseFirst(20);
+    for (uint64_t i = 0; i < 20; ++i) {
+        auto& slice = sliceStore.findSliceByTs(99 + i);
+        ASSERT_EQ(slice->start, 99 + i);
+    }
+    for (uint64_t i = 0; i < 20; ++i) {
+        auto& slice = sliceStore.findSliceByTs(99 + i);
+        ASSERT_EQ(slice->start, 99 + i);
+    }
+}
+
+TEST_F(WindowManagerTest, PartitionedHashMap) {
+    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
+    auto partitionedHashMap = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
+    for (uint64_t i = 0; i < 1000; ++i) {
+        auto* entry = partitionedHashMap.getEntry(i);
+        entry->value = 42;
+    }
+
+    for (uint64_t i = 0; i < 1000; ++i) {
+        auto* entry = partitionedHashMap.getEntry(i);
+        ASSERT_EQ(entry->value, 42ULL);
+    }
+
+    partitionedHashMap.clear();
+
+    for (uint64_t i = 0; i < 1000; ++i) {
+        auto* entry = partitionedHashMap.getEntry(i);
+        entry->value = 5;
+    }
+
+    for (uint64_t i = 0; i < 1000; ++i) {
+        auto* entry = partitionedHashMap.getEntry(i);
+        ASSERT_EQ(entry->value, 5ULL);
+    }
+}
+
+TEST_F(WindowManagerTest, MergePartitionedHashMap) {
+    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
+    auto partitionedHashMapT1 = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
+    auto partitionedHashMapT2 = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
+    for (uint64_t i = 0; i < 1000; ++i) {
+        auto* entry = partitionedHashMapT1.getEntry(i);
+        entry->value = 42;
+        auto* entry2 = partitionedHashMapT2.getEntry(i);
+        entry2->value = 42;
+    }
+
+    auto globalSliceStore = Experimental::GlobalAggregateStore<uint64_t, uint64_t>(bufferManager);
+
+    // merges partitions
+    for (uint64_t i = 0; i < 2; i++) {
+
+        auto& partition = globalSliceStore.getPartition(i);
+        auto& slice = partition->getSlice(0);
+        auto partition1 = partitionedHashMapT1.extractPartition(i);
+        slice->addPartition(std::move(partition1));
+
+        auto partition2 = partitionedHashMapT2.extractPartition(i);
+        auto result = slice->addPartition(std::move(partition2));
+        if (result == 2) {
+            // merge thread local state
+            auto& globalAggregate = slice->getGlobalState();
+            for(auto& partition: slice->getPartitions()){
+                for(uint64_t index = 0; index < partition->size(); index++){
+                    auto* partitionEntry = (*partition)[index];
+                    auto* globalEntry = globalAggregate.getEntry(partitionEntry->key);
+                    globalEntry->value = globalEntry->value + partitionEntry->value;
+                }
+            }
+            auto globalPartition = globalAggregate.extractPartition(0);
+            for(uint64_t index = 0; index < globalPartition->size(); index++){
+                auto* partitionEntry = (*globalPartition)[index];
+                std::cout <<  partitionEntry->key << " - " << partitionEntry->value  << std::endl;
+            }
+
+
+        }
+    }
+}
 
 TEST_F(WindowManagerTest, testSumAggregation) {
     auto aggregation = ExecutableSumAggregation<int64_t>::create();

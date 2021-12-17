@@ -101,5 +101,6 @@ Network::EventOnlyNetworkChannel* WorkerContext::getEventOnlyNetworkChannel(Netw
     auto it = reverseEventChannels.find(ownerId);// note we assume it's always available
     return (*it).second.get();
 }
+std::shared_ptr<AbstractBufferProvider> WorkerContext::getBufferProvider() { return localBufferPool; }
 
 }// namespace NES::Runtime
