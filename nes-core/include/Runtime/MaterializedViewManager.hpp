@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
 #define NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
 
-#include <map>
+#include <unordered_map>
 
 namespace NES::Experimental::MaterializedView {
 
@@ -65,7 +65,7 @@ public:
     std::string to_string();
 
   private:
-    std::map<uint64_t, MaterializedViewPtr> viewMap;
+    std::unordered_map<uint64_t, MaterializedViewPtr> viewMap;
     uint64_t nextViewId = 0;
 
 }; // class MaterializedViewManager
