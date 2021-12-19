@@ -71,7 +71,7 @@ TableSource::TableSource(SchemaPtr schema,
                                 "The following path is not a valid table file: " + pathTableFile);
 
     // check how many rows are in file/ table
-    numTuples = 1 + std::count(std::istreambuf_iterator<char>(input),
+    numTuples = std::count(std::istreambuf_iterator<char>(input),
                                std::istreambuf_iterator<char>(), '\n');
 
     // reset ifstream to beginning of file
@@ -91,13 +91,11 @@ TableSource::TableSource(SchemaPtr schema,
     auto inputParser = std::make_shared<CSVParser>(tupleSizeInBytes, this->schema->getSize(), physicalTypes, delimiter);
 
     // read file into memory
-    uint64_t tupleCount = 0;
     std::string line;
-    while (tupleCount < numTuples) {
+    for (size_t tupleCount = 0; tupleCount < numTuples; tupleCount++) {
         std::getline(input, line);
         NES_TRACE("TableSource line=" << tupleCount << " val=" << line);
         inputParser->writeInputTupleToMemoryArea(line, tupleCount, tmp, memoryAreaSize);
-        tupleCount++;
     }
 
     // if the memory area is smaller than a buffer
