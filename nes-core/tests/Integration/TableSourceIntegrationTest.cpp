@@ -44,6 +44,12 @@ auto schema_customer = Schema::create()
         ->addField("C_MKTSEGMENT", DataTypeFactory::createFixedChar(10+1))            // fixed text
         ->addField("C_COMMENT", DataTypeFactory::createFixedChar(117+1))  // var text
         ;
+auto schema_nation = Schema::create()
+        ->addField("N_NATIONKEY", BasicType::UINT32)
+        ->addField("N_NAME", DataTypeFactory::createFixedChar(25+1))      // var text
+        ->addField("N_REGIONKEY", BasicType::UINT32)
+        ->addField("N_COMMENT", DataTypeFactory::createFixedChar(152+1))  // var text
+        ;
 struct __attribute__((packed)) record_customer {
     uint32_t C_CUSTKEY;
     char C_NAME[25+1];
@@ -54,8 +60,15 @@ struct __attribute__((packed)) record_customer {
     char C_MKTSEGMENT[10+1];
     char C_COMMENT[117+1];
 };
+struct __attribute__((packed)) record_nation {
+    uint32_t N_NATIONKEY;
+    char N_NAME[25+1];
+    uint32_t N_REGIONKEY;
+    char N_COMMENT[152+1];
+};
 
 const std::string table_path_customer_l0200 = "./test_data/tpch_l0200_customer.tbl";
+const std::string table_path_nation_s0001 = "./test_data/tpch_s0001_nation.tbl";
 
 class TableSourceIntegrationTest : public testing::Test {
   public:
@@ -77,6 +90,17 @@ class TableSourceIntegrationTest : public testing::Test {
             int num_lines = std::count(std::istreambuf_iterator<char>(file),
                                            std::istreambuf_iterator<char>(), '\n');
             NES_ASSERT(num_lines==200, "The table file table_path_customer_l0200 does not contain exactly 200 lines.");
+        }
+
+        ASSERT_EQ(sizeof(record_nation), 187UL);
+        ASSERT_EQ(schema_nation->getSchemaSizeInBytes(), 187ULL);
+        {
+            std::ifstream file;
+            file.open(table_path_nation_s0001);
+            NES_ASSERT(file.is_open(), "Invalid path.");
+            int num_lines = std::count(std::istreambuf_iterator<char>(file),
+                                           std::istreambuf_iterator<char>(), '\n');
+            NES_ASSERT(num_lines==25, "The table file table_path_nation_s0001 does not contain exactly 25 lines.");
         }
     }
 };
@@ -119,7 +143,7 @@ TEST_F(TableSourceIntegrationTest, testCustomerTable) {
     wrk1->registerPhysicalStream(conf);
 
     // local fs
-    std::string filePath = "tableSourceTestOut.csv";
+    std::string filePath = "testCustomerTableOut.csv";
     remove(filePath.c_str());
 
     //register query
@@ -152,6 +176,165 @@ TEST_F(TableSourceIntegrationTest, testCustomerTable) {
             "7,Customer#000000007,TcGe5gaZNgVePxU5kRrvXBfkasDTea,18,28-190-982-9759,9561.950000,AUTOMOBILE,ainst the ironic, express theodolites. express, even pinto beans among the exp\n"
             "8,Customer#000000008,I0B10bB0AymmC, 0PrRYBCP1yGJ8xcBPmWhl5,17,27-147-574-9335,6819.740000,BUILDING,among the slyly regular theodolites kindle blithely courts. carefully even theodolites haggle slyly along the ide\n"
             "9,Customer#000000009,xKiAFTjUsCuxfeleNqefumTrjS,8,18-338-906-3675,8324.070000,FURNITURE,r theodolites according to the requests wake thinly excuses: pending requests haggle furiousl\n";
+    EXPECT_EQ(content, expected);
+
+    bool retStopWrk = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+// simple test for nation table
+TEST_F(TableSourceIntegrationTest, testNationTable) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    NES_INFO("TableSourceIntegrationTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("TableSourceIntegrationTest: Coordinator started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    auto streamCatalog = crd->getStreamCatalog();
+    streamCatalog->addLogicalStream("tpch_nation", schema_nation);
+
+    NES_INFO("TableSourceIntegrationTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("TableSourceIntegrationTest: Worker1 started successfully");
+
+    AbstractPhysicalStreamConfigPtr conf = TableSourceStreamConfig::create("TableSource",
+                                                                            "tpch_s0001_nation",
+                                                                            "tpch_nation",
+                                                                            table_path_nation_s0001,
+                                                                            0);  // <-- placeholder
+    wrk1->registerPhysicalStream(conf);
+
+    // local fs
+    std::string filePath = "testNationTableOut.csv";
+    remove(filePath.c_str());
+
+    //register query
+    std::string queryString =
+            R"(Query::from("tpch_nation").filter(Attribute("N_NATIONKEY") > 20).sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    int buffersToExpect = 1;
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+
+    NES_INFO("TableSourceIntegrationTest: Remove query");
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    std::ifstream ifs(filePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    const std::string expected =
+            "tpch_nation$N_NATIONKEY:INTEGER,tpch_nation$N_NAME:ArrayType,tpch_nation$N_REGIONKEY:INTEGER,tpch_nation$N_COMMENT:ArrayType\n"
+            "21,VIETNAM,2,hely enticingly express accounts. even, final \n"
+            "22,RUSSIA,3, requests against the platelets use never according to the quickly regular pint\n"
+            "23,UNITED KINGDOM,3,eans boost carefully special requests. accounts are. carefull\n"
+            "24,UNITED STATES,1,y final packages. slow foxes cajole quickly. quickly silent platelets breach ironic accounts. unusual pinto be\n";
+    EXPECT_EQ(content, expected);
+
+    bool retStopWrk = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+// simple test for nation table
+TEST_F(TableSourceIntegrationTest, testTwoTableJoin) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    NES_INFO("TableSourceIntegrationTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("TableSourceIntegrationTest: Coordinator started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    auto streamCatalog = crd->getStreamCatalog();
+    streamCatalog->addLogicalStream("tpch_customer", schema_customer);
+    streamCatalog->addLogicalStream("tpch_nation", schema_nation);
+
+    NES_INFO("TableSourceIntegrationTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("TableSourceIntegrationTest: Worker1 started successfully");
+
+    AbstractPhysicalStreamConfigPtr confCustomer = TableSourceStreamConfig::create("TableSource",
+                                                                           "tpch_l0200_customer",
+                                                                           "tpch_customer",
+                                                                           table_path_customer_l0200,
+                                                                           0);  // <-- placeholder
+    wrk1->registerPhysicalStream(confCustomer);
+    AbstractPhysicalStreamConfigPtr confNation = TableSourceStreamConfig::create("TableSource",
+                                                                            "tpch_s0001_nation",
+                                                                            "tpch_nation",
+                                                                            table_path_nation_s0001,
+                                                                            0);  // <-- placeholder
+    wrk1->registerPhysicalStream(confNation);
+
+    // local fs
+    std::string filePath = "testTwoTableJoinOut.csv";
+    remove(filePath.c_str());
+
+    //register query
+    std::string queryString =
+            R"(Query::from("tpch_nation").filter(Attribute("N_NATIONKEY") == 21).map(Attribute("timeForWindow") = 1)
+            .joinWith(Query::from("tpch_customer").map(Attribute("timeForWindow") = 1))
+                .where(Attribute("NATIONKEY")).equalsTo(Attribute("N_NATIONKEY"))
+                .window(TumblingWindow::of(EventTime(Attribute("timeForWindow")), Milliseconds(1)))
+            .sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    int buffersToExpect = 1;
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+
+    NES_INFO("TableSourceIntegrationTest: Remove query");
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    std::ifstream ifs(filePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    const std::string expected =
+            "tpch_nation$C_NATIONKEY:INTEGER,tpch_nation$C_NAME:ArrayType,tpch_nation$C_REGIONKEY:INTEGER,tpch_nation$C_COMMENT:ArrayType\n"
+            "21,VIETNAM,2,hely enticingly express accounts. even, final \n"
+            "22,RUSSIA,3, requests against the platelets use never according to the quickly regular pint\n"
+            "23,UNITED KINGDOM,3,eans boost carefully special requests. accounts are. carefull\n"
+            "24,UNITED STATES,1,y final packages. slow foxes cajole quickly. quickly silent platelets breach ironic accounts. unusual pinto be\n";
     EXPECT_EQ(content, expected);
 
     bool retStopWrk = wrk1->stop(false);
