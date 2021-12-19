@@ -74,7 +74,7 @@ class TableSourceIntegrationTest : public testing::Test {
             std::ifstream file;
             file.open(table_path_customer_l0200);
             NES_ASSERT(file.is_open(), "Invalid path.");
-            int num_lines = 1 + std::count(std::istreambuf_iterator<char>(file),
+            int num_lines = std::count(std::istreambuf_iterator<char>(file),
                                            std::istreambuf_iterator<char>(), '\n');
             NES_ASSERT(num_lines==200, "The table file table_path_customer_l0200 does not contain exactly 200 lines.");
         }
