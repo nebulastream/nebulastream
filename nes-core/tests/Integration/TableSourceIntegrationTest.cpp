@@ -34,6 +34,29 @@ namespace NES {
 uint64_t rpcPort = 4000;
 uint64_t restPort = 8081;
 
+auto schema_customer = Schema::create()
+        ->addField("C_CUSTKEY", BasicType::UINT32)
+        ->addField("C_NAME", DataTypeFactory::createFixedChar(25+1))      // var text
+        ->addField("C_ADDRESS", DataTypeFactory::createFixedChar(40+1))   // var text
+        ->addField("C_NATIONKEY", BasicType::UINT32)
+        ->addField("C_PHONE", DataTypeFactory::createFixedChar(15+1))     // fixed text
+        ->addField("C_ACCTBAL", DataTypeFactory::createDouble())                 // decimal
+        ->addField("C_MKTSEGMENT", DataTypeFactory::createFixedChar(10+1))            // fixed text
+        ->addField("C_COMMENT", DataTypeFactory::createFixedChar(117+1))  // var text
+        ;
+struct __attribute__((packed)) record_customer {
+    uint32_t C_CUSTKEY;
+    char C_NAME[25+1];
+    char C_ADDRESS[40+1];
+    uint32_t C_NATIONKEY;
+    char C_PHONE[15+1];
+    double C_ACCTBAL;
+    char C_MKTSEGMENT[10+1];
+    char C_COMMENT[117+1];
+};
+
+const std::string table_path_customer_l0200 = "./test_data/tpch_l0200_customer.tbl";
+
 class TableSourceIntegrationTest : public testing::Test {
   public:
     static void SetUpTestCase() {
@@ -44,11 +67,23 @@ class TableSourceIntegrationTest : public testing::Test {
     void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
+
+        ASSERT_EQ(sizeof(record_customer), 228UL);
+        ASSERT_EQ(schema_customer->getSchemaSizeInBytes(), 228ULL);
+        {
+            std::ifstream file;
+            file.open(table_path_customer_l0200);
+            NES_ASSERT(file.is_open(), "Invalid path.");
+            int num_lines = 1 + std::count(std::istreambuf_iterator<char>(file),
+                                           std::istreambuf_iterator<char>(), '\n');
+            NES_ASSERT(num_lines==200, "The table file table_path_customer_l0200 does not contain exactly 200 lines.");
+        }
     }
 };
 
-/// This test checks that a deployed TableSource can write M records spanning exactly N records
-TEST_F(TableSourceIntegrationTest, testTableSource) {
+
+// This test checks that a deployed TableSource can be initialized and wueried with a simple query
+TEST_F(TableSourceIntegrationTest, testCustomerTable) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
 
@@ -65,33 +100,7 @@ TEST_F(TableSourceIntegrationTest, testTableSource) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     auto streamCatalog = crd->getStreamCatalog();
-
-
-    struct __attribute__((packed)) Record {
-        uint32_t C_CUSTKEY;
-        char C_NAME[25+1];
-        char C_ADDRESS[40+1];
-        uint32_t C_NATIONKEY;
-        char C_PHONE[15+1];
-        double C_ACCTBAL;
-        char C_MKTSEGMENT[10+1];
-        char C_COMMENT[117+1];
-    };
-    ASSERT_EQ(sizeof(Record), 228UL);
-
-    auto schema = Schema::create()
-            ->addField("C_CUSTKEY", BasicType::UINT32)
-            ->addField("C_NAME", DataTypeFactory::createFixedChar(25+1))      // var text
-            ->addField("C_ADDRESS", DataTypeFactory::createFixedChar(40+1))   // var text
-            ->addField("C_NATIONKEY", BasicType::UINT32)
-            ->addField("C_PHONE", DataTypeFactory::createFixedChar(15+1))     // fixed text
-            ->addField("C_ACCTBAL", DataTypeFactory::createDouble())                 // decimal
-            ->addField("C_MKTSEGMENT", DataTypeFactory::createFixedChar(10+1))            // fixed text
-            ->addField("C_COMMENT", DataTypeFactory::createFixedChar(117+1))  // var text
-            ;
-    ASSERT_EQ(schema->getSchemaSizeInBytes(), 228ULL);
-
-    streamCatalog->addLogicalStream("tpch_customer", schema);
+    streamCatalog->addLogicalStream("tpch_customer", schema_customer);
 
     NES_INFO("TableSourceIntegrationTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
@@ -102,19 +111,10 @@ TEST_F(TableSourceIntegrationTest, testTableSource) {
     EXPECT_TRUE(retStart1);
     NES_INFO("TableSourceIntegrationTest: Worker1 started successfully");
 
-    const std::string table_path = "./test_data/tpch_l0200_customer.tbl";
-    {
-        std::ifstream file;
-        file.open(table_path);
-        NES_ASSERT(file.is_open(), "Invalid path.");
-        int num_lines = 1 + std::count(std::istreambuf_iterator<char>(file),
-                                   std::istreambuf_iterator<char>(), '\n');
-        NES_ASSERT(num_lines==200, "The table file does not contain exactly 200 lines.");
-    }
     AbstractPhysicalStreamConfigPtr conf = TableSourceStreamConfig::create("TableSource",
                                                                             "tpch_l0200_customer",
                                                                             "tpch_customer",
-                                                                            table_path,
+                                                                            table_path_customer_l0200,
                                                                             0);  // <-- placeholder
     wrk1->registerPhysicalStream(conf);
 
