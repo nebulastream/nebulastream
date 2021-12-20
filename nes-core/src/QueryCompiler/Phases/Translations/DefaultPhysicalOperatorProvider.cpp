@@ -253,11 +253,22 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
     auto windowDefinition = windowOperator->getWindowDefinition();
 
     if (true) {
-        auto windowBufferManager = std::make_shared<Runtime::BufferManager>();
+        auto windowBufferManager = std::make_shared<Runtime::BufferManager>(1024 * 1024, 20000);
+        uint64_t sliceSize = 0;
+        if (windowDefinition->getWindowType()->isTumblingWindow()) {
+            auto tumblingWindow = dynamic_pointer_cast<Windowing::TumblingWindow>(windowDefinition->getWindowType());
+            // auto numberOfSlices = windowDefinition->getAllowedLateness() / tumblingWindow->getSize().getTime();
+            sliceSize = tumblingWindow->getSize().getTime();
+        } else {
+            auto slidingWindow = dynamic_pointer_cast<Windowing::SlidingWindow>(windowDefinition->getWindowType());
+            // auto numberOfSlices = windowDefinition->getAllowedLateness() / tumblingWindow->getSize().getTime();
+            sliceSize = slidingWindow->getSlide().getTime();
+        }
+        auto numberOfWorkerThreads = 8;
         auto windowHandler = std::make_shared<Experimental::PreAggregationWindowHandler<uint64_t, uint64_t>>(windowDefinition,
                                                                                                              windowBufferManager,
-                                                                                                             10,
-                                                                                                             1);
+                                                                                                             sliceSize,
+                                                                                                             numberOfWorkerThreads);
         auto windowAggregateOperator = std::make_shared<Experimental::WindowAggregateOperator>(windowHandler);
         auto externalWindowAggregateOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
                                                                                                    operatorNode->getOutputSchema(),

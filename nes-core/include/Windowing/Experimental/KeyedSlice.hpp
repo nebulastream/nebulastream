@@ -30,7 +30,7 @@ class KeyedSlice {
 template<class KeyType, class ValueType>
 struct Entry {
     KeyType key;
-    uint64_t hash;
+   // uint64_t hash;
     ValueType value;
 };
 
@@ -40,6 +40,10 @@ class Partition {
     Partition(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
         : bufferManager(bufferManager), entrySize(sizeof(Entry<KeyType, ValueType>)),
           entriesPerBuffer(bufferManager->getBufferSize() / entrySize) {}
+    ~Partition(){
+       // std::cout << "~Partition" << std::endl;
+    };
+
 
     uint8_t* entryIndexToAddress(uint64_t entry) {
         auto bufferIndex = entry / entriesPerBuffer;
@@ -50,8 +54,12 @@ class Partition {
 
     uint8_t* allocateNewEntry() {
         if (maxEntry % entriesPerBuffer == 0) {
-            Runtime::TupleBuffer buffer = bufferManager->getBufferBlocking();
-            tupleBuffers.emplace_back(std::move(buffer));
+
+            auto buffer = bufferManager->getBufferNoBlocking();
+            if(!buffer.has_value()){
+                throw Compiler::CompilerException("BufferManager is empty. Size " + std::to_string(bufferManager->getNumOfPooledBuffers()));
+            }
+            tupleBuffers.emplace_back(std::move(buffer.value()));
         }
         return entryIndexToAddress(maxEntry++);
     }
@@ -77,15 +85,16 @@ class PartitionedHashMap {
         clear();
     }
 
-    Entry<KeyType, ValueType>* getEntry(KeyType key) {
-        const auto hash = getHashEntry(key);
+   inline Entry<KeyType, ValueType>* getEntry(KeyType key) {
+        //const auto hash = getHashEntry(key);
         auto value = map.find(key);
         if (value == map.end()) {
-            auto partitionIndex = hash % numberOfPartitions;
+           // auto partitionIndex = hash % numberOfPartitions;
+            auto partitionIndex = 0;
             auto nextAddress = partitions[partitionIndex]->allocateNewEntry();
             map[key] = nextAddress;
             auto* entry = ((Entry<KeyType, ValueType>*) nextAddress);
-            entry->hash = hash;
+            //entry->hash = hash;
             entry->key = key;
             entry->value = 0;
             return entry;
@@ -100,7 +109,7 @@ class PartitionedHashMap {
         }
     }
 
-    uint64_t getNumberOfPartitions() { return numberOfPartitions; }
+    uint64_t getNumberOfPartitions() { return 1; }
     std::array<std::unique_ptr<Partition<KeyType, ValueType>>, numberOfPartitions>& getPartitions() { return partitions; }
 
     uint64_t getHashEntry(KeyType key) { return hash(key); }
@@ -124,7 +133,7 @@ class PartitionedHashMap {
     uint64_t entriesPerBuffer;
 };
 
-template<class KeyType, class ValueType, uint64_t numberOfPartitions = 2>
+template<class KeyType, class ValueType, uint64_t numberOfPartitions>
 class PartitionedKeyedSlice {
   public:
     PartitionedKeyedSlice(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, uint64_t start, uint64_t end)
