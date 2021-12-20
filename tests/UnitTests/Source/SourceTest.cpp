@@ -1535,7 +1535,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     wrk1->registerLogicalStream("input1", testSchemaFileName);
 
     NES::AbstractPhysicalStreamConfigPtr conf1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 6, 11, "ingestionrate");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 22, 11, "ingestionrate");
     wrk1->registerPhysicalStream(conf1);
 
     std::string outputFilePath = "testIngestionRateFromQuery.out";
@@ -1568,7 +1568,55 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
                              "1,1,4\n"
                              "1,1,5\n"
                              "1,1,5\n"
-                             "1,1,5\n";
+                             "1,1,5\n"
+                             "1,1,6\n"
+                             "1,1,6\n"
+                             "1,1,6\n"
+                             "1,1,7\n"
+                             "1,1,7\n"
+                             "1,1,7\n"
+                             "1,1,8\n"
+                             "1,1,8\n"
+                             "1,1,8\n"
+                             "1,1,9\n"
+                             "1,1,9\n"
+                             "1,1,9\n"
+                             "1,1,10\n"
+                             "1,1,10\n"
+                             "1,1,10\n"
+                             "1,1,11\n"
+                             "1,1,11\n"
+                             "1,1,11\n"
+                             "1,1,12\n"
+                             "1,1,12\n"
+                             "1,1,12\n"
+                             "1,1,13\n"
+                             "1,1,13\n"
+                             "1,1,13\n"
+                             "1,1,14\n"
+                             "1,1,14\n"
+                             "1,1,14\n"
+                             "1,1,15\n"
+                             "1,1,15\n"
+                             "1,1,15\n"
+                             "1,1,16\n"
+                             "1,1,16\n"
+                             "1,1,16\n"
+                             "1,1,17\n"
+                             "1,1,17\n"
+                             "1,1,17\n"
+                             "1,1,18\n"
+                             "1,1,18\n"
+                             "1,1,18\n"
+                             "1,1,19\n"
+                             "1,1,19\n"
+                             "1,1,19\n"
+                             "1,1,20\n"
+                             "1,1,20\n"
+                             "1,1,20\n"
+                             "1,1,21\n"
+                             "1,1,21\n"
+                             "1,1,21\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath, 60));
     auto stop = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
