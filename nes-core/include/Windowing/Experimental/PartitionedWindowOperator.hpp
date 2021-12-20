@@ -94,15 +94,17 @@ class PreAggregationWindowHandler
                                 uint64_t sliceSize,
                                 uint64_t numberOfThreads)
         : sliceSize(sliceSize), globalSliceStore(bufferManager), bufferManager(bufferManager) {
-
-        for (uint64_t i = 0; i < numberOfThreads; i++) {
-            threadLocalSliceStore.emplace_back(bufferManager, sliceSize);
-        }
         std::vector<uint64_t> originIds;
         for (uint64_t i = 0; i < windowDefinition->getNumberOfInputEdges(); i++) {
             originIds.emplace_back(i + 1);
         }
         lockFreeWatermarkProcessor = std::make_shared<LockFreeWatermarkProcessor<>>();
+    }
+
+    void setup(Runtime::Execution::PipelineExecutionContext& ctx) {
+        for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
+            threadLocalSliceStore.emplace_back(bufferManager, sliceSize);
+        }
     }
     const uint64_t sliceSize;
     std::vector<PartitionedSliceStore<uint64_t, uint64_t>> threadLocalSliceStore;
@@ -127,7 +129,10 @@ class PreAggregateWindowOperator : public Runtime::Execution::ExecutablePipeline
         uint64_t test$ts;
     };
 
-    uint32_t setup(Runtime::Execution::PipelineExecutionContext&) override { return 0; }
+    uint32_t setup(Runtime::Execution::PipelineExecutionContext& ctx) override {
+        windowOperatorHandler->setup(ctx);
+        return 0;
+    }
 
     uint32_t open(Runtime::Execution::PipelineExecutionContext&, Runtime::WorkerContext&) override { return 0; }
     __attribute__((noinline)) ExecutionResult execute(Runtime::TupleBuffer& inputTupleBuffer,
@@ -239,7 +244,6 @@ class MergeSliceWindowOperator : public Runtime::Execution::ExecutablePipelineSt
 
         //globalSlice->getPartitions().clear();
 
-
         auto newMaxSliceIndex = globalPartition->triggeredSliceSequenceLog->append(mergeTask->sliceIndex + 1);
         auto currentMaxSliceIndex = globalPartition->maxSliceIndex.load();
         while (newMaxSliceIndex > currentMaxSliceIndex) {
@@ -247,7 +251,7 @@ class MergeSliceWindowOperator : public Runtime::Execution::ExecutablePipelineSt
             if (globalPartition->maxSliceIndex.compare_exchange_strong(currentMaxSliceIndex, newMaxSliceIndex)) {
                 // we updated the slice index from currentMaxSliceIndex to newMaxSliceIndex.
                 // trigger window aggregation for all slices between currentMaxSliceIndex and newMaxSliceIndex
-               // std::cout << "Send merge window " << std::endl;
+                // std::cout << "Send merge window " << std::endl;
 
                 auto buffer = workerContext.allocateTupleBuffer();
                 auto task = buffer.getBuffer<WindowAggregateTask>();
@@ -260,7 +264,6 @@ class MergeSliceWindowOperator : public Runtime::Execution::ExecutablePipelineSt
             }
             currentMaxSliceIndex = globalPartition->maxSliceIndex.load();
         }
-
 
         return ExecutionResult::Ok;
     }

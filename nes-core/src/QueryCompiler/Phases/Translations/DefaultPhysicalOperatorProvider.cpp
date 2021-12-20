@@ -264,11 +264,9 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
             // auto numberOfSlices = windowDefinition->getAllowedLateness() / tumblingWindow->getSize().getTime();
             sliceSize = slidingWindow->getSlide().getTime();
         }
-        auto numberOfWorkerThreads = 8;
         auto windowHandler = std::make_shared<Experimental::PreAggregationWindowHandler<uint64_t, uint64_t>>(windowDefinition,
                                                                                                              windowBufferManager,
-                                                                                                             sliceSize,
-                                                                                                             numberOfWorkerThreads);
+                                                                                                             sliceSize);
         auto windowAggregateOperator = std::make_shared<Experimental::WindowAggregateOperator>(windowHandler);
         auto externalWindowAggregateOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
                                                                                                    operatorNode->getOutputSchema(),
