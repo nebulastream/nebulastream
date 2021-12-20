@@ -91,8 +91,7 @@ class PreAggregationWindowHandler
   public:
     PreAggregationWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinition,
                                 Runtime::BufferManagerPtr bufferManager,
-                                uint64_t sliceSize,
-                                uint64_t numberOfThreads)
+                                uint64_t sliceSize)
         : sliceSize(sliceSize), globalSliceStore(bufferManager), bufferManager(bufferManager) {
         std::vector<uint64_t> originIds;
         for (uint64_t i = 0; i < windowDefinition->getNumberOfInputEdges(); i++) {
