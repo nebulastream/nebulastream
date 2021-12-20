@@ -842,6 +842,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
    // auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
     // create list of keyStamps
+    // TODO: Test this
     std::list<DataTypePtr> keyStamps;
     if (window->isKeyed()){
         std::list<FieldAccessExpressionNodePtr> keyList = window->getKeyList();
@@ -852,7 +853,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
         keyStamps.push_back(window->getWindowAggregation()->on()->getStamp());
     }
 
-    // TODO: Need to loop over that?
+    // TODO: Test this
     auto getWindowHandlerStatement =
         getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamps, window->getWindowAggregation());
     context->code->variableInitStmts.emplace_back(
@@ -1882,12 +1883,20 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     auto windowOperatorHandlerDeclaration =
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
-    // TODO: Loop over that?
 
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    // TODO: Test this
+    std::list<DataTypePtr> keyStamps;
+    if (window->isKeyed()){
+        std::list<FieldAccessExpressionNodePtr> keyList = window->getKeyList();
+        for (std::list<FieldAccessExpressionNodePtr>::iterator it = keyList.begin(); it != keyList.end(); ++it) {
+            keyStamps.push_back(it->get()->getStamp());
+        }
+    } else {
+        keyStamps.push_back(window->getWindowAggregation()->on()->getStamp());
+    }
 
     auto getWindowHandlerStatement =
-        getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation());
+        getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamps, window->getWindowAggregation());
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
 
@@ -1926,16 +1935,34 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     //        int64_t key = windowTuples[recordIndex].key;
 
     //TODO this is not nice but we cannot create an empty one or a ptr
-    // TODO: Loop over that?
-
-    auto keyVariableDeclaration =
-        VariableDeclaration::create(tf->createAnonymusDataType("auto"),
-                                    context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
+    // TODO: Test this with multple onKeys
+    std::list<VariableDeclaration> keyVariableDeclarationList;
+    // iterating over keystamps and creating for each a variable with name (key + number) and its own datatype
+    for (std::list<DataTypePtr>::iterator it = keyStamps.begin(); it != keyStamps.end(); ++it) {
+        int counter = 0;
+        auto keyVariableDeclaration =
+            VariableDeclaration::create(tf->createAnonymusDataType("auto"),
+                                        context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key" + std::to_string(counter));
+        keyVariableDeclarationList.push_back(keyVariableDeclaration);
+        ++counter;
+    }
+    // TODO: Test this for multiple Onkeys
     if (window->isKeyed()) {
-        auto keyVariableAttributeDeclaration = context->getRecordHandler()->getAttribute(window->getOnKey()->getFieldName());
-        auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
-        context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
+        std::list<FieldAccessExpressionNodePtr> windowKeys = window->getKeyList();
+        int counter = 0;
+        for (std::list<FieldAccessExpressionNodePtr>::iterator it = windowKeys.begin(); it != windowKeys.end(); ++it) {
+            auto keyVariableAttributeDeclaration = context->getRecordHandler()->getAttribute(it->get()->getFieldName());
+            auto keyVariable = keyVariableDeclarationList.begin();
+            std::advance(keyVariable, counter);
+            auto keyVariableDeclaration = *keyVariable;
+            auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
+            context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
+            ++counter;
+        }
     } else {
+        // TODO: Check if loop is unnecessary - should be only one attribute here
+        // For now i will take the first keyVariableDeclaration object for the defaultKeyAssignment -- talk to philipp
+        auto keyVariableDeclaration = *(keyVariableDeclarationList.begin());
         auto defaultKeyAssignment = VarDeclStatement(keyVariableDeclaration)
                                         .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(uint64_t(0)))));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(defaultKeyAssignment));
@@ -1945,6 +1972,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     //        auto key_value_handle = state_variable->get(key);
     auto keyHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key_value_handle");
     auto getKeyStateVariable = FunctionCallStatement("get");
+    // TODO: FInd out what exactly this does from code generator output
     getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
     auto keyHandlerVariableStatement =
         VarDeclStatement(keyHandlerVariableDeclaration).assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
@@ -2193,11 +2221,24 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     auto resultSchemaStatement =
         VarDeclStatement(resultSchemaDeclaration).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getResultSchemaCall));
     setupScope->addStatement(resultSchemaStatement.copy());
-    // TODO: Loop over that?
 
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
-    auto keyType = tf->createDataType(keyStamp);
+    // TODO: Introduce Loops + Test
+    std::list<DataTypePtr> keyStamps;
+    if (window->isKeyed()) {
+        std::list<FieldAccessExpressionNodePtr> keyList = window->getKeyList();
+        for (std::list<FieldAccessExpressionNodePtr>::iterator it = keyList.begin(); it != keyList.end(); ++it) {
+            keyStamps.push_back(it->get()->getStamp());
+        }
+    } else{
+        keyStamps.push_back(window->getWindowAggregation()->on()->getStamp());
+    }
 
+    // TODO: test this
+    std::list<GeneratableDataTypePtr> keyTypes;
+    for (std::list<DataTypePtr>::iterator it = keyStamps.begin(); it != keyStamps.end(); ++it) {
+        DataTypePtr keyStamp = static_cast<DataTypePtr>(it->get());
+        keyTypes.push_back(tf->createDataType(keyStamp));
+    }
     auto aggregation = window->getWindowAggregation();
     auto aggregationInputType = tf->createDataType(aggregation->getInputStamp());
 
@@ -2248,6 +2289,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     auto action = window->getTriggerAction();
     auto executableTriggerAction = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "triggerAction");
     if (action->getActionType() == Windowing::WindowAggregationTriggerAction) {
+        //TODO: Allow for multiple keys + TEst
         auto createTriggerActionCall = call("Windowing::ExecutableCompleteAggregationTriggerAction<" + keyType->getCode()->code_
                                             + "," + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
                                             + finalAggregateType->getCode()->code_ + ">::create");
@@ -2259,6 +2301,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else if (action->getActionType() == Windowing::SliceAggregationTriggerAction) {
+        //TODO: Allow for multiple keys + TEst
         auto createTriggerActionCall = call("Windowing::ExecutableSliceAggregationTriggerAction<" + keyType->getCode()->code_
                                             + "," + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
                                             + finalAggregateType->getCode()->code_ + ">::create");
@@ -2275,6 +2318,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
     //    windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
     auto windowHandler = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
+    //TODO: Allow for multiple keys + TEst
     auto createAggregationWindowHandlerCall =
         call("Windowing::AggregationWindowHandler<" + keyType->getCode()->code_ + "," + aggregationInputType->getCode()->code_
              + "," + partialAggregateTypeCode + "," + finalAggregateType->getCode()->code_ + ">::create");
