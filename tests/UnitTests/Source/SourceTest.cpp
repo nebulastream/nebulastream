@@ -1534,8 +1534,13 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     wrk1->registerLogicalStream("input1", testSchemaFileName);
 
-    NES::AbstractPhysicalStreamConfigPtr conf1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 22, 11, "ingestionrate");
+    NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create("LambdaSource",
+                                                                                       "test_stream1",
+                                                                                       "input1",
+                                                                                       std::move(func1),
+                                                                                       22,
+                                                                                       11,
+                                                                                       "ingestionrate");
     wrk1->registerPhysicalStream(conf1);
 
     std::string outputFilePath = "testIngestionRateFromQuery.out";
@@ -1819,10 +1824,10 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
     crdConf->setNumWorkerThreads(4);
-//    crdConf->setNumberOfBuffersInGlobalBufferManager(3000);
-//    crdConf->setNumberOfBuffersInSourceLocalBufferPool(124);
-//    crdConf->setNumberOfBuffersPerWorker(124);
-//    crdConf->setBufferSizeInBytes(524288);
+    //    crdConf->setNumberOfBuffersInGlobalBufferManager(3000);
+    //    crdConf->setNumberOfBuffersInSourceLocalBufferPool(124);
+    //    crdConf->setNumberOfBuffersPerWorker(124);
+    //    crdConf->setBufferSizeInBytes(524288);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
 
@@ -1839,28 +1844,27 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
 
     for (int64_t i = 0; i < 2; i++) {
         //        auto func_lamb_ptr = new std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>(lamb);
-//        auto func = std::make_shared<std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)>>
-//        [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+        //        auto func = std::make_shared<std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)>>
+        //        [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         //        auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-//        auto func = std::make_shared<std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)>>
-        auto func =
-            [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-                struct Record {
-                    uint64_t id;
-                    uint64_t value;
-                    uint64_t timestamp;
-                };
-
-                auto* records = buffer.getBuffer<Record>();
-                auto ts = time(nullptr);
-                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                    records[u].id = u;
-                    //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-                    records[u].value = u % 10;
-                    records[u].timestamp = ts;
-                }
-                return;
+        //        auto func = std::make_shared<std::function<void(NES::Runtime::TupleBuffer & buffer, uint64_t numberOfTuplesToProduce)>>
+        auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+            struct Record {
+                uint64_t id;
+                uint64_t value;
+                uint64_t timestamp;
             };
+
+            auto* records = buffer.getBuffer<Record>();
+            auto ts = time(nullptr);
+            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                records[u].id = u;
+                //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                records[u].value = u % 10;
+                records[u].timestamp = ts;
+            }
+            return;
+        };
 
         NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create("LambdaSource",
                                                                                            "test_stream" + std::to_string(i),

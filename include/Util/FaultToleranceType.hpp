@@ -16,9 +16,9 @@
 
 #ifndef NES_FAULTTOLERANCETYPE_H
 #define NES_FAULTTOLERANCETYPE_H
-#include <unordered_map>
 #include <stdint.h>
 #include <string>
+#include <unordered_map>
 namespace NES {
 enum class FaultToleranceType : int8_t {
     NONE = 0,         ///No fault-tolerance

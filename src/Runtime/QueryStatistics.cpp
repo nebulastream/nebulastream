@@ -64,8 +64,10 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedWatermarks=" << processedWatermarks.load();
     ss << " latencyAVG=" << latencySum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
     ss << " queueSizeAVG=" << queueSizeSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
-    ss << " availableGlobalBufferAVG=" << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
-    ss << " availableFixedBufferAVG=" << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
+    ss << " availableGlobalBufferAVG="
+       << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
+    ss << " availableFixedBufferAVG="
+       << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
     return ss.str();
 }
 

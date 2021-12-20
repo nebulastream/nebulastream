@@ -304,11 +304,8 @@ void DataSource::runningRoutineWithIngestionRate() {
                                                   << " "
                                                      "and overall buffers="
                                                   << processedOverallBufferCnt << " sleepCnt=" << sleepCnt
-                                                  <<  " startPeriod=" << startPeriod
-                                                  << " endPeriod=" << endPeriod
-                                                  << " nextPeriodStartTime=" << nextPeriodStartTime
-                                                  << " curTime=" << curTime
-                                                  );
+                                                  << " startPeriod=" << startPeriod << " endPeriod=" << endPeriod
+                                                  << " nextPeriodStartTime=" << nextPeriodStartTime << " curTime=" << curTime);
     }//end of while
 
     // inject reconfiguration task containing end of stream

@@ -16,9 +16,9 @@
 
 #ifndef NES_LINEAGETYPE_H
 #define NES_LINEAGETYPE_H
-#include <unordered_map>
 #include <stdint.h>
 #include <string>
+#include <unordered_map>
 
 namespace NES {
 enum class LineageType : std::int8_t {
