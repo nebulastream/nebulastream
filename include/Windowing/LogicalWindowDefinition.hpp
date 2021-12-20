@@ -18,6 +18,8 @@
 #define NES_INCLUDE_WINDOWING_LOGICAL_WINDOW_DEFINITION_HPP_
 
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <list>
+
 
 namespace NES::Windowing {
 
@@ -43,7 +45,7 @@ class LogicalWindowDefinition {
 
     /**
      * @brief This constructor constructs a key-by window
-     * @param onKey key on which the window is constructed
+     * @param keyList key(s) on which the window is constructed as FieldAccessExpressionNodePtr list
      * @param windowAggregation
      * @param windowType
      * @param distChar
@@ -52,7 +54,7 @@ class LogicalWindowDefinition {
      * @param window action
      * @param allowedLateness
      */
-    explicit LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
+    explicit LogicalWindowDefinition(std::list<FieldAccessExpressionNodePtr> keyList,
                                      WindowAggregationPtr windowAggregation,
                                      WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar,
@@ -81,6 +83,7 @@ class LogicalWindowDefinition {
 
     /**
      * @brief Create a new window definition for a keyed window
+     * @param keyList key(s) on which the window is constructed as FieldAccessExpressionNodePtr list
      * @param windowAggregation
      * @param windowType
      * @param window trigger policy
@@ -88,7 +91,7 @@ class LogicalWindowDefinition {
      * @param allowedLateness
      * @return Window Definition
      */
-    static LogicalWindowDefinitionPtr create(const FieldAccessExpressionNodePtr& onKey,
+    static LogicalWindowDefinitionPtr create(const std::list<FieldAccessExpressionNodePtr> keyList,
                                              const WindowAggregationPtr& windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
@@ -99,6 +102,7 @@ class LogicalWindowDefinition {
 
     /**
     * @brief Create a new window definition for a keyed window
+    * @param keyList key(s) on which the window is constructed as ExpressionItem list
     * @param windowAggregation
     * @param windowType
     * @param window trigger policy
@@ -106,7 +110,7 @@ class LogicalWindowDefinition {
      * @param allowedLateness
     * @return Window Definition
     */
-    static LogicalWindowDefinitionPtr create(ExpressionItem onKey,
+    static LogicalWindowDefinitionPtr create(std::list<ExpressionItem> keyList,
                                              const WindowAggregationPtr& windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
@@ -131,6 +135,7 @@ class LogicalWindowDefinition {
      * @brief Returns true if this window is keyed.
      * @return
     */
+    // TODO need to test
     bool isKeyed();
 
     /**
@@ -146,10 +151,10 @@ class LogicalWindowDefinition {
     void setWindowType(WindowTypePtr windowType);
 
     /**
-     * @brief getter/setter for on key
+     * @brief getter/setter for on key list
      */
-    FieldAccessExpressionNodePtr getOnKey();
-    void setOnKey(FieldAccessExpressionNodePtr onKey);
+    std::list<FieldAccessExpressionNodePtr> getKeyList();
+    void setKeyList(std::list<FieldAccessExpressionNodePtr> keyList);
 
     LogicalWindowDefinitionPtr copy();
 
@@ -180,7 +185,7 @@ class LogicalWindowDefinition {
     WindowTriggerPolicyPtr triggerPolicy;
     WindowActionDescriptorPtr triggerAction;
     WindowTypePtr windowType;
-    FieldAccessExpressionNodePtr onKey;
+    std::list<FieldAccessExpressionNodePtr> keyList;
     DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges;
     uint64_t originId{};

@@ -320,4 +320,35 @@ TEST_F(QueryTest, windowAggregationWithAs) {
     EXPECT_THAT(outputSchemaString, ::testing::HasSubstr("MY_OUTPUT_FIELD_NAME"));
 }
 
+/**
+ * @brief Test if multiple byKey expressions are possible
+ */
+TEST_F(QueryTest, multipleByKey) {
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    streamCatalog->addPhysicalStream("default_logical", sce);
+    //SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+
+    // create a query with "as" in the aggregation
+    auto query = Query::from("default_logical")
+                     .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
+                     .byKey(Attribute("id", INT64), Attribute("value", INT64))
+                     .apply(Sum(Attribute("value", INT64))->as(Attribute("MY_OUTPUT_FIELD_NAME")))
+                     .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
+                     .sink(PrintSinkDescriptor::create());
+
+    // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    // get the output schema of the sink
+    const auto outputSchemaString = query.getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString();
+    NES_DEBUG("QueryExecutionTest:: WindowAggWithAs outputSchema: " << outputSchemaString);
+
+    EXPECT_THAT(outputSchemaString, ::testing::HasSubstr("MY_OUTPUT_FIELD_NAME"));
+}
+
+
 }// namespace NES

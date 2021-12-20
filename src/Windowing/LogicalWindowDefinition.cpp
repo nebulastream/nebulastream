@@ -24,6 +24,7 @@
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <utility>
+#include <list>
 
 namespace NES::Windowing {
 
@@ -35,12 +36,12 @@ LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggr
                                                  WindowActionDescriptorPtr triggerAction,
                                                  uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(nullptr),
+      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), keyList(),
       distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 
-LogicalWindowDefinition::LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
+LogicalWindowDefinition::LogicalWindowDefinition(std::list<FieldAccessExpressionNodePtr> keyList,
                                                  WindowAggregationPtr windowAggregation,
                                                  WindowTypePtr windowType,
                                                  DistributionCharacteristicPtr distChar,
@@ -49,12 +50,12 @@ LogicalWindowDefinition::LogicalWindowDefinition(FieldAccessExpressionNodePtr on
                                                  WindowActionDescriptorPtr triggerAction,
                                                  uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(std::move(onKey)),
+      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), keyList(std::move(keyList)),
       distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
-
-bool LogicalWindowDefinition::isKeyed() { return onKey != nullptr; }
+// TODO check if this works like it should
+bool LogicalWindowDefinition::isKeyed() { return !keyList.empty(); }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const WindowAggregationPtr& windowAggregation,
                                                            const WindowTypePtr& windowType,
@@ -72,7 +73,7 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const WindowAggregati
                                                      allowedLateness);
 }
 
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey,
+LogicalWindowDefinitionPtr LogicalWindowDefinition::create(std::list<ExpressionItem> keyList,
                                                            const WindowAggregationPtr& windowAggregation,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
@@ -80,7 +81,17 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey,
                                                            const WindowTriggerPolicyPtr& triggerPolicy,
                                                            const WindowActionDescriptorPtr& triggerAction,
                                                            uint64_t allowedLateness) {
-    return std::make_shared<LogicalWindowDefinition>(onKey.getExpressionNode()->as<FieldAccessExpressionNode>(),
+    std::list<std::shared_ptr<FieldAccessExpressionNode>> fieldAccessList;
+    for (std::list<ExpressionItem>::iterator it = keyList.begin(); it != keyList.end(); ++it) {
+        auto keyExpression = it->getExpressionNode();
+        if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
+            NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+        } else {
+            auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+            fieldAccessList.push_back(fieldAccess);
+        }
+    }
+    return std::make_shared<LogicalWindowDefinition>(fieldAccessList,
                                                      windowAggregation,
                                                      windowType,
                                                      distChar,
@@ -90,7 +101,7 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey,
                                                      allowedLateness);
 }
 
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const FieldAccessExpressionNodePtr& onKey,
+LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const std::list<FieldAccessExpressionNodePtr> keyList,
                                                            const WindowAggregationPtr& windowAggregation,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
@@ -98,7 +109,7 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const FieldAccessExpr
                                                            const WindowTriggerPolicyPtr& triggerPolicy,
                                                            const WindowActionDescriptorPtr& triggerAction,
                                                            uint64_t allowedLateness) {
-    return std::make_shared<LogicalWindowDefinition>(onKey,
+    return std::make_shared<LogicalWindowDefinition>(keyList,
                                                      windowAggregation,
                                                      windowType,
                                                      distChar,
@@ -119,15 +130,15 @@ void LogicalWindowDefinition::setNumberOfInputEdges(uint64_t numberOfInputEdges)
 }
 WindowAggregationPtr LogicalWindowDefinition::getWindowAggregation() { return windowAggregation; }
 WindowTypePtr LogicalWindowDefinition::getWindowType() { return windowType; }
-FieldAccessExpressionNodePtr LogicalWindowDefinition::getOnKey() { return onKey; }
+std::list<FieldAccessExpressionNodePtr> LogicalWindowDefinition::getKeyList() { return keyList; }
 void LogicalWindowDefinition::setWindowAggregation(WindowAggregationPtr windowAggregation) {
     this->windowAggregation = std::move(windowAggregation);
 }
 void LogicalWindowDefinition::setWindowType(WindowTypePtr windowType) { this->windowType = std::move(windowType); }
-void LogicalWindowDefinition::setOnKey(FieldAccessExpressionNodePtr onKey) { this->onKey = std::move(onKey); }
+void LogicalWindowDefinition::setKeyList(std::list<FieldAccessExpressionNodePtr> keyList) { this->keyList = std::move(keyList); }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::copy() {
-    return create(onKey,
+    return create(keyList,
                   windowAggregation->copy(),
                   windowType,
                   distributionType,
@@ -151,7 +162,11 @@ std::string LogicalWindowDefinition::toString() {
     ss << " triggerPolicy=" << triggerPolicy->toString() << std::endl;
     ss << " triggerAction=" << triggerAction->toString() << std::endl;
     if (isKeyed()) {
-        ss << " onKey=" << onKey->toString() << std::endl;
+       // ss << " onKey(s)=" << k->toString() << std::endl;
+       ss << " onKey(s)=" << std::endl;
+       for (std::list<FieldAccessExpressionNodePtr>::iterator it = keyList.begin(); it != keyList.end(); ++it) {
+           ss << it->get()->toString() << std::endl;
+       }
     }
     ss << " distributionType=" << distributionType->toString() << std::endl;
     ss << " numberOfInputEdges=" << numberOfInputEdges;
@@ -168,7 +183,8 @@ bool LogicalWindowDefinition::equal(LogicalWindowDefinitionPtr otherWindowDefini
         return false;
     }
 
-    if (this->isKeyed() && !this->getOnKey()->equal(otherWindowDefinition->getOnKey())) {
+    // TODO: check if this works
+    if (this->isKeyed() && !(this->getKeyList() == (otherWindowDefinition->getKeyList()))) {
         return false;
     }
 

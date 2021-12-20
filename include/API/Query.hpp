@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <list>
 
 namespace NES {
 
@@ -424,12 +425,13 @@ class Query {
     Query& window(Windowing::WindowTypePtr const& windowType, Windowing::WindowAggregationPtr const& aggregation);
 
     /**
-      * @brief: Creates a window aggregation.
+      * @brief: Creates a window aggregation based on the key expressions
+      * @param expressionNodes keys to aggregate by.
       * @param windowType Window definition.
       * @param aggregation Window aggregation function.
       * @return query.
       */
-    Query& windowByKey(ExpressionItem onKey,
+    Query& windowByKey(std::list<ExpressionNodePtr> expressionNodes,
                        Windowing::WindowTypePtr const& windowType,
                        Windowing::WindowAggregationPtr const& aggregation);
 };

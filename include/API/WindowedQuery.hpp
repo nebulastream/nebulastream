@@ -21,6 +21,7 @@
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #include <string>
+#include <list>
 
 namespace NES {
 
@@ -41,6 +42,28 @@ namespace WindowOperatorBuilder {
 class WindowedQuery;
 class KeyedWindowedQuery;
 
+class KeyedWindowedQuery {
+  public:
+    /**
+    * @brief: Constructor. Initialises always originalQuery, windowType, onKey
+    * @param originalQuery
+    * @param windowType
+    * @param expressionNodeList
+    */
+    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::list<ExpressionNodePtr> expressionNodeList);
+
+    /**
+    * @brief: Calls internally the original windowByKey() function and returns the Query&
+    * @param aggregation
+    */
+    Query& apply(Windowing::WindowAggregationPtr aggregation);
+
+  private:
+    Query& originalQuery;
+    Windowing::WindowTypePtr windowType;
+    std::list<ExpressionNodePtr> expressionNodeList;
+};
+
 class WindowedQuery {
   public:
     /**
@@ -52,9 +75,18 @@ class WindowedQuery {
 
     /**
     * @brief: sets the Attribute for the keyBy Operation. Creates a KeyedWindowedQuery object.
-    * @param onKey
+    * @param onKey (variadic)
     */
-    [[nodiscard]] KeyedWindowedQuery byKey(const ExpressionItem& onKey) const;
+    template<class... ExpressionItem>
+    [[nodiscard]] KeyedWindowedQuery byKey(const ExpressionItem&... onKey) const {
+        std::list<NES::ExpressionNodePtr> expressionNodes;
+        std::array<NES::ExpressionItem, sizeof...(onKey)> list = {onKey...};
+        for (size_t i=0; i<sizeof...(onKey); i++){
+            expressionNodes.push_back(list[i].getExpressionNode());
+        }
+        return KeyedWindowedQuery(originalQuery, windowType, expressionNodes);
+        //return KeyedWindowedQuery(originalQuery, windowType, onKey.getExpressionNode());
+    }
 
     /**
    * @brief: Calls internally the original window() function and returns the Query&
@@ -65,27 +97,6 @@ class WindowedQuery {
   private:
     Query& originalQuery;
     Windowing::WindowTypePtr windowType;
-};
-
-class KeyedWindowedQuery {
-  public:
-    /**
-    * @brief: Constructor. Initialises always originalQuery, windowType, onKey
-    * @param originalQuery
-    * @param windowType
-    */
-    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionNodePtr onKey);
-
-    /**
-    * @brief: Calls internally the original windowByKey() function and returns the Query&
-    * @param aggregation
-    */
-    Query& apply(Windowing::WindowAggregationPtr aggregation);
-
-  private:
-    Query& originalQuery;
-    Windowing::WindowTypePtr windowType;
-    ExpressionNodePtr onKey;
 };
 
 }// namespace WindowOperatorBuilder

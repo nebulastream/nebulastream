@@ -840,9 +840,21 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     auto windowOperatorHandlerDeclaration =
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+   // auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    // create list of keyStamps
+    std::list<DataTypePtr> keyStamps;
+    if (window->isKeyed()){
+        std::list<FieldAccessExpressionNodePtr> keyList = window->getKeyList();
+        for (std::list<FieldAccessExpressionNodePtr>::iterator it = keyList.begin(); it != keyList.end(); ++it) {
+            keyStamps.push_back(it->get()->getStamp());
+        }
+    } else {
+        keyStamps.push_back(window->getWindowAggregation()->on()->getStamp());
+    }
+
+    // TODO: Need to loop over that?
     auto getWindowHandlerStatement =
-        getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation());
+        getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamps, window->getWindowAggregation());
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
 
@@ -885,20 +897,41 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
         VarDeclStatement(latenessHandlerVariableDeclaration).assign(allowedLatenessHandlerVariableStatement).copy());
 
     // Read key value from record
-    auto keyVariableDeclaration =
-        VariableDeclaration::create(tf->createDataType(keyStamp),
-                                    context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
+    // TODO: test if this works. + add keyVariableDeclaration to their own list.
+    std::list<VariableDeclaration> keyVariableDeclarationList;
+    // iterating over keystamps and creating for each a variable with name (key + number) and its own datatype
+    for (std::list<DataTypePtr>::iterator it = keyStamps.begin(); it != keyStamps.end(); ++it) {
+        int counter = 0;
+        auto keyVariableDeclaration =
+            VariableDeclaration::create(tf->createDataType(static_cast<DataTypePtr>(it->get())),
+                                        context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key" + std::to_string(counter));
+        keyVariableDeclarationList.push_back(keyVariableDeclaration);
+        ++counter;
+    }
     auto recordHandler = context->getRecordHandler();
     if (window->isKeyed()) {
-        auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getOnKey()->getFieldName());
-        auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
-        context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
+        // TODO: Test this - this is iterating over all windowsKeys and takes the corresponding keyVaraibleDeclarationList entry to combine to a keyVaroableAttributeStatement
+        // should have the same order as keyStamps come from windowKeys
+        std::list<FieldAccessExpressionNodePtr> windowKeys = window->getKeyList();
+        int counter = 0;
+        for (std::list<FieldAccessExpressionNodePtr>::iterator it = windowKeys.begin(); it != windowKeys.end(); ++it) {
+            auto keyVariableAttributeDeclaration = recordHandler->getAttribute(it->get()->getFieldName());
+            auto keyVariable = keyVariableDeclarationList.begin();
+            std::advance(keyVariable, counter);
+            auto keyVariableDeclaration = *keyVariable;
+            auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
+            context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
+            ++counter;
+        }
     } else {
+        // TODO: Check if loop is unnecessary - should be only one attribute here
+        // For now i will take the first keyVariableDeclaration object for the defaultKeyAssignment -- talk to philipp
+        auto keyVariableDeclaration = *(keyVariableDeclarationList.begin());
         auto defaultKeyAssignment = VarDeclStatement(keyVariableDeclaration)
                                         .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue((int64_t) 0))));
         context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(defaultKeyAssignment));
     }
-
+    // TODO: find out what this does; seems like we need a bigger loop on this to create multiple key_value_handle vars
     // get key handle for current key
     auto keyHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key_value_handle");
 
@@ -1849,6 +1882,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     auto windowOperatorHandlerDeclaration =
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
+    // TODO: Loop over that?
 
     auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
 
@@ -1892,6 +1926,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     //        int64_t key = windowTuples[recordIndex].key;
 
     //TODO this is not nice but we cannot create an empty one or a ptr
+    // TODO: Loop over that?
+
     auto keyVariableDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"),
                                     context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
@@ -2157,6 +2193,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     auto resultSchemaStatement =
         VarDeclStatement(resultSchemaDeclaration).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getResultSchemaCall));
     setupScope->addStatement(resultSchemaStatement.copy());
+    // TODO: Loop over that?
 
     auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
     auto keyType = tf->createDataType(keyStamp);
@@ -2483,10 +2520,21 @@ BinaryOperatorStatement CCodeGenerator::getSequenceNumber(VariableDeclaration tu
 }
 
 #define TO_CODE(type) tf->createDataType(type)->getCode()->code_
+std::string CCodeGenerator::generateOnKeyTuple(std::list<DataTypePtr> keyTypes){
+    std::string output = "std::tuple<";
+    auto tf = getTypeFactory();
+    for (std::list<DataTypePtr>::iterator it = keyTypes.begin(); it != keyTypes.end(); ++it) {
+        DataTypePtr key = static_cast<DataTypePtr>(it->get());
+        output = output + TO_CODE(key);
+        (std::next(it) != keyTypes.end() ? output = output + ", " : output = output + "> ");
+    }
+            return output;
+    }
+
 
 BinaryOperatorStatement
 CCodeGenerator::getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
-                                            DataTypePtr keyType,
+                                            std::list<DataTypePtr> keyTypes,
                                             const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor) {
     auto tf = getTypeFactory();
     // determine the partialAggregate parameter based on the aggregation type
@@ -2505,10 +2553,10 @@ CCodeGenerator::getAggregationWindowHandler(const VariableDeclaration& pipelineC
     }
     // Let K= Key Type, T= Input Type, Partial<T>= Partial Aggregate Type (from above if else), F= Final type
     // generated code : getWindowHandler<NES::Windowing::AggregationWindowHandler, K, Partial<T>, F>
-    auto call =
-        FunctionCallStatement(std::string("getWindowHandler<NES::Windowing::AggregationWindowHandler, ") + TO_CODE(keyType) + ", "
-                              + TO_CODE(windowAggregationDescriptor->getInputStamp()) + "," + partialAggregateCode + ","
-                              + TO_CODE(windowAggregationDescriptor->getFinalAggregateStamp()) + " >");
+    // TODO: Introduce iteration over keyTypes
+    auto call = FunctionCallStatement(std::string("getWindowHandler<NES::Windowing::AggregationWindowHandler, ") + generateOnKeyTuple(keyTypes) + ", "
+                          + TO_CODE(windowAggregationDescriptor->getInputStamp()) + "," + partialAggregateCode + ","
+                          + TO_CODE(windowAggregationDescriptor->getFinalAggregateStamp()) + " >");
     return VarRef(pipelineContextVariable).accessPtr(call);
 }
 

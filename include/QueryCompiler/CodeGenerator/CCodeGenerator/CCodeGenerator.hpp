@@ -361,6 +361,13 @@ class CCodeGenerator : public CodeGenerator {
     static StructDeclaration getStructDeclarationFromSchema(const std::string& structName, const SchemaPtr& schema);
 
     /**
+     * @brief Utility function to create a string for the codegenerator for multi-keyed windows. keys are stored in a std::tuple
+     * @param keyTypes list of datatyes for the keys
+     * @return string representation of the key tuple
+     */
+    std::string generateOnKeyTuple(std::list<DataTypePtr> keyTypes);
+
+    /**
      * @brief creates the aggregation window handler
      * @param pipelineContextVariable
      * @param keyType
@@ -369,7 +376,7 @@ class CCodeGenerator : public CodeGenerator {
      */
     BinaryOperatorStatement
     getAggregationWindowHandler(const VariableDeclaration& pipelineContextVariable,
-                                DataTypePtr keyType,
+                                std::list<DataTypePtr> keyTypes,
                                 const Windowing::WindowAggregationDescriptorPtr& windowAggregationDescriptor);
 
     /**

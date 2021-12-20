@@ -44,6 +44,7 @@
 #include <cstdarg>
 #include <iostream>
 #include <utility>
+#include <list>
 
 namespace NES {
 
@@ -55,24 +56,17 @@ namespace WindowOperatorBuilder {
 WindowedQuery::WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType)
     : originalQuery(originalQuery), windowType(std::move(windowType)) {}
 
-//KeyedWindowedQuery keyBy(ExpressionItem onKey);
-KeyedWindowedQuery WindowedQuery::byKey(const ExpressionItem& onKey) const {
-    return KeyedWindowedQuery(originalQuery, windowType, onKey.getExpressionNode());
-}
-
 Query& WindowedQuery::apply(const Windowing::WindowAggregationPtr& aggregation) {
     return originalQuery.window(windowType, aggregation);
 }
-
-KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionNodePtr onKey)
-    : originalQuery(originalQuery), windowType(std::move(windowType)), onKey(onKey) {}
+KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::list<ExpressionNodePtr> expressionNodes)
+    : originalQuery(originalQuery), windowType(std::move(windowType)), expressionNodeList(expressionNodes) {}
 
 Query& KeyedWindowedQuery::apply(Windowing::WindowAggregationPtr aggregation) {
-    return originalQuery.windowByKey(onKey, windowType, std::move(aggregation));
+    return originalQuery.windowByKey(expressionNodeList, windowType, std::move(aggregation));
 }
 
 }//namespace WindowOperatorBuilder
-
 Query& Query::window(const Windowing::WindowTypePtr& windowType, const Windowing::WindowAggregationPtr& aggregation) {
     NES_DEBUG("Query: add window operator");
     //we use a on time trigger as default that triggers on each change of the watermark
@@ -124,16 +118,24 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, const Windowing
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;
 }
-
-Query& Query::windowByKey(ExpressionItem onKey,
+// TODO: [] Make this iterate over a list
+// TODO : [] Check Behavior
+Query& Query::windowByKey(std::list<ExpressionNodePtr> expressionNodes,
                           const Windowing::WindowTypePtr& windowType,
                           const Windowing::WindowAggregationPtr& aggregation) {
     NES_DEBUG("Query: add keyed window operator");
-    auto keyExpression = onKey.getExpressionNode();
-    if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+    // we introduce a list for expressions to allow for multiple keys. This shall be iterated here and checked for correctness
+
+    std::list<std::shared_ptr<FieldAccessExpressionNode>> fieldAccessList;
+    for (std::list<ExpressionNodePtr>::iterator it = expressionNodes.begin(); it != expressionNodes.end(); ++it){
+        auto keyExpression = it->get();
+        if (!keyExpression->instanceOf<FieldAccessExpressionNode>()) {
+            NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
+        } else {
+            auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+            fieldAccessList.push_back(fieldAccess);
+        }
     }
-    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
 
     //we use a on time trigger as default that triggers on each change of the watermark
     auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
@@ -174,7 +176,7 @@ Query& Query::windowByKey(ExpressionItem onKey,
     auto inputSchema = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
 
     auto windowDefinition =
-        Windowing::LogicalWindowDefinition::create(fieldAccess,
+        Windowing::LogicalWindowDefinition::create(fieldAccessList,
                                                    aggregation,
                                                    windowType,
                                                    Windowing::DistributionCharacteristic::createCompleteWindowType(),
