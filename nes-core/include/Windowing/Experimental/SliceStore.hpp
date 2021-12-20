@@ -1,13 +1,14 @@
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_SLICESTORE_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_SLICESTORE_HPP_
 
+#include <Compiler/Exceptions/CompilerException.hpp>
 #include <Windowing/Experimental/KeyedSlice.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/SeqenceLog.hpp>
 #include <assert.h>
 namespace NES::Experimental {
 // A slice store, which contains a set of slices
-template<class HashMap, uint64_t numberOfSlices = 50>
+template<class HashMap, uint64_t numberOfSlices = 500>
 class SliceStore {
     using KeyedSlicePtr = std::unique_ptr<KeyedSlice<HashMap>>;
 
@@ -83,9 +84,9 @@ class GlobalSliceStore : public SliceStore<HashMap> {
 };
 
 // A slice store, which contains a set of slices
-template<class Key, class Value, uint64_t numberOfSlices = 50>
+template<class Key, class Value, uint64_t numberOfSlices = 500>
 class PartitionedSliceStore {
-    using KeyedSlicePtr = std::unique_ptr<PartitionedKeyedSlice<Key, Value>>;
+    using KeyedSlicePtr = std::unique_ptr<PartitionedKeyedSlice<Key, Value, 1>>;
 
   public:
     explicit PartitionedSliceStore(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, uint64_t sliceSize)
@@ -94,7 +95,7 @@ class PartitionedSliceStore {
 
         // create the first slice if non is existing [0 - slice size]
         if (empty()) {
-            slices[0] = std::make_unique<PartitionedKeyedSlice<uint64_t, uint64_t>>(bufferManager, 0, sliceSize);
+            slices[0] = std::make_unique<PartitionedKeyedSlice<uint64_t, uint64_t, 1>>(bufferManager, 0, sliceSize);
             lastIndex++;
         }
 
@@ -116,7 +117,7 @@ class PartitionedSliceStore {
 
     inline uint64_t getFirstIndex() { return firstIndex; }
 
-    inline uint64_t getLastIndex() { return lastIndex-1; }
+    inline uint64_t getLastIndex() { return lastIndex - 1; }
 
     inline KeyedSlicePtr& last() { return slices[getArrayIndex(getLastIndex())]; }
 
@@ -141,7 +142,8 @@ class PartitionedSliceStore {
         // std::cout << "add slice at " << nextSliceIndex << std::endl;
         if (slices[nextSliceIndex] == nullptr) {
             // create a new keyed slice
-            slices[nextSliceIndex] = std::make_unique<PartitionedKeyedSlice<Key, Value>>(bufferManager, last()->end, last()->end + sliceSize);
+            slices[nextSliceIndex] =
+                std::make_unique<PartitionedKeyedSlice<Key, Value, 1>>(bufferManager, last()->end, last()->end + sliceSize);
         } else {
             // re-use old slice
             slices[nextSliceIndex]->reset(last()->end, last()->end + sliceSize);
@@ -165,7 +167,7 @@ class PartitionedGlobalSlice {
         return partitions.size();
     }
 
-    const std::vector<std::unique_ptr<Partition<Key, Value>>>& getPartitions() { return partitions; }
+    std::vector<std::unique_ptr<Partition<Key, Value>>>& getPartitions() { return partitions; }
 
     PartitionedHashMap<Key, Value, 1>& getGlobalState() { return globalState; }
 
@@ -177,24 +179,99 @@ class PartitionedGlobalSlice {
 };
 
 template<class Key, class Value>
+class PreAggregateSliceStaging {
+  public:
+    uint64_t addPartition(uint64_t sliceIndex, std::unique_ptr<Partition<Key, Value>> partition) {
+        auto lock = std::unique_lock(addPartitionMutex);
+        if (!partitionMap.contains(sliceIndex)) {
+            partitionMap[sliceIndex] = std::make_unique<std::vector<std::unique_ptr<Partition<Key, Value>>>>();
+        }
+        partitionMap[sliceIndex]->emplace_back(std::move(partition));
+        return partitionMap[sliceIndex]->size();
+    }
+
+    std::unique_ptr<std::vector<std::unique_ptr<Partition<Key, Value>>>> getPartition(uint64_t sliceIndex) {
+        auto lock = std::unique_lock(addPartitionMutex);
+        if (!partitionMap.contains(sliceIndex)) {
+            throw Compiler::CompilerException("Slice Index " + std::to_string(sliceIndex) + "not available");
+        }
+        auto value = std::move(partitionMap[sliceIndex]);
+        auto iter = partitionMap.find(sliceIndex);
+        partitionMap.erase(iter);
+        return std::move(value);
+    }
+
+  private:
+    std::mutex addPartitionMutex;
+    std::map<uint64_t, std::unique_ptr<std::vector<std::unique_ptr<Partition<Key, Value>>>>> partitionMap;
+};
+
+template<class Key, class Value>
+class PartitionedGlobalStore2 {
+  public:
+    PartitionedGlobalStore2(Runtime::BufferManagerPtr bufferManager) : bufferManager(bufferManager) {
+        triggeredSliceSequenceLog = std::make_shared<SequenceLog<>>();
+        windowTriggerProcessor = std::make_shared<LockFreeWatermarkProcessor<>>();
+    };
+
+    std::unique_ptr<PartitionedHashMap<Key, Value, 1>>& getSlice(uint64_t sliceIndex) {
+        const std::lock_guard<std::mutex> lock(mutex);
+        if (sliceIndex < removedSlices) {
+            throw Compiler::CompilerException("Slice Index " + std::to_string(sliceIndex) + "is already removed");
+        }
+        if (!slices.contains(sliceIndex)) {
+            slices[sliceIndex] = std::make_unique<PartitionedHashMap<Key, Value, 1>>(bufferManager);
+        }
+        return slices[sliceIndex];
+    }
+
+    void removeSlicesTill(uint64_t sliceIndex) {
+        const std::lock_guard<std::mutex> lock(mutex);
+        for (uint64_t i = removedSlices; i < sliceIndex; i++) {
+            if (!slices.contains(i)) {
+                throw Compiler::CompilerException("Slice Index " + std::to_string(sliceIndex) + "not available");
+            }
+            auto iter = slices.find(i);
+            slices.erase(iter);
+            removedSlices++;
+        }
+    }
+
+    std::shared_ptr<SequenceLog<>> triggeredSliceSequenceLog;
+    std::shared_ptr<LockFreeWatermarkProcessor<>> windowTriggerProcessor;
+    std::atomic<uint64_t> maxSliceIndex;
+    std::atomic<uint64_t> triggeredSlices = 1;
+    std::mutex mutex;
+
+  private:
+    uint64_t removedSlices = 0;
+    std::map<uint64_t, std::unique_ptr<PartitionedHashMap<Key, Value, 1>>> slices;
+    Runtime::BufferManagerPtr bufferManager;
+};
+
+template<class Key, class Value>
 class PartitionedGlobalStore {
   public:
-    PartitionedGlobalStore(Runtime::BufferManagerPtr bufferManager) : bufferManager(bufferManager){
+    PartitionedGlobalStore(Runtime::BufferManagerPtr bufferManager) : bufferManager(bufferManager) {
         triggeredSliceSequenceLog = std::make_shared<SequenceLog<>>();
         windowTriggerProcessor = std::make_shared<LockFreeWatermarkProcessor<>>();
     };
     std::unique_ptr<PartitionedGlobalSlice<Key, Value>>& getSlice(uint64_t sliceIndex) {
-        auto lock = std::unique_lock(mutex);
+        const std::lock_guard<std::mutex> lock(mutex);
         while (slices.size() <= sliceIndex - startSliceIndex) {
             slices.emplace_back(std::make_unique<PartitionedGlobalSlice<Key, Value>>(bufferManager));
         }
-        return slices[sliceIndex - startSliceIndex];
+        auto& resultSlice = slices[sliceIndex - startSliceIndex];
+        if (resultSlice == nullptr) {
+            std::cout << "I accessed an null slice" << std::endl;
+        }
+        return resultSlice;
     }
 
     void removeSlicesTill(uint64_t sliceIndex) {
-        auto lock = std::unique_lock(mutex);
-        slices.erase(slices.begin() + (sliceIndex - triggeredSlices));
-        triggeredSlices = sliceIndex;
+        const std::lock_guard<std::mutex> lock(mutex);
+        slices.erase(slices.begin(), slices.begin() + (sliceIndex - startSliceIndex));
+        startSliceIndex = sliceIndex;
     }
 
     std::shared_ptr<SequenceLog<>> triggeredSliceSequenceLog;
@@ -209,18 +286,18 @@ class PartitionedGlobalStore {
     uint64_t startSliceIndex = 0;
 };
 
-template<class Key, class Value, uint64_t numberOfPartitions = 2>
+template<class Key, class Value, uint64_t numberOfPartitions = 1>
 class GlobalAggregateStore {
   public:
     GlobalAggregateStore(Runtime::BufferManagerPtr bufferManager) {
         for (uint64_t i = 0; i < numberOfPartitions; i++) {
-            partitiones[i] = std::make_unique<PartitionedGlobalStore<Key, Value>>(bufferManager);
+            partitiones[i] = std::make_unique<PartitionedGlobalStore2<Key, Value>>(bufferManager);
         }
     }
-    std::unique_ptr<PartitionedGlobalStore<Key, Value>>& getPartition(uint64_t index) { return partitiones[index]; };
+    std::unique_ptr<PartitionedGlobalStore2<Key, Value>>& getPartition(uint64_t index) { return partitiones[index]; };
 
   private:
-    std::array<std::unique_ptr<PartitionedGlobalStore<Key, Value>>, numberOfPartitions> partitiones;
+    std::array<std::unique_ptr<PartitionedGlobalStore2<Key, Value>>, numberOfPartitions> partitiones;
 };
 
 }// namespace NES::Experimental

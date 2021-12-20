@@ -148,6 +148,10 @@ TEST_F(WindowManagerTest, PartitionedHashMap) {
 }
 
 TEST_F(WindowManagerTest, MergePartitionedHashMap) {
+
+    auto  stage = Experimental::PreAggregateSliceStaging<uint64_t, uint64_t>();
+
+
     Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
     auto partitionedHashMapT1 = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
     auto partitionedHashMapT2 = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
@@ -165,14 +169,18 @@ TEST_F(WindowManagerTest, MergePartitionedHashMap) {
 
         auto& partition = globalSliceStore.getPartition(i);
         auto& slice = partition->getSlice(0);
-        auto partition1 = partitionedHashMapT1.extractPartition(i);
-        slice->addPartition(std::move(partition1));
+        auto& partition1 = partitionedHashMapT1.getPartition(i);
+        stage.addPartition(0, std::move(partition1));
+       //slice->addPartition(std::move(partition1));
 
-        auto partition2 = partitionedHashMapT2.extractPartition(i);
-        auto result = slice->addPartition(std::move(partition2));
+        auto& partition2 = partitionedHashMapT2.getPartition(i);
+        auto result = stage.addPartition(0, std::move(partition2));
+       // auto result = slice->addPartition(std::move(partition2));
         if (result == 2) {
             // merge thread local state
-            auto& globalAggregate = slice->getGlobalState();
+            auto partitions = stage.getPartition(0);
+            std::cout <<  partitions->size() <<  std::endl;
+           /* auto& globalAggregate = slice->getGlobalState();
             for(auto& partition: slice->getPartitions()){
                 for(uint64_t index = 0; index < partition->size(); index++){
                     auto* partitionEntry = (*partition)[index];
@@ -180,14 +188,15 @@ TEST_F(WindowManagerTest, MergePartitionedHashMap) {
                     globalEntry->value = globalEntry->value + partitionEntry->value;
                 }
             }
-            auto globalPartition = globalAggregate.extractPartition(0);
+            auto& globalPartition = globalAggregate.getPartition(0);
             for(uint64_t index = 0; index < globalPartition->size(); index++){
                 auto* partitionEntry = (*globalPartition)[index];
                 std::cout <<  partitionEntry->key << " - " << partitionEntry->value  << std::endl;
             }
-
+*/
 
         }
+
     }
 }
 

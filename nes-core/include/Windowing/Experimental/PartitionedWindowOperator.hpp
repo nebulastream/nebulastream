@@ -52,6 +52,7 @@ limitations under the License.
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnWatermarkChangeTriggerPolicy.hpp>
 #include <atomic>
+#include <string>
 namespace NES::Experimental {
 
 /**
@@ -64,9 +65,13 @@ struct WindowResultRecord {
     uint64_t aggregateValue;
 };
 
-struct PartitionMergeTask {
+class PartitionMergeTask {
+  public:
     uint64_t partitionIndex;
     uint64_t sliceIndex;
+    ~PartitionMergeTask(){
+        //std::cout << "~PartitionMergeTask" << std::endl;
+    };
 };
 
 struct WindowAggregateTask {
@@ -88,7 +93,7 @@ class PreAggregationWindowHandler
                                 Runtime::BufferManagerPtr bufferManager,
                                 uint64_t sliceSize,
                                 uint64_t numberOfThreads)
-        : sliceSize(sliceSize), globalSliceStore(bufferManager) {
+        : sliceSize(sliceSize), globalSliceStore(bufferManager), bufferManager(bufferManager) {
 
         for (uint64_t i = 0; i < numberOfThreads; i++) {
             threadLocalSliceStore.emplace_back(bufferManager, sliceSize);
@@ -97,12 +102,15 @@ class PreAggregationWindowHandler
         for (uint64_t i = 0; i < windowDefinition->getNumberOfInputEdges(); i++) {
             originIds.emplace_back(i + 1);
         }
-        lockFreeWatermarkProcessor = std::make_shared<LockFreeMultiOriginWatermarkProcessor>(originIds);
+        lockFreeWatermarkProcessor = std::make_shared<LockFreeWatermarkProcessor<>>();
     }
     const uint64_t sliceSize;
     std::vector<PartitionedSliceStore<uint64_t, uint64_t>> threadLocalSliceStore;
+    PreAggregateSliceStaging<uint64_t, uint64_t> preAggregateSliceStaging;
     GlobalAggregateStore<uint64_t, uint64_t> globalSliceStore;
-    std::shared_ptr<LockFreeMultiOriginWatermarkProcessor> lockFreeWatermarkProcessor;
+    std::shared_ptr<LockFreeWatermarkProcessor<>> lockFreeWatermarkProcessor;
+    Runtime::BufferManagerPtr bufferManager;
+    std::mutex mutex;
 };
 
 class PreAggregateWindowOperator : public Runtime::Execution::ExecutablePipelineStage {
@@ -115,6 +123,7 @@ class PreAggregateWindowOperator : public Runtime::Execution::ExecutablePipeline
     struct Record {
         uint64_t test$key;
         uint64_t test$value;
+        uint64_t payload;
         uint64_t test$ts;
     };
 
@@ -148,9 +157,7 @@ class PreAggregateWindowOperator : public Runtime::Execution::ExecutablePipeline
 
         auto watermarkProcessor = windowOperatorHandler->lockFreeWatermarkProcessor;
         // the watermark update is an atomic process and returns the last and the current watermark.
-        auto newGlobalWatermark = watermarkProcessor->updateWatermark(currentWatermark,
-                                                                      inputTupleBuffer.getSequenceNumber(),
-                                                                      inputTupleBuffer.getOriginId());
+        auto newGlobalWatermark = watermarkProcessor->updateWatermark(currentWatermark, inputTupleBuffer.getSequenceNumber());
         // check if the current max watermark is larger than the thread local watermark
         if (threadLocalSliceStore.lastThreadLocalWatermark < newGlobalWatermark) {
             //std::cout << "update watermark at " << newGlobalWatermark << std::endl;
@@ -165,13 +172,11 @@ class PreAggregateWindowOperator : public Runtime::Execution::ExecutablePipeline
                 auto& sliceState = slice->map;
 
                 for (uint64_t partitionIndex = 0; partitionIndex < sliceState.getNumberOfPartitions(); partitionIndex++) {
+                    auto& preAggregateSliceStaging = windowOperatorHandler->preAggregateSliceStaging;
                     auto localPartition = std::move(sliceState.getPartition(partitionIndex));
-                    auto& globalPartition = windowOperatorHandler->globalSliceStore.getPartition(partitionIndex);
-                    auto& globalSlice = globalPartition->getSlice(slice->sliceIndex);
-                    auto addedPartitionsToSlice = globalSlice->addPartition(std::move(localPartition));
-                    // check if all threads added their local partitions
+                    auto addedPartitionsToSlice =
+                        preAggregateSliceStaging.addPartition(slice->sliceIndex, std::move(localPartition));
                     if (addedPartitionsToSlice == pipelineExecutionContext.getNumberOfWorkerThreads()) {
-                        // dispatch task to aggregate partition into global hash map
                         auto buffer = workerContext.allocateTupleBuffer();
                         auto task = buffer.getBuffer<PartitionMergeTask>();
                         task->sliceIndex = slice->sliceIndex;
@@ -187,6 +192,11 @@ class PreAggregateWindowOperator : public Runtime::Execution::ExecutablePipeline
         }
         return ExecutionResult::Ok;
     }
+
+    virtual uint32_t stop(Runtime::Execution::PipelineExecutionContext&) {
+        std::cout << " stop PreAggregateWindowOperator" << std::endl;
+        return 0;
+    }
 };
 
 class MergeSliceWindowOperator : public Runtime::Execution::ExecutablePipelineStage {
@@ -195,28 +205,50 @@ class MergeSliceWindowOperator : public Runtime::Execution::ExecutablePipelineSt
         : windowOperatorHandler(windowOperatorHandler){};
 
     std::shared_ptr<PreAggregationWindowHandler<uint64_t, uint64_t>> windowOperatorHandler;
+
+    virtual uint32_t stop(Runtime::Execution::PipelineExecutionContext&) {
+        std::cout << " stop MergeSliceWindowOperator" << std::endl;
+        return 0;
+    }
+
     ExecutionResult execute(Runtime::TupleBuffer& inputTupleBuffer,
                             Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
                             Runtime::WorkerContext& workerContext) {
 
         auto* mergeTask = inputTupleBuffer.getBuffer<PartitionMergeTask>();
+        // auto partitions = std::move(mergeTask->partitions);
+        auto partitions = windowOperatorHandler->preAggregateSliceStaging.getPartition(mergeTask->sliceIndex);
+        // std::cout << "Merge Task P:" << partitions->size() << std::endl;
+
         auto& globalPartition = windowOperatorHandler->globalSliceStore.getPartition(mergeTask->partitionIndex);
         auto& globalSlice = globalPartition->getSlice(mergeTask->sliceIndex);
-        auto& globalAggregate = globalSlice->getGlobalState();
-        for (auto& partition : globalSlice->getPartitions()) {
+        // std::cout << "Merge ThreadLocal Sclices from P:" << mergeTask->partitionIndex << " S:" << mergeTask->sliceIndex
+        //         << std::endl;
+        for (auto& partition : (*partitions.get())) {
             for (uint64_t index = 0; index < partition->size(); index++) {
                 auto* partitionEntry = (*partition)[index];
-                auto* globalEntry = globalAggregate.getEntry(partitionEntry->key);
+                auto* globalEntry = globalSlice->getEntry(partitionEntry->key);
                 // merge into global value
                 globalEntry->value = globalEntry->value + partitionEntry->value;
             }
         }
+
+        // remove all partitions as we have merged all
+        //std::cout << "Clean Partition:" << partitions->size() << std::endl;
+        //globalPartition->removeSlicesTill(maxTriggeredSliceIndex);
+
+        //globalSlice->getPartitions().clear();
+
+
         auto newMaxSliceIndex = globalPartition->triggeredSliceSequenceLog->append(mergeTask->sliceIndex + 1);
-        while (newMaxSliceIndex > globalPartition->maxSliceIndex) {
-            auto currentMaxSliceIndex = globalPartition->maxSliceIndex.load();
+        auto currentMaxSliceIndex = globalPartition->maxSliceIndex.load();
+        while (newMaxSliceIndex > currentMaxSliceIndex) {
+            const std::lock_guard<std::mutex> lock(globalPartition->mutex);
             if (globalPartition->maxSliceIndex.compare_exchange_strong(currentMaxSliceIndex, newMaxSliceIndex)) {
                 // we updated the slice index from currentMaxSliceIndex to newMaxSliceIndex.
                 // trigger window aggregation for all slices between currentMaxSliceIndex and newMaxSliceIndex
+               // std::cout << "Send merge window " << std::endl;
+
                 auto buffer = workerContext.allocateTupleBuffer();
                 auto task = buffer.getBuffer<WindowAggregateTask>();
                 task->partitionIndex = mergeTask->partitionIndex;
@@ -226,7 +258,9 @@ class MergeSliceWindowOperator : public Runtime::Execution::ExecutablePipelineSt
                 buffer.setNumberOfTuples(1);
                 pipelineExecutionContext.dispatchBuffer(buffer);
             }
+            currentMaxSliceIndex = globalPartition->maxSliceIndex.load();
         }
+
 
         return ExecutionResult::Ok;
     }
@@ -238,6 +272,11 @@ class WindowAggregateOperator : public Runtime::Execution::ExecutablePipelineSta
         : windowOperatorHandler(windowOperatorHandler){};
     std::shared_ptr<PreAggregationWindowHandler<uint64_t, uint64_t>> windowOperatorHandler;
 
+    virtual uint32_t stop(Runtime::Execution::PipelineExecutionContext&) {
+        std::cout << " stop WindowAggregateOperator" << std::endl;
+        return 0;
+    }
+
     ExecutionResult execute(Runtime::TupleBuffer& inputTupleBuffer,
                             Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
                             Runtime::WorkerContext& workerContext) {
@@ -247,22 +286,29 @@ class WindowAggregateOperator : public Runtime::Execution::ExecutablePipelineSta
         auto windowResult = resultBuffer.getBuffer<WindowResultRecord>();
 
         auto* windowAggregateTask = inputTupleBuffer.getBuffer<WindowAggregateTask>();
+        // std::cout << "Got  windowAggregateTask partition: " << windowAggregateTask->partitionIndex
+        //           << " endSliceIndex: " << windowAggregateTask->endSliceIndex << std::endl;
         auto& partition = windowOperatorHandler->globalSliceStore.getPartition(windowAggregateTask->partitionIndex);
+
         uint64_t slicesPerWindow = 1;
         // trigger window aggregation for all slices between currentMaxSliceIndex and newMaxSliceIndex
         for (uint64_t sliceIndex = windowAggregateTask->startSliceIndex; sliceIndex < windowAggregateTask->endSliceIndex;
              sliceIndex++) {
-            PartitionedHashMap<uint64_t, uint64_t, 1> windowState =
-                PartitionedHashMap<uint64_t, uint64_t, 1>(workerContext.getBufferProvider());
-
             uint64_t startSliceForWindow = sliceIndex - (slicesPerWindow - 1);
             uint64_t endSliceForWindow = sliceIndex;
+
+            PartitionedHashMap<uint64_t, uint64_t, 1> windowState =
+                PartitionedHashMap<uint64_t, uint64_t, 1>(windowOperatorHandler->bufferManager);
+
             // iterate over all slices that are part of this window
             for (uint64_t index = startSliceForWindow; index <= endSliceForWindow; index++) {
-                auto& slice = partition->getSlice(index);
-                auto& sliceState = slice->getGlobalState();
+                if (index < partition->windowTriggerProcessor->getCurrentWatermark()) {
+                    throw Compiler::CompilerException("Slice Index " + std::to_string(index) + "is already removed");
+                }
+                auto& sliceState = partition->getSlice(index);
+
                 // iterate sequentially over state of slice
-                for (const auto& p : sliceState.getPartitions()) {
+                for (const auto& p : sliceState->getPartitions()) {
                     for (uint64_t i = 0; i < p->size(); i++) {
                         auto* entryInSlice = (*p)[i];
                         auto* entryInWindow = windowState.getEntry(entryInSlice->key);
@@ -270,9 +316,13 @@ class WindowAggregateOperator : public Runtime::Execution::ExecutablePipelineSta
                     }
                 }
             }
+
             auto windowStart = startSliceForWindow * windowOperatorHandler->sliceSize;
             auto windowEnd = (endSliceForWindow + 1) * windowOperatorHandler->sliceSize;
+            //   std::cout << "Emit window (" << windowStart << "-" << windowEnd << ")" << std::endl;
+
             // output window
+
             for (const auto& p : windowState.getPartitions()) {
                 for (uint64_t i = 0; i < p->size(); i++) {
                     auto* entryInSlice = (*p)[i];
@@ -299,8 +349,10 @@ class WindowAggregateOperator : public Runtime::Execution::ExecutablePipelineSta
         // This is windowAggregateTask->endSliceIndex - slicesPerWindow.
         // However, we have to make sure that for this partition the slice index is only increasing sequentially.
         auto maxTriggeredSliceIndex =
-            partition->windowTriggerProcessor->updateWatermark(windowAggregateTask->endSliceIndex - 1,
+            partition->windowTriggerProcessor->updateWatermark(windowAggregateTask->endSliceIndex,
                                                                windowAggregateTask->triggerSequenceNumber);
+        //std::cout << "Remove Slice from slice store:" << maxTriggeredSliceIndex << std::endl;
+
         partition->removeSlicesTill(maxTriggeredSliceIndex);
         return ExecutionResult::Ok;
     }
