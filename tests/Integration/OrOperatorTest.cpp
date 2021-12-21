@@ -73,7 +73,7 @@ class OrOperatorTest : public testing::Test {
 
 /* 1.Test
  * Here, we test simplest case for the OR operator, combining two streams
- * TODO: the second query requires a filter/map (from outputs a const Query)
+ * TODO: the second query requires a filter/map (from outputs a const Query) #2397
  */
 TEST_F(OrOperatorTest, DISABLED_testPatternOneOr) {
     coConf->resetCoordinatorOptions();
