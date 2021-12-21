@@ -69,13 +69,6 @@ class OrOperatorTest : public testing::Test {
     void TearDown() override { std::cout << "Tear down OrOperatorTest class." << std::endl; }
     uint64_t restPort = 8081;
 
-    string removeRandomKey(string contentString) {
-        std::regex r1("cep_leftkey([0-9]+)");
-        std::regex r2("cep_rightkey([0-9]+)");
-        contentString = std::regex_replace(contentString, r1, "cep_leftkey");
-        contentString = std::regex_replace(contentString, r2, "cep_rightkey");
-        return contentString;
-    }
 };
 
 /* 1.Test
@@ -144,7 +137,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternOneOr) {
     std::string outputFilePath = "testPatternOr1.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("OrOperatorTest: Submit andWith pattern");
+    NES_INFO("OrOperatorTest: Submit orWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").orWith(Query::from("QnV2")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
