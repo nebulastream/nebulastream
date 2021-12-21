@@ -81,6 +81,7 @@ class KalmanFilter {
     void setFrequencyRange(std::chrono::milliseconds frequencyRange);
     void setFrequencyWithRange(std::chrono::milliseconds frequencyInMillis,
                                std::chrono::milliseconds frequencyRange);
+    std::chrono::milliseconds getCurrentFrequency();
 
     /**
      * @brief calculate new gathering interval using euler number

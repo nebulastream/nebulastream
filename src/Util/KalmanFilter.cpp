@@ -193,4 +193,8 @@ void KalmanFilter::setFrequencyWithRange(std::chrono::milliseconds frequencyInMi
     this->setFrequencyRange(frequencyRange);
 }
 
+std::chrono::milliseconds KalmanFilter::getCurrentFrequency() {
+    return this->frequency;
+}
+
 }// namespace NES
