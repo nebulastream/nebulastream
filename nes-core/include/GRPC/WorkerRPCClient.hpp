@@ -154,7 +154,7 @@ class WorkerRPCClient {
      * @param ipAddress
     * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
      * @param globalSinkId : the unique global id of the Network Sink.
-    * @return true if succesful, else false //TODO
+    * @return true if successful, else false//TODO
     */
     static bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t globalSinkId);
 
@@ -166,7 +166,7 @@ class WorkerRPCClient {
      * @param newPort : the port of the node that the NetworkSink should send data to
      * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
      * @param globalSinkId : the unique global id of the Network Sink
-     * @return
+     * @return true if successful, else false //TODO
      */
     static bool updateNetworkSink(const std::string& address, uint64_t newNodeId, const std::string& newHostname, uint32_t newPort, uint64_t querySubPlanId, uint64_t globalSinkId);
 
