@@ -25,7 +25,7 @@ namespace NES::Experimental {
  * @brief Implements a lock free log of sequence numbers.
  * @tparam logSize
  */
-template<uint64_t logSize = 100>
+template<uint64_t logSize = 10000>
 class SequenceLog {
 
   public:
@@ -37,6 +37,7 @@ class SequenceLog {
         uint64_t current = currentSequenceNumber.load();
         while (sequenceNumber - current >= logSize) {
             current = currentSequenceNumber.load();
+            processLog();
         }
         // place the sequence number in the log at its designated position.
         auto logIndex = getLogIndex(sequenceNumber);

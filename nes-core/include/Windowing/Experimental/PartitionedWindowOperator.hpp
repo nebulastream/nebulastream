@@ -28,6 +28,7 @@ limitations under the License.
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/SeqenceLog.hpp>
 #include <Windowing/Experimental/SliceStore.hpp>
+#include <Windowing/Experimental/MapedSliceStore.hpp>
 #include <Windowing/Experimental/robin_hood.h>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
@@ -106,7 +107,7 @@ class PreAggregationWindowHandler
         }
     }
     const uint64_t sliceSize;
-    std::vector<PartitionedSliceStore<uint64_t, uint64_t>> threadLocalSliceStore;
+    std::vector<MapedSliceStore<uint64_t, uint64_t>> threadLocalSliceStore;
     PreAggregateSliceStaging<uint64_t, uint64_t> preAggregateSliceStaging;
     GlobalAggregateStore<uint64_t, uint64_t> globalSliceStore;
     std::shared_ptr<LockFreeWatermarkProcessor<>> lockFreeWatermarkProcessor;
@@ -143,6 +144,7 @@ class PreAggregateWindowOperator : public Runtime::Execution::ExecutablePipeline
         //  auto windowManager = windowHandler->getWindowManager();
         auto allowedLateness = 0;
         auto workerId = (workerContext.getId()) % pipelineExecutionContext.getNumberOfWorkerThreads();
+       // std::cout << "thread id" << workerId << std::endl;
         auto& threadLocalSliceStore = windowOperatorHandler->threadLocalSliceStore[workerId];
         auto records = inputTupleBuffer.getNumberOfTuples();
         uint64_t currentWatermark = 0;
@@ -163,24 +165,34 @@ class PreAggregateWindowOperator : public Runtime::Execution::ExecutablePipeline
         // the watermark update is an atomic process and returns the last and the current watermark.
         auto newGlobalWatermark = watermarkProcessor->updateWatermark(currentWatermark, inputTupleBuffer.getSequenceNumber());
         // check if the current max watermark is larger than the thread local watermark
-        if (threadLocalSliceStore.lastThreadLocalWatermark < newGlobalWatermark) {
+        if (newGlobalWatermark > threadLocalSliceStore.lastThreadLocalWatermark) {
             //std::cout << "update watermark at " << newGlobalWatermark << std::endl;
             // push the local slices to the global slice store.
-            for (uint64_t si = threadLocalSliceStore.getFirstIndex(); si != threadLocalSliceStore.getLastIndex(); si++) {
+            for (uint64_t si = threadLocalSliceStore.getFirstIndex(); si <= threadLocalSliceStore.getLastIndex(); si++) {
                 auto& slice = threadLocalSliceStore[si];
                 if (slice->end >= newGlobalWatermark) {
                     break;
                 }
 
+                if(si != slice->sliceIndex){
+                    std::cout << "Slice index is not correct " + std::to_string(si) + " vs " + std::to_string(slice->sliceIndex ) << std::endl;
+
+                    throw Compiler::CompilerException("<Slice index is not correct " + std::to_string(si) + " vs " + std::to_string(slice->sliceIndex ));
+                }
+
                 // put partitions to global slice store
                 auto& sliceState = slice->map;
-
+                assert(sliceState.getNumberOfPartitions() ==1);
                 for (uint64_t partitionIndex = 0; partitionIndex < sliceState.getNumberOfPartitions(); partitionIndex++) {
+                   // std::cout << "Worker: "<< workerId <<" add thead local state for slice " << slice->sliceIndex << std::endl;
+
                     auto& preAggregateSliceStaging = windowOperatorHandler->preAggregateSliceStaging;
                     auto localPartition = std::move(sliceState.getPartition(partitionIndex));
                     auto addedPartitionsToSlice =
                         preAggregateSliceStaging.addPartition(slice->sliceIndex, std::move(localPartition));
+
                     if (addedPartitionsToSlice == pipelineExecutionContext.getNumberOfWorkerThreads()) {
+                        std::cout << "Worker: "<< workerId <<" dispatch merge of slice " << slice->sliceIndex << std::endl;
                         auto buffer = workerContext.allocateTupleBuffer();
                         auto task = buffer.getBuffer<PartitionMergeTask>();
                         task->sliceIndex = slice->sliceIndex;
@@ -190,7 +202,7 @@ class PreAggregateWindowOperator : public Runtime::Execution::ExecutablePipeline
                     }
                 }
                 // erase slice from local slice store
-                threadLocalSliceStore.eraseFirst(1);
+                threadLocalSliceStore.dropFirstSlice();
             }
             threadLocalSliceStore.lastThreadLocalWatermark = newGlobalWatermark;
         }

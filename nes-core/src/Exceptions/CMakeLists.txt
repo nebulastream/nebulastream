@@ -27,4 +27,5 @@ add_source_files(nes-core
         TypeInferenceException.cpp
         UdfException.cpp
         SignatureComputationException.cpp
+        WindowProcessingException.cpp
 )

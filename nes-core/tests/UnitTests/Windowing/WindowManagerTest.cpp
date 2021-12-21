@@ -50,6 +50,7 @@
 #include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/Experimental/PartitionedSliceStore.hpp>
 
 #include <Common/ExecutableType/Array.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -121,6 +122,89 @@ TEST_F(WindowManagerTest, sliceStoreTest) {
     }
 }
 
+TEST_F(WindowManagerTest, sliceStoreTest3) {
+    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
+    auto sliceStore = Experimental::MapedSliceStore<uint64_t, uint64_t, 100>(bufferManager, 1);
+    for (uint64_t i = 0; i < 99; ++i) {
+        auto& slice = sliceStore.findSliceByTs(i);
+        ASSERT_EQ(slice->start, i);
+    }
+
+    for (uint64_t i = 0; i < 20; ++i) {
+        sliceStore.dropFirstSlice();
+        auto& slice = sliceStore.findSliceByTs(99 + i);
+        ASSERT_EQ(slice->start, 99 + i);
+    }
+    for (uint64_t i = 0; i < 20; ++i) {
+        auto& slice = sliceStore.findSliceByTs(99 + i);
+        ASSERT_EQ(slice->start, 99 + i);
+        ASSERT_EQ(slice->sliceIndex, 99 + i);
+    }
+
+    for (uint64_t i = 0; i < 90; ++i) {
+        sliceStore.dropFirstSlice();
+    }
+
+    // check if the get inserted the correct amount of slices if necessary.
+    sliceStore[200];
+    for (uint64_t i = 0; i < 99; ++i) {
+        auto& slice = sliceStore.findSliceByTs(110 + i);
+        ASSERT_EQ(slice->start, 110 + i);
+        ASSERT_EQ(slice->sliceIndex, 110 + i);
+    }
+}
+
+TEST_F(WindowManagerTest, sliceStoreTest2) {
+    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
+    auto sliceStore = Experimental::PartitionedSliceStore<uint64_t, uint64_t, 100>(bufferManager, 1);
+    for (uint64_t i = 0; i < 99; ++i) {
+        auto& slice = sliceStore.findSliceByTs(i);
+        ASSERT_EQ(slice->start, i);
+    }
+    ASSERT_ANY_THROW(sliceStore.findSliceByTs(100));
+
+    for (uint64_t i = 0; i < 20; ++i) {
+        sliceStore.dropFirstSlice();
+        auto& slice = sliceStore.findSliceByTs(99 + i);
+        ASSERT_EQ(slice->start, 99 + i);
+    }
+    for (uint64_t i = 0; i < 20; ++i) {
+        auto& slice = sliceStore.findSliceByTs(99 + i);
+        ASSERT_EQ(slice->start, 99 + i);
+        ASSERT_EQ(slice->sliceIndex, 99 + i);
+    }
+
+    for (uint64_t i = 0; i < 90; ++i) {
+        sliceStore.dropFirstSlice();
+    }
+
+    // check if the get inserted the correct amount of slices if necessary.
+    sliceStore[200];
+    for (uint64_t i = 0; i < 99; ++i) {
+        auto& slice = sliceStore.findSliceByTs(110 + i);
+        ASSERT_EQ(slice->start, 110 + i);
+        ASSERT_EQ(slice->sliceIndex, 110 + i);
+    }
+}
+
+TEST_F(WindowManagerTest, cleanSliceStoreTest) {
+    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
+    auto sliceStore = Experimental::PartitionedSliceStore<uint64_t, uint64_t, 100>(bufferManager, 1);
+    for (uint64_t i = 0; i < 99; ++i) {
+        auto& slice = sliceStore.findSliceByTs(i);
+        ASSERT_EQ(slice->start, i);
+    }
+
+    for (uint64_t i = 0; i < 99; ++i) {
+        sliceStore.dropFirstSlice();
+    }
+
+    for (uint64_t i = 0; i < 20; ++i) {
+        auto& slice = sliceStore.findSliceByTs(99 + i);
+        ASSERT_EQ(slice->start, 99 + i);
+    }
+}
+
 TEST_F(WindowManagerTest, PartitionedHashMap) {
     Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
     auto partitionedHashMap = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
@@ -167,8 +251,8 @@ TEST_F(WindowManagerTest, MergePartitionedHashMap) {
     // merges partitions
     for (uint64_t i = 0; i < 2; i++) {
 
-        auto& partition = globalSliceStore.getPartition(i);
-        auto& slice = partition->getSlice(0);
+       // auto& partition = globalSliceStore.getPartition(i);
+       // auto& slice = partition->getSlice(0);
         auto& partition1 = partitionedHashMapT1.getPartition(i);
         stage.addPartition(0, std::move(partition1));
        //slice->addPartition(std::move(partition1));

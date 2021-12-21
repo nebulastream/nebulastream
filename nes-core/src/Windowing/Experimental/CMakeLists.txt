@@ -1,3 +1,4 @@
+# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,18 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        DistributionCharacteristic.cpp
-        TimeCharacteristic.cpp
-        LogicalWindowDefinition.cpp
-        LogicalJoinDefinition.cpp
+add_source_nes(
+        PartitionedSliceStore.cpp
 )
-add_subdirectory(Watermark)
-add_subdirectory(Runtime)
-add_subdirectory(WindowAggregations)
-add_subdirectory(WindowActions)
-add_subdirectory(WindowMeasures)
-add_subdirectory(WindowPolicies)
-add_subdirectory(WindowTypes)
-add_subdirectory(WindowHandler)
-add_subdirectory(Experimental)
