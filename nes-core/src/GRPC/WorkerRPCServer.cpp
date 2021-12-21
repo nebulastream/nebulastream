@@ -125,5 +125,40 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     }
     return Status::CANCELLED;
 }
+Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
+    NES_DEBUG("WorkerRPCServer::BeginBuffer request received");
 
+    uint64_t querySubPlanId = request->querysubplanid();
+    uint64_t globalSinkId = request->networksinkid();
+    bool success = nodeEngine->bufferData(querySubPlanId,globalSinkId);
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StopQuery: success");
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        NES_ERROR("WorkerRPCServer::StopQuery: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
+Status WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request,
+                                           UpdateNetworkSinkReply* reply) {
+    NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request received");
+    uint64_t querySubPlanId = request->querysubplanid();
+    uint64_t networkSinkId = request->networksinkid();
+    uint64_t newNodeId = request->newnodeid();
+    std::string newHostname = request->newhostname();
+    uint32_t newPort = request->newport();
+
+    bool success = nodeEngine->updateNetworkSink(newNodeId,newHostname,newPort,querySubPlanId,networkSinkId);
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        NES_ERROR("WorkerRPCServer::UpdateNetworkSinks: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
 }// namespace NES
