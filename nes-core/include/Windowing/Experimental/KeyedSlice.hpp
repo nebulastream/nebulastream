@@ -76,7 +76,7 @@ class Partition {
     uint64_t maxEntry = 0;
 };
 
-template<class KeyType, class ValueType, uint64_t numberOfPartitions = 2>
+template<class KeyType, class ValueType, uint64_t numberOfPartitions = 1>
 class PartitionedHashMap {
   public:
     PartitionedHashMap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
@@ -136,12 +136,12 @@ class PartitionedHashMap {
 template<class KeyType, class ValueType, uint64_t numberOfPartitions>
 class PartitionedKeyedSlice {
   public:
-    PartitionedKeyedSlice(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, uint64_t start, uint64_t end)
-        : start(start), end(end), sliceIndex(start/(end-start)), map(bufferManager){};
-    void reset(uint64_t start, uint64_t end) {
+    PartitionedKeyedSlice(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, uint64_t start, uint64_t end, uint64_t sliceIndex)
+        : start(start), end(end), sliceIndex(sliceIndex), map(bufferManager){};
+    void reset(uint64_t start, uint64_t end,  uint64_t sliceIndex) {
         this->start = start;
         this->end = end;
-        this->sliceIndex = start/(end-start);
+        this->sliceIndex = sliceIndex;
         map.clear();
     }
     uint64_t start;
