@@ -284,7 +284,7 @@ TEST_F(OrOperatorTest, testPatternOneUnion) {
 
 /* 3.Test
  * Here, we test if we can use multi or operator for patterns and create complex events with it
- * TODO OR(C,OR(A,B)) second Or does not work due to schema mismatch
+ * TODO OR(C,OR(A,B)) second Or does not work due to schema mismatch #2398
  */
 TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     coConf->resetCoordinatorOptions();
