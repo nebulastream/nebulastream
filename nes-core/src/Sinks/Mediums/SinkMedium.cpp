@@ -67,4 +67,7 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
     }
 }
+uint64_t SinkMedium::getOperatorId() {
+    //method for NetworkSink will be added in #
+    return 0; }
 }// namespace NES
