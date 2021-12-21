@@ -316,6 +316,11 @@ add_executable(simple-pattern-test "Integration/SimplePatternTest.cpp")
 target_link_libraries(simple-pattern-test nes ${GTEST_LIBRARIES})
 add_test(NAME simple-pattern-test COMMAND simple-pattern-test)
 
+### OrOperatorTest ###
+add_executable(or-operator-test "Integration/OrOperatorTest.cpp")
+target_link_libraries(or-operator-test nes ${GTEST_LIBRARIES})
+add_test(NAME or-operator-test COMMAND or-operator-test)
+
 ### Sensor Bus Tests ###
 #add_executable(sensor-bus-tests "UnitTests/SensorBusTest.cpp")
 #target_link_libraries(sensor-bus-tests nes ${GTEST_LIBRARIES})
