@@ -148,6 +148,29 @@ class WorkerRPCClient {
     static bool requestMonitoringData(const std::string& address, Runtime::TupleBuffer& buf, uint64_t schemaSizeBytes);
 
     /**
+    * @brief Requests remote worker to start buffering data on a single NetworkSink identified by
+     * a query sub plan Id and a global sinkId.
+     * Once buffering starts, the Network Sink no longer sends data downstream
+     * @param ipAddress
+    * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
+     * @param globalSinkId : the unique global id of the Network Sink.
+    * @return true if succesful, else false //TODO
+    */
+    static bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t globalSinkId);
+
+    /**
+     * @brief requests a remote worker to reconfigure a NetworkSink so that the NetworkSink changes where it sends data to (changes downstream node)
+     * @param ipAddress
+     * @param newNodeId : the id of the node that the Network Sink will send data to after reconfiguration
+     * @param newHostname : the hostname of the node that the NetworkSink should send data to
+     * @param newPort : the port of the node that the NetworkSink should send data to
+     * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
+     * @param globalSinkId : the unique global id of the Network Sink
+     * @return
+     */
+    static bool updateNetworkSink(const std::string& address, uint64_t newNodeId, const std::string& newHostname, uint32_t newPort, uint64_t querySubPlanId, uint64_t globalSinkId);
+
+    /**
      * @brief This functions loops over all queues and wait for the async calls return
      * @param queues
      * @param mode

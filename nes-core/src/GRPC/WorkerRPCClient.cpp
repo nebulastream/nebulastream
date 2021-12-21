@@ -357,5 +357,52 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
 
     return false;
 }
+bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t globalSinkId) {
+    NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);
+    BufferRequest request;
+    request.set_querysubplanid(querySubPlanId);
+    request.set_networksinkid(globalSinkId);
+    BufferReply reply;
+    ClientContext context;
 
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->BeginBuffer(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_ERROR(" WorkerRPCClient::BeginBuffer "
+                  "error="
+                      << status.error_code() << ": " << status.error_message());
+        throw Exception("Error while WorkerRPCClient::stopQuery");
+    }
+    return false;
+}
+bool WorkerRPCClient::updateNetworkSink(const std::string& address,
+                                         uint64_t newNodeId, const std::string& newHostname,
+                                         uint32_t newPort, uint64_t querySubPlanId, uint64_t globalSinkId)
+{
+    UpdateNetworkSinkRequest request;
+    request.set_newnodeid(newNodeId);
+    request.set_newhostname(newHostname);
+    request.set_newport(newPort);
+    request.set_querysubplanid(querySubPlanId);
+    request.set_networksinkid(globalSinkId);
+
+    UpdateNetworkSinkReply reply;
+    ClientContext context;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->UpdateNetworkSink(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::UpdateNetworkSinks: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks "
+                  "error="
+                      << status.error_code() << ": " << status.error_message());
+        throw Exception("Error while WorkerRPCClient::updateNetworkSinks");
+    }
+}
 }// namespace NES

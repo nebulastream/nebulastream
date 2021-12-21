@@ -31,6 +31,10 @@ service WorkerRPCService {
 
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
+
+  rpc BeginBuffer(BufferRequest) returns (BufferReply){}
+
+  rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
 }
 
 message DeployQueryRequest {
@@ -94,4 +98,25 @@ message MonitoringDataRequest {
 
 message MonitoringDataReply {
   bytes buffer = 1;
+}
+
+message UpdateNetworkSinkRequest{
+  uint64 newNodeId = 1;
+  string newHostname = 2;
+  uint32 newPort = 3;
+  uint64 querySubPlanId = 4;
+  uint64 networkSinkId = 5;
+}
+
+message UpdateNetworkSinkReply {
+  bool success = 1;
+}
+
+message BufferRequest {
+  uint64 querySubPlanId = 1;
+  uint64 networkSinkId = 2;
+}
+
+message BufferReply {
+  bool success = 1;
 }
