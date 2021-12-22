@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #endif
 
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
 #include <numa.h>
 #include <numaif.h>
@@ -93,14 +93,14 @@ void readCpuConfig(uint32_t& numa_nodes_count,
 
 HardwareManager::HardwareManager() : globalAllocator(std::make_shared<NesDefaultMemoryAllocator>()) {
     detail::readCpuConfig(numaNodesCount, numPhysicalCpus, cpuMapping);
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     numaRegions.resize(numaNodesCount);
     for (uint32_t i = 0; i < numaNodesCount; ++i) {
         numaRegions[i] = std::make_shared<NumaRegionMemoryAllocator>(i);
     }
 #endif
 }
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 uint32_t HardwareManager::getNumberOfNumaRegions() const { return numaRegions.size(); }
 
 NumaRegionMemoryAllocatorPtr HardwareManager::getNumaAllactor(uint32_t numaNodeIndex) const {
@@ -111,7 +111,7 @@ NumaRegionMemoryAllocatorPtr HardwareManager::getNumaAllactor(uint32_t numaNodeI
 NesDefaultMemoryAllocatorPtr HardwareManager::getGlobalAllocator() const { return globalAllocator; }
 
 uint32_t HardwareManager::getNumaNodeForCore(int coreId) const {
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     return numa_node_of_cpu(coreId);
 #else
     return coreId;

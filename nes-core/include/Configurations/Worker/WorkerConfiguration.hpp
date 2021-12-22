@@ -244,6 +244,13 @@ class WorkerConfiguration {
     void setWorkerPinList(std::string list);
 
     /**
+    * @brief getter/setter for queuePinList
+    * @return
+    */
+    [[nodiscard]] const StringConfigOption& getQueuePinList() const;
+    void setQueuePinList(std::string list);
+
+    /**
     * @brief getter/setter for numa awareness
     * @return
     */
@@ -302,6 +309,7 @@ class WorkerConfiguration {
     StringConfigOption sourcePinList;
     StringConfigOption workerPinList;
     std::vector<PhysicalSourcePtr> physicalSources;
+    StringConfigOption queuePinList;
 };
 }// namespace Configurations
 }// namespace NES

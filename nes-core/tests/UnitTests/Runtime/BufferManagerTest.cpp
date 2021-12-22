@@ -51,7 +51,7 @@ TEST_F(BufferManagerTest, initializedBufferManager) {
     ASSERT_EQ(buffers_free, buffers_managed);
 }
 
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 TEST_F(BufferManagerTest, initializedBufferManagerWithNuma) {
     auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
     auto bufferManager =

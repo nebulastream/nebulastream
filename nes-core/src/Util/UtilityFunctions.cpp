@@ -37,6 +37,12 @@
 
 namespace NES {
 
+uint64_t Util::numberOfUniqueValues(std::vector<uint64_t>& values)
+{
+    std::sort(values.begin(), values.end());
+    return std::unique(values.begin(), values.end()) - values.begin();
+}
+
 std::string Util::escapeJson(const std::string& str) {
     std::ostringstream o;
     for (char c : str) {

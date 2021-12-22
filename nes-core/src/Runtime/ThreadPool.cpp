@@ -31,7 +31,7 @@
 #include <thread>
 #include <utility>
 
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
 #include <Runtime/HardwareManager.hpp>
 #include <numa.h>
@@ -50,10 +50,11 @@ ThreadPool::ThreadPool(uint64_t nodeId,
                        std::vector<BufferManagerPtr> bufferManagers,
                        uint64_t numberOfBuffersPerWorker,
                        HardwareManagerPtr hardwareManager,
-                       std::vector<uint64_t> workerPinningPositionList)
+                       std::vector<uint64_t> workerPinningPositionList,
+                       std::vector<uint64_t> queuePinListMapping)
     : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), bufferManagers(bufferManagers),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), workerPinningPositionList(workerPinningPositionList),
-      hardwareManager(hardwareManager) {}
+      queuePinListMapping(queuePinListMapping), hardwareManager(hardwareManager) {}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");
@@ -113,15 +114,15 @@ bool ThreadPool::start() {
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier]() {
             setThreadName("Wrk-%d-%d", nodeId, i);
-
+            uint64_t queueIdx = 0;
             BufferManagerPtr localBufferManager;
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#if defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
             if (workerPinningPositionList.size() != 0) {
                 NES_ASSERT(numThreads <= workerPinningPositionList.size(),
                            "Not enough worker positions for pinning are provided");
                 uint64_t maxPosition = *std::max_element(workerPinningPositionList.begin(), workerPinningPositionList.end());
                 NES_ASSERT(maxPosition < std::thread::hardware_concurrency(), "pinning position is out of cpu range");
-
+                //pin core
                 cpu_set_t cpuset;
                 CPU_ZERO(&cpuset);
                 CPU_SET(workerPinningPositionList[i], &cpuset);
@@ -131,33 +132,29 @@ bool ThreadPool::start() {
                 } else {
                     NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
                 }
-                auto nodeOfCpu = numa_node_of_cpu(workerPinningPositionList[i]);
-                auto numaNodeIndex = nodeOfCpu;
-                NES_ASSERT(numaNodeIndex <= (int) bufferManagers.size(), "requested buffer manager idx is too large");
-
-                localBufferManager = bufferManagers[numaNodeIndex];
-                NES_WARNING("Worker thread " << i << " will use numa node =" << numaNodeIndex);
-                std::stringstream ss;
-                ss << "Worker thread " << i << " pins to core=" << workerPinningPositionList[i]
-                   << " will use numa node =" << numaNodeIndex << std::endl;
-                std::cout << ss.str();
-
             } else {
-#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-                //We have to make sure that we divide the number of threads evenly among the numa nodes
-                NES_WARNING("Flag: NES_USE_ONE_QUEUE_PER_NUMA_NODE is used but no worker list is specified");
-                auto numberOfNumaRegions = hardwareManager->getNumberOfNumaRegions();
-                if (numberOfNumaRegions != 1 && numThreads != 1) {
-                    NES_ASSERT(
-                        false,
-                        "We have to specify a worker list that evenly distributes threads among cores for more than one thread");
-                } else {
-                    NES_WARNING("With only one NUMA node we do not distribute the threads among the cores");
-                }
-#endif
-                NES_WARNING("Worker use default affinity");
-                localBufferManager = bufferManagers[0];
+                NES_THROW_RUNTIME_ERROR("NES_USE_ONE_QUEUE_PER_NUMA_NODE or NES_USE_ONE_QUEUE_PER_QUERY require a mapping list");
             }
+#endif
+
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+            NES_ASSERT(false, "I don't think this works anymore");
+//            auto nodeOfCpu = numa_node_of_cpu(threadToCoreMapping);
+//            auto numaNodeIndex = nodeOfCpu;
+//            NES_ASSERT(numaNodeIndex <= (int) bufferManagers.size(), "requested buffer manager idx is too large");
+//
+//            localBufferManager = bufferManagers[numaNodeIndex];
+//            NES_ASSERT(numThreads <= workerPinningPositionList.size(), "Not enough worker positions for pinning are provided");
+//            std::stringstream ss;
+//            ss << "Worker thread " << i << " pins to core=" << workerPinningPositionList[i]
+//               << " will use numa node =" << numaNodeIndex << std::endl;
+//            std::cout << ss.str();
+//            queueIdx = numaNodeIndex;
+#elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
+            //give one buffer manager per queue
+            localBufferManager = bufferManagers[queuePinListMapping[i]];
+            queueIdx = queuePinListMapping[i];
+            NES_WARNING("worker " << i << " pins to queue=" << queuePinListMapping[i]);
 #else
             localBufferManager = bufferManagers[0];
 #endif
@@ -173,8 +170,11 @@ bool ThreadPool::start() {
             queryManager->cpuProfilers[NesThread::getId() % queryManager->cpuProfilers.size()] = profiler;
 #endif
             // TODO (2310) properly initialize the profiler with a file, thread, and core id
-
+#if defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
+            runningRoutine(WorkerContext(NesThread::getId(), localBufferManager, numberOfBuffersPerWorker, queueIdx));
+#else
             runningRoutine(WorkerContext(NesThread::getId(), localBufferManager, numberOfBuffersPerWorker));
+#endif
         });
     }
     barrier->wait();
