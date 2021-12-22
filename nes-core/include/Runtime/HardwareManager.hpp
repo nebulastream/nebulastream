@@ -122,7 +122,7 @@ class HardwareManager {
      */
     bool bindThreadToCore(pthread_t thread, uint32_t numaIndex, uint32_t coreId);
 
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     /**
      * @brief Returns the numa allocator for the numaNodeIndex-th numa node
      * @param numaNodeIndex
@@ -144,7 +144,7 @@ class HardwareManager {
 
   private:
     NesDefaultMemoryAllocatorPtr globalAllocator;
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     std::vector<NumaRegionMemoryAllocatorPtr> numaRegions;
 #endif
     std::unordered_map<uint64_t, NumaDescriptor> cpuMapping;

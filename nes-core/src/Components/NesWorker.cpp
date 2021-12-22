@@ -50,6 +50,7 @@ NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig)
     : workerConfig(std::move(workerConfig)), coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
       localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
       workerToCoreMapping(workerConfig->getWorkerPinList()->getValue()),
+      queuePinList(workerConfig->getQueuePinList()->getValue()),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()), localWorkerRpcPort(workerConfig->getRpcPort()->getValue()),
       localWorkerZmqPort(workerConfig->getDataPort()->getValue()), numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
       numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()),
@@ -137,6 +138,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
                                                                                       : Runtime::NumaAwarenessFlag::DISABLED,
                                                                   workerToCoreMapping,
+                                                                  queuePinList,
                                                                   queryCompilerCompilationStrategy,
                                                                   queryCompilerPipeliningStrategy,
                                                                   queryCompilerOutputBufferOptimizationLevel);

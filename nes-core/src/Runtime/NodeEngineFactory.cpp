@@ -54,6 +54,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersPerWorker,
                                                   NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& workerToCodeMapping,
+                                                  const std::string& queuePinList,
                                                   const std::string& queryCompilerCompilationStrategy,
                                                   const std::string& queryCompilerPipeliningStrategy,
                                                   const std::string& queryCompilerOutputBufferOptimizationLevel) {
@@ -63,7 +64,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto hardwareManager = std::make_shared<Runtime::HardwareManager>();
         std::vector<BufferManagerPtr> bufferManagers;
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
         if (enableNumaAwareness == NumaAwarenessFlag::ENABLED) {
             auto numberOfBufferPerNumaNode = numberOfBuffersInGlobalBufferManager / hardwareManager->getNumberOfNumaRegions();
             NES_ASSERT2_FMT(numberOfBuffersInSourceLocalBufferPool < numberOfBufferPerNumaNode,
@@ -82,9 +83,19 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                                      numberOfBuffersInGlobalBufferManager,
                                                                      hardwareManager->getGlobalAllocator()));
         }
+#elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
+        NES_WARNING("Numa flags " << int(enableNumaAwareness));
+        std::vector<uint64_t> queuePinListMapping = Util::splitWithStringDelimiter<uint64_t>(queuePinList, ",");
+        auto numberOfQueues = Util::numberOfUniqueValues(queuePinListMapping);
+        for (auto i = 0u; i < numberOfQueues; ++i) {
+            bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
+                                                                     numberOfBuffersInGlobalBufferManager,
+                                                                     hardwareManager->getGlobalAllocator()));
+        }
 #else
         NES_WARNING("Numa flags " << int(enableNumaAwareness) << " are ignored");
         bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
+
                                                                  numberOfBuffersInGlobalBufferManager,
                                                                  hardwareManager->getGlobalAllocator()));
 #endif
@@ -96,8 +107,13 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         QueryManagerPtr queryManager;
         if (workerToCodeMapping != "") {
             std::vector<uint64_t> workerToCoreMapping = Util::splitWithStringDelimiter<uint64_t>(workerToCodeMapping, ",");
-            queryManager =
-                std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, hardwareManager, workerToCoreMapping);
+            std::vector<uint64_t> queuePinListMapping = Util::splitWithStringDelimiter<uint64_t>(queuePinList, ",");
+            queryManager = std::make_shared<QueryManager>(bufferManagers,
+                                                          nodeEngineId,
+                                                          numThreads,
+                                                          hardwareManager,
+                                                          workerToCoreMapping,
+                                                          queuePinListMapping);
         } else {
             queryManager = std::make_shared<QueryManager>(bufferManagers, nodeEngineId, numThreads, hardwareManager);
         }

@@ -36,7 +36,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
 #include <Runtime/HardwareManager.hpp>
 #include <numa.h>
@@ -52,7 +52,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     NES_ASSERT(nodeEngine, "invalid engine");
     auto numaNodeIndex = 0u;
-#ifdef NES_ENABLE_NUMA_SUPPORT
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
     if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();

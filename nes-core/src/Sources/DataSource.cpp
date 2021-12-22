@@ -31,11 +31,11 @@
 
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadNaming.hpp>
-#ifdef NES_ENABLE_NUMA_SUPPORT
+//#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
 #include <numa.h>
 #include <numaif.h>
-#endif
+//#endif
 #endif
 #include <utility>
 namespace NES {
@@ -112,7 +112,6 @@ bool DataSource::start() {
     // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
     // only CPU i as set.
 #ifdef __linux__
-#ifdef NES_ENABLE_NUMA_SUPPORT
         if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
             NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(), "pinning position is out of cpu range");
             cpu_set_t cpuset;
@@ -137,7 +136,6 @@ bool DataSource::start() {
         } else {
             NES_WARNING("Use default affinity for source");
         }
-#endif
 #endif
 
         prom.set_value(true);

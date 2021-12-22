@@ -932,6 +932,109 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_EQ(response2, 0);
 }
 
+TEST_F(QueryDeploymentTest, testOneQueuePerQuery) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    wrkConf->setWorkerPinList("1,2");
+    wrkConf->setQueuePinList("1,2");
+    wrkConf->setNumWorkerThreads(2);
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << stream;
+    out.close();
+    crd->getNesWorker()->registerLogicalStream("stream", testSchemaFileName);
+
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
+
+    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
+    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
+    srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
+    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
+    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
+    //register physical stream
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
+    crd->getNesWorker()->registerPhysicalStream(streamConf);
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    std::string outputFilePath1 = "test1.out";
+    std::string outputFilePath2 = "test2.out";
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query1 = R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath1
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId1 =
+        queryService->validateAndQueueAddRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    string query2 = R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath2
+        + R"(", "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId2 =
+        queryService->validateAndQueueAddRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
+
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath1));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId1);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId2);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
+    int response1 = remove("test1.out");
+    EXPECT_EQ(response1, 0);
+
+    int response2 = remove("test2.out");
+    EXPECT_EQ(response2, 0);
+}
+
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->setRpcPort(rpcPort);
