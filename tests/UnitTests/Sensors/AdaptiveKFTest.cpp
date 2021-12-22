@@ -125,7 +125,7 @@ TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
     }
 
     // error has changed and P != P0
-    ASSERT_NE(initialError, kalmanFilter.getError());
+    EXPECT_NE(initialError, kalmanFilter.getError());
 }
 
 TEST_F(AdaptiveKFTest, kfStateChangeTest) {
@@ -249,7 +249,7 @@ TEST_F(AdaptiveKFTest, kfLambdaChangeTest) {
 
     auto oldLambda = kalmanFilter.getLambda();
     kalmanFilter.setLambda(0.1);
-    ASSERT_NE(oldLambda, kalmanFilter.getLambda());
+    EXPECT_NE(oldLambda, kalmanFilter.getLambda());
 }
 
 TEST_F(AdaptiveKFTest, kfUpdateNoTimestepTest) {
@@ -265,11 +265,11 @@ TEST_F(AdaptiveKFTest, kfUpdateNoTimestepTest) {
     // start measurements vector
     Eigen::VectorXd y(1);
     auto oldStep = kfProxy.getCurrentStep();
-    ASSERT_EQ(oldStep, kfProxy.initialTimestamp);
+    EXPECT_EQ(oldStep, kfProxy.initialTimestamp);
     kfProxy.update(y);
     auto newStep = kfProxy.getCurrentStep();
-    ASSERT_NE(newStep, kfProxy.initialTimestamp);
-    ASSERT_NEAR(newStep - oldStep, kfProxy.timeStep, 0.01);
+    EXPECT_NE(newStep, kfProxy.initialTimestamp);
+    EXPECT_NEAR(newStep - oldStep, kfProxy.timeStep, 0.01);
 }
 
 TEST_F(AdaptiveKFTest, kfUpdateWithTimestepTest) {
@@ -284,9 +284,9 @@ TEST_F(AdaptiveKFTest, kfUpdateWithTimestepTest) {
     auto newTs = std::time(nullptr);
     kfProxy.init(initialState, newTs);
 
-    ASSERT_NE(initialTs, kfProxy.initialTimestamp);
-    ASSERT_EQ(kfProxy.initialTimestamp, newTs);
-    ASSERT_EQ(kfProxy.currentTime, kfProxy.initialTimestamp);
+    EXPECT_NE(initialTs, kfProxy.initialTimestamp);
+    EXPECT_EQ(kfProxy.initialTimestamp, newTs);
+    EXPECT_EQ(kfProxy.currentTime, kfProxy.initialTimestamp);
 }
 
 TEST_F(AdaptiveKFTest, kfErrorDividerTest) {
@@ -294,14 +294,14 @@ TEST_F(AdaptiveKFTest, kfErrorDividerTest) {
     KFProxy kfProxy{2};
     kfProxy.setDefaultValues();
     auto errorDivider = kfProxy.totalEstimationErrorDivider;
-    ASSERT_NE(errorDivider, 0);
-    ASSERT_NEAR(errorDivider, 1.5, 0.01);
+    EXPECT_NE(errorDivider, 0);
+    EXPECT_NEAR(errorDivider, 1.5, 0.01);
 
     // 10, then 20, error should be (20/1 + 10/2) / (1/1 + 1/2) = 16.667
     kfProxy.kfErrorWindow.push(10);
     kfProxy.kfErrorWindow.push(20);
     auto totalEstError = kfProxy.calculateTotalEstimationError();
-    ASSERT_NEAR(totalEstError, 16.66, 0.01);
+    EXPECT_NEAR(totalEstError, 16.66, 0.01);
 }
 
 TEST_F(AdaptiveKFTest, kfErrorDividerDefaultSizeTest) {
@@ -309,8 +309,8 @@ TEST_F(AdaptiveKFTest, kfErrorDividerDefaultSizeTest) {
     KFProxy kfProxy;
     kfProxy.setDefaultValues();
     auto errorDivider = kfProxy.totalEstimationErrorDivider;
-    ASSERT_NE(errorDivider, 0);
-    ASSERT_NEAR(errorDivider, this->defaultEstimationErrorDivider, 0.01);
+    EXPECT_NE(errorDivider, 0);
+    EXPECT_NEAR(errorDivider, this->defaultEstimationErrorDivider, 0.01);
 }
 
 TEST_F(AdaptiveKFTest, kfErrorDividerCustomSizeTest) {
@@ -318,38 +318,38 @@ TEST_F(AdaptiveKFTest, kfErrorDividerCustomSizeTest) {
     KFProxy kfProxy{1};
     kfProxy.setDefaultValues();
     auto errorDivider = kfProxy.totalEstimationErrorDivider;
-    ASSERT_NE(errorDivider, 0);
-    ASSERT_NEAR(errorDivider, 1, 0.01);
+    EXPECT_NE(errorDivider, 0);
+    EXPECT_NEAR(errorDivider, 1, 0.01);
 
     // window of 0
     KFProxy kfProxy1{0};
     kfProxy1.setDefaultValues();
     errorDivider = kfProxy1.totalEstimationErrorDivider;
-    ASSERT_EQ(errorDivider, 1);
+    EXPECT_EQ(errorDivider, 1);
 
     // window of 50
     KFProxy kfProxy2{50};
     kfProxy2.setDefaultValues();
     errorDivider = kfProxy2.totalEstimationErrorDivider;
-    ASSERT_NE(errorDivider, 0);
-    ASSERT_NEAR(errorDivider, 4.5, 0.1);
+    EXPECT_NE(errorDivider, 0);
+    EXPECT_NEAR(errorDivider, 4.5, 0.1);
 }
 
 TEST_F(AdaptiveKFTest, kfEstimationErrorEmptyWindowTest) {
     // default filter
     KFProxy kfProxy{0};
     kfProxy.setDefaultValues();
-    ASSERT_EQ(kfProxy.calculateTotalEstimationError(), 0);
+    EXPECT_EQ(kfProxy.calculateTotalEstimationError(), 0);
 
     // window of 1
     KFProxy kfProxy1{1};
     kfProxy1.setDefaultValues();
-    ASSERT_EQ(kfProxy1.calculateTotalEstimationError(), 0);
+    EXPECT_EQ(kfProxy1.calculateTotalEstimationError(), 0);
 
     // window of 50
     KFProxy kfProxy2{50};
     kfProxy2.setDefaultValues();
-    ASSERT_EQ(kfProxy2.calculateTotalEstimationError(), 0);
+    EXPECT_EQ(kfProxy2.calculateTotalEstimationError(), 0);
 }
 
 TEST_F(AdaptiveKFTest, kfEstimationErrorFilledWindowTest) {
@@ -357,9 +357,9 @@ TEST_F(AdaptiveKFTest, kfEstimationErrorFilledWindowTest) {
     KFProxy kfProxy{1};
     kfProxy.setDefaultValues();
     kfProxy.kfErrorWindow.push(2);
-    ASSERT_EQ(kfProxy.calculateTotalEstimationError(), 2);
+    EXPECT_EQ(kfProxy.calculateTotalEstimationError(), 2);
     kfProxy.kfErrorWindow.push(0); // will replace 2
-    ASSERT_EQ(kfProxy.calculateTotalEstimationError(), 0);
+    EXPECT_EQ(kfProxy.calculateTotalEstimationError(), 0);
 
     // window of 2
     KFProxy kfProxy2{2};
@@ -369,8 +369,8 @@ TEST_F(AdaptiveKFTest, kfEstimationErrorFilledWindowTest) {
         kfProxy2.kfErrorWindow.push(value);
         value++;
     }
-    ASSERT_NE(kfProxy2.calculateTotalEstimationError(), 0);
-    ASSERT_NEAR(kfProxy2.calculateTotalEstimationError(), 0.6, 0.1);
+    EXPECT_NE(kfProxy2.calculateTotalEstimationError(), 0);
+    EXPECT_NEAR(kfProxy2.calculateTotalEstimationError(), 0.6, 0.1);
 }
 
 TEST_F(AdaptiveKFTest, kfSimpleInitTest) {
@@ -379,9 +379,9 @@ TEST_F(AdaptiveKFTest, kfSimpleInitTest) {
     kfProxy.init();
 
     // initial values are zero and size is defaulted to 3 in init
-    ASSERT_EQ(kfProxy.getState().size(), 3);
+    EXPECT_EQ(kfProxy.getState().size(), 3);
     for (int i = 0; i < kfProxy.getState().size(); ++i) {
-        ASSERT_EQ(kfProxy.getState()[i], 0);
+        EXPECT_EQ(kfProxy.getState()[i], 0);
     }
 }
 
@@ -395,9 +395,9 @@ TEST_F(AdaptiveKFTest, kfInitWithStateTest) {
     kfProxy.init(initialState);
 
     // initial values from previous step and size is 3
-    ASSERT_EQ(kfProxy.getState().size(), 2);
-    ASSERT_EQ(kfProxy.getState()[0], 0);
-    ASSERT_EQ(kfProxy.getState()[1], measurements[0]);
+    EXPECT_EQ(kfProxy.getState().size(), 2);
+    EXPECT_EQ(kfProxy.getState()[0], 0);
+    EXPECT_EQ(kfProxy.getState()[1], measurements[0]);
 }
 
 TEST_F(AdaptiveKFTest, kfNewGatheringIntervalMillisTest) {
@@ -412,12 +412,12 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalMillisTest) {
 
     kfProxy.kfErrorWindow.push(0);
     kfProxy.kfErrorWindow.push(1);
-    ASSERT_NE(kfProxy.calculateTotalEstimationError(), 0);
-    ASSERT_NEAR(kfProxy.calculateTotalEstimationError(), 0.6, 0.1);
+    EXPECT_NE(kfProxy.calculateTotalEstimationError(), 0);
+    EXPECT_NEAR(kfProxy.calculateTotalEstimationError(), 0.6, 0.1);
 
     auto newFrequency = kfProxy.getNewFrequency();
-    ASSERT_NE(oldFrequency.count(), newFrequency.count());
-    ASSERT_GT(oldFrequency.count(), newFrequency.count());
+    EXPECT_NE(oldFrequency.count(), newFrequency.count());
+    EXPECT_GT(oldFrequency.count(), newFrequency.count());
 }
 
 TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
@@ -433,16 +433,16 @@ TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
     initialState << 0, measurements[0], measurements[1];
     kfNormal.init(initialState);
     kfAbnormal.init(initialState);
-    ASSERT_EQ(initialState, kfNormal.getState());
-    ASSERT_EQ(initialState, kfAbnormal.getState());
-    ASSERT_EQ(kfNormal.getState(), kfAbnormal.getState());
+    EXPECT_EQ(initialState, kfNormal.getState());
+    EXPECT_EQ(initialState, kfAbnormal.getState());
+    EXPECT_EQ(kfNormal.getState(), kfAbnormal.getState());
 
     // start measurements vector
     Eigen::VectorXd y(1);
     y << measurements[2]; // 1.2913511148
     kfNormal.update(y); // update once, this has a huge error due to starting vals
     kfAbnormal.update(y);
-    ASSERT_EQ(kfNormal.getEstimationError(), kfAbnormal.getEstimationError());
+    EXPECT_EQ(kfNormal.getEstimationError(), kfAbnormal.getEstimationError());
 
     // update 1st filter, normal value (similar to first update)
     y << measurements[3]; // 1.48485250951, somewhat "normal"
@@ -455,7 +455,7 @@ TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
     auto abnormalEstimationError = kfAbnormal.getEstimationError();
 
     // assert that error is bigger when value is "abnormal"
-    ASSERT_NE(abnormalEstimationError, normalEstimationError);
-    ASSERT_GT(abnormalEstimationError, normalEstimationError);
+    EXPECT_NE(abnormalEstimationError, normalEstimationError);
+    EXPECT_GT(abnormalEstimationError, normalEstimationError);
 }
 }// namespace NES
