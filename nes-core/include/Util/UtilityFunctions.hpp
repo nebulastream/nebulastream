@@ -144,7 +144,16 @@ bool endsWith(const std::string& fullString, const std::string& ending);
      * @param start
      * @return true if it ends with the given string, else false
      */
+uint64_t numberOfUniqueValues(std::vector<uint64_t>& values);
+
+    /**
+     * @brief Get number of unique elements
+     * @param fullString
+     * @param start
+     * @return true if it ends with the given string, else false
+     */
 bool startsWith(const std::string& fullString, const std::string& ending);
+
 
 /**
    * @brief this function creates an ID string

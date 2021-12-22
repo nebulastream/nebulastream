@@ -31,6 +31,7 @@
 #include <memory>
 #include <stack>
 #include <utility>
+#include <Util/UtilityFunctions.hpp>
 
 namespace NES::Runtime {
 
@@ -86,17 +87,16 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 
 }// namespace detail
 
-#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
-#endif
 
 QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            uint64_t nodeEngineId,
                            uint16_t numThreads,
                            HardwareManagerPtr hardwareManager,
-                           std::vector<uint64_t> workerToCoreMapping)
+                           std::vector<uint64_t> workerToCoreMapping,
+                           std::vector<uint64_t> queuePinList)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
-      workerToCoreMapping(workerToCoreMapping), hardwareManager(hardwareManager)
+      workerToCoreMapping(workerToCoreMapping), hardwareManager(hardwareManager), queuePinListMapping(queuePinList)
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
       ,
       taskQueue(
@@ -104,7 +104,7 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 #endif
 {
     NES_DEBUG("Init QueryManager::QueryManager");
-#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#if defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     //the goal of the code below is to make sure that we have a even distribution of task among numa nodes
     // because we use this assumptions in the remainder for simplify the shutdown/reconfiguration
 
@@ -165,6 +165,12 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
     for (uint64_t i = 0; i < numberOfQueues; i++) {
         taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
     }
+#elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
+    //create the actual task queues
+    numberOfQueues = queuePinListMapping.size();
+    for (uint64_t i = 0; i < queuePinListMapping.size(); i++) {
+        taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
+    }
 #endif
     tempCounterTasksCompleted.resize(numThreads);
     reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
@@ -194,7 +200,8 @@ bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
                                                   bufferManagers,
                                                   numberOfBuffersPerWorker,
                                                   hardwareManager,
-                                                  workerToCoreMapping);
+                                                  workerToCoreMapping,
+                                                  queuePinListMapping);
         return threadPool->start();
     }
     NES_ASSERT2_FMT(false, "Cannot start query manager workers");
@@ -227,12 +234,13 @@ void QueryManager::destroy() {
             std::scoped_lock locks(queryMutex, statisticsMutex);
             NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size()
                                                                     << " task queue size=" << taskQueue.size());
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
             std::scoped_lock locks(queryMutex, statisticsMutex);
             for (uint32_t i = 0; i < numberOfQueues; i++) {
                 NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size() << " id=" << i
                                                                         << " task queue size=" << taskQueues[i].size());
             }
+
 #else
             std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
 #endif
@@ -459,7 +467,7 @@ void QueryManager::poisonWorkers() {
     for (auto i{0ul}; i < threadPool->getNumberOfThreads(); ++i) {
         taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
     }
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
     //TODO:assumption same number of threads per numa region
     auto numberOfNumaRegions = numberOfQueues;
     for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
@@ -547,7 +555,7 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     auto qSize = taskQueue.size();
     return qSize > 0 ? qSize : 0;
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
     auto sum = 0;
     for (uint32_t i = 0; i < numberOfQueues; i++) {
         auto qSize = taskQueues[i].size();
@@ -599,7 +607,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     } else {
         taskQueue.blockingWrite(Task(pipeline, buffer, getNextTaskId()));
     }
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
     //TODO: add one mutex per queue
     auto numberOfNumaRegions = numberOfQueues;
     for (auto u{0ul}; u < numberOfNumaRegions; ++u) {
@@ -666,7 +674,8 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
 bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
 
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)                                  \
+    || defined(NES_USE_ONE_QUEUE_PER_QUERY)
     auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
     // send EOS to NetworkSources
     for (auto& source : executableQueryPlan->getSources()) {// TODO change source vector to source map to avoid for loops..
@@ -757,7 +766,9 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::unique_lock queryLock(queryMutex);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 #ifndef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#ifndef NES_USE_ONE_QUEUE_PER_QUERY
     std::unique_lock lock(workMutex);
+#endif
 #endif
 #endif
 
@@ -775,19 +786,23 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     }
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 #ifndef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#ifndef NES_USE_ONE_QUEUE_PER_QUERY
     cv.notify_all();
+#endif
 #endif
 #endif
     return true;
 }
 
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)                                  \
+    || defined(NES_USE_ONE_QUEUE_PER_QUERY)
 ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& workerContext) {
 #else
 ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, WorkerContext& workerContext) {
 #endif
     NES_TRACE("QueryManager: QueryManager::getWork wait get lock");
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)                                  \
+    || defined(NES_USE_ONE_QUEUE_PER_QUERY)
     Task task;
     if (running) {
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
@@ -853,7 +868,8 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
 #endif
 }// namespace NES::Runtime
 
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)                                  \
+    || defined(NES_USE_ONE_QUEUE_PER_QUERY)
 ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
     bool hitReconfiguration = false;
     Task task;
@@ -924,25 +940,34 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                           Execution::SuccessorExecutablePipeline executable,
-                                          uint32_t numaNode) {
-    NES_TRACE("Add Work for executable=" << numaNode);
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+                                          uint32_t queueId) {
+    NES_DEBUG("Add Work for executable for queue=" << queueId);
+#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)                                  \
+    || defined(NES_USE_ONE_QUEUE_PER_QUERY)
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
                         "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
         NES_DEBUG("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer " << buffer
-                                                                << " numaNode=" << numaNode);
+                                                                << " queueId=" << queueId);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 
 #else
-        taskQueues[numaNode].write(Task(executable, buffer, getNextTaskId()));
+        taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
 #endif
     } else {
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 #else
-        taskQueues[numaNode].write(Task(executable, buffer, getNextTaskId()));
+        size_t qepId = 0;
+        //TODO this is not correct we need a better way to specify this
+        if (auto* sink = std::get_if<DataSinkPtr>(&executable)) {
+            qepId = (*sink)->getParentPlanId();
+        } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
+            qepId = (*executablePipeline)->getQuerySubPlanId();
+        }
+        NES_DEBUG("put qepId=" << qepId << " into queue " << qepId % numberOfQueues);
+        taskQueues[queueId % numberOfQueues].write(Task(executable, buffer, getNextTaskId()));
 #endif
     }
 #else
@@ -1003,7 +1028,7 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
         auto qSize = 0;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
         qSize = taskQueue.size();
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
         for (uint32_t i = 0; i < numberOfQueues; i++) {
             auto tempSize = taskQueues[i].size();
             if (tempSize > 0) {

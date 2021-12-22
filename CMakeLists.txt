@@ -241,7 +241,7 @@ endif ()
 find_package(NUMA)
 if (NUMA_FOUND)
     set(LIBRARIES ${LIBRARIES} -lnuma)
-    add_compile_definitions(NES_ENABLE_NUMA_SUPPORT)
+    add_compile_definitions(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     message(STATUS "Using Numa")
 endif ()
 
