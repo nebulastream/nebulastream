@@ -53,6 +53,10 @@
 #include <folly/concurrency/UnboundedQueue.h>
 #endif
 
+#undef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#undef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#define NES_USE_ONE_QUEUE_PER_QUERY
+
 namespace NES {
 namespace Runtime {
 
@@ -323,6 +327,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::vector<uint64_t> queuePinListMapping;
     std::vector<folly::MPMCQueue<Task>> taskQueues;
 #else
+    assert(0);
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;
     std::condition_variable cv;
