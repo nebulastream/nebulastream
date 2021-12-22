@@ -22,16 +22,25 @@
 namespace NES {
 namespace Sensors {
 
+/**
+ * @brief: the purpose of this struct is to encapsulate the
+ * simplest schema coming out of a sensor, for testing and
+ * benchmarking setups. Usually we need to read the
+ * values and feed them to a strategy, e.g.: a Kalman filter.
+ * Basically this is a small-time substitute instead
+ * of passing around a schema that is not defined
+ * across the codebase.
+ */
 struct __attribute__((packed)) SingleSensor {
     uint64_t id;
     uint64_t value;
     uint64_t payload;
     uint64_t timestamp;
 
-
+    // default c-tor
     SingleSensor() {
         id = 0;
-        value = -1;
+        value = 0;
         payload = 0;
         timestamp = 0;
     }
