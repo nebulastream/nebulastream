@@ -508,6 +508,7 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t globalSinkId
         //added in #2395
         //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,BufferData,networkSink);
         //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
+        return true;
     }
     //query sub plan did not have network sink with specified id
     return false;
@@ -530,6 +531,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string& newHos
         //added in #2402
         //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,networkSink, newNodeLocation);
         //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
+        return true;
     }
     //query sub plan did not have network sink with specified id
     return false;
