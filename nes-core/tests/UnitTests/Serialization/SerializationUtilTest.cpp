@@ -371,7 +371,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     {
         Network::NodeLocation nodeLocation{1, "localhost", 31337};
         Network::NesPartition nesPartition{1, 22, 33, 44};
-        auto sink = Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
+        auto sink = Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 5, 0);
         auto* serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
