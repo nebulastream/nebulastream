@@ -501,7 +501,7 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t globalSinkId
     auto sinks = qep->getSinks();
     //make sure that query sub plan has network sink with specified id
     auto it = std::find_if(sinks.begin(), sinks.end(),[globalSinkId](const DataSinkPtr& dataSink){
-                    return dataSink->getOperatorId() == globalSinkId && dataSink->getSinkMediumType() == NETWORK_SINK;
+                    return dataSink->getGlobalOperatorId() == globalSinkId && dataSink->getSinkMediumType() == NETWORK_SINK;
             });
     if(it != sinks.end()){
         auto networkSink = *it;
@@ -524,7 +524,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string& newHos
     auto networkSinks = qep->getSinks();
     //make sure that query sub plan has network sink with specified id
     auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[globalSinkId](const DataSinkPtr& dataSink){
-        return dataSink->getOperatorId() == globalSinkId && dataSink->getSinkMediumType() == NETWORK_SINK;
+        return dataSink->getGlobalOperatorId() == globalSinkId && dataSink->getSinkMediumType() == NETWORK_SINK;
     });
     if(it != networkSinks.end()){
         auto networkSink = *it;
