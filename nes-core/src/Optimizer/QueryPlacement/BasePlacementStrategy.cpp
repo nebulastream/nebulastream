@@ -148,8 +148,9 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId
                                        sourceTopologyNode->getIpAddress(),
                                        sourceTopologyNode->getDataPort());
     Network::NesPartition nesPartition(queryId, sourceOperatorId, 0, 0);
+    auto operatorId = Util::getNextOperatorId();
     return LogicalOperatorFactory::createSinkOperator(
-        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
+        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES,operatorId), operatorId);
 }
 
 OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId queryId,
