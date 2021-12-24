@@ -87,7 +87,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @Note this function is only overwritten by the NetworkSink. In all other cases it returns 0
      * @return the global operator id of the sink medium
      */
-    virtual uint64_t getOperatorId();
+    virtual uint64_t getGlobalOperatorId();
 
     /**
    * @brief method to return the current schema of the sink
