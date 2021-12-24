@@ -121,6 +121,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
 }
 
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,
+                              OperatorId globalOperatorId,
                               QuerySubPlanId querySubPlanId,
                               Network::NodeLocation const& nodeLocation,
                               Network::NesPartition nesPartition,
@@ -129,6 +130,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               std::chrono::milliseconds waitTime,
                               uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema,
+                                                  globalOperatorId,
                                                   querySubPlanId,
                                                   nodeEngine->getNetworkManager(),
                                                   nodeLocation,
