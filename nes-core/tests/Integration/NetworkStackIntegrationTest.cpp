@@ -182,6 +182,7 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
 
     auto networkSink = std::make_shared<NetworkSink>(schema,
                                                      0,
+                                                     0,
                                                      nodeEngine->getNetworkManager(),
                                                      nodeLocation,
                                                      nesPartition,
@@ -345,6 +346,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
+                                                         0,
                                                          netManager,
                                                          nodeLocation,
                                                          nesPartition,
@@ -475,6 +477,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         });
 
     auto networkSink = std::make_shared<NetworkSink>(schema,
+                                                     0,
                                                      1,
                                                      netManagerSender,
                                                      nodeLocationReceiver,
@@ -739,6 +742,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
         });
 
     auto networkSink = std::make_shared<TestNetworkSink>(schema,
+                                                         0,
                                                          1,
                                                          nodeEngineSender->getNetworkManager(),
                                                          nodeLocationReceiver,

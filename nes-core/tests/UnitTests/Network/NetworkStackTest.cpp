@@ -673,6 +673,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
+                                                         0,
                                                          netManager,
                                                          nodeLocation,
                                                          nesPartition,
