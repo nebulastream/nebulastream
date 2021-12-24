@@ -527,7 +527,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string& newHos
     });
     if(it != networkSinks.end()){
         auto networkSink = *it;
-        //added in #2395
+        //added in #2402
         //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,networkSink, newNodeLocation);
         //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
     }
