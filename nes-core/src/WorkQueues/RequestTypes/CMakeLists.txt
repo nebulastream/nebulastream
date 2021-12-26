@@ -17,4 +17,5 @@ add_source_nes(
         RunQueryRequest.cpp
         StopQueryRequest.cpp
         RestartQueryRequest.cpp
+        MigrateQueryRequest.cpp
 )
