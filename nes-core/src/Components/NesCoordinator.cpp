@@ -48,6 +48,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Services/MaintenanceService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
@@ -129,6 +130,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 
     udfCatalog = Catalogs::UdfCatalog::create();
+    maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -149,6 +151,7 @@ NesCoordinator::~NesCoordinator() {
     queryRequestProcessorService.reset();
     queryService.reset();
     monitoringService.reset();
+    maintenanceService.reset();
     queryRequestProcessorThread.reset();
     worker.reset();
     streamCatalogService.reset();
@@ -173,6 +176,7 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(restThread.use_count() == 0, "NesCoordinator restThread leaked");
     NES_ASSERT(streamCatalogService.use_count() == 0, "NesCoordinator streamCatalogService leaked");
     NES_ASSERT(topologyManagerService.use_count() == 0, "NesCoordinator topologyManagerService leaked");
+    NES_ASSERT(maintenanceService.use_count() == 0, "NesCoordinator maintenanceService leaked");
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
@@ -246,6 +250,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               globalExecutionPlan,
                                               queryService,
                                               monitoringService,
+                                              maintenanceService,
                                               globalQueryPlan,
                                               udfCatalog,
                                               worker->getNodeEngine()->getBufferManager());
@@ -353,6 +358,12 @@ Catalogs::UdfCatalogPtr NesCoordinator::getUdfCatalog() { return udfCatalog; }
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 
 GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }
+
+GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() { return globalExecutionPlan; }
+
+MaintenanceServicePtr NesCoordinator::getMaintenanceService() { return maintenanceService; }
+
+WorkerRPCClientPtr NesCoordinator::getWorkerRPCClient() { return workerRpcClient; }
 
 void NesCoordinator::onFatalError(int, std::string) {}
 
