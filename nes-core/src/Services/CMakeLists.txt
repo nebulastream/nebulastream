@@ -19,4 +19,5 @@ add_source_nes(
         QueryParsingService.cpp
         StreamCatalogService.cpp
         TopologyManagerService.cpp
+        MaintenanceService.cpp
 )
