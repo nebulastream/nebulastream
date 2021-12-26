@@ -16,6 +16,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <REST/Controller/BaseController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
+#include <REST/Controller/MaintenanceController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/QueryController.hpp>
@@ -37,6 +38,7 @@ RestEngine::RestEngine(const SourceCatalogPtr& streamCatalog,
                        const GlobalExecutionPlanPtr& globalExecutionPlan,
                        const QueryServicePtr& queryService,
                        const MonitoringServicePtr& monitoringService,
+                       const MaintenanceServicePtr& maintenanceService,
                        const GlobalQueryPlanPtr& globalQueryPlan,
                        const Catalogs::UdfCatalogPtr& udfCatalog,
                        const Runtime::BufferManagerPtr bufferManager) {
@@ -47,6 +49,7 @@ RestEngine::RestEngine(const SourceCatalogPtr& streamCatalog,
     monitoringController = std::make_shared<MonitoringController>(monitoringService, bufferManager);
     topologyController = std::make_shared<TopologyController>(topology);
     udfCatalogController = std::make_shared<UdfCatalogController>(udfCatalog);
+    maintenanceController = std::make_shared<MaintenanceController>(maintenanceService);
 }
 
 void RestEngine::initRestOpHandlers() {
@@ -144,6 +147,10 @@ void RestEngine::handlePost(web::http::http_request request) {
             return;
         } else if (paths[0] == UdfCatalogController::path_prefix) {
             udfCatalogController->handlePost(paths, request);
+            return;
+        }
+        else if(paths[0] == "maintenance") {
+            maintenanceController->handlePost(paths, request);
             return;
         }
     }

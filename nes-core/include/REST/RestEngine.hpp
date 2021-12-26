@@ -31,6 +31,9 @@ namespace NES {
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
+class MaintenanceService;
+using MaintenanceServicePtr = std::shared_ptr<MaintenanceService> ;
+
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
@@ -57,6 +60,9 @@ using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
 
 class MonitoringController;
 using MonitoringControllerPtr = std::shared_ptr<MonitoringController>;
+
+class MaintenanceController;
+typedef std::shared_ptr<MaintenanceController> MaintenanceControllerPtr;
 
 class TopologyController;
 using TopologyControllerPtr = std::shared_ptr<TopologyController>;
@@ -88,6 +94,7 @@ class RestEngine {
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,
                const MonitoringServicePtr& monitoringService,
+               const MaintenanceServicePtr& maintenanceService,
                const GlobalQueryPlanPtr& globalQueryPlan,
                const Catalogs::UdfCatalogPtr& udfCatalog,
                const Runtime::BufferManagerPtr bufferManager);
@@ -142,6 +149,7 @@ class RestEngine {
     MonitoringControllerPtr monitoringController;
     TopologyControllerPtr topologyController;
     UdfCatalogControllerPtr udfCatalogController;
+    MaintenanceControllerPtr maintenanceController;
 };
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;
