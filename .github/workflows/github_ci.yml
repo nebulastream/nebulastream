@@ -66,6 +66,7 @@ jobs:
           access_token: ${{ github.token }}
       - name: Build Docker
         id: builddocker
+        continue-on-error: true
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: Run tests

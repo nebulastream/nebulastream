@@ -111,7 +111,7 @@ message(STATUS "NES_DEPENDENCIES_BINARY_ROOT: ${NES_DEPENDENCIES_BINARY_ROOT}.")
 # NES supports self hosting its compilation with the local clang binary.
 if (NES_SELF_HOSTING)
     message(STATUS "Self-host compilation of NES from ${NES_DEPENDENCIES_BINARY_ROOT}")
-    set(CMAKE_C_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang-12")
+    set(CMAKE_C_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang")
     set(CMAKE_CXX_COMPILER "${NES_DEPENDENCIES_BINARY_ROOT}/tools/llvm/clang++")
 else ()
     message(STATUS "Use system compiler")
