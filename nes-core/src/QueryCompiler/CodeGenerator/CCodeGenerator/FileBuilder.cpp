@@ -43,6 +43,8 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Windowing/WindowHandler/JoinHandler.hpp>\n"
                           "#include <Windowing/WindowActions/ExecutableNestedLoopJoinTriggerAction.hpp>\n"
                           "#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>\n"
+                          "#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>\n"
+                          "#include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>\n"
                           "#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>\n"

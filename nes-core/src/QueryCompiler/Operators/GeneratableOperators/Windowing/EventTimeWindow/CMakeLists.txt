@@ -13,7 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        PartitionedSliceStore.cpp
+        GeneratableKeyedThreadLocalPreAggregationOperator.cpp
+        GeneratableKeyedSliceMergingOperator.cpp
+        GeneratableKeyedTumblingWindowSink.cpp
 )
-
-add_subdirectory(TimeBasedWindow)

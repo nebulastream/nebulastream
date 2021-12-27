@@ -125,7 +125,7 @@ class PreAggregateSliceStaging {
         return partitionMap[sliceIndex]->size();
     }
 
-    std::unique_ptr<std::vector<std::unique_ptr<Partition<Key, Value>>>> getPartition(uint64_t sliceIndex) {
+    std::unique_ptr<std::vector<std::unique_ptr<Partition<Key, Value>>>> erasePartition(uint64_t sliceIndex) {
         const std::lock_guard<std::mutex> lock(addPartitionMutex);
         if (!partitionMap.contains(sliceIndex)) {
             throw Compiler::CompilerException("Slice Index " + std::to_string(sliceIndex) + "not available");

@@ -736,7 +736,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                         aggregation,
                                                                         window,
                                                                         distChar,
-                                                                        1,
+                                                                        windowDetails->numberofinputedges(),
                                                                         trigger,
                                                                         action,
                                                                         allowedLateness);

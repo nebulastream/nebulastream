@@ -59,9 +59,12 @@ void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodeP
     NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp << " "
                                                                                                << windowOp->toString());
     windowOp->getWindowDefinition()->setOriginId(windowOp->getId());
-    auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
+    auto windowDef = windowOp->getWindowDefinition();
+    windowDef->setNumberOfInputEdges(windowOp->getChildren().size());
+    auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef);
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());
+
     NES_DEBUG("DistributeWindowRule::apply: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
     windowOp->replace(newWindowOp);
 }

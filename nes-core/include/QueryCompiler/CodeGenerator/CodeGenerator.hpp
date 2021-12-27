@@ -140,6 +140,18 @@ class CodeGenerator {
         PipelineContextPtr context,
         uint64_t operatorHandlerIndex) = 0;
 
+    virtual bool generateCodeForKeyedSliceMergingOperator(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) = 0;
+
+    virtual bool generateCodeForThreadLocalPreAggregationOperator(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) = 0;
+
     /**
    * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
    * @param window The window definition, which contains all properties of the window.

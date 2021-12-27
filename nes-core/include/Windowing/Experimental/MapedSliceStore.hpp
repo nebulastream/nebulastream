@@ -32,15 +32,13 @@ class MapedSliceStore {
         return getSlice(logicalSliceIndex);
     }
 
-    bool contains(uint64_t sliceIndex){
-        return slices.contains(sliceIndex);
-    }
+    bool contains(uint64_t sliceIndex) { return slices.contains(sliceIndex); }
 
     inline const KeyedSlicePtr& operator[](uint64_t sliceIndex) { return getSlice(sliceIndex); }
 
     inline uint64_t getFirstIndex() { return firstIndex; }
 
-    inline uint64_t getLastIndex() { return lastIndex - 1; }
+    inline uint64_t getLastIndex() { return lastIndex; }
 
     inline void dropFirstSlice() {
         // if the first index reaches the last index, we create a dummy slice at the end.
@@ -58,18 +56,21 @@ class MapedSliceStore {
      * @brief Appends a new slice to the end of the slice store.
      * @throws WindowProcessingException if the slice store is full
      */
-    void insertSlice(uint64_t sliceIndex) {
+    KeyedSlicePtr& insertSlice(uint64_t sliceIndex) {
         // slices are always pre-initialized. Thus, we can just call reset.
         auto startTs = sliceIndex * sliceSize;
         auto endTs = (sliceIndex + 1) * sliceSize;
-        if (!sliceStack.empty()) {
-            auto slice = std::move(sliceStack.back());
-            sliceStack.pop_back();
-            slice->reset(startTs, endTs, sliceIndex);
-            slices[sliceIndex] = std::move(slice);
+        auto slice = allocateNewSlice(startTs, endTs, sliceIndex);
+        if (sliceIndex >= lastIndex) {
+            if (currentSlice != nullptr) {
+                slices[currentSlice->sliceIndex] = std::move(currentSlice);
+            }
+            lastIndex = sliceIndex;
+            currentSlice = std::move(slice);
+            return currentSlice;
         } else {
-            slices[sliceIndex] =
-                std::make_unique<PartitionedKeyedSlice<uint64_t, uint64_t, 1>>(bufferManager, startTs, endTs, sliceIndex);
+            slices[sliceIndex] = std::move(slice);
+            return slices[sliceIndex];
         }
     }
 
@@ -78,26 +79,35 @@ class MapedSliceStore {
      * @param sliceIndex
      * @return KeyedSlicePtr
      */
-    KeyedSlicePtr& getSlice(uint64_t sliceIndex) {
-        if (sliceIndex < firstIndex) {
+    inline KeyedSlicePtr& getSlice(uint64_t sliceIndex) {
+        /*if (sliceIndex < firstIndex) {
             throw WindowProcessingException("Requested slice index " + std::to_string(sliceIndex) + " is before "
                                             + std::to_string(firstIndex));
-        }
+        }*/
 
-        if (!slices.contains(sliceIndex)) {
-            insertSlice(sliceIndex);
-            if (sliceIndex > lastIndex) {
-                lastIndex = sliceIndex;
-            }
+        if (currentSlice != nullptr && sliceIndex == lastIndex) {
+            return currentSlice;
+        } else if (!slices.contains(sliceIndex)) {
+            return insertSlice(sliceIndex);
+        } else {
+            return slices[sliceIndex];
         }
-
-        return slices[sliceIndex];
     }
 
-
+    inline KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs, uint64_t sliceIndex) {
+        if (!sliceStack.empty()) {
+            auto slice = std::move(sliceStack.back());
+            sliceStack.pop_back();
+            slice->reset(startTs, endTs, sliceIndex);
+            return std::move(slice);
+        } else {
+            return std::make_unique<PartitionedKeyedSlice<uint64_t, uint64_t, 1>>(bufferManager, startTs, endTs, sliceIndex);
+        }
+    }
 
     std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;
     uint64_t sliceSize;
+    KeyedSlicePtr currentSlice;
     std::map<uint64_t, KeyedSlicePtr> slices;
     std::list<KeyedSlicePtr> sliceStack;
     uint64_t firstIndex = 0;

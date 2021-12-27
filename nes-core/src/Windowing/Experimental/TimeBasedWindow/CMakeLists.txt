@@ -13,7 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        PartitionedSliceStore.cpp
+        KeyedEventTimeWindowHandler.cpp
+        KeyedThreadLocalSliceStore.cpp
+        KeyedSlice.cpp
 )
-
-add_subdirectory(TimeBasedWindow)

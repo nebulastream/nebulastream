@@ -47,6 +47,13 @@ class QueryCompilerOptions {
         OPERATOR_AT_A_TIME
     };
 
+    enum WindowingStrategy {
+        // Applies default windowing strategy.
+        DEFAULT,
+        // Applies an experimental thread local implementation for window aggregations
+        THREAD_LOCAL
+    };
+
     enum OutputBufferOptimizationLevel {
         // Use highest optimization available.
         ALL,
@@ -98,11 +105,16 @@ class QueryCompilerOptions {
      * @param num of buffers
      */
     void setNumSourceLocalBuffers(uint64_t num);
+
     /**
      * @brief Returns the number of local source buffers.
      * @return uint64_t
      */
     uint64_t getNumSourceLocalBuffers() const;
+
+    WindowingStrategy getWindowingStrategy() const;
+
+    void setWindowingStrategy(WindowingStrategy windowingStrategy);
 
   protected:
     uint64_t numSourceLocalBuffers;
@@ -110,6 +122,7 @@ class QueryCompilerOptions {
     PipeliningStrategy pipeliningStrategy;
     CompilationStrategy compilationStrategy;
     FilterProcessingStrategy filterProcessingStrategy;
+    WindowingStrategy windowingStrategy;
 };
 }// namespace QueryCompilation
 }// namespace NES

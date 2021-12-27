@@ -34,6 +34,7 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     options.setFilterProcessingStrategy(BRANCHED);
     options.setNumSourceLocalBuffers(64);
     options.setOutputBufferOptimizationLevel(ALL);
+    options.setWindowingStrategy(DEFAULT);
     return std::make_shared<QueryCompilerOptions>(options);
 }
 QueryCompilerOptions::PipeliningStrategy QueryCompilerOptions::getPipeliningStrategy() const { return pipeliningStrategy; }
@@ -54,6 +55,10 @@ void QueryCompilerOptions::setFilterProcessingStrategy(FilterProcessingStrategy 
 
 QueryCompilerOptions::FilterProcessingStrategy QueryCompilerOptions::getFilterProcessingStrategy() const {
     return filterProcessingStrategy;
+}
+QueryCompilerOptions::WindowingStrategy QueryCompilerOptions::getWindowingStrategy() const { return windowingStrategy; }
+void QueryCompilerOptions::setWindowingStrategy(QueryCompilerOptions::WindowingStrategy windowingStrategy) {
+    QueryCompilerOptions::windowingStrategy = windowingStrategy;
 }
 
 }// namespace NES::QueryCompilation

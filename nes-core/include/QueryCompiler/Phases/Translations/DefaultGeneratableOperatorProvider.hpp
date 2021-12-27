@@ -111,6 +111,9 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param operatorNode the current operator node.
      */
     void lowerSlicePreAggregation(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerKeyedThreadLocalSlicePreAggregation(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerKeyedSliceMergingOperator(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerKeyedTumblingWindowSink(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers a join build operator.

@@ -7,6 +7,8 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Windowing/Experimental/Hash.hpp>
+#include <Windowing/Experimental/HashMap.hpp>
 #include <Windowing/Experimental/robin_hood.h>
 #include <utility>
 
@@ -30,7 +32,7 @@ class KeyedSlice {
 template<class KeyType, class ValueType>
 struct Entry {
     KeyType key;
-   // uint64_t hash;
+    // uint64_t hash;
     ValueType value;
 };
 
@@ -41,9 +43,8 @@ class Partition {
         : bufferManager(bufferManager), entrySize(sizeof(Entry<KeyType, ValueType>)),
           entriesPerBuffer(bufferManager->getBufferSize() / entrySize) {}
     ~Partition(){
-       // std::cout << "~Partition" << std::endl;
+        // std::cout << "~Partition" << std::endl;
     };
-
 
     uint8_t* entryIndexToAddress(uint64_t entry) {
         auto bufferIndex = entry / entriesPerBuffer;
@@ -54,10 +55,10 @@ class Partition {
 
     uint8_t* allocateNewEntry() {
         if (maxEntry % entriesPerBuffer == 0) {
-
             auto buffer = bufferManager->getBufferNoBlocking();
-            if(!buffer.has_value()){
-                throw Compiler::CompilerException("BufferManager is empty. Size " + std::to_string(bufferManager->getNumOfPooledBuffers()));
+            if (!buffer.has_value()) {
+                throw Compiler::CompilerException("BufferManager is empty. Size "
+                                                  + std::to_string(bufferManager->getNumOfPooledBuffers()));
             }
             tupleBuffers.emplace_back(std::move(buffer.value()));
         }
@@ -80,16 +81,20 @@ template<class KeyType, class ValueType, uint64_t numberOfPartitions = 1>
 class PartitionedHashMap {
   public:
     PartitionedHashMap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
-        : bufferManager(bufferManager), entrySize(sizeof(Entry<KeyType, ValueType>)),
-          entriesPerBuffer(bufferManager->getBufferSize() / sizeof(Entry<KeyType, ValueType>)) {
+        : bufferManager(bufferManager), map(Experimental::Hashmap(bufferManager, sizeof(KeyType), sizeof(ValueType), 10000)),
+          entrySize(sizeof(Entry<KeyType, ValueType>)),
+
+
+          entriesPerBuffer(bufferManager->getBufferSize() / sizeof(Entry<KeyType, ValueType>)),
+    hasher(Experimental::CRC32Hash()){
         clear();
     }
-
-   inline Entry<KeyType, ValueType>* getEntry(KeyType key) {
+/*
+    inline Entry<KeyType, ValueType>* getEntry(KeyType key) {
         //const auto hash = getHashEntry(key);
         auto value = map.find(key);
         if (value == map.end()) {
-           // auto partitionIndex = hash % numberOfPartitions;
+            // auto partitionIndex = hash % numberOfPartitions;
             auto partitionIndex = 0;
             auto nextAddress = partitions[partitionIndex]->allocateNewEntry();
             map[key] = nextAddress;
@@ -100,6 +105,18 @@ class PartitionedHashMap {
             return entry;
         }
         return ((Entry<KeyType, ValueType>*) value->second);
+    }
+    */
+
+    inline uint8_t* getEntry(KeyType& key) {
+        const auto h = hasher(key, Experimental::Hash<Experimental::CRC32Hash>::SEED);
+        auto entry = map.findOrCreate<KeyType, false>(key, h);
+        return map.getValuePtr(entry);
+    }
+
+    inline uint8_t* getEntry(KeyType& key, uint64_t h) {
+        auto entry = map.findOrCreate<KeyType, false>(key, h);
+        return map.getValuePtr(entry);
     }
 
     void clear() {
@@ -114,7 +131,7 @@ class PartitionedHashMap {
 
     uint64_t getHashEntry(KeyType key) { return hash(key); }
 
-     uint64_t getSize() const {
+    uint64_t getSize() const {
         uint64_t size = 0;
         for (uint64_t p = 0; p < numberOfPartitions; p++) {
             size = size + partitions[p]->size();
@@ -127,18 +144,23 @@ class PartitionedHashMap {
   private:
     std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;
     robin_hood::hash<KeyType> hash;
-    robin_hood::unordered_map<KeyType, uint8_t*> map;
+    //robin_hood::unordered_map<KeyType, uint8_t*> map;
+    Hashmap map;
     std::array<std::unique_ptr<Partition<KeyType, ValueType>>, numberOfPartitions> partitions;
     uint64_t entrySize;
     uint64_t entriesPerBuffer;
+    Hash<CRC32Hash> hasher;
 };
 
 template<class KeyType, class ValueType, uint64_t numberOfPartitions>
 class PartitionedKeyedSlice {
   public:
-    PartitionedKeyedSlice(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, uint64_t start, uint64_t end, uint64_t sliceIndex)
+    PartitionedKeyedSlice(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
+                          uint64_t start,
+                          uint64_t end,
+                          uint64_t sliceIndex)
         : start(start), end(end), sliceIndex(sliceIndex), map(bufferManager){};
-    void reset(uint64_t start, uint64_t end,  uint64_t sliceIndex) {
+    void reset(uint64_t start, uint64_t end, uint64_t sliceIndex) {
         this->start = start;
         this->end = end;
         this->sliceIndex = sliceIndex;

@@ -18,3 +18,4 @@ add_source_files(nes-core
 )
 
 add_subdirectory(WindowAggregations)
+add_subdirectory(EventTimeWindow)
