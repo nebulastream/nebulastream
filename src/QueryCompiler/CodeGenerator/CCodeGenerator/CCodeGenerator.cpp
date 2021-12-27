@@ -934,13 +934,17 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     }
     // TODO: find out what this does; seems like we need a bigger loop on this to create multiple key_value_handle vars
     // get key handle for current key
-    auto keyHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key_value_handle");
+    // TODO: Loop over keyVaraibleDeclarationList and assign key_value_handler_x with getKeyVariableDeclaration_X
+    int counter = 0;
+    for(std::list<VariableDeclaration>::iterator it = keyVariableDeclarationList.begin(); it != keyVariableDeclarationList.end(); ++it){
+        auto keyHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key_value_handle_" + std::to_string(counter));
+        auto getKeyStateVariable = FunctionCallStatement("get");
+        getKeyStateVariable.addParameter(VarRef(*it)); // not sure if *it is the correct way of accessing here.
+        auto keyHandlerVariableStatement =
+            VarDeclStatement(keyHandlerVariableDeclaration).assign(VarRef(windowStateVarDeclaration).accessPtr(getKeyStateVariable));
+        context->code->currentCodeInsertionPoint->addStatement(keyHandlerVariableStatement.copy());
 
-    auto getKeyStateVariable = FunctionCallStatement("get");
-    getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
-    auto keyHandlerVariableStatement =
-        VarDeclStatement(keyHandlerVariableDeclaration).assign(VarRef(windowStateVarDeclaration).accessPtr(getKeyStateVariable));
-    context->code->currentCodeInsertionPoint->addStatement(keyHandlerVariableStatement.copy());
+    }
     // access window slice state from state variable via key
     auto windowStateVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
