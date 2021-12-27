@@ -125,7 +125,7 @@ endif (NES_LOGGING_LEVEL)
 set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations ")
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3  -DNES_RELEASE_MODE=1")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fsanitize=address -fno-omit-frame-pointer   -DNES_RELEASE_MODE=1")
 include(cmake/Sanitizers.cmake)
 
 if (ENABLE_IWYU)
