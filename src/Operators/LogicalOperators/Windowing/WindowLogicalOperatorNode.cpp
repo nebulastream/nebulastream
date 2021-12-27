@@ -77,9 +77,13 @@ bool WindowLogicalOperatorNode::inferSchema() {
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
-        windowDefinition->getOnKey()->inferStamp(inputSchema);
-        outputSchema->addField(
-            AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
+        // TODO: Check if this works
+        auto keyList = windowDefinition->getKeyList();
+        for (std::list<FieldAccessExpressionNodePtr>::iterator it = keyList.begin(); it != keyList.end(); ++it) {
+            it->get()->inferStamp(inputSchema);
+            outputSchema->addField(
+                AttributeField::create(it->get()->getFieldName(), it->get()->getStamp()));
+        }
     }
     auto asField = windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName();
     outputSchema->addField(AttributeField::create(asField, windowAggregation->as()->getStamp()));
@@ -99,8 +103,14 @@ void WindowLogicalOperatorNode::inferStringSignature() {
     std::stringstream signatureStream;
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
+    // TODO: Check if the string is displayed correctly.
     if (windowDefinition->isKeyed()) {
-        signatureStream << "WINDOW-BY-KEY(" << windowDefinition->getOnKey()->toString() << ",";
+
+        signatureStream << "WINDOW-BY-KEY[s](";
+        auto keyList = windowDefinition->getKeyList();
+        for (std::list<FieldAccessExpressionNodePtr>::iterator it = keyList.begin(); it != keyList.end(); ++it) {
+            signatureStream << it->get()->toString() << ",";
+        }
     } else {
         signatureStream << "WINDOW(";
     }

@@ -943,9 +943,9 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
         auto keyHandlerVariableStatement =
             VarDeclStatement(keyHandlerVariableDeclaration).assign(VarRef(windowStateVarDeclaration).accessPtr(getKeyStateVariable));
         context->code->currentCodeInsertionPoint->addStatement(keyHandlerVariableStatement.copy());
-
     }
     // access window slice state from state variable via key
+    // TODO: This is later needed
     auto windowStateVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
 
@@ -1013,6 +1013,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
         }
     }
 
+    // TODO: Unsure how to handle this: windowState that adds an windowaggregation descriptor.
     auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
                                             .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
 
@@ -1069,8 +1070,11 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
     sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
     //only in debug mode add the key for debugging
-    sliceStream.addParameter(VarRef(keyVariableDeclaration));
-    context->code->currentCodeInsertionPoint->addStatement(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream).copy());
+    // TODO: Do i get this correctly? Here for debugging reasons I just iterate over the key variables and display them?
+    for(std::list<VariableDeclaration>::iterator it = keyVariableDeclarationList.begin(); it != keyVariableDeclarationList.end(); ++it){
+        sliceStream.addParameter(VarRef(*it)); // not sure if *it is the correct way of accessing here.
+        context->code->currentCodeInsertionPoint->addStatement(VarRef(windowManagerVarDeclaration).accessPtr(sliceStream).copy());
+    }
 
     // find the slices for a time stamp
     auto getSliceIndexByTs = FunctionCallStatement("getSliceIndexByTs");
@@ -1974,16 +1978,20 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
 
     // get key handle for current key
     //        auto key_value_handle = state_variable->get(key);
-    auto keyHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key_value_handle");
-    auto getKeyStateVariable = FunctionCallStatement("get");
-    // TODO: FInd out what exactly this does from code generator output
-    getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
-    auto keyHandlerVariableStatement =
-        VarDeclStatement(keyHandlerVariableDeclaration).assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
-    context->code->currentCodeInsertionPoint->addStatement(keyHandlerVariableStatement.copy());
+    // TODO: Check if this is really in line what we need at generated code level
+    int counter = 0;
+    for(std::list<VariableDeclaration>::iterator it = keyVariableDeclarationList.begin(); it != keyVariableDeclarationList.end(); ++it){
+        auto keyHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key_value_handle_" + std::to_string(counter));
+        auto getKeyStateVariable = FunctionCallStatement("get");
+        getKeyStateVariable.addParameter(VarRef(*it)); // not sure if *it is the correct way of accessing here.
+        auto keyHandlerVariableStatement =
+            VarDeclStatement(keyHandlerVariableDeclaration).assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
+        context->code->currentCodeInsertionPoint->addStatement(keyHandlerVariableStatement.copy());
+    }
 
     //    auto windowState = key_value_handle.valueOrDefault(0);
     // access window slice state from state variable via key
+    // TODO: Not sure if I get this correctly: need to check window funcitonality
     auto windowStateVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
     getValueFromKeyHandle.addParameter(
@@ -2041,7 +2049,10 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
     sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
-    sliceStream.addParameter(VarRef(keyVariableDeclaration));
+    // TODO: Check if i can simply do it like this.
+    for(std::list<VariableDeclaration>::iterator it = keyVariableDeclarationList.begin(); it != keyVariableDeclarationList.end(); ++it) {
+        sliceStream.addParameter(VarRef(*it));
+    }
     auto sliceStreamStatement = VarRef(windowManagerVarDeclaration).accessPtr(sliceStream).copy();
     context->code->currentCodeInsertionPoint->addStatement(sliceStreamStatement);
 
