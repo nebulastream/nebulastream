@@ -13,8 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#include <algorithm>
 #include <Util/libcuckoo/cuckoohash_map.hh>
+#include <algorithm>
 #include <assert.h>
 #include <atomic>
 #include <memory>
@@ -42,7 +42,7 @@ namespace NES::Experimental {
  *
  * @tparam logSize
  */
-template<uint64_t logSize = 100>
+template<uint64_t logSize = 10000>
 class LockFreeWatermarkProcessor {
     struct WatermarkTuple {
       public:
@@ -97,11 +97,9 @@ class LockFreeWatermarkProcessor {
 
 class LockFreeMultiOriginWatermarkProcessor {
   public:
-    explicit LockFreeMultiOriginWatermarkProcessor(std::vector<uint64_t> originIDs) : originIDMap(originIDs) {
-        // initialize state.
-        watermarkProcessor.resize(originIDs.size());
-        for (uint64_t index = 0; index < originIDs.size(); index++) {
-            watermarkProcessor[index] = std::make_unique<LockFreeWatermarkProcessor<>>();
+    explicit LockFreeMultiOriginWatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {
+        for (uint64_t i = 0; i < numberOfOrigins; i++) {
+            watermarkProcessors.emplace_back(std::make_shared<LockFreeWatermarkProcessor<>>());
         }
     };
 
@@ -109,46 +107,42 @@ class LockFreeMultiOriginWatermarkProcessor {
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param numberOfOrigins
      */
-    static std::shared_ptr<LockFreeMultiOriginWatermarkProcessor> create(const std::initializer_list<uint64_t> originIDs) {
-        return std::make_shared<LockFreeMultiOriginWatermarkProcessor>(originIDs);
+    static std::shared_ptr<LockFreeMultiOriginWatermarkProcessor> create(const uint64_t numberOfOrigins) {
+        return std::make_shared<LockFreeMultiOriginWatermarkProcessor>(numberOfOrigins);
     }
 
     uint64_t updateWatermark(uint64_t ts, uint64_t sequenceNumber, uint64_t origin) {
-        auto originIndex = getOriginIdIndex(origin);
-        watermarkProcessor[originIndex]->updateWatermark(ts, sequenceNumber);
-        /**
-         * // update the watermark for this origin.
-        do {
-            // load current watermark for this origin
-            currentWatermarkTs = currentWatermarks[originIndex].load();
-            // we have to prevent that another thread updated the watermark at the same time.
-            // thus we calculate the max between our update and the  currentWatermarkTs.
-            newWatermarkTs = std::max(newWatermarkTs, currentWatermarkTs);
-        } while (!currentWatermarks[originIndex].compare_exchange_strong(currentWatermarkTs, newWatermarkTs));
-         */
+        if (!map.contains(origin)) {
+            auto table = map.lock_table();
+            auto [_, status] = table.insert(origin, currentOrigins);
+            if (status) {
+                currentOrigins++;
+            }
+            table.unlock();
+        }
+        auto index = map.find(origin);
+        watermarkProcessors[index]->updateWatermark(ts, sequenceNumber);
         return getCurrentWatermark();
     }
 
-    [[nodiscard]] uint64_t getCurrentWatermark() const {
+    [[nodiscard]] uint64_t getCurrentWatermark() {
+        if (currentOrigins < numberOfOrigins) {
+            return 0;
+        }
         auto minWt = UINT64_MAX;
-        for (auto& wt : watermarkProcessor) {
+
+        for (auto& wt : watermarkProcessors) {
             minWt = std::min(minWt, wt->getCurrentWatermark());
         }
+
         return minWt;
     }
 
   private:
-    uint64_t getOriginIdIndex(uint64_t id) {
-        for (uint64_t index = 0; index < originIDMap.size(); index++) {
-            if (originIDMap[index] == id) {
-                return index;
-            }
-        }
-        assert(false);
-    }
-
-    std::vector<std::unique_ptr<LockFreeWatermarkProcessor<>>> watermarkProcessor;
-    const std::vector<uint64_t> originIDMap;
+    cuckoohash_map<uint64_t, uint64_t> map;
+    const uint64_t numberOfOrigins;
+    std::vector<std::shared_ptr<LockFreeWatermarkProcessor<>>> watermarkProcessors;
+    uint64_t currentOrigins =0;
 };
 
 }// namespace NES::Experimental

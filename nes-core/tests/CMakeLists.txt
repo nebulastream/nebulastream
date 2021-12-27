@@ -56,6 +56,10 @@ add_executable(compiler-test "UnitTests/Compiler/JITCompilerTest.cpp")
 target_link_libraries(compiler-test nes-tests)
 add_test(NAME compiler-test COMMAND compiler-test)
 
+add_executable(hashmap-test "UnitTests/Util/HashMapTest.cpp")
+target_link_libraries(hashmap-test nes ${GTEST_LIBRARIES})
+add_test(NAME hashmap-test COMMAND hashmap-test)
+
 add_executable(compiler-sharedlibrary-test "UnitTests/Compiler/SharedLibraryTest.cpp")
 target_link_libraries(compiler-sharedlibrary-test nes-tests)
 add_test(NAME compiler-sharedlibrary-test COMMAND compiler-sharedlibrary-test)

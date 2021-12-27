@@ -88,6 +88,11 @@ using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescript
 class AbstractWindowHandler;
 using AbstractWindowHandlerPtr = std::shared_ptr<AbstractWindowHandler>;
 
+namespace Experimental{
+class KeyedEventTimeWindowHandler;
+using KeyedEventTimeWindowHandlerPtr = std::shared_ptr<KeyedEventTimeWindowHandler>;
+}
+
 }// namespace Windowing
 
 class OperatorNode;

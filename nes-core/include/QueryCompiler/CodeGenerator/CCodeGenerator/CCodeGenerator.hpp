@@ -126,6 +126,18 @@ class CCodeGenerator : public CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) override;
 
+    bool generateCodeForThreadLocalPreAggregationOperator(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) override;
+
+    bool generateCodeForKeyedSliceMergingOperator(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) override;
+
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.

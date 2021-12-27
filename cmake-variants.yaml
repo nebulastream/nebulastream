@@ -1,0 +1,36 @@
+buildType:
+  default: debug
+  choices:
+    debug:
+      short: Debug
+      long: Emit debug information
+      buildType: Debug
+    release:
+      short: Release
+      long: Optimize generated code
+      buildType: Release
+# -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DNES_BUILD_DEPENDENCIES_LOCAL=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DCMAKE_TOOLCHAIN_FILE=/home/pgrulich/projects/nes/nebulastream-dependencies/nes-dependencies-x64-linux-nes/scripts/buildsystems/vcpkg.cmake -DNES_SELF_HOSTING=1 -DCMAKE_USE_LATCH_FREE_BUFFER_MANAGER=0 -DCMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE=0 -DNES_LOGGING_LEVEL=LEVEL_NONE -DNES_BUILD_NATIVE=1
+MQTT:
+  default: ON
+  choices:
+    ON:
+      short: USE MQTT
+      long: USE MQTT
+      NES_USE_MQTT: 1
+    OFF:
+      short: NES_USE_MQTT
+      long: Create shared libraries/DLLs
+      NES_USE_MQTT: 0
+SELF_HOSTING:
+  default: ON
+  choices:
+    ON:
+      short: Self Hosting ON
+      long: USE MQTT
+      settings:
+        NES_SELF_HOSTING: ON
+    OFF:
+      short: Self Hosting OFF
+      long: Create shared libraries/DLLs
+      settings: 
+        NES_SELF_HOSTING: OFF

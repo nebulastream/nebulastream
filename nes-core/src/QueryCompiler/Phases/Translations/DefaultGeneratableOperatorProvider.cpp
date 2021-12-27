@@ -29,6 +29,9 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/EventTimeWindow/GeneratableKeyedSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/EventTimeWindow/GeneratableKeyedTumblingWindowSink.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/EventTimeWindow/GeneratableKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
@@ -45,6 +48,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedTumblingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
@@ -93,6 +99,12 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         lowerJoinBuild(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalJoinSinkOperator>()) {
         lowerJoinSink(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>()) {
+        return lowerKeyedThreadLocalSlicePreAggregation(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalKeyedSliceMergingOperator>()) {
+        return lowerKeyedSliceMergingOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalKeyedTumblingWindowSink>()) {
+        return lowerKeyedTumblingWindowSink(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalExternalOperator>()) {
         return;
     } else {
@@ -264,6 +276,58 @@ void DefaultGeneratableOperatorProvider::lowerCEPIteration(QueryPlanPtr queryPla
                                                                       physicalCEPIterationOperator->getMinIterations(),
                                                                       physicalCEPIterationOperator->getMaxIterations());
     queryPlan->replaceOperator(physicalCEPIterationOperator, generatableCEPIterationOperator);
+}
+void DefaultGeneratableOperatorProvider::lowerKeyedThreadLocalSlicePreAggregation(
+    const QueryPlanPtr& queryPlan,
+    const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+
+    auto slicePreAggregationOperator = operatorNode->as<PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator>();
+
+    auto windowAggregationDescriptor =
+        slicePreAggregationOperator->getWindowHandler()->getWindowDefinition()->getWindowAggregation();
+    auto generatableWindowAggregation = lowerWindowAggregation(windowAggregationDescriptor);
+
+    auto generatableOperator =
+        GeneratableOperators::GeneratableKeyedThreadLocalPreAggregationOperator::create(slicePreAggregationOperator->getInputSchema(),
+                                                                             slicePreAggregationOperator->getOutputSchema(),
+                                                                             slicePreAggregationOperator->getWindowHandler(),
+                                                                             generatableWindowAggregation);
+    queryPlan->replaceOperator(slicePreAggregationOperator, generatableOperator);
+
+}
+void DefaultGeneratableOperatorProvider::lowerKeyedSliceMergingOperator(
+    const QueryPlanPtr& queryPlan,
+    const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+    auto sliceMergingOperator = operatorNode->as<PhysicalOperators::PhysicalKeyedSliceMergingOperator>();
+
+    auto windowAggregationDescriptor =
+        sliceMergingOperator->getWindowHandler()->getWindowDefinition()->getWindowAggregation();
+    auto generatableWindowAggregation = lowerWindowAggregation(windowAggregationDescriptor);
+
+    auto generatableOperator =
+        GeneratableOperators::GeneratableKeyedSliceMergingOperator::create(sliceMergingOperator->getInputSchema(),
+                                                                                        sliceMergingOperator->getOutputSchema(),
+                                                                                        sliceMergingOperator->getWindowHandler(),
+                                                                                        generatableWindowAggregation);
+    queryPlan->replaceOperator(sliceMergingOperator, generatableOperator);
+
+}
+
+void DefaultGeneratableOperatorProvider::lowerKeyedTumblingWindowSink(
+    const QueryPlanPtr& queryPlan,
+    const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+    auto sink = operatorNode->as<PhysicalOperators::PhysicalKeyedTumblingWindowSink>();
+
+    auto windowAggregationDescriptor =
+        sink->getWindowHandler()->getWindowDefinition()->getWindowAggregation();
+    auto generatableWindowAggregation = lowerWindowAggregation(windowAggregationDescriptor);
+
+    auto generatableOperator =
+        GeneratableOperators::GeneratableKeyedTumblingWindowSink::create(sink->getInputSchema(),
+                                                                           sink->getOutputSchema(),
+                                                                           sink->getWindowHandler(),
+                                                                           generatableWindowAggregation);
+    queryPlan->replaceOperator(sink, generatableOperator);
 }
 
 }// namespace NES::QueryCompilation

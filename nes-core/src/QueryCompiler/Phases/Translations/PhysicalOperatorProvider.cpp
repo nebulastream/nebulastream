@@ -12,3 +12,11 @@
     limitations under the License.
 */
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
+
+namespace NES {
+namespace QueryCompilation {
+
+PhysicalOperatorProvider::PhysicalOperatorProvider(QueryCompilerOptionsPtr options) : options(options) {}
+
+}// namespace QueryCompilation
+}// namespace NES

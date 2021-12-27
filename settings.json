@@ -1,0 +1,8 @@
+{
+    "cmake.buildEnvironment":{
+        "CMAKE_MAKE_PROGRAM":"make"
+    },
+    "cmake.configureSettings": {
+        "CMAKE_MAKE_PROGRAM": "make"
+      }
+}

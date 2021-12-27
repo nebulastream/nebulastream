@@ -127,6 +127,7 @@ class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
 inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler() {
     auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
     options->setCompilationStrategy(QueryCompilation::QueryCompilerOptions::DEBUG);
+    options->setWindowingStrategy(QueryCompilation::QueryCompilerOptions::THREAD_LOCAL);
     auto phaseProvider = std::make_shared<TestPhaseProvider>();
     auto cppCompiler = Compiler::CPPCompiler::create();
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

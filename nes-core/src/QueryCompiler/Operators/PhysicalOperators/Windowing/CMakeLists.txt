@@ -19,3 +19,4 @@ add_source_files(nes-core
         PhysicalSliceMergingOperator.cpp
 )
 
+add_subdirectory(EventTimeWindow)
