@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v7)
+set(VCPKG_BINARY_VERSION v9)
 
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
@@ -436,7 +436,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 # LLVM
-find_package(LLVM 12.0.0 CONFIG REQUIRED)
+find_package(LLVM 13.0.0 CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")
