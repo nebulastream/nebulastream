@@ -215,12 +215,21 @@ if (CMAKE_ENABLE_JEMALLOC)
     include_directories(${JEMALLOC_INCLUDE_DIRS})
     set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
 endif ()
+# lcryto is required for asio to communicate
+if(APPLE)
+    find_library(SSL_LIB libssl.a REQUIRED)
+    find_library(CRYPTO_LIB libcrypto.a REQUIRED)
+    set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
+endif()
+if(UNIX AND NOT APPLE)
+    set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
+endif()
 
 # Numa awareness
 find_package(NUMA)
 if(NUMA_FOUND)
     set(LIBRARIES ${LIBRARIES} -lnuma)
-    add_compile_definitions(NES_ENABLE_NUMA_SUPPORT)
+    #add_compile_definitions(NES_ENABLE_NUMA_SUPPORT)
     message(STATUS "Using Numa")
 endif()
 
@@ -341,17 +350,6 @@ endif ()
 
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
-
-# lcryto is required for asio to communicate
-if(APPLE)
-    find_library(SSL_LIB libssl.a REQUIRED)
-    find_library(CRYPTO_LIB libcrypto.a REQUIRED)
-    set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
-endif()
-if(UNIX AND NOT APPLE)
-    find_package(OpenSSL REQUIRED)
-    set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
-endif()
 
 # C++ REST SDK
 find_package(cpprestsdk CONFIG REQUIRED)
