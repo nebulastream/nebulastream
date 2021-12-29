@@ -34,9 +34,11 @@ then
    	then
       if [ "${eRequireBuild}" == "true" ]
       then
+        echo "Required Build Failed"
         rm -rf /nebulastream/build
         exit $?
       else
+        echo "Optional Build Failed"
         rm -rf /nebulastream/build
         exit 0
       fi
@@ -48,9 +50,11 @@ then
       then
         if [ "${eRequireTest}" == "true" ]
         then
+          echo "Required Tests Failed"
           rm -rf /nebulastream/build
           exit $?
         else
+          echo "Optional Tests Failed"
           rm -rf /nebulastream/build
           exit 0
         fi
