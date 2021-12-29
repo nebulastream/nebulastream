@@ -13,46 +13,23 @@ on:
     branches:
       - '*'
 jobs:
-  build-INTEL:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
-    runs-on: [ self-hosted, linux, X64, Build ]
-    timeout-minutes: 90
-    steps:
-      - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v2
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.7.0
-        with:
-          access_token: ${{ github.token }}
-      - name: Run tests
-        run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-      - name: docker cleanup
-        if: ${{ always() }}
-        run: |
-          docker rm -f ${{ github.run_id }}_build
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v2
-        with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always()
-  build-x64-matrix:
+  build-x64-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
     runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        osversion: [ubuntu-18_04, ubuntu-20_04, ubuntu-21_10]
+        include:
+          - osversion: ubuntu-18_04
+            require_build: false
+            require_test: false
+          - osversion: ubuntu-20_04
+            require_build: true
+            require_test: true
+          - osversion: ubuntu-21_10
+            require_build: true
+            require_test: true
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
@@ -71,7 +48,7 @@ jobs:
         run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: Run tests
         run: |
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="{{ matrix.require_build }}" -eRequireTest="{{ matrix.require_test }}" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
       - name: docker cleanup
         if: ${{ always() }}
         run: |
@@ -90,6 +67,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
     runs-on: [self-hosted, linux, arm64, Build]
     timeout-minutes: 90
+    continue-on-error: true
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
@@ -102,13 +80,9 @@ jobs:
         with:
           access_token: ${{ github.token }}
       #TODO: 2268 remove the environment variable to allow test execution on arm server
-      - name: Run build
-        run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eOS="ARM64" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: Run build and test
-        continue-on-error: true
         run: |
-          docker run --name ${{ github.run_id }}_test -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup build
         if: ${{ always() }}
         run: |
