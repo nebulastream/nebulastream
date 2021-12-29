@@ -20,6 +20,7 @@ set -e
 
 if [ $# -eq 0 ]
 then
+    # Build NES
     mkdir -p /nebulastream/build
     cd /nebulastream/build
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
@@ -28,13 +29,34 @@ then
     cd /nebulastream/build/tests
     ln -s ../nesCoordinator .
    	ln -s ../nesWorker .
-   	#TODO: #2268 remove the if statement to allow test execution on arm server
-   	if [ "${OS}" != "ARM64" ]
+   	# Check if build was successful
+   	if [ $? != 0 ]
    	then
-      make test_debug
+      if [ "${eRequireBuild}" == "true" ]
+      then
+        rm -rf /nebulastream/build
+        exit $?
+      else
+        rm -rf /nebulastream/build
+        exit 0
+      fi
+    else
+      # If build was successful we execute the tests
+      # timeout after 90 minutes
+      timeout 90m make test_debug
+      if [ $?  != 0 ]
+      then
+        if [ "${eRequireTest}" == "true" ]
+        then
+          rm -rf /nebulastream/build
+          exit $?
+        else
+          rm -rf /nebulastream/build
+          exit 0
+        fi
+      fi
     fi
-    result=$?
-    rm -rf /nebulastream/build
+
     exit $result
 else
     exec $@
