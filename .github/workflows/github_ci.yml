@@ -22,14 +22,14 @@ jobs:
       matrix:
         include:
           - osversion: ubuntu-18_04
-            require_build: false
-            require_test: false
+            require_build: "false"
+            require_test: "false"
           - osversion: ubuntu-20_04
-            require_build: true
-            require_test: true
+            require_build: "true"
+            require_test: "true"
           - osversion: ubuntu-21_10
-            require_build: true
-            require_test: true
+            require_build: "true"
+            require_test: "true"
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
@@ -48,7 +48,7 @@ jobs:
         run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: Run tests
         run: |
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="{{ matrix.require_build }}" -eRequireTest="{{ matrix.require_test }}" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild={{ matrix.require_build }} -eRequireTest={{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }}
       - name: docker cleanup
         if: ${{ always() }}
         run: |
