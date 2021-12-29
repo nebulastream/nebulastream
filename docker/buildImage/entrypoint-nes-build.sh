@@ -27,13 +27,10 @@ then
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
     cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
     make -j4
-    cd /nebulastream/build/tests
-    ln -s ../nesCoordinator .
-   	ln -s ../nesWorker .
    	# Check if build was successful
-   	if [ $? != 0 ]
+   	if [ $? -ne 0 ];
    	then
-      if [ "${RequireBuild}" == "true" ]
+      if [ "${RequireBuild}" == "true" ];
       then
         echo "Required Build Failed"
         rm -rf /nebulastream/build
@@ -44,12 +41,15 @@ then
         exit 0
       fi
     else
+      cd /nebulastream/build/tests
+      ln -s ../nesCoordinator .
+      ln -s ../nesWorker .
       # If build was successful we execute the tests
       # timeout after 90 minutes
       timeout 70m make test_debug
-      if [ $?  != 0 ]
+      if [ $? -ne 0 ];
       then
-        if [ "${RequireTest}" == "true" ]
+        if [ "${RequireTest}" == "true" ];
         then
           echo "Required Tests Failed"
           rm -rf /nebulastream/build
@@ -61,8 +61,6 @@ then
         fi
       fi
     fi
-
-    exit $result
 else
     exec $@
 fi
