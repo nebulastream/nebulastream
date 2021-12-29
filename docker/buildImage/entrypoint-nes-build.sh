@@ -17,7 +17,8 @@
 set -e
 
 [[ ! -f /nebulastream/CMakeLists.txt ]] && echo "Please mount source code at /nebulastream point. Run [docker run -v <path-to-nes>:/nebulastream -d <nes-image>]" && exit 1
-
+echo "Required Build Failed=${RequireBuild}"
+echo "Required Test Failed=${RequireTest}"
 if [ $# -eq 0 ]
 then
     # Build NES
@@ -32,7 +33,7 @@ then
    	# Check if build was successful
    	if [ $? != 0 ]
    	then
-      if [ "${eRequireBuild}" == "true" ]
+      if [ "${RequireBuild}" == "true" ]
       then
         echo "Required Build Failed"
         rm -rf /nebulastream/build
@@ -48,7 +49,7 @@ then
       timeout 70m make test_debug
       if [ $?  != 0 ]
       then
-        if [ "${eRequireTest}" == "true" ]
+        if [ "${RequireTest}" == "true" ]
         then
           echo "Required Tests Failed"
           rm -rf /nebulastream/build
