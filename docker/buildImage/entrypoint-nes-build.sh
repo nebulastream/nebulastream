@@ -43,7 +43,7 @@ then
     else
       # If build was successful we execute the tests
       # timeout after 90 minutes
-      timeout 90m make test_debug
+      timeout 70m make test_debug
       if [ $?  != 0 ]
       then
         if [ "${eRequireTest}" == "true" ]
