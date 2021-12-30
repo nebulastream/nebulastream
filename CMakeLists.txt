@@ -221,7 +221,8 @@ if(APPLE)
     set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
 endif()
 if(UNIX AND NOT APPLE)
-    set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
+    find_package(OpenSSL REQUIRED)
+    set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
 endif()
 
 # Numa awareness
