@@ -31,7 +31,7 @@ WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWin
     this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
     this->windowDefinition->setWindowType(windowDefinition->getWindowType());
-    this->windowDefinition->setOnKey(windowDefinition->getOnKey());
+    this->windowDefinition->setKeyList(windowDefinition->getKeyList());
     this->windowDefinition->setOriginId(id);
 }
 
@@ -73,10 +73,15 @@ bool WindowComputationOperator::inferSchema() {
             ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", UINT64));
 
     if (windowDefinition->isKeyed()) {
+        // TODO: Check if this works
         // infer the data type of the key field.
-        windowDefinition->getOnKey()->inferStamp(inputSchema);
-        outputSchema->addField(
-            AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
+        auto keyList = windowDefinition->getKeyList();
+        for (std::list<FieldAccessExpressionNodePtr>::iterator it = keyList.begin(); it != keyList.end(); ++it) {
+            it->get()->inferStamp(inputSchema);
+            outputSchema->addField(
+                AttributeField::create(it->get()->getFieldName(), it->get()->getStamp()));
+        }
+
     }
     outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
                                                   windowAggregation->on()->getStamp()));

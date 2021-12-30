@@ -2304,7 +2304,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     auto action = window->getTriggerAction();
     auto executableTriggerAction = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "triggerAction");
     if (action->getActionType() == Windowing::WindowAggregationTriggerAction) {
-        //TODO: Allow for multiple keys + TEst
+        //TODO: Allow for multiple keys + TEst: What kind of data type do we build here? are we again using a tuple? ask Philipp
         auto createTriggerActionCall = call("Windowing::ExecutableCompleteAggregationTriggerAction<" + keyType->getCode()->code_
                                             + "," + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
                                             + finalAggregateType->getCode()->code_ + ">::create");
@@ -2316,7 +2316,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else if (action->getActionType() == Windowing::SliceAggregationTriggerAction) {
-        //TODO: Allow for multiple keys + TEst
+        //TODO: Allow for multiple keys + TEst: What kind of data type do we build here? are we again using a tuple? ask Philipp
         auto createTriggerActionCall = call("Windowing::ExecutableSliceAggregationTriggerAction<" + keyType->getCode()->code_
                                             + "," + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
                                             + finalAggregateType->getCode()->code_ + ">::create");
@@ -2333,7 +2333,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     // AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
     //    windowDefinition, executableWindowAggregation, executablePolicyTrigger, executableWindowAction);
     auto windowHandler = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
-    //TODO: Allow for multiple keys + TEst
+    //TODO: Allow for multiple keys + TEst: What kind of data type do we build here? are we again using a tuple? ask Philipp
     auto createAggregationWindowHandlerCall =
         call("Windowing::AggregationWindowHandler<" + keyType->getCode()->code_ + "," + aggregationInputType->getCode()->code_
              + "," + partialAggregateTypeCode + "," + finalAggregateType->getCode()->code_ + ">::create");
