@@ -57,10 +57,10 @@ GeneratableKeyedThreadLocalPreAggregationOperator::GeneratableKeyedThreadLocalPr
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 
-void GeneratableKeyedThreadLocalPreAggregationOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr ctx) {
-    //  auto windowDefinition = windowHandler->getWindowDefinition();
-    //codegen->generateWindowSetup(windowDefinition, outputSchema, context, id, windowHandler);
-    GeneratableOperator::generateOpen(codegen, ctx);
+void GeneratableKeyedThreadLocalPreAggregationOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    auto windowDefinition = windowHandler->getWindowDefinition();
+    auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
+    codegen->generateKeyedThreadLocalPreAggregationSetup(windowDefinition, outputSchema, context, id, windowOperatorIndex);
 }
 
 void GeneratableKeyedThreadLocalPreAggregationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

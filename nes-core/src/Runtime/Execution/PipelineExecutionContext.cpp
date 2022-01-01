@@ -47,5 +47,8 @@ std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() 
 
 std::string PipelineExecutionContext::toString() const { return "PipelineContext(queryID:" + std::to_string(queryId); }
 uint64_t PipelineExecutionContext::getNumberOfWorkerThreads() const { return queryManager.lock()->getNumberOfWorkerThreads(); }
+Runtime::BufferManagerPtr PipelineExecutionContext::getBufferManager() const {
+    return queryManager.lock()->getBufferManager();
+}
 
 }// namespace NES::Runtime::Execution

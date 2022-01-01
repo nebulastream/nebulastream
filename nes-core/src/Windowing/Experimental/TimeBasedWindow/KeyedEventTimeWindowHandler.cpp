@@ -29,7 +29,10 @@ void KeyedEventTimeWindowHandler::setup(Runtime::Execution::PipelineExecutionCon
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
         threadLocalSliceStores.emplace_back(hashmapFactory, sliceSize, 100);
     }
+    this->factory = hashmapFactory;
 }
+
+NES::Experimental::Hashmap KeyedEventTimeWindowHandler::getHashMap() { return factory->create(); }
 
 void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext& wctx,
                                                           Runtime::Execution::PipelineExecutionContext& ctx,
@@ -56,14 +59,18 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
             // put partitions to global slice store
             auto& sliceState = slice->getState();
             // each worker adds its local state to the staging area
-            auto partition = SliceStaging::Partition(sliceState.getEntries());
-            auto addedPartitionsToSlice = sliceStaging.addToSlice(slice->getIndex(), std::move(partition));
+            auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging.addToSlice(slice->getIndex(), sliceState.getEntries());
             if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
-                auto buffer = wctx.allocateTupleBuffer();
-                auto task = buffer.getBuffer<SliceMergeTask>();
-                task->sliceIndex = slice->getIndex();
-                buffer.setNumberOfTuples(1);
-                ctx.dispatchBuffer(buffer);
+                if (numberOfBuffers != 0) {
+                    NES_DEBUG("Deploy merge task for slice " << slice->getIndex() << " with " << numberOfBuffers << " buffers.");
+                    auto buffer = wctx.allocateTupleBuffer();
+                    auto task = buffer.getBuffer<SliceMergeTask>();
+                    task->sliceIndex = slice->getIndex();
+                    buffer.setNumberOfTuples(1);
+                    ctx.dispatchBuffer(buffer);
+                } else {
+                    NES_DEBUG("Slice " << slice->getIndex() << " is empty. Don't deploy merge task.");
+                }
             }
 
             // erase slice from thread local slice store
@@ -73,7 +80,23 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
     }
 }
 Windowing::LogicalWindowDefinitionPtr KeyedEventTimeWindowHandler::getWindowDefinition() { return windowDefinition; }
-void KeyedEventTimeWindowHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {}
-void KeyedEventTimeWindowHandler::stop(Runtime::Execution::PipelineExecutionContextPtr){};
+
+void KeyedEventTimeWindowHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
+    isRunning = true;
+}
+
+void KeyedEventTimeWindowHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+    bool current = true;
+    if(isRunning.compare_exchange_strong(current, false)){
+        NES_DEBUG("stop KeyedEventTimeWindowHandler");
+        // todo fix shutdown, currently KeyedEventTimeWindowHandler is never destructed because operators have references.
+        this->threadLocalSliceStores.clear();
+    }
+}
+KeyedSlicePtr KeyedEventTimeWindowHandler::createKeyedSlice(uint64_t sliceIndex) {
+    auto startTs = sliceIndex * sliceSize;
+    auto endTs = (sliceIndex + 1) * sliceSize;
+    return std::make_unique<KeyedSlice>(factory, startTs, endTs, sliceIndex);
+};
 
 }// namespace NES::Windowing::Experimental

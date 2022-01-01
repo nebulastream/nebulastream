@@ -13,6 +13,7 @@
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
+#include <Windowing/Experimental/HashMap.hpp>
 
 
 namespace NES::Windowing::Experimental {
@@ -49,13 +50,17 @@ class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler, 
                Runtime::StateManagerPtr stateManager,
                uint32_t localStateVariableId) override;
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    NES::Experimental::Hashmap getHashMap();
+    KeyedSlicePtr createKeyedSlice(uint64_t sliceIndex);
 
   private:
+    std::atomic<bool> isRunning;
     uint64_t sliceSize;
     std::vector<KeyedThreadLocalSliceStore> threadLocalSliceStores;
     SliceStaging sliceStaging;
     std::shared_ptr<::NES::Experimental::LockFreeMultiOriginWatermarkProcessor> watermarkProcessor;
     const Windowing::LogicalWindowDefinitionPtr windowDefinition;
+    NES::Experimental::HashMapFactoryPtr factory;
 };
 
 }// namespace NES::Windowing::Experimental

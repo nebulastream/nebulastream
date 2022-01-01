@@ -184,14 +184,6 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
     /*  declaration of num of records */
 
-    /* ExecutionResult ret = Ok; */
-    // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
-    code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
-        VariableDeclaration::create(tf->createAnonymusDataType("ExecutionResult"),
-                                    "ret",
-                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"))
-            .copy());
-
     if (inputSchema->getLayoutType() == Schema::ROW_LAYOUT) {
         NES_DEBUG("CCodeGenerator::generateCodeForEmit: generate emit for row layout");
         code->varDeclarationInputTuples =
@@ -207,7 +199,13 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     } else {
         NES_ERROR("inputSchema->getLayoutType()is neither ROW_LAYOUT nor COL_LAYOUT!!!");
     }
-
+    /* ExecutionResult ret = Ok; */
+    // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
+    code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
+        VariableDeclaration::create(tf->createAnonymusDataType("ExecutionResult"),
+                                    "ret",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"))
+            .copy());
     code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
     // If it is a row layout, then map struct to buffer, otherwise set the start of all fields
@@ -863,7 +861,7 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     auto getThreadLocalState = call("getThreadLocalSliceStore");
     getThreadLocalState->addParameter(VarRef(workerId));
     auto threadLocalStateStatement =
-        VarDeclStatement(threadLocalState).assign(VarRef(windowOperatorHandlerDeclaration).accessRef(getThreadLocalState));
+        VarDeclStatement(threadLocalState).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getThreadLocalState));
     context->code->variableInitStmts.push_back(threadLocalStateStatement.copy());
 
     // Read key value from record
@@ -890,6 +888,50 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     auto sliceAssignmentStatement = VarDeclStatement(slice).assign(VarRef(threadLocalState).accessRef(findSliceByTs));
     context->code->currentCodeInsertionPoint->addStatement(sliceAssignmentStatement.copy());
 
+    // auto* entry = (uint64_t*) slice->map.getEntry(key);
+    auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
+    auto getState = call("getState");
+    auto getEntry = call("getEntry<" + TO_CODE(keyStamp) + ">");
+    getEntry->addParameter(VarRef(keyVariableDeclaration));
+    auto entryAssignmentStatement = VarDeclStatement(entry).assign(
+        TypeCast(VarRef(slice).accessPtr(getState).accessRef(getEntry), tf->createAnonymusDataType("EntryType*")));
+    context->code->currentCodeInsertionPoint->addStatement(entryAssignmentStatement.copy());
+    auto aggField =
+        recordHandler->getAttribute(window->getWindowAggregation()->on()->as<FieldAccessExpressionNode>()->getFieldName());
+    auto partialAggregateStamp = tf->createDataType(window->getWindowAggregation()->getPartialAggregateStamp());
+    auto aggregateDeclaration = VariableDeclaration::create(partialAggregateStamp, "agg");
+    auto sum = VarRef(entry).accessPtr(VarRef(aggregateDeclaration)) + *aggField;
+    auto updatedPartial = VarRef(entry).accessPtr(VarRef(aggregateDeclaration)).assign(sum);
+    context->code->currentCodeInsertionPoint->addStatement(updatedPartial.copy());
+
+    auto triggerThreadLocalStateCall = call("triggerThreadLocalState");
+    triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationWorkerContext));
+    triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationExecutionContext));
+    triggerThreadLocalStateCall->addParameter(VarRef(workerId));
+    triggerThreadLocalStateCall->addParameter(getOriginId(context->code->varDeclarationInputBuffer));
+    triggerThreadLocalStateCall->addParameter(getSequenceNumber(context->code->varDeclarationInputBuffer));
+    triggerThreadLocalStateCall->addParameter(getWatermark(context->code->varDeclarationInputBuffer));
+    auto triggerThreadLocalStateCallCallStatement =
+        VarRef(windowOperatorHandlerDeclaration).accessPtr(triggerThreadLocalStateCall);
+
+    context->code->cleanupStmts.push_back(triggerThreadLocalStateCallCallStatement.createCopy());
+
+    return true;
+}
+
+bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
+    Windowing::LogicalWindowDefinitionPtr window,
+    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr,
+    PipelineContextPtr context,
+    uint64_t windowOperatorIndex) {
+    auto tf = getTypeFactory();
+    auto code = context->code;
+    auto td = context->code;
+
+    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    auto physicalKeyType = tf->createDataType(keyStamp);
+    auto keyVariableDeclaration = VariableDeclaration::create(physicalKeyType, "key");
+
     // create struct for entry
     // consists of keys and aggregation values
     StructDeclaration structDeclarationTuple = StructDeclaration::create("EntryType", "");
@@ -901,40 +943,209 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     structDeclarationTuple.addField(aggregateDeclaration);
     context->code->structDeclarationInputTuples.push_back(structDeclarationTuple);
 
-    // auto* entry = (uint64_t*) slice->map.getEntry(key);
-    auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
-    auto getState = call("getState");
-    auto getEntry = call("getEntry<" + TO_CODE(keyStamp) + ">");
-    getEntry->addParameter(VarRef(keyVariableDeclaration));
-    auto entryAssignmentStatement = VarDeclStatement(entry).assign(
-        TypeCast(VarRef(slice).accessPtr(getState).accessRef(getEntry), tf->createAnonymusDataType("EntryType*")));
-    context->code->currentCodeInsertionPoint->addStatement(entryAssignmentStatement.copy());
-    auto aggField =
-        recordHandler->getAttribute(window->getWindowAggregation()->on()->as<FieldAccessExpressionNode>()->getFieldName());
+    auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
+    auto workerContextType = tf->createAnonymusDataType("Runtime::WorkerContext");
+    VariableDeclaration varDeclarationInputBuffer =
+        VariableDeclaration::create(tf->createReference(tupleBufferType), "inputTupleBuffer");
 
-    auto sum = VarRef(entry).accessPtr(VarRef(aggregateDeclaration)) + *aggField;
-    auto updatedPartial = VarRef(entry).accessPtr(VarRef(aggregateDeclaration)).assign(sum);
-    context->code->currentCodeInsertionPoint->addStatement(updatedPartial.copy());
+    VariableDeclaration varDeclarationPipelineExecutionContext =
+        VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
 
-    return true;
-}
+    VariableDeclaration varDeclarationWorkerContext =
+        VariableDeclaration::create(tf->createReference(workerContextType), "workerContext");
 
-bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
-    Windowing::LogicalWindowDefinitionPtr,
-    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr,
-    PipelineContextPtr context,
-    uint64_t) {
-    auto tf = getTypeFactory();
-    auto code = context->code;
-    auto td = context->code;
-    auto result =
+    code->varDeclarationInputBuffer = varDeclarationInputBuffer;
+    code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
+    code->varDeclarationWorkerContext = varDeclarationWorkerContext;
+
+    /* ExecutionResult ret = Ok; */
+    // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
+    code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
         VariableDeclaration::create(tf->createAnonymusDataType("ExecutionResult"),
                                     "ret",
-                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"));
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"))
+            .copy());
+    code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
-    code->returnStmt = ReturnStatement::create(VarRefStatement(result).createCopy());
+    code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
 
+    auto mergeTask = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "mergeTask");
+    code->variableInitStmts.push_back(
+        VarDeclStatement(mergeTask)
+            .assign(TypeCast(getBuffer(code->varDeclarationInputBuffer),
+                             tf->createAnonymusDataType("NES::Windowing::Experimental::SliceMergeTask*")))
+            .copy());
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedEventTimeWindowHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+    auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
+                                       .assign(VarRef(code->varDeclarationExecutionContext).accessRef(getOperatorHandlerCall));
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+
+    // auto partitions = windowOperatorHandler->getSliceStaging().erasePartition(mergeTask->sliceIndex);
+    auto sliceIndex = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "sliceIndex");
+    auto getSliceStagingCall = call("getSliceStaging");
+    auto erasePartitionCall = call("erasePartition");
+    erasePartitionCall->addParameter(VarRef(mergeTask).accessPtr(VarRef(sliceIndex)));
+    auto partitions = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "partitions");
+    auto partitionStatement =
+        VarDeclStatement(partitions)
+            .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getSliceStagingCall).accessRef(erasePartitionCall));
+    context->code->variableInitStmts.push_back(partitionStatement.copy());
+    auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
+    auto createSliceCall = call("createKeyedSlice");
+    createSliceCall->addParameter(VarRef(mergeTask).accessPtr(VarRef(sliceIndex)));
+    context->code->variableInitStmts.push_back(
+        VarDeclStatement(globalSlice).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(createSliceCall)).copy());
+
+    auto globalSliceState = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "globalSliceState");
+    context->code->variableInitStmts.push_back(
+        VarDeclStatement(globalSliceState).assign(VarRef(globalSlice).accessPtr(call("getState"))).copy());
+    auto buffers = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "buffers");
+    // for (auto& partition : (*partitions.get())) {
+    auto getSizeCall = call("size");
+
+    auto partitionIndex = std::dynamic_pointer_cast<VariableDeclaration>(
+        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()),
+                                    "partitionIndex",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
+            .copy());
+
+    auto partitionLoop = std::make_shared<FOR>(
+        partitionIndex,
+        (VarRef(partitionIndex) < (VarRef(partitions).accessPtr(VarRef(buffers)).accessRef(getSizeCall))).copy(),
+        (++VarRef(partitionIndex)).copy());
+    {
+        auto loopBody = partitionLoop->getCompoundStatement();
+        auto buffer = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "buffer");
+        auto entries = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entries");
+        // buffer = partitions[partitionIndex];
+        loopBody->addStatement(
+            VarDeclStatement(buffer).assign(VarRef(partitions).accessPtr(VarRef(buffers))[VarRef(partitionIndex)]).copy());
+        loopBody->addStatement(VarDeclStatement(entries).assign(VarRef(buffer).accessRef(call("getBuffer"))).copy());
+        // scan over buffer
+        auto recordIndex = std::dynamic_pointer_cast<VariableDeclaration>(
+            VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()),
+                                        "recordIndex",
+                                        DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
+                .copy());
+
+        auto scanLoop = std::make_shared<FOR>(
+            recordIndex,
+            (VarRef(recordIndex) < (VarRef(buffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall))).copy(),
+            (++VarRef(recordIndex)).copy());
+        {
+            auto scanBody = scanLoop->getCompoundStatement();
+            auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
+            // todo fix entry size
+
+            auto entrySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 32)));
+            auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
+            auto entryAssignmentStatement =
+                VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySize * VarRef(recordIndex))) + entryOffset,
+                                                        tf->createAnonymusDataType("EntryType*")));
+            scanBody->addStatement(entryAssignmentStatement.copy());
+
+            auto globalEntry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "globalEntry");
+            auto getEntry = call("getEntry<" + TO_CODE(keyStamp) + ">");
+            getEntry->addParameter(VarRef(entry).accessPtr(VarRef(keyVariableDeclaration)));
+            auto globalEntryAssignmentStatement = VarDeclStatement(globalEntry).assign(
+                TypeCast(VarRef(globalSliceState).accessRef(getEntry), tf->createAnonymusDataType("EntryType*")));
+            scanBody->addStatement(globalEntryAssignmentStatement.copy());
+
+            auto sum = VarRef(globalEntry).accessPtr(VarRef(aggregateDeclaration)) + VarRef(entry).accessPtr(VarRef(aggregateDeclaration));
+            auto updatedPartial = VarRef(globalEntry).accessPtr(VarRef(aggregateDeclaration)).assign(sum);
+            scanBody->addStatement(updatedPartial.copy());
+        }
+        loopBody->addStatement(scanLoop);
+    }
+    context->code->variableInitStmts.push_back(partitionLoop);
     return 0;
+}
+
+bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWindowDefinitionPtr,
+                                                            GeneratableOperators::GeneratableWindowAggregationPtr,
+                                                            PipelineContextPtr context,
+                                                            uint64_t,
+                                                            SchemaPtr resultSchema) {
+    auto tf = getTypeFactory();
+    auto code = context->code;
+
+    auto globalSliceState = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "globalSliceState");
+    auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
+
+
+    auto buffers = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "buffers");
+    auto buffersAssignment = VarDeclStatement(buffers).assign(VarRef(globalSliceState).accessRef(call("getEntries")));
+    context->code->variableInitStmts.push_back(buffersAssignment.copy());
+    // for (auto& partition : (*partitions.get())) {
+    auto getSizeCall = call("size");
+
+    auto partitionIndex = std::dynamic_pointer_cast<VariableDeclaration>(
+        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()),
+                                    "partitionIndex",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
+            .copy());
+
+    auto partitionLoop = std::make_shared<FOR>(
+        partitionIndex,
+        (VarRef(partitionIndex) < (VarRef(buffers).accessPtr(getSizeCall))).copy(),
+        (++VarRef(partitionIndex)).copy());
+    {
+        auto loopBody = partitionLoop->getCompoundStatement();
+        auto buffer = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "buffer");
+        auto entries = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entries");
+        // buffer = partitions[partitionIndex];
+        auto getCall = call("operator[]");
+        getCall->addParameter(VarRef(partitionIndex));
+        loopBody->addStatement(
+            VarDeclStatement(buffer).assign(VarRef(buffers).accessPtr(getCall)).copy());
+        loopBody->addStatement(VarDeclStatement(entries).assign(VarRef(buffer).accessRef(call("getBuffer"))).copy());
+        // scan over buffer
+        auto recordIndex = std::dynamic_pointer_cast<VariableDeclaration>(
+            VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()),
+                                        "recordIndex",
+                                        DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
+                .copy());
+
+        auto scanLoop = std::make_shared<FOR>(
+            recordIndex,
+            (VarRef(recordIndex) < (VarRef(buffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall))).copy(),
+            (++VarRef(recordIndex)).copy());
+        {
+            auto scanBody = scanLoop->getCompoundStatement();
+            auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
+            // todo fix entry size
+
+            auto entrySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 32)));
+            auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
+            auto entryAssignmentStatement =
+                VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySize * VarRef(recordIndex))) + entryOffset,
+                                                        tf->createAnonymusDataType("EntryType*")));
+
+            scanBody->addStatement(entryAssignmentStatement.copy());
+            // todo currently we assume here that the output schema always has the following fields in the same order.
+            // assign start field
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[0]->getName(), VarRef(globalSlice).accessPtr(call("getStart")).copy());
+            // assign end field
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[1]->getName(), VarRef(globalSlice).accessPtr(call("getEnd")).copy());
+            // assign key field
+            auto key = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key");
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[2]->getName(), VarRef(entry).accessPtr(VarRef(key)).copy());
+            // assign value field
+            auto value = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "agg");
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[3]->getName(), VarRef(entry).accessPtr(VarRef(value)).copy());
+
+            context->code->currentCodeInsertionPoint = scanBody;
+        }
+        loopBody->addStatement(scanLoop);
+    }
+    context->code->cleanupStmts.push_back(partitionLoop);
+
+    return false;
 }
 
 /**
@@ -2233,6 +2444,74 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
     setupScope->addStatement(statement.copy());
 }
 
+uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                                     SchemaPtr,
+                                                                     PipelineContextPtr context,
+                                                                     uint64_t id,
+                                                                     uint64_t windowOperatorIndex) {
+
+    auto tf = getTypeFactory();
+    auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
+
+    auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+
+    // create a new setup scope for this operator
+    auto setupScope = context->createSetupScope();
+
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedEventTimeWindowHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+
+    auto windowOperatorStatement =
+        VarDeclStatement(windowOperatorHandlerDeclaration).assign(executionContextRef.accessRef(getOperatorHandlerCall));
+    setupScope->addStatement(windowOperatorStatement.copy());
+
+    // getWindowDefinition
+    auto windowDefDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowDefinition");
+    auto getWindowDefinitionCall = call("getWindowDefinition");
+    auto windowDefinitionStatement = VarDeclStatement(windowDefDeclaration)
+                                         .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getWindowDefinitionCall));
+    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    auto physicalKeyType = tf->createDataType(keyStamp);
+    auto keyVariableDeclaration = VariableDeclaration::create(physicalKeyType, "key");
+
+    // create struct for entry
+    // consists of keys and aggregation values
+    StructDeclaration structDeclarationTuple = StructDeclaration::create("EntryType", "");
+    /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
+    structDeclarationTuple.makeStructCompact();
+    structDeclarationTuple.addField(keyVariableDeclaration);
+    auto partialAggregateStamp = tf->createDataType(window->getWindowAggregation()->getPartialAggregateStamp());
+
+    auto aggregateDeclaration = VariableDeclaration::create(partialAggregateStamp, "agg");
+    structDeclarationTuple.addField(aggregateDeclaration);
+    context->code->structDeclarationInputTuples.push_back(structDeclarationTuple);
+
+    auto createCall = call("std::make_shared<Experimental::HashMapFactory>");
+    auto getBufferManagerCall = call("getBufferManager");
+    createCall->addParameter(VarRefStatement(context->code->varDeclarationExecutionContext).accessRef(getBufferManagerCall));
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto constantKeySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(physicalDataTypeFactory.getPhysicalType(keyStamp)->size())));
+    createCall->addParameter(constantKeySize);
+    auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(physicalDataTypeFactory.getPhysicalType(window->getWindowAggregation()->getPartialAggregateStamp())->size())));
+    createCall->addParameter(constantValueSize);
+    auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 100000)));
+    createCall->addParameter(constantNumberOfEntries);
+
+    auto hashMapFactory = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "hashMapFactory");
+
+    auto hashMapFactoryStatement = VarDeclStatement(hashMapFactory).assign(createCall);
+    setupScope->addStatement(hashMapFactoryStatement.copy());
+
+    auto setupWindowHandler = call("setup");
+    setupWindowHandler->addParameter(VarRef(context->code->varDeclarationExecutionContext));
+    setupWindowHandler->addParameter(VarRef(hashMapFactory));
+    setupScope->addStatement(VarRef(windowOperatorHandlerDeclaration).accessPtr(setupWindowHandler).createCopy());
+    return 0;
+}
+
 uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window,
                                              SchemaPtr,
                                              PipelineContextPtr context,
@@ -2710,4 +2989,7 @@ VariableDeclaration CCodeGenerator::getJoinOperatorHandler(const PipelineContext
 
     return windowOperatorHandlerDeclaration;
 }
+
+
+
 }// namespace NES::QueryCompilation

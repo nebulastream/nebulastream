@@ -24,7 +24,9 @@ CodeExpressionPtr TypeCastExprStatement::getCode() const {
     CodeExpressionPtr code;
     code = combine(std::make_shared<CodeExpression>("("), dataType->getCode());
     code = combine(code, std::make_shared<CodeExpression>(")"));
-    code = combine(code, expression->getCode());
+    code = combine(
+        code,
+        combine(combine(std::make_shared<CodeExpression>("("), expression->getCode()), std::make_shared<CodeExpression>(")")));
     return code;
 }
 

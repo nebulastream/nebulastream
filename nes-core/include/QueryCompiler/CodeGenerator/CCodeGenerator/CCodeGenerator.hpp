@@ -111,6 +111,11 @@ class CCodeGenerator : public CodeGenerator {
                                  PipelineContextPtr context,
                                  uint64_t id,
                                  Windowing::WindowOperatorHandlerPtr windowOperatorHandler) override;
+    uint64_t generateKeyedThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                                                  SchemaPtr windowOutputSchema,
+                                                                  PipelineContextPtr context,
+                                                                  uint64_t id,
+                                                         uint64_t windowOperatorIndex) override;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -137,6 +142,13 @@ class CCodeGenerator : public CodeGenerator {
         QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) override;
+
+    bool
+    generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWindowDefinitionPtr window,
+                                           GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                           PipelineContextPtr context,
+                                           uint64_t windowOperatorIndex,
+                                           SchemaPtr ptr) override;
 
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.

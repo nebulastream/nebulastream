@@ -23,6 +23,7 @@ CPPCompilerFlags CPPCompilerFlags::createDefaultCompilerFlags() {
     flags.addFlag(NO_TRIGRAPHS);
     flags.addFlag(FPIC);
     flags.addFlag(WPARENTHESES_EQUALITY);
+    flags.addFlag(SSE_4_2);
 #ifdef __APPLE__
     flags.addFlag(std::string("-isysroot ") + std::string(NES_OSX_SYSROOT));
 #endif
