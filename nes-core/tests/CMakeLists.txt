@@ -668,5 +668,3 @@ add_dependencies(e2e-coordinator-multi-query-test nesCoordinator nesWorker)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
-# Custom test commands --------------------------------------------------------
-add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
