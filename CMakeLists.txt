@@ -516,42 +516,14 @@ endif ()
 
 ###########################################################################################
 
-# Add Source Code
-add_subdirectory(src)
 
-# Add Library
-get_source_nes(nes_SOURCE_FILES)
-get_header_nes(nes_HEADER_FILES)
-add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
-target_include_directories(nes PUBLIC "include")
-target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
-if (iwyu_path)
+if(iwyu_path)
     set_property(TARGET nes PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
 endif ()
 
 
-if (GRPC_LIBRARIES)
-    target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})
-endif ()
 # Documentation
 add_subdirectory(docs)
-
-add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
-target_link_libraries(nesCoordinator PRIVATE ${LIBRARIES} nes)
-target_include_directories(nesCoordinator PUBLIC "include")
-target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-if (GRPC_LIBRARIES)
-    target_link_libraries(nesCoordinator PRIVATE ${GRPC_LIBRARIES})
-endif ()
-
-add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
-target_link_libraries(nesWorker PUBLIC ${LIBRARIES} nes)
-target_include_directories(nesWorker PUBLIC "include")
-target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-if (GRPC_LIBRARIES)
-    target_link_libraries(nesWorker PRIVATE ${GRPC_LIBRARIES})
-endif ()
 
 ExternalProject_Add(
         gtest
@@ -600,9 +572,6 @@ include_directories("${source_dir}/googletest/include"
 
 set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} libgtest libgtest_main libgmock cpprestsdk::cpprest)
 
-# Add client
-add_subdirectory(client)
-
 # Add tests with command
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -613,8 +582,14 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
+# Add client
+add_subdirectory(nes-core)
+add_subdirectory(nes-client)
 #Add benchmarks with command
 add_subdirectory(benchmark)
+
+# Custom test commands --------------------------------------------------------
+add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
 
 #Change to alter behaviour of cpack and installation directory of deb package
 install(TARGETS nes
