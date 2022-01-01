@@ -19,6 +19,7 @@
 
 namespace NES {
 
+class Query;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
@@ -39,11 +40,11 @@ class CPPClient {
      * @param operator placement e.g. "BottomUp" or "TopDown"
      * @return query id of deployed query. -1 if deployment failed
      */
-    int64_t submitQuery(const QueryPlanPtr& queryPlan, const std::string& placement = "BottomUp");
+    int64_t submitQuery(const Query& query, const std::string& placement = "BottomUp");
 
   private:
-    const std::string& coordinatorHost;
-    const std::string& coordinatorRESTPort;
+    const std::string coordinatorHost;
+    const std::string coordinatorRESTPort;
 };
 }// namespace NES
 
