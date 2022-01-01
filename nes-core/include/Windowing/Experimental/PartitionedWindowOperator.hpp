@@ -196,7 +196,7 @@ class MergeSliceWindowOperator : public Runtime::Execution::ExecutablePipelineSt
         //         << std::endl;
         for (auto& partition : (*partitions.get())) {
             for (uint64_t index = 0; index < partition->size(); index++) {
-                auto* partitionEntry = (*partition)[index];
+                auto* partitionEntry = (partition)->operator[](index);
                 auto* globalEntry = globalSlice->getEntry(partitionEntry->key);
                 // merge into global value
                 // globalEntry->value = globalEntry->value + partitionEntry->value;

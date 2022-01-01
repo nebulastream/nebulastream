@@ -61,10 +61,10 @@ void GeneratableKeyedTumblingWindowSink::generateOpen(CodeGeneratorPtr, Pipeline
     //codegen->generateWindowSetup(windowDefinition, outputSchema, context, id, windowHandler);
 }
 
-void GeneratableKeyedTumblingWindowSink::generateExecute(CodeGeneratorPtr, PipelineContextPtr) {
-    //auto handler = context->getHandlerIndex(windowHandler);
-    //auto windowDefinition = windowHandler->getWindowDefinition();
-    // codegen->generateCodeForSlicingWindow(windowDefinition, windowAggregation, context, handler);
+void GeneratableKeyedTumblingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    auto handler = context->getHandlerIndex(windowHandler);
+    auto windowDefinition = windowHandler->getWindowDefinition();
+    codegen->generateCodeForKeyedTumblingWindowSink(windowDefinition, windowAggregation, context, handler, outputSchema);
 }
 
 std::string GeneratableKeyedTumblingWindowSink::toString() const { return "GeneratableKeyedSliceMergingOperator"; }

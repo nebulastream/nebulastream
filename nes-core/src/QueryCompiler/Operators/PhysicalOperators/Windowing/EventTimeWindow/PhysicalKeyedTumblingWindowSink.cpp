@@ -9,7 +9,7 @@ PhysicalKeyedTumblingWindowSink::PhysicalKeyedTumblingWindowSink(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractEmitOperator(),
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
 
 std::string PhysicalKeyedTumblingWindowSink::toString() const {

@@ -211,6 +211,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false);
 
+    BufferManagerPtr getBufferManager(){
+        return bufferManagers[0];
+    }
+
   private:
     /**
      * @brief this methods adds a reconfiguration task on the worker queue

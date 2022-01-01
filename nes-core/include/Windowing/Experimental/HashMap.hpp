@@ -50,9 +50,7 @@ class Hashmap {
         return (T*) getKeyPtr(entry);
     };
 
-    std::unique_ptr<std::vector<Runtime::TupleBuffer>> getEntries(){
-        return std::move(storageBuffers);
-    };
+    std::unique_ptr<std::vector<Runtime::TupleBuffer>> getEntries() { return std::move(storageBuffers); };
 
     /**
      * @brief Get the value for a specific entry
@@ -83,7 +81,7 @@ class Hashmap {
 
     template<typename K, bool useTags>
     inline Entry* findOneEntry(const K& key, hash_t h);
-   template<class KeyType>
+    template<class KeyType>
     inline uint8_t* getEntry(KeyType& key);
     template<typename K, bool useTags>
     Hashmap::Entry* findOrCreate(K key, hash_t hash);
@@ -107,7 +105,16 @@ class Hashmap {
 
     Hashmap(const Hashmap&) = delete;
 
-    inline ~Hashmap();
+    inline ~Hashmap(){
+        if(storageBuffers){
+            storageBuffers->clear();
+        }
+    }
+
+    Runtime::TupleBuffer& getBufferForEntry(uint64_t entry) {
+        auto bufferIndex = entry / entriesPerBuffer;
+        return (*storageBuffers)[bufferIndex];
+    }
 
     Entry* entryIndexToAddress(uint64_t entry) {
         auto bufferIndex = entry / entriesPerBuffer;
@@ -123,8 +130,10 @@ class Hashmap {
                 //     throw Compiler::CompilerException("BufferManager is empty. Size "
                 //                                     + std::to_string(bufferManager->getNumOfPooledBuffers()));
             }
-            (*storageBuffers).emplace_back(std::move(buffer.value()));
+            (*storageBuffers).emplace_back(buffer.value());
         }
+        auto buffer = getBufferForEntry(currentSize);
+        buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
         return entryIndexToAddress(currentSize);
     }
 
@@ -140,8 +149,6 @@ class Hashmap {
 extern Hashmap::Entry notFound;
 
 inline Hashmap::Entry* Hashmap::end() { return nullptr; }
-
-inline Hashmap::~Hashmap() { std::cout << "drop hashtable" << std::endl; }
 
 inline Hashmap::ptr_t Hashmap::tag(Hashmap::hash_t hash) {
     auto tagPos = hash >> (sizeof(hash_t) * 8 - 4);
@@ -211,8 +218,13 @@ size_t inline Hashmap::setSize(size_t nrEntries) {
     auto buffer = bufferManager->getUnpooledBuffer(capacity * sizeof(Entry*));
     if (!buffer.has_value()) {
     }
-    buffer = buffer.value();
+    this->entryBuffer = buffer.value();
     entries = buffer->getBuffer<Entry*>();
+
+    if (storageBuffers == nullptr) {
+        storageBuffers = std::make_unique<std::vector<Runtime::TupleBuffer>>();
+    }
+
     return capacity * loadFactor;
 }
 
@@ -221,6 +233,7 @@ void inline Hashmap::clear() {
     for (size_t i = 0; i < capacity; i++) {
         entries[i] = nullptr;
     }
+    storageBuffers = std::make_unique<std::vector<Runtime::TupleBuffer>>();
 }
 
 template<typename K, bool useTags>
@@ -251,7 +264,7 @@ inline Hashmap::Entry* Hashmap::findOrCreate(K key, hash_t hash) {
     return entry;
 }
 template<class KeyType>
-inline uint8_t* getEntry(KeyType& key) {
+inline uint8_t* Hashmap::getEntry(KeyType& key) {
     const auto h = hasher(key, Experimental::Hash<Experimental::CRC32Hash>::SEED);
     auto entry = findOrCreate<KeyType, false>(key, h);
     return getKeyPtr(entry);

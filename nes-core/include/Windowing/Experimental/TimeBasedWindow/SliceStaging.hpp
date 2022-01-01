@@ -11,20 +11,25 @@ class SliceStaging {
   public:
     class Partition {
       public:
-        Partition(std::unique_ptr<std::vector<Runtime::TupleBuffer>> buffers) : buffers(std::move(buffers)){};
-        std::unique_ptr<std::vector<Runtime::TupleBuffer>> buffers;
+        std::vector<Runtime::TupleBuffer> buffers;
+        uint64_t addedSlices = 0;
     };
 
-    uint64_t addToSlice(uint64_t sliceIndex, Partition partition) {
+    std::tuple<uint64_t, uint64_t> addToSlice(uint64_t sliceIndex, std::unique_ptr<std::vector<Runtime::TupleBuffer>> entries) {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
         if (!slicePartitionMap.contains(sliceIndex)) {
-            slicePartitionMap[sliceIndex] = std::make_unique<std::vector<Partition>>();
+            slicePartitionMap[sliceIndex] = std::make_unique<Partition>();
         }
-        slicePartitionMap[sliceIndex]->emplace_back(std::move(partition));
-        return slicePartitionMap[sliceIndex]->size();
+        auto& partition = slicePartitionMap[sliceIndex];
+        for (auto& entryBuffer : (*entries.get())) {
+            partition->buffers.emplace_back(entryBuffer);
+        }
+        partition->addedSlices++;
+
+        return {partition->addedSlices,  partition->buffers.size()};
     }
 
-    std::unique_ptr<std::vector<Partition>> erasePartition(uint64_t sliceIndex) {
+    std::unique_ptr<Partition> erasePartition(uint64_t sliceIndex) {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
         if (!slicePartitionMap.contains(sliceIndex)) {
             throw WindowProcessingException("Slice Index " + std::to_string(sliceIndex) + "not available");
@@ -37,7 +42,7 @@ class SliceStaging {
 
   private:
     std::mutex sliceStagingMutex;
-    std::map<uint64_t, std::unique_ptr<std::vector<Partition>>> slicePartitionMap;
+    std::map<uint64_t, std::unique_ptr<Partition>> slicePartitionMap;
 };
 }// namespace NES::Windowing::Experimental
 

@@ -56,7 +56,6 @@ class KeyedThreadLocalSliceStore {
             throw WindowProcessingException("Requested slice index " + std::to_string(sliceIndex) + " is before "
                                             + std::to_string(firstIndex));
         }
-
         if (currentSlice != nullptr && sliceIndex == lastIndex) {
             return currentSlice;
         } else if (!slices.contains(sliceIndex)) {
