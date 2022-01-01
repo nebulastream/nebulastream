@@ -31,6 +31,8 @@ install(TARGETS nes_client
         COMPONENT nesLibrary
         DESTINATION lib)
 
+add_subdirectory(tests)
+
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")
