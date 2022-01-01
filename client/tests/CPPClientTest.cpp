@@ -18,8 +18,10 @@
 
 #include <API/Query.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 #include <Util/Logger.hpp>
-#include <Util/TestUtils.hpp>
 #include <CPPClient.hpp>
 
 #include <unistd.h>
@@ -27,7 +29,7 @@
 using namespace std;
 
 namespace NES {
-
+using namespace Configurations;
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
 uint64_t rpcPort = 1289;
@@ -52,45 +54,14 @@ class CPPClientTest : public testing::Test {
  */
 TEST_F(CPPClientTest, DeployQueryTest) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("DeployQueryTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0U);
     NES_INFO("DeployQueryTest: Coordinator started successfully");
-
-    NES_INFO("DeployQueryTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("DeployQueryTest: Worker1 started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    // Register query
-    CSVSourceConfigPtr sourceConfig;
-    sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
-
-    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalStream("default_logical", sce);
 
     Query query = Query::from("default_logical");
 
@@ -99,15 +70,6 @@ TEST_F(CPPClientTest, DeployQueryTest) {
 
     EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
 
-    /*auto insertedQueryPlan = crd->getQueryCatalog()->getQueryCatalogEntry(queryId)->getInputQueryPlan();
-    // Expect that the query id and query sub plan id from the deserialized query plan are valid
-    EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
-    EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
-    // Since the deserialization acquires the next queryId and querySubPlanId from the PlanIdGenerator, the deserialized Id should not be the same with the original Id
-    EXPECT_TRUE(insertedQueryPlan->getQueryId() != queryPlan->getQueryId());
-    EXPECT_TRUE(insertedQueryPlan->getQuerySubPlanId() != queryPlan->getQuerySubPlanId());*/
-
-    EXPECT_TRUE(wrk1->stop(true));
     EXPECT_TRUE(crd->stopCoordinator(true));
 }
 
