@@ -20,7 +20,7 @@
 #include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <client/include/CPPClient.hpp>
+#include <CPPClient.hpp>
 
 #include <unistd.h>
 
@@ -56,9 +56,7 @@ TEST_F(CPPClientTest, DeployQueryTest) {
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    //coordinatorConfig->setEnableMonitoring(false);
     workerConfig->setCoordinatorPort(rpcPort);
-   // workerConfig->setEnableMonitoring(false);
 
     NES_INFO("DeployQueryTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -95,10 +93,9 @@ TEST_F(CPPClientTest, DeployQueryTest) {
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     Query query = Query::from("default_logical");
-    auto queryPlan = query.getQueryPlan();
 
     CPPClient client = CPPClient("localhost", std::to_string(restPort));
-    uint64_t queryId = client.submitQuery(queryPlan, "ButtomUp");
+    uint64_t queryId = client.submitQuery(query, "ButtomUp");
 
     EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
 

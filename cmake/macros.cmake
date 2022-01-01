@@ -52,7 +52,7 @@ macro(get_header_nes HEADER_FILES)
 endmacro()
 
 macro(get_header_nes_client HEADER_FILES)
-    file(GLOB_RECURSE ${HEADER_FILES} "client/include/*.h" "client/include/*.hpp")
+    file(GLOB_RECURSE ${HEADER_FILES} "include/*.h" "include/*.hpp")
 endmacro()
 
 find_program(CLANG_FORMAT_EXE clang-format)

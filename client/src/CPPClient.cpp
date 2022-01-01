@@ -18,7 +18,7 @@
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger.hpp>
-#include <client/include/CPPClient.hpp>
+#include <CPPClient.hpp>
 
 #include <cpprest/http_client.h>
 
@@ -29,7 +29,8 @@ CPPClient::CPPClient(const std::string& coordinatorHost, const std::string& coor
     NES::setupLogging("nesClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 }
 
-int64_t CPPClient::submitQuery(const QueryPlanPtr& queryPlan, const std::string& placement) {
+int64_t CPPClient::submitQuery(const Query& query, const std::string& placement) {
+    auto queryPlan = query.getQueryPlan();
     SubmitQueryRequest request;
     auto serializedQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan, true);

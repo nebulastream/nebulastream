@@ -362,6 +362,6 @@ Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& w
     return *this;
 }
 
-QueryPlanPtr Query::getQueryPlan() { return queryPlan; }
+QueryPlanPtr Query::getQueryPlan() const { return queryPlan; }
 
 }// namespace NES

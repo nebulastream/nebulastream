@@ -343,7 +343,7 @@ class Query {
      * @brief Gets the query plan from the current query.
      * @return QueryPlan
      */
-    QueryPlanPtr getQueryPlan();
+    QueryPlanPtr getQueryPlan() const;
 
     // creates a new query object
     Query(QueryPlanPtr queryPlan);

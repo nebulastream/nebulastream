@@ -17,6 +17,9 @@ add_subdirectory(src)
 get_source_nes_client(nes_client_SOURCE_FILES)
 get_header_nes_client(nes_client_HEADER_FILES)
 
+message(STATUS "Client Headers: ${nes_client_HEADER_FILES}")
+message(STATUS "Client Source: ${nes_client_SOURCE_FILES}")
+
 # Add Library
 add_library(nes_client SHARED ${nes_client_SOURCE_FILES} ${nes_client_HEADER_FILES})
 target_include_directories(nes_client PUBLIC "include")
