@@ -28,16 +28,16 @@ then
     cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
     make -j4
    	# Check if build was successful
-   	if [ $? -ne 0 ];
+    errorCode = $?
+   	if [ $errorCode -ne 0 ];
    	then
+      rm -rf /nebulastream/build
       if [ "${RequireBuild}" == "true" ];
       then
-        echo "Required Build Failed"
-        rm -rf /nebulastream/build
-        exit $?
+        echo "Required Build Failed"     
+        exit $errorCode
       else
         echo "Optional Build Failed"
-        rm -rf /nebulastream/build
         exit 0
       fi
     else
@@ -47,16 +47,16 @@ then
       # If build was successful we execute the tests
       # timeout after 90 minutes
       timeout 70m make test_debug
-      if [ $? -ne 0 ];
+      errorCode = $?
+      if [ $errorCode -ne 0 ];
       then
+        rm -rf /nebulastream/build 
         if [ "${RequireTest}" == "true" ];
         then
-          echo "Required Tests Failed"
-          rm -rf /nebulastream/build
-          exit $?
+          echo "Required Tests Failed"          
+          exit $errorCode
         else
           echo "Optional Tests Failed"
-          rm -rf /nebulastream/build
           exit 0
         fi
       fi
