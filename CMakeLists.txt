@@ -277,34 +277,8 @@ else ()
 endif ()
 set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
-# Proto file
-set(PROTO_PATH "${PROJECT_SOURCE_DIR}/grpc")
-set(PROTO_FILE_PATH "${PROTO_PATH}/*.proto")
 
-file(GLOB PROTO_FILES "${PROTO_FILE_PATH}")
-foreach (PROTO_FILE ${PROTO_FILES})
-    get_filename_component(FILENAME ${PROTO_FILE} "NAME")
-    string(REGEX REPLACE "[.]proto$" ".pb.cc" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
-    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".pb.h" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
-    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".grpc.pb.cc" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
-    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-    string(REGEX REPLACE "[.]proto$" ".grpc.pb.h" OUTPUT_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME})
-    list(APPEND OUTPUT_SOURCES ${OUTPUT_SOURCE})
-endforeach ()
 
-message(STATUS "Found the following Proto files: " ${OUTPUT_SOURCES})
-
-add_custom_command(
-        OUTPUT ${OUTPUT_SOURCES}
-        COMMAND ${_PROTOBUF_PROTOC}
-        ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
-        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
-        -I "${PROTO_PATH}"
-        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
-        "${PROTO_FILE_PATH}"
-        DEPENDS "${PROTO_FILE_PATH}")
 
 # LibZMQ
 message(STATUS "Libzmq")
