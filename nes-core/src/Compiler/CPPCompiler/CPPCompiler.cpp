@@ -31,7 +31,7 @@
 
 namespace NES::Compiler {
 
-const std::string NESIncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
+const std::string NESIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-core/include/";
 const std::string DEBSIncludePath = PATH_TO_DEB_SOURCE_CODE "/include/";
 
 #ifdef __APPLE__
