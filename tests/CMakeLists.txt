@@ -26,52 +26,7 @@ else ()
     set(CMAKE_ARGS_CROSS "")
 endif ()
 
-ExternalProject_Add(
-        gtest
-        URL https://github.com/google/googletest/archive/release-1.11.0.zip
-        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
-        CMAKE_ARGS ${CMAKE_ARGS_CROSS}
-        # Disable install step
-        INSTALL_COMMAND ""
-        URL_HASH SHA256=353571c2440176ded91c2de6d6cd88ddd41401d14692ec1f99e35d013feda55a
-)
-
-# Get GTest source and binary directories from CMake project
-ExternalProject_Get_Property(gtest source_dir binary_dir)
-
-# Create a libgtest target to be used as a dependency by test programs
-add_library(libgtest IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest gtest gtest_main)
-
-# Set libgtest properties
-set_target_properties(libgtest PROPERTIES
-        "IMPORTED_LOCATION" "${binary_dir}/lib/libgtest.a"
-        "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-        )
-
-add_library(libgtest_main IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest_main gtest_main)
-
-set_target_properties(libgtest_main PROPERTIES
-        "IMPORTED_LOCATION" "${binary_dir}/lib/libgtest_main.a"
-        "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-        )
-
-# Create a libgmock target to be used as a dependency by test programs
-add_library(libgmock IMPORTED STATIC GLOBAL)
-add_dependencies(libgmock gtest)
-
-# Set libgmock properties
-set_target_properties(libgmock PROPERTIES
-        "IMPORTED_LOCATION" "${binary_dir}/lib/libgmock.a"
-        "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-        )
-
-# Set Include Dirs
-include_directories("${source_dir}/googletest/include"
-        "${source_dir}/googlemock/include")
-
-set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} libgtest libgtest_main libgmock cpprestsdk::cpprest)
+set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} cpprestsdk::cpprest)
 
 # Copy Test Data --------------------------------------------------------------
 file(COPY test_data DESTINATION .)
