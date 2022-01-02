@@ -28,7 +28,7 @@ then
     cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
     make -j4
    	# Check if build was successful
-    errorCode = $?
+    errorCode=$?
    	if [ $errorCode -ne 0 ];
    	then
       rm -rf /nebulastream/build
@@ -47,7 +47,7 @@ then
       # If build was successful we execute the tests
       # timeout after 90 minutes
       timeout 70m make test_debug
-      errorCode = $?
+      errorCode=$?
       if [ $errorCode -ne 0 ];
       then
         rm -rf /nebulastream/build 
