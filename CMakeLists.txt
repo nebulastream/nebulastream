@@ -112,7 +112,8 @@ endif ()
 
 # enables tracing of stack traces if operator / expression nodes are created
 if (CMAKE_NES_TRACE_NODE_CREATION)
-    set(NES_SPECIFIC_FLAGS "-DNES_TRACE_NODE_CREATION=1")
+    add_compile_definitions(NES_TRACE_NODE_CREATION)
+    message(STATUS "Trace node creation")
 endif ()
 
 # Set NES_LOGGING_LEVEL Flag
