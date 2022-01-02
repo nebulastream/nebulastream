@@ -56,5 +56,8 @@ KeyedSlicePtr& KeyedThreadLocalSliceStore::insertSlice(uint64_t sliceIndex) {
         return slices[sliceIndex];
     }
 }
+void KeyedThreadLocalSliceStore::setFirstSliceIndex(uint64_t i) {
+    firstIndex = i;
+}
 
 }// namespace NES::Windowing::Experimental

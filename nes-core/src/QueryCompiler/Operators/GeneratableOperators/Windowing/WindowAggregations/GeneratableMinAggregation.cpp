@@ -39,4 +39,12 @@ void GeneratableMinAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto ifStatement = IF(partialRef > *fieldReference, partialRef.assign(fieldReference));
     currentCode->addStatement(ifStatement.createCopy());
 }
+
+void GeneratableMinAggregation::compileCombine(CompoundStatementPtr currentCode,
+                                               VarRefStatement globalPartial, VarRefStatement localPartial) {
+    auto partial1 = globalPartial.accessPtr(VarRef(getPartialAggregate()));
+    auto partial2 = localPartial.accessPtr(VarRef(getPartialAggregate()));
+    auto ifStatement = IF(partial1 > partial2, partial1.assign(partial2));
+    currentCode->addStatement(ifStatement.createCopy());
+}
 }// namespace NES::QueryCompilation::GeneratableOperators

@@ -128,10 +128,11 @@ class CodeGenerator {
                                          Windowing::WindowOperatorHandlerPtr windowOperatorHandler) = 0;
 
     virtual uint64_t generateKeyedThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                         SchemaPtr windowOutputSchema,
-                                         PipelineContextPtr context,
-                                         uint64_t id,
-                                         uint64_t windowOperatorIndex ) = 0;
+                                                                 SchemaPtr windowOutputSchema,
+                                                                 PipelineContextPtr context,
+                                                                 uint64_t id,
+                                                                 uint64_t windowOperatorIndex,
+                                                                 GeneratableOperators::GeneratableWindowAggregationPtr ptr) = 0;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.

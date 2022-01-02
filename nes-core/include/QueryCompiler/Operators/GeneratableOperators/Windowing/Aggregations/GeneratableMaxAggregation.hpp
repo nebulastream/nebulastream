@@ -39,6 +39,9 @@ class GeneratableMaxAggregation : public GeneratableWindowAggregation {
     void compileLiftCombine(CompoundStatementPtr currentCode,
                             BinaryOperatorStatement partialRef,
                             RecordHandlerPtr recordHandler) override;
+
+    void compileCombine(CompoundStatementPtr currentCode,
+                        VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) override;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

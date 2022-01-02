@@ -47,9 +47,16 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
     auto newGlobalWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceNumber, originId);
     // check if the current max watermark is larger than the thread local watermark
     if (newGlobalWatermark > threadLocalSliceStore.getLastWatermark()) {
-        // push the local slices to the global slice store.
 
-        for (uint64_t si = threadLocalSliceStore.getFirstIndex(); si <= threadLocalSliceStore.getLastIndex(); si++) {
+        if (threadLocalSliceStore.getLastWatermark() == 0) {
+            // special case for the first watermark handling
+            auto currentSliceIndex = newGlobalWatermark / sliceSize;
+            threadLocalSliceStore.setFirstSliceIndex(currentSliceIndex - 1);
+        }
+        // push the local slices to the global slice store.
+        auto firstIndex = threadLocalSliceStore.getFirstIndex();
+        auto lastIndex = threadLocalSliceStore.getLastIndex();
+        for (uint64_t si = firstIndex; si <= lastIndex; si++) {
 
             const auto& slice = threadLocalSliceStore[si];
             if (slice->getEnd() >= newGlobalWatermark) {
@@ -87,7 +94,7 @@ void KeyedEventTimeWindowHandler::start(Runtime::Execution::PipelineExecutionCon
 
 void KeyedEventTimeWindowHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
     bool current = true;
-    if(isRunning.compare_exchange_strong(current, false)){
+    if (isRunning.compare_exchange_strong(current, false)) {
         NES_DEBUG("stop KeyedEventTimeWindowHandler");
         // todo fix shutdown, currently KeyedEventTimeWindowHandler is never destructed because operators have references.
         this->threadLocalSliceStores.clear();
