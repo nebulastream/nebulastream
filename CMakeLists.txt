@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v10)
+set(VCPKG_BINARY_VERSION v11)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -385,9 +385,13 @@ if (NES_USE_ADAPTIVE)
     message("Adaptive sampling dependencies OK")
 endif (NES_USE_ADAPTIVE)
 
+find_package(GTest CONFIG REQUIRED)
+if (NOT ${GTest_FOUND})
+    message(FATAL_ERROR "Unable to find GTest")
+endif ()
+set(LIBRARIES ${LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 
 # PAPI
-
 if (CMAKE_USE_PAPI_PROFILER)
     find_path(PAPI_PREFIX
             NAMES include/papi.h
