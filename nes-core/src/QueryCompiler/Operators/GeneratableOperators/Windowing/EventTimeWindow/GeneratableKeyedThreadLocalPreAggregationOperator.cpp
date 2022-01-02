@@ -60,7 +60,12 @@ GeneratableKeyedThreadLocalPreAggregationOperator::GeneratableKeyedThreadLocalPr
 void GeneratableKeyedThreadLocalPreAggregationOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowDefinition = windowHandler->getWindowDefinition();
     auto windowOperatorIndex = context->registerOperatorHandler(windowHandler);
-    codegen->generateKeyedThreadLocalPreAggregationSetup(windowDefinition, outputSchema, context, id, windowOperatorIndex);
+    codegen->generateKeyedThreadLocalPreAggregationSetup(windowDefinition,
+                                                         outputSchema,
+                                                         context,
+                                                         id,
+                                                         windowOperatorIndex,
+                                                         windowAggregation);
 }
 
 void GeneratableKeyedThreadLocalPreAggregationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

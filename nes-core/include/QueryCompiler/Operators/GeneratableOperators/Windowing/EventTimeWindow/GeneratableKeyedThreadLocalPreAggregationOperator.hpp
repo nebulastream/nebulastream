@@ -50,9 +50,13 @@ class GeneratableKeyedThreadLocalPreAggregationOperator : public GeneratableOper
                                          SchemaPtr outputSchema,
                                          Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
                                          GeneratableWindowAggregationPtr windowAggregation);
+
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+
     [[nodiscard]] std::string toString() const override;
+
     OperatorNodePtr copy() override;
 
   private:

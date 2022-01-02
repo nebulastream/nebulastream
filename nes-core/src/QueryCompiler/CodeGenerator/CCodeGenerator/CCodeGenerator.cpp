@@ -668,11 +668,12 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
          * if(minWatermark < allowedLateness)
          *      minWatermark = 0
          */
-        auto zero = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "0");
-        auto setWatermarkToZero = IF(VarRef(currentWatermarkVariableDeclaration) < Constant(tf->createValueType(
-                                         DataTypeFactory::createBasicValue(eventTimeWatermarkStrategy->getAllowedLateness()))),
-                                     VarRef(currentWatermarkVariableDeclaration).assign(VarRef(zero)));
-        context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
+      //  TODO check if needed
+        //auto zero = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "0");
+       // auto setWatermarkToZero = IF(VarRef(currentWatermarkVariableDeclaration) < Constant(tf->createValueType(
+        //                                 DataTypeFactory::createBasicValue(eventTimeWatermarkStrategy->getAllowedLateness()))),
+        //                             VarRef(currentWatermarkVariableDeclaration).assign(VarRef(zero)));
+        //context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
 
         // Check and update max watermark if current watermark is greater than maximum watermark
         // if (currentWatermark > maxWatermark) {
@@ -823,6 +824,22 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     }
 }
 
+StructDeclaration
+CCodeGenerator::generatePartialAggregationEntry(const Windowing::LogicalWindowDefinitionPtr window,
+                                                GeneratableOperators::GeneratableWindowAggregationPtr generatableAggregation) {
+    auto tf = getTypeFactory();
+    auto key = window->getOnKey();
+    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(key->getStamp()), key->getFieldName());
+    // create struct for entry
+    StructDeclaration structDeclarationTuple = StructDeclaration::create("PartialAggregationEntry", "partialAggregationEntry");
+    /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
+    structDeclarationTuple.makeStructCompact();
+    structDeclarationTuple.addField(keyVariableDeclaration);
+    auto aggregation = window->getWindowAggregation();
+    structDeclarationTuple.addField(*generatableAggregation->getPartialAggregate());
+    return structDeclarationTuple;
+}
+
 /**
  * Code Generation for the window operator
  * @param window windowdefinition
@@ -832,11 +849,13 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
  */
 bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     Windowing::LogicalWindowDefinitionPtr window,
-    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr,
+    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr aggregation,
     PipelineContextPtr context,
     uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
+
+    StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, aggregation);
 
     auto windowOperatorHandlerDeclaration =
         VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
@@ -894,16 +913,20 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     auto getEntry = call("getEntry<" + TO_CODE(keyStamp) + ">");
     getEntry->addParameter(VarRef(keyVariableDeclaration));
     auto entryAssignmentStatement = VarDeclStatement(entry).assign(
-        TypeCast(VarRef(slice).accessPtr(getState).accessRef(getEntry), tf->createAnonymusDataType("EntryType*")));
+        TypeCast(VarRef(slice).accessPtr(getState).accessRef(getEntry), tf->createPointer(partialAggregationEntry.getType())));
     context->code->currentCodeInsertionPoint->addStatement(entryAssignmentStatement.copy());
-    auto aggField =
+
+    aggregation->compileLiftCombine(context->code->currentCodeInsertionPoint,
+                                    VarRef(entry).accessPtr(VarRef(aggregation->getPartialAggregate())),
+                                    recordHandler);
+    /* auto aggField =
         recordHandler->getAttribute(window->getWindowAggregation()->on()->as<FieldAccessExpressionNode>()->getFieldName());
     auto partialAggregateStamp = tf->createDataType(window->getWindowAggregation()->getPartialAggregateStamp());
     auto aggregateDeclaration = VariableDeclaration::create(partialAggregateStamp, "agg");
     auto sum = VarRef(entry).accessPtr(VarRef(aggregateDeclaration)) + *aggField;
     auto updatedPartial = VarRef(entry).accessPtr(VarRef(aggregateDeclaration)).assign(sum);
     context->code->currentCodeInsertionPoint->addStatement(updatedPartial.copy());
-
+*/
     auto triggerThreadLocalStateCall = call("triggerThreadLocalState");
     triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationWorkerContext));
     triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationExecutionContext));
@@ -921,27 +944,19 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
 
 bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
     Windowing::LogicalWindowDefinitionPtr window,
-    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr,
+    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr aggregation,
     PipelineContextPtr context,
     uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     auto code = context->code;
     auto td = context->code;
 
+    StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, aggregation);
+    context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
+
     auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
     auto physicalKeyType = tf->createDataType(keyStamp);
-    auto keyVariableDeclaration = VariableDeclaration::create(physicalKeyType, "key");
-
-    // create struct for entry
-    // consists of keys and aggregation values
-    StructDeclaration structDeclarationTuple = StructDeclaration::create("EntryType", "");
-    /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
-    structDeclarationTuple.makeStructCompact();
-    structDeclarationTuple.addField(keyVariableDeclaration);
-    auto partialAggregateStamp = tf->createDataType(window->getWindowAggregation()->getPartialAggregateStamp());
-    auto aggregateDeclaration = VariableDeclaration::create(partialAggregateStamp, "agg");
-    structDeclarationTuple.addField(aggregateDeclaration);
-    context->code->structDeclarationInputTuples.push_back(structDeclarationTuple);
+    auto keyVariableDeclaration = partialAggregationEntry.getVariableDeclaration(window->getOnKey()->getFieldName());
 
     auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
     auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
@@ -1046,19 +1061,17 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
             auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
             auto entryAssignmentStatement =
                 VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySize * VarRef(recordIndex))) + entryOffset,
-                                                        tf->createAnonymusDataType("EntryType*")));
+                                                        tf->createPointer(partialAggregationEntry.getType())));
             scanBody->addStatement(entryAssignmentStatement.copy());
 
             auto globalEntry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "globalEntry");
             auto getEntry = call("getEntry<" + TO_CODE(keyStamp) + ">");
             getEntry->addParameter(VarRef(entry).accessPtr(VarRef(keyVariableDeclaration)));
-            auto globalEntryAssignmentStatement = VarDeclStatement(globalEntry).assign(
-                TypeCast(VarRef(globalSliceState).accessRef(getEntry), tf->createAnonymusDataType("EntryType*")));
+            auto globalEntryAssignmentStatement = VarDeclStatement(globalEntry)
+                                                      .assign(TypeCast(VarRef(globalSliceState).accessRef(getEntry),
+                                                                       tf->createPointer(partialAggregationEntry.getType())));
             scanBody->addStatement(globalEntryAssignmentStatement.copy());
-
-            auto sum = VarRef(globalEntry).accessPtr(VarRef(aggregateDeclaration)) + VarRef(entry).accessPtr(VarRef(aggregateDeclaration));
-            auto updatedPartial = VarRef(globalEntry).accessPtr(VarRef(aggregateDeclaration)).assign(sum);
-            scanBody->addStatement(updatedPartial.copy());
+            aggregation->compileCombine(scanBody, VarRef(globalEntry), VarRef(entry));
         }
         loopBody->addStatement(scanLoop);
     }
@@ -1066,17 +1079,16 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
     return 0;
 }
 
-bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWindowDefinitionPtr,
-                                                            GeneratableOperators::GeneratableWindowAggregationPtr,
+bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWindowDefinitionPtr window,
+                                                            GeneratableOperators::GeneratableWindowAggregationPtr aggregation,
                                                             PipelineContextPtr context,
                                                             uint64_t,
                                                             SchemaPtr resultSchema) {
     auto tf = getTypeFactory();
     auto code = context->code;
-
+    StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, aggregation);
     auto globalSliceState = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "globalSliceState");
     auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
-
 
     auto buffers = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "buffers");
     auto buffersAssignment = VarDeclStatement(buffers).assign(VarRef(globalSliceState).accessRef(call("getEntries")));
@@ -1090,10 +1102,9 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWi
                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
             .copy());
 
-    auto partitionLoop = std::make_shared<FOR>(
-        partitionIndex,
-        (VarRef(partitionIndex) < (VarRef(buffers).accessPtr(getSizeCall))).copy(),
-        (++VarRef(partitionIndex)).copy());
+    auto partitionLoop = std::make_shared<FOR>(partitionIndex,
+                                               (VarRef(partitionIndex) < (VarRef(buffers).accessPtr(getSizeCall))).copy(),
+                                               (++VarRef(partitionIndex)).copy());
     {
         auto loopBody = partitionLoop->getCompoundStatement();
         auto buffer = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "buffer");
@@ -1101,8 +1112,7 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWi
         // buffer = partitions[partitionIndex];
         auto getCall = call("operator[]");
         getCall->addParameter(VarRef(partitionIndex));
-        loopBody->addStatement(
-            VarDeclStatement(buffer).assign(VarRef(buffers).accessPtr(getCall)).copy());
+        loopBody->addStatement(VarDeclStatement(buffer).assign(VarRef(buffers).accessPtr(getCall)).copy());
         loopBody->addStatement(VarDeclStatement(entries).assign(VarRef(buffer).accessRef(call("getBuffer"))).copy());
         // scan over buffer
         auto recordIndex = std::dynamic_pointer_cast<VariableDeclaration>(
@@ -1124,20 +1134,24 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWi
             auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
             auto entryAssignmentStatement =
                 VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySize * VarRef(recordIndex))) + entryOffset,
-                                                        tf->createAnonymusDataType("EntryType*")));
+                                                        tf->createPointer(partialAggregationEntry.getType())));
 
             scanBody->addStatement(entryAssignmentStatement.copy());
             // todo currently we assume here that the output schema always has the following fields in the same order.
             // assign start field
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[0]->getName(), VarRef(globalSlice).accessPtr(call("getStart")).copy());
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[0]->getName(),
+                                                           VarRef(globalSlice).accessPtr(call("getStart")).copy());
             // assign end field
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[1]->getName(), VarRef(globalSlice).accessPtr(call("getEnd")).copy());
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[1]->getName(),
+                                                           VarRef(globalSlice).accessPtr(call("getEnd")).copy());
             // assign key field
-            auto key = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "key");
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[2]->getName(), VarRef(entry).accessPtr(VarRef(key)).copy());
+            auto key = partialAggregationEntry.getVariableDeclaration(window->getOnKey()->getFieldName());
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[2]->getName(),
+                                                           VarRef(entry).accessPtr(VarRef(key)).copy());
             // assign value field
-            auto value = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "agg");
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[3]->getName(), VarRef(entry).accessPtr(VarRef(value)).copy());
+            auto value = aggregation->getPartialAggregate();
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[3]->getName(),
+                                                           VarRef(entry).accessPtr(VarRef(value)).copy());
 
             context->code->currentCodeInsertionPoint = scanBody;
         }
@@ -2444,11 +2458,13 @@ void CCodeGenerator::generateCodeForAggregationInitialization(const BlockScopeSt
     setupScope->addStatement(statement.copy());
 }
 
-uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                                     SchemaPtr,
-                                                                     PipelineContextPtr context,
-                                                                     uint64_t id,
-                                                                     uint64_t windowOperatorIndex) {
+uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
+    Windowing::LogicalWindowDefinitionPtr window,
+    SchemaPtr,
+    PipelineContextPtr context,
+    uint64_t id,
+    uint64_t windowOperatorIndex,
+    GeneratableOperators::GeneratableWindowAggregationPtr windowAggregation) {
 
     auto tf = getTypeFactory();
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
@@ -2479,23 +2495,18 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(Windowing::
 
     // create struct for entry
     // consists of keys and aggregation values
-    StructDeclaration structDeclarationTuple = StructDeclaration::create("EntryType", "");
-    /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
-    structDeclarationTuple.makeStructCompact();
-    structDeclarationTuple.addField(keyVariableDeclaration);
-    auto partialAggregateStamp = tf->createDataType(window->getWindowAggregation()->getPartialAggregateStamp());
-
-    auto aggregateDeclaration = VariableDeclaration::create(partialAggregateStamp, "agg");
-    structDeclarationTuple.addField(aggregateDeclaration);
-    context->code->structDeclarationInputTuples.push_back(structDeclarationTuple);
+    StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, windowAggregation);
+    context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
 
     auto createCall = call("std::make_shared<Experimental::HashMapFactory>");
     auto getBufferManagerCall = call("getBufferManager");
     createCall->addParameter(VarRefStatement(context->code->varDeclarationExecutionContext).accessRef(getBufferManagerCall));
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto constantKeySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(physicalDataTypeFactory.getPhysicalType(keyStamp)->size())));
+    auto constantKeySize = Constant(
+        tf->createValueType(DataTypeFactory::createBasicValue(physicalDataTypeFactory.getPhysicalType(keyStamp)->size())));
     createCall->addParameter(constantKeySize);
-    auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(physicalDataTypeFactory.getPhysicalType(window->getWindowAggregation()->getPartialAggregateStamp())->size())));
+    auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+        physicalDataTypeFactory.getPhysicalType(window->getWindowAggregation()->getPartialAggregateStamp())->size())));
     createCall->addParameter(constantValueSize);
     auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 100000)));
     createCall->addParameter(constantNumberOfEntries);
@@ -2989,7 +3000,5 @@ VariableDeclaration CCodeGenerator::getJoinOperatorHandler(const PipelineContext
 
     return windowOperatorHandlerDeclaration;
 }
-
-
 
 }// namespace NES::QueryCompilation

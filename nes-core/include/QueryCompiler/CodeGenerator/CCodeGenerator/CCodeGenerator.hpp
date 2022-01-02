@@ -112,10 +112,11 @@ class CCodeGenerator : public CodeGenerator {
                                  uint64_t id,
                                  Windowing::WindowOperatorHandlerPtr windowOperatorHandler) override;
     uint64_t generateKeyedThreadLocalPreAggregationSetup(Windowing::LogicalWindowDefinitionPtr window,
-                                                                  SchemaPtr windowOutputSchema,
-                                                                  PipelineContextPtr context,
-                                                                  uint64_t id,
-                                                         uint64_t windowOperatorIndex) override;
+                                                         SchemaPtr windowOutputSchema,
+                                                         PipelineContextPtr context,
+                                                         uint64_t id,
+                                                         uint64_t windowOperatorIndex,
+                                                         GeneratableOperators::GeneratableWindowAggregationPtr ptr) override;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -251,6 +252,13 @@ class CCodeGenerator : public CodeGenerator {
      * @return
      */
     static BinaryOperatorStatement getBuffer(const VariableDeclaration& tupleBufferVariable);
+
+    /**
+     * @brief returns tupleBufferVariable.getBuffer()
+     * @param tupleBufferVariable
+     * @return
+     */
+    static StructDeclaration generatePartialAggregationEntry(const Windowing::LogicalWindowDefinitionPtr window, GeneratableOperators::GeneratableWindowAggregationPtr generatableAggregation);
 
     /**
      * @brief returns getOperatorHandler<Windowing::WindowOperatorHandler>(windowOperatorIndex);

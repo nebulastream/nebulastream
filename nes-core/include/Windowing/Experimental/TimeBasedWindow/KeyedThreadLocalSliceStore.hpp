@@ -39,6 +39,8 @@ class KeyedThreadLocalSliceStore {
     void dropFirstSlice();
     uint64_t getLastWatermark();
     void setLastWatermark(uint64_t watermarkTs);
+    void setFirstSliceIndex(uint64_t i);
+
   private:
     /**
      * @brief Appends a new slice to the end of the slice store.

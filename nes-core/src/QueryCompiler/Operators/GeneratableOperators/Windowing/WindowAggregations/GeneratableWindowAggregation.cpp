@@ -12,12 +12,21 @@
     limitations under the License.
 */
 
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableWindowAggregation::GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
-    : aggregationDescriptor(std::move(aggregationDescriptor)) {}
+    : aggregationDescriptor(std::move(aggregationDescriptor)) {
+    auto resultField = this->aggregationDescriptor->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
+    auto partialAggregateDeclaration = VariableDeclaration::create(this->aggregationDescriptor->getPartialAggregateStamp(), resultField);
+    this->partialAggregate = std::make_shared<VariableDeclaration>(partialAggregateDeclaration);
+
+}
 
 }// namespace NES::QueryCompilation::GeneratableOperators

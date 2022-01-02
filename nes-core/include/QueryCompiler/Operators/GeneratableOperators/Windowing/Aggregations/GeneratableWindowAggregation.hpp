@@ -17,6 +17,7 @@
 #include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
+#include "QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp"
 
 namespace NES::Windowing {
 class WindowAggregationDescriptor;
@@ -45,11 +46,19 @@ class GeneratableWindowAggregation {
                                     BinaryOperatorStatement partialValueRef,
                                     RecordHandlerPtr recordHandler) = 0;
 
+    virtual void compileCombine(CompoundStatementPtr currentCode,
+                                VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) = 0;
+
     virtual ~GeneratableWindowAggregation() noexcept = default;
+
+    virtual NES::QueryCompilation::VariableDeclarationPtr getPartialAggregate(){
+        return partialAggregate;
+    };
 
   protected:
     explicit GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
     Windowing::WindowAggregationDescriptorPtr aggregationDescriptor;
+    NES::QueryCompilation::VariableDeclarationPtr partialAggregate;
 };
 
 }// namespace GeneratableOperators

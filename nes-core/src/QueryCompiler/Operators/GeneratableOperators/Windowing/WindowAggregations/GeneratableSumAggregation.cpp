@@ -40,4 +40,13 @@ void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto updatedPartial = partialRef.assign(sum);
     currentCode->addStatement(updatedPartial.copy());
 }
+void GeneratableSumAggregation::compileCombine(CompoundStatementPtr currentCode,
+                                               VarRefStatement partialValueRef1,
+                                               VarRefStatement partialValueRef2) {
+
+    auto updatedPartial = partialValueRef1.accessPtr(VarRef(getPartialAggregate()))
+                              .assign(partialValueRef1.accessPtr(VarRef(getPartialAggregate()))
+                                      + partialValueRef2.accessPtr(VarRef(getPartialAggregate())));
+    currentCode->addStatement(updatedPartial.copy());
+}
 }// namespace NES::QueryCompilation::GeneratableOperators
