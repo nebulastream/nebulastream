@@ -48,9 +48,9 @@ then
         exit 0
       fi
     else
-      cd /nebulastream/build/nes-core/tests
-      ln -s ../nesCoordinator .
-      ln -s ../nesWorker .
+     # cd /nebulastream/build/nes-core/tests
+     # ln -s ../nesCoordinator .
+     # ln -s ../nesWorker .
       # If build was successful we execute the tests
       # timeout after 70 minutes
       # We don't want to rely on the github-action timeout, because
