@@ -13,6 +13,7 @@
 */
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -60,7 +61,11 @@ void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodeP
                                                                                                << windowOp->toString());
     windowOp->getWindowDefinition()->setOriginId(windowOp->getId());
     auto windowDef = windowOp->getWindowDefinition();
-    windowDef->setNumberOfInputEdges(windowOp->getChildren().size());
+    // identify the number of origins by the number of sources.
+    // TODO we should have a better way to invesigate the number of origins for a specific operator and maybe also give specifc ids.
+    auto sourceOptrs = windowOp->getNodesByType<SourceLogicalOperatorNode>();
+    auto origins = sourceOptrs.size();
+    windowDef->setNumberOfInputEdges(origins);
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef);
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());
