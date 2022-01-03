@@ -47,7 +47,7 @@ class ConfigTest : public testing::Test {
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
     CoordinatorConfigPtr coordinatorConfigPtr = CoordinatorConfig::create();
-    coordinatorConfigPtr->overwriteConfigWithYAMLFileInput("../tests/test_data/emptyCoordinator.yaml");
+    coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyCoordinator.yaml");
 
     EXPECT_EQ(coordinatorConfigPtr->getRestPort()->getValue(), coordinatorConfigPtr->getRestPort()->getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->getRpcPort()->getValue(), coordinatorConfigPtr->getRpcPort()->getDefaultValue());
@@ -126,7 +126,7 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
 
     WorkerConfigPtr workerConfigPtr = WorkerConfig::create();
-    workerConfigPtr->overwriteConfigWithYAMLFileInput("../tests/test_data/emptyWorker.yaml");
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml");
 
     EXPECT_NE(workerConfigPtr->getLocalWorkerIp()->getValue(), workerConfigPtr->getLocalWorkerIp()->getDefaultValue());
     EXPECT_EQ(workerConfigPtr->getRpcPort()->getValue(), workerConfigPtr->getRpcPort()->getDefaultValue());
@@ -201,7 +201,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
 
     std::map<string, string> commandLineParams;
 
-    commandLineParams.insert(std::pair<string, string>("--sourceConfigPath", "../../tests/test_data/emptySource.yaml"));
+    commandLineParams.insert(std::pair<string, string>("--sourceConfigPath",  std::string(TEST_DATA_DIRECTORY) +"emptySource.yaml"));
 
     SourceConfigPtr sourceConfigPtr = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 
@@ -214,7 +214,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
     EXPECT_EQ(sourceConfigPtr->getPhysicalStreamName()->getValue(), sourceConfigPtr->getPhysicalStreamName()->getDefaultValue());
     EXPECT_NE(sourceConfigPtr->getLogicalStreamName()->getValue(), sourceConfigPtr->getLogicalStreamName()->getDefaultValue());
 
-    commandLineParams.insert_or_assign("--sourceConfigPath", "../../tests/test_data/emptyMQTTSource.yaml");
+    commandLineParams.insert_or_assign("--sourceConfigPath", std::string(TEST_DATA_DIRECTORY) + "emptyMQTTSource.yaml");
 
     SourceConfigPtr sourceConfigPtr1 = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 

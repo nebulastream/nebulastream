@@ -426,9 +426,9 @@ class SourceTest : public testing::Test {
     void SetUp() override {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
-        this->path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
-        this->path_to_file_head = "../tests/test_data/ysb-tuples-100-campaign-100-head.csv";
-        this->path_to_bin_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
+        this->path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
+        this->path_to_file_head = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100-head.csv";
+        this->path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.bin";
         this->schema = Schema::create()
                            ->addField("user_id", DataTypeFactory::createFixedChar(16))
                            ->addField("page_id", DataTypeFactory::createFixedChar(16))
@@ -1223,7 +1223,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
                                ->addField("uint8", UINT8)
                                ->addField("int8", INT8);
 
-    std::string path_to_int_file = "../tests/test_data/every-int.csv";
+    std::string path_to_int_file = std::string(TEST_DATA_DIRECTORY) + "every-int.csv";
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setFilePath(path_to_int_file);
     sourceConfig->setNumberOfBuffersToProduce(1);// file not looping
@@ -1283,7 +1283,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
 TEST_F(SourceTest, testCSVSourceFloatTypes) {
     // use custom schema and file, read once
     SchemaPtr float_schema = Schema::create()->addField("float64", FLOAT64)->addField("float32", FLOAT32);
-    std::string path_to_float_file = "../tests/test_data/every-float.csv";
+    std::string path_to_float_file = std::string(TEST_DATA_DIRECTORY) + "every-float.csv";
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setFilePath(path_to_float_file);
     sourceConfig->setNumberOfBuffersToProduce(1);// file is not going to loop
@@ -1320,7 +1320,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
                                 ->addField("falsey", BOOLEAN)
                                 ->addField("truthy", BOOLEAN);
 
-    std::string path_to_bool_file = "../tests/test_data/every-boolean.csv";
+    std::string path_to_bool_file = std::string(TEST_DATA_DIRECTORY) + "every-boolean.csv";
 
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 

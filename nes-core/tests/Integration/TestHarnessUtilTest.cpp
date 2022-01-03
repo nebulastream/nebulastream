@@ -529,7 +529,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setFilePath("../tests/test_data/testCSV.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(1);
@@ -583,7 +583,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setFilePath("../tests/test_data/testCSV.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(1);

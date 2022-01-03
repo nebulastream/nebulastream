@@ -48,7 +48,7 @@ then
         exit 0
       fi
     else
-      cd /nebulastream/build/tests
+      cd /nebulastream/build/nes-core/tests
       ln -s ../nesCoordinator .
       ln -s ../nesWorker .
       # If build was successful we execute the tests

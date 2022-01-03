@@ -93,7 +93,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/exdra.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("exdra");
@@ -312,7 +312,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -366,7 +366,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -423,7 +423,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
@@ -512,7 +512,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -582,7 +582,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -636,7 +636,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
@@ -696,7 +696,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -745,7 +745,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
@@ -794,7 +794,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -844,7 +844,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
@@ -908,7 +908,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(5);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -995,7 +995,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(5);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -1075,7 +1075,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     out.close();
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(6);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -1164,7 +1164,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     out.close();
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -1232,7 +1232,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -1350,7 +1350,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     out.close();
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
@@ -1806,7 +1806,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
     SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("car");
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("car");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);

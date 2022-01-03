@@ -109,14 +109,14 @@ class MillisecondIntervalTest : public testing::Test {
 
         srcConf = CSVSourceConfig::create();
         srcConf->setSourceType("DefaultSource");
-        srcConf->setFilePath("../tests/test_data/exdra.csv");
+        srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
         srcConf->setSourceFrequency(550);
         srcConf->setNumberOfTuplesToProducePerBuffer(1);
         srcConf->setNumberOfBuffersToProduce(3);
         srcConf->setPhysicalStreamName("physical_test");
         srcConf->setLogicalStreamName("testStream");
 
-        path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
+        path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
 
         NES_INFO("Setup MillisecondIntervalTest class.");
     }
