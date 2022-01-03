@@ -616,7 +616,7 @@ TEST_F(TopologyTest, testPathFindingWithMaintenance) {
 
     topology->print();
 
-    std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(12),topologyNodes.at(13),topologyNodes.at(14)};
+    std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(12), topologyNodes.at(13), topologyNodes.at(14)};
 
     std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
 
@@ -723,7 +723,7 @@ TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
 
     topology->print();
 
-    auto topNodes = {topologyNodes.at(4),topologyNodes.at(5)};
+    auto topNodes = {topologyNodes.at(4), topologyNodes.at(5)};
     auto commonAncestor = topology->findCommonAncestor(topNodes);
     EXPECT_TRUE(commonAncestor->getId() == 1);
     topology->findNodeWithId(1)->setMaintenanceFlag(true);
@@ -763,11 +763,9 @@ TEST_F(TopologyTest, testFindCommonChildWithMaintenance) {
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
 
-
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
-
 
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(4));
     topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
@@ -775,7 +773,7 @@ TEST_F(TopologyTest, testFindCommonChildWithMaintenance) {
 
     topology->print();
 
-    auto topNodes = {topologyNodes.at(1),topologyNodes.at(2)};
+    auto topNodes = {topologyNodes.at(1), topologyNodes.at(2)};
     auto commonChild = topology->findCommonChild(topNodes);
     EXPECT_TRUE(commonChild->getId() == 4);
     topology->findNodeWithId(4)->setMaintenanceFlag(true);
@@ -840,12 +838,12 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
     topology->findNodeWithId(5)->setMaintenanceFlag(true);
 
     auto childNodes = {topologyNodes.at(7), topologyNodes.at(8)};
-    auto parentNodes = {topologyNodes.at(1),topologyNodes.at(2)};
+    auto parentNodes = {topologyNodes.at(1), topologyNodes.at(2)};
     auto commonAncestor = topology->findCommonAncestor(childNodes);
     auto commonChild = topology->findCommonChild(parentNodes);
     EXPECT_TRUE(commonAncestor->getId() == 3);
     EXPECT_TRUE(commonAncestor->getId() == commonChild->getId());
 
-    auto path  = topology->findPathBetween(childNodes,parentNodes);
+    auto path = topology->findPathBetween(childNodes, parentNodes);
     EXPECT_TRUE(path.size() != 0);
 }
