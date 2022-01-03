@@ -12,20 +12,21 @@ KeyedThreadLocalSliceStore::KeyedThreadLocalSliceStore(NES::Experimental::HashMa
 };
 
 KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs, uint64_t sliceIndex) {
-    if (!preallocatedSlices.empty()) {
-        auto slice = std::move(preallocatedSlices.back());
-        preallocatedSlices.pop_back();
-        slice->reset(startTs, endTs, sliceIndex);
-        return slice;
-    } else {
+    //if (!preallocatedSlices.empty()) {
+    //    auto slice = std::move(preallocatedSlices.back());
+    //    preallocatedSlices.pop_back();
+    //    slice->reset(startTs, endTs, sliceIndex);
+    //    return slice;
+    //} else {
         return std::make_unique<KeyedSlice>(hashMapFactory, startTs, endTs, sliceIndex);
-    }
+    //}
 }
 
 void KeyedThreadLocalSliceStore::dropFirstSlice() {
     // if the first index reaches the last index, we create a dummy slice at the end.
     if (slices.contains(firstIndex)) {
-        preallocatedSlices.emplace_back(std::move(slices[firstIndex]));
+       // auto slice = std::move(slices[firstIndex]);
+       // preallocatedSlices.emplace_back(std::move(slice));
         slices.erase(firstIndex);
     }
     this->firstIndex++;
