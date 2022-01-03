@@ -16,7 +16,6 @@
 
 #ifndef NES_INCLUDE_MONITORING_METRIC_VALUES_GROUPED_METRIC_VALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRIC_VALUES_GROUPED_METRIC_VALUES_HPP_
-#include <optional>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
@@ -24,6 +23,7 @@
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
+#include <optional>
 
 namespace NES {
 class MonitoringPlan;

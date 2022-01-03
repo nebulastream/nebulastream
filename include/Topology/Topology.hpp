@@ -21,8 +21,8 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <vector>
 #include <optional>
+#include <vector>
 
 namespace NES {
 

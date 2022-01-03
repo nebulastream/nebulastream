@@ -16,12 +16,12 @@
 
 #include <Util/Logger.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
+#include <algorithm>
 #include <csignal>
 #include <cstdio>
 #include <fcntl.h>
 #include <thread>
 #include <vector>
-#include <algorithm>
 
 namespace NES::Util {
 
