@@ -62,9 +62,9 @@ class SinkTest : public testing::Test {
         test_schema =
             Schema::create()->addField("KEY", DataTypeFactory::createInt32())->addField("VALUE", DataTypeFactory::createUInt32());
         write_result = false;
-        path_to_csv_file = "../tests/test_data/sink.csv";
-        path_to_bin_file = "../tests/test_data/sink.bin";
-        path_to_osfile_file = "../tests/test_data/testOs.txt";
+        path_to_csv_file = std::string(TEST_DATA_DIRECTORY) + "sink.csv";
+        path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "sink.bin";
+        path_to_osfile_file = std::string(TEST_DATA_DIRECTORY) + "testOs.txt";
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
     }

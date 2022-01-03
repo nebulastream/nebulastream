@@ -139,7 +139,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3133, streamConf);
 
-    std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
+    std::string path_to_file = std::string(TEST_DATA_DIRECTORY) + "adaptive-test-mock.csv";
 
     SchemaPtr schema = Schema::create()->addField("temperature", UINT32);
 
@@ -171,7 +171,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3133, streamConf);
 
-    std::string path_to_file = "../tests/test_data/adaptive-test-mock.csv";
+    std::string path_to_file = std::string(TEST_DATA_DIRECTORY) + "adaptive-test-mock.csv";
 
     SchemaPtr schema = Schema::create()->addField("temperature", UINT32);
 

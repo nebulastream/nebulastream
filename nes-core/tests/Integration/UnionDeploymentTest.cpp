@@ -763,7 +763,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_ruby");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("ruby");
@@ -931,7 +931,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_ruby");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("ruby");
@@ -1068,7 +1068,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     wrk1->registerLogicalStream("ruby", rareStonesSchemaFileName);
     wrk2->registerLogicalStream("diamond", rareStonesSchemaFileName);
 
-    sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setPhysicalStreamName("physical_ruby");
     sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setLogicalStreamName("ruby");

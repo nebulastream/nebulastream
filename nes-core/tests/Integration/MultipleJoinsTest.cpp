@@ -125,7 +125,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     wrk1->registerLogicalStream("window3", testSchemaFileName3);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -135,7 +135,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
 
     SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
 
-    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf1->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -145,7 +145,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
 
     SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
 
-    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf2->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -304,7 +304,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     wrk3->registerLogicalStream("window3", testSchemaFileName3);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -313,7 +313,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -321,7 +321,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
     SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -481,7 +481,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     wrk1->registerLogicalStream("window4", testSchemaFileName4);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -489,7 +489,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -497,7 +497,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
     SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -505,7 +505,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
     SourceConfigPtr srcConf3 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf3->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf3->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf3->as<CSVSourceConfig>()->setLogicalStreamName("window4");
     srcConf3->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf3->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -668,7 +668,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     wrk1->registerLogicalStream("window4", testSchemaFileName4);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -676,7 +676,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -684,7 +684,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
     SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -692,7 +692,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
     SourceConfigPtr srcConf3 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf3->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf3->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf3->as<CSVSourceConfig>()->setLogicalStreamName("window4");
     srcConf3->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf3->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -844,7 +844,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     wrk1->registerLogicalStream("window3", testSchemaFileName3);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -852,7 +852,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -860,7 +860,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
     SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1027,7 +1027,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     wrk3->registerLogicalStream("window3", testSchemaFileName3);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1035,7 +1035,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1043,7 +1043,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
     SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1212,7 +1212,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     wrk1->registerLogicalStream("window4", testSchemaFileName4);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1220,7 +1220,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1228,7 +1228,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
     SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1236,7 +1236,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     PhysicalStreamConfigPtr windowStream3 = PhysicalStreamConfig::create(srcConf2);
 
     SourceConfigPtr srcConf3 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf3->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf3->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf3->as<CSVSourceConfig>()->setLogicalStreamName("window4");
     srcConf3->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf3->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
@@ -1420,7 +1420,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     wrk1->registerLogicalStream("window4", testSchemaFileName4);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1429,7 +1429,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
 
     SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
 
-    srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
+    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1438,7 +1438,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
 
     SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
 
-    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf2->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -1448,7 +1448,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     SourceConfigPtr srcConf3 = SourceConfigFactory::createSourceConfig("CSVSource");
 
     srcConf3->as<CSVSourceConfig>()->setLogicalStreamName("window4");
-    srcConf3->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window4.csv");
+    srcConf3->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf3->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf3->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf3->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");

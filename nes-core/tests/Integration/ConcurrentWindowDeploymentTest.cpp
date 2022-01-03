@@ -93,7 +93,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    sourceConfig->setFilePath("../tests/test_data/exdra.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setPhysicalStreamName("test_stream");
     sourceConfig->setLogicalStreamName("exdra");
@@ -333,7 +333,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -424,7 +424,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -517,7 +517,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
@@ -634,7 +634,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -737,7 +737,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -835,7 +835,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
@@ -942,7 +942,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime)
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -1034,7 +1034,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
@@ -1141,7 +1141,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventT
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -1248,7 +1248,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
@@ -1342,7 +1342,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(5);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -1431,7 +1431,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(5);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -1513,7 +1513,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(6);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -1604,7 +1604,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
     wrk1->registerLogicalStream("windowStream", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -1738,7 +1738,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -1886,7 +1886,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
@@ -2118,7 +2118,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationW
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setFilePath("../tests/test_data/window.csv");
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->setNumberOfBuffersToProduce(1);

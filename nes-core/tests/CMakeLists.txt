@@ -30,8 +30,8 @@ set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} cpprestsdk::cpprest)
 
 # Copy Test Data --------------------------------------------------------------
 file(COPY test_data DESTINATION .)
-add_definitions(-DTEST_DATA_DIRECTORY="${CMAKE_BINARY_DIR}/tests/test_data")
-message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}")
+add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_data/")
+message(STATUS "Test Data Directory: ${CMAKE_CURRENT_BINARY_DIR}/test_data")
 
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
