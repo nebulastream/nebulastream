@@ -17,6 +17,8 @@
 #set -e
 
 [[ ! -f /nebulastream/CMakeLists.txt ]] && echo "Please mount source code at /nebulastream point. Run [docker run -v <path-to-nes>:/nebulastream -d <nes-image>]" && exit 1
+if [ -z "${RequireBuild}" ]; then echo RequireBuild="true"; fi
+if [ -z "${RequireTest}" ]; then echo RequireTest="true"; fi
 echo "Required Build Failed=${RequireBuild}"
 echo "Required Test Failed=${RequireTest}"
 if [ $# -eq 0 ]
@@ -27,10 +29,10 @@ then
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
     cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
     make -j4
-   	# Check if build was successful
+    # Check if build was successful
     errorCode=$?
-   	if [ $errorCode -ne 0 ];
-   	then
+    if [ $errorCode -ne 0 ];
+    then
       rm -rf /nebulastream/build
       if [ "${RequireBuild}" == "true" ];
       then
@@ -45,7 +47,9 @@ then
       ln -s ../nesCoordinator .
       ln -s ../nesWorker .
       # If build was successful we execute the tests
-      # timeout after 90 minutes
+      # timeout after 70 minutes
+      # We don't want to rely on the github-action timeout, because
+      # this would fail the job in any case.
       timeout 70m make test_debug
       errorCode=$?
       if [ $errorCode -ne 0 ];
