@@ -25,8 +25,8 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
-#include <utility>
 #include <optional>
+#include <utility>
 
 namespace NES {
 
