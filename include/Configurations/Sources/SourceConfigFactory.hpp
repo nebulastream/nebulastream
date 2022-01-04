@@ -61,7 +61,7 @@ class SourceConfigFactory {
      * @param sourceType source type of source config object
      * @return source config object of type sourceType
      */
-    static SourceConfigPtr createSourceConfig(std::string _sourceType);
+    static SourceConfigPtr createSourceConfig(std::string sourceType);
 
     /**
      * @brief create default source config

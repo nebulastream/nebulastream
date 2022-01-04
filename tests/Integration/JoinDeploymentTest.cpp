@@ -65,10 +65,15 @@ class JoinDeploymentTest : public testing::Test {
  */
 //TODO: this test will be enabled once we have the renaming function using as
 //TODO: prevent self join
-TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
+TEST_F(JoinDeploymentTest, testSelfJoinTumblingWindow) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig(Configurations::CSV_SOURCE_CONFIG);
+    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
+    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
