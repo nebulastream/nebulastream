@@ -161,8 +161,8 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     buffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
-    NES_TRACE("CSVSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << currentPositionInFile);
-    NES_TRACE("CSVSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
+    NES_DEBUG("CSVSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << currentPositionInFile);
+    NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }

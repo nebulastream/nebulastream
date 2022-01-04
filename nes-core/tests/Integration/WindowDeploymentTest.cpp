@@ -247,6 +247,10 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = "ysb.out";
+    NES::AbstractPhysicalStreamConfigPtr conf =
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "YSB_phy", "ysb", func, 10, 100, "frequency");
+
+    wrk1->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"ysb\").window(TumblingWindow::of(EventTime(Attribute(\"current_ms\")), "

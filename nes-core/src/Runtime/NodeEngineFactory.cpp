@@ -87,10 +87,17 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         NES_WARNING("Numa flags " << int(enableNumaAwareness));
         std::vector<uint64_t> queuePinListMapping = Util::splitWithStringDelimiter<uint64_t>(queuePinList, ",");
         auto numberOfQueues = Util::numberOfUniqueValues(queuePinListMapping);
-        for (auto i = 0u; i < numberOfQueues; ++i) {
+        if(numberOfQueues == 0) {
             bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
                                                                      numberOfBuffersInGlobalBufferManager,
                                                                      hardwareManager->getGlobalAllocator()));
+        }
+        else {
+            for (auto i = 0u; i < numberOfQueues; ++i) {
+                bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
+                                                                         numberOfBuffersInGlobalBufferManager,
+                                                                         hardwareManager->getGlobalAllocator()));
+            }
         }
 #else
         NES_WARNING("Numa flags " << int(enableNumaAwareness) << " are ignored");

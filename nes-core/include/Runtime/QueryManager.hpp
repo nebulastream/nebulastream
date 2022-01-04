@@ -50,14 +50,14 @@
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
 
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || NES_USE_ONE_QUEUE_PER_NUMA_NODE
-#include <folly/MPMCQueue.h>
-#include <folly/concurrency/UnboundedQueue.h>
-#endif
-
 #undef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 #undef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #define NES_USE_ONE_QUEUE_PER_QUERY
+
+#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
+#include <folly/MPMCQueue.h>
+#include <folly/concurrency/UnboundedQueue.h>
+#endif
 
 namespace NES {
 namespace Runtime {
