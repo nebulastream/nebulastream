@@ -33,21 +33,21 @@ option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
+option(NES_ENABLES_TESTS "Compute test coverage" ON)
 
 if (NOT CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
     message(FATAL_ERROR "Disabling CMAKE_USE_LATCH_FREE_BUFFER_MANAGER is not supported for now, please enable it")
-endif()
+endif ()
 
 if (NOT CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     message(FATAL_ERROR "Disabling CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE is not supported for now, please enable it")
-endif()
+endif ()
 
 # for macOS or iOS, watchOS, tvOS (since 3.10.3), and other UNIXes
 # The system architecture is normally set in CMAKE_HOST_PROCESSOR,
 # which is set by the PROJECT command. However, we cannot call PROJECT
 # at this point because we want to use a custom toolchain file.
 execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
-
 
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
@@ -130,19 +130,19 @@ include(cmake/Sanitizers.cmake)
 
 if (ENABLE_IWYU)
     find_program(iwyu_path NAMES include-what-you-use iwyu)
-    if(iwyu_path)
-      message(STATUS "IWYU enabled and found! Suggestions will be printed to stderr.")
-    else()
-      message(WARNING "IWYU is enabled but not found! You will not get any suggestions")
-    endif()
-endif()
+    if (iwyu_path)
+        message(STATUS "IWYU enabled and found! Suggestions will be printed to stderr.")
+    else ()
+        message(WARNING "IWYU is enabled but not found! You will not get any suggestions")
+    endif ()
+endif ()
 
 if (ENABLE_CLANG_TIDY)
     message(STATUS "clang tidy enabled")
     set(CMAKE_CXX_CLANG_TIDY clang-tidy)
-else()
+else ()
     message(STATUS "clang tidy not enabled")
-endif()
+endif ()
 
 if (NES_BUILD_BENCHMARKS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNES_BENCHMARKS_FLAG_MODE=1")
@@ -164,7 +164,7 @@ if (NES_BUILD_NATIVE)
         add_compile_definitions(HAS_AVX)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
     endif ()
-else()
+else ()
     # Compiler should produce specific code for system architecture
     include(CheckCXXCompilerFlag)
     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
@@ -175,11 +175,11 @@ else()
             message(STATUS "CMAKE detects AVX2 support")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
         endif ()
-    else()
+    else ()
         if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86-64")
             message(STATUS "CMAKE detects generic x86-64 arch support")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
-        elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+        elseif (APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
             message(STATUS "CMAKE detects APPLE ARM64 support")
             # Clang has the exact same macros for A14 as M1.
             # Current Clang master has -mcpu=apple-m1 but
@@ -187,13 +187,13 @@ else()
             # offer so many different configuration parameters
             # that compilers prefer -mcpu=XXX instead.
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-a14")
-        elseif(NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+        elseif (NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
             message(STATUS "CMAKE detects generic ARM64 support")
             # Arm themselves suggest using -mcpu=native, or in general,
             # to use -mcpu=CPU_TYPE. For more info, here:
             # https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/compiler-flags-across-architectures-march-mtune-and-mcpu
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=native")
-        endif()
+        endif ()
     endif ()
 endif ()
 
@@ -216,23 +216,23 @@ if (CMAKE_ENABLE_JEMALLOC)
     set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
 endif ()
 # lcryto is required for asio to communicate
-if(APPLE)
+if (APPLE)
     find_library(SSL_LIB libssl.a REQUIRED)
     find_library(CRYPTO_LIB libcrypto.a REQUIRED)
     set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
-endif()
-if(UNIX AND NOT APPLE)
+endif ()
+if (UNIX AND NOT APPLE)
     find_package(OpenSSL REQUIRED)
     set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
-endif()
+endif ()
 
 # Numa awareness
 find_package(NUMA)
-if(NUMA_FOUND)
+if (NUMA_FOUND)
     set(LIBRARIES ${LIBRARIES} -lnuma)
     add_compile_definitions(NES_ENABLE_NUMA_SUPPORT)
     message(STATUS "Using Numa")
-endif()
+endif ()
 
 # GRPC and protobuf
 set(gRPC_RELEASE "v1.28.1")
@@ -385,11 +385,13 @@ if (NES_USE_ADAPTIVE)
     message("Adaptive sampling dependencies OK")
 endif (NES_USE_ADAPTIVE)
 
-find_package(GTest CONFIG REQUIRED)
-if (NOT ${GTest_FOUND})
-    message(FATAL_ERROR "Unable to find GTest")
+if (NOT NES_ENABLES_TESTS)
+    find_package(GTest CONFIG REQUIRED)
+    if (NOT ${GTest_FOUND})
+        message(FATAL_ERROR "Unable to find GTest")
+    endif ()
+    set(LIBRARIES ${LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 endif ()
-set(LIBRARIES ${LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 
 # PAPI
 if (CMAKE_USE_PAPI_PROFILER)
@@ -424,7 +426,7 @@ if (CMAKE_USE_PAPI_PROFILER)
     set(LIBRARIES ${LIBRARIES} ${PAPI_LIBRARIES})
     add_compile_definitions(ENABLE_PAPI_PROFILER)
     include_directories(${PAPI_INCLUDE_DIRS})
-endif()
+endif ()
 
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
@@ -471,9 +473,9 @@ add_definitions(-D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"')
 add_definitions(-D 'PATH_TO_NES_SOURCE_CODE=\"${PATH_TO_NES_SOURCE_CODE}\"')
 add_definitions(-D 'PATH_TO_DEB_SOURCE_CODE=\"${PATH_TO_DEB_SOURCE_CODE}\"')
 add_definitions(-D 'PATH_TO_BINARY_DIR=\"${PATH_TO_BINARY_DIR}\"')
-if(APPLE)
+if (APPLE)
     add_definitions(-D 'NES_OSX_SYSROOT=\"${CMAKE_OSX_SYSROOT}\"')
-endif()
+endif ()
 
 add_definitions(-D 'QUERY_COMPILATION_CC=\"${QUERY_COMPILATION_CC}\"')
 add_definitions(-D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"')
@@ -484,9 +486,9 @@ add_definitions(-D '__STDC_LIMIT_MACROS')
 
 
 # $ORIGIN is to read the shared object from the installation directory
-if(ORIGIN)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
-endif()
+if (ORIGIN)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
+endif ()
 #https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
@@ -512,9 +514,9 @@ add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES}
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
-if(iwyu_path)
+if (iwyu_path)
     set_property(TARGET nes PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
-endif()
+endif ()
 
 
 if (GRPC_LIBRARIES)
@@ -539,9 +541,14 @@ if (GRPC_LIBRARIES)
     target_link_libraries(nesWorker PRIVATE ${GRPC_LIBRARIES})
 endif ()
 
-# Add tests with command
-enable_testing()
-add_subdirectory(tests)
+if (NOT NES_ENABLES_TESTS)
+    # Add tests with command
+    enable_testing()
+    add_subdirectory(tests)
+    message(STATUS "Tests are enabled")
+else ()
+    message(STATUS "Tests are disabled")
+endif ()
 
 #Add benchmarks with command
 add_subdirectory(benchmark)
