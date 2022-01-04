@@ -327,7 +327,7 @@ target_link_libraries(and-operator-test nes ${GTEST_LIBRARIES})
 add_test(NAME and-operator-test COMMAND and-operator-test)
 
 ### AndOperatorTest ###
-add_executable(seq-operator-test "Integration/SeqOperatorTest.cpp")
+add_executable(seq-operator-test "Integration/SEQOperatorTest.cpp")
 target_link_libraries(seq-operator-test nes ${GTEST_LIBRARIES})
 add_test(NAME seq-operator-test COMMAND seq-operator-test)
 
