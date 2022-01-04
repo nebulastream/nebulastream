@@ -21,6 +21,7 @@
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <grpcpp/grpcpp.h>
 #include <string>
+#include <optional>
 
 using grpc::Channel;
 using grpc::ClientContext;
