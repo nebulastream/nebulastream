@@ -326,6 +326,11 @@ add_executable(and-operator-test "Integration/AndOperatorTest.cpp")
 target_link_libraries(and-operator-test nes ${GTEST_LIBRARIES})
 add_test(NAME and-operator-test COMMAND and-operator-test)
 
+### AndOperatorTest ###
+add_executable(seq-operator-test "Integration/SeqOperatorTest.cpp")
+target_link_libraries(seq-operator-test nes ${GTEST_LIBRARIES})
+add_test(NAME seq-operator-test COMMAND seq-operator-test)
+
 ### Sensor Bus Tests ###
 #add_executable(sensor-bus-tests "UnitTests/SensorBusTest.cpp")
 #target_link_libraries(sensor-bus-tests nes ${GTEST_LIBRARIES})
