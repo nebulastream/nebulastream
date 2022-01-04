@@ -940,7 +940,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQuery) {
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
     wrkConf->setWorkerPinList("1,2");
-    wrkConf->setQueuePinList("1,2");
+    wrkConf->setQueuePinList("0,1");
     wrkConf->setNumWorkerThreads(2);
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -955,20 +955,32 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQuery) {
     std::ofstream out(testSchemaFileName);
     out << stream;
     out.close();
-    crd->getNesWorker()->registerLogicalStream("stream", testSchemaFileName);
+    crd->getNesWorker()->registerLogicalStream("stream1", testSchemaFileName);
+    crd->getNesWorker()->registerLogicalStream("stream2", testSchemaFileName);
 
     SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
-
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
+    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream1");
     srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
     //register physical stream
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
     crd->getNesWorker()->registerPhysicalStream(streamConf);
+
+    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("CSVSource");
+    srcConf2->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
+    srcConf2->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
+    srcConf2->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
+    srcConf2->as<CSVSourceConfig>()->setSourceFrequency(0);
+    srcConf2->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("stream2");
+    srcConf2->as<CSVSourceConfig>()->setSkipHeader(true);
+    //register physical stream
+    PhysicalStreamConfigPtr streamConf2 = PhysicalStreamConfig::create(srcConf2);
+    crd->getNesWorker()->registerPhysicalStream(streamConf2);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -977,11 +989,12 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQuery) {
     std::string outputFilePath2 = "test2.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query1 = R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath1
+    string query1 = R"(Query::from("stream1").sink(FileSinkDescriptor::create(")" + outputFilePath1
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 =
         queryService->validateAndQueueAddRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    string query2 = R"(Query::from("stream").sink(FileSinkDescriptor::create(")" + outputFilePath2
+
+    string query2 = R"(Query::from("stream2").sink(FileSinkDescriptor::create(")" + outputFilePath2
         + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 =
         queryService->validateAndQueueAddRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
@@ -990,27 +1003,8 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQuery) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
-    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n"
-                             "1,1\n";
+    string expectedContent = "stream$value:INTEGER,stream$id:INTEGER,stream$timestamp:INTEGER\n"
+                             "1,12,1001\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath1));
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));

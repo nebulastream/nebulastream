@@ -103,7 +103,8 @@ createLambdaSource(const SchemaPtr& schema,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
                    GatheringMode::Value gatheringMode,
-                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                   uint64_t sourceAffinity) {
     return std::make_shared<LambdaSource>(schema,
                                           bufferManager,
                                           queryManager,
@@ -113,7 +114,8 @@ createLambdaSource(const SchemaPtr& schema,
                                           operatorId,
                                           numSourceLocalBuffers,
                                           gatheringMode,
-                                          successors);
+                                          successors,
+                                          sourceAffinity);
 }
 
 DataSourcePtr createMemorySource(const SchemaPtr& schema,

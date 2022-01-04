@@ -46,7 +46,8 @@ class LambdaSource : public GeneratorSource {
         OperatorId operatorId,
         size_t numSourceLocalBuffers,
         GatheringMode::Value gatheringMode,
-        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+        uint64_t sourceAffinity);
 
     SourceType getType() const override;
 
