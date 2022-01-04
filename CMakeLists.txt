@@ -541,7 +541,7 @@ if (GRPC_LIBRARIES)
     target_link_libraries(nesWorker PRIVATE ${GRPC_LIBRARIES})
 endif ()
 
-if (NOT NES_ENABLES_TESTS)
+if (NES_ENABLES_TESTS)
     # Add tests with command
     enable_testing()
     add_subdirectory(tests)

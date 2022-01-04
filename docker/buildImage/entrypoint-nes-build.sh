@@ -20,12 +20,12 @@
 
 # RequireBuild indicates if the build should succeed if we fail during make.
 # This is important to check the log to identify build errors on new platforms.
-if [ -z "${RequireBuild}" ]; then echo RequireBuild="true"; fi
+if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${RequireBuild}; fi
 # RequireTest indicates if the build should succeed if we fail during tests.
 # This is important to check the log to identify test errors on new platforms.
-if [ -z "${RequireTest}" ]; then echo RequireTest="true"; fi
-echo "Required Build Failed=${RequireBuild}"
-echo "Required Test Failed=${RequireTest}"
+if [ -z "${RequireTest}" ]; then RequireTest="true"; else RequireTest=${RequireTest}; fi
+echo "Required Build Failed=$RequireBuild"
+echo "Required Test Failed=$RequireTest"
 if [ $# -eq 0 ]
 then
     # Build NES
@@ -39,7 +39,7 @@ then
     if [ $errorCode -ne 0 ];
     then
       rm -rf /nebulastream/build
-      if [ "${RequireBuild}" == "true" ];
+      if [ "$RequireBuild" == "true" ];
       then
         echo "Required Build Failed"     
         exit $errorCode
@@ -60,7 +60,7 @@ then
       if [ $errorCode -ne 0 ];
       then
         rm -rf /nebulastream/build 
-        if [ "${RequireTest}" == "true" ];
+        if [ "$RequireTest" == "true" ];
         then
           echo "Required Tests Failed"          
           exit $errorCode
