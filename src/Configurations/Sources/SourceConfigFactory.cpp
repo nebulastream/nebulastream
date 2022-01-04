@@ -63,9 +63,9 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::stri
     }
 }
 
-SourceConfigPtr SourceConfigFactory::createSourceConfig(std::string _sourceType) {
+SourceConfigPtr SourceConfigFactory::createSourceConfig(std::string sourceType) {
 
-    switch (stringToConfigSourceType[_sourceType]) {
+    switch (stringToConfigSourceType[sourceType]) {
         case CSVSource: return CSVSourceConfig::create();
         case MQTTSource: return MQTTSourceConfig::create();
         case KafkaSource: return KafkaSourceConfig::create();
