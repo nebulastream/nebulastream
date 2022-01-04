@@ -52,7 +52,7 @@ void MaintenanceController::handlePost(const std::vector<utility::string_t>& pat
                   web::json::value result{};
 
                       result["Test"] = web::json::value::string("This is a test");
-                      result["Node Id"]      =web::json::value::number(id);
+                      result["Node Id"] = web::json::value::number(id);
                       result["Strategy"] = web::json::value::number(strategy);
                       successMessageImpl(message, result);
                   return;
