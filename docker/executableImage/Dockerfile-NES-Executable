@@ -6,7 +6,7 @@ RUN mkdir -p /nebulastream/build && \
     cd /nebulastream/build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
     make version && make -j4 && cpack && mv *.deb /nes.deb && \
-    rm -rf /nebulastream/build/nes-dependencies-v7-x64-linux-nes.7z
+    rm -rf /nebulastream/build/nes-dependencies-v11-x64-linux-nes.7z
 
 FROM nebulastream/nes-build-image:latest AS execimg
 
