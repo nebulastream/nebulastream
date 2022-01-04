@@ -16,10 +16,10 @@
 
 #ifndef NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_
 #define NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_
+#include <optional>
 
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
-#include <optional>
 #include <unordered_map>
 
 namespace NES {
