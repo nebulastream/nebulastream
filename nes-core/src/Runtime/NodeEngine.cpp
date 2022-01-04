@@ -493,19 +493,19 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
     std::cerr << "Exception: " << exception->what() << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
-bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t globalSinkId) {
-    //TODO: add error handling/return false in some cases
+bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t sinkOperatorId) {
+    //TODO: #2412 add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Received request to buffer Data on network Sink");
     std::unique_lock lock(engineMutex);
     auto qep = deployedQEPs[querySubPlanId];
     auto sinks = qep->getSinks();
     //make sure that query sub plan has network sink with specified id
-    auto it = std::find_if(sinks.begin(), sinks.end(),[globalSinkId](const DataSinkPtr& dataSink){
-                    return dataSink->getGlobalOperatorId() == globalSinkId && dataSink->getSinkMediumType() == NETWORK_SINK;
+    auto it = std::find_if(sinks.begin(), sinks.end(),[sinkOperatorId](const DataSinkPtr& dataSink){
+                    return dataSink->getOperatorId() == sinkOperatorId && dataSink->getSinkMediumType() == NETWORK_SINK;
             });
     if(it != sinks.end()){
         auto networkSink = *it;
-        //added in #2395
+        //below code will be added in #2395
         //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,BufferData,networkSink);
         //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
         return true;
@@ -514,21 +514,21 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t globalSinkId
     return false;
 }
 
-bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort,
-                                    QuerySubPlanId querySubPlanId, uint64_t globalSinkId) {
-    //TODO: add error handling/return false in some cases
+bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string &newHostname, uint32_t newPort,
+                                   QuerySubPlanId querySubPlanId, uint64_t sinkOperatorId) {
+    //TODO: #2412 add error handling/return false in some cases
     NES_ERROR("NodeEngine: Received request to update Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
     auto qep = deployedQEPs[querySubPlanId];
     auto networkSinks = qep->getSinks();
     //make sure that query sub plan has network sink with specified id
-    auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[globalSinkId](const DataSinkPtr& dataSink){
-        return dataSink->getGlobalOperatorId() == globalSinkId && dataSink->getSinkMediumType() == NETWORK_SINK;
+    auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[sinkOperatorId](const DataSinkPtr& dataSink){
+        return dataSink->getOperatorId() == sinkOperatorId && dataSink->getSinkMediumType() == NETWORK_SINK;
     });
     if(it != networkSinks.end()){
         auto networkSink = *it;
-        //added in #2402
+        //below code will be added in #2402
         //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,networkSink, newNodeLocation);
         //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
         return true;
