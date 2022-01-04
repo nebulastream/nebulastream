@@ -357,11 +357,12 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
 
     return false;
 }
-bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t globalSinkId) {
+
+bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t sinkOperatorId) {
     NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);
     BufferRequest request;
     request.set_querysubplanid(querySubPlanId);
-    request.set_networksinkid(globalSinkId);
+    request.set_networksinkid(sinkOperatorId);
     BufferReply reply;
     ClientContext context;
 
@@ -379,16 +380,16 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
     }
     return false;
 }
-bool WorkerRPCClient::updateNetworkSink(const std::string& address,
-                                         uint64_t newNodeId, const std::string& newHostname,
-                                         uint32_t newPort, uint64_t querySubPlanId, uint64_t globalSinkId)
-{
+
+
+bool WorkerRPCClient::updateNetworkSink(const std::string &address, uint64_t newNodeId, const std::string &newHostname,
+                                        uint32_t newPort, uint64_t querySubPlanId, uint64_t sinkOperatorId) {
     UpdateNetworkSinkRequest request;
     request.set_newnodeid(newNodeId);
     request.set_newhostname(newHostname);
     request.set_newport(newPort);
     request.set_querysubplanid(querySubPlanId);
-    request.set_networksinkid(globalSinkId);
+    request.set_networksinkid(sinkOperatorId);
 
     UpdateNetworkSinkReply reply;
     ClientContext context;
