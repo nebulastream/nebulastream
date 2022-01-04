@@ -43,7 +43,10 @@ class RunQueryRequest : public Request {
 
     /// Virtual destructor for inheritance
     virtual ~RunQueryRequest() = default;
-
+    RunQueryRequest(const RunQueryRequest&) = default;
+    RunQueryRequest(RunQueryRequest&&) = default;
+    RunQueryRequest& operator=(const RunQueryRequest&) = default;
+    RunQueryRequest& operator=(RunQueryRequest&&) = default;
     /**
      * @brief Get the query plan to run
      * @return pointer to the query plan to run
