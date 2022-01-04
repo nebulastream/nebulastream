@@ -159,7 +159,7 @@ class And {
      * @param subQueryRhs
      * @param originalQuery
      */
-    And(Query& subQueryRhs, Query& originalQuery);
+    And(const Query& subQueryRhs, Query& originalQuery);
 
     /**
      * @brief: calls internal the original andWith function with all the gathered parameters.
@@ -182,7 +182,7 @@ class Seq {
      * @param subQueryRhs
      * @param originalQuery
      */
-    Seq(Query& subQueryRhs, Query& originalQuery);
+    Seq(const Query& subQueryRhs, Query& originalQuery);
 
     /**
      * @brief: calls internal the original seqWith function with all the gathered parameters.
@@ -243,21 +243,21 @@ class Query {
      * @param subQueryRhs
      * @return object where the window() function is defined and can be called by user
      */
-    CEPOperatorBuilder::And andWith(Query& subQueryRhs);
+    CEPOperatorBuilder::And andWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
      * @param subQueryRhs
      * @return object where where() function is defined and can be called by user
      */
-    CEPOperatorBuilder::Seq seqWith(Query& subQueryRhs);
+    CEPOperatorBuilder::Seq seqWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class Or.
      * @param subQueryRhs
      * @return the query (pushed to union with)
      */
-    Query& orWith(Query& subQuery);
+    Query& orWith(const Query& subQuery);
 
     /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.

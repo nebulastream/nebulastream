@@ -49,9 +49,9 @@ ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem) { return 
 
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
 
-CEPOperatorBuilder::And Query::andWith(Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
+CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
-CEPOperatorBuilder::Seq Query::seqWith(Query& subQueryRhs) { return CEPOperatorBuilder::Seq(subQueryRhs, *this); }
+CEPOperatorBuilder::Seq Query::seqWith(const Query& subQueryRhs) { return CEPOperatorBuilder::Seq(subQueryRhs, *this); }
 
 namespace JoinOperatorBuilder {
 
@@ -81,14 +81,14 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
 
 namespace CEPOperatorBuilder {
 
-And::And(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
+And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the streams in order to reuse the join-logic later
     std::string cepLeftKey = keyAssignmentLeft();
     std::string cepRightKey = keyAssignmentRight();
     //next: map the attributes with value 1 to the left and right stream
     originalQuery.map(Attribute(cepLeftKey) = 1);
-    subQueryRhs.map(Attribute(cepRightKey) = 1);
+    this->subQueryRhs.map(Attribute(cepRightKey) = 1);
     //last, define the artificial attributes as key attributes
     NES_DEBUG("Query: add name cepLeftKey " << cepLeftKey);
     NES_DEBUG("Query: add name cepRightKey " << cepRightKey);
@@ -100,14 +100,14 @@ Query& And::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original andWith() function
 }
 
-Seq::Seq(Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {
+Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the streams in order to reuse the join-logic later
     std::string cepLeftKey = keyAssignmentLeft();
     std::string cepRightKey = keyAssignmentRight();
     //next: map the attributes with value 1 to the left and right stream
     originalQuery.map(Attribute(cepLeftKey) = 1);
-    subQueryRhs.map(Attribute(cepRightKey) = 1);
+    this->subQueryRhs.map(Attribute(cepRightKey) = 1);
     //last, define the artificial attributes as key attributes
     onLeftKey = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode();
     onRightKey = ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
@@ -303,19 +303,20 @@ Query& Query::seqWith(const Query& subQueryRhs,
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
 
-Query& Query::orWith(Query& subQueryRhs) {
+Query& Query::orWith(const Query& subQueryRhs) {
     NES_DEBUG("Query: add map operator that add the original stream name to the left and right side streams of the OR ");
     //get source names
     auto streamNameLeft = this->getQueryPlan()->getSourceConsumed();
-    auto streamNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
+    auto subQuery = const_cast<Query&>(subQueryRhs);
+    auto streamNameRight = subQuery.getQueryPlan()->getSourceConsumed();
     auto maxLength = std::max(streamNameRight.length(), streamNameLeft.length());
     streamNameLeft.resize(maxLength, '_');
     streamNameRight.resize(maxLength, '_');
     //map the attributes with value streamNameLeft and streamNameRight to the left and right stream
     this->map(Attribute("StreamName") = streamNameLeft);
-    subQueryRhs.map(Attribute("StreamName") = streamNameRight);
+    subQuery.map(Attribute("StreamName") = streamNameRight);
     NES_DEBUG("Query: finally we translate the OR into a union OP ");
-    return Query::unionWith(subQueryRhs);
+    return Query::unionWith(subQuery);
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
