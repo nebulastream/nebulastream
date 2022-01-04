@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <optional>
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
@@ -25,7 +26,7 @@
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
-#include <optional>
+
 #include <utility>
 
 namespace NES {
