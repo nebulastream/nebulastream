@@ -42,7 +42,7 @@ class RunQueryRequest : public Request {
     static RunQueryRequestPtr create(QueryPlanPtr queryPlan, std::string queryPlacementStrategy);
 
     /// Virtual destructor for inheritance
-//    ~RunQueryRequest() override = default;
+    ~RunQueryRequest() = default;
 
     /**
      * @brief Get the query plan to run
