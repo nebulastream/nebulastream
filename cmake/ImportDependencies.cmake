@@ -95,8 +95,6 @@ else (NES_USE_PREBUILD_DEPENDENCIES)
 
     IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
         message(STATUS "NES dependencies do not exist!")
-        #download_file(https://github.com/nebulastream/nebulastream-dependencies/releases/download/v7/nes-dependencies-v7-x64-linux-nes.7z
-        #       ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z)
         download_file(https://github.com/nebulastream/dependencies/releases/download/${VCPKG_BINARY_VERSION}/${COMPRESSED_BINARY_NAME}.7z
                 ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z)
         file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
