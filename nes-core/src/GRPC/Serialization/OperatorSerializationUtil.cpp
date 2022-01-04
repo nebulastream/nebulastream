@@ -1359,7 +1359,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
         serializedSinkDescriptor.set_waittime(s.count());
         serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
         //set global Id
-        serializedSinkDescriptor.set_globaloperatorid(networkSinkDescriptor->getGlobalOperatorId());
+        serializedSinkDescriptor.set_operatorid(networkSinkDescriptor->getOperatorId());
         //pack to output
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
@@ -1461,7 +1461,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
                                                       nesPartition,
                                                       waitTime,
                                                       serializedSinkDescriptor.retrytimes(),
-                                                      serializedSinkDescriptor.globaloperatorid());
+                                                      serializedSinkDescriptor.operatorid());
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
         // de-serialize file sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();

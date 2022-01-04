@@ -41,7 +41,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr
-    create(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::milliseconds waitTime, uint32_t retryTimes, OperatorId globalOperatorId);
+    create(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::milliseconds waitTime, uint32_t retryTimes, OperatorId operatorId);
 
     /**
      * @brief returns the string representation of the network sink
@@ -84,20 +84,20 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @brief getter for global network sink id
      * @return the global operator id
      */
-    OperatorId getGlobalOperatorId();
+    OperatorId getOperatorId();
 
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
                                    NesPartition nesPartition,
                                    std::chrono::milliseconds waitTime,
                                    uint32_t retryTimes,
-                                   OperatorId globalOperatorId = Util::getNextOperatorId());
+                                   OperatorId operatorId = Util::getNextOperatorId());
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
-    OperatorId globalOperatorId;
+    OperatorId operatorId;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
