@@ -31,7 +31,7 @@ class Request : public std::enable_shared_from_this<Request> {
   public:
     explicit Request(QueryId queryId);
 
-//    virtual ~Request() = default;
+    virtual ~Request() = default;
 
     /**
      * @brief Get the query id to stop
