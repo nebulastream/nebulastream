@@ -80,9 +80,9 @@ class SeqOperatorTest : public testing::Test {
 };
 
 /* 1.Test
- * Here, we test if we can use and operator without any additional operator
+ * Here, we test if we can use seq operator without any additional operator
  */
-TEST_F(SeqOperatorTest, testPatternOneSimpleAnd) {
+TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -91,7 +91,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleAnd) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+    NES_INFO("SeqOperatorTest: Coordinator started successfully");
 
     NES_INFO("AndOperatorTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
@@ -100,7 +100,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleAnd) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AndOperatorTest: Worker1 started successfully");
+    NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
@@ -109,7 +109,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleAnd) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("AndOperatorTest: Worker2 started successfully");
+    NES_INFO("SeqOperatorTest: Worker2 started successfully");
 
     //register logical stream qnv
     std::string window =
@@ -140,10 +140,10 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleAnd) {
 
     wrk2->registerPhysicalStream(windowStream2);
 
-    std::string outputFilePath = "testAndPatternWithTestStream1.out";
+    std::string outputFilePath = "testSeqPatternWithTestStream1.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("AndOperatorTest: Submit andWith pattern");
+    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
 
     std::string query =
         R"(Query::from("Win1").seqWith(Query::from("Win2"))
@@ -161,7 +161,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleAnd) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("AndOperatorTest: Remove query");
+    NES_INFO("SeqOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
@@ -181,7 +181,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleAnd) {
 /* 2.Test
  * Here, we test if we can use and operator for patterns in combination with filter
  */
-TEST_F(SeqOperatorTest, testPatternOneAnd) {
+TEST_F(SeqOperatorTest, testPatternOneSeq) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -190,16 +190,16 @@ TEST_F(SeqOperatorTest, testPatternOneAnd) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+    NES_INFO("SeqOperatorTest: Coordinator started successfully");
 
-    NES_INFO("AndOperatorTest: Start worker 1");
+    NES_INFO("SeqOperatorTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AndOperatorTest: Worker1 started successfully");
+    NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
@@ -208,7 +208,7 @@ TEST_F(SeqOperatorTest, testPatternOneAnd) {
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("AndOperatorTest: Worker2 started successfully");
+    NES_INFO("SeqOperatorTest: Worker2 started successfully");
 
     //register logical stream qnv
     std::string qnv =
@@ -240,13 +240,13 @@ TEST_F(SeqOperatorTest, testPatternOneAnd) {
     PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf1);
     wrk2->registerPhysicalStream(conf73);
 
-    std::string outputFilePath = "testAndPatternWithTestStream1.out";
+    std::string outputFilePath = "testSeqPatternWithTestStream1.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("AndOperatorTest: Submit andWith pattern");
+    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
 
     std::string query =
-        R"(Query::from("QnV1").filter(Attribute("velocity") > 70).seqWith(Query::from("QnV2").filter(Attribute("velocity") > 70))
+        R"(Query::from("QnV1").filter(Attribute("velocity") > 70).seqWith(Query::from("QnV2").filter(Attribute("velocity") > 60))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
@@ -261,7 +261,7 @@ TEST_F(SeqOperatorTest, testPatternOneAnd) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("AndOperatorTest: Remove query");
+    NES_INFO("SeqOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
@@ -269,8 +269,16 @@ TEST_F(SeqOperatorTest, testPatternOneAnd) {
         "+----------------------------------------------------+\n"
         "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
-        "|1543622400000|1543622700000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622580000|73.166664|5|1|\n"
+        "|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622640000|64.777779|10|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622880000|69.388885|7|1|\n"
+        "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622940000|66.222221|12|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543623300000|1543623600000|1|R2000070|1543623480000|78.555557|5|1|R2000073|1543623540000|62.055557|10|1|\n"
         "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
@@ -292,9 +300,9 @@ TEST_F(SeqOperatorTest, testPatternOneAnd) {
 }
 
 /* 3. Test
- * Here, we test if we can use and operator with sliding window (5 Minutes, 1 Minute) for patterns and create complex events with it
+ * Here, we test if we can use seq operator with sliding window (5 Minutes, 1 Minute) for patterns and create complex events with it
  */
-TEST_F(SeqOperatorTest, testPatternAndWithSlidingWindow) {
+TEST_F(SeqOperatorTest, testPatternSeqWithSlidingWindow) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -303,25 +311,25 @@ TEST_F(SeqOperatorTest, testPatternAndWithSlidingWindow) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+    NES_INFO("SeqOperatorTest: Coordinator started successfully");
 
-    NES_INFO("AndOperatorTest: Start worker 1");
+    NES_INFO("SeqOperatorTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AndOperatorTest: Worker1 started successfully");
+    NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
+    NES_INFO("SeqOperatorTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-   NES_INFO("AndOperatorTest: Worker2 started successfully");
+   NES_INFO("SeqOperatorTest: Worker2 started successfully");
 
     //register logical stream qnv
     std::string qnv =
@@ -335,7 +343,7 @@ TEST_F(SeqOperatorTest, testPatternAndWithSlidingWindow) {
 
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(20);
     srcConf->setPhysicalStreamName("test_stream_QnV1");
     srcConf->setLogicalStreamName("QnV1");
@@ -345,7 +353,7 @@ TEST_F(SeqOperatorTest, testPatternAndWithSlidingWindow) {
 
     srcConf1->setSourceType("CSVSource");
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf1->setNumberOfTuplesToProducePerBuffer(3);
     srcConf1->setNumberOfBuffersToProduce(20);
     srcConf1->setPhysicalStreamName("test_stream_QnV2");
     srcConf1->setLogicalStreamName("QnV2");
@@ -353,13 +361,13 @@ TEST_F(SeqOperatorTest, testPatternAndWithSlidingWindow) {
     PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf1);
     wrk2->registerPhysicalStream(conf73);
 
-    std::string outputFilePath = "testPatternAndSliding.out";
+    std::string outputFilePath = "testPatternSeqSliding.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("AndOperatorTest: Submit andWith pattern");
+    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
 
     std::string query =
-        R"(Query::from("QnV1").filter(Attribute("velocity")>70).seqWith(Query::from("QnV2").filter(Attribute("velocity")>70)).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(5),Minutes(1))).sink(FileSinkDescriptor::create(")"
+        R"(Query::from("QnV1").filter(Attribute("velocity")>66).seqWith(Query::from("QnV2").filter(Attribute("velocity")>62)).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -389,11 +397,33 @@ TEST_F(SeqOperatorTest, testPatternAndWithSlidingWindow) {
         "+----------------------------------------------------+\n"
         "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1543622580000|1543622880000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
-        "|1543622520000|1543622820000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
-        "|1543622460000|1543622760000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
-        "|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
-        "|1543622340000|1543622640000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
+        "|1543622040000|1543622640000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543622280000|1543622880000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
+        "|1543622160000|1543622760000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
+        "|1543622280000|1543622880000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
+        "|1543622160000|1543622760000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543622520000|1543623120000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
+        "|1543622400000|1543623000000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
+        "|1543622520000|1543623120000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
+        "|1543622400000|1543623000000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
+        "|1543622520000|1543623120000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
+        "|1543622400000|1543623000000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543622640000|1543623240000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
+        "|1543622760000|1543623360000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
+        "|1543622640000|1543623240000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543622880000|1543623480000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
         "+----------------------------------------------------+";
 
     EXPECT_EQ(removeRandomKey(content),expectedContent);
@@ -409,10 +439,10 @@ TEST_F(SeqOperatorTest, testPatternAndWithSlidingWindow) {
 }
 
 /* 4.Test
- * Here, we test if we can use and operator with isEarlyTermination for patterns and create complex events with it
+ * Here, we test if we can use seq operator with isEarlyTermination for patterns and create complex events with it
  */
 //TODO Ariane issue 2339
-TEST_F(SeqOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
+TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -421,25 +451,25 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("AndOperatorTest: Coordinator started successfully");
+    NES_INFO("SeqOperatorTest: Coordinator started successfully");
 
-    NES_INFO("AndOperatorTest: Start worker 1");
+    NES_INFO("SeqOperatorTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("AndOperatorTest: Worker1 started successfully");
+    NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
+    NES_INFO("SeqOperatorTest: Start worker 2");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("AndOperatorTest: Worker2 started successfully");
+    NES_INFO("SeqOperatorTest: Worker2 started successfully");
 
     //register logical stream qnv
     std::string qnv =
@@ -471,10 +501,10 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf1);
     wrk2->registerPhysicalStream(conf73);
 
-    std::string outputFilePath = "testPatternAndEarlyTermination.out";
+    std::string outputFilePath = "testPatternSeqEarlyTermination.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("AndOperatorTest: Submit andWith pattern");
+    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
 
     std::string query =
         R"(Query::from("QnV1").filter(Attribute("velocity")>50).seqWith(Query::from("QnV2").filter(Attribute("quantity")>5)).isEarlyTermination(true).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
@@ -491,7 +521,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("AndOperatorTest: Remove query");
+    NES_INFO("SeqOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
@@ -525,10 +555,10 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
 }
 
 /* 5.Test
- * Here, we test if we can use and operator for patterns and create complex events with it
+ * Here, we test if we can use seq operator for patterns and create complex events with it
  */
 //TODO Ariane issue 2303
-TEST_F(SeqOperatorTest, DISABLED_testMultiAndPattern) {
+TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -539,7 +569,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiAndPattern) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("SimplePatternTest: Coordinator started successfully");
+    NES_INFO("SeqOperatorTest: Coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
@@ -549,7 +579,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiAndPattern) {
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("SimplePatternTest: Worker1 started successfully");
+    NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
     //    NES_INFO("QueryDeploymentTest: Start worker 2");
     //    wrkConf->setCoordinatorPort(port);
@@ -571,7 +601,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiAndPattern) {
     //    EXPECT_TRUE(retStart3);
     //    NES_INFO("SimplePatternTest: Worker3 started successfully");
 
-    std::string outputFilePath = "testMultiAndPatternWithTestStream.out";
+    std::string outputFilePath = "testMultiSeqPatternWithTestStream.out";
     remove(outputFilePath.c_str());
 
     //register logical streams qnv
@@ -618,8 +648,8 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiAndPattern) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    NES_INFO("SimplePatternTest: Submit andWith pattern");
-    //  Pattern - 1 ANDS - 34 result tuple
+    NES_INFO("SeqOperatorTest: Submit andWith pattern");
+    //  Pattern - 1 SeqS - 34 result tuple
     std::string query1 =
         R"(Query::from("QnV").filter(Attribute("velocity") > 65)
         .seqWith(Query::from("QnV1").filter(Attribute("velocity") > 65))
@@ -627,7 +657,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiAndPattern) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
-    // Pattern - 2 ANDs
+    // Pattern - 2 Seqs
     std::string query2 =
         R"(Query::from("QnV").filter(Attribute("velocity") > 70)
         .seqWith(Query::from("QnV1").filter(Attribute("velocity") > 70))
@@ -675,7 +705,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiAndPattern) {
         "+----------------------------------------------------+";
 
     //EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-    NES_INFO("QueryDeploymentTest: Remove query");
+    NES_INFO("SeqOperatorTest: Remove query");
 
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
@@ -701,5 +731,4 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiAndPattern) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
-
 }
