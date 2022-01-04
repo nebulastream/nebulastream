@@ -385,7 +385,7 @@ if (NES_USE_ADAPTIVE)
     message("Adaptive sampling dependencies OK")
 endif (NES_USE_ADAPTIVE)
 
-if (NOT NES_ENABLES_TESTS)
+if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)
     if (NOT ${GTest_FOUND})
         message(FATAL_ERROR "Unable to find GTest")
