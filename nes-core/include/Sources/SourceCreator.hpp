@@ -108,7 +108,8 @@ createLambdaSource(const SchemaPtr& schema,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
                    GatheringMode::Value gatheringMode,
-                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+                   uint64_t sourceAffinity);
 
 /**
  * @brief function to create an empty zmq source

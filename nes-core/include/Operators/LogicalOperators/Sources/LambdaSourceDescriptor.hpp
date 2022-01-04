@@ -41,7 +41,8 @@ class LambdaSourceDescriptor : public SourceDescriptor {
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         uint64_t numBuffersToProduce,
         uint64_t gatheringValue,
-        GatheringMode::Value gatheringMode);
+        GatheringMode::Value gatheringMode,
+        uint64_t sourceAffinity);
 
     /**
      * @brief Factory method to create a LambdaSourceDescriptor object
@@ -56,7 +57,8 @@ class LambdaSourceDescriptor : public SourceDescriptor {
            std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProcess,
            uint64_t gatheringValue,
-           GatheringMode::Value gatheringMode);
+           GatheringMode::Value gatheringMode,
+           uint64_t sourceAffinity);
 
     /**
      * @brief Provides the string representation of the memory source
@@ -95,6 +97,12 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      */
     uint64_t getGatheringValue() const;
 
+    /**
+    * @brief return the source affinity thus on which core this source is mapped
+    * @return
+    */
+    uint64_t getSourceAffinity() const;
+
     SourceDescriptorPtr copy() override;
 
   private:
@@ -102,6 +110,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
     GatheringMode::Value gatheringMode;
+    uint64_t sourceAffinity;
 };
 }// namespace NES
 

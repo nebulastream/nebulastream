@@ -168,7 +168,11 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 #elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
     //create the actual task queues
     numberOfQueues = queuePinListMapping.size();
-    for (uint64_t i = 0; i < queuePinListMapping.size(); i++) {
+    if(numberOfQueues == 0)
+    {
+        numberOfQueues = 1;
+    }
+    for (uint64_t i = 0; i < numberOfQueues; i++) {
         taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
     }
 #endif
