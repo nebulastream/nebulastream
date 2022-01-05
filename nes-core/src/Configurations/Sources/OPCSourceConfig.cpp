@@ -40,7 +40,7 @@ OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfig
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
       password(ConfigOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
     NES_INFO("OPCSourceConfig: Init source config object with values from sourceConfigMap.");
-    if (sourceConfigMap.find(OPC_SOURCE_NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
+    /*if (sourceConfigMap.find(OPC_SOURCE_NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
         namespaceIndex->setValue(std::stoi(sourceConfigMap.find(OPC_SOURCE_NAME_SPACE_INDEX_CONFIG)->second));
     }
     if (sourceConfigMap.find(OPC_SOURCE_NODE_IDENTIFIER_CONFIG) != sourceConfigMap.end()) {
@@ -55,7 +55,7 @@ OPCSourceConfig::OPCSourceConfig(std::map<std::string, std::string> sourceConfig
     }
     if (sourceConfigMap.find(OPC_SOURCE_PASSWORD_CONFIG) != sourceConfigMap.end()) {
         password->setValue(sourceConfigMap.find(OPC_SOURCE_PASSWORD_CONFIG)->second);
-    }
+    }*/
 }
 
 OPCSourceConfig::OPCSourceConfig()

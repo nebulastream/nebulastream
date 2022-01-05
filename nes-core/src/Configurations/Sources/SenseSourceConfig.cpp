@@ -36,11 +36,11 @@ SenseSourceConfig::SenseSourceConfig(std::map<std::string, std::string> sourceCo
     : SourceConfig(sourceConfigMap, SENSE_SOURCE_CONFIG),
       udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
-    if (sourceConfigMap.find(SENSE_SOURCE_UDFS_CONFIG) != sourceConfigMap.end()) {
+    /*if (sourceConfigMap.find(SENSE_SOURCE_UDFS_CONFIG) != sourceConfigMap.end()) {
         udfs->setValue(sourceConfigMap.find(SENSE_SOURCE_UDFS_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no udfs defined! Please define a udfs.");
-    }
+    }*/
 }
 
 SenseSourceConfig::SenseSourceConfig()

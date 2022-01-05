@@ -34,11 +34,11 @@ BinarySourceConfig::BinarySourceConfig(std::map<std::string, std::string> source
     : SourceConfig(sourceConfigMap, BINARY_SOURCE_CONFIG),
       filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceConfig: Init source config object.");
-    if (sourceConfigMap.find(BINARY_SOURCE_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+    /*if (sourceConfigMap.find(BINARY_SOURCE_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find(BINARY_SOURCE_FILE_PATH_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("BinarySourceConfig:: no filePath defined! Please define a filePath.");
-    }
+    }*/
 }
 
 BinarySourceConfig::BinarySourceConfig()

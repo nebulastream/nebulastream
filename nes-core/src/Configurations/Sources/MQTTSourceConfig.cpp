@@ -52,7 +52,7 @@ MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConf
       flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")) {
     NES_INFO("NesSourceConfig: Init source config object with new values.");
 
-    if (sourceConfigMap.find(MQTT_SOURCE_URL_CONFIG) != sourceConfigMap.end()) {
+    /*if (sourceConfigMap.find(MQTT_SOURCE_URL_CONFIG) != sourceConfigMap.end()) {
         url->setValue(sourceConfigMap.find(MQTT_SOURCE_URL_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no Url defined! Please define a Url.");
@@ -80,7 +80,7 @@ MQTTSourceConfig::MQTTSourceConfig(std::map<std::string, std::string> sourceConf
     }
     if (sourceConfigMap.find(MQTT_SOURCE_FLUSH_INTERVAL_MS_CONFIG) != sourceConfigMap.end()) {
         flushIntervalMS->setValue(std::stof(sourceConfigMap.find(MQTT_SOURCE_FLUSH_INTERVAL_MS_CONFIG)->second));
-    }
+    }*/
 }
 
 MQTTSourceConfig::MQTTSourceConfig()

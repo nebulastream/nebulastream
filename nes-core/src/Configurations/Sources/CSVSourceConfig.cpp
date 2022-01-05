@@ -37,7 +37,7 @@ CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfig
       delimiter(
           ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")) {
     NES_INFO("CSVSourceConfig: Init source config object.");
-    if (sourceConfigMap.find(CSV_SOURCE_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+    /*if (sourceConfigMap.find(CSV_SOURCE_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find(CSV_SOURCE_FILE_PATH_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("CSVSourceConfig:: no filePath defined! Please define a filePath.");
@@ -47,7 +47,7 @@ CSVSourceConfig::CSVSourceConfig(std::map<std::string, std::string> sourceConfig
     }
     if (sourceConfigMap.find(CSV_SOURCE_SKIP_HEADER_CONFIG) != sourceConfigMap.end()) {
         skipHeader->setValue((sourceConfigMap.find(CSV_SOURCE_SKIP_HEADER_CONFIG)->second == "true"));
-    }
+    }*/
 }
 
 CSVSourceConfig::CSVSourceConfig()
