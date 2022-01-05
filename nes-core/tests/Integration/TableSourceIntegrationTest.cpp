@@ -23,38 +23,34 @@
 #include <Configurations/Worker/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
-
 auto schema_customer = Schema::create()
-        ->addField("C_CUSTKEY", BasicType::UINT32)
+        ->addField("C_CUSTKEY", BasicType::UINT64)
         ->addField("C_NAME", DataTypeFactory::createFixedChar(25+1))      // var text
         ->addField("C_ADDRESS", DataTypeFactory::createFixedChar(40+1))   // var text
-        ->addField("C_NATIONKEY", BasicType::UINT32)
+        ->addField("C_NATIONKEY", BasicType::UINT64)
         ->addField("C_PHONE", DataTypeFactory::createFixedChar(15+1))     // fixed text
         ->addField("C_ACCTBAL", DataTypeFactory::createDouble())                 // decimal
         ->addField("C_MKTSEGMENT", DataTypeFactory::createFixedChar(10+1))            // fixed text
         ->addField("C_COMMENT", DataTypeFactory::createFixedChar(117+1))  // var text
         ;
 auto schema_nation = Schema::create()
-        ->addField("N_NATIONKEY", BasicType::UINT32)
+        ->addField("N_NATIONKEY", BasicType::UINT64)
         ->addField("N_NAME", DataTypeFactory::createFixedChar(25+1))      // var text
-        ->addField("N_REGIONKEY", BasicType::UINT32)
+        ->addField("N_REGIONKEY", BasicType::UINT64)
         ->addField("N_COMMENT", DataTypeFactory::createFixedChar(152+1))  // var text
         ;
 struct __attribute__((packed)) record_customer {
-    uint32_t C_CUSTKEY;
+    uint64_t C_CUSTKEY;
     char C_NAME[25+1];
     char C_ADDRESS[40+1];
-    uint32_t C_NATIONKEY;
+    uint64_t C_NATIONKEY;
     char C_PHONE[15+1];
     double C_ACCTBAL;
     char C_MKTSEGMENT[10+1];
@@ -63,7 +59,7 @@ struct __attribute__((packed)) record_customer {
 struct __attribute__((packed)) record_nation {
     uint32_t N_NATIONKEY;
     char N_NAME[25+1];
-    uint32_t N_REGIONKEY;
+    uint64_t N_REGIONKEY;
     char N_COMMENT[152+1];
 };
 
@@ -73,36 +69,41 @@ const std::string table_path_nation_s0001 = "./test_data/tpch_s0001_nation.tbl";
 class TableSourceIntegrationTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("TableSourceIntegrationTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup TableSourceIntegrationTest test class.");
-    }
+        NES::setupLogging("TableSourceIntegrationTest.log", NES::LOG_DEBUG);
 
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-
-        ASSERT_EQ(sizeof(record_customer), 228UL);
-        ASSERT_EQ(schema_customer->getSchemaSizeInBytes(), 228ULL);
+        // check validity of schemas and table files to be used
+        ASSERT_EQ(sizeof(record_customer), 236UL);
+        ASSERT_EQ(schema_customer->getSchemaSizeInBytes(), 236ULL);
         {
             std::ifstream file;
             file.open(table_path_customer_l0200);
             NES_ASSERT(file.is_open(), "Invalid path.");
             int num_lines = std::count(std::istreambuf_iterator<char>(file),
-                                           std::istreambuf_iterator<char>(), '\n');
+                                       std::istreambuf_iterator<char>(), '\n');
             NES_ASSERT(num_lines==200, "The table file table_path_customer_l0200 does not contain exactly 200 lines.");
         }
 
-        ASSERT_EQ(sizeof(record_nation), 187UL);
-        ASSERT_EQ(schema_nation->getSchemaSizeInBytes(), 187ULL);
+        ASSERT_EQ(sizeof(record_nation), 195UL);
+        ASSERT_EQ(schema_nation->getSchemaSizeInBytes(), 195ULL);
         {
             std::ifstream file;
             file.open(table_path_nation_s0001);
             NES_ASSERT(file.is_open(), "Invalid path.");
             int num_lines = std::count(std::istreambuf_iterator<char>(file),
-                                           std::istreambuf_iterator<char>(), '\n');
+                                       std::istreambuf_iterator<char>(), '\n');
             NES_ASSERT(num_lines==25, "The table file table_path_nation_s0001 does not contain exactly 25 lines.");
         }
     }
+
+    void SetUp() override {
+        //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
+        // by assigning a different RPC port for each test case
+        rpcPort = rpcPort + 30;
+        restPort = restPort + 2;
+    }
+    uint64_t rpcPort = 4000;
+    uint64_t restPort = 8081;
 };
 
 

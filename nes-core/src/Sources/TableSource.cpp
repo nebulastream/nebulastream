@@ -112,6 +112,10 @@ TableSource::TableSource(SchemaPtr schema,
         }
     }
 
+    // we know how many buffers this static source contains.
+    // the last buffer might not be full but every tuple will get emitted.
+    this->numBuffersToProcess = (memoryAreaSize + bufferSize - 1) / bufferSize;
+
     NES_DEBUG("TableSource() memoryAreaSize=" << memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
@@ -172,5 +176,5 @@ void TableSource::fillBuffer(Runtime::TupleBuffer& buffer) {
 
 std::string TableSource::toString() const { return "TableSource"; }
 
-NES::SourceType TableSource::getType() const { return MEMORY_SOURCE; }
+NES::SourceType TableSource::getType() const { return TABLE_SOURCE; }
 }// namespace NES
