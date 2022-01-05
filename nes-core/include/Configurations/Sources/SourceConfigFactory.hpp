@@ -21,6 +21,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <list>
 
 namespace NES {
 
@@ -77,7 +78,7 @@ class SourceConfigFactory {
      * @param filePath path to yaml configuration file
      * @return configuration map with yaml file configs
      */
-    static std::map<std::string, std::string> readYAMLFile(const std::string& filePath);
+    static std::map<std::string, std::list<std::string>> readYAMLFile(const std::string& filePath);
 
     /**
      * @brief overwrites configurations with command line input params

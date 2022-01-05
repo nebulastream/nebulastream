@@ -34,7 +34,7 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
     : SourceConfig(sourceConfigMap, KAFKA_SOURCE_CONFIG),
       brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
-          AUTO_COMMIT,
+          AUTO_COMMIT_CONFIG,
           1,
           "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
       groupId(ConfigOption<std::string>::create(GROUP_ID_CONFIG,
@@ -46,7 +46,7 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
                                                        "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceConfig: Init source config object with values from sourceConfigMap.");
 
-    if (sourceConfigMap.find(KAFKA_SOURCE_BROKERS_CONFIG) != sourceConfigMap.end()) {
+    /*if (sourceConfigMap.find(KAFKA_SOURCE_BROKERS_CONFIG) != sourceConfigMap.end()) {
         brokers->setValue(sourceConfigMap.find(KAFKA_SOURCE_BROKERS_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no brokers defined! Please define brokers.");
@@ -66,13 +66,13 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
     }
     if (sourceConfigMap.find(KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
         connectionTimeout->setValue(std::stoi(sourceConfigMap.find(KAFKA_SOURCE_CONNECTION_TIMEOUT_CONFIG)->second));
-    }
+    }*/
 }
 
 KafkaSourceConfig::KafkaSourceConfig()
     : SourceConfig(KAFKA_SOURCE_CONFIG), brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
-          AUTO_COMMIT,
+          AUTO_COMMIT_CONFIG,
           1,
           "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
       groupId(ConfigOption<std::string>::create(GROUP_ID_CONFIG,

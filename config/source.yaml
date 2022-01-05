@@ -2,92 +2,106 @@
 
 # ~~ Source Handling ~~
 
-# Set number of buffers to produce, i.e. how often the read csv file is repeated
-numberOfBuffersToProduce: 1
-
-# Set number of tuples to produce per buffer
-numberOfTuplesToProducePerBuffer: 1
-
-# Set physical stream name
-physicalStreamName: default_stream_phy
-
 # Set logical stream name where this stream is added to
 logicalStreamName: default_stream_log
-
-# Set sampling frequency of source
-sourceFrequency: 1
-
-# Set input data format
-inputFormat: JSON
-
 # Set the source type (available options: NoSource, DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
 #                                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
 #                                         BinarySource (ToDo: Make source available))
 # NoSource: The worker will create a default source but no physical stream will be associated with it
-sourceType: NoSource
-
-# DefaultSource: A simple source with default data created inside NES, useful for testing
-# numberOfBuffersToProduce defines how often the default data is repeated for this source
-DefaultSource:
-
-# SenseSource: Creates a Sense source
-SenseSource:
-  # Set user defined function
-  - udfs:
-
-# CSVSource and its needed configuration params
-# This source reads data from a csv file
-# numberOfBuffersToProduce defines how often the csv file is repeated
-CSVSource:
+sourceType:
+  NoSource:
+    # DefaultSource: A simple source with default data created inside NES, useful for testing
+    # numberOfBuffersToProduce defines how often the default data is repeated for this source
+  DefaultSource:
+    # SenseSource: Creates a Sense source
+  SenseSource:
+    # Set user defined function
+    - udfs: test
+      # Set physical stream name
+      physicalStreamName: default_stream_phy
+  # CSVSource and its needed configuration params
+  # This source reads data from a csv file
+  # numberOfBuffersToProduce defines how often the csv file is repeated
+  CSVSource:
   # Set file path
-  - filePath:
-  # Skip first line of the file
-    skipHeader: false
-  # Set delimiter, e.g. , or .
-    delimiter: ,
+    - filePath: /tests/test_data/exdra.csv
+      # Skip first line of the file
+      skipHeader: false
+      # Set delimiter, e.g. , or .
+      delimiter: ","
+      # Set number of buffers to produce, i.e. how often the read csv file is repeated
+      numberOfBuffersToProduce: 1
+      # Set number of tuples to produce per buffer
+      numberOfTuplesToProducePerBuffer: 1
+      # Set sampling frequency of source
+      sourceFrequency: 1
+      # Set input data format
+      inputFormat: JSON
+      # Set physical stream name
+      physicalStreamName: default_stream_phy
 
-# BinarySource: read from a binary source file
-BinarySource:
+    - filePath: "/tests/test_data/exdra.csv"
+      skipHeader: true
+      delimiter: ","
+    # Set number of buffers to produce, i.e. how often the read csv file is repeated
+      numberOfBuffersToProduce: 1
+    # Set number of tuples to produce per buffer
+      numberOfTuplesToProducePerBuffer: 1
+    # Set sampling frequency of source
+      sourceFrequency: 1
+    # Set input data format
+      inputFormat: JSON
+    # Set physical stream name
+      physicalStreamName: default_stream_phy
+  # BinarySource: read from a binary source file
+  BinarySource:
   # Set file path
-  - filePath:
-
-# MQTTSource: Connect to an MQTT broker and read data from there
-MQTTSource:
+    - filePath:
+      # Set physical stream name
+      physicalStreamName: default_stream_phy
+  # MQTTSource: Connect to an MQTT broker and read data from there
+  MQTTSource:
   # Set url to connect to
-  - url:
+    - url:
   # Set clientId
-    clientId:
+      clientId:
   # Set userName
-    userName:
+      userName:
   # Set topic to listen to
-    topic:
+      topic:
   # set quality of service
-    qos: 2
+      qos: 2
   # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-    cleanSession: true
+      cleanSession: true
   # set tupleBuffer flush interval in milliseconds
-    flushIntervalMS: -1
-
-# KafkaSource: Connect to a kafka broker and read data form there
-KafkaSource:
-  # Set kafka broker string
-  - brokers:
-  # Set auto commit, boolean value where 1 equals true, and 0 equals false
-    autoCommit: 1
-  # Set groupId
-    groupId:
-  # Set topic to listen to
-    topic:
-  # Set connection time out for source
-    connectionTimeout: 10
-
-# OPCSource: connect to an OPC server and read data from there
-OPCSource:
+      flushIntervalMS: -1
+      # Set input data format
+      inputFormat: JSON
+      # Set physical stream name
+      physicalStreamName: default_stream_phy
+  # KafkaSource: Connect to a kafka broker and read data form there
+  KafkaSource:
+    # Set kafka broker string
+    - brokers:
+    # Set auto commit, boolean value where 1 equals true, and 0 equals false
+      autoCommit: 1
+    # Set groupId
+      groupId:
+    # Set topic to listen to
+      topic: "test"
+    # Set connection time out for source
+      connectionTimeout: 10
+      # Set physical stream name
+      physicalStreamName: default_stream_phy
+  # OPCSource: connect to an OPC server and read data from there
+  OPCSource:
   # Set namespaceIndex for node, needed for: OPCSource
-  - namespaceIndex:
-  # Set node identifier, needed for: OPCSource
-    nodeIdentifier:
-  # Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
-    userName:
-  # Set password, needed for: OPCSource
-    password:
+    - namespaceIndex:
+    # Set node identifier, needed for: OPCSource
+      nodeIdentifier:
+    # Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
+      userName:
+    # Set password, needed for: OPCSource
+      password:
+      # Set physical stream name
+      physicalStreamName: default_stream_phy
