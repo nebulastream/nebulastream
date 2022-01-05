@@ -179,7 +179,6 @@ class NesWorker {
      */
     bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
 
-
     uint64_t getWorkerId();
 
   private:

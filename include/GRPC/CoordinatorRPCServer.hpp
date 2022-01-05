@@ -138,7 +138,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply that is sent back from the coordinator to the worker to confirm that notification was successful
      * @return success
      */
-    Status NotifyQueryFailure(ServerContext* context, const QueryFailureNotification* request, QueryFailureNotificationReply* reply) override;
+    Status NotifyQueryFailure(ServerContext* context,
+                              const QueryFailureNotification* request,
+                              QueryFailureNotificationReply* reply) override;
 
   private:
     TopologyManagerServicePtr topologyManagerService;
