@@ -189,10 +189,13 @@ Status CoordinatorRPCServer::RemoveParent(ServerContext*, const RemoveParentRequ
     return Status::CANCELLED;
 }
 
-Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*, const QueryFailureNotification* request, QueryFailureNotificationReply* reply) {
+Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
+                                                const QueryFailureNotification* request,
+                                                QueryFailureNotificationReply* reply) {
     try {
-        NES_ERROR("CoordinatorRPCServer::notifyQueryFailure: failure message received. id of failed query: " << request->queryid()
-                  << "Id of worker: " << request->workerid() << " Reason for failure: " << request->errormsg());
+        NES_ERROR("CoordinatorRPCServer::notifyQueryFailure: failure message received. id of failed query: "
+                  << request->queryid() << "Id of worker: " << request->workerid()
+                  << " Reason for failure: " << request->errormsg());
         // TODO implement here what happens with received Query that failed
         reply->set_success(true);
         return Status::OK;

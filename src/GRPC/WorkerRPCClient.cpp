@@ -17,13 +17,13 @@
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
 #include <API/Schema.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
 
@@ -353,7 +353,7 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     // We need to release reply's buffer (in case we handle the exception).
     reply.release_buffer();
     NES_THROW_RUNTIME_ERROR("WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
-                                                                             << status.error_message());
+                                                                            << status.error_message());
 
     return false;
 }

@@ -1220,7 +1220,7 @@ TEST_F(QueryDeploymentTest, testGrpcNotifyQueryFailure) {
         + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    auto globalQueryPlan = crd->getGlobalQueryPlan(); //necessary?
+    auto globalQueryPlan = crd->getGlobalQueryPlan();//necessary?
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     QueryId subQueryId = 1;

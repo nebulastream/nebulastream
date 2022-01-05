@@ -17,11 +17,11 @@
 #ifndef NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_
 #define NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_
 
-#include <CoordinatorRPCService.grpc.pb.h>
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
+#include <CoordinatorRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
-#include <string>
 #include <optional>
+#include <string>
 
 using grpc::Channel;
 using grpc::ClientContext;
