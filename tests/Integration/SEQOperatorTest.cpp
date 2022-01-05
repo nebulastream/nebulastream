@@ -124,7 +124,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(9);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("Win1");
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
@@ -133,7 +133,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
 
     srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(9);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("Win2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
