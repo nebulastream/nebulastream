@@ -104,7 +104,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @brief method to return the network sinks operator id
      * @return operator Id
      */
-    OperatorId getOperatorId() override;
+    OperatorId getOperatorId();
 
   private:
     OperatorId operatorId;

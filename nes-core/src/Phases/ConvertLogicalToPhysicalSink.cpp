@@ -135,7 +135,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSink: Creating network sink");
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         return createNetworkSink(schema,
-                                 networkSinkDescriptor->getOperatorId(),
+                                 operatorId,
                                  querySubPlan->getQuerySubPlanId(),
                                  networkSinkDescriptor->getNodeLocation(),
                                  networkSinkDescriptor->getNesPartition(),
