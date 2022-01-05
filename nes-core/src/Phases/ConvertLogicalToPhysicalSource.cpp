@@ -190,6 +190,8 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   operatorId,
                                   numSourceLocalBuffers,
                                   memorySourceDescriptor->getGatheringMode(),
+                                  memorySourceDescriptor->getSourceAffinity(),
+                                  memorySourceDescriptor->getTaskQueueId(),
                                   successors);
     } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
@@ -205,8 +207,9 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                      numSourceLocalBuffers,
                                      benchmarkSourceDescriptor->getGatheringMode(),
                                      benchmarkSourceDescriptor->getSourceMode(),
-                                     successors,
-                                     benchmarkSourceDescriptor->getSourceAffinity());
+                                     benchmarkSourceDescriptor->getSourceAffinity(),
+                                     benchmarkSourceDescriptor->getTaskQueueId(),
+                                     successors);
     } else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating lambda source");
         auto lambdaSourceDescriptor = sourceDescriptor->as<LambdaSourceDescriptor>();
@@ -219,8 +222,9 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   operatorId,
                                   numSourceLocalBuffers,
                                   lambdaSourceDescriptor->getGatheringMode(),
-                                  successors,
-                                  lambdaSourceDescriptor->getSourceAffinity());
+                                  lambdaSourceDescriptor->getSourceAffinity(),
+                                  lambdaSourceDescriptor->getTaskQueueId(),
+                                  successors);
                                   successors);
     } else if (sourceDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSourceDescriptor>()){
         NES_INFO("ConvertLogicalToPhysicalSource: Creating materialized view source");

@@ -27,10 +27,11 @@ BenchmarkSourceDescriptor::BenchmarkSourceDescriptor(SchemaPtr schema,
                                                      uint64_t gatheringValue,
                                                      GatheringMode::Value gatheringMode,
                                                      SourceMode::Value sourceMode,
-                                                     uint64_t sourceAffinity)
+                                                     uint64_t sourceAffinity,
+                                                     uint64_t taskQueueId)
     : SourceDescriptor(std::move(schema)), memoryArea(std::move(memoryArea)), memoryAreaSize(memoryAreaSize),
       numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
-      sourceMode(sourceMode), sourceAffinity(sourceAffinity) {
+      sourceMode(sourceMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
 }
 
@@ -41,7 +42,8 @@ std::shared_ptr<BenchmarkSourceDescriptor> BenchmarkSourceDescriptor::create(con
                                                                              uint64_t gatheringValue,
                                                                              GatheringMode::Value gatheringMode,
                                                                              SourceMode::Value sourceMode,
-                                                                             uint64_t sourceAffinity) {
+                                                                             uint64_t sourceAffinity,
+                                                                             uint64_t taskQueueId) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<BenchmarkSourceDescriptor>(schema,
@@ -51,7 +53,8 @@ std::shared_ptr<BenchmarkSourceDescriptor> BenchmarkSourceDescriptor::create(con
                                                        gatheringValue,
                                                        gatheringMode,
                                                        sourceMode,
-                                                       sourceAffinity);
+                                                       sourceAffinity,
+                                                       taskQueueId);
 }
 std::string BenchmarkSourceDescriptor::toString() { return "BenchmarkSourceDescriptor"; }
 
@@ -70,6 +73,9 @@ size_t BenchmarkSourceDescriptor::getMemoryAreaSize() const { return memoryAreaS
 uint64_t BenchmarkSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
 uint64_t BenchmarkSourceDescriptor::getSourceAffinity() const { return sourceAffinity; }
+uint64_t BenchmarkSourceDescriptor::getTaskQueueId() const { return taskQueueId; }
+DataSource::GatheringMode BenchmarkSourceDescriptor::getGatheringMode() const { return gatheringMode; }
+BenchmarkSource::SourceMode BenchmarkSourceDescriptor::getSourceMode() const { return sourceMode; }
 
 GatheringMode::Value BenchmarkSourceDescriptor::getGatheringMode() const { return gatheringMode; }
 

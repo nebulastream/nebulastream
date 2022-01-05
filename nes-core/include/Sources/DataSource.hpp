@@ -59,8 +59,10 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode::Value gatheringMode,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
-                            std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+                                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
+                            std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
+                        uint64_t sourceAffinity = 0,
+                        uint64_t taskQueueId = 0);
 
     DataSource() = delete;
 
@@ -228,13 +230,13 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t numBuffersToProcess = std::numeric_limits<decltype(numBuffersToProcess)>::max();
     uint64_t numSourceLocalBuffers;
     uint64_t gatheringIngestionRate{};
-    uint64_t sourceAffinity{std::numeric_limits<uint64_t>::max()};
     std::chrono::milliseconds gatheringInterval{0};
     GatheringMode::Value gatheringMode;
     SourceType type;
     std::atomic<bool> wasGracefullyStopped{true};
     std::atomic_bool running{false};
-    uint32_t numaNode;
+    uint64_t sourceAffinity;
+    uint64_t taskQueueId;
     /**
      * @brief Emits a tuple buffer to the successors.
      * @param buffer

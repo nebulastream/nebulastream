@@ -364,7 +364,7 @@ class LambdaSourceProxy : public LambdaSource {
                        operatorId,
                        numSourceLocalBuffers,
                        gatheringMode,
-                       successors,0){};
+                       0, 0, successors){};
 
   private:
     FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeFrequency);

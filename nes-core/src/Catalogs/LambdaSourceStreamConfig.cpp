@@ -33,7 +33,8 @@ LambdaSourceStreamConfig::LambdaSourceStreamConfig(
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     std::string gatheringMode,
-    uint64_t sourceAffinity)
+    uint64_t sourceAffinity,
+    uint64_t taskQueueId)
     : PhysicalStreamConfig(DefaultSourceConfig::create()), sourceType(std::move(sourceType)),
       generationFunction(std::move(generationFunction)) {
     // nop
@@ -43,6 +44,7 @@ LambdaSourceStreamConfig::LambdaSourceStreamConfig(
     this->gatheringMode = DataSource::getGatheringModeFromString(std::move(gatheringMode));
     this->gatheringValue = gatheringValue;
     this->sourceAffinity = sourceAffinity;
+    this->taskQueueId = taskQueueId;
 }
 
 std::string LambdaSourceStreamConfig::getSourceType() { return sourceType; }
@@ -59,7 +61,8 @@ SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema) {
                                                     this->numberOfBuffersToProduce,
                                                     this->gatheringValue,
                                                     this->gatheringMode,
-                                                    this->sourceAffinity);
+                                                    this->sourceAffinity,
+                                                    this->taskQueueId);
 }
 
 AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
@@ -70,7 +73,8 @@ AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     const std::string& gatheringMode,
-    uint64_t sourceAffinity) {
+    uint64_t sourceAffinity,
+    uint64_t taskQueueId) {
     return std::make_shared<LambdaSourceStreamConfig>(sourceType,
                                                       physicalStreamName,
                                                       logicalStreamName,
@@ -78,7 +82,8 @@ AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
                                                       numBuffersToProcess,
                                                       gatheringValue,
                                                       gatheringMode,
-                                                      sourceAffinity);
+                                                      sourceAffinity,
+                                                      taskQueueId);
 }
 
 }// namespace NES

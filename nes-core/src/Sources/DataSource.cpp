@@ -50,9 +50,12 @@ DataSource::DataSource(SchemaPtr pSchema,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode::Value gatheringMode,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
+                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
+                       uint64_t sourceAffinity,
+                       uint64_t taskQueueId
+                       )
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
-      executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),
+      executableSuccessors(std::move(executableSuccessors)), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), operatorId(operatorId), schema(std::move(pSchema)),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
     this->kFilter.setDefaultValues();
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
@@ -81,7 +84,7 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
 
 void DataSource::emitWork(Runtime::TupleBuffer& buffer) {
     for (const auto& successor : executableSuccessors) {
-        queryManager->addWorkForNextPipeline(buffer, successor, numaNode);
+        queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
     }
 }
 
@@ -123,8 +126,7 @@ bool DataSource::start() {
                 NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
             } else {
                 int cpu = sched_getcpu();
-                numaNode = numa_node_of_cpu(cpu);
-
+                auto numaNode = numa_node_of_cpu(cpu);
                 unsigned long cur_mask;
                 auto ret = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
                 if (ret != 0) {
@@ -137,6 +139,11 @@ bool DataSource::start() {
             NES_WARNING("Use default affinity for source");
         }
 #endif
+
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+        taskQueueId = numa_node_of_cpu(cpu);
+#endif
+        std::cout << "source " << operatorId << " pins to queue=" << taskQueueId << std::endl;
 
         prom.set_value(true);
         runningRoutine();

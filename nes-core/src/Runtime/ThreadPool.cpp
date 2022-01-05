@@ -132,6 +132,7 @@ bool ThreadPool::start() {
                   NES_ERROR("Error calling pthread_setaffinity_np: " << rc);
               } else {
                   NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
+                  std::cout << "worker " << i << " pins to core=" << workerPinningPositionList[i] << std::endl;
               }
           } else {
               NES_THROW_RUNTIME_ERROR(
@@ -155,14 +156,17 @@ bool ThreadPool::start() {
 #elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
           //give one buffer manager per queue
           if (queuePinListMapping.empty()) {
+              std::cout << "worker " << i << " pins to queue 0 as no  queuePinList is provided " << std::endl;
               queueIdx = 0;
           } else {
+              NES_ASSERT(queuePinListMapping.size() == numThreads, "We need as many threads as queues");
               NES_WARNING("worker " << i << " pins to queue=" << queuePinListMapping[i]);
+              std::cout << "worker " << i << " pins to queue=" << queuePinListMapping[i] << std::endl;
               queueIdx = queuePinListMapping[i];
           }
 
           NES_WARNING("worker " << i << " uses buffer manager=" << i);
-          localBufferManager = bufferManagers[i];
+          localBufferManager = bufferManagers[queueIdx];
 #else
           localBufferManager = bufferManagers[0];
 #endif

@@ -60,6 +60,7 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
                              GatheringMode::Value gatheringMode,
                              SourceMode::Value sourceMode,
                              uint64_t sourceAffinity,
+                             uint64_t taskQueueId,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.

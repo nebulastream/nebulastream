@@ -47,6 +47,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                                  GatheringMode::Value gatheringMode,
                                  SourceMode::Value sourceMode,
                                  uint64_t sourceAffinity,
+                                 uint64_t taskQueueId,
                                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -66,6 +67,8 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
     }
     this->sourceAffinity = sourceAffinity;
+    this->taskQueueId = taskQueueId;
+
     schemaSize = this->schema->getSchemaSizeInBytes();
     bufferSize = localBufferManager->getBufferSize();
 
@@ -144,7 +147,7 @@ void BenchmarkSource::runningRoutine() {
         generatedBuffers++;
 
         for (const auto& successor : executableSuccessors) {
-            queryManager->addWorkForNextPipeline(buffer, successor, numaNode);
+            queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
         }
     }
 

@@ -37,8 +37,9 @@ LambdaSource::LambdaSource(
     OperatorId operatorId,
     size_t numSourceLocalBuffers,
     GatheringMode::Value gatheringMode,
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-    uint64_t sourceAffinity)
+    uint64_t sourceAffinity,
+    uint64_t taskQueueId,
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
                       std::move(queryManager),
@@ -59,6 +60,7 @@ LambdaSource::LambdaSource(
     numberOfTuplesToProduce = this->localBufferManager->getBufferSize() / this->schema->getSchemaSizeInBytes();
     wasGracefullyStopped = true;
     this->sourceAffinity = sourceAffinity;
+    this->taskQueueId = taskQueueId;
 }
 
 std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {

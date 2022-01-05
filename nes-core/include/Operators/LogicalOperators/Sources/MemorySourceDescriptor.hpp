@@ -39,7 +39,9 @@ class MemorySourceDescriptor : public SourceDescriptor {
                                     size_t memoryAreaSize,
                                     uint64_t numBuffersToProcess,
                                     uint64_t gatheringValue,
-                                    GatheringMode::Value gatheringMode);
+                                    GatheringMode::Value gatheringMode,
+                                    uint64_t sourceAffinity,
+                                    uint64_t taskQueueId);
 
     /**
      * @brief Factory method to create a MemorySourceDescriptor object
@@ -53,7 +55,9 @@ class MemorySourceDescriptor : public SourceDescriptor {
                                                           size_t memoryAreaSize,
                                                           uint64_t numBuffersToProcess,
                                                           uint64_t gatheringValue,
-                                                          GatheringMode::Value gatheringMode);
+                                                          GatheringMode::Value gatheringMode,
+                                                          uint64_t sourceAffinity = 0,
+                                                          uint64_t taskQueueId = 0);
 
     /**
      * @brief Provides the string representation of the memory source
@@ -98,6 +102,18 @@ class MemorySourceDescriptor : public SourceDescriptor {
      */
     uint64_t getGatheringValue() const;
 
+    /**
+    * @brief return the source affinity thus on which core this source is mapped
+    * @return
+    */
+    uint64_t getSourceAffinity() const;
+
+    /**
+    * @brief return the task queue id thus on which core this source is mapped
+    * @return
+    */
+    uint64_t getTaskQueueId() const;
+
     SourceDescriptorPtr copy() override;
 
   private:
@@ -106,6 +122,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
     GatheringMode::Value gatheringMode;
+    uint64_t sourceAffinity;
+    uint64_t taskQueueId;
 };
 }// namespace NES
 #endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MEMORYSOURCEDESCRIPTOR_HPP_

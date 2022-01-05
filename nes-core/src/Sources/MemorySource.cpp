@@ -44,6 +44,8 @@ MemorySource::MemorySource(SchemaPtr schema,
                            OperatorId operatorId,
                            size_t numSourceLocalBuffers,
                            GatheringMode::Value gatheringMode,
+                           uint64_t sourceAffinity,
+                           uint64_t taskQueueId,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
@@ -65,6 +67,9 @@ MemorySource::MemorySource(SchemaPtr schema,
     this->sourceAffinity = sourceAffinity;
     schemaSize = this->schema->getSchemaSizeInBytes();
     bufferSize = localBufferManager->getBufferSize();
+
+    this->sourceAffinity = sourceAffinity;
+    this->taskQueueId = taskQueueId;
 
     //if the memory area is smaller than a buffer
     if (memoryAreaSize <= bufferSize) {
