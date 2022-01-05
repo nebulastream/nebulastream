@@ -124,8 +124,8 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(6);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream1");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("Win1");
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
@@ -133,8 +133,8 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
 
     srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(6);
-    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
     srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("Win2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
@@ -168,13 +168,13 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    bool retStopWrk1 = wrk1->stop(false);
+    bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop(false);
+    bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator(false);
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
 }
 
