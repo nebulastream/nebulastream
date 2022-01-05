@@ -45,7 +45,8 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
         uint64_t numBuffersToProcess,
         uint64_t gatheringValue,
         std::string gatheringMode,
-        uint64_t sourceAffinity);
+        uint64_t sourceAffinity,
+        uint64_t taskQueueId);
 
     ~LambdaSourceStreamConfig() noexcept override = default;
 
@@ -96,7 +97,8 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
            uint64_t numBuffersToProcess,
            uint64_t gatheringValue,
            const std::string& gatheringMode,
-           uint64_t sourceAffinity);
+           uint64_t sourceAffinity = 0,
+           uint64_t taskQueueId = 0);
 
   private:
     std::string sourceType;
@@ -104,6 +106,7 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;
     uint64_t sourceAffinity;
+    uint64_t taskQueueId;
 };
 
 }// namespace NES

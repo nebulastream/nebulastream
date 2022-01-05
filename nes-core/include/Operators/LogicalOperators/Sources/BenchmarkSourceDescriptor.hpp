@@ -40,7 +40,8 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                        uint64_t gatheringValue,
                                        GatheringMode::Value gatheringMode,
                                        SourceMode::Value sourceMode,
-                                       uint64_t sourceAffinity);
+                                       uint64_t sourceAffinity,
+                                       uint64_t taskQueueId);
 
     /**
      * @brief Factory method to create a BenchmarkSourceDescriptor object
@@ -56,7 +57,9 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                                              uint64_t gatheringValue,
                                                              GatheringMode::Value gatheringMode,
                                                              SourceMode::Value sourceMode,
-                                                             uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
+                                                             uint64_t sourceAffinity = 0,
+                                                             uint64_t taskQueueId = 0
+                                                             );
 
     /**
      * @brief Provides the string representation of the memory source
@@ -113,6 +116,12 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     */
     uint64_t getSourceAffinity() const;
 
+    /**
+    * @brief return the task queue id thus on which core this source is mapped
+    * @return
+    */
+    uint64_t getTaskQueueId() const;
+
     SourceDescriptorPtr copy() override;
 
   private:
@@ -123,6 +132,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     GatheringMode::Value gatheringMode;
     SourceMode::Value sourceMode;
     uint64_t sourceAffinity;
+    uint64_t taskQueueId;
 };
 }// namespace NES
 #endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_

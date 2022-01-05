@@ -103,8 +103,9 @@ createLambdaSource(const SchemaPtr& schema,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
                    GatheringMode::Value gatheringMode,
-                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                   uint64_t sourceAffinity) {
+                   uint64_t sourceAffinity,
+                   uint64_t taskQueueId,
+                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<LambdaSource>(schema,
                                           bufferManager,
                                           queryManager,
@@ -114,8 +115,9 @@ createLambdaSource(const SchemaPtr& schema,
                                           operatorId,
                                           numSourceLocalBuffers,
                                           gatheringMode,
-                                          successors,
-                                          sourceAffinity);
+                                          sourceAffinity,
+                                          taskQueueId,
+                                          successors);
 }
 
 DataSourcePtr createMemorySource(const SchemaPtr& schema,
@@ -128,6 +130,8 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  OperatorId operatorId,
                                  size_t numSourceLocalBuffers,
                                  GatheringMode::Value gatheringMode,
+                                 uint64_t sourceAffinity,
+                                 uint64_t taskQueueId,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<MemorySource>(schema,
                                           memoryArea,
@@ -139,6 +143,8 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                           operatorId,
                                           numSourceLocalBuffers,
                                           gatheringMode,
+                                          sourceAffinity,
+                                          taskQueueId,
                                           successors);
 }
 
@@ -153,8 +159,9 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     size_t numSourceLocalBuffers,
                                     GatheringMode::Value gatheringMode,
                                     SourceMode::Value sourceMode,
-                                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                                    uint64_t sourceAffinity) {
+                                    uint64_t sourceAffinity,
+                                    uint64_t taskQueueId,
+                                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<BenchmarkSource>(schema,
                                              memoryArea,
                                              memoryAreaSize,
@@ -167,6 +174,7 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                              gatheringMode,
                                              sourceMode,
                                              sourceAffinity,
+                                             taskQueueId,
                                              successors);
 }
 
