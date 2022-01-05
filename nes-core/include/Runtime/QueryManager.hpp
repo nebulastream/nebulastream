@@ -327,7 +327,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::vector<uint64_t> queuePinListMapping;
     std::vector<folly::MPMCQueue<Task>> taskQueues;
 #else
-    assert(0);
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;
     std::condition_variable cv;
