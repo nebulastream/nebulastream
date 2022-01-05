@@ -123,8 +123,8 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
 
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(9);
+    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(6);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("Win1");
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
@@ -132,8 +132,8 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     wrk1->registerPhysicalStream(windowStream);
 
     srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(9);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(6);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("Win2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
@@ -161,12 +161,12 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
+    std::ifstream ifs(outputFilePath.c_str());
+    EXPECT_TRUE(ifs.good());
+
     NES_INFO("AndOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
