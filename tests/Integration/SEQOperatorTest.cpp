@@ -49,8 +49,8 @@ class SeqOperatorTest : public testing::Test {
     CSVSourceConfigPtr srcConf2;
 
     static void SetUpTestCase() {
-        NES::setupLogging("AndOperatorTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup AndOperatorTest test class.");
+        NES::setupLogging("SeqOperatorTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup SeqOperatorTest test class.");
     }
 
     void SetUp() override {
@@ -93,7 +93,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     EXPECT_NE(port, 0UL);
     NES_INFO("SeqOperatorTest: Coordinator started successfully");
 
-    NES_INFO("AndOperatorTest: Start worker 1");
+    NES_INFO("SeqOperatorTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
@@ -124,8 +124,8 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(9);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream1");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("Win1");
     PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
 
@@ -133,8 +133,8 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
 
     srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
     srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(9);
-    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
     srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("Win2");
     PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
 
@@ -293,13 +293,13 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 
-    bool retStopWrk1 = wrk1->stop(false);
+    bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop(false);
+    bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator(false);
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -432,13 +432,13 @@ TEST_F(SeqOperatorTest, testPatternSeqWithSlidingWindow) {
 
     EXPECT_EQ(removeRandomKey(content),expectedContent);
 
-    bool retStopWrk1 = wrk1->stop(false);
+    bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop(false);
+    bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator(false);
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
 }
 
