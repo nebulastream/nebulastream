@@ -415,7 +415,7 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
 
     NES_DEBUG("QueryManager: Check if query is registered");
     auto foundQuerySubPlanIds = queryIdToQuerySubPlanIds.find(queryId);
-    NES_DEBUG("Founded members = " << foundQuerySubPlanIds->second.size());
+    NES_DEBUG("Found members = " << foundQuerySubPlanIds->second.size());
     if (foundQuerySubPlanIds == queryIdToQuerySubPlanIds.end()) {
         NES_ERROR("QueryManager::getQueryStatistics: query does not exists " << queryId);
         return queryStatistics;
