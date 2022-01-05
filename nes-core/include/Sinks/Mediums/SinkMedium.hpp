@@ -83,13 +83,6 @@ class SinkMedium : public Runtime::Reconfigurable {
     virtual std::string toString() const = 0;
 
     /**
-     *@brief virtual function to get global Operator Id of a SinkMedium
-     * @Note this function is only overwritten by the NetworkSink. In all other cases it returns 0
-     * @return the global operator id of the sink medium
-     */
-    virtual uint64_t getOperatorId();
-
-    /**
    * @brief method to return the current schema of the sink
    * @return schema description of the sink
    */
