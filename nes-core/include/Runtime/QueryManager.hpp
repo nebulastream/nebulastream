@@ -50,10 +50,6 @@
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
 
-#undef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-#undef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-#define NES_USE_ONE_QUEUE_PER_QUERY
-
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
@@ -323,7 +319,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::vector<uint64_t> queuePinListMapping;
     std::vector<folly::MPMCQueue<Task>> taskQueues;
 #else
-    assert(0);
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;
     std::condition_variable cv;

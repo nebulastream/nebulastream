@@ -108,8 +108,9 @@ createLambdaSource(const SchemaPtr& schema,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
                    GatheringMode::Value gatheringMode,
-                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                   uint64_t sourceAffinity);
+                   uint64_t sourceAffinity,
+                   uint64_t taskQueueId,
+                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create an empty zmq source
@@ -205,6 +206,8 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  OperatorId operatorId,
                                  size_t numSourceLocalBuffers,
                                  GatheringMode::Value gatheringMode,
+                                 uint64_t sourceAffinity,
+                                 uint64_t taskQueueId,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -230,8 +233,9 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     size_t numSourceLocalBuffers,
                                     GatheringMode::Value gatheringMode,
                                     SourceMode::Value sourceMode,
-                                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                                    uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
+                                    uint64_t sourceAffinity,
+                                    uint64_t taskQueueId,
+                                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
  * @brief function to create a network source

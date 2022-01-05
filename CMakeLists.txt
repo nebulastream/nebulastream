@@ -116,9 +116,11 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
 endif ()
 
 if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
+    if(NOT NES_USE_ONE_QUEUE_PER_QUERY)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_NUMA_NODE=1")
     if (CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
         set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
+    endif ()
     endif ()
 endif ()
 
@@ -254,7 +256,7 @@ endif ()
 find_package(NUMA)
 if (NUMA_FOUND)
     set(LIBRARIES ${LIBRARIES} -lnuma)
-    add_compile_definitions(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#    add_compile_definitions(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     message(STATUS "Using Numa")
 endif ()
 
@@ -436,7 +438,7 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 # LLVM
-find_package(LLVM 13.0.0 CONFIG REQUIRED)
+find_package(LLVM 12.0.0 CONFIG REQUIRED)
 if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")

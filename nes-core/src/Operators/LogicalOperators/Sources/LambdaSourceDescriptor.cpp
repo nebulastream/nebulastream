@@ -25,10 +25,11 @@ LambdaSourceDescriptor::LambdaSourceDescriptor(
     uint64_t numBuffersToProduce,
     uint64_t gatheringValue,
     GatheringMode::Value gatheringMode,
-    uint64_t sourceAffinity)
+    uint64_t sourceAffinity,
+    uint64_t taskQueueId)
     : SourceDescriptor(std::move(schema)), generationFunction(std::move(generationFunction)),
       numBuffersToProcess(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode)
-, sourceAffinity(sourceAffinity){}
+, sourceAffinity(sourceAffinity), taskQueueId(taskQueueId){}
 
 std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     const SchemaPtr& schema,
@@ -36,14 +37,16 @@ std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     GatheringMode::Value gatheringMode,
-    uint64_t sourceAffinity) {
+    uint64_t sourceAffinity,
+    uint64_t taskQueueId) {
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<LambdaSourceDescriptor>(schema,
                                                     std::move(generationFunction),
                                                     numBuffersToProcess,
                                                     gatheringValue,
                                                     gatheringMode,
-                                                    sourceAffinity);
+                                                    sourceAffinity,
+                                                    taskQueueId);
 }
 std::string LambdaSourceDescriptor::toString() { return "LambdaSourceDescriptor"; }
 
@@ -77,4 +80,6 @@ SourceDescriptorPtr LambdaSourceDescriptor::copy() {
 }
 
 uint64_t LambdaSourceDescriptor::getSourceAffinity() const {return  sourceAffinity; }
+
+uint64_t LambdaSourceDescriptor::getTaskQueueId() const { return taskQueueId; }
 }// namespace NES

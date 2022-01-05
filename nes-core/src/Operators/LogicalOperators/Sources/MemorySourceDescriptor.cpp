@@ -25,9 +25,12 @@ MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema,
                                                size_t memoryAreaSize,
                                                uint64_t numBuffersToProcess,
                                                uint64_t gatheringValue,
-                                               GatheringMode::Value gatheringMode)
+                                               GatheringMode::Value gatheringMode,
+                                               uint64_t sourceAffinity,
+                                               uint64_t taskQueueId)
     : SourceDescriptor(std::move(schema)), memoryArea(std::move(memoryArea)), memoryAreaSize(memoryAreaSize),
-      numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode) {
+      numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
+      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId){
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
 }
 
@@ -36,7 +39,9 @@ std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(const Sch
                                                                        size_t memoryAreaSize,
                                                                        uint64_t numBuffersToProcess,
                                                                        uint64_t gatheringValue,
-                                                                       GatheringMode::Value gatheringMode) {
+                                                                       GatheringMode::Value gatheringMode,
+                                                                       uint64_t sourceAffinity,
+                                                                       uint64_t taskQueueId){
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<MemorySourceDescriptor>(schema,
@@ -44,7 +49,9 @@ std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(const Sch
                                                     memoryAreaSize,
                                                     numBuffersToProcess,
                                                     gatheringValue,
-                                                    gatheringMode);
+                                                    gatheringMode,
+                                                    sourceAffinity,
+                                                    taskQueueId);
 }
 std::string MemorySourceDescriptor::toString() { return "MemorySourceDescriptor"; }
 
@@ -65,6 +72,8 @@ uint64_t MemorySourceDescriptor::getNumBuffersToProcess() const { return numBuff
 GatheringMode::Value MemorySourceDescriptor::getGatheringMode() const { return gatheringMode; }
 
 uint64_t MemorySourceDescriptor::getGatheringValue() const { return gatheringValue; }
+uint64_t MemorySourceDescriptor::getSourceAffinity() const { return sourceAffinity; }
+uint64_t MemorySourceDescriptor::getTaskQueueId() const { return taskQueueId; }
 
 SourceDescriptorPtr MemorySourceDescriptor::copy() {
     auto copy = MemorySourceDescriptor::create(schema->copy(),

@@ -322,8 +322,8 @@ class TestUtils {
      * @param queryCatalog: the catalog containig the queries in the system
      * @return true if successful
      */
-    static bool checkStoppedOrTimeout(QueryId queryId, const QueryCatalogPtr& queryCatalog) {
-        auto timeoutInSec = std::chrono::seconds(timeout);
+    static bool checkStoppedOrTimeout(QueryId queryId, const QueryCatalogPtr& queryCatalog, uint64_t tout = timeout) {
+        auto timeoutInSec = std::chrono::seconds(tout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkStoppedOrTimeout: check query status");
