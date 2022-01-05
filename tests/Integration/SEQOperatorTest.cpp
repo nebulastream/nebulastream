@@ -144,38 +144,42 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     remove(outputFilePath.c_str());
 
     NES_INFO("SeqOperatorTest: Submit seqWith pattern");
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     std::string query =
         R"(Query::from("Win1").seqWith(Query::from("Win2"))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+
+    std::ifstream ifs(outputFilePath.c_str());
+    EXPECT_TRUE(ifs.good());
 
     NES_INFO("SeqOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
-
-    bool retStopWrk1 = wrk1->stop(false);
+    NES_DEBUG("SeqOperatorTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop(false);
+    NES_DEBUG("SeqOperatorTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator(false);
+    NES_DEBUG("SeqOperatorTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
+    NES_DEBUG("SeqOperatorTest: Test finished");
 }
 
 /* 2.Test
