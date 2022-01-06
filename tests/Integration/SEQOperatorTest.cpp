@@ -548,13 +548,13 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 
-    bool retStopWrk1 = wrk1->stop(false);
+    bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop(false);
+    bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator(false);
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
 }
 
