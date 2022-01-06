@@ -123,7 +123,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
 
     //register physical stream
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(5);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream1");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("Win1");
@@ -132,7 +132,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     wrk1->registerPhysicalStream(windowStream);
 
     srcConf1->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window2.csv");
-    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(5);
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
     srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("Win2");
@@ -144,21 +144,21 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     remove(outputFilePath.c_str());
 
     NES_INFO("SeqOperatorTest: Submit seqWith pattern");
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     std::string query =
         R"(Query::from("Win1").seqWith(Query::from("Win2"))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     std::ifstream ifs(outputFilePath.c_str());
@@ -168,18 +168,14 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_DEBUG("SeqOperatorTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_DEBUG("SeqOperatorTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    NES_DEBUG("SeqOperatorTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_DEBUG("SeqOperatorTest: Test finished");
 }
 
 /* 2.Test
