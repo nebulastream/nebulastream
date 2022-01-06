@@ -18,7 +18,7 @@
 #include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Configurations/Sources/KafkaSourceConfig.hpp>
 #include <Configurations/Sources/MQTTSourceConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
@@ -203,7 +203,8 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
 
     commandLineParams.insert(std::pair<string, string>("--sourceConfigPath",  std::string(TEST_DATA_DIRECTORY) +"emptySource.yaml"));
 
-    SourceConfigPtr sourceConfigPtr = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
+    SourceConfigPtr sourceConfigPtr =
+        PhysicalStreamConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 
     EXPECT_EQ(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
@@ -216,7 +217,8 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
 
     commandLineParams.insert_or_assign("--sourceConfigPath", std::string(TEST_DATA_DIRECTORY) + "emptyMQTTSource.yaml");
 
-    SourceConfigPtr sourceConfigPtr1 = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
+    SourceConfigPtr sourceConfigPtr1 =
+        PhysicalStreamConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 
     EXPECT_EQ(sourceConfigPtr1->getSourceType()->getValue(), sourceConfigPtr1->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr1->getSourceFrequency()->getValue(), sourceConfigPtr1->getSourceFrequency()->getDefaultValue());
@@ -259,7 +261,8 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                       string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
     }
 
-    SourceConfigPtr sourceConfigPtr = SourceConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
+    SourceConfigPtr sourceConfigPtr =
+        PhysicalStreamConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
 
     EXPECT_NE(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
     EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
@@ -288,7 +291,8 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                       string(argv1[i]).substr(string(argv1[i]).find('=') + 1, string(argv1[i]).length() - 1)));
     }
 
-    SourceConfigPtr sourceConfigPtr1 = SourceConfigFactory::createSourceConfig(commandLineParams1, commandLineParams1.size());
+    SourceConfigPtr sourceConfigPtr1 =
+        PhysicalStreamConfigFactory::createSourceConfig(commandLineParams1, commandLineParams1.size());
 
     EXPECT_EQ(sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceType()->getValue(),
               sourceConfigPtr1->as<KafkaSourceConfig>()->getSourceType()->getDefaultValue());

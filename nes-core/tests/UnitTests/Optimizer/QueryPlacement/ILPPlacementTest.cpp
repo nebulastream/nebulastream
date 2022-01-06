@@ -20,7 +20,7 @@
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -113,7 +113,7 @@ class ILPPlacementTest : public testing::Test {
         streamCatalogForILP = std::make_shared<StreamCatalog>(queryParsingService);
         streamCatalogForILP->addLogicalStream(streamName, schema);
 
-        SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
+        SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
         sourceConfig->setSourceFrequency(0);
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setPhysicalStreamName("test3");

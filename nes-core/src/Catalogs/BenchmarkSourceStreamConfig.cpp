@@ -15,7 +15,7 @@
 */
 
 #include <Catalogs/BenchmarkSourceStreamConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
@@ -42,7 +42,7 @@ BenchmarkSourceStreamConfig::BenchmarkSourceStreamConfig(std::string sourceType,
                                                          const std::string& gatheringMode,
                                                          const std::string& sourceMode,
                                                          uint64_t sourceAffinity)
-    : PhysicalStreamConfig(SourceConfigFactory::createSourceConfig()), sourceType(std::move(sourceType)),
+    : PhysicalStreamConfig(PhysicalStreamConfigFactory::createSourceConfig()), sourceType(std::move(sourceType)),
       memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize) {
     // nop
     this->physicalStreamName = std::move(physicalStreamName);

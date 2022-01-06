@@ -19,7 +19,7 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -71,12 +71,12 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
         streamCatalog->addLogicalStream("bike", schema);
         streamCatalog->addLogicalStream("truck", schema);
 
-        SourceConfigPtr sourceConfigCar = SourceConfigFactory::createSourceConfig();
-        sourceConfigCar->setSourceFrequency(0);
-        sourceConfigCar->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfigCar->setPhysicalStreamName("testCar");
-        sourceConfigCar->setLogicalStreamName("car");
-        PhysicalStreamConfigPtr phyConfCar = PhysicalStreamConfig::create(sourceConfigCar);
+        SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
+        sourceConfig->setSourceFrequency(0);
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->setPhysicalStreamName("test2");
+        sourceConfig->setLogicalStreamName("car");
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
