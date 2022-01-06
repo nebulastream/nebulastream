@@ -281,13 +281,13 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
 
-    bool retStopWrk1 = wrk1->stop(false);
+    bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop(false);
+    bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator(false);
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -398,13 +398,13 @@ TEST_F(AndOperatorTest, testPatternAndWithSlidingWindow) {
 
     EXPECT_EQ(removeRandomKey(content),expectedContent);
 
-    bool retStopWrk1 = wrk1->stop(false);
+    bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop(false);
+    bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator(false);
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -689,7 +689,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     EXPECT_EQ(removeRandomKey(content), expectedContent);
     //    NES_INFO("SimplePatternTest: Remove query");
 
-    bool retStopWrk1 = wrk1->stop(false);
+    bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
     //    bool retStopWrk2 = wrk2->stop(false);
@@ -698,7 +698,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     //    bool retStopWrk3 = wrk3->stop(false);
     //    EXPECT_TRUE(retStopWrk3);
 
-    bool retStopCord = crd->stopCoordinator(false);
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
 }
 
