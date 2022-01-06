@@ -19,6 +19,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -501,8 +502,9 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t sinkOperator
     auto sinks = qep->getSinks();
     //make sure that query sub plan has network sink with specified id
     auto it = std::find_if(sinks.begin(), sinks.end(),[sinkOperatorId](const DataSinkPtr& dataSink){
-                    return dataSink->getOperatorId() == sinkOperatorId && dataSink->getSinkMediumType() == NETWORK_SINK;
-            });
+        Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
+        return networkSink && networkSink->getOperatorId() == sinkOperatorId;
+    });
     if(it != sinks.end()){
         auto networkSink = *it;
         //below code will be added in #2395
@@ -524,7 +526,8 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string &newHos
     auto networkSinks = qep->getSinks();
     //make sure that query sub plan has network sink with specified id
     auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[sinkOperatorId](const DataSinkPtr& dataSink){
-        return dataSink->getOperatorId() == sinkOperatorId && dataSink->getSinkMediumType() == NETWORK_SINK;
+        Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
+        return networkSink && networkSink->getOperatorId() == sinkOperatorId;
     });
     if(it != networkSinks.end()){
         auto networkSink = *it;
