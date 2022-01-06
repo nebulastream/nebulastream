@@ -314,15 +314,6 @@ TEST_F(AndOperatorTest, testPatternAndWithSlidingWindow) {
     EXPECT_TRUE(retStart1);
     NES_INFO("AndOperatorTest: Worker1 started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-   NES_INFO("AndOperatorTest: Worker2 started successfully");
-
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
@@ -331,7 +322,7 @@ TEST_F(AndOperatorTest, testPatternAndWithSlidingWindow) {
     out << qnv;
     out.close();
     wrk1->registerLogicalStream("QnV1", testSchemaFileName);
-    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
+    wrk1->registerLogicalStream("QnV2", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
@@ -351,7 +342,7 @@ TEST_F(AndOperatorTest, testPatternAndWithSlidingWindow) {
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
     PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf1);
-    wrk2->registerPhysicalStream(conf73);
+    wrk1 ->registerPhysicalStream(conf73);
 
     std::string outputFilePath = "testPatternAndSliding.out";
     remove(outputFilePath.c_str());
@@ -370,7 +361,6 @@ TEST_F(AndOperatorTest, testPatternAndWithSlidingWindow) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("AndOperatorTest: Remove query");
@@ -400,9 +390,6 @@ TEST_F(AndOperatorTest, testPatternAndWithSlidingWindow) {
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
 
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
