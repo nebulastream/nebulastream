@@ -155,7 +155,8 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
