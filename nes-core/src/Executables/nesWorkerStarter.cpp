@@ -26,7 +26,7 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Configurations/Worker/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
 
-    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig(commandLineParams, argc);
+    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig(commandLineParams, argc);
 
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
 

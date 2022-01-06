@@ -20,7 +20,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -62,7 +62,7 @@ void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");

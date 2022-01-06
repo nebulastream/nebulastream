@@ -22,7 +22,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfig.hpp>
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Configurations/Sources/SourceTypeConfig.hpp>
 #include <Configurations/Worker/WorkerConfig.hpp>
 
 namespace NES {

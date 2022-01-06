@@ -19,7 +19,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -64,7 +64,7 @@ class QueryTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
 
-        sourceConfig = SourceConfigFactory::createSourceConfig();
+        sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setNumberOfBuffersToProduce(3);
         sourceConfig->setPhysicalStreamName("test2");

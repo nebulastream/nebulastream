@@ -21,7 +21,7 @@
 #include <Configurations/Sources/MQTTSourceConfig.hpp>
 #include <Configurations/Sources/SenseSourceConfig.hpp>
 #include <Configurations/Sources/MaterializedViewSourceConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>

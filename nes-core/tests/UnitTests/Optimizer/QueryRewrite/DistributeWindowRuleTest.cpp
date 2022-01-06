@@ -20,7 +20,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -67,7 +67,7 @@ void setupSensorNodeAndStreamCatalogTwoNodes(const StreamCatalogPtr& streamCatal
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");
@@ -93,7 +93,7 @@ void setupSensorNodeAndStreamCatalogFiveNodes(const StreamCatalogPtr& streamCata
 
     std::cout << "topo=" << topology->toString() << std::endl;
 
-    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig();
+    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test2");

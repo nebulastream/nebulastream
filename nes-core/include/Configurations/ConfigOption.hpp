@@ -18,7 +18,6 @@
 #define NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTION_HPP_
 
 #include <Util/Logger.hpp>
-#include <Util/yaml/Yaml.hpp>
 #include <any>
 #include <sstream>
 #include <string>

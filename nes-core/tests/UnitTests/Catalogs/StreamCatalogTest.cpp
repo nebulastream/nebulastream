@@ -20,7 +20,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <iostream>
 
@@ -51,7 +51,7 @@ class StreamCatalogTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void SetUp() override {
-        sourceConfig = SourceConfigFactory::createSourceConfig();
+        sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
