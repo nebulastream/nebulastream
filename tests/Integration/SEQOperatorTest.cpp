@@ -323,15 +323,6 @@ TEST_F(SeqOperatorTest, testPatternSeqWithSlidingWindow) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
-    NES_INFO("SeqOperatorTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-   NES_INFO("SeqOperatorTest: Worker2 started successfully");
-
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
@@ -340,7 +331,7 @@ TEST_F(SeqOperatorTest, testPatternSeqWithSlidingWindow) {
     out << qnv;
     out.close();
     wrk1->registerLogicalStream("QnV1", testSchemaFileName);
-    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
+    wrk1->registerLogicalStream("QnV2", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
@@ -360,7 +351,7 @@ TEST_F(SeqOperatorTest, testPatternSeqWithSlidingWindow) {
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
     PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf1);
-    wrk2->registerPhysicalStream(conf73);
+    wrk1->registerPhysicalStream(conf73);
 
     std::string outputFilePath = "testPatternSeqSliding.out";
     remove(outputFilePath.c_str());
@@ -379,7 +370,6 @@ TEST_F(SeqOperatorTest, testPatternSeqWithSlidingWindow) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     NES_INFO("AndOperatorTest: Remove query");
@@ -409,31 +399,28 @@ TEST_F(SeqOperatorTest, testPatternSeqWithSlidingWindow) {
         "+----------------------------------------------------++----------------------------------------------------+\n"
         "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1543622520000|1543623120000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622400000|1543623000000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
-        "|1543622520000|1543623120000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
         "|1543622400000|1543623000000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
-        "|1543622520000|1543623120000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
         "|1543622400000|1543623000000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
         "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1543622640000|1543623240000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
-        "|1543622760000|1543623360000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
-        "|1543622640000|1543623240000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
+        "|1543622520000|1543623120000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
+        "|1543622520000|1543623120000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
+        "|1543622520000|1543623120000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
         "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
+        "|1543622640000|1543623240000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
         "|1543622880000|1543623480000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
+        "|1543622760000|1543623360000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
+        "|1543622640000|1543623240000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
         "+----------------------------------------------------+";
 
     EXPECT_EQ(removeRandomKey(content),expectedContent);
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
 
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
