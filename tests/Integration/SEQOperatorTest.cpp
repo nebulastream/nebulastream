@@ -304,7 +304,7 @@ TEST_F(SeqOperatorTest, testPatternOneSeq) {
  * Here, we test if we can use seq operator with sliding window (5 Minutes, 1 Minute) for patterns and create complex events with it
  * TODO: output changes
  */
-TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
+TEST_F(SeqOperatorTest, testPatternSeqWithSlidingWindow) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
