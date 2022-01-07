@@ -31,7 +31,13 @@ install(TARGETS nes_client
         COMPONENT nesLibrary
         DESTINATION lib)
 
-add_subdirectory(tests)
+if (NES_ENABLES_TESTS)
+    # Add tests with command
+    add_subdirectory(tests)
+    message(STATUS "Tests are enabled")
+else ()
+    message(STATUS "Tests are disabled")
+endif ()
 
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})

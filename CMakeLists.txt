@@ -550,7 +550,6 @@ set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} libgtest libgtest_main libgmo
 if (NES_ENABLES_TESTS)
     # Add tests with command
     enable_testing()
-    add_subdirectory(tests)
     message(STATUS "Tests are enabled")
 else ()
     message(STATUS "Tests are disabled")

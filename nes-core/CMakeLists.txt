@@ -72,5 +72,10 @@ target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)
     target_link_libraries(nesWorker PRIVATE ${GRPC_LIBRARIES})
 endif ()
-
-add_subdirectory(tests)
+if (NES_ENABLES_TESTS)
+    # Add tests with command
+    add_subdirectory(tests)
+    message(STATUS "Tests are enabled")
+else ()
+    message(STATUS "Tests are disabled")
+endif ()
