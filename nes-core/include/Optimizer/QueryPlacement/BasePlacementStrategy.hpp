@@ -103,6 +103,11 @@ class BasePlacementStrategy {
      */
     virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) = 0;
 
+    /**
+     * @brief Modifies the execution graph of the query based on the newly added operators
+     * @param queryPlan: the query plan
+     * @return true if successful
+     */
     virtual bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) = 0;
 
   protected:
@@ -112,6 +117,13 @@ class BasePlacementStrategy {
      */
     void mapPinnedOperatorToTopologyNodes(const QueryPlanPtr& queryPlan);
 
+    /**
+     * @brief Assign sink operator to a node accessible to all sources
+     * @param queryId : the id of the query.
+     * @param sourceOperators: the source operators in the query
+     * @param mapOfSourceToTopologyNodes: map of source stream name to topology nodes
+     * @param mergedGraphSourceNodes: start nodes of graph containing merged source graphs
+     */
     void pinSinkOperator(QueryId queryId,
                          const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators,
                          std::map<std::string, std::vector<TopologyNodePtr>>& mapOfSourceToTopologyNodes,
