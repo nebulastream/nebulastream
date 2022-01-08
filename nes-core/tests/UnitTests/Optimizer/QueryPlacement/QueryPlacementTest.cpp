@@ -76,7 +76,7 @@ class QueryPlacementTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTest test class." << std::endl; }
 
-    void setupTopologyAndStreamCatalog(std::vector<uint16_t> resources = {4, 4, 4}) {
+    void setupTopologyAndStreamCatalog(std::vector<uint16_t> resources) {
 
         topology = Topology::create();
 
@@ -133,7 +133,7 @@ class QueryPlacementTest : public testing::Test {
 /* Test query placement with bottom up strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 
-    setupTopologyAndStreamCatalog();
+    setupTopologyAndStreamCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -194,7 +194,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 /* Test query placement with top down strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
 
-    setupTopologyAndStreamCatalog();
+    setupTopologyAndStreamCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -256,7 +256,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
 /* Test query placement of query with multiple sinks with bottom up strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
 
-    setupTopologyAndStreamCatalog();
+    setupTopologyAndStreamCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -338,7 +338,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
 /* Test query placement of query with multiple sinks and multiple source operators with bottom up strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperatorsWithBottomUpStrategy) {
 
-    setupTopologyAndStreamCatalog();
+    setupTopologyAndStreamCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -417,7 +417,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 /* Test query placement of query with multiple sinks with TopDown strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownStrategy) {
 
-    setupTopologyAndStreamCatalog();
+    setupTopologyAndStreamCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -498,7 +498,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
 /* Test query placement of query with multiple sinks with TopDown strategy  */
 TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
 
-    setupTopologyAndStreamCatalog();
+    setupTopologyAndStreamCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -730,7 +730,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
 /* Test query placement of query with multiple sinks and multiple source operators with Top Down strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperatorsWithTopDownStrategy) {
 
-    setupTopologyAndStreamCatalog();
+    setupTopologyAndStreamCatalog({4, 4, 4});
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
