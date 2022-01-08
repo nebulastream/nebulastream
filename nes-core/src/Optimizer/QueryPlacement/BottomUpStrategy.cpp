@@ -99,6 +99,7 @@ bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& qu
             << queryId);
         NES_INFO("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: And query plan \n" << queryPlan->toString());
         auto nodesWithQueryDeployed = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+        // Reconstruct internal structures based on the global execution plan
         for (const auto& nodeWithQueryDeployed : nodesWithQueryDeployed) {
             for (const auto& querySubPlan : nodeWithQueryDeployed->getQuerySubPlans(queryId)) {
                 auto nodes = QueryPlanIterator(querySubPlan).snapshot();
