@@ -295,7 +295,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
         NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Get execution node where parent operator is placed");
         ExecutionNodePtr parentExecutionNode = operatorToExecutionNodeMap[parentOperator->getId()];
         bool allChildrenPlaced = true;
-        if (executionNode->getId() != parentExecutionNode->getId() && !operatorAndParentConnected(operatorNode, parentOperator)) {
+        if (executionNode->getId() != parentExecutionNode->getId() && !isSourceAndDestinationConnected(operatorNode, parentOperator)) {
 
             NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Parent and its child operator are placed on different "
                       "physical node.");
@@ -588,7 +588,7 @@ bool BasePlacementStrategy::assignMappingToTopology(const NES::TopologyPtr topol
     return true;
 }
 
-bool BasePlacementStrategy::operatorAndParentConnected(const OperatorNodePtr& source, const OperatorNodePtr& destination) {
+bool BasePlacementStrategy::isSourceAndDestinationConnected(const OperatorNodePtr& source, const OperatorNodePtr& destination) {
     auto sourceNode = operatorToExecutionNodeMap[source->getId()];
     auto targetNode = operatorToExecutionNodeMap[destination->getId()];
     auto sourceSubPlan = operatorToSubPlan[source->getId()];
