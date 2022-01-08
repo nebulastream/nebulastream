@@ -199,7 +199,14 @@ class BasePlacementStrategy {
      * @param executionNode
      */
     void addExecutionNodeAsRoot(ExecutionNodePtr& executionNode);
-    bool operatorAndParentConnected(const OperatorNodePtr& source, const OperatorNodePtr& destination);
+
+    /**
+     * @brief Validates if the source operator and destination operator are connected directly or via network sinks
+     * @param source : The source operator
+     * @param destination : The destination operator
+     * @return true if the source and destination are connected otherwise false
+     */
+    bool isSourceAndDestinationConnected(const OperatorNodePtr& source, const OperatorNodePtr& destination);
 };
 }// namespace NES::Optimizer
 #endif  // NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
