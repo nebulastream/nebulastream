@@ -112,7 +112,7 @@ class TestUtils {
      */
     [[nodiscard]] static Util::Subprocess startWorker(std::initializer_list<std::string> flags) {
         NES_INFO("Start worker");
-        return {std::string(PATH_TO_BINARY_DIR) + "/nesWorker", flags};
+        return {std::string(PATH_TO_BINARY_DIR) + "/nes-core/nesWorker", flags};
     }
 
     /**
