@@ -23,7 +23,7 @@ namespace NES::QueryCompilation {
 FileBuilder FileBuilder::create(const std::string&, const std::unordered_set<std::string>& headers) {
     FileBuilder builder;
     if(!headers.empty()) {
-            for (auto itr : headers) {
+            for (const auto& itr : headers) {
                 builder.declations << itr << "\n";
             }
     }
