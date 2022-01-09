@@ -20,6 +20,7 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <unordered_set>
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
@@ -54,10 +55,19 @@ class GeneratableOperator : public UnaryOperatorNode {
      */
     virtual void generateClose(CodeGeneratorPtr codegen, PipelineContextPtr context);
 
+    /**
+     *
+     * @return headers required by GeneratableOperator
+     */
+    virtual std::unordered_set<std::string> getHeaders() const;
+
     ~GeneratableOperator() noexcept override = default;
 
   protected:
     GeneratableOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
+
+  private:
+    std::unordered_set<std::string> headers;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
