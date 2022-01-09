@@ -20,13 +20,16 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
 
 namespace NES::QueryCompilation {
-FileBuilder FileBuilder::create(const std::string&, const std::unordered_set<std::string>& headers) {
+FileBuilder FileBuilder::create(const std::string&, [[maybe_unused]] const std::unordered_set<std::string>& headers) {
     FileBuilder builder;
+
+#ifdef NES_ONLY_REQUIRED_HEADERS
     if(!headers.empty()) {
             for (const auto& itr : headers) {
                 builder.declations << itr << "\n";
             }
     }
+#else
     builder.declations << "#include <Common/ExecutableType/Array.hpp>\n"
                           "#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>\n"
                           "#include <cstdint>\n"
@@ -58,7 +61,9 @@ FileBuilder FileBuilder::create(const std::string&, const std::unordered_set<std
                           "#include <Windowing/WindowAggregations/ExecutableMedianAggregation.hpp>\n"
                           "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>\n"
                           "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>\n"
-                          "using namespace NES::QueryCompilation;"
+        ;
+#endif
+    builder.declations << "using namespace NES::QueryCompilation;"
                        << std::endl;
 
     return builder;
