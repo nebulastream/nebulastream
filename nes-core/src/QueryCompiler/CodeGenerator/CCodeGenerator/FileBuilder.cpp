@@ -23,7 +23,7 @@ namespace NES::QueryCompilation {
 FileBuilder FileBuilder::create(const std::string&, [[maybe_unused]] const std::unordered_set<std::string>& headers) {
     FileBuilder builder;
 
-#ifdef NES_ONLY_REQUIRED_HEADERS
+#ifndef NES_ONLY_REQUIRED_HEADERS
     if(!headers.empty()) {
             for (const auto& itr : headers) {
                 builder.declarations << itr << "\n";
@@ -63,7 +63,12 @@ FileBuilder FileBuilder::create(const std::string&, [[maybe_unused]] const std::
                           "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>\n"
         ;
 #endif
-    builder.declarations << "using namespace NES::QueryCompilation;"
+    builder.declarations << "#include <Runtime/TupleBuffer.hpp>\n"
+                            "#include <Runtime/ExecutionResult.hpp>\n"
+                            "#include <Runtime/WorkerContext.hpp>\n"
+                            "#include <Runtime/Execution/PipelineExecutionContext.hpp>\n"
+                            "#include <Runtime/Execution/ExecutablePipelineStage.hpp>\n"
+                            "using namespace NES::QueryCompilation;"
                        << std::endl;
 
     return builder;
