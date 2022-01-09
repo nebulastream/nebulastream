@@ -28,4 +28,6 @@ GeneratableOperator::GeneratableOperator(OperatorId id, SchemaPtr inputSchema, S
 void GeneratableOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
 
 void GeneratableOperator::generateClose(CodeGeneratorPtr, PipelineContextPtr) {}
+
+std::unordered_set<std::string> GeneratableOperator::getHeaders() const { return {}; }
 }// namespace NES::QueryCompilation::GeneratableOperators

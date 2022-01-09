@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_QUERY_COMPILER_PIPELINE_CONTEXT_HPP_
 #define NES_INCLUDE_QUERY_COMPILER_PIPELINE_CONTEXT_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <unordered_set>
 
 namespace NES {
 namespace QueryCompilation {
@@ -78,12 +79,12 @@ class PipelineContext {
     /**
      * @brief add vector of headers to requiredHeaders
      */
-    void addHeaders(std::vector<std::string> headers);
+    void addHeaders(std::unordered_set<std::string> headers);
 
     /**
-     * @brief gets required headers for this pipeline contex
+     * @brief gets required headers for this pipeline context
      */
-     std::vector<std::string> getRequiredHeaders();
+     std::unordered_set<std::string> getRequiredHeaders();
 
   private:
     RecordHandlerPtr recordHandler;
@@ -92,7 +93,7 @@ class PipelineContext {
     std::vector<BlockScopeStatementPtr> startScopes;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
     bool tuplePassesFiltersIsDeclared = false;
-    std::vector<std::string> requiredHeaders;
+    std::unordered_set<std::string> requiredHeaders;
 };
 }// namespace QueryCompilation
 }// namespace NES

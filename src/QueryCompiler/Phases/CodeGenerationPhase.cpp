@@ -100,4 +100,15 @@ void CodeGenerationPhase::generate(const OperatorNodePtr& rootOperator,
     }
 }
 
+void CodeGenerationPhase::addHeadersToPipelineContex(const OperatorNodePtr& rootOperator, PipelineContextPtr& context) {
+    auto iterator = DepthFirstNodeIterator(rootOperator);
+    for (auto&& node : iterator) {
+        if (!node->instanceOf<GeneratableOperators::GeneratableOperator>()) {
+            throw QueryCompilationException("Operator should be of type GeneratableOperator but it is a " + node->toString());
+        }
+        auto generatableOperator = node->as<GeneratableOperators::GeneratableOperator>();
+        context->addHeaders(generatableOperator->getHeaders());
+    }
+}
+
 }// namespace NES::QueryCompilation
