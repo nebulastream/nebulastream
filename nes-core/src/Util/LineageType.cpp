@@ -31,4 +31,14 @@ LineageType stringToLineageTypeMap(const std::string lineageMode) {
         return LineageType::INVALID;
     }
 }
+std::string toString(const LineageType lineageMode) {
+    switch (lineageMode) {
+        case LineageType::NONE: return "NONE";
+        case LineageType::IN_MEMORY: return "IN_MEMORY";
+        case LineageType::PERSISTENT: return "PERSISTENT";
+        case LineageType::REMOTE: return "REMOTE";
+        case LineageType::INVALID: return "INVALID";
+    }
+}
+
 }// namespace NES

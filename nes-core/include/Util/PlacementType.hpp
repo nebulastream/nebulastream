@@ -14,23 +14,18 @@
     limitations under the License.
 */
 
-#ifndef NES_FAULTTOLERANCETYPE_H
-#define NES_FAULTTOLERANCETYPE_H
+#ifndef NES_PLACEMENTYPE_H
+#define NES_PLACEMENTYPE_H
+#include <cinttypes>
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
+
 namespace NES {
-enum class FaultToleranceType : int8_t {
-    NONE = 0,         ///No fault-tolerance
-    AT_MOST_ONCE = 1, ///At-most-once guarantee: some tuple buffers might be dropped
-    AT_LEAST_ONCE = 2,///At-least-once guarantee: some tuple buffers might be processed twice
-    EXACTLY_ONCE = 3, ///Exactly-once guarantee: all tuple buffers are processed once
-    INVALID = 4
-};
+enum class PlacementType : std::int8_t { TopDown = 0, BottomUp = 1 };
 
-std::string toString(const FaultToleranceType faultToleranceMode);
+std::string toString(const PlacementType placementType);
 
-FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranceMode);
+
 }// namespace NES
-
-#endif//NES_FAULTTOLERANCETYPE_H
+#endif//NES_PLACEMENTYPE_H

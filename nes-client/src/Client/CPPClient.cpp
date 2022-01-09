@@ -14,57 +14,77 @@
     limitations under the License.
 */
 
-#include <API/Query.hpp>
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <SerializableQueryPlan.pb.h>
-#include <Util/Logger.hpp>
-#include <CPPClient.hpp>
+#include "API/Query.hpp"
+#include "GRPC/Serialization/QueryPlanSerializationUtil.hpp"
+#include "SerializableQueryPlan.pb.h"
+#include "Util/Logger.hpp"
+#include <Client/CPPClient.hpp>
+#include <Client/ClientException.hpp>
 
 #include <cpprest/http_client.h>
 
 namespace NES {
 
-CPPClient::CPPClient(const std::string& coordinatorHost, const std::string& coordinatorRESTPort)
+CPPClient::CPPClient(const std::string& coordinatorHost, uint16_t coordinatorRESTPort)
     : coordinatorHost(coordinatorHost), coordinatorRESTPort(coordinatorRESTPort) {
     NES::setupLogging("nesClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+
+    if (coordinatorHost.empty()) {
+        throw ClientException("host name for coordinator is empty");
+    }
 }
 
-int64_t CPPClient::submitQuery(const Query& query, const std::string& placement) {
+int64_t CPPClient::submitQuery(const Query& query, const QueryConfig config) {
     auto queryPlan = query.getQueryPlan();
     SubmitQueryRequest request;
-    auto serializedQueryPlan = request.mutable_queryplan();
+    auto* serializedQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan, true);
 
     auto& context = *request.mutable_context();
-    auto placement_buffer = google::protobuf::Any();
-    placement_buffer.set_value(placement);
-    context["placement"] = placement_buffer;
+
+    auto placement = google::protobuf::Any();
+    placement.set_value(toString(config.getPlacementType()));
+    context["placement"] = placement;
+
+    auto linageType = google::protobuf::Any();
+    linageType.set_value(toString(config.getLineageType()));
+    context["linage"] = linageType;
+
+    auto faultToleranceType = google::protobuf::Any();
+    faultToleranceType.set_value(toString(config.getFaultToleranceType()));
+    context["faultTolerance"] = faultToleranceType;
 
     std::string msg = request.SerializeAsString();
 
-    web::json::value json_return;
+    web::json::value jsonResult;
     web::http::client::http_client_config cfg;
-    cfg.set_timeout(std::chrono::seconds(20));
-    web::http::client::http_client client("http://" + coordinatorHost + ":" + coordinatorRESTPort + "/v1/nes/", cfg);
+    cfg.set_timeout(requestTimeout);
+    web::http::client::http_client client(getHostName(), cfg);
     client.request(web::http::methods::POST, "query/execute-query-ex", msg)
         .then([](const web::http::http_response& response) {
             return response.extract_json();
         })
-        .then([&json_return](const pplx::task<web::json::value>& task) {
-            NES_INFO("CPPClient::submitQuery: recieved response");
+        .then([&jsonResult](const pplx::task<web::json::value>& task) {
+            NES_INFO("CPPClient::submitQuery: received response");
             try {
-                json_return = task.get();
+                jsonResult = task.get();
             } catch (const web::http::http_exception& e) {
                 NES_ERROR("CPPClient::submitQuery: error while setting return: " << e.what());
+                throw ClientException("CPPClient::submitQuery: error while setting return.");
             }
         })
         .wait();
     int64_t queryId = -1;
     try {
-        queryId = json_return.at("queryId").as_integer();
+        queryId = jsonResult.at("queryId").as_integer();
     } catch (const web::json::json_exception& e) {
         NES_ERROR("CPPClient::submitQuery: error while parsing queryId: " << e.what());
+        throw ClientException("CPPClient::submitQuery: error while parsing queryId:");
     }
     return queryId;
+}
+
+std::string CPPClient::getHostName() {
+    return "http://" + coordinatorHost + ":" + std::to_string(coordinatorRESTPort) + "/v1/nes/";
 }
 }// namespace NES

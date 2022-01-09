@@ -31,4 +31,13 @@ FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranc
         return FaultToleranceType::INVALID;
     }
 }
+std::string toString(const FaultToleranceType faultToleranceMode) {
+    switch (faultToleranceMode) {
+        case FaultToleranceType::NONE: return "NONE";
+        case FaultToleranceType::AT_MOST_ONCE: return "AT_MOST_ONCE";
+        case FaultToleranceType::AT_LEAST_ONCE: return "AT_LEAST_ONCE";
+        case FaultToleranceType::EXACTLY_ONCE: return "EXACTLY_ONCE";
+        case FaultToleranceType::INVALID: return "INVALID";
+    }
+}
 }// namespace NES

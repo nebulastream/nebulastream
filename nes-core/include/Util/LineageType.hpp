@@ -30,6 +30,7 @@ enum class LineageType : std::int8_t {
     INVALID = 4
 };
 
+std::string toString(const LineageType lineageMode);
 LineageType stringToLineageTypeMap(const std::string lineageMode);
 }// namespace NES
 #endif//NES_LINEAGETYPE_H

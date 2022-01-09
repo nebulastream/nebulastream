@@ -12,24 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_nes(
-        UtilityFunctions.cpp
-        SharedLibrary.cpp
-        TimeMeasurement.cpp
-        Logger.cpp
-        StacktraceLoader.cpp
-        ThreadNaming.cpp
-        BufferSequenceNumber.cpp
-        TestUtils.cpp
-        FaultToleranceType.cpp
-        LineageType.cpp
-        PlacementType.cpp
+add_source_nes_client(
+        CPPClient.cpp
+        QueryConfig.cpp
+        ClientException.cpp
 )
-if (NES_USE_MQTT)
-    add_source_nes(
-        MQTTClientWrapper.cpp
-    )
-endif ()
-add_subdirectory(yaml)
-add_subdirectory(Subprocess)
-
