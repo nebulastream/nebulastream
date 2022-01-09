@@ -21,6 +21,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace NES::QueryCompilation {
@@ -35,7 +36,7 @@ class FileBuilder {
     std::stringstream declations;
 
   public:
-    static FileBuilder create(const std::string& file_name, const std::vector<std::string>& headers);
+    static FileBuilder create(const std::string& file_name, const std::unordered_set<std::string>& headers = {});
     FileBuilder& addDeclaration(DeclarationPtr const&);
     CodeFile build();
 };

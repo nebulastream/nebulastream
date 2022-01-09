@@ -20,11 +20,11 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
 
 namespace NES::QueryCompilation {
-FileBuilder FileBuilder::create(const std::string&, const std::vector<std::string>& headers) {
+FileBuilder FileBuilder::create(const std::string&, const std::unordered_set<std::string>& headers) {
     FileBuilder builder;
     if(!headers.empty()) {
-            for (auto i{0ul}; i < headers.size(); i++) {
-                builder.declations << headers[i] << "\n";
+            for (auto itr : headers) {
+                builder.declations << itr << "\n";
             }
     }
     builder.declations << "#include <Common/ExecutableType/Array.hpp>\n"
