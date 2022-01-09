@@ -17,6 +17,9 @@
 #ifndef NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 #define NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 
+#include <Client/QueryConfig.hpp>
+#include <chrono>
+
 namespace NES {
 
 class Query;
@@ -32,19 +35,22 @@ class CPPClient {
      * @param coordinator host e.g. 127.0.0.1
      * @param coordinator REST port e.g. 8081
      */
-    CPPClient(const std::string& coordinatorHost = "127.0.0.1", const std::string& coordinatorRESTPort = "8081");
+    CPPClient(const std::string& coordinatorHost = "127.0.0.1",
+              uint16_t coordinatorPort = 8081);
 
     /*
      * @brief Deploy a query to the coordinator
      * @param query plan to deploy
-     * @param operator placement e.g. "BottomUp" or "TopDown"
-     * @return query id of deployed query. -1 if deployment failed
+     * @return query id of deployed query.
      */
-    int64_t submitQuery(const Query& query, const std::string& placement = "BottomUp");
+    int64_t submitQuery(const Query& query, QueryConfig config = QueryConfig());
 
   private:
     const std::string coordinatorHost;
-    const std::string coordinatorRESTPort;
+    const uint16_t coordinatorRESTPort;
+    const std::chrono::seconds requestTimeout = std::chrono::seconds(20);
+
+    std::string getHostName();
 };
 }// namespace NES
 

@@ -16,13 +16,13 @@
 
 #include <gtest/gtest.h>
 
+#include "Client/CPPClient.hpp"
 #include <API/Query.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
-#include <Components/NesCoordinator.hpp>
 #include <Catalogs/QueryCatalog.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Util/Logger.hpp>
-#include <CPPClient.hpp>
 
 #include <unistd.h>
 
@@ -65,8 +65,8 @@ TEST_F(CPPClientTest, DeployQueryTest) {
 
     Query query = Query::from("default_logical");
 
-    CPPClient client = CPPClient("localhost", std::to_string(restPort));
-    uint64_t queryId = client.submitQuery(query, "ButtomUp");
+    CPPClient client = CPPClient("localhost", restPort);
+    uint64_t queryId = client.submitQuery(query);
 
     EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
 
