@@ -30,7 +30,7 @@ FileBuilder FileBuilder::create(const std::string&, [[maybe_unused]] const std::
             }
     }
 #else
-    builder.declations << "#include <Common/ExecutableType/Array.hpp>\n"
+    builder.declarations << "#include <Common/ExecutableType/Array.hpp>\n"
                           "#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>\n"
                           "#include <cstdint>\n"
                           "#include <string.h>\n"
