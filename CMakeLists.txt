@@ -154,6 +154,10 @@ if (NES_BUILD_BENCHMARKS)
     #-fno-omit-frame-pointer
 endif ()
 
+if (NES_ONLY_REQUIRED_HEADERS)
+    add_compile_definitions(NES_ONLY_REQUIRED_HEADERS)
+endif()
+
 # AVX detection
 find_package(AVX)
 
