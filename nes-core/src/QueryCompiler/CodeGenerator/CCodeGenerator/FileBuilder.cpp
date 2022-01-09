@@ -26,7 +26,7 @@ FileBuilder FileBuilder::create(const std::string&, [[maybe_unused]] const std::
 #ifdef NES_ONLY_REQUIRED_HEADERS
     if(!headers.empty()) {
             for (const auto& itr : headers) {
-                builder.declations << itr << "\n";
+                builder.declarations << itr << "\n";
             }
     }
 #else
@@ -63,19 +63,19 @@ FileBuilder FileBuilder::create(const std::string&, [[maybe_unused]] const std::
                           "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>\n"
         ;
 #endif
-    builder.declations << "using namespace NES::QueryCompilation;"
+    builder.declarations << "using namespace NES::QueryCompilation;"
                        << std::endl;
 
     return builder;
 }
 FileBuilder& FileBuilder::addDeclaration(const DeclarationPtr& declaration) {
     auto const code = declaration->getCode();
-    declations << code << ";";
+    declarations << code << ";";
     return *this;
 }
 CodeFile FileBuilder::build() {
     CodeFile file;
-    file.code = declations.str();
+    file.code = declarations.str();
     return file;
 }
 }// namespace NES::QueryCompilation

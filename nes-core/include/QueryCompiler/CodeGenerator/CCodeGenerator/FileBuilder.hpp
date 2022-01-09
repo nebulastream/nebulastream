@@ -33,7 +33,7 @@ class CodeFile {
 
 class FileBuilder {
   private:
-    std::stringstream declations;
+    std::stringstream declarations;
 
   public:
     static FileBuilder create(const std::string& file_name, const std::unordered_set<std::string>& headers = {});
