@@ -41,11 +41,6 @@ FileBuilder FileBuilder::create(const std::string&, [[maybe_unused]] const std::
                           "#include <Windowing/WindowActions/BaseExecutableJoinAction.hpp>\n"
                           "#include <Windowing/Runtime/WindowManager.hpp>\n"
                           "#include <Windowing/Runtime/WindowSliceStore.hpp>\n"
-                          "#include <Runtime/TupleBuffer.hpp>\n"
-                          "#include <Runtime/ExecutionResult.hpp>\n"
-                          "#include <Runtime/WorkerContext.hpp>\n"
-                          "#include <Runtime/Execution/PipelineExecutionContext.hpp>\n"
-                          "#include <Runtime/Execution/ExecutablePipelineStage.hpp>\n"
                           "#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>\n"
                           "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>\n"
                           "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>\n"
@@ -63,8 +58,14 @@ FileBuilder FileBuilder::create(const std::string&, [[maybe_unused]] const std::
                           "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>\n"
         ;
 #endif
-    builder.declarations << "using namespace NES::QueryCompilation;"
-                       << std::endl;
+    builder.declarations <<
+                        "#include <Runtime/TupleBuffer.hpp>\n"
+                        "#include <Runtime/ExecutionResult.hpp>\n"
+                        "#include <Runtime/WorkerContext.hpp>\n"
+                        "#include <Runtime/Execution/PipelineExecutionContext.hpp>\n"
+                        "#include <Runtime/Execution/ExecutablePipelineStage.hpp>\n"
+                        "using namespace NES::QueryCompilation;"
+                         << std::endl;
 
     return builder;
 }
