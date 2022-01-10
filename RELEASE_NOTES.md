@@ -13,7 +13,10 @@
 ### - Fault Tolerance
 ### - Monitoring
 ### - Build Management
-- add `NES_USE_LLD` option to use LLD on unix builds. This can improve compilation time.
+1. We started to split our application in individual components:
+   - nes-core
+   - nes-client
+2. add `NES_USE_LLD` option to use LLD on unix builds. This can improve compilation time.
 ### - UDF Support
 ### - Network Stack
 

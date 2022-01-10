@@ -16,7 +16,7 @@
 #include <Client/ClientException.hpp>
 #include <Runtime/internal/backward.hpp>
 #include <Util/Logger.hpp>
-namespace NES {
+namespace NES::Client {
 
 ClientException::ClientException(const std::string& message)
     : NesRuntimeException(message, NES::Runtime::collectAndPrintStacktrace()) {

@@ -18,7 +18,7 @@
 
 #include <Exceptions/NesRuntimeException.hpp>
 
-namespace NES {
+namespace NES::Client {
 
 class ClientException : public NesRuntimeException{
   public:

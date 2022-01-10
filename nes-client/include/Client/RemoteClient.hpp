@@ -19,24 +19,23 @@
 
 #include <Client/QueryConfig.hpp>
 #include <chrono>
-
-namespace NES {
-
+namespace NES{
 class Query;
-class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
+}
+namespace NES::Client {
 
 /**
  * @brief CPP client to deploy queries over the REST API
  */
-class CPPClient {
+class RemoteClient {
   public:
     /* @brief constructor of the client
      * @param coordinator host e.g. 127.0.0.1
      * @param coordinator REST port e.g. 8081
      */
-    CPPClient(const std::string& coordinatorHost = "127.0.0.1",
-              uint16_t coordinatorPort = 8081);
+    RemoteClient(const std::string& coordinatorHost = "127.0.0.1",
+              uint16_t coordinatorPort = 8081,
+              std::chrono::seconds requestTimeout = std::chrono::seconds(20));
 
     /*
      * @brief Deploy a query to the coordinator
@@ -48,7 +47,7 @@ class CPPClient {
   private:
     const std::string coordinatorHost;
     const uint16_t coordinatorRESTPort;
-    const std::chrono::seconds requestTimeout = std::chrono::seconds(20);
+    const std::chrono::seconds requestTimeout;
 
     std::string getHostName();
 };

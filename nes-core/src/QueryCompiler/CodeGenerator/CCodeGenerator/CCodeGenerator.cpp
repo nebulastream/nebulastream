@@ -2270,6 +2270,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
 
 std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     auto code = context->code;
+
     // FunctionDeclaration main_function =
     auto tf = getTypeFactory();
 

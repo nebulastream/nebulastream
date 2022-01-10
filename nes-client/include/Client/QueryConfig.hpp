@@ -22,10 +22,10 @@
 #include <Util/PlacementType.hpp>
 #include <ostream>
 
-namespace NES {
+namespace NES::Client {
 
 /**
- * @brief CPP client to deploy queries over the REST API
+ * @brief Interface to set configuration parameters for a query.
  */
 class QueryConfig {
   public:
@@ -33,16 +33,40 @@ class QueryConfig {
                 LineageType lineageType = LineageType::NONE,
                 PlacementType placementType = PlacementType::BottomUp);
 
+    /**
+     * @brief Returns the level of fault tolerance.
+     * @return FaultToleranceType
+     */
     FaultToleranceType getFaultToleranceType() const;
 
+    /**
+     * @brief Sets the level of fault tolerance.
+     * @param faultToleranceType
+     */
     void setFaultToleranceType(FaultToleranceType faultToleranceType);
 
+    /**
+     * @brief Returns the type of Linage.
+     * @return LineageType
+     */
     LineageType getLineageType() const;
 
+    /**
+     * @brief Sets the linage type
+     * @param lineageType
+     */
     void setLineageType(LineageType lineageType);
 
+    /**
+     * @brief Returns the placement type.
+     * @return PlacementType
+     */
     PlacementType getPlacementType() const;
 
+    /**
+     * @brief Sets the placement type
+     * @param placementType
+     */
     void setPlacementType(PlacementType placementType);
 
   private:

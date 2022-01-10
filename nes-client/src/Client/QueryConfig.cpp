@@ -16,7 +16,7 @@
 
 #include <Client/QueryConfig.hpp>
 
-namespace NES {
+namespace NES::Client {
 
 
 QueryConfig::QueryConfig(FaultToleranceType faultToleranceType, LineageType lineageType, PlacementType placementType)
