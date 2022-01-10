@@ -24,7 +24,7 @@ namespace NES {
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-OperatorNode::OperatorNode(uint64_t id) : id(id) { NES_INFO("Creating Operator " << id); }
+OperatorNode::OperatorNode(uint64_t id) : id(id), properties() { NES_INFO("Creating Operator " << id); }
 
 uint64_t OperatorNode::getId() const { return id; }
 
@@ -163,9 +163,11 @@ NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorId) {
     return nullptr;
 }
 
-void OperatorNode::addProperty(const std::string& key, const std::any& value) { properties.insert(std::make_pair(key, value)); }
+void OperatorNode::addProperty(const std::string& key, const std::any value) {
+    properties[key] = value;
+}
 
-std::any OperatorNode::getProperty(const std::string& key) { return properties.at(key); }
+std::any OperatorNode::getProperty(const std::string& key) { return properties[key]; }
 
 bool OperatorNode::checkIfPropertyExist(const std::string& key) { return properties.find(key) != properties.end(); }
 

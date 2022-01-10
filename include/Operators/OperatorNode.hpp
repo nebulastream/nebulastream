@@ -20,6 +20,7 @@
 #include <Nodes/Node.hpp>
 #include <Operators/OperatorId.hpp>
 #include <any>
+#include <unordered_map>
 
 namespace NES {
 
@@ -136,7 +137,7 @@ class OperatorNode : public Node {
      * @param key key of the new property
      * @param value value of the new property
      */
-    void addProperty(const std::string& key, const std::any& value);
+    void addProperty(const std::string& key, const std::any value);
 
     /**
      * @brief Get a the value of a property
@@ -181,7 +182,7 @@ class OperatorNode : public Node {
     /*
      * @brief Map of properties of the current node
      */
-    std::map<std::string, std::any> properties;
+    std::unordered_map<std::string, std::any> properties;
 };
 
 }// namespace NES

@@ -66,7 +66,9 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
     if (copy->instanceOf<SourceLogicalOperatorNode>()) {
         copy->as<SourceLogicalOperatorNode>()->setProjectSchema(projectSchema);
     }
-
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
     return copy;
 }
 
