@@ -160,6 +160,7 @@ bool ThreadPool::start() {
               queueIdx = 0;
           } else {
               NES_ASSERT(queuePinListMapping.size() == numThreads, "We need as many threads as queues");
+              NES_ASSERT(queuePinListMapping.size() == numThreads, "We need as many threads as queues");
               NES_WARNING("worker " << i << " pins to queue=" << queuePinListMapping[i]);
               std::cout << "worker " << i << " pins to queue=" << queuePinListMapping[i] << std::endl;
               queueIdx = queuePinListMapping[i];
