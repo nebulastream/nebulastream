@@ -18,16 +18,13 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Nodes/Util/VizDumpHandler.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
@@ -45,14 +42,11 @@
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <memory>
 
-using namespace std;
 using namespace std;
 
 namespace NES {
@@ -63,8 +57,11 @@ using namespace NES::QueryCompilation::PhysicalOperators;
 
 class QueryCompilerTest : public testing::Test {
   public:
-    std::shared_ptr<QueryParsingService> queryParsingService;
-    std::shared_ptr<Compiler::JITCompiler> jitCompiler;
+    const SchemaPtr schema = Schema::create();
+    NES::StreamCatalogPtr streamCatalog;
+    shared_ptr<NES::QueryCompilation::QueryCompiler> queryCompiler;
+    Runtime::NodeEnginePtr nodeEngine;
+
     static void SetUpTestCase() {
         NES::setupLogging("QueryCompilerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryCompilerTest test class.");
@@ -72,11 +69,49 @@ class QueryCompilerTest : public testing::Test {
 
     void SetUp() override {
         auto cppCompiler = Compiler::CPPCompiler::create();
-        jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-        queryParsingService = QueryParsingService::create(jitCompiler);
+        auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
+        auto queryParsingService = QueryParsingService::create(jitCompiler);
+
+        auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+        auto phaseFactory = Phases::DefaultPhaseFactory::create();
+        queryCompiler = NES::DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+
+        streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     }
 
     void TearDown() override { NES_DEBUG("Tear down QueryCompilerTest Test."); }
+
+    /**
+     * @brief create nodeEngine with default values. Needs to be outside of SetUp(), otherwise the tests will fail to allocate the ports.
+     */
+    static Runtime::NodeEnginePtr startNodeEngine(uint16_t port = 31337) {
+        auto streamConf = PhysicalStreamConfig::createEmpty();
+        return Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                            port,
+                                                            streamConf,
+                                                            1,
+                                                            4096,
+                                                            1024,
+                                                            12,
+                                                            12,
+                                                            NES::Runtime::NumaAwarenessFlag::DISABLED);
+    }
+
+    /**
+     * @brief Utility function to reduce code duplication and enable reusability and readability.
+     */
+    void executeCommonQueryCompilerTest(Query query) {
+        auto queryPlan = query.getQueryPlan();
+
+        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+        queryPlan = typeInferencePhase->execute(queryPlan);
+
+        auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
+        request->enableDump();
+        auto result = queryCompiler->compileQuery(request);
+
+        ASSERT_FALSE(result->hasError());
+    }
 };
 
 /**
@@ -86,35 +121,12 @@ class QueryCompilerTest : public testing::Test {
  *
  */
 TEST_F(QueryCompilerTest, filterQuery) {
-    SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
-                                                                   streamConf,
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
-    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
-    auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+    nodeEngine = startNodeEngine();
 
     auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
-    auto queryPlan = query.getQueryPlan();
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
-    request->enableDump();
-    auto result = queryCompiler->compileQuery(request);
-
-    ASSERT_FALSE(result->hasError());
+    executeCommonQueryCompilerTest(query);
 }
 
 /**
@@ -124,12 +136,10 @@ TEST_F(QueryCompilerTest, filterQuery) {
  *
  */
 TEST_F(QueryCompilerTest, filterQueryBitmask) {
-    SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+    nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
                                                                    streamConf,
                                                                    1,
@@ -141,22 +151,11 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
                                                                    "",
                                                                    "Release",
                                                                    "No");
-    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
-    auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
     auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
-    auto queryPlan = query.getQueryPlan();
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
-    request->enableDump();
-    auto result = queryCompiler->compileQuery(request);
-
-    ASSERT_FALSE(result->hasError());
+    executeCommonQueryCompilerTest(query);
 }
+
 /**
  * @brief Input Query Plan:
  *
@@ -164,39 +163,17 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
  *
  */
 TEST_F(QueryCompilerTest, windowQuery) {
-    SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
-                                                                   streamConf,
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
-    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
-    auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+    nodeEngine = startNodeEngine();
 
     auto query = Query::from("streamName")
                      .window(SlidingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10), Seconds(2)))
                      .byKey(Attribute("key"))
                      .apply(Sum(Attribute("value")))
                      .sink(NullOutputSinkDescriptor::create());
-    auto queryPlan = query.getQueryPlan();
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
-    request->enableDump();
-    auto result = queryCompiler->compileQuery(request);
-    ASSERT_FALSE(result->hasError());
+    executeCommonQueryCompilerTest(query);
 }
 
 /**
@@ -206,40 +183,18 @@ TEST_F(QueryCompilerTest, windowQuery) {
  *
  */
 TEST_F(QueryCompilerTest, windowQueryEventTime) {
-    SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("ts", INT64);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
-                                                                   streamConf,
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
-    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
-    auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+    nodeEngine = startNodeEngine();
 
     auto query = Query::from("streamName")
                      .window(SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10), Seconds(2)))
                      .byKey(Attribute("key"))
                      .apply(Sum(Attribute("value")))
                      .sink(NullOutputSinkDescriptor::create());
-    auto queryPlan = query.getQueryPlan();
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
-    request->enableDump();
-    auto result = queryCompiler->compileQuery(request);
-    ASSERT_FALSE(result->hasError());
+    executeCommonQueryCompilerTest(query);
 }
 
 /**
@@ -251,36 +206,15 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
  *
  */
 TEST_F(QueryCompilerTest, unionQuery) {
-    SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
-                                                                   streamConf,
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
-    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
-    auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+    nodeEngine = startNodeEngine();
+
     auto query1 = Query::from("streamName");
     auto query2 =
         Query::from("streamName").filter(Attribute("key") == 32).unionWith(query1).sink(NullOutputSinkDescriptor::create());
-    auto queryPlan = query2.getQueryPlan();
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
-    request->enableDump();
-    auto result = queryCompiler->compileQuery(request);
-    ASSERT_FALSE(result->hasError());
+    executeCommonQueryCompilerTest(query2);
 }
 
 /**
@@ -292,25 +226,12 @@ TEST_F(QueryCompilerTest, unionQuery) {
  *
  */
 TEST_F(QueryCompilerTest, joinQuery) {
-    SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("leftStream", schema);
     streamCatalog->addLogicalStream("rightStream", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
-                                                                   streamConf,
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
-    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
-    auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+    nodeEngine = startNodeEngine();
+
     auto query1 = Query::from("leftStream");
     auto query2 = Query::from("rightStream")
                       .joinWith(query1)
@@ -318,15 +239,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
                       .equalsTo(Attribute("rightStream$key"))
                       .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
                       .sink(NullOutputSinkDescriptor::create());
-    auto queryPlan = query2.getQueryPlan();
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    queryPlan = typeInferencePhase->execute(queryPlan);
-
-    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
-    request->enableDump();
-    auto result = queryCompiler->compileQuery(request);
-    ASSERT_FALSE(result->hasError());
+    executeCommonQueryCompilerTest(query2);
 }
 
 class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStage {
@@ -344,23 +257,9 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
  *
  */
 TEST_F(QueryCompilerTest, externalOperatorTest) {
-    SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
-                                                                   streamConf,
-                                                                   1,
-                                                                   4096,
-                                                                   1024,
-                                                                   12,
-                                                                   12,
-                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
-    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
-    auto phaseFactory = Phases::DefaultPhaseFactory::create();
-    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
+    nodeEngine = startNodeEngine();
 
     auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
