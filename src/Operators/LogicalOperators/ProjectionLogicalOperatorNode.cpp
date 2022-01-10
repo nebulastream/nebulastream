@@ -84,6 +84,9 @@ OperatorNodePtr ProjectionLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createProjectionOperator(expressions, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
     return copy;
 }
 

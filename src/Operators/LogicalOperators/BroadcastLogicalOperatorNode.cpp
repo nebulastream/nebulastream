@@ -40,6 +40,9 @@ OperatorNodePtr BroadcastLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createBroadcastOperator(id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
     return copy;
 }
 
