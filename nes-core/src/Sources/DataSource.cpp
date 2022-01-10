@@ -72,9 +72,9 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     // set the origin id for this source
     buffer.setOriginId(operatorId);
     // set the creation timestamp
-    buffer.setCreationTimestamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count());
+//    buffer.setCreationTimestamp(
+//        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+//            .count());
     // Set the sequence number of this buffer.
     // A data source generates a monotonic increasing sequence number
     maxSequenceNumber++;
