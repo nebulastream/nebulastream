@@ -13,7 +13,7 @@
 # limitations under the License.
 
 add_source_nes_client(
-        CPPClient.cpp
+        RemoteClient.cpp
         QueryConfig.cpp
         ClientException.cpp
 )

@@ -14,19 +14,19 @@
     limitations under the License.
 */
 
-#include "API/Query.hpp"
-#include "GRPC/Serialization/QueryPlanSerializationUtil.hpp"
-#include "SerializableQueryPlan.pb.h"
-#include "Util/Logger.hpp"
-#include <Client/CPPClient.hpp>
+#include <Client/RemoteClient.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <API/Query.hpp>
 #include <Client/ClientException.hpp>
-
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <SerializableQueryPlan.pb.h>
+#include <Util/Logger.hpp>
 #include <cpprest/http_client.h>
 
-namespace NES {
+namespace NES::Client {
 
-CPPClient::CPPClient(const std::string& coordinatorHost, uint16_t coordinatorRESTPort)
-    : coordinatorHost(coordinatorHost), coordinatorRESTPort(coordinatorRESTPort) {
+RemoteClient::RemoteClient(const std::string& coordinatorHost, uint16_t coordinatorRESTPort, std::chrono::seconds requestTimeout)
+    : coordinatorHost(coordinatorHost), coordinatorRESTPort(coordinatorRESTPort), requestTimeout(requestTimeout) {
     NES::setupLogging("nesClientStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
     if (coordinatorHost.empty()) {
@@ -34,7 +34,7 @@ CPPClient::CPPClient(const std::string& coordinatorHost, uint16_t coordinatorRES
     }
 }
 
-int64_t CPPClient::submitQuery(const Query& query, const QueryConfig config) {
+int64_t RemoteClient::submitQuery(const Query& query, const QueryConfig config) {
     auto queryPlan = query.getQueryPlan();
     SubmitQueryRequest request;
     auto* serializedQueryPlan = request.mutable_queryplan();
@@ -84,7 +84,7 @@ int64_t CPPClient::submitQuery(const Query& query, const QueryConfig config) {
     return queryId;
 }
 
-std::string CPPClient::getHostName() {
+std::string RemoteClient::getHostName() {
     return "http://" + coordinatorHost + ":" + std::to_string(coordinatorRESTPort) + "/v1/nes/";
 }
-}// namespace NES
+}// namespace NES::Client

@@ -14,15 +14,15 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
-#include "Client/CPPClient.hpp"
-#include <API/Query.hpp>
-#include <Catalogs/QueryCatalog.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Util/Logger.hpp>
+#include "Client/RemoteClient.hpp"
+#include "API/Query.hpp"
+#include "Catalogs/QueryCatalog.hpp"
+#include "Components/NesCoordinator.hpp"
+#include "Configurations/Coordinator/CoordinatorConfig.hpp"
+#include "Configurations/Sources/CSVSourceConfig.hpp"
+#include "Util/Logger.hpp"
 
 #include <unistd.h>
 
@@ -36,10 +36,10 @@ uint64_t rpcPort = 1289;
 uint64_t dataPort = 1489;
 uint64_t restPort = 8089;
 
-class CPPClientTest : public testing::Test {
+class RemoteClientTest : public testing::Test {
   protected:
-    static void SetUpTestCase() { NES::setupLogging("CPPClientTest.log", NES::LOG_DEBUG); }
-    static void TearDownTestCase() { NES_INFO("Tear down CPPClientTest test class."); }
+    static void SetUpTestCase() { NES::setupLogging("RemoteClientTest.log", NES::LOG_DEBUG); }
+    static void TearDownTestCase() { NES_INFO("Tear down RemoteClientTest test class."); }
 
     void SetUp() override {
         rpcPort += 10;
@@ -52,7 +52,7 @@ class CPPClientTest : public testing::Test {
  * @brief Test if doploying a query over the REST api works properly
  * @result deployed query ID is valid
  */
-TEST_F(CPPClientTest, DeployQueryTest) {
+TEST_F(RemoteClientTest, DeployQueryTest) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -65,7 +65,7 @@ TEST_F(CPPClientTest, DeployQueryTest) {
 
     Query query = Query::from("default_logical");
 
-    CPPClient client = CPPClient("localhost", restPort);
+    auto client = Client::RemoteClient("localhost", restPort);
     uint64_t queryId = client.submitQuery(query);
 
     EXPECT_TRUE(crd->getQueryCatalog()->queryExists(queryId));
