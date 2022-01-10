@@ -56,6 +56,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         }
     }
 
+    //Iterate over all source operators
     for (auto& sourceOperator : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
         NES_DEBUG("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
@@ -66,7 +67,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                                                        << " physical source locations in the topology.");
 
         NES_TRACE("LogicalSourceExpansionRule: Find the logical sub-graph to be duplicated for the source operator.");
-
         OperatorNodePtr operatorToDuplicate = getLogicalGraphToDuplicate(sourceOperator);
         NES_TRACE("LogicalSourceExpansionRule: Create " << sourceLocations.size() - 1
                                                         << " duplicated logical sub-graph and add to original graph");
@@ -75,6 +75,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
             OperatorNodePtr duplicateOperator = operatorToDuplicate->duplicate();
             //Add to the source operator the id of the physical node where we have to pin the operator
+            duplicateOperator->getAllLeafNodes();
             duplicateOperator->addProperty("PinnedNodeId", sourceLocation->getId());
 
             //Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
@@ -98,41 +99,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                     }
                 }
             }
-
-            //            NES_TRACE("LogicalSourceExpansionRule: Get all root nodes of the duplicated logical sub-graph to connect with "
-            //                      "original graph");
-            //            std::vector<NodePtr> rootNodes = duplicateOperator->getAllRootNodes();
-            //            NES_TRACE("LogicalSourceExpansionRule: Get all nodes in the duplicated logical sub-graph");
-            //            std::vector<NodePtr> family = duplicateOperator->getAndFlattenAllAncestors();
-            //
-            //            NES_TRACE("LogicalSourceExpansionRule: For each original head operator find the duplicate operator and connect "
-            //                      "it to the original graph");
-            //            for (const auto& originalRootOperator : originalRootOperators) {
-            //
-            //                NES_TRACE("LogicalSourceExpansionRule: Search the duplicate operator equal to original head operator");
-            //                auto found = std::find_if(family.begin(), family.end(), [&](const NodePtr& member) {
-            //                    return member->as<OperatorNode>()->getId() == originalRootOperator->getId();
-            //                });
-            //
-            //                if (found != family.end()) {
-            //                    NES_TRACE("LogicalSourceExpansionRule: Found the duplicate operator equal to the original head operator");
-            //                    NES_TRACE(
-            //                        "LogicalSourceExpansionRule: Add the duplicate operator to the parent of the original head operator");
-            //                    for (const auto& parent : originalRootOperator->getParents()) {
-            //                        NES_TRACE("LogicalSourceExpansionRule: Assign the duplicate operator a new operator id.");
-            //                        (*found)->as<OperatorNode>()->setId(Util::getNextOperatorId());
-            //                        parent->addChild(*found);
-            //                    }
-            //                    family.erase(found);
-            //                } else {
-            //                    //Throw exception
-            //                }
-            //            }
-
-            //            NES_TRACE("LogicalSourceExpansionRule: Assign all operators in the duplicated operator graph a new operator id.");
-            //            for (auto& member : family) {
-            //                member->as<OperatorNode>()->setId(Util::getNextOperatorId());
-            //            }
         }
     }
     NES_DEBUG("LogicalSourceExpansionRule: Finished applying LogicalSourceExpansionRule plan=" << queryPlan->toString());
@@ -141,15 +107,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 
 OperatorNodePtr LogicalSourceExpansionRule::getLogicalGraphToDuplicate(const OperatorNodePtr& operatorNode) {
     NES_DEBUG("LogicalSourceExpansionRule: Get the logical graph to duplicate.");
-    //    if (isBlockingOperator(operatorNode)) {
-    //        NES_TRACE("LogicalSourceExpansionRule: Found the first binary or sink operator.");
-    //        return std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>>();
-    //    }
-
-    //    NES_TRACE("LogicalSourceExpansionRule: Create duplicate of the input operator.");
-    //    OperatorNodePtr copyOfOperator = operatorNode->copy();
-    //    std::set<OperatorNodePtr> originalRootOperators;
-
     NES_TRACE("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
     auto parentOperators = operatorNode->getParents();
     for (const auto& parent : parentOperators) {
@@ -179,26 +136,6 @@ OperatorNodePtr LogicalSourceExpansionRule::getLogicalGraphToDuplicate(const Ope
                 operatorNode->addProperty("ListOfBlockingParents", listOfConnectedBlockingParents);
             }
         }
-
-        //        OperatorNodePtr duplicatedParentOperator;
-        //        std::set<OperatorNodePtr> rootOperators;
-        //
-        //        NES_TRACE("LogicalSourceExpansionRule: Get the duplicated parent operator and its ancestors.");
-        //        std::tie(duplicatedParentOperator, rootOperators) = getLogicalGraphToDuplicate(parentOperator);
-        //
-        //        if (duplicatedParentOperator) {
-        //            NES_TRACE("LogicalSourceExpansionRule: Got a duplicated parent operator. Add the duplicate as parent to the copy of "
-        //                      "input operator.");
-        //            copyOfOperator->addParent(duplicatedParentOperator);
-        //            NES_TRACE("LogicalSourceExpansionRule: Add the original head operators to the list of head operators for the input "
-        //                      "operator");
-        //
-        //            originalRootOperators.insert(rootOperators.begin(), rootOperators.end());
-        //        } else {
-        //            NES_TRACE("LogicalSourceExpansionRule: Parent operator was either n-ary or was of type sink.");
-        //            NES_TRACE("LogicalSourceExpansionRule: Add the input operator as original head operator of the duplicated sub-graph");
-        //            originalRootOperators.insert(operatorNode);
-        //        }
     }
     return operatorNode;
 }
