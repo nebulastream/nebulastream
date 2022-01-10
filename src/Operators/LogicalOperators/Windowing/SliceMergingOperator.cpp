@@ -51,6 +51,9 @@ OperatorNodePtr SliceMergingOperator::copy() {
     auto copy = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
     return copy;
 }
 bool SliceMergingOperator::inferSchema() {

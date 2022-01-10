@@ -51,6 +51,9 @@ OperatorNodePtr WindowComputationOperator::copy() {
     auto copy = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
     return copy;
 }
 bool WindowComputationOperator::inferSchema() {

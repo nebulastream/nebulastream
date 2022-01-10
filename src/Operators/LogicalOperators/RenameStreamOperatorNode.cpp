@@ -67,6 +67,9 @@ OperatorNodePtr RenameStreamOperatorNode::copy() {
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
     return copy;
 }
 

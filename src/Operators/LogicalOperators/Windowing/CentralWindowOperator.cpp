@@ -54,6 +54,9 @@ OperatorNodePtr CentralWindowOperator::copy() {
     auto copy = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    for (auto [key, value] : properties) {
+        copy->addProperty(key, value);
+    }
     return copy;
 }
 bool CentralWindowOperator::inferSchema() {
