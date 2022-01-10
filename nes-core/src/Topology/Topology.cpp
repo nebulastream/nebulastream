@@ -21,6 +21,7 @@
 #include <utility>
 #include <s2/s2latlng.h>
 #include <s2/s2closest_point_query.h>
+#include <s2/s2earth.h>
 
 namespace NES {
 
@@ -69,25 +70,76 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
     return false;
 }
 
-bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, double latitude, double longitude) {
-    S2Point loc(S2LatLng::FromDegrees(latitude, longitude));
-    //todo: check if we need to remove the old location before updating
-    NES_DEBUG("updating location of Node to: " << latitude << ", " << longitude);
-    NES_DEBUG(node);
-    //std::cout << loc << std::endl;
+bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, std::tuple<double, double> newCoordinates, bool init) {
+    double newLat = get<0>(newCoordinates);
+    double newLng = get<1>(newCoordinates);
+    S2Point newLoc(S2LatLng::FromDegrees(newLat, newLng));
+    NES_DEBUG("updating location of Node to: " << newLat << ", " << newLng);
 
-    nodePointIndex.Add(loc, node);
-    node->setCoordinates(latitude, longitude);
+    //if this function was not called during the creation of the node (init != false), we need to delete the old entry
+    if (!init) {
+        auto oldCoordOpt = node->getCoordinates();
+        //a non field node cannot be given a position after its creation
+        if (!oldCoordOpt.has_value() && !init) {
+            NES_WARNING("Trying to set the Position of a non field node");
+            return false;
+        }
+
+        auto oldCoord = oldCoordOpt.value();
+        S2Point oldLoc(S2LatLng::FromDegrees(get<0>(oldCoord), get<1>(oldCoord)));
+        nodePointIndex.Remove(oldLoc, node);
+    }
+
+    nodePointIndex.Add(newLoc, node);
+    node->setCoordinates(newCoordinates);
     return true;
 }
 
-TopologyNodePtr Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr) {
+TopologyNodePtr Topology::getClosestNodeTo(const std::tuple<double, double> coordTuple, int radius) {
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
-    std::tuple<double, double> coordTuple = nodePtr->getCoordinates();
+    query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
     S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(std::get<0>(coordTuple), std::get<1>(coordTuple))));
-    return query.FindClosestPoint(&target).data();
+    TopologyNodePtr closest = query.FindClosestPoint(&target).data();
+    return closest;
 }
 
+TopologyNodePtr Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
+    auto coordTupleOpt = nodePtr->getCoordinates();
+
+    if (!coordTupleOpt.has_value()) {
+        NES_WARNING("Trying to get the closest node to a node that does not have a location");
+        return {nullptr};
+    }
+
+    auto coordTuple = coordTupleOpt.value();
+
+    S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
+    query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
+    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(std::get<0>(coordTuple), std::get<1>(coordTuple))));
+    TopologyNodePtr closest = query.FindClosestPoint(&target).data();
+    if (closest != nodePtr) {
+        return closest;
+    }
+    return query.FindClosestPoints(&target)[1].data();
+}
+
+std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> Topology::getNodesInRange(std::tuple<double, double> center, double radius) {
+    S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
+    query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
+
+    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(std::get<0>(center), std::get<1>(center))));
+    auto result = query.FindClosestPoints(&target);
+    std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> retList;
+    for ( auto r : result) {
+        auto latLng = S2LatLng(r.point());
+        retList.emplace_back(r.data(), std::tuple(latLng.lat().degrees(), latLng.lng().degrees()));
+    }
+    return retList;
+}
+
+size_t Topology::getSizeOfPointIndex() {
+    return nodePointIndex.num_points();
+}
 
 std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
                                                        const std::vector<TopologyNodePtr>& destinationNodes) {

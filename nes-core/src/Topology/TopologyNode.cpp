@@ -123,12 +123,16 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     linkProperties.erase(linkedNode);
     return true;
 }
-std::tuple<double, double> TopologyNode::getCoordinates() {
-    return coordinates; }
-
-bool TopologyNode::setCoordinates(double lat, double lng) {
-    coordinates = std::make_tuple(lat, lng);
-    return true;
+std::optional<std::tuple<double, double>> TopologyNode::getCoordinates() {
+    return coordinates;
 }
 
+bool TopologyNode::setCoordinates(double lat, double lng) {
+    return setCoordinates(std::make_tuple(lat, lng));
+}
+
+bool TopologyNode::setCoordinates(std::tuple<double, double> coordinatesIn) {
+    coordinates = coordinatesIn;
+    return true;
+}
 }// namespace NES

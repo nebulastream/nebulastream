@@ -144,23 +144,40 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     bool hasLocation();
 
     /**
-     * @brief method to set the coordinates from pair of degrees
-     * @return success of operation
+     * @brief checks if the tuple represents valid coordinates (abs(lat) < 90 and abs(lng) < 180)
+     * @param coordinates
+     * @return true if input was valid geocoordinates
      */
-    bool setNodeLocationCoordinates(std::tuple<double, double> coordinates);
+    static bool checkValidityOfCoordinates(std::tuple<double, double> coordinates);
 
     /**
      * @brief returns lat/lng coordinates of the node if a location was set
      */
-    std::tuple<double, double> getNodeLocationCoordinates();
+    std::optional<std::tuple<double, double>> getNodeLocationCoordinates();
 
     /**
-     *
-     * @param coordinates = string of the format "<double>, <double>"
-     * @return std::optional containing a tuple which contains the lat/lng degrees of std::nullopt_t
+     * @brief convert a geo-coordinate string to a tuple of doubles
+     * @param coordinates: string of the format "<double>, <double>"
+     * @return std::optional containing a tuple which contains the lat/lng degrees or std::nullopt_t
      * if the supplied string is not a valid coordinate pair
      */
-    std::optional<std::tuple<double, double>> locationStringToTuple(std::string coordinates);
+    static std::optional<std::tuple<double, double>> locationStringToTuple(const std::string& coordinates);
+
+
+    /**
+     * @brief Method to get all field nodes within a certain range around a geographical point
+     * @param coord: center location as tuple of doubles, radius: radius in km to define query area
+     * @return list of node IDs and their corresponding coordinates
+     */
+    std::vector<std::pair<uint64_t, std::tuple<double, double>>> getNodeIdsInRange(std::tuple<double, double> coord, double radius);
+
+    /**
+     * @brief Method to get all field nodes within a certain range around the location of this node
+     * @param radius = radies in km to define query area
+     * @return list of node IDs and their corresponding coordinates
+     */
+    std::vector<std::pair<uint64_t, std::tuple<double, double>>> getNodeIdsInRange(double radius);
+
     /**
      * @brief Method to check if a worker is still running
      * @return running status of the worker
@@ -210,6 +227,12 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     bool waitForConnect() const;
 
     void handleRpcs(WorkerRPCServer& service);
+
+    /**
+     * @brief method to set the coordinates from pair of degrees. it does not update the topology and is meant for initialization
+     * @return success of operation
+     */
+    bool setNodeLocationCoordinates(std::tuple<double, double> coordinates);
 
 
     void onFatalError(int signalNumber, std::string callstack);

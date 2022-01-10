@@ -112,14 +112,12 @@ class CoordinatorRPCClient {
      * @param staticNesMetrics: metrics to report
      * @return bool indicating success
      */
-     //todo: add parameter here?
     bool registerNode(const std::string& ipAddress,
                       int64_t grpcPort,
                       int64_t dataPort,
                       int16_t numberOfSlots,
                       std::optional<StaticNesMetricsPtr> staticNesMetrics,
-                      double latitude,
-                      double longitude);
+                      std::optional<std::tuple<double, double>> coordinates);
 
     /**
    * @brief method to unregister a node after the connection is established
@@ -151,6 +149,13 @@ class CoordinatorRPCClient {
       * @return bool indicating success
       */
     bool notifyEpochTermination(uint64_t timestamp, uint64_t queryId);
+
+    /**
+     * @brief Method to get all field nodes within a certain range around a geographical point
+     * @param coord: center location as tuple of doubles, radius: radius in km to define query area
+     * @return list of node IDs and their corresponding coordinates
+     */
+    std::vector<std::pair<uint64_t, std::tuple<double, double>>> getNodeIdsInRange(std::tuple<double, double> coord, double radius);
 
   private:
     uint64_t workerId;

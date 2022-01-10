@@ -29,14 +29,21 @@ CoordinatorRPCServer::CoordinatorRPCServer(TopologyManagerServicePtr topologyMan
       monitoringManager(monitoringManager), replicationService(replicationService){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
+    std::optional<std::tuple<double, double>> coordOpt;
+    if (request->has_coordinates()) {
+        const auto& coordIn = request->coordinates();
+        coordOpt = std::make_tuple(coordIn.lat(), coordIn.lng());
+
+    } else {
+        coordOpt = std::optional<std::tuple<double, double>>();
+    }
+
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
     uint64_t id = topologyManagerService->registerNode(request->address(),
                                                        request->grpcport(),
                                                        request->dataport(),
                                                        request->numberofslots(),
-                                                       (NodeType) request->type(),
-                                                       request->latitude(),
-                                                       request->longitude());
+                                                       coordOpt);
 
     auto groupedMetrics = std::make_shared<GroupedMetricValues>();
     groupedMetrics->staticNesMetrics = std::make_unique<StaticNesMetrics>(StaticNesMetrics(request->monitoringdata()));
@@ -219,4 +226,20 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
         NES_ERROR("CoordinatorRPCServer: received broken punctuation message: " << ex.what());
         return Status::CANCELLED;
     }
+}
+
+Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
+
+    auto middlePoint = std::make_tuple(request->coord().lat(), request->coord().lng());
+    std::vector<std::pair<uint64 , std::tuple<double, double>>> resultVec = topologyManagerService->getNodesIdsInRange(middlePoint, request->radius());
+
+    for (auto elem : resultVec) {
+        NodeGeoInfo* nodeInfo = reply->add_nodes();
+        nodeInfo->set_id(elem.first);
+        Coordinates coord;
+        auto coordTuple = elem.second;
+        coord.set_lat(std::get<0>(coordTuple));
+        coord.set_lng(std::get<1>(coordTuple));
+    }
+    return Status::OK;
 }

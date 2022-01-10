@@ -678,13 +678,15 @@ add_test(NAME grpc-test COMMAND grpc-test)
 
 ### S2libTest ###
 add_executable(s2-library-test "felix-ba-tests/s2libraryTests.cpp")
-target_link_libraries(s2-library-test nes ${GTEST_LIBRARIES})
+target_link_libraries(s2-library-test nes ${GTEST_LIBRARIES} s2)
+target_include_directories(s2-library-test PUBLIC "/usr/local/include/s2")
 add_test(NAME s2-library-test COMMAND s2-library-test)
 
-### S2libTest ###
-add_executable(GeoLocationTests "felix-ba-tests/GeoLocationTests.cpp")
-target_link_libraries(GeoLocationTests nes ${GTEST_LIBRARIES})
-add_test(NAME GeoLocationTests COMMAND GeoLocationTests)
+### GoeLocationTest ###
+add_executable(geoLocationTests "Integration/GeoLocationTests.cpp")
+target_link_libraries(geoLocationTests nes ${GTEST_LIBRARIES} s2)
+target_include_directories(geoLocationTests PUBLIC "/usr/local/include/s2")
+add_test(NAME geoLocationTests COMMAND GeoLocationTests)
 
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###
