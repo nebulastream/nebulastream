@@ -108,7 +108,14 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
      * @param operatorNode : start operator
      * @return a tuple of duplicated operator with its duplicated downstream operator chains and a vector of original head operators
      */
-    std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>> getLogicalGraphToDuplicate(const OperatorNodePtr& operatorNode);
+    OperatorNodePtr getLogicalGraphToDuplicate(const OperatorNodePtr& operatorNode);
+
+    /**
+     * @brief Check if the input operator is a blocking operator or not (operator that can't be expanded, for example, Window Join or Union)
+     * @param operatorNode : operator to check
+     * @return true if blocking else false
+     */
+    bool isBlockingOperator(const OperatorNodePtr& operatorNode);
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERY_REWRITE_LOGICAL_SOURCE_EXPANSION_RULE_HPP_
