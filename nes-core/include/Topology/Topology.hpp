@@ -25,6 +25,8 @@
 
 namespace NES {
 
+//if no other values is supplied to the getClosestNodePosition() function, it will use this search radius to try to find a node
+const int STANDARD_SEARCH_RADIUS = 50;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
@@ -64,9 +66,46 @@ class Topology {
      */
     bool removePhysicalNode(const TopologyNodePtr& nodeToRemove);
 
-    bool setPhysicalNodePosition(const TopologyNodePtr& node, double latitude, double longitude);
+    /**
+     * @brief This method sets the location of a new node (making it a field node) or updates the position of an existing field node
+     * @param node: a pointer to the topology node
+     * @param coordinates: the (new) location of the field node
+     * @param init: defines if the method is called as part of node creation or later on. trying to set a location for a node
+     * without existing coordinates will result in failure if the init flag is not set, thus preventing the updating of
+     * non field nodes to become field nodes
+     * @return true if successful
+     */
+    bool setPhysicalNodePosition(const TopologyNodePtr& node, std::tuple<double, double> coordinates, bool init = false);
 
-    TopologyNodePtr getClosestNodeTo(const TopologyNodePtr& nodePtr);
+    //TODO: make these functions also return optional?
+    /**
+     * @brief returns the closest field node to a certain geographical location
+     * @param coordTuple coordinates of a location on the map
+     * @param radius the maximum distance which the returned node can habe from the specified location
+     * @return TopologyNodePtr to the closest field node
+     */
+    TopologyNodePtr getClosestNodeTo(std::tuple<double, double> coordTuple, int radius = STANDARD_SEARCH_RADIUS);
+
+    /**
+     * @brief returns the closest field node to a cartein node (which does not equal the node passed as an argument)
+     * @param nodePtr: pointer to a field node
+     * @param radius the maximum distance which the returned node can habe from the specified node
+     * @return TopologyNodePtr to the closest field node unequal to nodePtr
+     */
+    TopologyNodePtr getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = STANDARD_SEARCH_RADIUS);
+
+    /**
+     * @brief get a list of all the nodes within a certain radius around a location
+     * @param center: a point on the map around which we look for nodes
+     * @param radius: the maximum distance of the returned nodes from center
+     * @return a vector of pairs containing node pointers and the corresponding locations
+     */
+    std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> getNodesInRange(std::tuple<double, double> center, double radius);
+    /**
+     *
+     * @return the amount of field nodes in the system
+     */
+    size_t getSizeOfPointIndex();
 
     /**
      * @brief This method will find a given physical node by its id
@@ -196,6 +235,7 @@ class Topology {
     */
     static TopologyNodePtr findTopologyNodeInSubgraphById(uint64_t id, const std::vector<TopologyNodePtr>& sourceNodes);
 
+
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
 
@@ -214,6 +254,7 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
+    // a spatial index that stores pointers to all the field nodes
     S2PointIndex<TopologyNodePtr> nodePointIndex;
 };
 }// namespace NES

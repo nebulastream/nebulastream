@@ -379,8 +379,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         std::optional<StaticNesMetricsPtr> staticNesMetrics,
-                                        double latitude,
-                                        double longitude) {
+                                        std::optional<std::tuple<double, double>> coordinates) {
 
     RegisterNodeRequest request;
     request.set_address(ipAddress);
@@ -395,8 +394,16 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     }
 
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
-    request.set_latitude(latitude);
-    request.set_longitude(longitude);
+    if (coordinates.has_value()) {
+        NES_DEBUG("Registered node is a field node");
+        auto cIn = coordinates.value();
+        auto coordinates = new Coordinates;
+        coordinates->set_lat(get<0>(cIn));
+        coordinates->set_lng(get<1>(cIn));
+        request.set_allocated_coordinates(coordinates);
+    } else {
+        NES_DEBUG("Registered node is an inner (non field) node");
+    }
 
     class RegisterNodeListener : public detail::RpcExecutionListener<bool, RegisterNodeRequest, RegisterNodeReply> {
       public:
@@ -476,6 +483,27 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
+std::vector<std::pair<uint64_t, std::tuple<double, double>>> CoordinatorRPCClient::getNodeIdsInRange(std::tuple<double, double> coord,
+                                                                                          double radius) {
+    GetNodesInRangeRequest request;
+    Coordinates* co = new Coordinates;
+    co->set_lat(get<0>(coord));
+    co->set_lng(get<1>(coord));
+    request.set_allocated_coord(co);
+    request.set_radius(radius);
+    GetNodesInRangeReply reply;
+    ClientContext context;
+
+    Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
+
+    //TODO: does it make sense here to use a map instead of a vector?
+    std::vector<std::pair<uint64_t, std::tuple<double, double>>> retVec;
+    for (NodeGeoInfo nodeInfo : *reply.mutable_nodes()) {
+        retVec.emplace_back(nodeInfo.id(), std::tuple(nodeInfo.coord().lat(), nodeInfo.coord().lng()));
+    }
+    return retVec;
+
+}
 bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
     EpochBarrierPropagationNotification request;
     request.set_timestamp(timestamp);

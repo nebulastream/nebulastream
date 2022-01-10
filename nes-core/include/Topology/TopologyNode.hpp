@@ -143,9 +143,26 @@ class TopologyNode : public Node {
      */
     bool removeLinkProperty(const TopologyNodePtr& linkedNode);
 
-    std::tuple<double, double> getCoordinates();
+    /**
+     * @brief get the geographical coordinates of a topology node
+     * @return The geographical coordinates of the node
+     */
+    std::optional<std::tuple<double, double>> getCoordinates();
 
+    /**
+     * @brief set the goegraphical coordinates of a topology node
+     * @param lat
+     * @param lng
+     * @return true on success
+     */
     bool setCoordinates(double lat, double lng);
+
+    /**
+     * @brief set the goegraphical coordinates of a topology node
+     * @param coordinatesIn: a tuple with the coordinates
+     * @return true on success
+     */
+    bool setCoordinates(std::tuple<double, double> coordinatesIn);
 
   private:
     uint64_t id;
@@ -155,7 +172,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     bool maintenanceFlag;
-    std::tuple<double, double> coordinates;
+    std::optional<std::tuple<double, double>> coordinates;
 
     /**
      * @brief A field to store a map of node properties

@@ -368,7 +368,8 @@ find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
 set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
 
 # s2 Library
-find_package(s2)
+add_library(s2 SHARED IMPORTED)
+set_target_properties(s2 PROPERTIES IMPORTED_LOCATION "/usr/local/lib/libs2.so.0")
 set(LIBRARIES ${LIBRARIES} s2)
 
 # Library containing Kafka client

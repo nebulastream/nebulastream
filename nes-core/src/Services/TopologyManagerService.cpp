@@ -31,7 +31,7 @@ TopologyManagerService::TopologyManagerService(TopologyPtr topology) : topology(
 }
 
 uint64_t
-TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, double latitude, double longitude) {
+TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<std::tuple<double, double>> coordinates) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -64,11 +64,10 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
         topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
-    //todo: what is the best way to represent an incalid value?
-    if (latitude != 200 && longitude != 200) {
-        //todo: add call to add location here
-        NES_DEBUG("added node with geographical location: " << latitude << ", " << longitude);
-        topology->setPhysicalNodePosition(physicalNode, latitude, longitude);
+    if (coordinates.has_value()) {
+        auto c = coordinates.value();
+        NES_DEBUG("added node with geographical location: " << get<0>(c) << ", " << get<1>(c));
+        topology->setPhysicalNodePosition(newTopologyNode, c, true);
     } else {
         NES_DEBUG("added node does not have a geographical location");
     }
@@ -76,6 +75,11 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
     NES_DEBUG("TopologyManagerService::registerNode: topology after insert = ");
     topology->print();
     return id;
+}
+
+uint64_t
+TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots) {
+    return registerNode(address, grpcPort, dataPort, numberOfSlots, std::optional<std::tuple<double, double>>());
 }
 
 bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
@@ -183,5 +187,22 @@ bool TopologyManagerService::removeParent(uint64_t childId, uint64_t parentId) {
 TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return topology->findNodeWithId(nodeId); }
 
 uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNodeIdCounter; }
+
+//TODO add functions here, that do not only look circular, but make sure, that there are nodes found in every possible direction of furture movement
+
+std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> TopologyManagerService::getNodesInRange(std::tuple<double, double> center, double radius) {
+    return topology->getNodesInRange(center, radius);
+}
+
+
+std::vector<std::pair<uint64 , std::tuple<double, double>>> TopologyManagerService::getNodesIdsInRange(std::tuple<double, double> center, double radius) {
+   auto list = getNodesInRange(center, radius);
+   std::vector<std::pair<uint64, std::tuple<double, double>>> retList{};
+   retList.reserve(list.size());
+for (auto elem : list) {
+       retList.emplace_back(std::pair(elem.first->getId(), elem.second));
+   }
+   return retList;
+}
 
 }// namespace NES

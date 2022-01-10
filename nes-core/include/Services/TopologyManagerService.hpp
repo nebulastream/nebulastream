@@ -18,6 +18,8 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <vector>
+#include <s2/base/integral_types.h>
 
 namespace NES {
 class Topology;
@@ -33,13 +35,23 @@ class TopologyManagerService {
     TopologyManagerService(TopologyPtr topology);
 
     /**
-     * @brief registers a node
+     * @brief registers a node (can be a field node or a non field node)
+     * @param address of node ip:port
+     * @param cpu the cpu capacity of the worker
+     * @param nodeProperties of the to be added sensor
+     * @param coordinates: an optional containing either the node location if the node is a field node, or nullopt_t for non field nodes
+     * @return id of node
+     */
+    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<std::tuple<double, double>> coordinates);
+
+    /**
+     * @brief registers a non field node (therefore no location needs to be supplied)
      * @param address of node ip:port
      * @param cpu the cpu capacity of the worker
      * @param nodeProperties of the to be added sensor
      * @return id of node
      */
-    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, double latitude, double longitude);
+    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots);
 
     /**
     * @brief unregister an existing node
@@ -65,11 +77,28 @@ class TopologyManagerService {
     bool removeParent(uint64_t childId, uint64_t parentId);
 
     /**
-     * @brief calls the method findNodeWithId of Topology class
+     * @brief returns a pointer to the node with the specified id
      * @param nodeId
-     * @return TopologyNodePtr
+     * @return TopologyNodePtr (or a nullptr if there is no node with this id)
      */
     TopologyNodePtr findNodeWithId(uint64_t nodeId);
+
+
+    /**
+     * @brief query for topology pointers of the field nodes within a certain radius around a geographical location
+     * @param center: the center of the query area
+     * @param radius: all field nodes within this radius around the center will be returned
+     * @return vector of pairs containing a pointer to the topology node and the nodes location
+     */
+    std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> getNodesInRange(std::tuple<double, double> center, double radius) ;
+
+    /**
+     * @brief query for the ids of field nodes within a certain radius around a geographical location
+     * @param center: the center of the query area
+     * @param radius: all field nodes within this radius around the center will be returned
+     * @return vector of pairs containing node ids and the corresponding location
+     */
+    std::vector<std::pair<uint64 , std::tuple<double, double>>> getNodesIdsInRange(std::tuple<double, double> center, double radius);
 
   private:
     TopologyPtr topology;
