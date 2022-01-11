@@ -47,24 +47,25 @@ public:
 
     /// @brief retrieve the view by viewId
     /// @note will throw an runtime_error if view does not exist.
-    /// @note please check existance with 'containView()'
+    /// @note please check existence with 'containView()'
     MaterializedViewPtr getView(uint64_t viewId);
 
     /// @brief create a new view by view type
     MaterializedViewPtr createView(ViewType type);
 
-    /// @brief create a new view by view type and assing given id
+    /// @brief create a new view by view type and  given id
     /// @note will throw an runtime_error if view does not exist.
-    /// @note please check existance with 'containView()'
+    /// @note please check existence with 'containView()'
     MaterializedViewPtr createView(ViewType type, uint64_t viewId);
 
-    /// @brief delete view from mananger
+    /// @brief delete view from manager
     bool deleteView(uint64_t viewId);
 
     /// @brief print managed views
     std::string to_string();
 
   private:
+    std::mutex mutex;
     std::unordered_map<uint64_t, MaterializedViewPtr> viewMap;
     uint64_t nextViewId = 0;
 
