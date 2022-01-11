@@ -72,5 +72,6 @@ std::string GeneratableSlicePreAggregationOperator::toString() const { return "G
 OperatorNodePtr GeneratableSlicePreAggregationOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler, windowAggregation);
 }
+void GeneratableSlicePreAggregationOperator::generateHeaders(PipelineContextPtr) {};
 
 }// namespace NES::QueryCompilation::GeneratableOperators

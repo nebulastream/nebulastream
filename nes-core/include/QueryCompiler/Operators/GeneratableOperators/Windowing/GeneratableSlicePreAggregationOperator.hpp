@@ -55,6 +55,7 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
                                          GeneratableWindowAggregationPtr windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+    void generateHeaders(PipelineContextPtr) override;
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 

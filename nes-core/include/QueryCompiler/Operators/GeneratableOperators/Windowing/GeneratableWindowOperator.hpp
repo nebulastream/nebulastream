@@ -34,6 +34,12 @@ class GeneratableWindowOperator : public GeneratableOperator {
 
     virtual ~GeneratableWindowOperator() noexcept = default;
 
+    /**
+     *
+     * @return headers required by GeneratableWindowOperator
+     */
+    void generateHeaders(PipelineContextPtr context) override;
+
     Windowing::WindowOperatorHandlerPtr operatorHandler;
 };
 }// namespace GeneratableOperators
