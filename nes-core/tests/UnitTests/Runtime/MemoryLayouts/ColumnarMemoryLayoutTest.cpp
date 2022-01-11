@@ -20,9 +20,6 @@
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 #include <gtest/gtest.h>
