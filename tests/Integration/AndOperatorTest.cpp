@@ -293,7 +293,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
 
 /* 3. Test
  * Here, we test if we can use and operator with sliding window (5 Minutes, 1 Minute) for patterns and create complex events with it
- * TODO: sliding windows create different outputs
+ * TODO: sliding windows create different outputs #2357
  */
 TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     coConf->resetCoordinatorOptions();
