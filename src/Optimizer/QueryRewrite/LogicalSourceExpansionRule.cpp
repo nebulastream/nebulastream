@@ -83,6 +83,8 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
 
             for (auto& node : allOperators) {
                 auto operatorNode = node->as<OperatorNode>();
+                //Assign new operator id
+                operatorNode->setId(Util::getNextOperatorId());
                 const std::any& value = operatorNode->getProperty("ListOfBlockingParents");
                 //Check if the operator need to be connected to a blocking parent
                 if (value.has_value()) {
@@ -93,8 +95,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                         if (!blockingOperator) {
                             //Throw an exception as this should never occur
                         }
-                        //Assign new operator id
-                        operatorNode->setId(Util::getNextOperatorId());
                         blockingOperator->addChild(operatorNode);
                     }
                 }
