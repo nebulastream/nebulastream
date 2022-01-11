@@ -14,13 +14,14 @@
     limitations under the License.
 */
 
-#include "Nodes/Util/Iterators/DepthFirstNodeIterator.hpp"
 #include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -75,7 +76,8 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             OperatorNodePtr duplicateOperator = sourceOperator->duplicate();
             //Add to the source operator the id of the physical node where we have to pin the operator
             duplicateOperator->getAllLeafNodes();
-            duplicateOperator->addProperty("PinnedNodeId", sourceLocation->getId());
+            //NOTE: This is required at the time of placement to know where the source operator is pinned
+            duplicateOperator->addProperty(PINNED_NODE_ID, sourceLocation->getId());
 
             //Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
             const std::vector<NodePtr>& allOperators = duplicateOperator->getAndFlattenAllAncestors();
@@ -99,6 +101,8 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                         blockingOperator->addChild(operatorNode);
                     }
                 }
+                //Remove the property
+                operatorNode->removeProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS);
             }
         }
     }

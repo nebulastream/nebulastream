@@ -65,7 +65,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         }
 
         NES_DEBUG("TopDownStrategy: map pinned operators to the physical location");
-        mapPinnedOperatorToTopologyNodes(queryId, sourceOperators);
+        mapPinnedOperatorToTopologyNodes(queryPlan);
 
         NES_DEBUG("TopDownStrategy: Get all sink operators");
         const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
