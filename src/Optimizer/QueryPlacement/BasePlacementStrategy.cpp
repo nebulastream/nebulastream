@@ -41,111 +41,70 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topologyPtr)),
       typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)) {}
 
-void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
-                                                             const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators) {
+void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr& queryPlan) {
 
     NES_DEBUG("BasePlacementStrategy: Prepare a map of source to physical nodes");
-    NES_TRACE("BasePlacementStrategy: Clear the previous pinned operator mapping");
+
+    //Clear the previous pinned operator mapping
     pinnedOperatorLocationMap.clear();
+
+    //Fetch all source and sink operators for pinning
+    auto sourceOperators = queryPlan->getSourceOperators();
+    auto sinkOperators = queryPlan->getSinkOperators();
+
     TopologyNodePtr sinkNode = topology->getRoot();
-    std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
-    std::vector<TopologyNodePtr> allSourceNodes;
+    std::set<TopologyNodePtr> nodesWithPhysicalStreams;
+    //Fetch all topology node contributing the physical streams involved in the query plan
     for (const auto& sourceOperator : sourceOperators) {
-        if (!sourceOperator->getSourceDescriptor()->hasStreamName()) {
-            throw Exception("BasePlacementStrategy: Source Descriptor need stream name: " + std::to_string(queryId));
+
+        auto value = sourceOperator->getProperty(PINNED_NODE_ID);
+        if (!value.has_value()) {
+            //throw exception
         }
-        const std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
-        if (mapOfSourceToTopologyNodes.find(streamName) != mapOfSourceToTopologyNodes.end()) {
-            NES_TRACE("BasePlacementStrategy: Entry for the logical stream " << streamName << " already present.");
-            continue;
-        }
-        NES_TRACE("BasePlacementStrategy: Get all topology nodes for the logical source stream");
-        const std::vector<TopologyNodePtr> sourceNodes = streamCatalog->getSourceNodesForLogicalStream(streamName);
-        if (sourceNodes.empty()) {
-            NES_ERROR("BasePlacementStrategy: No source found in the topology for stream " << streamName
-                                                                                           << " for query with id : " << queryId);
-            throw Exception("BasePlacementStrategy: No source found in the topology for stream " + streamName
-                            + " for query with id : " + std::to_string(queryId));
-        }
-        mapOfSourceToTopologyNodes[streamName] = sourceNodes;
-        NES_TRACE("BasePlacementStrategy: Find the topology sub graph for the source nodes.");
-        std::vector<TopologyNodePtr> topoSubGraphSourceNodes = this->topology->findPathBetween(sourceNodes, {sinkNode});
-        allSourceNodes.insert(allSourceNodes.end(), topoSubGraphSourceNodes.begin(), topoSubGraphSourceNodes.end());
+        auto nodeId = std::any_cast<uint64_t>(value);
+        auto nodeWithPhysicalStream = topology->findNodeWithId(nodeId);
+        //NOTE: Add the physical node to the set (we used set here to prevent inserting duplicate physical node in-case of self join or
+        // two physical streams located on same physical node)
+        nodesWithPhysicalStreams.insert(nodeWithPhysicalStream);
     }
+    std::vector sourceNodes(nodesWithPhysicalStreams.begin(), nodesWithPhysicalStreams.end());
 
-    NES_DEBUG("BasePlacementStrategy: Merge all the topology sub-graphs found using their source nodes");
-    std::vector<TopologyNodePtr> mergedGraphSourceNodes = topology->mergeSubGraphs(allSourceNodes);
+    //NOTE: This step performs path selection
+    std::vector<TopologyNodePtr> selectedTopologyForPlacement = topology->findPathBetween(sourceNodes, {sinkNode});
 
-    NES_TRACE("BasePlacementStrategy: Collecting all sink operators.");
-    std::set<OperatorNodePtr> sinkOperators;
-    for (const auto& sourceOperator : sourceOperators) {
-        const std::vector<NodePtr>& rootOperatorNodes = sourceOperator->getAllRootNodes();
-        for (const auto& rootOperator : rootOperatorNodes) {
-            OperatorNodePtr sinkOperator = rootOperator->as<SinkLogicalOperatorNode>();
-            sinkOperators.insert(sinkOperator);
-        }
-    }
-
-    NES_TRACE("BasePlacementStrategy: Locating sink node.");
+    //NOTE: This step pins the sink operators
+    NES_TRACE("BasePlacementStrategy: Locating node to pin sink operator.");
     //TODO: change here if the topology can have more than one root node
-    TopologyNodePtr sourceTopologyNode = mergedGraphSourceNodes[0];
-    std::vector<NodePtr> rootNodes = sourceTopologyNode->getAllRootNodes();
-
+    std::vector<NodePtr> rootNodes = selectedTopologyForPlacement[0]->getAllRootNodes();
     if (rootNodes.empty()) {
         NES_ERROR("BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
         throw Exception("BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
     }
-
+    //Fetch one root node and pin all sink operators to the node
     TopologyNodePtr rootNode = rootNodes[0]->as<TopologyNode>();
-
     NES_TRACE("BasePlacementStrategy: Adding location for sink operator.");
     for (const auto& sinkOperator : sinkOperators) {
         pinnedOperatorLocationMap[sinkOperator->getId()] = rootNode;
     }
 
-    NES_DEBUG(
-        "BasePlacementStrategy: Update the source to topology node map using the source nodes from the merged topology graph");
-    for (auto& entry : mapOfSourceToTopologyNodes) {
-        NES_TRACE(
-            "BasePlacementStrategy: Taking nodes from the merged sub graphs and replacing the initial source topology nodes.");
-        std::vector<TopologyNodePtr> sourceNodes;
-        for (auto sourceNode : entry.second) {
-            auto found = std::find_if(mergedGraphSourceNodes.begin(),
-                                      mergedGraphSourceNodes.end(),
-                                      [&](const TopologyNodePtr& sourceNodeToUse) {
-                                          return sourceNode->getId() == sourceNodeToUse->getId();
-                                      });
-            if (found == mergedGraphSourceNodes.end()) {
-                NES_ERROR("BasePlacementStrategy: unable to locate the initial source node in the merged sub graph.");
-                throw Exception("BasePlacementStrategy: unable to locate the initial source node in the merged sub graph.");
-            }
-            NES_TRACE(
-                "BasePlacementStrategy: Inserting the source node from the merged graph into the new source node location.");
-            sourceNodes.push_back(*found);
+    //NOTE: This step pins all source nodes
+    for (const auto& sourceOperator : sourceOperators) {
+        auto value = sourceOperator->getProperty(PINNED_NODE_ID);
+        if (!value.has_value()) {
+            //throw exception
         }
-        NES_TRACE("BasePlacementStrategy: Updating the source to topology node map.");
-        mapOfSourceToTopologyNodes[entry.first] = sourceNodes;
-    }
-
-    for (const auto& sourceNode : sourceOperators) {
-        SourceDescriptorPtr sourceDescriptor = sourceNode->getSourceDescriptor();
-        std::string logicalSourceName = sourceDescriptor->getStreamName();
-        NES_DEBUG("BasePlacementStrategy: Get the topology node for logical source name " << logicalSourceName);
-        std::vector<TopologyNodePtr> topologyNodes = mapOfSourceToTopologyNodes[logicalSourceName];
-        if (topologyNodes.empty()) {
-            NES_ERROR("BasePlacementStrategy: unable to find topology nodes for logical source " << logicalSourceName);
-            throw Exception("BasePlacementStrategy: unable to find topology nodes for logical source " + logicalSourceName);
-        }
-
-        TopologyNodePtr candidateTopologyNode = topologyNodes[0];
-        if (candidateTopologyNode->getAvailableResources() == 0) {
-            NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
+        auto nodeId = std::any_cast<uint64_t>(value);
+        auto found = std::find_if(selectedTopologyForPlacement.begin(),
+                                  selectedTopologyForPlacement.end(),
+                                  [&nodeId](const TopologyNodePtr& sourceNodeToUse) {
+                                      return nodeId == sourceNodeToUse->getId();
+                                  });
+        if (found == selectedTopologyForPlacement.end()) {
+            NES_ERROR("BasePlacementStrategy: unable to locate a node in the selected topology for placing the source operator.");
             throw Exception(
-                "BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
+                "BasePlacementStrategy: unable to locate a node in the selected topology for placing the source operator.");
         }
-        pinnedOperatorLocationMap[sourceNode->getId()] = candidateTopologyNode;
-        topologyNodes.erase(topologyNodes.begin());
-        mapOfSourceToTopologyNodes[logicalSourceName] = topologyNodes;
+        pinnedOperatorLocationMap[sourceOperator->getId()] = *found;
     }
 }
 

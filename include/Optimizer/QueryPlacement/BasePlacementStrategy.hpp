@@ -73,6 +73,8 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 using PlacementMatrix = std::vector<std::vector<bool>>;
 
+const std::string PINNED_NODE_ID = "PinnedNodeId";
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -102,10 +104,9 @@ class BasePlacementStrategy {
   protected:
     /**
      * @brief Map the logical source name to the physical source nodes in the topology used for placing the operators
-     * @param queryId : the id of the query.
      * @param sourceOperators: the source operators in the query
      */
-    void mapPinnedOperatorToTopologyNodes(QueryId queryId, const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators);
+    void mapPinnedOperatorToTopologyNodes(const QueryPlanPtr& queryPlan);
 
     /**
      * @brief Get Execution node for the input topology node

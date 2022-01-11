@@ -65,102 +65,73 @@ class JoinDeploymentTest : public testing::Test {
  */
 //TODO: this test will be enabled once we have the renaming function using as
 //TODO: prevent self join
-TEST_F(JoinDeploymentTest, testSelfJoinTumblingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig(Configurations::CSV_SOURCE_CONFIG);
+TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
+
+    struct Window {
+        uint64_t value;
+        uint64_t id;
+        uint64_t timestamp;
+    };
+
+    auto windowSchema = Schema::create()
+                            ->addField("value", DataTypeFactory::createUInt64())
+                            ->addField("id", DataTypeFactory::createUInt64())
+                            ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
+
+
+    string query =
+        R"(Query::from("window").as("w1").joinWith(Query::from("window").as("w2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))))";
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+
+
+    //Setup first physical stream
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
     srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream1");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
     srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    testHarness.addCSVSource(conf, windowSchema);
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    //Setup second physical stream for same logical stream
+//    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
+//    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+//    testHarness.addCSVSource(conf2, windowSchema);
 
-    NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ULL);
-    NES_INFO("JoinDeploymentTest: Coordinator started successfully");
+    struct Output {
+        int64_t start;
+        int64_t end;
+        int64_t key;
+        uint64_t value1;
+        uint64_t id1;
+        uint64_t timestamp1;
+        uint64_t value2;
+        uint64_t id2;
+        uint64_t timestamp2;
 
-    NES_INFO("JoinDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("JoinDeploymentTest: Worker1 started successfully");
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (start == rhs.start && end == rhs.end && key == rhs.key && value1 == rhs.value1 && id1 == rhs.id1
+                    && timestamp1 == rhs.timestamp1 && value2 == rhs.value2 && id2 == rhs.id2 && timestamp2 == rhs.timestamp2);
+        }
+    };
 
-    NES_INFO("JoinDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("JoinDeploymentTest: Worker2 started SUCCESSFULLY");
+    std::vector<Output> expectedOutput = {{1000, 2000, 4, 1, 4, 1002, 1, 4, 1002},
+                                          {1000, 2000, 12, 1, 12, 1001, 1, 12, 1001},
+                                          {2000, 3000, 1, 2, 1, 2000, 2, 1, 2000},
+                                          {2000, 3000, 11, 2, 11, 2001, 2, 11, 2001},
+                                          {2000, 3000, 16, 2, 16, 2002, 2, 16, 2002}};
 
-    std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
-    remove(outputFilePath.c_str());
 
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
-    //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
-
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
-    PhysicalStreamConfigPtr windowStream2 = PhysicalStreamConfig::create(srcConf);
-
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream2);
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    NES_INFO("JoinDeploymentTest: Submit query");
-    string query =
-        R"(Query::from("window").as("w1").joinWith(Query::from("window").as("w2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
-        Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-
-    QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
-
-    string expectedContent;
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
-
-    NES_DEBUG("JoinDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    NES_DEBUG("JoinDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_DEBUG("JoinDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
-
-    NES_DEBUG("JoinDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("JoinDeploymentTest: Test finished");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 /**
