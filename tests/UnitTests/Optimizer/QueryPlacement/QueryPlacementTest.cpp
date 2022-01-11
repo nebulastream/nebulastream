@@ -1040,3 +1040,125 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
     EXPECT_TRUE(isSource2PlacementValid);
     EXPECT_EQ(mapPlacementCount, 2U);
 }
+
+/**
+ * Test placement of self join query on a topology with one logical source
+ * Topology: sinkNode--mid1--srcNode1(A)
+ *
+ * Query: SinkOp---join---SourceOp(A)
+ *                    \
+ *                     -----SourceOp(A)
+ *
+ *
+ *
+ */
+TEST_F(QueryPlacementTest, testPlacementOfSelfJoinQuery) {
+    // Setup the topology
+    auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 14);
+    auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
+    auto srcNode1 = TopologyNode::create(2, "localhost", 4003, 5003, 4);
+
+    TopologyPtr topology = Topology::create();
+    topology->setAsRoot(sinkNode);
+
+    topology->addNewPhysicalNodeAsChild(sinkNode, midNode1);
+    topology->addNewPhysicalNodeAsChild(midNode1, srcNode1);
+
+    ASSERT_TRUE(sinkNode->containAsChild(midNode1));
+    ASSERT_TRUE(midNode1->containAsChild(srcNode1));
+
+    NES_DEBUG("QueryPlacementTest:: topology: " << topology->toString());
+
+    // Prepare the source and schema
+    std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                         "->addField(\"value\", BasicType::UINT64)"
+                         "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
+    const std::string streamName = "car";
+
+    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog->addLogicalStream(streamName, schema);
+
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("car");
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, srcNode1);
+
+    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+
+    Query query = Query::from("car")
+                      .as("c1")
+                      .joinWith(Query::from("car").as("c2"))
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                      .sink(NullOutputSinkDescriptor::create());
+    auto testQueryPlan = query.getQueryPlan();
+
+    // Prepare the placement
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
+
+    // Execute optimization phases prior to placement
+    testQueryPlan = typeInferencePhase->execute(testQueryPlan);
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    testQueryPlan = queryReWritePhase->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(testQueryPlan);
+    typeInferencePhase->execute(testQueryPlan);
+
+    assignDataModificationFactor(testQueryPlan);
+
+    // Execute the placement
+    placementStrategy->updateGlobalExecutionPlan(testQueryPlan);
+    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
+
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
+
+    EXPECT_EQ(executionNodes.size(), 3UL);
+    // check if map is placed two times
+    uint32_t mapPlacementCount = 0;
+
+    bool isSinkPlacementValid = false;
+    bool isSource1PlacementValid = false;
+    bool isSource2PlacementValid = false;
+    for (const auto& executionNode : executionNodes) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(testQueryPlan->getQueryId())) {
+            OperatorNodePtr root = querySubPlan->getRootOperators()[0];
+
+            // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
+            if (root->as<SinkLogicalOperatorNode>()->getId() == testQueryPlan->getSinkOperators()[0]->getId()) {
+                isSinkPlacementValid = executionNode->getTopologyNode()->getId() == 0;
+            }
+
+            for (const auto& child : root->getChildren()) {
+                if (child->instanceOf<SourceLogicalOperatorNode>()) {
+                    // if the current operator is a stream source, it should be placed in topology node with id 3 or 4 (source nodes)
+                    if (child->as<SourceLogicalOperatorNode>()->getId() == testQueryPlan->getSourceOperators()[0]->getId()) {
+                        isSource1PlacementValid =
+                            executionNode->getTopologyNode()->getId() ==2;
+                    } else if (child->as<SourceLogicalOperatorNode>()->getId()
+                               == testQueryPlan->getSourceOperators()[1]->getId()) {
+                        isSource2PlacementValid =
+                            executionNode->getTopologyNode()->getId() == 2;
+                    }
+                }
+            }
+        }
+    }
+
+    EXPECT_TRUE(isSinkPlacementValid);
+    EXPECT_TRUE(isSource1PlacementValid);
+    EXPECT_TRUE(isSource2PlacementValid);
+}
