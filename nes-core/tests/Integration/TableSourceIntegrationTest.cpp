@@ -260,8 +260,9 @@ TEST_F(TableSourceIntegrationTest, testNationTable) {
     EXPECT_TRUE(retStopCord);
 }
 
-// simple test for nation table
-TEST_F(TableSourceIntegrationTest, testTwoTableJoin) {
+// incomplete
+// this test is supposed to join two table sources relying on the streaming join operator
+TEST_F(TableSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
 
