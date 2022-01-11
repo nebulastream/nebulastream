@@ -48,7 +48,7 @@ class QueryCompilerOptions {
     };
 
     enum OutputBufferOptimizationLevel {
-        // Use highest optimization.
+        // Use highest optimization available.
         ALL,
         // create separate result buffer and copy everything over after all operations are applied.
         // Check size after every written tuple.

@@ -314,7 +314,10 @@ TEST_F(QueryExecutionTest, filterQuery) {
             ASSERT_TRUE(plan->stop());
             testSink->cleanupBuffers();// wont be called by runtime as no runtime support in this test
             ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+
+            break;
         }
+        break;
     }
 }
 

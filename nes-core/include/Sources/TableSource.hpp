@@ -21,6 +21,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
 namespace NES {
+class CSVParser;
+using CSVParserPtr = std::shared_ptr<CSVParser>;
 namespace Runtime {
 namespace detail {
 class MemorySegment;
@@ -38,6 +40,7 @@ class TableSource : public GeneratorSource, public Runtime::BufferRecycler {
      * @param operatorId the valid id of the source
      */
     explicit TableSource(SchemaPtr schema,
+                          std::string pathTableFile,
                           Runtime::BufferManagerPtr bufferManager,
                           Runtime::QueryManagerPtr queryManager,
                           OperatorId operatorId,
@@ -70,13 +73,15 @@ class TableSource : public GeneratorSource, public Runtime::BufferRecycler {
     virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
 
   private:
+    std::string pathTableFile;
     uint64_t numberOfTuplesToProducePerBuffer;
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
     uint64_t currentPositionInBytes;
     uint64_t tupleSizeInBytes;
+    std::vector<PhysicalTypePtr> physicalTypes;
     uint64_t bufferSize;
-    const size_t numTuples; // in table
+    size_t numTuples; // in table
 
     void fillBuffer(Runtime::TupleBuffer &buffer);
 };

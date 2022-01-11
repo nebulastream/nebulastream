@@ -36,6 +36,7 @@ class TableSourceStreamConfig : public PhysicalStreamConfig {
     explicit TableSourceStreamConfig(std::string sourceType,
                                       std::string physicalStreamName,
                                       std::string logicalStreamName,
+                                      std::string pathTableFile,
                                       uint64_t numBuffersToProcess);
 
     ~TableSourceStreamConfig() noexcept override = default;
@@ -83,10 +84,12 @@ class TableSourceStreamConfig : public PhysicalStreamConfig {
     static AbstractPhysicalStreamConfigPtr create(const std::string& sourceType,
                                                   const std::string& physicalStreamName,
                                                   const std::string& logicalStreamName,
+                                                  const std::string& pathTableFile,
                                                   uint64_t numBuffersToProcess);
 
   private:
     std::string sourceType;
+    std::string pathTableFile;
 };
 }// namespace NES
 #endif// NES_INCLUDE_CATALOGS_TABLE_SOURCE_STREAM_CONFIG_HPP_
