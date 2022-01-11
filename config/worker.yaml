@@ -41,6 +41,28 @@ parentId: -1
 # The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
 logLevel: LOG_DEBUG
 
+# Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]
+queryCompilerCompilationStrategy: OPTIMIZE
+
+# Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME]
+queryCompilerPipeliningStrategy: OPERATOR_FUSION
+
+# Indicates the OutputBufferAllocationStrategy [ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,
+# |REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]
+queryCompilerOutputBufferOptimizationLevel: ALL
+
+# Comma separated list of where to map the sources
+sourcePinList:
+
+# Comma separated list of where to map the worker
+workerPinList:
+
+# Enable Numa-Aware execution
+numaAwareness: false
+
+# Enable monitoring
+enableMonitoring: false
+
 # ~~~ Physical Stream Configurations ~~~
 
 # A Physical Stream may be associated with multiple Instances of a logicalStreamName, a physicalStreamName and a SourceType
@@ -48,7 +70,7 @@ logLevel: LOG_DEBUG
 # Available source Types: DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
 #                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
 #                         BinarySource (ToDo: Make source available))
-physicalStreamConfigs:
+physicalStreamsConfig:
   # Set logical stream name where this stream is added to
   - logicalStreamName: default_stream_log
     # Set physical stream name

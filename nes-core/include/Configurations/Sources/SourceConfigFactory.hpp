@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#ifndef NES_SOURCECONFIGFACTORY_HPP
-#define NES_SOURCECONFIGFACTORY_HPP
+#ifndef NES_PHYSICALSTREAMCONFIGFACTORY_HPP
+#define NES_PHYSICALSTREAMCONFIGFACTORY_HPP
 
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamConfig.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -46,10 +46,7 @@ static std::map<std::string, ConfigSourceType> stringToConfigSourceType{{SENSE_S
                                                                         {DEFAULT_SOURCE_CONFIG, DefaultSource},
                                                                         {NO_SOURCE_CONFIG, DefaultSource}};
 
-class SourceConfig;
-using SourceConfigPtr = std::shared_ptr<SourceConfig>;
-
-class SourceConfigFactory {
+class PhysicalStreamConfigFactory {
   public:
     /**
      * @brief create source config with yaml file and/or command line params
@@ -57,20 +54,27 @@ class SourceConfigFactory {
      * @param argc number of command line params
      * @return source config object
      */
-    static SourceConfigPtr createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc);
+    static PhysicalStreamConfigPtr createPhysicalStreamConfig(const std::map<std::string, std::string>& commandLineParams, int argc);
+
+    /**
+     * @brief create physical stream config with yaml file
+     * @param physicalStreamConfig yaml elements from yaml file
+     * @return physical stream config object
+     */
+    static PhysicalStreamConfigPtr createPhysicalStreamConfig(ryml::NodeRef physicalStreamConfig);
 
     /**
      * @brief create default source config with default values of type sourceType
      * @param sourceType source type of source config object
      * @return source config object of type sourceType
      */
-    static SourceConfigPtr createSourceConfig(std::string sourceType);
+    static PhysicalStreamConfigPtr createPhysicalStreamConfig(std::string _sourceType);
 
     /**
      * @brief create default source config
      * @return default source config object
      */
-    static SourceConfigPtr createSourceConfig();
+    static PhysicalStreamConfigPtr createPhysicalStreamConfig();
 
   private:
     /**
@@ -93,4 +97,4 @@ class SourceConfigFactory {
 }// namespace Configurations
 }// namespace NES
 
-#endif//NES_SOURCECONFIGFACTORY_HPP
+#endif//NES_PHYSICALSTREAMCONFIGFACTORY_HPP

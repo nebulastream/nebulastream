@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#ifndef NES_OPCSOURCECONFIG_HPP
-#define NES_OPCSOURCECONFIG_HPP
+#ifndef NES_OPCSOURCETYPECONFIG_HPP
+#define NES_OPCSOURCETYPECONFIG_HPP
 
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
 #include <map>
 #include <string>
 
@@ -25,14 +25,14 @@ namespace NES {
 
 namespace Configurations {
 
-class OPCSourceConfig;
-using OPCSourceConfigPtr = std::shared_ptr<OPCSourceConfig>;
+class OPCSourceTypeConfig;
+using OPCSourceTypeConfigPtr = std::shared_ptr<OPCSourceTypeConfig>;
 
 /**
  * @brief Configuration object for OPC source config
  * connect to an OPC server and read data from there
  */
-class OPCSourceConfig : public SourceConfig {
+class OPCSourceTypeConfig : public SourceTypeConfig {
 
   public:
     /**
@@ -40,15 +40,15 @@ class OPCSourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static OPCSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a OPCSourceConfigPtr object
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceConfigPtr create();
+    static OPCSourceTypeConfigPtr create();
 
-    ~OPCSourceConfig() override = default;
+    ~OPCSourceTypeConfig() override = default;
 
     /**
      * @brief resets alls Source configuration to default values
@@ -65,7 +65,7 @@ class OPCSourceConfig : public SourceConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceConfigPtr const& other) override;
+    bool equal(SourceTypeConfigPtr const& other) override;
 
     [[nodiscard]] std::shared_ptr<ConfigOption<std::uint32_t>> getNamespaceIndex() const;
 
@@ -108,12 +108,12 @@ class OPCSourceConfig : public SourceConfig {
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit OPCSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with default values
      */
-    OPCSourceConfig();
+    OPCSourceTypeConfig();
 
     IntConfigOption namespaceIndex;
     StringConfigOption nodeIdentifier;

@@ -14,12 +14,13 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_
-#define NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_
+#ifndef NES_INCLUDE_CONFIGURATIONS_WORKER_PHYSICAL_STREAM_CONFIG_SOURCE_TYPE_CONFIG_HPP_
+#define NES_INCLUDE_CONFIGURATIONS_WORKER_PHYSICAL_STREAM_CONFIG_SOURCE_TYPE_CONFIG_HPP_
 
 #include <map>
 #include <memory>
 #include <string>
+#include <Util/yaml/rapidyaml.hpp>
 
 namespace NES {
 
@@ -28,13 +29,11 @@ namespace Configurations {
 /*
  * Constant config strings to read specific values from yaml or command line input
  */
+const std::string SOURCE_TYPE_CONFIG = "sourceType";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
-const std::string PHYSICAL_STREAM_NAME_CONFIG = "physicalStreamName";
 const std::string SOURCE_FREQUENCY_CONFIG = "sourceFrequency";
-const std::string LOGICAL_STREAM_NAME_CONFIG = "logicalStreamName";
 const std::string INPUT_FORMAT_CONFIG = "inputFormat";
-const std::string SOURCE_TYPE_CONFIG = "sourceType";
 const std::string UDFS_CONFIG = "udfs";
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
 const std::string CSV_SOURCE_CONFIG = "CSVSource";
@@ -65,8 +64,8 @@ const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
 const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 const std::string NO_SOURCE_CONFIG = "NoSource";
 
-class SourceConfig;
-using SourceConfigPtr = std::shared_ptr<SourceConfig>;
+class SourceTypeConfig;
+using SourceTypeConfigPtr = std::shared_ptr<SourceTypeConfig>;
 
 template<class T>
 class ConfigOption;
@@ -78,7 +77,7 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 /**
  * @brief Configuration object for source config
  */
-class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
+class SourceTypeConfig : public std::enable_shared_from_this<SourceTypeConfig> {
 
   public:
     /**
@@ -86,15 +85,15 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
      * @param sourceConfigMap with input params
      * @param sourceType type of source from where object was initialized
      */
-    explicit SourceConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType);
+    explicit SourceTypeConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType);
 
     /**
      * @brief constructor to create a new source option object initialized with default values as set below
      * @param sourceType type of source from where object was initialized
      */
-    explicit SourceConfig(std::string _sourceType);
+    explicit SourceTypeConfig(std::string _sourceType);
 
-    virtual ~SourceConfig() = default;
+    virtual ~SourceTypeConfig() = default;
 
     /**
      * @brief resets all options to default values
@@ -117,7 +116,7 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    virtual bool equal(SourceConfigPtr const& other);
+    virtual bool equal(SourceTypeConfigPtr const& other);
 
     /**
      * @brief gets a ConfigOption object with sourceType
@@ -128,66 +127,6 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
      * @brief set the value for sourceType with the appropriate data format
      */
     void setSourceType(std::string sourceTypeValue);
-
-    /**
-     * @brief gets a ConfigOption object with sourceFrequency
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getSourceFrequency() const;
-
-    /**
-     * @brief set the value for sourceFrequency with the appropriate data format
-     */
-    void setSourceFrequency(uint32_t sourceFrequencyValue);
-
-    /**
-     * @brief gets a ConfigOption object with numberOfBuffersToProduce
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersToProduce() const;
-
-    /**
-     * @brief set the value for numberOfBuffersToProduce with the appropriate data format
-     */
-    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
-
-    /**
-     * @brief gets a ConfigOption object with numberOfTuplesToProducePerBuffer
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
-
-    /**
-     * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
-     */
-    void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
-
-    /**
-     * @brief gets a ConfigOption object with physicalStreamName
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getPhysicalStreamName() const;
-
-    /**
-     * @brief set the value for physicalStreamName with the appropriate data format
-     */
-    void setPhysicalStreamName(std::string physicalStreamName);
-
-    /**
-     * @brief gets a ConfigOption object with logicalStreamName
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getLogicalStreamName() const;
-
-    /**
-     * @brief set the value for logicalStreamName with the appropriate data format
-     */
-    void setLogicalStreamName(std::string logicalStreamName);
-
-    /**
-     * @brief Get input data format
-     */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getInputFormat() const;
-
-    /**
-     * @brief Set input data format
-     */
-    void setInputFormat(std::string inputFormat);
 
     /**
      * @brief Checks if the current Source is of type SourceConfig
@@ -218,14 +157,8 @@ class SourceConfig : public std::enable_shared_from_this<SourceConfig> {
     }
 
   private:
-    IntConfigOption numberOfBuffersToProduce;
-    IntConfigOption numberOfTuplesToProducePerBuffer;
-    StringConfigOption physicalStreamName;
-    StringConfigOption logicalStreamName;
-    IntConfigOption sourceFrequency;
-    StringConfigOption inputFormat;
     StringConfigOption sourceType;
 };
 }// namespace Configurations
 }// namespace NES
-#endif// NES_INCLUDE_CONFIGURATIONS_CONFIG_OPTIONS_SOURCE_CONFIG_HPP_
+#endif// NES_INCLUDE_CONFIGURATIONS_WORKER_PHYSICAL_STREAM_CONFIG_SOURCE_TYPE_CONFIG_HPP_

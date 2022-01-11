@@ -76,8 +76,6 @@ int main(int argc, char** argv) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig(commandLineParams, argc);
-
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
 
     NES_INFO("NESWORKERSTARTER: Start with " << workerConfig->toString());

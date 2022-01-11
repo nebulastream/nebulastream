@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#ifndef NES_DEFAULTSOURCECONFIG_HPP
-#define NES_DEFAULTSOURCECONFIG_HPP
+#ifndef NES_DEFAULTSOURCETYPECONFIG_HPP
+#define NES_DEFAULTSOURCETYPECONFIG_HPP
 
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
 #include <map>
 #include <string>
 
@@ -25,14 +25,14 @@ namespace NES {
 
 namespace Configurations {
 
-class DefaultSourceConfig;
-using DefaultSourceConfigPtr = std::shared_ptr<DefaultSourceConfig>;
+class DefaultSourceTypeConfig;
+using DefaultSourceTypeConfigPtr = std::shared_ptr<DefaultSourceTypeConfig>;
 
 /**
  * @brief Configuration object for default source config
  * A simple source with default data created inside NES, useful for testing
  */
-class DefaultSourceConfig : public SourceConfig {
+class DefaultSourceTypeConfig : public SourceTypeConfig {
 
   public:
     /**
@@ -40,13 +40,13 @@ class DefaultSourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return DefaultSourceConfigPtr
      */
-    static DefaultSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static DefaultSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create defaultSourceConfig with default values
      * @return defaultSourceConfig with default values
      */
-    static DefaultSourceConfigPtr create();
+    static DefaultSourceTypeConfigPtr create();
     /**
      * @brief resets all Source configuration to default values
      */
@@ -62,18 +62,30 @@ class DefaultSourceConfig : public SourceConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceConfigPtr const& other) override;
+    bool equal(SourceTypeConfigPtr const& other) override;
+
+    /**
+     * @brief gets a ConfigOption object with numberOfBuffersToProduce
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersToProduce() const;
+
+    /**
+     * @brief set the value for numberOfBuffersToProduce with the appropriate data format
+     */
+    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
   private:
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for configs
      */
-    explicit DefaultSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit DefaultSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Default source config object initialized with default values
      */
-    DefaultSourceConfig();
+    DefaultSourceTypeConfig();
+    IntConfigOption numberOfBuffersToProduce;
+
 };
 }// namespace Configurations
 }// namespace NES

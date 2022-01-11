@@ -65,7 +65,7 @@ class CSVSourceConfig : public SourceConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceConfigPtr const& other) override;
+    bool equal(SourceTypeConfigPtr const& other) override;
 
     /**
      * @brief Get file path, needed for: CSVSource, BinarySource
@@ -97,6 +97,46 @@ class CSVSourceConfig : public SourceConfig {
      */
     void setDelimiter(std::string delimiter);
 
+    /**
+     * @brief gets a ConfigOption object with sourceFrequency
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getSourceFrequency() const;
+
+    /**
+     * @brief set the value for sourceFrequency with the appropriate data format
+     */
+    void setSourceFrequency(uint32_t sourceFrequencyValue);
+
+    /**
+     * @brief gets a ConfigOption object with numberOfBuffersToProduce
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersToProduce() const;
+
+    /**
+     * @brief set the value for numberOfBuffersToProduce with the appropriate data format
+     */
+    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
+
+    /**
+     * @brief gets a ConfigOption object with numberOfTuplesToProducePerBuffer
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
+
+    /**
+     * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
+     */
+    void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
+
+    /**
+     * @brief Get input data format
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getInputFormat() const;
+
+    /**
+     * @brief Set input data format
+     */
+    void setInputFormat(std::string inputFormat);
+
   private:
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
@@ -110,6 +150,11 @@ class CSVSourceConfig : public SourceConfig {
     StringConfigOption filePath;
     BoolConfigOption skipHeader;
     StringConfigOption delimiter;
+    IntConfigOption numberOfBuffersToProduce;
+    IntConfigOption numberOfTuplesToProducePerBuffer;
+    IntConfigOption sourceFrequency;
+    StringConfigOption inputFormat;
+
 };
 }// namespace Configurations
 }// namespace NES

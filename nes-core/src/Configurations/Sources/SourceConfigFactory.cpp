@@ -14,26 +14,25 @@
     limitations under the License.
 */
 
-#include <Configurations/Sources/BinarySourceConfig.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/DefaultSourceConfig.hpp>
-#include <Configurations/Sources/KafkaSourceConfig.hpp>
-#include <Configurations/Sources/MQTTSourceConfig.hpp>
-#include <Configurations/Sources/OPCSourceConfig.hpp>
-#include <Configurations/Sources/SenseSourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/BinarySourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/CSVSourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/DefaultSourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/KafkaSourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/MQTTSourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/OPCSourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/SenseSourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamConfigFactory.hpp>
 #include <Configurations/Sources/MaterializedViewSourceConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
 #include <Util/Logger.hpp>
-#define RYML_SINGLE_HDR_DEFINE_NOW
-#include <Util/yaml/rapidyaml-0.3.0.hpp>
+#include <Util/yaml/rapidyaml.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <filesystem>
-#include "Util/yaml/Yaml.hpp"
 
 namespace NES {
 
 namespace Configurations {
 
-SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::string, std::string>& commandLineParams, int argc) {
+PhysicalStreamConfigPtr PhysicalStreamConfigFactory::createPhysicalStreamConfig(const std::map<std::string, std::string>& commandLineParams, int argc) {
 
     auto sourceConfigPath = commandLineParams.find("--" + SOURCE_CONFIG_PATH_CONFIG);
     std::map<std::string, std::string> configurationMap;
@@ -48,71 +47,147 @@ SourceConfigPtr SourceConfigFactory::createSourceConfig(const std::map<std::stri
     }
 
     if (!configurationMap.contains(SOURCE_TYPE_CONFIG)) {
-        DefaultSourceConfigPtr noSource = DefaultSourceConfig::create();
+        DefaultSourceTypeConfigPtr noSource = DefaultSourceTypeConfig::create();
         noSource->setSourceType(NO_SOURCE_CONFIG);
         return noSource;
     }
 
     switch (stringToConfigSourceType[configurationMap.at(SOURCE_TYPE_CONFIG)]) {
-        case CSVSource: return CSVSourceConfig::create(configurationMap);
-        case MQTTSource: return MQTTSourceConfig::create(configurationMap);
-        case KafkaSource: return KafkaSourceConfig::create(configurationMap);
-        case OPCSource: return OPCSourceConfig::create(configurationMap);
-        case BinarySource: return BinarySourceConfig::create(configurationMap);
-        case SenseSource: return SenseSourceConfig::create(configurationMap);
+        case CSVSource: return CSVSourceTypeConfig::create(configurationMap);
+        case MQTTSource: return MQTTSourceTypeConfig::create(configurationMap);
+        case KafkaSource: return KafkaSourceTypeConfig::create(configurationMap);
+        case OPCSource: return OPCSourceTypeConfig::create(configurationMap);
+        case BinarySource: return BinarySourceTypeConfig::create(configurationMap);
+        case SenseSource: return SenseSourceTypeConfig::create(configurationMap);
+        case DefaultSource: return DefaultSourceTypeConfig::create(configurationMap);
         case MaterializedViewSource: return Experimental::MaterializedView::MaterializedViewSourceConfig::create(configurationMap);
-        case DefaultSource: return DefaultSourceConfig::create(configurationMap);
         default:
             NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " + configurationMap.at(SOURCE_TYPE_CONFIG)
                                     + " not supported");
     }
 }
 
-SourceConfigPtr SourceConfigFactory::createSourceConfig(std::string sourceType) {
+PhysicalStreamConfigPtr PhysicalStreamConfigFactory::createPhysicalStreamConfig(ryml::NodeRef physicalStreamConfigNode) {
 
-    switch (stringToConfigSourceType[sourceType]) {
-        case CSVSource: return CSVSourceConfig::create();
-        case MQTTSource: return MQTTSourceConfig::create();
-        case KafkaSource: return KafkaSourceConfig::create();
-        case OPCSource: return OPCSourceConfig::create();
-        case BinarySource: return BinarySourceConfig::create();
-        case SenseSource: return SenseSourceConfig::create();
+    //Todo: set logical and physical stream names
+    //check source name and pass source configs to correct source
+    //set source configs in the sources
+    //ToDo: check what to do with command line params
+
+    PhysicalStreamConfigPtr physicalStreamConfig =
+
+    try {
+        if (physicalStreamConfig.find_child(ryml::to_csubstr(LOGICAL_STREAM_NAME_CONFIG)).has_val()){
+            (root.find_child(ryml::to_csubstr(LOGICAL_STREAM_NAME_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).has_val()){
+            setCoordinatorIp(root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(COORDINATOR_PORT_CONFIG)).has_val()){
+            setCoordinatorPort(std::stoi(root.find_child(ryml::to_csubstr(COORDINATOR_PORT_CONFIG)).val().str));
+        }
+        if (root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).has_val()){
+            setRpcPort(std::stoi(root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).val().str));
+        }
+        if (root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).has_val()){
+            setDataPort(std::stoi(root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).val().str));
+        }
+        if (root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).has_val()){
+            setNumberOfSlots(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).val().str));
+        }
+        if (root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).has_val()){
+            setNumWorkerThreads(std::stoi(root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).val().str));
+        }
+        if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).has_val()){
+            setNumberOfBuffersInGlobalBufferManager(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).val().str));
+        }
+        if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).has_val()){
+            setNumberOfBuffersInSourceLocalBufferPool(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).val().str));
+        }
+        if (root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).has_val()){
+            setBufferSizeInBytes(std::stoi(root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).val().str));
+        }
+        if (root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).has_val()){
+            setParentId(root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(LOG_LEVEL_CONFIG)).has_val()){
+            setLogLevel(root.find_child(ryml::to_csubstr(LOG_LEVEL_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG)).has_val()){
+            setQueryCompilerCompilationStrategy(root.find_child(ryml::to_csubstr(QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG)).has_val()){
+            setQueryCompilerPipeliningStrategy(root.find_child(ryml::to_csubstr(QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG)).has_val()){
+            setQueryCompilerOutputBufferAllocationStrategy(root.find_child(ryml::to_csubstr(QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(SOURCE_PIN_LIST_CONFIG)).has_val()){
+            setSourcePinList(root.find_child(ryml::to_csubstr(SOURCE_PIN_LIST_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(WORKER_PIN_LIST_CONFIG)).has_val()){
+            setWorkerPinList(root.find_child(ryml::to_csubstr(WORKER_PIN_LIST_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(NUMA_AWARENESS_CONFIG)).has_val()){
+            setNumaAware(root.find_child(ryml::to_csubstr(NUMA_AWARENESS_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).has_val()){
+            setEnableMonitoring(root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).val().str);
+        }
+        if (root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG)).has_val()){
+            for(ryml::NodeRef const& child : root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG))){
+                physicalStreamsConfig.insert(PhysicalStreamConfigFactory::createPhysicalStreamConfig(child));
+            }
+        }
+    } catch (std::exception& e) {
+        NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
+                  "values. "
+                  << e.what());
+        resetWorkerOptions();
+    }
+
+    if (argc >= 1) {
+        configurationMap = overwriteConfigWithCommandLineInput(commandLineParams, configurationMap);
+    }
+
+    if (!configurationMap.contains(SOURCE_TYPE_CONFIG)) {
+        DefaultSourceTypeConfigPtr noSource = DefaultSourceTypeConfig::create();
+        noSource->setSourceType(NO_SOURCE_CONFIG);
+        return noSource;
+    }
+
+    switch (stringToConfigSourceType[configurationMap.at(SOURCE_TYPE_CONFIG)]) {
+        case CSVSource: return CSVSourceTypeConfig::create(configurationMap);
+        case MQTTSource: return MQTTSourceTypeConfig::create(configurationMap);
+        case KafkaSource: return KafkaSourceTypeConfig::create(configurationMap);
+        case OPCSource: return OPCSourceTypeConfig::create(configurationMap);
+        case BinarySource: return BinarySourceTypeConfig::create(configurationMap);
+        case SenseSource: return SenseSourceTypeConfig::create(configurationMap);
+        case DefaultSource: return DefaultSourceTypeConfig::create(configurationMap);
         case MaterializedViewSource: return Experimental::MaterializedView::MaterializedViewSourceConfig::create();
-        case DefaultSource: return DefaultSourceConfig::create();
+        default:
+            NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " + configurationMap.at(SOURCE_TYPE_CONFIG)
+                                    + " not supported");
+    }
+}
+
+PhysicalStreamConfigPtr PhysicalStreamConfigFactory::createPhysicalStreamConfig(std::string _sourceType) {
+
+    switch (stringToConfigSourceType[_sourceType]) {
+        case CSVSource: return CSVSourceTypeConfig::create();
+        case MQTTSource: return MQTTSourceTypeConfig::create();
+        case KafkaSource: return KafkaSourceTypeConfig::create();
+        case OPCSource: return OPCSourceTypeConfig::create();
+        case BinarySource: return BinarySourceTypeConfig::create();
+        case SenseSource: return SenseSourceTypeConfig::create();
+        case DefaultSource: return DefaultSourceTypeConfig::create();
         default: return nullptr;
     }
 }
 
-template<class CharContainer>
-size_t file_get_contents1(const char *filename, CharContainer *v)
-{
-    ::FILE *fp = ::fopen(filename, "rb");
-    C4_CHECK_MSG(fp != nullptr, "could not open file");
-    ::fseek(fp, 0, SEEK_END);
-    long sz = ::ftell(fp);
-    v->resize(static_cast<typename CharContainer::size_type>(sz));
-    if(sz)
-    {
-        ::rewind(fp);
-        size_t ret = ::fread(&(*v)[0], 1, v->size(), fp);
-        C4_CHECK(ret == (size_t)sz);
-    }
-    ::fclose(fp);
-    return v->size();
-}
+PhysicalStreamConfigPtr PhysicalStreamConfigFactory::createPhysicalStreamConfig() { return DefaultSourceTypeConfig::create(); }
 
-/** load a file from disk into an existing CharContainer */
-template<class CharContainer>
-CharContainer file_get_contents(const char *filename)
-{
-    CharContainer cc;
-    file_get_contents1(filename, &cc);
-    return cc;
-}
-
-SourceConfigPtr SourceConfigFactory::createSourceConfig() { return DefaultSourceConfig::create(); }
-
-std::map<std::string, std::list<std::string>> SourceConfigFactory::readYAMLFile(const std::string& filePath) {
+std::map<std::string, std::list<std::string>> PhysicalStreamConfigFactory::readYAMLFile(const std::string& filePath) {
 
     std::map<std::string, std::list<std::string>> configurationMap;
 
@@ -123,10 +198,14 @@ std::map<std::string, std::list<std::string>> SourceConfigFactory::readYAMLFile(
         //Yaml::Parse(config, filePath.c_str());
         std::cout << "whats the output" << std::endl;
 
-        std::string contents = file_get_contents<std::string>(filePath.c_str());
+        auto contents = Util::detail::file_get_contents<std::string>(filePath.c_str());
         ryml::Tree tree = ryml::parse(ryml::to_csubstr(contents));
 
-        std::cout << tree.rootref().last_child().find_child("CSVSource").first_child().find_child("skipHeader") << std::endl;
+        const char* name = "CSVSource";
+        std::cout << tree.rootref().last_child().find_child(ryml::to_csubstr(name)).first_child().find_child("skipHeader") << std::endl;
+
+        std::cout << "does this work? " << std::endl;
+        std::cout << tree.rootref().find_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG.c_str()));
 
         for(ryml::NodeRef const& child : tree.rootref().children()){
             std::cout << "When do you break" << std::endl;
@@ -333,7 +412,7 @@ std::map<std::string, std::list<std::string>> SourceConfigFactory::readYAMLFile(
     return configurationMap;
 }
 std::map<std::string, std::string>
-SourceConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams,
+PhysicalStreamConfigFactory::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams,
                                                          std::map<std::string, std::string> configurationMap) {
 
     try {

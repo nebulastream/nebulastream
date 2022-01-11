@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#ifndef NES_MQTTSOURCECONFIG_HPP
-#define NES_MQTTSOURCECONFIG_HPP
+#ifndef NES_MQTTSOURCETYPECONFIG_HPP
+#define NES_MQTTSOURCETYPECONFIG_HPP
 
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
 #include <map>
 #include <string>
 
@@ -25,14 +25,14 @@ namespace NES {
 
 namespace Configurations {
 
-class MQTTSourceConfig;
-using MQTTSourceConfigPtr = std::shared_ptr<MQTTSourceConfig>;
+class MQTTSourceTypeConfig;
+using MQTTSourceTypeConfigPtr = std::shared_ptr<MQTTSourceTypeConfig>;
 
 /**
  * @brief Configuration object for MQTT source config
  * Connect to an MQTT broker and read data from there
  */
-class MQTTSourceConfig : public SourceConfig {
+class MQTTSourceTypeConfig : public SourceTypeConfig {
 
   public:
     /**
@@ -40,13 +40,13 @@ class MQTTSourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceConfigPtr
      */
-    static MQTTSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static MQTTSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a MQTTSourceConfigPtr object with default values
      * @return MQTTSourceConfigPtr
      */
-    static MQTTSourceConfigPtr create();
+    static MQTTSourceTypeConfigPtr create();
 
     /**
      * @brief resets all Source configuration to default values
@@ -63,7 +63,7 @@ class MQTTSourceConfig : public SourceConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceConfigPtr const& other) override;
+    bool equal(SourceTypeConfigPtr const& other) override;
 
     /**
      * @brief Get url to connect
@@ -135,16 +135,26 @@ class MQTTSourceConfig : public SourceConfig {
      */
     void setFlushIntervalMS(float flushIntervalMs);
 
+    /**
+     * @brief Get input data format
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getInputFormat() const;
+
+    /**
+     * @brief Set input data format
+     */
+    void setInputFormat(std::string inputFormat);
+
   private:
     /**
      * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
      */
-    explicit MQTTSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit MQTTSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new MQTT source config object initialized with default values as set below
      */
-    MQTTSourceConfig();
+    MQTTSourceTypeConfig();
 
     StringConfigOption url;
     StringConfigOption clientId;
@@ -153,6 +163,8 @@ class MQTTSourceConfig : public SourceConfig {
     IntConfigOption qos;
     BoolConfigOption cleanSession;
     FloatConfigOption flushIntervalMS;
+    StringConfigOption inputFormat;
+
 };
 }// namespace Configurations
 }// namespace NES

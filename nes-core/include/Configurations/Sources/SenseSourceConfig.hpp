@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#ifndef NES_SENSESOURCECONFIG_HPP
-#define NES_SENSESOURCECONFIG_HPP
+#ifndef NES_SENSESOURCETYPECONFIG_HPP
+#define NES_SENSESOURCETYPECONFIG_HPP
 
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
 #include <map>
 #include <string>
 
@@ -25,13 +25,13 @@ namespace NES {
 
 namespace Configurations {
 
-class SenseSourceConfig;
-using SenseSourceConfigPtr = std::shared_ptr<SenseSourceConfig>;
+class SenseSourceTypeConfig;
+using SenseSourceTypeConfigPtr = std::shared_ptr<SenseSourceTypeConfig>;
 
 /**
 * @brief Configuration object for source config
 */
-class SenseSourceConfig : public SourceConfig {
+class SenseSourceTypeConfig : public SourceTypeConfig {
 
   public:
     /**
@@ -47,7 +47,7 @@ class SenseSourceConfig : public SourceConfig {
      */
     static SenseSourceConfigPtr create();
 
-    ~SenseSourceConfig() override = default;
+    ~SenseSourceTypeConfig() override = default;
 
     /**
      * @brief resets alls Source configuration to default values
@@ -64,7 +64,7 @@ class SenseSourceConfig : public SourceConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceConfigPtr const& other) override;
+    bool equal(SourceTypeConfigPtr const& other) override;
 
     /**
      * @brief Get udsf
@@ -80,12 +80,12 @@ class SenseSourceConfig : public SourceConfig {
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    explicit SenseSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit SenseSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with default values
      */
-    SenseSourceConfig();
+    SenseSourceTypeConfig();
 
     StringConfigOption udfs;
 };

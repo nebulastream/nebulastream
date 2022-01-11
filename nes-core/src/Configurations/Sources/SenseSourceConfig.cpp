@@ -15,7 +15,7 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/Sources/SenseSourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/SenseSourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 #include <utility>
@@ -24,16 +24,16 @@ namespace NES {
 
 namespace Configurations {
 
-std::shared_ptr<SenseSourceConfig> SenseSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<SenseSourceConfig>(SenseSourceConfig(std::move(sourceConfigMap)));
+std::shared_ptr<SenseSourceTypeConfig> SenseSourceTypeConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<SenseSourceTypeConfig>(SenseSourceTypeConfig(std::move(sourceConfigMap)));
 }
 
-std::shared_ptr<SenseSourceConfig> SenseSourceConfig::create() {
-    return std::make_shared<SenseSourceConfig>(SenseSourceConfig());
+std::shared_ptr<SenseSourceTypeConfig> SenseSourceTypeConfig::create() {
+    return std::make_shared<SenseSourceTypeConfig>(SenseSourceTypeConfig());
 }
 
-SenseSourceConfig::SenseSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap, SENSE_SOURCE_CONFIG),
+SenseSourceTypeConfig::SenseSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
+    : SourceTypeConfig(sourceConfigMap, SENSE_SOURCE_CONFIG),
       udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
     /*if (sourceConfigMap.find(SENSE_SOURCE_UDFS_CONFIG) != sourceConfigMap.end()) {
@@ -43,35 +43,35 @@ SenseSourceConfig::SenseSourceConfig(std::map<std::string, std::string> sourceCo
     }*/
 }
 
-SenseSourceConfig::SenseSourceConfig()
-    : SourceConfig(SENSE_SOURCE_CONFIG),
+SenseSourceTypeConfig::SenseSourceTypeConfig()
+    : SourceTypeConfig(SENSE_SOURCE_CONFIG),
       udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with default values.");
 }
 
-void SenseSourceConfig::resetSourceOptions() {
+void SenseSourceTypeConfig::resetSourceOptions() {
     setUdfs(udfs->getDefaultValue());
-    SourceConfig::resetSourceOptions(SENSE_SOURCE_CONFIG);
+    SourceTypeConfig::resetSourceOptions(SENSE_SOURCE_CONFIG);
 }
 
-std::string SenseSourceConfig::toString() {
+std::string SenseSourceTypeConfig::toString() {
     std::stringstream ss;
     ss << udfs->toStringNameCurrentValue();
-    ss << SourceConfig::toString();
+    ss << SourceTypeConfig::toString();
     return ss.str();
 }
 
-bool SenseSourceConfig::equal(const SourceConfigPtr& other) {
-    if (!other->instanceOf<SenseSourceConfig>()) {
+bool SenseSourceTypeConfig::equal(const SourceTypeConfigPtr& other) {
+    if (!other->instanceOf<SenseSourceTypeConfig>()) {
         return false;
     }
-    auto otherSourceConfig = other->as<SenseSourceConfig>();
-    return SourceConfig::equal(other) && udfs->getValue() == otherSourceConfig->udfs->getValue();
+    auto otherSourceConfig = other->as<SenseSourceTypeConfig>();
+    return SourceTypeConfig::equal(other) && udfs->getValue() == otherSourceConfig->udfs->getValue();
 }
 
-StringConfigOption SenseSourceConfig::getUdfs() const { return udfs; }
+StringConfigOption SenseSourceTypeConfig::getUdfs() const { return udfs; }
 
-void SenseSourceConfig::setUdfs(std::string udfsValue) { udfs->setValue(udfsValue); }
+void SenseSourceTypeConfig::setUdfs(std::string udfsValue) { udfs->setValue(udfsValue); }
 
 }// namespace Configurations
 }// namespace NES

@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Configurations/ConfigOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/DefaultSourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
@@ -27,14 +28,21 @@ DefaultSourceTypeConfigPtr DefaultSourceTypeConfig::create(std::map<std::string,
     return std::make_shared<DefaultSourceTypeConfig>(DefaultSourceTypeConfig(std::move(sourceConfigMap)));
 }
 
-DefaultSourceTypeConfigPtr DefaultSourceTypeConfig::create() { return std::make_shared<DefaultSourceTypeConfig>(DefaultSourceTypeConfig()); }
+DefaultSourceTypeConfigPtr DefaultSourceTypeConfig::create() {
+    return std::make_shared<DefaultSourceTypeConfig>(DefaultSourceTypeConfig());
+}
 
 DefaultSourceTypeConfig::DefaultSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceTypeConfig(std::move(sourceConfigMap), DEFAULT_SOURCE_CONFIG) {
+    : SourceTypeConfig(std::move(sourceConfigMap), DEFAULT_SOURCE_CONFIG),
+      numberOfBuffersToProduce(
+          ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
-DefaultSourceTypeConfig::DefaultSourceTypeConfig() : SourceTypeConfig(DEFAULT_SOURCE_CONFIG) {
+DefaultSourceTypeConfig::DefaultSourceTypeConfig()
+    : SourceTypeConfig(DEFAULT_SOURCE_CONFIG),
+      numberOfBuffersToProduce(
+          ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -46,7 +54,7 @@ std::string DefaultSourceTypeConfig::toString() {
     return ss.str();
 }
 
-bool DefaultSourceTypeConfig::equal(const SourceConfigPtr& other) {
+bool DefaultSourceTypeConfig::equal(const SourceTypeConfigPtr& other) {
     if (!other->instanceOf<DefaultSourceTypeConfig>()) {
         return false;
     }

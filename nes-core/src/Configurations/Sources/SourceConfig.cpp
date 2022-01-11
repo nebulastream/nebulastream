@@ -15,7 +15,7 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 #include <utility>
@@ -24,18 +24,8 @@ namespace NES {
 
 namespace Configurations {
 
-SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType)
-    : numberOfBuffersToProduce(
-        ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
-      numberOfTuplesToProducePerBuffer(ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
-                                                                      1,
-                                                                      "Number of tuples to produce per buffer.")),
-      physicalStreamName(
-          ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
-      logicalStreamName(
-          ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
-      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
-      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")),
+SourceTypeConfig::SourceTypeConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType)
+    :
       sourceType(ConfigOption<std::string>::create(SOURCE_TYPE_CONFIG,
                                                    std::move(_sourceType),
                                                    "Type of the Source (available options: NoSource, DefaultSource, CSVSource, "
@@ -66,94 +56,34 @@ SourceConfig::SourceConfig(std::map<std::string, std::string> sourceConfigMap, s
     }
 }
 
-SourceConfig::SourceConfig(std::string _sourceType)
-    : numberOfBuffersToProduce(
-        ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
-      numberOfTuplesToProducePerBuffer(ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
-                                                                      1,
-                                                                      "Number of tuples to produce per buffer.")),
-      physicalStreamName(
-          ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
-      logicalStreamName(
-          ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
-      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
-      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")),
-      sourceType(
+SourceTypeConfig::SourceTypeConfig(std::string _sourceType)
+    : sourceType(
           ConfigOption<std::string>::create(SOURCE_TYPE_CONFIG,
                                             std::move(_sourceType),
                                             "Type of the Source (available options: DefaultSource, CSVSource, BinarySource).")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
-void SourceConfig::resetSourceOptions(std::string _sourceType) {
+void SourceTypeConfig::resetSourceOptions(std::string _sourceType) {
     setSourceType(std::move(_sourceType));
-    setInputFormat(inputFormat->getDefaultValue());
-    setSourceFrequency(sourceFrequency->getDefaultValue());
-    setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
-    setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
-    setPhysicalStreamName(physicalStreamName->getDefaultValue());
-    setLogicalStreamName(logicalStreamName->getDefaultValue());
 }
 
-std::string SourceConfig::toString() {
+std::string SourceTypeConfig::toString() {
     std::stringstream ss;
     ss << sourceType->toStringNameCurrentValue();
-    ss << inputFormat->toStringNameCurrentValue();
-    ss << sourceFrequency->toStringNameCurrentValue();
-    ss << numberOfBuffersToProduce->toStringNameCurrentValue();
-    ss << numberOfTuplesToProducePerBuffer->toStringNameCurrentValue();
-    ss << physicalStreamName->toStringNameCurrentValue();
-    ss << logicalStreamName->toStringNameCurrentValue();
     return ss.str();
 }
 
-bool SourceConfig::equal(const SourceConfigPtr& other) {
-    if (!other->instanceOf<SourceConfig>()) {
+bool SourceTypeConfig::equal(const SourceTypeConfigPtr& other) {
+    if (!other->instanceOf<SourceTypeConfig>()) {
         return false;
     }
-    return sourceType->getValue() == other->sourceType->getValue() && inputFormat->getValue() == other->inputFormat->getValue()
-        && sourceFrequency->getValue() == other->sourceFrequency->getValue()
-        && numberOfBuffersToProduce->getValue() == other->numberOfBuffersToProduce->getValue()
-        && numberOfTuplesToProducePerBuffer->getValue() == other->numberOfTuplesToProducePerBuffer->getValue()
-        && physicalStreamName->getValue() == other->physicalStreamName->getValue()
-        && logicalStreamName->getValue() == other->logicalStreamName->getValue();
+    return sourceType->getValue() == other->sourceType->getValue();
 }
 
-StringConfigOption SourceConfig::getSourceType() const { return sourceType; }
+StringConfigOption SourceTypeConfig::getSourceType() const { return sourceType; }
 
-StringConfigOption SourceConfig::getInputFormat() const { return inputFormat; }
-
-IntConfigOption SourceConfig::getSourceFrequency() const { return sourceFrequency; }
-
-IntConfigOption SourceConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
-
-IntConfigOption SourceConfig::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
-
-StringConfigOption SourceConfig::getPhysicalStreamName() const { return physicalStreamName; }
-
-StringConfigOption SourceConfig::getLogicalStreamName() const { return logicalStreamName; }
-
-void SourceConfig::setSourceType(std::string sourceTypeValue) { sourceType->setValue(std::move(sourceTypeValue)); }
-
-void SourceConfig::setSourceFrequency(uint32_t sourceFrequencyValue) { sourceFrequency->setValue(sourceFrequencyValue); }
-
-void SourceConfig::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduceValue) {
-    numberOfBuffersToProduce->setValue(numberOfBuffersToProduceValue);
-}
-
-void SourceConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBufferValue) {
-    numberOfTuplesToProducePerBuffer->setValue(numberOfTuplesToProducePerBufferValue);
-}
-
-void SourceConfig::setPhysicalStreamName(std::string physicalStreamNameValue) {
-    physicalStreamName->setValue(std::move(physicalStreamNameValue));
-}
-
-void SourceConfig::setLogicalStreamName(std::string logicalStreamNameValue) {
-    logicalStreamName->setValue(std::move(logicalStreamNameValue));
-}
-
-void SourceConfig::setInputFormat(std::string inputFormatValue) { inputFormat->setValue(std::move(inputFormatValue)); }
+void SourceTypeConfig::setSourceType(std::string sourceTypeValue) { sourceType->setValue(std::move(sourceTypeValue)); }
 
 }// namespace Configurations
 }// namespace NES
