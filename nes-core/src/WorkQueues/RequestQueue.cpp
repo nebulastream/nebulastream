@@ -42,7 +42,7 @@ std::vector<NESRequestPtr> RequestQueue::getNextBatch() {
     std::vector<NESRequestPtr> queriesToSchedule;
     queriesToSchedule.reserve(batchSize);
     if (!requestQueue.empty()) {
-        uint64_t currentBatchSize = 1;
+        uint64_t currentBatchSize = 1; // todo why is this 1, not 0?
         //Prepare a batch of queries to schedule
         while (currentBatchSize <= batchSize && !requestQueue.empty()) {
             queriesToSchedule.emplace_back(requestQueue.front());

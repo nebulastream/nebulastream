@@ -35,9 +35,10 @@ struct MemoryAreaDeleter {
 TableSourceStreamConfig::TableSourceStreamConfig(std::string sourceType,
                                                    std::string physicalStreamName,
                                                    std::string logicalStreamName,
+                                                   std::string pathTableFile,
                                                    uint64_t numBuffersToProcess)
-    : PhysicalStreamConfig(DefaultSourceConfig::create()), sourceType(std::move(sourceType)) {
-    // nop
+    : PhysicalStreamConfig(DefaultSourceConfig::create()), sourceType(std::move(sourceType)),
+    pathTableFile(std::move(pathTableFile)) {
     this->physicalStreamName = std::move(physicalStreamName);
     this->logicalStreamName = std::move(logicalStreamName);
     this->numberOfBuffersToProduce = numBuffersToProcess;
@@ -52,16 +53,18 @@ std::string TableSourceStreamConfig::getPhysicalStreamName() { return physicalSt
 std::string TableSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 SourceDescriptorPtr TableSourceStreamConfig::build(SchemaPtr ptr) {
-    return std::make_shared<TableSourceDescriptor>(ptr);
+    return std::make_shared<TableSourceDescriptor>(ptr, this->pathTableFile);
 }
 
 AbstractPhysicalStreamConfigPtr TableSourceStreamConfig::create(const std::string& sourceType,
                                                                  const std::string& physicalStreamName,
                                                                  const std::string& logicalStreamName,
+                                                                 const std::string& pathTableFile,
                                                                  uint64_t numBuffersToProcess) {
     return std::make_shared<TableSourceStreamConfig>(sourceType,
                                                       physicalStreamName,
                                                       logicalStreamName,
+                                                      pathTableFile,
                                                       numBuffersToProcess);
 }
 

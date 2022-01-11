@@ -20,22 +20,26 @@
 
 namespace NES {
 
-TableSourceDescriptor::TableSourceDescriptor(SchemaPtr schema)
-    : SourceDescriptor(std::move(schema)) {}
+TableSourceDescriptor::TableSourceDescriptor(SchemaPtr schema, std::string pathTableFile)
+: SourceDescriptor(std::move(schema)), pathTableFile(std::move(pathTableFile)) {}
 
-std::shared_ptr<TableSourceDescriptor> TableSourceDescriptor::create(const SchemaPtr& schema) {
+std::shared_ptr<TableSourceDescriptor> TableSourceDescriptor::create(const SchemaPtr& schema, std::string pathTableFile) {
     NES_ASSERT(schema, "TableSourceDescriptor: Invalid schema passed.");
-    return std::make_shared<TableSourceDescriptor>(schema);
+    return std::make_shared<TableSourceDescriptor>(schema, pathTableFile);
 }
-std::string TableSourceDescriptor::toString() { return "TableSourceDescriptor"; }
+std::string TableSourceDescriptor::toString() {
+    return "TableSourceDescriptor. pathTableFile: " + pathTableFile;
+}
 
 bool TableSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<TableSourceDescriptor>()) {
         return false;
     }
     auto otherTableDescr = other->as<TableSourceDescriptor>();
-    return schema == otherTableDescr->schema;
+    return schema == otherTableDescr->schema && pathTableFile == otherTableDescr->pathTableFile;
 }
 
 SchemaPtr TableSourceDescriptor::getSchema() const { return schema; }
+
+std::string TableSourceDescriptor::getPathTableFile() const { return pathTableFile; }
 }// namespace NES

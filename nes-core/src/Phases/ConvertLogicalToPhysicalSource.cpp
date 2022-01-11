@@ -196,6 +196,7 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto tableSourceDescriptor = sourceDescriptor->as<TableSourceDescriptor>();
         return createTableSource(tableSourceDescriptor->getSchema(),
+                                 tableSourceDescriptor->getPathTableFile(),
                                   bufferManager,
                                   queryManager,
                                   operatorId,

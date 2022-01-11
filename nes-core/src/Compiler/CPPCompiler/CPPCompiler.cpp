@@ -199,11 +199,10 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
 
     timer.pause();
-    if (!request->enableDebugging()) {
-        std::filesystem::remove(sourceFileName);
-    }
     NES_INFO("CPPCompiler Runtime: " << (double) timer.getRuntime() / (double) 1000000 << "ms");// print runtime
-    std::filesystem::remove(sourceFileName);
+    if (!request->enableDebugging()) {
+         std::filesystem::remove(sourceFileName);
+    }
     std::filesystem::remove(libraryFileName);
     return CompilationResult(sharedLibrary, std::move(timer));
 }

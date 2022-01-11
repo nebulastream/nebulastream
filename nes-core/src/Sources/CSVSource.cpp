@@ -60,7 +60,6 @@ CSVSource::CSVSource(SchemaPtr schema,
     input.seekg(0, std::ifstream::end);
     if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1) {
         NES_ERROR("CSVSource::CSVSource File " + filePath + " is corrupted");
-        //        NES_ASSERT2_FMT(false, "CSVSource::CSVSource File " + filePath + " is corrupted");
     } else {
         this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
     }
@@ -74,7 +73,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->fileEnded = false;
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const auto& field : schema->fields) {
+    for (const AttributeFieldPtr& field : schema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }

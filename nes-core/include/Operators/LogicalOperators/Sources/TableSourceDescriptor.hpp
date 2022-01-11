@@ -31,14 +31,14 @@ class TableSourceDescriptor : public SourceDescriptor {
      * @brief Ctor of a TableSourceDescriptor
      * @param schema the schema of the source
      */
-    explicit TableSourceDescriptor(SchemaPtr schema);
+    explicit TableSourceDescriptor(SchemaPtr schema, std::string pathTableFile);
 
     /**
      * @brief Factory method to create a TableSourceDescriptor object
      * @param schema the schema of the source
      * @return a correctly initialized shared ptr to TableSourceDescriptor
      */
-    static std::shared_ptr<TableSourceDescriptor> create(const SchemaPtr& schema);
+    static std::shared_ptr<TableSourceDescriptor> create(const SchemaPtr& schema, std::string pathTableFile);
 
     /**
      * @brief Provides the string representation of the table source
@@ -57,9 +57,15 @@ class TableSourceDescriptor : public SourceDescriptor {
      * @brief return the schema
      * @return
      */
-    SchemaPtr getSchema() const; // todo needed?
+    SchemaPtr getSchema() const;
+
+    /**
+     * @brief return the path to the table file to be loaded.
+     * @return
+     */
+    std::string getPathTableFile() const;
   private:
-    // todo: some way of identifying the data stored at the worker.
+    std::string pathTableFile;
 };
 }// namespace NES
 #endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_TABLE_SOURCE_DESCRIPTOR_HPP_

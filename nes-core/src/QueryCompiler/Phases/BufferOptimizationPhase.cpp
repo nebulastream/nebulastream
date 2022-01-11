@@ -120,7 +120,8 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
 
     // Check if necessary conditions are fulfilled and set the desired strategy in the emit operator:
     if (inputSchema->equals(outputSchema) && !filterOperatorFound
-        && (level == QueryCompilerOptions::ONLY_INPLACE_OPERATIONS_NO_FALLBACK || level == QueryCompilerOptions::ALL)) {
+        && (level == QueryCompilerOptions::ONLY_INPLACE_OPERATIONS_NO_FALLBACK
+            || level == QueryCompilerOptions::ALL)) {
         // The highest level of optimization - just modifying the input buffer in place and passing it to the next pipeline
         // - can be applied as there are no filter statements etc.
         emitNode->setOutputBufferAllocationStrategy(ONLY_INPLACE_OPERATIONS);
@@ -138,14 +139,16 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
         return operatorPipeline;
     }
     if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
-        && (level == QueryCompilerOptions::REUSE_INPUT_BUFFER_NO_FALLBACK || level == QueryCompilerOptions::ALL)) {
+        && (level == QueryCompilerOptions::REUSE_INPUT_BUFFER_NO_FALLBACK
+            || level == QueryCompilerOptions::ALL)) {
         // The optimization  "reuse input buffer as output buffer" can be applied.
         emitNode->setOutputBufferAllocationStrategy(REUSE_INPUT_BUFFER);
         NES_DEBUG("BufferOptimizationPhase: Assign REUSE_INPUT_BUFFER optimization strategy to pipeline.");
         return operatorPipeline;
     }
     if (inputSchema->getSchemaSizeInBytes() >= outputSchema->getSchemaSizeInBytes()
-        && (level == QueryCompilerOptions::OMIT_OVERFLOW_CHECK_NO_FALLBACK || level == QueryCompilerOptions::ALL)) {
+        && (level == QueryCompilerOptions::OMIT_OVERFLOW_CHECK_NO_FALLBACK
+            || level == QueryCompilerOptions::ALL)) {
         // The optimization "omit size check" can be applied.
         emitNode->setOutputBufferAllocationStrategy(OMIT_OVERFLOW_CHECK);
         NES_DEBUG("BufferOptimizationPhase: Assign OMIT_OVERFLOW_CHECK optimization strategy to pipeline.");
