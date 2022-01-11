@@ -40,6 +40,10 @@ class SliceStaging {
         return value;
     }
 
+
+   void triggerPreaggregatedSlice(uint64_t sequenceNumber, uint64_t sliceIndex, KeyedSlicePtr slice);
+
+
   private:
     std::mutex sliceStagingMutex;
     std::map<uint64_t, std::unique_ptr<Partition>> slicePartitionMap;

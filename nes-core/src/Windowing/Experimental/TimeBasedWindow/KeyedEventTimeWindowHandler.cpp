@@ -86,6 +86,25 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
         threadLocalSliceStore.setLastWatermark(newGlobalWatermark);
     }
 }
+
+void KeyedEventTimeWindowHandler::triggerSliceMerging(Runtime::WorkerContext& wctx,
+                                                      Runtime::Execution::PipelineExecutionContext& ctx,
+                                                      uint64_t sequenceNumber,
+                                                      KeyedSlicePtr slice) {
+    // add pre-aggregated slice to slice store
+    auto [oldMaxSliceIndex, newMaxSliceIndex] = globalSliceStore.addSlice(sequenceNumber, slice->getIndex(), std::move(slice));
+    // check if we can trigger window computation
+    if (newMaxSliceIndex > oldMaxSliceIndex) {
+        auto buffer = wctx.allocateTupleBuffer();
+        auto task = buffer.getBuffer<WindowTriggerTask>();
+        task->startSlice = oldMaxSliceIndex;
+        task->endSlice = newMaxSliceIndex;
+        task->sequenceNumber = newMaxSliceIndex;
+        buffer.setNumberOfTuples(1);
+        ctx.dispatchBuffer(buffer);
+    }
+}
+
 Windowing::LogicalWindowDefinitionPtr KeyedEventTimeWindowHandler::getWindowDefinition() { return windowDefinition; }
 
 void KeyedEventTimeWindowHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
