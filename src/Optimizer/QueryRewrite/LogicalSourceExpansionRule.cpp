@@ -59,21 +59,20 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     //Iterate over all source operators
     for (auto& sourceOperator : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
-        NES_DEBUG("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
+        NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
         std::vector<TopologyNodePtr> sourceLocations =
             streamCatalog->getSourceNodesForLogicalStream(sourceDescriptor->getStreamName());
-
-        NES_DEBUG("LogicalSourceExpansionRule: Found " << sourceLocations.size()
+        NES_TRACE("LogicalSourceExpansionRule: Found " << sourceLocations.size()
                                                        << " physical source locations in the topology.");
 
-        NES_TRACE("LogicalSourceExpansionRule: Find the logical sub-graph to be duplicated for the source operator.");
-        OperatorNodePtr operatorToDuplicate = getLogicalGraphToDuplicate(sourceOperator);
+        removeConnectedBlockingOperators(sourceOperator);
         NES_TRACE("LogicalSourceExpansionRule: Create " << sourceLocations.size() - 1
                                                         << " duplicated logical sub-graph and add to original graph");
 
+        //Create one duplicate operator fro each physical source
         for (auto& sourceLocation : sourceLocations) {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
-            OperatorNodePtr duplicateOperator = operatorToDuplicate->duplicate();
+            OperatorNodePtr duplicateOperator = sourceOperator->duplicate();
             //Add to the source operator the id of the physical node where we have to pin the operator
             duplicateOperator->getAllLeafNodes();
             duplicateOperator->addProperty("PinnedNodeId", sourceLocation->getId());
@@ -85,7 +84,9 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                 auto operatorNode = node->as<OperatorNode>();
                 //Assign new operator id
                 operatorNode->setId(Util::getNextOperatorId());
-                const std::any& value = operatorNode->getProperty("ListOfBlockingParents");
+
+                //Fetch the connected blocking operators to the operator
+                const std::any& value = operatorNode->getProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS);
                 //Check if the operator need to be connected to a blocking parent
                 if (value.has_value()) {
                     auto listOfConnectedBlockingParents = std::any_cast<std::vector<uint64_t>>(value);
@@ -105,16 +106,18 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-OperatorNodePtr LogicalSourceExpansionRule::getLogicalGraphToDuplicate(const OperatorNodePtr& operatorNode) {
-    NES_DEBUG("LogicalSourceExpansionRule: Get the logical graph to duplicate.");
-    NES_TRACE("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
+void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const OperatorNodePtr& operatorNode) {
+
+    //Check if upstream (parent) operator of this operator is blocking or not if not then recursively call this method for the upstream
+    // operator
     auto parentOperators = operatorNode->getParents();
+    NES_TRACE("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
     for (const auto& parent : parentOperators) {
 
         //Check if the parent operator is a blocking operator or not
         auto parentOperator = parent->as<OperatorNode>();
         if (!isBlockingOperator(parentOperator)) {
-            getLogicalGraphToDuplicate(parentOperator);
+            removeConnectedBlockingOperators(parentOperator);
         } else {
             //If parent is blocking then remove current operator as its child.
             // Add to the current operator information about operator id of the removed parent.
@@ -125,19 +128,18 @@ OperatorNodePtr LogicalSourceExpansionRule::getLogicalGraphToDuplicate(const Ope
             }
 
             //extract the list of connected blocking parents and add the current parent to the list
-            std::any value = operatorNode->getProperty("ListOfBlockingParents");
-            if (value.has_value()) {
+            std::any value = operatorNode->getProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS);
+            if (value.has_value()) {//update the existing list
                 auto listOfConnectedBlockingParents = std::any_cast<std::vector<uint64_t>>(value);
                 listOfConnectedBlockingParents.emplace_back(parentOperator->getId());
-                operatorNode->addProperty("ListOfBlockingParents", listOfConnectedBlockingParents);
-            } else {
+                operatorNode->addProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
+            } else {//create a new entry if value doesn't exist
                 std::vector<uint64_t> listOfConnectedBlockingParents;
                 listOfConnectedBlockingParents.emplace_back(parentOperator->getId());
-                operatorNode->addProperty("ListOfBlockingParents", listOfConnectedBlockingParents);
+                operatorNode->addProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
             }
         }
     }
-    return operatorNode;
 }
 
 bool LogicalSourceExpansionRule::isBlockingOperator(const OperatorNodePtr& operatorNode) {

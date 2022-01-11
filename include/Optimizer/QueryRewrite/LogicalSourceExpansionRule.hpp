@@ -37,6 +37,8 @@ namespace NES::Optimizer {
 class LogicalSourceExpansionRule;
 using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule>;
 
+const std::string LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS = "ListOfBlockingParents";
+
 /**
  * @brief This class will expand the logical query graph by adding information about the physical sources and expand the
  * graph by adding additional replicated operators.
@@ -104,11 +106,12 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
     StreamCatalogPtr streamCatalog;
 
     /**
-     * @brief Returns the duplicated operator and its chain of upstream operators till first n-ary or sink operator is found
-     * @param operatorNode : start operator
-     * @return a tuple of duplicated operator with its duplicated downstream operator chains and a vector of original head operators
+     * @brief This method starts from an operator and traverse upstream if the corresponding upstream(parent) operator is not a
+     * blocking operator (@see isBlockingOperator). If the upstream operator is a blocking operator then it is removed as the operator's upstream
+     * operator and its information is stored in the operators property.
+     * @param operatorNode : operator to check for connected blocking operator
      */
-    OperatorNodePtr getLogicalGraphToDuplicate(const OperatorNodePtr& operatorNode);
+    void removeConnectedBlockingOperators(const OperatorNodePtr& operatorNode);
 
     /**
      * @brief Check if the input operator is a blocking operator or not (operator that can't be expanded, for example, Window Join or Union)
