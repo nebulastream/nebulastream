@@ -20,19 +20,22 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
+
 namespace NES {
+
 class CSVParser;
 using CSVParserPtr = std::shared_ptr<CSVParser>;
-namespace Runtime {
-namespace detail {
+
+namespace Runtime::detail {
 class MemorySegment;
-}
-}// namespace Runtime
+}// namespace Runtime::detail
+
+namespace Experimental {
 /**
  * @brief Table Source
  * todo Still under development
  */
-class TableSource : public GeneratorSource, public Runtime::BufferRecycler {
+class TableSource : public GeneratorSource, public ::NES::Runtime::BufferRecycler {
   public:
     /**
      * @brief The constructor of a TableSource
@@ -41,16 +44,16 @@ class TableSource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     explicit TableSource(SchemaPtr schema,
                           std::string pathTableFile,
-                          Runtime::BufferManagerPtr bufferManager,
-                          Runtime::QueryManagerPtr queryManager,
+                          ::NES::Runtime::BufferManagerPtr bufferManager,
+                          ::NES::Runtime::QueryManagerPtr queryManager,
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
-                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+                          std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
      */
-    std::optional<Runtime::TupleBuffer> receiveData() override;
+    std::optional<::NES::Runtime::TupleBuffer> receiveData() override;
 
     /**
      * @brief Provides a string representation of the source
@@ -64,13 +67,13 @@ class TableSource : public GeneratorSource, public Runtime::BufferRecycler {
      */
     SourceType getType() const override;
 
-    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
+    virtual void recyclePooledBuffer(::NES::Runtime::detail::MemorySegment*) override{};
 
     /**
      * @brief Interface method for unpooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
+    virtual void recycleUnpooledBuffer(::NES::Runtime::detail::MemorySegment*) override{};
 
   private:
     std::string pathTableFile;
@@ -82,11 +85,12 @@ class TableSource : public GeneratorSource, public Runtime::BufferRecycler {
     uint64_t bufferSize;
     size_t numTuples; // in table
 
-    void fillBuffer(Runtime::TupleBuffer &buffer);
+    void fillBuffer(::NES::Runtime::TupleBuffer &buffer);
 };
 
 using TableSourcePtr = std::shared_ptr<TableSource>;
 
+}// namespace Experimental
 }// namespace NES
 
 #endif// NES_INCLUDE_SOURCES_TABLE_SOURCE_HPP_
