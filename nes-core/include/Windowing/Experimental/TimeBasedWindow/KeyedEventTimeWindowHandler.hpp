@@ -14,6 +14,7 @@
 #include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
 #include <Windowing/Experimental/HashMap.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
 
 
 namespace NES::Windowing::Experimental {
@@ -21,7 +22,15 @@ class KeyedThreadLocalSliceStore;
 
 class SliceMergeTask {
   public:
+    uint64_t sequenceNumber;
     uint64_t sliceIndex;
+};
+
+class WindowTriggerTask {
+  public:
+    uint64_t sequenceNumber;
+    uint64_t startSlice;
+    uint64_t endSlice;
 };
 
 class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler, public detail::virtual_enable_shared_from_this<KeyedEventTimeWindowHandler, false> {
@@ -58,9 +67,14 @@ class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler, 
     uint64_t sliceSize;
     std::vector<KeyedThreadLocalSliceStore> threadLocalSliceStores;
     SliceStaging sliceStaging;
+    KeyedGlobalSliceStore globalSliceStore;
     std::shared_ptr<::NES::Experimental::LockFreeMultiOriginWatermarkProcessor> watermarkProcessor;
     const Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
+    void triggerSliceMerging(Runtime::WorkerContext& wctx,
+                             Runtime::Execution::PipelineExecutionContext& ctx,
+                             uint64_t sequenceNumber,
+                             KeyedSlicePtr slice);
 };
 
 }// namespace NES::Windowing::Experimental

@@ -16,4 +16,5 @@ add_source_nes(
         KeyedEventTimeWindowHandler.cpp
         KeyedThreadLocalSliceStore.cpp
         KeyedSlice.cpp
+        KeyedGlobalSliceStore.cpp
 )
