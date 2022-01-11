@@ -59,14 +59,6 @@ class CodeGenerationPhase {
     QueryCompilerOptions::CompilationStrategy compilationStrategy;
     static void generate(const OperatorNodePtr& rootOperator,
                          const std::function<void(GeneratableOperators::GeneratableOperatorPtr)>& applyFunction);
-
-    /**
-     * Adds the headers of all operators in an OperatorPipeline (starting with root operator) to the PipelineContext.
-     * These headers are later added to the generated .cpp file.
-     * @param rootOperator root Operator of an OpertorPipeline
-     * @param context PipelineContext
-     */
-    static void addHeadersToPipelineContex(const OperatorNodePtr& rootOperator, PipelineContextPtr& context);
 };
 }// namespace QueryCompilation
 };// namespace NES

@@ -78,6 +78,10 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
         operatorNode->generateClose(codeGenerator, context);
     });
 
+    generate(rootOperator, [&context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode){
+        operatorNode->generateHeaders(context);
+    });
+
     auto pipelineStage = codeGenerator->compile(jitCompiler, context, compilationStrategy);
 
     // we replace the current pipeline operators with an executable operator.
@@ -97,17 +101,6 @@ void CodeGenerationPhase::generate(const OperatorNodePtr& rootOperator,
         }
         auto generatableOperator = node->as<GeneratableOperators::GeneratableOperator>();
         applyFunction(generatableOperator);
-    }
-}
-
-void CodeGenerationPhase::addHeadersToPipelineContex(const OperatorNodePtr& rootOperator, PipelineContextPtr& context) {
-    auto iterator = DepthFirstNodeIterator(rootOperator);
-    for (auto&& node : iterator) {
-        if (!node->instanceOf<GeneratableOperators::GeneratableOperator>()) {
-            throw QueryCompilationException("Operator should be of type GeneratableOperator but it is a " + node->toString());
-        }
-        auto generatableOperator = node->as<GeneratableOperators::GeneratableOperator>();
-        context->addHeaders(generatableOperator->getHeaders());
     }
 }
 
