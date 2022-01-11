@@ -27,6 +27,24 @@ namespace NES {
 
 namespace Configurations {
 
+const std::string REST_PORT_CONFIG = "restPort";
+const std::string RPC_PORT_CONFIG = "rpcPort"; //used to be coordinator port, renamed to uniform naming
+const std::string DATA_PORT_CONFIG = "dataPort";
+const std::string REST_IP_CONFIG = "restIp";
+const std::string COORDINATOR_IP_CONFIG = "coordinatorIp";
+const std::string NUMBER_OF_SLOTS_CONFIG = "numberOfSlots";
+const std::string LOG_LEVEL_CONFIG = "logLevel";
+const std::string NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG = "numberOfBuffersInGlobalBufferManager";
+const std::string NUMBER_OF_BUFFERS_PER_WORKER_CONFIG = "numberOfBuffersPerWorker";
+const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG = "numberOfBuffersInSourceLocalBufferPool";
+const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
+const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
+const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
+const std::string ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG = "enableSemanticQueryValidation";
+const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
+const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
+const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
+
 class CoordinatorConfig;
 using CoordinatorConfigPtr = std::shared_ptr<CoordinatorConfig>;
 using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;

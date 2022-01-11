@@ -21,6 +21,7 @@
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/yaml/rapidyaml.hpp>
 #include <functional>
 #include <map>
 #include <string>
@@ -91,6 +92,32 @@ struct SplitFunctionHelper<double> {
         return std::atof(str.c_str());
     };
 };
+
+template<class CharContainer>
+size_t file_get_contents(const char *filename, CharContainer *container)
+{
+    ::FILE *filestream= ::fopen(filename, "rb");
+    ::fseek(filestream, 0, SEEK_END);
+    long size = ::ftell(filestream);
+    container->resize(static_cast<typename CharContainer::size_type>(size));
+    if(size)
+    {
+        ::rewind(filestream);
+        size_t ret = ::fread(&(*container)[0], 1, container->size(), filestream);
+        C4_CHECK(ret == (size_t)size);
+    }
+    ::fclose(filestream);
+    return container->size();
+}
+
+/** load a file from disk into an existing CharContainer */
+template<class CharContainer>
+CharContainer file_get_contents(const char *filename)
+{
+    CharContainer container;
+    file_get_contents(filename, &container);
+    return container;
+}
 
 }// namespace detail
 /**

@@ -15,7 +15,7 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/Sources/KafkaSourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/KafkaSourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 #include <utility>
@@ -24,14 +24,14 @@ namespace NES {
 
 namespace Configurations {
 
-KafkaSourceConfigPtr KafkaSourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig(std::move(sourceConfigMap)));
+KafkaSourceTypeConfigPtr KafkaSourceTypeConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<KafkaSourceTypeConfig>(KafkaSourceTypeConfig(std::move(sourceConfigMap)));
 }
 
-KafkaSourceConfigPtr KafkaSourceConfig::create() { return std::make_shared<KafkaSourceConfig>(KafkaSourceConfig()); }
+KafkaSourceTypeConfigPtr KafkaSourceTypeConfig::create() { return std::make_shared<KafkaSourceTypeConfig>(KafkaSourceTypeConfig()); }
 
-KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap, KAFKA_SOURCE_CONFIG),
+KafkaSourceTypeConfig::KafkaSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
+    : SourceTypeConfig(sourceConfigMap, KAFKA_SOURCE_CONFIG),
       brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
           AUTO_COMMIT_CONFIG,
@@ -69,8 +69,8 @@ KafkaSourceConfig::KafkaSourceConfig(std::map<std::string, std::string> sourceCo
     }*/
 }
 
-KafkaSourceConfig::KafkaSourceConfig()
-    : SourceConfig(KAFKA_SOURCE_CONFIG), brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
+KafkaSourceTypeConfig::KafkaSourceTypeConfig()
+    : SourceTypeConfig(KAFKA_SOURCE_CONFIG), brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
       autoCommit(ConfigOption<uint32_t>::create(
           AUTO_COMMIT_CONFIG,
           1,
@@ -85,57 +85,57 @@ KafkaSourceConfig::KafkaSourceConfig()
     NES_INFO("KafkaSourceConfig: Init source config object with default values.");
 }
 
-void KafkaSourceConfig::resetSourceOptions() {
+void KafkaSourceTypeConfig::resetSourceOptions() {
     setBrokers(brokers->getDefaultValue());
     setAutoCommit(autoCommit->getDefaultValue());
     setGroupId(groupId->getDefaultValue());
     setTopic(topic->getDefaultValue());
     setConnectionTimeout(connectionTimeout->getDefaultValue());
-    SourceConfig::resetSourceOptions(KAFKA_SOURCE_CONFIG);
+    SourceTypeConfig::resetSourceOptions(KAFKA_SOURCE_CONFIG);
 }
 
-std::string KafkaSourceConfig::toString() {
+std::string KafkaSourceTypeConfig::toString() {
     std::stringstream ss;
     ss << brokers->toStringNameCurrentValue();
     ss << autoCommit->toStringNameCurrentValue();
     ss << groupId->toStringNameCurrentValue();
     ss << topic->toStringNameCurrentValue();
     ss << connectionTimeout->toStringNameCurrentValue();
-    ss << SourceConfig::toString();
+    ss << SourceTypeConfig::toString();
     return ss.str();
 }
 
-bool KafkaSourceConfig::equal(const SourceConfigPtr& other) {
-    if (!other->instanceOf<KafkaSourceConfig>()) {
+bool KafkaSourceTypeConfig::equal(const SourceTypeConfigPtr& other) {
+    if (!other->instanceOf<KafkaSourceTypeConfig>()) {
         return false;
     }
-    auto otherSourceConfig = other->as<KafkaSourceConfig>();
-    return SourceConfig::equal(other) && brokers->getValue() == otherSourceConfig->brokers->getValue()
+    auto otherSourceConfig = other->as<KafkaSourceTypeConfig>();
+    return SourceTypeConfig::equal(other) && brokers->getValue() == otherSourceConfig->brokers->getValue()
         && autoCommit->getValue() == otherSourceConfig->autoCommit->getValue()
         && groupId->getValue() == otherSourceConfig->groupId->getValue()
         && topic->getValue() == otherSourceConfig->topic->getValue()
         && connectionTimeout->getValue() == otherSourceConfig->connectionTimeout->getValue();
 }
 
-StringConfigOption KafkaSourceConfig::getBrokers() const { return brokers; }
+StringConfigOption KafkaSourceTypeConfig::getBrokers() const { return brokers; }
 
-IntConfigOption KafkaSourceConfig::getAutoCommit() const { return autoCommit; }
+IntConfigOption KafkaSourceTypeConfig::getAutoCommit() const { return autoCommit; }
 
-StringConfigOption KafkaSourceConfig::getGroupId() const { return groupId; }
+StringConfigOption KafkaSourceTypeConfig::getGroupId() const { return groupId; }
 
-StringConfigOption KafkaSourceConfig::getTopic() const { return topic; }
+StringConfigOption KafkaSourceTypeConfig::getTopic() const { return topic; }
 
-IntConfigOption KafkaSourceConfig::getConnectionTimeout() const { return connectionTimeout; }
+IntConfigOption KafkaSourceTypeConfig::getConnectionTimeout() const { return connectionTimeout; }
 
-void KafkaSourceConfig::setBrokers(std::string brokersValue) { brokers->setValue(std::move(brokersValue)); }
+void KafkaSourceTypeConfig::setBrokers(std::string brokersValue) { brokers->setValue(std::move(brokersValue)); }
 
-void KafkaSourceConfig::setAutoCommit(uint32_t autoCommitValue) { autoCommit->setValue(autoCommitValue); }
+void KafkaSourceTypeConfig::setAutoCommit(uint32_t autoCommitValue) { autoCommit->setValue(autoCommitValue); }
 
-void KafkaSourceConfig::setGroupId(std::string groupIdValue) { groupId->setValue(std::move(groupIdValue)); }
+void KafkaSourceTypeConfig::setGroupId(std::string groupIdValue) { groupId->setValue(std::move(groupIdValue)); }
 
-void KafkaSourceConfig::setTopic(std::string topicValue) { topic->setValue(std::move(topicValue)); }
+void KafkaSourceTypeConfig::setTopic(std::string topicValue) { topic->setValue(std::move(topicValue)); }
 
-void KafkaSourceConfig::setConnectionTimeout(uint32_t connectionTimeoutValue) {
+void KafkaSourceTypeConfig::setConnectionTimeout(uint32_t connectionTimeoutValue) {
     connectionTimeout->setValue(connectionTimeoutValue);
 }
 }// namespace Configurations

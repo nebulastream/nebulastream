@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#ifndef NES_KAFKASOURCECONFIG_HPP
-#define NES_KAFKASOURCECONFIG_HPP
+#ifndef NES_KAFKASOURCETYPECONFIG_HPP
+#define NES_KAFKASOURCETYPECONFIG_HPP
 
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
 #include <map>
 #include <string>
 
@@ -25,14 +25,14 @@ namespace NES {
 
 namespace Configurations {
 
-class KafkaSourceConfig;
-using KafkaSourceConfigPtr = std::shared_ptr<KafkaSourceConfig>;
+class KafkaSourceTypeConfig;
+using KafkaSourceTypeConfigPtr = std::shared_ptr<KafkaSourceTypeConfig>;
 
 /**
  * @brief Configuration object for Kafka source config
  * Connect to a kafka broker and read data form there
  */
-class KafkaSourceConfig : public SourceConfig {
+class KafkaSourceTypeConfig : public SourceTypeConfig {
 
   public:
     /**
@@ -40,13 +40,13 @@ class KafkaSourceConfig : public SourceConfig {
      * @param sourceConfigMap inputted config options
      * @return KafkaSourceConfigPtr
      */
-    static KafkaSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static KafkaSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a KafkaSourceConfigPtr object
      * @return KafkaSourceConfigPtr
      */
-    static KafkaSourceConfigPtr create();
+    static KafkaSourceTypeConfigPtr create();
 
     /**
      * @brief resets alls Source configuration to default values
@@ -63,7 +63,7 @@ class KafkaSourceConfig : public SourceConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceConfigPtr const& other) override;
+    bool equal(SourceTypeConfigPtr const& other) override;
 
     /**
      * @brief Get broker string
@@ -119,12 +119,12 @@ class KafkaSourceConfig : public SourceConfig {
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
      */
-    explicit KafkaSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit KafkaSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Kafka source config object initialized with default values
      */
-    KafkaSourceConfig();
+    KafkaSourceTypeConfig();
 
     StringConfigOption brokers;
     IntConfigOption autoCommit;

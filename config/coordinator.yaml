@@ -48,6 +48,11 @@ queryMergerRule: DefaultQueryMergerRule
 # Semantic Query Validation Feature
 enableSemanticQueryValidation: false
 
+# Enable monitoring
+enableMonitoring: false
+
+# Selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]
+memoryLayoutPolicy: FORCE_ROW_LAYOUT
+
 # Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule
 performOnlySourceOperatorExpansion: false
-

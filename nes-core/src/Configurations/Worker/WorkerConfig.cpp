@@ -15,9 +15,12 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
+#include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamConfigFactory.hpp>
 #include <Util/Logger.hpp>
-#include <Util/yaml/Yaml.hpp>
+#include <Util/yaml/rapidyaml.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <string>
 #include <thread>
@@ -91,77 +94,72 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
 
         NES_INFO("NesWorkerConfig: Using config file with path: " << filePath << " .");
 
-        Yaml::Node config = *(new Yaml::Node());
-        Yaml::Parse(config, filePath.c_str());
+        auto contents = Util::detail::file_get_contents<std::string>(filePath.c_str());
+        ryml::Tree tree = ryml::parse(ryml::to_csubstr(contents));
+        ryml::NodeRef root = tree.rootref();
+
         try {
-            if (!config["coordinatorPort"].As<std::string>().empty() && config["coordinatorPort"].As<std::string>() != "\n") {
-                setCoordinatorPort(config["coordinatorPort"].As<uint16_t>());
+            if (root.find_child(ryml::to_csubstr(LOCAL_WORKER_IP_CONFIG)).has_val()){
+                setLocalWorkerIp(root.find_child(ryml::to_csubstr(LOCAL_WORKER_IP_CONFIG)).val().str);
             }
-            if (!config["rpcPort"].As<std::string>().empty() && config["rpcPort"].As<std::string>() != "\n") {
-                setRpcPort(config["rpcPort"].As<uint16_t>());
+            if (root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).has_val()){
+                setCoordinatorIp(root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).val().str);
             }
-            if (!config["dataPort"].As<std::string>().empty() && config["dataPort"].As<std::string>() != "\n") {
-                setDataPort(config["dataPort"].As<uint16_t>());
+            if (root.find_child(ryml::to_csubstr(COORDINATOR_PORT_CONFIG)).has_val()){
+                setCoordinatorPort(std::stoi(root.find_child(ryml::to_csubstr(COORDINATOR_PORT_CONFIG)).val().str));
             }
-            if (!config["localWorkerIp"].As<std::string>().empty() && config["localWorkerIp"].As<std::string>() != "\n") {
-                setLocalWorkerIp(config["localWorkerIp"].As<std::string>());
+            if (root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).has_val()){
+                setRpcPort(std::stoi(root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).val().str));
             }
-            if (!config["coordinatorIp"].As<std::string>().empty() && config["coordinatorIp"].As<std::string>() != "\n") {
-                setCoordinatorIp(config["coordinatorIp"].As<std::string>());
+            if (root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).has_val()){
+                setDataPort(std::stoi(root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).val().str));
             }
-            if (!config["numberOfSlots"].As<std::string>().empty() && config["numberOfSlots"].As<std::string>() != "\n") {
-                setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
+            if (root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).has_val()){
+                setNumberOfSlots(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).val().str));
             }
-            if (!config["numWorkerThreads"].As<std::string>().empty() && config["numWorkerThreads"].As<std::string>() != "\n") {
-                setNumWorkerThreads(config["numWorkerThreads"].As<uint32_t>());
+            if (root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).has_val()){
+                setNumWorkerThreads(std::stoi(root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).val().str));
             }
-            if (!config["parentId"].As<std::string>().empty() && config["parentId"].As<std::string>() != "\n") {
-                setParentId(config["parentId"].As<std::string>());
+            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).has_val()){
+                setNumberOfBuffersInGlobalBufferManager(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).val().str));
             }
-            if (!config["logLevel"].As<std::string>().empty() && config["logLevel"].As<std::string>() != "\n") {
-                setLogLevel(config["logLevel"].As<std::string>());
+            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).has_val()){
+                setNumberOfBuffersInSourceLocalBufferPool(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).val().str));
             }
-            if (!config["bufferSizeInBytes"].As<std::string>().empty() && config["bufferSizeInBytes"].As<std::string>() != "\n") {
-                setBufferSizeInBytes(config["bufferSizeInBytes"].As<uint32_t>());
+            if (root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).has_val()){
+                setBufferSizeInBytes(std::stoi(root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).val().str));
             }
-            if (!config["numberOfBuffersInGlobalBufferManager"].As<std::string>().empty()
-                && config["numberOfBuffersInGlobalBufferManager"].As<std::string>() != "\n") {
-                setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
+            if (root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).has_val()){
+                setParentId(root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).val().str);
             }
-            if (!config["numberOfBuffersPerWorker"].As<std::string>().empty()
-                && config["numberOfBuffersPerWorker"].As<std::string>() != "\n") {
-                setNumberOfBuffersPerWorker(config["numberOfBuffersPerWorker"].As<uint32_t>());
+            if (root.find_child(ryml::to_csubstr(LOG_LEVEL_CONFIG)).has_val()){
+                setLogLevel(root.find_child(ryml::to_csubstr(LOG_LEVEL_CONFIG)).val().str);
             }
-            if (!config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>().empty()
-                && config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>() != "\n") {
-                setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            if (root.find_child(ryml::to_csubstr(QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG)).has_val()){
+                setQueryCompilerCompilationStrategy(root.find_child(ryml::to_csubstr(QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG)).val().str);
             }
-            if (!config["sourcePinList"].As<std::string>().empty() && config["sourcePinList"].As<std::string>() != "\n") {
-                setSourcePinList(config["sourcePinList"].As<std::string>());
+            if (root.find_child(ryml::to_csubstr(QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG)).has_val()){
+                setQueryCompilerPipeliningStrategy(root.find_child(ryml::to_csubstr(QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG)).val().str);
             }
-            if (!config["workerPinList"].As<std::string>().empty() && config["workerPinList"].As<std::string>() != "\n") {
-                setWorkerPinList(config["setWorkerPinList"].As<std::string>());
+            if (root.find_child(ryml::to_csubstr(QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG)).has_val()){
+                setQueryCompilerOutputBufferAllocationStrategy(root.find_child(ryml::to_csubstr(QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG)).val().str);
             }
-            if (!config["queryCompilerCompilationStrategy"].As<std::string>().empty()
-                && config["queryCompilerCompilationStrategy"].As<std::string>() != "\n") {
-                setQueryCompilerCompilationStrategy(config["queryCompilerCompilationStrategy"].As<std::string>());
+            if (root.find_child(ryml::to_csubstr(SOURCE_PIN_LIST_CONFIG)).has_val()){
+                setSourcePinList(root.find_child(ryml::to_csubstr(SOURCE_PIN_LIST_CONFIG)).val().str);
             }
-            if (!config["queryCompilerPipeliningStrategy"].As<std::string>().empty()
-                && config["queryCompilerPipeliningStrategy"].As<std::string>() != "\n") {
-                setQueryCompilerPipeliningStrategy(config["queryCompilerPipeliningStrategy"].As<std::string>());
+            if (root.find_child(ryml::to_csubstr(WORKER_PIN_LIST_CONFIG)).has_val()){
+                setWorkerPinList(root.find_child(ryml::to_csubstr(WORKER_PIN_LIST_CONFIG)).val().str);
             }
-            if (!config["queryCompilerOutputBufferOptimizationLevel"].As<std::string>().empty()
-                && config["queryCompilerOutputBufferOptimizationLevel"].As<std::string>() != "\n") {
-                setQueryCompilerOutputBufferAllocationStrategy(
-                    config["queryCompilerOutputBufferOptimizationLevel"].As<std::string>());
+            if (root.find_child(ryml::to_csubstr(NUMA_AWARENESS_CONFIG)).has_val()){
+                setNumaAware(root.find_child(ryml::to_csubstr(NUMA_AWARENESS_CONFIG)).val().str);
             }
-            if (!config["numaAwareness"].As<bool>()) {
-                numaAwareness->setValue(false);
-            } else {
-                numaAwareness->setValue(true);
+            if (root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).has_val()){
+                setEnableMonitoring(root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).val().str);
             }
-            if (!config["enableMonitoring"].As<std::string>().empty() && config["enableMonitoring"].As<std::string>() != "\n") {
-                setEnableMonitoring(config["enableMonitoring"].As<bool>());
+            if (root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG)).has_val()){
+                for(ryml::NodeRef const& child : root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG))){
+                    physicalStreamsConfig.insert(PhysicalStreamConfigFactory::createPhysicalStreamConfig(child));
+                }
             }
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
@@ -179,43 +177,43 @@ void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
     try {
 
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
-            if (it->first == "--localWorkerIp" && !it->second.empty()) {
+            if (it->first == "--"+LOCAL_WORKER_IP_CONFIG && !it->second.empty()) {
                 setLocalWorkerIp(it->second);
-            } else if (it->first == "--coordinatorIp" && !it->second.empty()) {
+            } else if (it->first == "--"+COORDINATOR_IP_CONFIG && !it->second.empty()) {
                 setCoordinatorIp(it->second);
-            } else if (it->first == "--rpcPort" && !it->second.empty()) {
+            } else if (it->first == "--"+RPC_PORT_CONFIG && !it->second.empty()) {
                 setRpcPort(stoi(it->second));
-            } else if (it->first == "--coordinatorPort" && !it->second.empty()) {
+            } else if (it->first == "--"+COORDINATOR_PORT_CONFIG && !it->second.empty()) {
                 setCoordinatorPort(stoi(it->second));
-            } else if (it->first == "--dataPort" && !it->second.empty()) {
+            } else if (it->first == "--"+DATA_PORT_CONFIG && !it->second.empty()) {
                 setDataPort(stoi(it->second));
-            } else if (it->first == "--numberOfSlots" && !it->second.empty()) {
+            } else if (it->first == "--"+NUMBER_OF_SLOTS_CONFIG && !it->second.empty()) {
                 setNumberOfSlots(stoi(it->second));
-            } else if (it->first == "--numWorkerThreads" && !it->second.empty()) {
+            } else if (it->first == "--"+NUM_WORKER_THREADS_CONFIG && !it->second.empty()) {
                 setNumWorkerThreads(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersInGlobalBufferManager" && !it->second.empty()) {
+            } else if (it->first == "--"+NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG && !it->second.empty()) {
                 setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersPerWorker" && !it->second.empty()) {
+            } else if (it->first == "--"+NUMBER_OF_BUFFERS_PER_WORKER_CONFIG && !it->second.empty()) {
                 setNumberOfBuffersPerWorker(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool" && !it->second.empty()) {
+            } else if (it->first == "--"+NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG && !it->second.empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
-            } else if (it->first == "--bufferSizeInBytes" && !it->second.empty()) {
+            } else if (it->first == "--"+BUFFERS_SIZE_IN_BYTES_CONFIG && !it->second.empty()) {
                 setBufferSizeInBytes(stoi(it->second));
-            } else if (it->first == "--parentId" && !it->second.empty()) {
+            } else if (it->first == "--"+PARENT_ID_CONFIG && !it->second.empty()) {
                 setParentId(it->second);
-            } else if (it->first == "--queryCompilerCompilationStrategy" && !it->second.empty()) {
+            } else if (it->first == "--"+QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG && !it->second.empty()) {
                 setQueryCompilerCompilationStrategy(it->second);
-            } else if (it->first == "--queryCompilerPipeliningStrategy" && !it->second.empty()) {
+            } else if (it->first == "--"+QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG && !it->second.empty()) {
                 setQueryCompilerPipeliningStrategy(it->second);
-            } else if (it->first == "--queryCompilerOutputBufferOptimizationLevel" && !it->second.empty()) {
+            } else if (it->first == "--"+QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG && !it->second.empty()) {
                 setQueryCompilerOutputBufferAllocationStrategy(it->second);
-            } else if (it->first == "--sourcePinList") {
+            } else if (it->first == "--"+SOURCE_PIN_LIST_CONFIG) {
                 setSourcePinList(it->second);
-            } else if (it->first == "--workerPinList") {
+            } else if (it->first == "--"+WORKER_PIN_LIST_CONFIG) {
                 setWorkerPinList(it->second);
-            } else if (it->first == "--numaAwareness") {
+            } else if (it->first == "--"+NUMA_AWARENESS_CONFIG) {
                 setNumaAware(true);
-            } else if (it->first == "--enableMonitoring" && !it->second.empty()) {
+            } else if (it->first == "--"+ENABLE_MONITORING_CONFIG && !it->second.empty()) {
                 setEnableMonitoring((it->second == "true"));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
