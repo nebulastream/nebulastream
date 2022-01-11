@@ -42,15 +42,6 @@ class CSVParser : public Parser {
                                       Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema) override;
 
-    /**
-   * @brief takes csv string line as input, casts its values to the correct types and writes it to the memoryArea
-   * @param csvInput: csv string value(one line) that is cast to the PhysicalType and written to the memoryArea
-   * @param tupleCount: the number of tuples already written to the current memoryArea
-   * @param memoryArea: a pointer to the memory area to be written to. Assure that an area of size memoryAreaSize is allocated and held during the function call.
-   * @param memoryAreaSize: size of the allocated memoryArea.
-   */
-    bool writeInputTupleToMemoryArea(std::string csvInput, uint64_t tupleCount, uint8_t *memoryArea, uint64_t memoryAreaSize);
-
   private:
     uint64_t numberOfSchemaFields;
     std::vector<NES::PhysicalTypePtr> physicalTypes;

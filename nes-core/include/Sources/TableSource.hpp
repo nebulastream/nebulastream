@@ -79,7 +79,6 @@ class TableSource : public GeneratorSource, public Runtime::BufferRecycler {
     size_t memoryAreaSize;
     uint64_t currentPositionInBytes;
     uint64_t tupleSizeInBytes;
-    std::vector<PhysicalTypePtr> physicalTypes;
     uint64_t bufferSize;
     size_t numTuples; // in table
 

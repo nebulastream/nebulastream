@@ -57,7 +57,7 @@ struct __attribute__((packed)) record_customer {
     char C_COMMENT[117+1];
 };
 struct __attribute__((packed)) record_nation {
-    uint32_t N_NATIONKEY;
+    uint64_t N_NATIONKEY;
     char N_NAME[25+1];
     uint64_t N_REGIONKEY;
     char N_COMMENT[152+1];

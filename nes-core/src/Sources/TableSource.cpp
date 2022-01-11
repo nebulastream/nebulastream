@@ -21,6 +21,9 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/internal/apex_memmove.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
 #ifdef __x86_64__
 #include <Runtime/internal/rte_memory.h>
 #endif
@@ -78,24 +81,32 @@ TableSource::TableSource(SchemaPtr schema,
     input.seekg(0, input.beg);
 
     memoryAreaSize = tupleSizeInBytes * numTuples;
-    uint8_t* tmp = reinterpret_cast<uint8_t *>(malloc(memoryAreaSize));
-    memoryArea = static_cast<const std::shared_ptr<uint8_t>>(tmp);
+    uint8_t* memoryAreaPtr = reinterpret_cast<uint8_t *>(malloc(memoryAreaSize));
+    memoryArea = static_cast<const std::shared_ptr<uint8_t>>(memoryAreaPtr);
+
+
+    // setup a (fake) dynamic buffer around the memoryArea, so that the CSV parser can fill it
+    Runtime::MemoryLayouts::RowLayoutPtr rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->schema, memoryAreaSize);
+    auto fakeCallback = [](__attribute__((unused)) Runtime::detail::MemorySegment* segment, __attribute__((unused)) BufferRecycler* recycler) {};
+    auto fakeBuffer = Runtime::TupleBuffer::wrapMemory(memoryAreaPtr, memoryAreaSize, fakeCallback);
+    auto dynamicFakeBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, fakeBuffer);
 
     // setup file parser
+    std::vector<PhysicalTypePtr> physicalTypes;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : this->schema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }
     std::string delimiter = "|";
-    auto inputParser = std::make_shared<CSVParser>(tupleSizeInBytes, this->schema->getSize(), physicalTypes, delimiter);
+    auto inputParser = std::make_shared<CSVParser>(this->schema->getSize(), physicalTypes, delimiter);
 
     // read file into memory
     std::string line;
     for (size_t tupleCount = 0; tupleCount < numTuples; tupleCount++) {
         std::getline(input, line);
         NES_TRACE("TableSource line=" << tupleCount << " val=" << line);
-        inputParser->writeInputTupleToMemoryArea(line, tupleCount, tmp, memoryAreaSize);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicFakeBuffer, this->schema);
     }
 
     // if the memory area is smaller than a buffer
