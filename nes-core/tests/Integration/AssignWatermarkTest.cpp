@@ -13,7 +13,7 @@
 */
 
 #include <gtest/gtest.h>
-#include <Util/TestHarness/TestHarness.hpp>
+#include "../util/NesBaseTest.hpp"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -32,24 +32,12 @@ namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
-
-class AssignWatermarkTest : public testing::Test {
+class AssignWatermarkTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("AssignWatermarkTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup AssignWatermarkTest test class.");
     }
-
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-
-    void TearDown() override { std::cout << "Tear down AssignWatermarkTest class." << std::endl; }
 
     std::string ipAddress = "127.0.0.1";
 };
@@ -63,8 +51,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
                                             ->addField(createField("timestamp", UINT64));)";
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     crd->getStreamCatalogService()->registerLogicalSource("window", window);
@@ -95,7 +83,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testWatermarkAssignmentCentralTumblingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testWatermarkAssignmentCentralTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     // The query contains a watermark assignment with 50 ms allowed lateness
@@ -147,8 +135,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
                                             ->addField(createField("timestamp", UINT64));)";
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     crd->getStreamCatalogService()->registerLogicalSource("window", window);
@@ -194,7 +182,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     EXPECT_TRUE(retStart3);
     NES_INFO("AssignWatermarkTest: Worker 3 started successfully");
 
-    std::string outputFilePath = "testWatermarkAssignmentDistributedTumblingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testWatermarkAssignmentDistributedTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -251,8 +239,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
                                             ->addField(createField("timestamp", UINT64));)";
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     crd->getStreamCatalogService()->registerLogicalSource("window", window);
@@ -263,8 +251,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     //Setup Worker
     NES_INFO("AssignWatermarkTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    workerConfig->setCoordinatorPort(rpcPort);
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
     //Add Source to Worker
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -280,7 +267,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testWatermarkAssignmentCentralSlidingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testWatermarkAssignmentCentralSlidingWindow.out";
     remove(outputFilePath.c_str());
 
     // The query contains a watermark assignment with 50 ms allowed lateness
@@ -335,8 +322,8 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
                            ->addField(createField("timestamp", UINT64));)";
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -348,7 +335,6 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("AssignWatermarkTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(rpcPort);
     //Add Source to Worker
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -381,7 +367,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     EXPECT_TRUE(retStart3);
     NES_INFO("AssignWatermarkTest: Worker 3 started successfully");
 
-    std::string outputFilePath = "testWatermarkAssignmentDistributedSlidingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testWatermarkAssignmentDistributedSlidingWindow.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();

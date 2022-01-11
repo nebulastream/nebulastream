@@ -52,6 +52,7 @@
 #include <cassert>
 #include <cmath>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <iostream>
 #include <utility>
 

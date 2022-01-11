@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "../util/NesBaseTest.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -34,11 +35,7 @@ namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 4000;
-
-class OrOperatorTest : public testing::Test {
+class OrOperatorTest : public Testing::NESBaseTest {
   public:
     CoordinatorConfigurationPtr coordinatorConfiguration;
 
@@ -48,22 +45,19 @@ class OrOperatorTest : public testing::Test {
     }
 
     void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
+        Testing::NESBaseTest::SetUp();
         coordinatorConfiguration = CoordinatorConfiguration::create();
-        coordinatorConfiguration->setRpcPort(rpcPort);
-        coordinatorConfiguration->setRestPort(restPort);
+        coordinatorConfiguration->setRpcPort(*rpcCoordinatorPort);
+        coordinatorConfiguration->setRestPort(*restPort);
     }
 
     void TearDown() override { std::cout << "Tear down OrOperatorTest class." << std::endl; }
-    uint64_t restPort = 8081;
 };
 
 /* 1.Test
  * OR operator standalone
  */
 TEST_F(OrOperatorTest, testPatternOneOr) {
-    coordinatorConfiguration->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -81,8 +75,6 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     NES_INFO("OrOperatorTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->setCoordinatorPort(port);
-    worker1Configuration->setRpcPort(port + 10);
-    worker1Configuration->setDataPort(port + 11);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
@@ -100,8 +92,6 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     NES_INFO("OrOperatorTest: Start worker 2 with physical source");
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->setCoordinatorPort(port);
-    worker2Configuration->setRpcPort(port + 20);
-    worker2Configuration->setDataPort(port + 21);
     //Add Physical source
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -116,7 +106,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     NES_INFO("OrOperatorTest: Worker2 started successfully");
 
 
-    std::string outputFilePath = "testPatternOr1.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPatternOr1.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("OrOperatorTest: Submit orWith pattern");
@@ -176,8 +166,6 @@ TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
     NES_INFO("OrOperatorTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->setCoordinatorPort(port);
-    worker1Configuration->setRpcPort(port + 10);
-    worker1Configuration->setDataPort(port + 11);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
@@ -186,7 +174,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
     worker1Configuration->addPhysicalSource(conf70);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(worker1Configuration);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("OrOperatorTest: Worker1 started successfully");
@@ -195,8 +183,6 @@ TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
     NES_INFO("OrOperatorTest: Start worker 2 with physical source");
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->setCoordinatorPort(port);
-    worker2Configuration->setRpcPort(port + 20);
-    worker2Configuration->setDataPort(port + 21);
     //Add Physical source
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -205,12 +191,12 @@ TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
     //register physical stream R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
     worker2Configuration->addPhysicalSource(conf73);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(worker2Configuration);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("OrOperatorTest: Worker2 started successfully");
 
-    std::string outputFilePath = "testPatternOr2.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPatternOr2.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("OrOperatorTest: Submit andWith pattern");
@@ -275,8 +261,6 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     NES_INFO("OrOperatorTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->setCoordinatorPort(port);
-    worker1Configuration->setRpcPort(port + 10);
-    worker1Configuration->setDataPort(port + 11);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
@@ -293,8 +277,6 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     NES_INFO("OrOperatorTest: Start worker 2 with physical source");
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->setCoordinatorPort(port);
-    worker2Configuration->setRpcPort(port + 20);
-    worker2Configuration->setDataPort(port + 21);
     //Add Physical source
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -311,8 +293,6 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     NES_INFO("OrOperatorTest: Start worker 3 with physical source");
     auto worker3Configuration = WorkerConfiguration::create();
     worker3Configuration->setCoordinatorPort(port);
-    worker3Configuration->setRpcPort(port + 30);
-    worker3Configuration->setDataPort(port + 31);
     //Add Physical source
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -326,7 +306,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     EXPECT_TRUE(retStart3);
     NES_INFO("OrOperatorTest: Worker3 started successfully");
 
-    std::string outputFilePath = "testPatternOR3.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPatternOR3.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("OrOperatorTest: Submit andWith pattern");
@@ -391,8 +371,6 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     NES_INFO("OrOperatorTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->setCoordinatorPort(port);
-    worker1Configuration->setRpcPort(port + 10);
-    worker1Configuration->setDataPort(port + 11);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
@@ -408,8 +386,6 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     NES_INFO("OrOperatorTest: Start worker 2 with physical source");
     auto worker2Configuration = WorkerConfiguration::create();
     worker2Configuration->setCoordinatorPort(port);
-    worker2Configuration->setRpcPort(port + 20);
-    worker2Configuration->setDataPort(port + 21);
     //Add Physical source
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -422,7 +398,7 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     EXPECT_TRUE(retStart2);
     NES_INFO("OrOperatorTest: Worker2 started successfully");
 
-    std::string outputFilePath = "testOrPatternWithTestStream.out";
+    std::string outputFilePath = getTestResourceFolder() / "testOrPatternWithTestStream.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("SimplePatternTest: Submit orWith pattern");

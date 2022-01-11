@@ -31,6 +31,19 @@ add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_da
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
 #-------------------------------##############----------------------------------
+#------------------------------- # Nes Utils for Test Suite --------------------------------
+
+add_library(nes-tests "util/NesBaseTest.cpp")
+target_include_directories(nes-tests PUBLIC ${GTEST_INCLUDE_DIRS} "../include")
+target_link_libraries(nes-tests ${LIBRARIES})
+set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} cpprestsdk::cpprest nes-tests)
+
+
+add_executable(nes-port-server "util/PortServer.cpp")
+target_include_directories(nes-port-server PUBLIC ${GTEST_INCLUDE_DIRS} "../include")
+target_link_libraries(nes-port-server ${LIBRARIES})
+
+#-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
 
 add_executable(udf-catalog-controller-test "UnitTests/Rest/UdfCatalogControllerTest.cpp")

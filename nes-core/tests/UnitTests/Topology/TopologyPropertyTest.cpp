@@ -16,10 +16,11 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 namespace NES {
 
-class TopologyPropertiesTest : public testing::Test {
+class TopologyPropertiesTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() { setupLogging(); }
 

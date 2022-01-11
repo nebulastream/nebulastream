@@ -29,6 +29,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <iostream>
 
 using namespace std;
@@ -37,24 +38,12 @@ namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
-
-class grpcTests : public testing::Test {
+class grpcTests : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("grpcTests.log", NES::LOG_TRACE);
         NES_INFO("Setup grpc test class.");
     }
-
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-
-    void TearDown() override { NES_INFO("Tear down grpcTest class."); }
 };
 
 /**
@@ -67,9 +56,9 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     PhysicalSourcePtr srcConf = PhysicalSource::create("default_logical", "x1", defaultSource);
     wrkConf->addPhysicalSource(srcConf);
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
+    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -77,7 +66,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker");
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);

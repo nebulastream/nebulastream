@@ -23,6 +23,7 @@
 #include <Util/TestUtils.hpp>
 #include <chrono>//for timing execution
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #include <iostream>
 #include <regex>
 
@@ -30,16 +31,12 @@ namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 4000;
-
-class AndOperatorTest : public testing::Test {
+class AndOperatorTest : public Testing::NESBaseTest {
   public:
-    CoordinatorConfigurationPtr coConf;
-    CSVSourceTypePtr srcConf1;
-    CSVSourceTypePtr srcConf2;
-    CSVSourceTypePtr srcConf3;
+    CoordinatorConfigPtr coConf;
+    CSVSourceConfigPtr srcConf;
+    CSVSourceConfigPtr srcConf1;
+    CSVSourceConfigPtr srcConf2;
 
     static void SetUpTestCase() {
         NES::setupLogging("AndOperatorTest.log", NES::LOG_DEBUG);
@@ -47,18 +44,19 @@ class AndOperatorTest : public testing::Test {
     }
 
     void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-        coConf = CoordinatorConfiguration::create();
-        srcConf1 = CSVSourceType::create();
-        srcConf2 = CSVSourceType::create();
+        Testing::NESBaseTest::SetUp();
+        coConf = CoordinatorConfig::create();
+        wrkConf1 = WorkerConfig::create();
+        wrkConf2 = WorkerConfig::create();
+        srcConf = CSVSourceConfig::create();
+        srcConf1 = CSVSourceConfig::create();
+        srcConf2 = CSVSourceConfig::create();
 
-        coConf->setRpcPort(rpcPort);
-        coConf->setRestPort(restPort);
+        coConf->setRpcPort(*rpcCoordinatorPort);
+        coConf->setRestPort(*restPort);
+        wrkConf1->setCoordinatorPort(*rpcCoordinatorPort);
+        wrkConf2->setCoordinatorPort(*rpcCoordinatorPort);
     }
-
-    void TearDown() override { std::cout << "Tear down AndOperatorTest class." << std::endl; }
-    uint64_t restPort = 8081;
 
     string removeRandomKey(string contentString) {
         std::regex r1("cep_leftkey([0-9]+)");
@@ -76,7 +74,6 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     // Setup Coordinator
     std::string window = R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))
                                             ->addField(createField("timestamp", UINT64));)";
-    coConf->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getStreamCatalogService()->registerLogicalSource("Win1", window);
@@ -113,7 +110,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     EXPECT_TRUE(retStart2);
     NES_INFO("AndOperatorTest: Worker2 started successfully");
 
-    std::string outputFilePath = "testAndPatternWithTestStream1.out";
+    std::string outputFilePath = getTestResourceFolder() / "testAndPatternWithTestStream1.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("AndOperatorTest: Submit andWith pattern");
@@ -159,7 +156,6 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                                          ->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))
                                          ->addField(createField("quantity", UINT64));)";
-    coConf->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
@@ -186,8 +182,6 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     NES_INFO("QueryDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
     srcConf2->setNumberOfTuplesToProducePerBuffer(5);
     srcConf2->setNumberOfBuffersToProduce(20);
@@ -199,7 +193,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     NES_INFO("AndOperatorTest: Worker2 started successfully");
 
 
-    std::string outputFilePath = "testAndPatternWithTestStream1.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("AndOperatorTest: Submit andWith pattern");
@@ -262,7 +256,6 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                                          ->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))
                                          ->addField(createField("quantity", UINT64));)";
-    coConf->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
@@ -293,7 +286,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     EXPECT_TRUE(retStart1);
     NES_INFO("AndOperatorTest: Worker1 started successfully");
 
-    std::string outputFilePath = "testPatternAndSliding.out";
+    std::string outputFilePath = getTestResourceFolder() /  "testPatternAndSliding.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("AndOperatorTest: Submit andWith pattern");
@@ -393,7 +386,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     EXPECT_TRUE(retStart2);
     NES_INFO("AndOperatorTest: Worker2 started successfully");
 
-    std::string outputFilePath = "testPatternAndEarlyTermination.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPatternAndEarlyTermination.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("AndOperatorTest: Submit andWith pattern");
@@ -494,7 +487,7 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
-    std::string outputFilePath = "testMultiAndPatternWithTestStream.out";
+    std::string outputFilePath = getTestResourceFolder() / "testMultiAndPatternWithTestStream.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();

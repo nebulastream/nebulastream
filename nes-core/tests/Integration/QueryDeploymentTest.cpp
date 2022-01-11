@@ -28,6 +28,7 @@
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #include <iostream>
 
 using namespace std;
@@ -36,24 +37,13 @@ namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
-
-class QueryDeploymentTest : public testing::Test {
+class QueryDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("QueryDeploymentTest.log", NES::LOG_TRACE);
         NES_INFO("Setup QueryDeploymentTest test class.");
     }
 
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-
-    void TearDown() override { NES_INFO("Tear down QueryDeploymentTest class."); }
 };
 
 /**
@@ -61,8 +51,8 @@ class QueryDeploymentTest : public testing::Test {
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -101,7 +91,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployTwoWorkerMergeUsingBottomUp.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -200,8 +190,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -237,7 +227,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
 
-    std::string outputFilePath = "testDeployTwoWorkerMergeUsingTopDown.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -346,9 +336,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("test");//2
+                                  .attachWorkerWithMemorySourceToCoordinator("test");
 
     for (uint32_t i = 0; i < 10; ++i) {
         testHarness = testHarness.pushElement<Test>({1, i}, 2); // fills record store of source with id 0-9
@@ -387,9 +377,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("test");//2
+                                  .attachWorkerWithMemorySourceToCoordinator("test");
     for (int i = 0; i < 10; ++i) {
         testHarness = testHarness.pushElement<Test>({1, 1}, 2);
     }
@@ -423,7 +413,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test") //2
                                   .attachWorkerWithMemorySourceToCoordinator("test");//3
@@ -464,7 +454,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test"))";
-    auto testHarness = TestHarness(query, restPort, rpcPort)
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", defaultLogicalSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test") //2
                            .attachWorkerWithMemorySourceToCoordinator("test");//3
@@ -506,7 +496,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test").filter(Attribute("id") < 5))";
-    auto testHarness = TestHarness(query, restPort, rpcPort)
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", defaultLogicalSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test");
 
@@ -534,8 +524,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenTwoSourcesRunning) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -566,7 +556,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "test.out";
+    std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -587,14 +577,13 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
-    int response = remove("test.out");
-    EXPECT_TRUE(response == 0);
+
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenOneSourceRunning) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -625,7 +614,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "test.out";
+    std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -646,14 +635,13 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
-    int response = remove("test.out");
-    EXPECT_TRUE(response == 0);
+
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenNoSourceRunning) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -676,7 +664,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     csvSourceType1->setSkipHeader(true);
     auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
@@ -684,7 +672,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "test.out";
+    std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
         + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -705,8 +693,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
-    int response = remove("test.out");
-    EXPECT_TRUE(response == 0);
+
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
@@ -721,7 +708,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test").project(Attribute("id")))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
 
@@ -748,8 +735,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -770,7 +757,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "test.out";
+    std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("default_logical").project(Attribute("asd")).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -800,8 +787,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1183,17 +1170,13 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 
-    int response1 = remove("test1.out");
-    EXPECT_EQ(response1, 0);
 
-    int response2 = remove("test2.out");
-    EXPECT_EQ(response2, 0);
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1290,11 +1273,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 
-    int response1 = remove("test1.out");
-    EXPECT_EQ(response1, 0);
 
-    int response2 = remove("test2.out");
-    EXPECT_EQ(response2, 0);
 }
 
 /**
@@ -1323,7 +1302,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     string query =
         R"(Query::from("window").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
     Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window", testSchema)
                                   .addLogicalSource("window2", testSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("window", csvSourceType)
@@ -1370,8 +1349,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
  */
 TEST_F(QueryDeploymentTest, testGrpcNotifyQueryFailure) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1

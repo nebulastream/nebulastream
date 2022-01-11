@@ -23,13 +23,15 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
 
+#include "../util/NesBaseTest.hpp"
+
 using namespace std;
 
 namespace NES {
 
 using namespace Configurations;
 
-class AllowedLatenessTest : public testing::Test {
+class AllowedLatenessTest : public Testing::NESBaseTest {
   public:
     CSVSourceTypePtr inOrderConf;
     CSVSourceTypePtr outOfOrderConf;
@@ -41,6 +43,7 @@ class AllowedLatenessTest : public testing::Test {
     }
 
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         // window-out-of-order.csv contains 12 rows
         outOfOrderConf = CSVSourceType::create();
         outOfOrderConf->setFilePath("../tests/test_data/window-out-of-order.csv");
@@ -57,16 +60,11 @@ class AllowedLatenessTest : public testing::Test {
         inOrderConf->setNumberOfBuffersToProduce(6);
         inOrderConf->setSkipHeader(false);
 
-        restPort = restPort + 2;
-        rpcPort = rpcPort + 30;
-
         inputSchema = Schema::create()
                           ->addField("value", DataTypeFactory::createUInt64())
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("timestamp", DataTypeFactory::createUInt64());
     }
-
-    void TearDown() override { std::cout << "Tear down AllowedLatenessTest class." << std::endl; }
 
     std::string testName = "AllowedLatenessTest";
 
@@ -82,8 +80,6 @@ class AllowedLatenessTest : public testing::Test {
         }
     };
 
-    uint32_t restPort = 8080;
-    uint32_t rpcPort = 4000;
 };
 
 // Test name abbreviations
@@ -104,7 +100,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                     .addLogicalSource("inOrderStream", inputSchema)
                     .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                     .validate().setupTopology();
@@ -130,7 +126,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .validate().setupTopology();
@@ -155,7 +151,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .validate().setupTopology();
@@ -180,7 +176,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .validate().setupTopology();
@@ -204,7 +200,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .validate().setupTopology();
@@ -229,7 +225,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .validate().setupTopology();
@@ -255,7 +251,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_0ms) {
                    ".apply(Sum(Attribute(\"value\")))";
 
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
@@ -280,7 +276,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
@@ -307,7 +303,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
@@ -334,7 +330,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
@@ -359,7 +355,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_10ms) {
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
@@ -386,7 +382,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
                                   .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
@@ -422,7 +418,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator() //idx 2
                                   .attachWorkerToCoordinator() //idx 3
@@ -457,7 +453,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator() //idx 2
                                   .attachWorkerToCoordinator() //idx 3
@@ -492,7 +488,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("inOrderStream", inputSchema)
                                   .attachWorkerToCoordinator() //idx 2
                                   .attachWorkerToCoordinator() //idx 3
@@ -527,7 +523,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerToCoordinator() //idx 2
                                   .attachWorkerToCoordinator() //idx 3
@@ -561,7 +557,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerToCoordinator() //idx 2
                                   .attachWorkerToCoordinator() //idx 3
@@ -596,7 +592,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("OutOfOrderStream", inputSchema)
                                   .attachWorkerToCoordinator() //idx 2
                                   .attachWorkerToCoordinator() //idx 3

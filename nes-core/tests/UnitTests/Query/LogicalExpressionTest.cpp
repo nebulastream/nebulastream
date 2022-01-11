@@ -20,13 +20,14 @@
 #include <Util/UtilityFunctions.hpp>
 
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 namespace NES {
 
 /// Due to the order of overload resolution, the implicit conversion of 0 to a nullptr has got a higher priority
 /// as an build-in conversion than the user-defined implicit conversions to the type ExpressionItem.
 /// Check that this does not cause any issues for any logical expression
-class LogicalExpressionTest : public testing::Test {
+class LogicalExpressionTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     static void SetUpTestCase() {

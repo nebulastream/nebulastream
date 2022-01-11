@@ -460,6 +460,9 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
     std::cerr << "Error: " << strerror(errno) << std::endl;
     std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
+#ifdef ENABLE_CORE_DUMPER
+    detail::createCoreDump();
+#endif
 }
 
 void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
@@ -468,6 +471,9 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
     std::cerr << "Error: " << strerror(errno) << std::endl;
     std::cerr << "Exception: " << exception->what() << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
+#ifdef ENABLE_CORE_DUMPER
+    detail::createCoreDump();
+#endif
 }
 
 const std::vector<PhysicalSourcePtr>& NodeEngine::getPhysicalSources() const { return physicalSources; }

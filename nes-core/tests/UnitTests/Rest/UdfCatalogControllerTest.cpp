@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 #include "../../util/ProtobufMessageFactory.hpp"
 #include <Catalogs/UDF/UdfCatalog.hpp>
@@ -27,7 +28,7 @@ using namespace NES::Catalogs;
 
 namespace NES {
 
-class UdfCatalogControllerTest : public testing::Test {
+class UdfCatalogControllerTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() {
         NES::setupLogging("UdfTest.log", NES::LOG_DEBUG);

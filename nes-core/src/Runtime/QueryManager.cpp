@@ -213,7 +213,7 @@ bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
                                                   std::vector<uint64_t>()
 #endif
         );
-        return threadPool->start();
+        return true;
     }
     NES_ASSERT2_FMT(false, "Cannot start query manager workers");
     return false;

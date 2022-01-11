@@ -213,6 +213,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
     std::deque<detail::MemorySegment*> availableBuffers;
 #else
     folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
+    std::atomic<size_t> numOfAvailableBuffers;
 #endif
     std::vector<UnpooledBufferHolder> unpooledBuffers;
 

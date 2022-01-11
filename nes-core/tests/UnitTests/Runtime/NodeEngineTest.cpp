@@ -40,6 +40,7 @@
 #include <csignal>
 #include <future>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <iostream>
 #include <utility>
 
@@ -113,7 +114,6 @@ std::string joinedExpectedOutput10 =
     "|100|\n"
     "+----------------------------------------------------+";
 
-std::string filePath = "file.txt";
 namespace Runtime {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener);
 }
@@ -217,35 +217,20 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
  *  - long running queries
  *
  */
-class NodeEngineTest : public testing::Test {
+class NodeEngineTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("EngineTest.log", NES::LOG_DEBUG);
-        remove(filePath.c_str());
+
         NES_INFO("Setup EngineTest test class.");
     }
     static void TearDownTestCase() {
-        remove(filePath.c_str());
-        remove("qep1.txt");
-        remove("qep2.txt");
-        std::cout << "Tear down EngineTest class." << std::endl;
+        NES_INFO("TearDownTestCase EngineTest test class.");
     }
 };
 /**
  * Helper Methods
  */
-void testOutput() {
-    ifstream testFile(filePath.c_str());
-    EXPECT_TRUE(testFile.good());
-    std::ifstream ifs(filePath.c_str());
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    EXPECT_EQ(content, expectedOutput);
-    ifs.close();
-    int response = remove(filePath.c_str());
-    EXPECT_TRUE(response == 0);
-}
-
 void testOutput(const std::string& path) {
     ifstream testFile(path.c_str());
     EXPECT_TRUE(testFile.good());
@@ -286,10 +271,10 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
         };
 };
 
-auto setupQEP(const NodeEnginePtr& engine, QueryId queryId) {
+auto setupQEP(const NodeEnginePtr& engine, QueryId queryId, const std::string& outPath) {
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
 
-    DataSinkPtr sink = createTextFileSink(sch, queryId, engine, filePath, false);
+    DataSinkPtr sink = createTextFileSink(sch, queryId, engine, outPath, false);
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, queryId, context, executable, 1, {sink});
@@ -315,45 +300,45 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId) {
 TEST_F(NodeEngineTest, testStartStopEngineEmpty) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
     EXPECT_TRUE(engine->stop());
 }
 
 TEST_F(NodeEngineTest, teststartDeployStop) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
-    auto [qep, pipeline] = setupQEP(engine, testQueryId);
+    auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
     pipeline->completedPromise.get_future().get();
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     EXPECT_TRUE(engine->stop());
 
-    testOutput();
+    testOutput(getTestResourceFolder() / "test.out");
 }
 
 TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
-    auto [qep, pipeline] = setupQEP(engine, testQueryId);
+    auto [qep, pipeline] = setupQEP(engine, getTestResourceFolder() / testQueryId);
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
     EXPECT_TRUE(engine->undeployQuery(testQueryId));
     EXPECT_TRUE(engine->stop());
 
-    testOutput();
+    testOutput(getTestResourceFolder() / "test.out");
 }
 
 TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
-    auto [qep, pipeline] = setupQEP(engine, testQueryId);
+    auto [qep, pipeline] = setupQEP(engine, getTestResourceFolder() /  testQueryId);
     EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
     EXPECT_TRUE(engine->startQuery(testQueryId));
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
@@ -365,18 +350,18 @@ TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
     EXPECT_TRUE(engine->unregisterQuery(testQueryId));
     EXPECT_TRUE(engine->stop());
 
-    testOutput();
+    testOutput(getTestResourceFolder() / "test.out");
 }
 //
 TEST_F(NodeEngineTest, testParallelDifferentSource) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     //  GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
-    auto sink1 = createTextFileSink(sch1, 0, engine, "qep1.txt", false);
+    auto sink1 = createTextFileSink(sch1, 0, engine, getTestResourceFolder() / "qep1.txt", false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
@@ -386,7 +371,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sink2 = createTextFileSink(sch2, 0, engine, "qep2.txt", false);
+    auto sink2 = createTextFileSink(sch2, 0, engine, getTestResourceFolder() / "qep2.txt", false);
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(0, 2, context2, executable2, 1, {sink2});
@@ -418,18 +403,18 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
     EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Invalid);
 
-    testOutput("qep1.txt");
-    testOutput("qep2.txt");
+    testOutput(getTestResourceFolder() / "qep1.txt");
+    testOutput(getTestResourceFolder() / "qep2.txt");
 }
 //
 TEST_F(NodeEngineTest, testParallelSameSource) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
-    auto sink1 = createTextFileSink(sch1, 1, engine, "qep1.txt", true);
+    auto sink1 = createTextFileSink(sch1, 1, engine, getTestResourceFolder() / "qep1.txt", true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
@@ -439,7 +424,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
         ExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(), engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 = createTextFileSink(sch2, 2, engine, "qep2.txt", true);
+    DataSinkPtr sink2 = createTextFileSink(sch2, 2, engine, getTestResourceFolder() / "qep2.txt", true);
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
@@ -462,18 +447,18 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
     EXPECT_TRUE(engine->undeployQuery(2));
     EXPECT_TRUE(engine->stop());
 
-    testOutput("qep1.txt");
-    testOutput("qep2.txt");
+    testOutput(getTestResourceFolder() / "qep1.txt");
+    testOutput(getTestResourceFolder() / "qep2.txt");
 }
 //
 TEST_F(NodeEngineTest, testParallelSameSink) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     // create two executable query plans, which emit to the same sink
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sharedSink = createTextFileSink(sch1, 0, engine, "qep12.txt", false);
+    auto sharedSink = createTextFileSink(sch1, 0, engine, getTestResourceFolder() / "qep12.txt", false);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(1, 1, context1, executable1, 1, {sharedSink});
@@ -517,16 +502,16 @@ TEST_F(NodeEngineTest, testParallelSameSink) {
     EXPECT_TRUE(engine->undeployQuery(1));
     EXPECT_TRUE(engine->undeployQuery(2));
     EXPECT_TRUE(engine->stop());
-    testOutput("qep12.txt", joinedExpectedOutput);
+    testOutput(getTestResourceFolder() / "qep12.txt", joinedExpectedOutput);
 }
 //
 TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    auto sink1 = createTextFileSink(sch1, 0, engine, "qep3.txt", true);
+    auto sink1 = createTextFileSink(sch1, 0, engine, getTestResourceFolder() / "qep3.txt", true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
@@ -549,7 +534,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     //DataSourcePtr source1 =
     //    createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     /*
-    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep3.txt", true);
+    DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, getTestResourceFolder() / "qep3.txt", true);
     //builder1.addSource(source1);
     builder1.addSink(sink1);
     builder1.setQueryId(1);
@@ -597,15 +582,14 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     EXPECT_TRUE(engine->undeployQuery(2));
     EXPECT_TRUE(engine->stop());
 
-    testOutput("qep3.txt", joinedExpectedOutput);
+    testOutput(getTestResourceFolder() / "qep3.txt", joinedExpectedOutput);
 }
 //
 TEST_F(NodeEngineTest, testStartStopStartStop) {
-    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
-    auto [qep, pipeline] = setupQEP(engine, testQueryId);
+    auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
     pipeline->completedPromise.get_future().get();
 
@@ -616,7 +600,7 @@ TEST_F(NodeEngineTest, testStartStopStartStop) {
 
     EXPECT_TRUE(engine->stop());
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Invalid);
-    testOutput();
+    testOutput(getTestResourceFolder() / "test.out");
 }
 
 TEST_F(NodeEngineTest, testBufferData) {
@@ -731,13 +715,13 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
         }
     };
 
-    auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337);
+    auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 0);
 
     //GeneratedQueryExecutionPlanBuilder builder = GeneratedQueryExecutionPlanBuilder::create();
     //DataSourcePtr source =
     //    createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
+    DataSinkPtr sink = createTextFileSink(sch, 0, engine, getTestResourceFolder() / "test.out", true);
     // builder.addSource(source);
     // builder.addSink(sink);
     // builder.setQueryId(testQueryId);
@@ -803,13 +787,13 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
             throw 1;
         }
     };
-    auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337);
+    auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 0);
 
     //GeneratedQueryExecutionPlanBuilder builder = GeneratedQueryExecutionPlanBuilder::create();
     //DataSourcePtr source =
     //    createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
+    DataSinkPtr sink = createTextFileSink(sch, 0, engine, getTestResourceFolder() / "test.out", true);
     //builder.addSource(source);
     // builder.addSink(sink);
     //builder.setQueryId(testQueryId);

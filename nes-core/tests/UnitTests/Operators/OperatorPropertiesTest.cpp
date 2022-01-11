@@ -19,10 +19,11 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 namespace NES {
 
-class OperatorPropertiesTest : public testing::Test {
+class OperatorPropertiesTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() { setupLogging(); }
 

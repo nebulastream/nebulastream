@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -29,7 +30,7 @@
 using namespace std;
 using namespace NES;
 
-class TopologyManagerServiceTest : public testing::Test {
+class TopologyManagerServiceTest : public Testing::NESBaseTest {
   public:
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";

@@ -20,6 +20,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <limits>
 
 #include <Common/DataTypes/DataType.hpp>
@@ -34,7 +35,7 @@ namespace NES {
 using namespace NES::API;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class DataTypeFactoryTests : public testing::Test {
+class DataTypeFactoryTests : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("DataTypeFactory.log", NES::LOG_DEBUG);

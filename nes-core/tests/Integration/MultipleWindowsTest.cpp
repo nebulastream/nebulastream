@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -30,30 +31,24 @@ using namespace std;
 namespace NES {
 
 using namespace Configurations;
-
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
-
-class MultipleWindowsTest : public testing::Test {
+class MultipleWindowsTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("MultipleWindowsTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultipleWindowsTest test class.");
     }
-
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-
-    void TearDown() override { NES_INFO("Tear down MultipleWindowsTest class."); }
 };
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    NES_INFO("WindowDeploymentTest: Start coordinator");
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
+
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+
+    NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -83,7 +78,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("MultipleWindowsTest: Submit query");
@@ -122,8 +117,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     coordinatorConfig->setNumberOfSlots(12);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -170,7 +165,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("MultipleWindowsTest: Submit query");
@@ -217,8 +212,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
  */
 TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     coordinatorConfig->setNumberOfSlots(12);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -250,7 +245,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "outputLog.out";
+    std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("MultipleWindowsTest: Submit query");
@@ -298,10 +293,9 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
-
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    auto coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -347,7 +341,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "outputLog.out";
+    std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("MultipleWindowsTest: Submit query");
@@ -399,9 +393,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    auto coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -415,7 +409,6 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumberOfSlots(12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
@@ -432,7 +425,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("MultipleWindowsTest: Submit query");
@@ -489,8 +482,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -536,7 +529,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("MultipleWindowsTest: Submit query");
@@ -589,8 +582,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
  */
 TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -617,7 +610,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    std::string outputFilePath = "testOutput.out";
+    std::string outputFilePath = getTestResourceFolder() / "testOutput.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -707,8 +700,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
 |  |  |        SOURCE(8,window)
      */
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -767,7 +760,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     wrk3->replaceParent(1, 2);
     NES_INFO("MultipleWindowsTest: Worker3 started SUCCESSFULLY");
 
-    std::string outputFilePath = "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
+    std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -864,8 +857,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
 |  |  |        SOURCE(10,window)
      */
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -923,7 +916,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     wrk3->replaceParent(1, 2);
     NES_INFO("MultipleWindowsTest: Worker3 started SUCCESSFULLY");
 
-    std::string outputFilePath = "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
+    std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();

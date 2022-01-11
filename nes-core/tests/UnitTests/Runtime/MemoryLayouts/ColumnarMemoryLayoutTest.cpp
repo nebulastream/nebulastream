@@ -23,13 +23,14 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 #include <gtest/gtest.h>
+#include "../../../util/NesBaseTest.hpp"
 
 #include <cstdlib>
 #include <iostream>
 #include <vector>
 
 namespace NES::Runtime::MemoryLayouts {
-class ColumnarMemoryLayoutTest : public testing::Test {
+class ColumnarMemoryLayoutTest : public Testing::NESBaseTest {
   public:
     BufferManagerPtr bufferManager;
 

@@ -41,7 +41,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr physicalSource = PhysicalSource::create("default", "default1", defaultSourceType);
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 12345, {physicalSource});
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
         testPlan = QueryCompilation::PipelineQueryPlan::create(0, 0);
     }
 

@@ -33,12 +33,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
+#include "../../util/NesBaseTest.hpp"
 
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
-
-class MaterializedViewTest : public testing::Test {
-  public:
+class MaterializedViewTest : public Testing::NESBaseTest {
+public:
     static void SetUpTestCase() {
         NES::setupLogging("MaterializedViewTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MaterializedViewTest test class.");
@@ -48,8 +46,8 @@ class MaterializedViewTest : public testing::Test {
 /// @brief tests if a query with materialized view sink starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("MaterializedViewTupleViewSinkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(false);
@@ -67,9 +65,6 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -106,8 +101,8 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
 /// @brief tests if a query with materialized view source starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("MaterializedViewTupleBufferSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(false);
@@ -122,8 +117,6 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(12);
     // materialized view physical stream
     size_t viewId = 1;
@@ -162,8 +155,8 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
 // @brief tests with two concurrent queries if writing and reading of MVs works properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(false);
@@ -180,9 +173,6 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setRpcPort(port + 10);
-    workerConfig1->setDataPort(port + 11);
     workerConfig1->setNumberOfSlots(12);
     // materialized view physical stream
     size_t viewId = 1;

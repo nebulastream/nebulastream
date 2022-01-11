@@ -31,6 +31,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <iostream>
 
 using namespace std;
@@ -40,7 +41,7 @@ namespace NES {
 using namespace NES::API;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class AddScanAndEmitPhaseTest : public testing::Test {
+class AddScanAndEmitPhaseTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("AddScanAndEmitPhase.log", NES::LOG_DEBUG);

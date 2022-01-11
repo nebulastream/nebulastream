@@ -22,6 +22,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <iostream>
 #include <string>
 
@@ -51,12 +52,9 @@
 #define INPUTFORMAT SourceDescriptor::InputFormat::JSON
 #endif
 
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
-
 namespace NES {
 
-class MQTTSourceTest : public testing::Test {
+class MQTTSourceTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -65,16 +63,18 @@ class MQTTSourceTest : public testing::Test {
     }
 
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", UINT32);
         mqttSourceType = MQTTSourceType::create();
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {});
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {});
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();
     }
 
     /* Will be called after a test is executed. */
     void TearDown() override {
+        Testing::NESBaseTest::TearDown();
         ASSERT_TRUE(nodeEngine->stop());
         NES_DEBUG("MQTTSOURCETEST::TearDown() Tear down MQTTSourceTest");
     }
@@ -170,11 +170,10 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
+    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
-    remove("test.out");
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -214,7 +213,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
 
-    std::string outputFilePath = "test.out";
+    std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -235,8 +234,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
-    //    int response = remove("test.out");
-    //    EXPECT_TRUE(response == 0);
+
 }
 }// namespace NES
 #endif

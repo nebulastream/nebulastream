@@ -27,6 +27,7 @@
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -63,7 +64,7 @@ using namespace std;
 
 namespace NES {
 
-class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
+class TranslateToPhysicalOperatorPhaseTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("TranslateToPhysicalOperatorPhaseTest.log", NES::LOG_DEBUG);

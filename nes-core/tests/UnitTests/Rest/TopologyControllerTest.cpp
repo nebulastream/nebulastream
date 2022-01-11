@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 #define _TURN_OFF_PLATFORM_STRING // undef U from cpprest
 #include <REST/Controller/TopologyController.hpp>
@@ -24,7 +25,7 @@
 
 namespace NES {
 
-class TopologyControllerTest : public testing::Test {
+class TopologyControllerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("TopologyControllerTest.log", NES::LOG_DEBUG);

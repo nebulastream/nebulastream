@@ -25,6 +25,7 @@
 #include <Util/TestUtils.hpp>
 #include <type_traits>
 #include <utility>
+#include <filesystem>
 
 /**
  * @brief This test harness wrap query deployment test in our test framework.
@@ -76,15 +77,14 @@ class TestHarness {
          * @param rpcPort for for the grpc
          */
     explicit TestHarness(std::string queryWithoutSink,
-                         uint16_t restPort = 8081,
-                         uint16_t rpcPort = 4000,
+                         uint16_t restPort,
+                         uint16_t rpcPort,
+                         std::filesystem::path testHarnessResourcePath,
                          uint64_t memSrcFrequency = 0,
                          uint64_t memSrcNumBuffToProcess = 1)
         : queryWithoutSink(std::move(queryWithoutSink)), coordinatorIPAddress("127.0.0.1"), restPort(restPort), rpcPort(rpcPort),
           memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess), bufferSize(4096),
-          physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false){};
-
-    ~TestHarness() { NES_DEBUG("TestHarness: ~TestHarness()"); };
+          physicalSourceCount(0), topologyId(1), validationDone(false), topologySetupDone(false), testHarnessResourcePath(testHarnessResourcePath) {}
 
     /**
          * @brief push a single element/tuple to specific source
@@ -373,7 +373,7 @@ class TestHarness {
                 default: break;
             }
 
-            NesWorkerPtr nesWorker = std::make_shared<NesWorker>(workerConfiguration);
+            NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
             nesWorker->start(/**blocking**/ false, /**withConnect**/ true);
 
             //We are assuming that coordinator has a node id 1
@@ -414,7 +414,7 @@ class TestHarness {
         QueryCatalogPtr queryCatalog = nesCoordinator->getQueryCatalog();
 
         // local fs
-        std::string filePath = "testHarness.out";
+        std::string filePath = testHarnessResourcePath / "testHarness.out";
         remove(filePath.c_str());
 
         //register query
@@ -527,6 +527,7 @@ class TestHarness {
     uint32_t topologyId;
     bool validationDone;
     bool topologySetupDone;
+    std::filesystem::path testHarnessResourcePath;
 };
 }// namespace NES
 

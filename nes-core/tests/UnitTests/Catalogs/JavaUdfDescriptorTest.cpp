@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 using namespace std::string_literals;
 
@@ -22,7 +23,7 @@ using namespace std::string_literals;
 
 namespace NES::Catalogs {
 
-class JavaUdfDescriptorTest : public testing::Test {
+class JavaUdfDescriptorTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() { NES::setupLogging("UdfTest.log", NES::LOG_DEBUG); }
 

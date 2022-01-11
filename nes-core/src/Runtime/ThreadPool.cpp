@@ -52,7 +52,9 @@ ThreadPool::ThreadPool(uint64_t nodeId,
                        std::vector<uint64_t> queuePinListMapping)
     : nodeId(nodeId), numThreads(numThreads), queryManager(std::move(queryManager)), bufferManagers(bufferManagers),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker), workerPinningPositionList(workerPinningPositionList),
-      queuePinListMapping(queuePinListMapping), hardwareManager(hardwareManager) {}
+      queuePinListMapping(queuePinListMapping), hardwareManager(hardwareManager) {
+    start();
+}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");
@@ -99,9 +101,10 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
 }
 
 bool ThreadPool::start() {
-    auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
     std::unique_lock lock(reconfigLock);
-    if (running) {
+    auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
+    auto expected = false;
+    if (!running.compare_exchange_strong(expected, true)) {
         NES_DEBUG("Threadpool:start already running, return false");
         return false;
     }
@@ -170,8 +173,8 @@ bool ThreadPool::start() {
           localBufferManager = bufferManagers[0];
 #endif
 
-          barrier->wait();
-          NES_ASSERT(localBufferManager != NULL, "localBufferManager is null");
+            barrier->wait();
+            NES_ASSERT(localBufferManager != nullptr, "localBufferManager is null");
 #ifdef ENABLE_PAPI_PROFILER
           auto path = std::filesystem::path("worker_" + std::to_string(NesThread::getId()) + ".csv");
           auto profiler = std::make_shared<Profiler::PapiCpuProfiler>(Profiler::PapiCpuProfiler::Presets::CachePresets,
@@ -207,18 +210,19 @@ bool ThreadPool::stop() {
     NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads");
     queryManager->poisonWorkers();
     /* join all threads if possible */
-    for (auto& thread: threads) {
+    lock.unlock();
+    for (auto& thread : threads) {
         if (thread.joinable()) {
             thread.join();
         }
     }
+    lock.lock();
     threads.clear();
     NES_DEBUG("Threadpool: stop finished");
     return true;
 }
 
 uint32_t ThreadPool::getNumberOfThreads() const {
-    std::unique_lock lock(reconfigLock);
     return numThreads;
 }
 

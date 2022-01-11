@@ -22,27 +22,18 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 
 using namespace std;
 namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
-
-class MultiWorkerTest : public testing::Test {
+class MultiWorkerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("MultiWorkerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultiWorkerTest test class.");
-    }
-
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down MultiWorkerTest class."); }
@@ -50,8 +41,8 @@ class MultiWorkerTest : public testing::Test {
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -76,9 +67,9 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
 }
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    auto crdConf = CoordinatorConfiguration::create();
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -116,8 +107,8 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
 
 TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -155,8 +146,8 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
 
 TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -199,8 +190,8 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
 
 TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -235,8 +226,8 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
 
 TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -279,8 +270,8 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
 
 TEST_F(MultiWorkerTest, testMultipleWorker) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

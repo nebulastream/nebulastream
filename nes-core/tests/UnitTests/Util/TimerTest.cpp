@@ -16,11 +16,12 @@
 #include <Util/Timer.hpp>
 #include <chrono>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <thread>
 #include <unistd.h>
 
 namespace NES {
-class TimerTest : public testing::Test {
+class TimerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("TimerTest.log", NES::LOG_DEBUG);

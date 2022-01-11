@@ -172,6 +172,7 @@ TEST_F(BufferManagerTest, bufferManagerMtAccess) {
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
     auto bufferManager = std::make_shared<Runtime::BufferManager>(buffer_size, buffers_managed);
+    std::atomic<size_t> numBuffers = buffers_managed;
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
@@ -182,22 +183,23 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 250000;
+    constexpr uint32_t max_buffer = 5'000;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
     prod_threads.reserve(producer_threads);
     for (uint32_t i = 0ul; i < producer_threads; ++i) {
-        prod_threads.emplace_back([&workQueue, &mutex, &cvar, &bufferManager]() {
+        prod_threads.emplace_back([&workQueue, &mutex, &cvar, &bufferManager, &numBuffers]() {
             for (uint32_t j = 0ul; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
                 auto buf = bufferManager->getBufferBlocking();
+                numBuffers.fetch_sub(1);
                 for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
                     buf.getBuffer<uint32_t>()[k] = k;
                 }
                 buf.getBuffer<uint32_t>()[buffer_size / sizeof(uint32_t) - 1] = 0;
                 lock.lock();
-                workQueue.push_back(buf);
+                workQueue.emplace_back(std::move(buf));
                 cvar.notify_all();
                 lock.unlock();
             }
@@ -205,7 +207,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
     }
     con_threads.reserve(consumer_threads);
     for (uint32_t i = 0ul; i < consumer_threads; ++i) {
-        con_threads.emplace_back([&workQueue, &mutex, &cvar]() {
+        con_threads.emplace_back([&workQueue, &mutex, &cvar, &numBuffers]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
             while (true) {
                 lock.lock();
@@ -215,12 +217,14 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
                 auto buf = workQueue.front();
                 workQueue.pop_front();
                 lock.unlock();
+                if (buf.getBuffer<uint32_t>()[buffer_size / sizeof(uint32_t) - 1] == max_buffer) {
+                    numBuffers.fetch_add(1);
+                    break;
+                }
                 for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
                     ASSERT_EQ(buf.getBuffer<uint32_t>()[k], k);
                 }
-                if (buf.getBuffer<uint32_t>()[buffer_size / sizeof(uint32_t) - 1] == max_buffer) {
-                    break;
-                }
+                numBuffers.fetch_add(1);
             }
         });
     }
@@ -230,8 +234,9 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
     for (uint32_t j = 0ul; j < consumer_threads; ++j) {
         std::unique_lock<std::mutex> lock(mutex);
         auto buf = bufferManager->getBufferBlocking();
+        numBuffers.fetch_sub(1);
         buf.getBuffer<uint32_t>()[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
-        workQueue.push_back(buf);
+        workQueue.emplace_back(std::move(buf));
         cvar.notify_all();
     }
     for (auto& t : con_threads) {
@@ -240,6 +245,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumer) {
     std::unique_lock<std::mutex> lock(mutex);
     workQueue.clear();
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(numBuffers.load(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
@@ -264,7 +270,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 250000;
+    constexpr uint32_t max_buffer = 25'000;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
@@ -279,7 +285,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
                 }
                 buf.getBuffer<uint32_t>()[buffer_size / sizeof(uint32_t) - 1] = 0;
                 lock.lock();
-                workQueue.push_back(buf);
+                workQueue.emplace_back(std::move(buf));
                 cvar.notify_all();
                 lock.unlock();
             }
@@ -297,12 +303,12 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
                 auto buf = workQueue.front();
                 workQueue.pop_front();
                 lock.unlock();
-                for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
-                    ASSERT_EQ(buf.getBuffer<uint32_t>()[k], k);
-                }
                 auto ctrl_val = buf.getBuffer<uint32_t>()[buffer_size / sizeof(uint32_t) - 1];
                 if (ctrl_val == max_buffer) {
                     break;
+                }
+                for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
+                    ASSERT_EQ(buf.getBuffer<uint32_t>()[k], k);
                 }
             }
         });
@@ -318,7 +324,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
             writer[k] = k;
         }
         writer[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
-        workQueue.push_back(buf);
+        workQueue.emplace_back(std::move(buf));
         cvar.notify_all();
     }
     for (auto& t : con_threads) {
@@ -358,7 +364,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 250;
+    constexpr uint32_t max_buffer = 1'000;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
@@ -376,7 +382,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
                 }
                 data[buffer_size / sizeof(uint32_t) - 1] = 0;
                 lock.lock();
-                workQueue.push_back(buf);
+                workQueue.emplace_back(std::move(buf));
                 cvar.notify_all();
                 lock.unlock();
             }
@@ -415,7 +421,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
             data[k] = k;
         }
         data[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
-        workQueue.push_back(buf);
+        workQueue.emplace_back(std::move(buf));
         cvar.notify_all();
     }
     for (auto& t : con_threads) {
@@ -439,7 +445,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 100'000;
+    constexpr uint32_t max_buffer = 10'000;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
@@ -456,7 +462,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
                 }
                 writer[buffer_size / sizeof(uint32_t) - 1] = 0;
                 lock.lock();
-                workQueue.push_back(buf);
+                workQueue.emplace_back(std::move(buf));
                 cvar.notify_all();
                 lock.unlock();
             }
@@ -495,16 +501,17 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
             writer[k] = k;
         }
         writer[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
-        workQueue.push_back(buf);
+        workQueue.emplace_back(std::move(buf));
         cvar.notify_all();
     }
     for (auto& t : con_threads) {
         t.join();
     }
     std::unique_lock<std::mutex> lock(mutex);
+    localPool->destroy();
     workQueue.clear();
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAllocation) {
@@ -519,7 +526,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
     std::deque<TupleBuffer> workQueue;
     std::condition_variable cvar;
 
-    constexpr uint32_t max_buffer = 100'000;
+    constexpr uint32_t max_buffer = 2;
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
@@ -535,7 +542,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
                 }
                 writer[buffer_size / sizeof(uint32_t) - 1] = 0;
                 lock.lock();
-                workQueue.push_back(buf);
+                workQueue.emplace_back(std::move(buf));
                 cvar.notify_all();
                 lock.unlock();
             }
@@ -551,7 +558,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
                 while (workQueue.empty()) {
                     cvar.wait(lock);
                 }
-                auto buf = workQueue.front();
+                TupleBuffer buf = workQueue.front();
                 workQueue.pop_front();
                 lock.unlock();
                 auto copied_buf = localPool->getBufferBlocking();
@@ -577,7 +584,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
             writer[k] = k;
         }
         writer[buffer_size / sizeof(uint32_t) - 1] = max_buffer;
-        workQueue.push_back(buf);
+        workQueue.emplace_back(std::move(buf));
         cvar.notify_all();
     }
     for (auto& t : con_threads) {
@@ -585,8 +592,9 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
     }
     std::unique_lock<std::mutex> lock(mutex);
     workQueue.clear();
+    localPool->destroy();
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
 }// namespace NES

@@ -49,10 +49,12 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 
+#include "../../util/NesBaseTest.hpp"
+
 using namespace NES;
 using Runtime::TupleBuffer;
 
-class ProjectionTest : public testing::Test {
+class ProjectionTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("ProjectionTest.log", NES::LOG_DEBUG);
@@ -73,7 +75,7 @@ class ProjectionTest : public testing::Test {
 
         auto streamConf = PhysicalSource::create("x","x1");
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                  31337,
+                                                                  0,
                                                                   {streamConf},
                                                                   1,
                                                                   4096,

@@ -50,6 +50,7 @@
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <iostream>
 #include <memory>
 
@@ -62,7 +63,7 @@ using namespace NES::API;
 using namespace NES::QueryCompilation;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class QueryCompilerTest : public testing::Test {
+class QueryCompilerTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
@@ -96,7 +97,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
+                                                                   0,
                                                                    {streamConf},
                                                                    1,
                                                                    4096,
@@ -143,7 +144,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     auto defaultSourceType = DefaultSourceType::create();
     auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
+                                                                   0,
                                                                    {streamConf},
                                                                    1,
                                                                    4096,
@@ -192,7 +193,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
+                                                                   0,
                                                                    {streamConf},
                                                                    1,
                                                                    4096,
@@ -243,7 +244,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     auto defaultSourceType = DefaultSourceType::create();
     auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
+                                                                   0,
                                                                    {streamConf},
                                                                    1,
                                                                    4096,
@@ -295,7 +296,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     auto defaultSourceType = DefaultSourceType::create();
     auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
+                                                                   0,
                                                                    {streamConf},
                                                                    1,
                                                                    4096,
@@ -350,7 +351,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto streamConf1 = PhysicalSource::create(leftSourceLogicalSourceName, "x1", defaultSourceType);
     auto streamConf2 = PhysicalSource::create(rightSourceLogicalSourceName, "x1", defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
+                                                                   0,
                                                                    {streamConf1, streamConf2},
                                                                    1,
                                                                    4096,
@@ -410,7 +411,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     auto defaultSourceType = DefaultSourceType::create();
     auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                   31337,
+                                                                   0,
                                                                    {streamConf},
                                                                    1,
                                                                    4096,

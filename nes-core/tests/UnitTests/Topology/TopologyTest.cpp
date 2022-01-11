@@ -13,6 +13,7 @@
 */
 
 #include "gtest/gtest.h"
+#include "../../util/NesBaseTest.hpp"
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -22,7 +23,7 @@
 using namespace NES;
 
 /* - TopologyTest ---------------------------------------------------- */
-class TopologyTest : public testing::Test {
+class TopologyTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
 

@@ -21,6 +21,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 
+
 namespace NES {
 
 class SyntacticQueryValidationTest : public testing::Test {

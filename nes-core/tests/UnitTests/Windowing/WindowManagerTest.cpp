@@ -52,18 +52,20 @@
 #include <Common/ExecutableType/Array.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+
+#include "../../util/NesBaseTest.hpp"
+
 using namespace NES::Windowing;
 namespace NES {
 using Runtime::TupleBuffer;
 
-class WindowManagerTest : public testing::Test {
+class WindowManagerTest : public Testing::NESBaseTest {
   public:
-    void SetUp() override {
+    static void SetUpTestCase() {
         NES::setupLogging("WindowManagerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowMangerTest test class.");
     }
 
-    void TearDown() override { std::cout << "Tear down WindowManager test class." << std::endl; }
 
     const uint64_t buffers_managed = 10;
     const uint64_t buffer_size = 4 * 1024;
@@ -570,7 +572,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
+    auto port = getAvailablePort();
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", port, {conf});
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
@@ -655,7 +658,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, {conf});
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {conf});
 
     auto aggregation = Sum(Attribute("id", UINT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);

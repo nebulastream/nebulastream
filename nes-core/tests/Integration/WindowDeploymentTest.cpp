@@ -16,6 +16,7 @@
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -40,24 +41,13 @@ namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
 
-class WindowDeploymentTest : public testing::Test {
+class WindowDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("WindowDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowDeploymentTest test class.");
     }
-
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-
-    void TearDown() override { std::cout << "Tear down WindowDeploymentTest class." << std::endl; }
 };
 
 /**
@@ -68,9 +58,9 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -92,7 +82,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
+    std::string outputFilePath =  getTestResourceFolder() / "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -140,8 +130,8 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
  */
 TEST_F(WindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -232,7 +222,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, "frequency");
     auto physicalSource = PhysicalSource::create("ysb", "YSB_phy", lambdaSourceType);
     workerConfig->addPhysicalSource(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -240,7 +230,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "ysb.out";
+    std::string outputFilePath = getTestResourceFolder() / "ysb.out";
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"ysb\").window(TumblingWindow::of(EventTime(Attribute(\"current_ms\")), "
@@ -287,7 +277,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
 
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -341,7 +331,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
 
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Minutes(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -397,7 +387,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 
     std::string query =
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -442,8 +432,8 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -451,10 +441,10 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    workerConfig->setCoordinatorPort(rpcPort);
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig->addPhysicalSource(windowStream);
+    workerConfig1->addPhysicalSource(windowStream);
 
     //register logical stream
     std::string testSchema =
@@ -468,21 +458,21 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig2->addPhysicalSource(windowStream);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    std::string outputFilePath = "testDeployOneWorkerDistributedWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -544,7 +534,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
 
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts"), Seconds()), Minutes(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -597,7 +587,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     std::string query =
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -656,7 +646,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(1))).apply(Sum(Attribute("value"))))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -704,7 +694,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 
     std::string query =
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -752,7 +742,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
 
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(1))).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -801,7 +791,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
 
     std::string query =
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -833,8 +823,6 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
 
 TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -845,7 +833,10 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
     workerConfig->addPhysicalSource(windowStream);
-    workerConfig->setCoordinatorPort(rpcPort);
+
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     //creating schema
     std::string window =
@@ -870,7 +861,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -902,8 +893,6 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
 
 TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -914,7 +903,10 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
     workerConfig->addPhysicalSource(windowStream);
-    workerConfig->setCoordinatorPort(rpcPort);
+
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     //register logical stream qnv
     std::string window =
@@ -927,15 +919,14 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig.clone()));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
     workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig.clone());
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -944,7 +935,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -978,8 +969,6 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
  */
 TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -990,7 +979,10 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     auto windowStream = PhysicalSource::create("windowStream", "test_stream", sourceConfig);
     workerConfig->addPhysicalSource(windowStream);
-    workerConfig->setCoordinatorPort(rpcPort);
+
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     //register logical stream qnv
     std::string window =
@@ -1011,7 +1003,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testGlobalTumblingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1045,8 +1037,6 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
  */
 TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -1057,7 +1047,10 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     auto windowStream = PhysicalSource::create("windowStream", "test_stream", sourceConfig);
     workerConfig->addPhysicalSource(windowStream);
-    workerConfig->setCoordinatorPort(rpcPort);
+
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     //register logical stream qnv
     std::string window =
@@ -1086,7 +1079,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testGlobalTumblingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1138,7 +1131,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -1179,10 +1172,11 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     //register logical stream qnv
     std::string window =
@@ -1243,7 +1237,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     EXPECT_TRUE(retStart5);
     NES_INFO("WindowDeploymentTest: Worker 6 started successfully");
 
-    std::string outputFilePath = "testDeployOneWorkerDistributedWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -1313,7 +1307,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator,  *restPort, *rpcCoordinatorPort, getTestResourceFolder())
         .addLogicalSource("car", carSchema)
         .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1361,7 +1355,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1411,7 +1405,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithBoolKey) {
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))).project(Attribute("value2")))";
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1457,7 +1451,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))).project(Attribute("value2")))";
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1501,7 +1495,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value"))))";
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1555,7 +1549,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Avg(Attribute("value1"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1606,7 +1600,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1656,7 +1650,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1706,7 +1700,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("id")).apply(Max(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -1759,7 +1753,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1809,7 +1803,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1861,7 +1855,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Count()))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1914,7 +1908,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMedianAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Median(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 
@@ -1967,7 +1961,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Count()->as(Attribute("Frequency"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car");
 

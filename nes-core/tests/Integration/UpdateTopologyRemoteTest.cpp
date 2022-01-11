@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <gtest/gtest.h>//
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -19,17 +20,13 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
+
+#include "../util/NesBaseTest.hpp"
 
 using namespace std;
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
-
-class UpdateTopologyRemoteTest : public testing::Test {
+class UpdateTopologyRemoteTest : public Testing::NESBaseTest {
   public:
     // set the default numberOfSlots to the number of processor
     const uint16_t processorCount = std::thread::hardware_concurrency();
@@ -42,59 +39,66 @@ class UpdateTopologyRemoteTest : public testing::Test {
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
     }
 
-    void SetUp() override { rpcPort = rpcPort + 30; }
-
     static void TearDownTestCase() { std::cout << "Tear down UpdateTopologyRemoteTest test class." << std::endl; }
 };
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+    auto workerConfig1 = WorkerConfiguration::create();
+    auto workerConfig2 = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
+
     workerConfig1->setNumberOfSlots(workerNumberOfSlots);
-    workerConfig1->setCoordinatorPort(rpcPort);
     workerConfig2->setNumberOfSlots(workerNumberOfSlots);
-    workerConfig2->setCoordinatorPort(rpcPort);
 
     coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    auto port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0ull);
     NES_INFO("coordinator started successfully");
 
     NES_INFO("start worker");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig);
+    auto node1RpcPort = getAvailablePort();
+    auto node1DataPort = getAvailablePort();
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->setRpcPort(*node1RpcPort);
+    workerConfig1->setDataPort(*node1DataPort);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
 
+    auto node2RpcPort = getAvailablePort();
+    auto node2DataPort = getAvailablePort();
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig2->setRpcPort(*node2RpcPort);
+    workerConfig2->setDataPort(*node2DataPort);
     workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");
 
     TopologyPtr topology = crd->getTopology();
 
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
+//    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *rpcCoordinatorPort)); // this is the worker inside the coordinator
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node1RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node2RpcPort));
 
     TopologyNodePtr rootNode = topology->getRoot();
-    EXPECT_TRUE(rootNode->getGrpcPort() == port + 1);
+//    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     EXPECT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfSlots);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
-    EXPECT_TRUE(node1->getGrpcPort() == node1RpcPort);
+    EXPECT_TRUE(node1->getGrpcPort() == *node1RpcPort);
     EXPECT_TRUE(node1->getAvailableResources() == workerNumberOfSlots);
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
-    EXPECT_TRUE(node2->getGrpcPort() == node2RpcPort);
+    EXPECT_TRUE(node2->getGrpcPort() == *node2RpcPort);
     EXPECT_TRUE(node2->getAvailableResources() == workerNumberOfSlots);
 
     NES_INFO("ADD NEW PARENT");
@@ -126,15 +130,14 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+    auto workerConfig1 = WorkerConfiguration::create();
+    auto workerConfig2 = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
-    workerConfig->setNumberOfSlots(workerNumberOfSlots);
-    workerConfig->setCoordinatorPort(rpcPort);
+    workerConfig1->setNumberOfSlots(workerNumberOfSlots);
     workerConfig2->setNumberOfSlots(workerNumberOfSlots);
-    workerConfig2->setCoordinatorPort(rpcPort);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -142,31 +145,39 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     NES_INFO("coordinator started successfully");
 
     NES_INFO("start worker");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig);
+    auto node1RpcPort = getAvailablePort();
+    auto node1DataPort = getAvailablePort();
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->setRpcPort(*node1RpcPort);
+    workerConfig1->setDataPort(*node1DataPort);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
 
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
+    auto node2RpcPort = getAvailablePort();
+    auto node2DataPort = getAvailablePort();
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig2->setRpcPort(*node2RpcPort);
+    workerConfig2->setDataPort(*node2DataPort);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");
 
     TopologyPtr topology = crd->getTopology();
 
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
+//    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *rpcCoordinatorPort)); // worker inside the coordinator
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node1RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, *node2RpcPort));
 
     TopologyNodePtr rootNode = topology->getRoot();
-    EXPECT_TRUE(rootNode->getGrpcPort() == port + 1);
+//    EXPECT_TRUE(rootNode->getGrpcPort() == *rpcCoordinatorPort);
     EXPECT_TRUE(rootNode->getChildren().size() == 2);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
-    EXPECT_TRUE(node1->getGrpcPort() == node1RpcPort);
+    EXPECT_TRUE(node1->getGrpcPort() == *node1RpcPort);
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
-    EXPECT_TRUE(node2->getGrpcPort() == node2RpcPort);
+    EXPECT_TRUE(node2->getGrpcPort() == *node2RpcPort);
 
     NES_INFO("REMOVE NEW PARENT");
     bool successRemoveParent = wrk->removeParent(node1->getId());

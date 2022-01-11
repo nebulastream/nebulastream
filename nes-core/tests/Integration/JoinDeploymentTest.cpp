@@ -16,6 +16,7 @@
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -40,22 +41,13 @@ namespace NES {
 
 using namespace Configurations;
 
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
-
-class JoinDeploymentTest : public testing::Test {
+class JoinDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("JoinDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup JoinDeploymentTest test class.");
     }
 
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-
-    void TearDown() override { std::cout << "Tear down JoinDeploymentTest class." << std::endl; }
 };
 
 /**
@@ -87,7 +79,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     string query =
         R"(Query::from("window").as("w1").joinWith(Query::from("window").as("w2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window", windowSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("window", csvSourceType)
                                   .validate()
@@ -161,7 +153,7 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType)
@@ -237,7 +229,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType)
@@ -319,7 +311,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -399,7 +391,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -482,7 +474,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -564,7 +556,7 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -652,7 +644,7 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -741,7 +733,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(
         SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -826,7 +818,7 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(
         SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", windowSchema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
@@ -898,7 +890,7 @@ TEST_F(JoinDeploymentTest, testJoinWithFixedCharKey) {
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
             .project(Attribute("window1window2$start"),Attribute("window1window2$end"), Attribute("window1window2$key"),  Attribute("window1$timestamp"))
         )";
-    TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", window1Schema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithMemorySourceToCoordinator("window1")

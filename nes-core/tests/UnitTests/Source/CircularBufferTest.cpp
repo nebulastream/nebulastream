@@ -13,13 +13,14 @@
 */
 
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 #include <Util/CircularBuffer.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-class CircularBufferTest : public testing::Test {
+class CircularBufferTest : public Testing::NESBaseTest {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup CircularBufferTest test class." << std::endl; }

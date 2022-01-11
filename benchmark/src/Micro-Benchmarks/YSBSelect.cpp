@@ -81,7 +81,7 @@ int main() {
                                ->addField("d3", UINT32)
                                ->addField("d4", UINT16);
 #if 0
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, nullptr, 1);
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 0, nullptr, 1);
     std::vector<DataSourcePtr> sources;
     for (int i = 0; i < 2; i++) {
         DataSourcePtr thisSource = (YSBBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema, 1, ++i));

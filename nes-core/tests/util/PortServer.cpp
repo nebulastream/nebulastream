@@ -1,4 +1,6 @@
 /*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -11,18 +13,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
-#define NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
 
-#include <Exceptions/NesRuntimeException.hpp>
 
-namespace NES::Client {
+#include <zmq.hpp>
 
-    class ClientException : public NesRuntimeException{
-      public:
-        explicit ClientException(const std::string& message);
-    };
+
+int main(int, char** ) {
+
+    zmq::context_t context(1);
+    zmq::socket_t frontend(context, zmq::socket_type::rep);
+    frontend.bind("ipc:///nes.port.pool");
+
 
 }
-
-#endif//NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_

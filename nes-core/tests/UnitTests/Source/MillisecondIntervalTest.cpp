@@ -16,6 +16,7 @@
 #include <thread>
 
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -36,9 +37,6 @@ using namespace NES::Runtime::Execution;
 namespace NES {
 
 using namespace Configurations;
-
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
 
 struct __attribute__((packed)) ysbRecord {
     char user_id[16]{};
@@ -76,7 +74,7 @@ struct __attribute__((packed)) ysbRecord {
  * First we check for sub-second unit-tests on a soruce and its behavior. Then,
  * we include an E2Etest with a stream that samples at sub-second interval.
  */
-class MillisecondIntervalTest : public testing::Test {
+class MillisecondIntervalTest : public Testing::NESBaseTest {
   public:
     CoordinatorConfigurationPtr crdConf;
     WorkerConfigurationPtr wrkConf;
@@ -91,8 +89,7 @@ class MillisecondIntervalTest : public testing::Test {
 
     void SetUp() override {
 
-        restPort = restPort + 3;
-        rpcPort = rpcPort + 40;
+        Testing::NESBaseTest::SetUp();
 
         csvSourceType = CSVSourceType::create();
         csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
@@ -100,14 +97,14 @@ class MillisecondIntervalTest : public testing::Test {
         csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
         csvSourceType->setNumberOfBuffersToProduce(3);
         PhysicalSourcePtr streamConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
-        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {streamConf});
+        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
 
         crdConf = CoordinatorConfiguration::create();
-        crdConf->setRpcPort(rpcPort);
-        crdConf->setRestPort(restPort);
+        crdConf->setRpcPort(*rpcCoordinatorPort);
+        crdConf->setRestPort(*restPort);
 
         wrkConf = WorkerConfiguration::create();
-        wrkConf->setCoordinatorPort(rpcPort);
+        wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
         path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
 
