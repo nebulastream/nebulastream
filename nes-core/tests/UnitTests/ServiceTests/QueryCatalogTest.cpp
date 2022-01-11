@@ -30,7 +30,6 @@ using namespace std;
 
 std::string ip = "127.0.0.1";
 std::string host = "localhost";
-uint16_t publish_port = 4711;
 
 class QueryCatalogTest : public testing::Test {
   public:

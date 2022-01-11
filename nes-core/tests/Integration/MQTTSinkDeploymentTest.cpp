@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -28,12 +29,7 @@ using namespace std;
 
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
-
-class MQTTSinkDeploymentTest : public testing::Test {
+class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
   public:
     CoordinatorConfigurationPtr coConf;
     WorkerConfigurationPtr wrkConf;
@@ -44,17 +40,18 @@ class MQTTSinkDeploymentTest : public testing::Test {
     }
 
     void SetUp() override {
-
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
+        Testing::NESBaseTest::SetUp();
         coConf = CoordinatorConfiguration::create();
         wrkConf = WorkerConfiguration::create();
-        coConf->setRpcPort(rpcPort);
-        coConf->setRestPort(restPort);
-        wrkConf->setCoordinatorPort(rpcPort);
+        coConf->setRpcPort(*rpcCoordinatorPort);
+        coConf->setRestPort(*restPort);
+        wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
     }
 
-    void TearDown() override { NES_INFO("Tear down MQTTSinkDeploymentTest class."); }
+    void TearDown() override {
+        Testing::NESBaseTest::TearDown();
+        NES_INFO("Tear down MQTTSinkDeploymentTest class.");
+    }
 };
 
 /**
@@ -82,7 +79,7 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorker.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorker.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("MQTTSinkDeploymentTest: Submit query");

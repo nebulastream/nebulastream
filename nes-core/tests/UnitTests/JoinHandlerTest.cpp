@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 
 #include <map>
 #include <vector>

@@ -15,6 +15,7 @@
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger.hpp>
@@ -25,22 +26,12 @@ using namespace std;
 
 namespace NES {
 
-class ComplexSequenceTest : public testing::Test {
+class ComplexSequenceTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("ComplexSequenceTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup ComplexSequenceTest test class.");
     }
-
-    void SetUp() override {
-        restPort = restPort + 2;
-        rpcPort = rpcPort + 30;
-    }
-
-    void TearDown() override { std::cout << "Tear down ComplexSequenceTest class." << std::endl; }
-
-    uint32_t restPort = 8080;
-    uint32_t rpcPort = 4000;
 };
 
 /*
@@ -73,7 +64,7 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestSingleNodeSingleWindowSingleJoin
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
             .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(2))).byKey(Attribute("window1window2$key")).apply(Sum(Attribute("window1$id1")))
         )";
-    auto testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", window1Schema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithMemorySourceToCoordinator("window1")//2
@@ -153,7 +144,7 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
             .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(1))).byKey(Attribute("window1window2$key")).apply(Sum(Attribute("window1$id1")))
         )";
-    auto testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", window1Schema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerToCoordinator()                             //2
@@ -277,7 +268,7 @@ TEST_F(ComplexSequenceTest, DISABLED_ComplexTestSingleNodeMultipleWindowsMultipl
             .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
-    auto testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithJoinAndWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", window1Schema)
                                   .addLogicalSource("window2", window2Schema)
                                   .addLogicalSource("window3", window3Schema)
@@ -397,7 +388,7 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
             .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
-    auto testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithJoinAndWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", window1Schema)
                                   .addLogicalSource("window2", window2Schema)
                                   .addLogicalSource("window3", window3Schema)
@@ -561,7 +552,7 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
             .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
-    auto testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithJoinAndWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", window1Schema)
                                   .addLogicalSource("window2", window2Schema)
                                   .addLogicalSource("window3", window3Schema)

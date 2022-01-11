@@ -36,6 +36,7 @@ BufferManager::BufferManager(uint32_t bufferSize,
     :
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
       availableBuffers(numOfBuffers),
+      numOfAvailableBuffers(numOfBuffers),
 #endif
       bufferSize(bufferSize), numOfBuffers(numOfBuffers), memoryResource(memoryResource) {
     initialize(withAlignment);
@@ -66,7 +67,7 @@ void BufferManager::destroy() {
         }
         if (!success) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers="
-                                    << allBuffers.size() << " available=" << availableBuffers.size());
+                                    << numOfAvailableBuffers.load() << " available=" << availableBuffers.size());
         }
         // RAII takes care of deallocating memory here
         allBuffers.clear();
@@ -155,6 +156,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
 #else
     detail::MemorySegment* memSegment = nullptr;
     availableBuffers.blockingRead(memSegment);
+    numOfAvailableBuffers.fetch_sub(1);
 #endif
     if (memSegment->controlBlock->prepare()) {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
@@ -175,6 +177,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
     if (!availableBuffers.read(memSegment)) {
         return std::nullopt;
     }
+    numOfAvailableBuffers.fetch_sub(1);
 #endif
     if (memSegment->controlBlock->prepare()) {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
@@ -199,6 +202,7 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
     if (!availableBuffers.tryReadUntil(deadline, memSegment)) {
         return std::nullopt;
     }
+    numOfAvailableBuffers.fetch_sub(1);
 #endif
     if (memSegment->controlBlock->prepare()) {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
@@ -261,6 +265,7 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment) {
         NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment");
     }
     availableBuffers.write(segment);
+    numOfAvailableBuffers.fetch_add(1);
 #endif
 }
 
@@ -299,8 +304,7 @@ size_t BufferManager::getAvailableBuffers() const {
     std::unique_lock lock(availableBuffersMutex);
     return availableBuffers.size();
 #else
-    auto qSize = availableBuffers.size();
-    return qSize > 0 ? qSize : 0;
+    return numOfAvailableBuffers.load();
 #endif
 }
 
@@ -344,6 +348,7 @@ LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedB
 #else
         detail::MemorySegment* memorySegment;
         availableBuffers.blockingRead(memorySegment);
+        numOfAvailableBuffers.fetch_sub(1);
         buffers.emplace_back(memorySegment);
 #endif
     }
@@ -367,6 +372,7 @@ FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfR
 #else
         detail::MemorySegment* memorySegment;
         availableBuffers.blockingRead(memorySegment);
+        numOfAvailableBuffers.fetch_sub(1);
         buffers.emplace_back(memorySegment);
 #endif
     }

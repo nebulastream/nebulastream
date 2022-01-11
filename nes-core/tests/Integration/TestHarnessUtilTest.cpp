@@ -11,35 +11,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <gtest/gtest.h>//
+
+#include "../util/NesBaseTest.hpp"
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <gmock/gmock.h>
-#include <gtest/gtest.h>
+
 #pragma clang diagnostic pop
 #include <Common/DataTypes/DataTypeFactory.hpp>
 namespace NES {
 
 using namespace Configurations;
 
-class TestHarnessUtilTest : public testing::Test {
+class TestHarnessUtilTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("TestHarnessUtilTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup TestHarnessUtilTest test class.");
     }
 
-    void SetUp() override {
-        restPort = restPort + 2;
-        rpcPort = rpcPort + 30;
-    }
-
     static void TearDownTestCase() { NES_INFO("TestHarnessUtilTest test class TearDownTestCase."); }
 
-    uint32_t restPort = 8080;
-    uint32_t rpcPort = 4000;
 };
 
 /*
@@ -60,7 +57,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({40, 40, 40}, 2)
@@ -111,7 +108,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")//2
                                   .attachWorkerWithMemorySourceToCoordinator("car")//3
@@ -177,7 +174,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .addLogicalSource("truck", truckSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -233,7 +230,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")//2
                                   .attachWorkerWithMemorySourceToCoordinator("car")//3
@@ -324,7 +321,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
 
     std::string queryWithJoinOperator =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithJoinOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window1", window1Schema)
                                   .addLogicalSource("window2", window2Schema)
                                   .attachWorkerWithMemorySourceToCoordinator("window1")
@@ -394,7 +391,7 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({40, 40, 40}, 2)
@@ -445,7 +442,7 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   /**
                                     * Expected topology:
@@ -538,7 +535,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     csvSourceType->setSkipHeader(false);
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   //register physical stream
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
@@ -590,7 +587,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     csvSourceType->setSkipHeader(false);
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   //register physical stream
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)//2
@@ -630,7 +627,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
 
-    EXPECT_THROW(TestHarness(queryWithFilterOperator, restPort, rpcPort).validate().setupTopology(), Exception);
+    EXPECT_THROW(TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).validate().setupTopology(), Exception);
 }
 
 /*
@@ -644,7 +641,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     };
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
     EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), NesRuntimeException);
@@ -679,7 +676,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
                            ->addField("timestamp", DataTypeFactory::createUInt64());
 
     std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .addLogicalSource("truck", truckSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")  //2

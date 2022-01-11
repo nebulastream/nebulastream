@@ -15,7 +15,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferStorage.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <thread>
 namespace NES {
 const size_t buffersInserted = 21;
@@ -24,7 +24,7 @@ const size_t oneBuffer = 1;
 const size_t expectedStorageSize = 2;
 const size_t numberOfThreads = 5;
 
-class BufferStorageTest : public testing::Test {
+class BufferStorageTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
 

@@ -14,6 +14,7 @@
 
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <log4cxx/appender.h>
 
 #include <State/StateManager.hpp>

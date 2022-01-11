@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -43,13 +44,7 @@ using std::cout;
 using std::endl;
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-// TODO use grpc async queue to fix this issue - I am currently increasing the rpc port by 30 on every test! this is very bad!
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
-
-class MonitoringIntegrationTest : public testing::Test {
+class MonitoringIntegrationTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
 
@@ -59,13 +54,10 @@ class MonitoringIntegrationTest : public testing::Test {
     }
 
     void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
+        Testing::NESBaseTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
-        NES_INFO("MonitoringIntegrationTest: Setting up test with rpc port " << rpcPort << ", rest port " << restPort);
+        NES_INFO("MonitoringIntegrationTest: Setting up test with rpc port " << rpcCoordinatorPort << ", rest port " << restPort);
     }
-
-    void TearDown() override { std::cout << "Tear down MonitoringIntegrationTest class." << std::endl; }
 };
 
 TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
@@ -73,12 +65,12 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(rpcPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
     crdConf->setEnableMonitoring(true);
-    crdConf->setRestPort(restPort);
-    wrkConf1->setCoordinatorPort(rpcPort);
+    crdConf->setRestPort(*restPort);
+    wrkConf1->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf1->setEnableMonitoring(true);
-    wrkConf2->setCoordinatorPort(rpcPort);
+    wrkConf2->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf2->setEnableMonitoring(true);
 
     cout << "start coordinator" << endl;
@@ -156,12 +148,12 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(rpcPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
     crdConf->setEnableMonitoring(true);
-    crdConf->setRestPort(restPort);
-    wrkConf1->setCoordinatorPort(rpcPort);
+    crdConf->setRestPort(*restPort);
+    wrkConf1->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf1->setEnableMonitoring(true);
-    wrkConf2->setCoordinatorPort(rpcPort);
+    wrkConf2->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf2->setEnableMonitoring(true);
 
     cout << "start coordinator" << endl;
@@ -243,12 +235,12 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDis
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     bool monitoring = false;
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     crdConf->setEnableMonitoring(monitoring);
-    wrkConf1->setCoordinatorPort(rpcPort);
+    wrkConf1->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf1->setEnableMonitoring(monitoring);
-    wrkConf2->setCoordinatorPort(rpcPort);
+    wrkConf2->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf2->setEnableMonitoring(monitoring);
 
     cout << "start coordinator" << endl;
@@ -258,14 +250,12 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDis
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker 1" << endl;
-    wrkConf->setCoordinatorPort(port);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
     cout << "worker1 started successfully" << endl;
 
     cout << "start worker 2" << endl;
-    wrkConf->setCoordinatorPort(port);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart2);

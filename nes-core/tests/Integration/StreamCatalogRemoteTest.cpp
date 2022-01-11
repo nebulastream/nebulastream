@@ -24,33 +24,26 @@
 #include <Util/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 
 using namespace std;
 namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
-
-class StreamCatalogRemoteTest : public testing::Test {
+class StreamCatalogRemoteTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("StreamCatalogRemoteTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup StreamCatalogRemoteTest test class.");
     }
 
-    void SetUp() override { rpcPort = rpcPort + 30; }
-
-    void TearDown() override { std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl; }
 };
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -88,8 +81,8 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -131,8 +124,8 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
 
 TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -176,8 +169,8 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
 
 TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1

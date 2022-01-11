@@ -25,6 +25,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <ostream>
 
 inline constexpr auto zmqPort = static_cast<uint16_t>(11195u);// XXX: 666555;
@@ -38,7 +39,7 @@ using namespace std;
 namespace NES {
 using Runtime::TupleBuffer;
 
-class SinkTest : public testing::Test {
+class SinkTest : public Testing::NESBaseTest {
   public:
     SchemaPtr test_schema;
     std::array<uint32_t, 8> test_data{};
@@ -64,7 +65,7 @@ class SinkTest : public testing::Test {
         path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "sink.bin";
         path_to_osfile_file = std::string(TEST_DATA_DIRECTORY) + "testOs.txt";
         PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
-        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {streamConf});
+        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
     }
 
     /* Called after a single test. */

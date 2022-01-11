@@ -46,7 +46,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         engine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                              9090,
+                                                              0,
                                                               {physicalSource},
                                                               1,
                                                               4096,

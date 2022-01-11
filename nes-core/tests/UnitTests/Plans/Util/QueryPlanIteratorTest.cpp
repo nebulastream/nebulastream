@@ -33,13 +33,14 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
+#include "../../../util/NesBaseTest.hpp"
 #include <iostream>
 
 using namespace std;
 
 namespace NES {
 
-class QueryPlanIteratorTest : public testing::Test {
+class QueryPlanIteratorTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("QueryPlanIteratorTest.log", NES::LOG_DEBUG);

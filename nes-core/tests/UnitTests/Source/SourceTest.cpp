@@ -54,6 +54,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 namespace NES {
 
@@ -425,11 +426,11 @@ class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineSt
     }
 };
 
-class SourceTest : public testing::Test {
+class SourceTest : public Testing::NESBaseTest {
   public:
     void SetUp() override {
         PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
-        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {streamConf});
+        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
         this->path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
         this->path_to_file_head = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100-head.csv";
         this->path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.bin";
@@ -476,7 +477,10 @@ class SourceTest : public testing::Test {
         NES_INFO("Setup SourceTest test class.");
     }
 
-    void TearDown() override { ASSERT_TRUE(nodeEngine->stop()); }
+    void TearDown() override {
+        Testing::NESBaseTest::TearDown();
+        ASSERT_TRUE(nodeEngine->stop());
+    }
 
     std::optional<Runtime::TupleBuffer> GetEmptyBuffer() { return this->nodeEngine->getBufferManager()->getBufferNoBlocking(); }
 
@@ -1652,8 +1656,8 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
 
 TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
-    crdConf->setRpcPort(4000);
-    crdConf->setRestPort(8081);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
@@ -1692,7 +1696,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
 
-    std::string outputFilePath = "testIngestionRateFromQuery.out";
+    std::string outputFilePath = getTestResourceFolder() / "testIngestionRateFromQuery.out";
     remove(outputFilePath.c_str());
     string query =
         R"(Query::from("input1").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -1872,8 +1876,8 @@ TEST_F(SourceTest, testMemorySource) {
 
 TEST_F(SourceTest, testTwoLambdaSources) {
     NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
-    crdConf->setRpcPort(4000);
-    crdConf->setRestPort(8081);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
     auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
@@ -1961,8 +1965,8 @@ TEST_F(SourceTest, testTwoLambdaSources) {
 
 TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
-    crdConf->setRpcPort(4000);
-    crdConf->setRestPort(8081);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     crdConf->setNumWorkerThreads(4);
     //    crdConf->setNumberOfBuffersInGlobalBufferManager(3000);
     //    crdConf->setNumberOfBuffersInSourceLocalBufferPool(124);

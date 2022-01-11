@@ -15,6 +15,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #include <string>
 #include <unistd.h>
 #define GetCurrentDir getcwd
@@ -36,24 +37,13 @@ using namespace concurrency::streams;
 
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 1200;
-uint64_t dataPort = 1400;
-uint64_t restPort = 8000;
 uint16_t timeout = 5;
 
-class E2ECoordinatorMultiQueryTest : public testing::Test {
+class E2ECoordinatorMultiQueryTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("E2ECoordinatorMultiQueryTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
-    }
-
-    void SetUp() override {
-        rpcPort += 10;
-        dataPort += 10;
-        restPort += 10;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
@@ -71,12 +61,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     remove(pathQuery2.c_str());
 
     auto coordinator = TestUtils::startCoordinator(
-        {TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort), TestUtils::numberOfSlots(8)});
+        {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::numberOfSlots(8)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
+
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::numberOfSlots(8),
                                           TestUtils::sourceType("DefaultSource"),
                                           TestUtils::logicalStreamName("default_logical"),
@@ -97,24 +88,24 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     ssQuery2 << R"());","strategyName" : "BottomUp"})";
     NES_INFO("string submit for query2=" << ssQuery2.str());
 
-    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(restPort));
+    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(*restPort));
     NES_INFO("try to acc return Q1=" << jsonReturnQ1);
     QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
     NES_INFO("Query ID1: " << queryId1);
     EXPECT_NE(queryId1, INVALID_QUERY_ID);
 
-    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(restPort));
+    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(*restPort));
     NES_INFO("try to acc return Q2=" << jsonReturnQ2);
 
     QueryId queryId2 = jsonReturnQ2.at("queryId").as_integer();
     NES_INFO("Query ID2: " << queryId2);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -148,19 +139,19 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
     NES_INFO(" start coordinator");
-    std::string pathQuery1 = "query1.out";
-    std::string pathQuery2 = "query2.out";
-    std::string pathQuery3 = "query3.out";
+    std::string pathQuery1 = getTestResourceFolder() /  "query1.out";
+    std::string pathQuery2 = getTestResourceFolder() / "query2.out";
+    std::string pathQuery3 = getTestResourceFolder() /  "query3.out";
 
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
     remove(pathQuery3.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(rpcPort + 3), TestUtils::dataPort(dataPort), TestUtils::coordinatorPort(rpcPort),
+        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPor),
             TestUtils::sourceType("DefaultSource"),
             TestUtils::logicalStreamName("default_logical"),
             TestUtils::physicalStreamName("test")});
@@ -187,9 +178,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     ssQuery3 << R"());","strategyName" : "BottomUp"})";
     NES_INFO("string submit for query3=" << ssQuery3.str());
 
-    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(restPort));
-    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(restPort));
-    web::json::value jsonReturnQ3 = TestUtils::startQueryViaRest(ssQuery3.str(), std::to_string(restPort));
+    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(*restPort));
+    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(*restPort));
+    web::json::value jsonReturnQ3 = TestUtils::startQueryViaRest(ssQuery3.str(), std::to_string(*restPort));
 
     QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
     QueryId queryId2 = jsonReturnQ2.at("queryId").as_integer();
@@ -199,9 +190,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
     EXPECT_NE(queryId3, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId3, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId3, 1, std::to_string(*restPort)));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -215,9 +206,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
                              "1,1\n"
                              "1,1\n";
 
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId3, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId3, std::to_string(*restPort)));
 
     std::ifstream ifsQ1(pathQuery1.c_str());
     EXPECT_TRUE(ifsQ1.good());
@@ -246,12 +237,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     NES_INFO(" start coordinator");
-    std::string Qpath1 = "QueryQnV1.out";
-    std::string Qpath2 = "QueryQnV2.out";
+    std::string Qpath1 = getTestResourceFolder() /  "QueryQnV1.out";
+    std::string Qpath2 = getTestResourceFolder() / "QueryQnV2.out";
     remove(Qpath1.c_str());
     remove(Qpath2.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
@@ -260,11 +251,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalStreamName("QnV"),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
@@ -272,7 +263,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
                                           TestUtils::sourceFrequency(1000),
                                           TestUtils::physicalStreamName("test_stream")});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
     ssQuery1 << "{\"userQuery\" : ";
@@ -297,11 +288,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     string bodyQuery2 = ssQuery2.str();
 
     NES_INFO("send query 1:");
-    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(restPort));
+    web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(*restPort));
     NES_INFO("return from q1");
 
     NES_INFO("send query 2:");
-    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(restPort));
+    web::json::value jsonReturnQ2 = TestUtils::startQueryViaRest(ssQuery2.str(), std::to_string(*restPort));
     NES_INFO("return from q2");
 
     QueryId queryId1 = jsonReturnQ1.at("queryId").as_integer();
@@ -310,11 +301,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     EXPECT_NE(queryId1, INVALID_QUERY_ID);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
 
     string expectedContent1 = "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER\n"
                               "R2000073,1543624020000,102.629631,8\n"
@@ -347,14 +338,14 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
 
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
-    std::string outputFilePath2 = "ValidUserQueryWithTumbWindowFileOutputTestResult2.txt";
+    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
+    std::string outputFilePath2 = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult2.txt";
     remove(outputFilePath.c_str());
     remove(outputFilePath2.c_str());
 
-    string coordinatorRPCPort = std::to_string(rpcPort);
+    string coordinatorRPCPort = std::to_string(*rpcCoordinatorPort);
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
@@ -363,11 +354,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalStreamName("window"),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
@@ -375,7 +366,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::sourceFrequency(1000),
                                           TestUtils::physicalStreamName("test_stream")});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -399,10 +390,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     NES_INFO("query 2 string submit=" << ss2.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("return from query 1");
 
-    web::json::value json_return_Q2 = TestUtils::startQueryViaRest(ss2.str(), std::to_string(restPort));
+    web::json::value json_return_Q2 = TestUtils::startQueryViaRest(ss2.str(), std::to_string(*restPort));
     NES_INFO("return from query 2");
 
     NES_INFO("try to acc return");
@@ -413,11 +404,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     NES_INFO("Query ID 2: " << queryId2);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
 
     string expectedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,10000,1,51\n"
@@ -451,12 +442,12 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
-    std::string outputFilePath2 = "ValidUserQueryWithSlidWindowFileOutputTestResult2.txt";
+    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
+    std::string outputFilePath2 = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult2.txt";
     remove(outputFilePath.c_str());
     remove(outputFilePath2.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
@@ -465,11 +456,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::logicalStreamName("window"),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
@@ -477,7 +468,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                                           TestUtils::sourceFrequency(1000),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::physicalStreamName("test_stream")});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -504,10 +495,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     NES_INFO("query 2 string submit=" << ss2.str());
     string body2 = ss2.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("return from query 1");
 
-    web::json::value json_return_Q2 = TestUtils::startQueryViaRest(ss2.str(), std::to_string(restPort));
+    web::json::value json_return_Q2 = TestUtils::startQueryViaRest(ss2.str(), std::to_string(*restPort));
     NES_INFO("return from query 2");
 
     NES_INFO("try to acc return");
@@ -518,11 +509,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     NES_INFO("Query ID 2: " << queryId2);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(*restPort)));
 
     string expectedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,10000,1,51\n"

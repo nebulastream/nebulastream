@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -41,15 +42,10 @@ namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 5000;
-
-class MonitoringSerializationTest : public testing::Test {
+class MonitoringSerializationTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
     CoordinatorConfigurationPtr crdConf;
     WorkerConfigurationPtr wrkConf;
     uint64_t bufferSize = 0;
@@ -63,23 +59,20 @@ class MonitoringSerializationTest : public testing::Test {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        crdConf = CoordinatorConfiguration::create();
-        wrkConf = WorkerConfiguration::create();
-        crdConf->resetCoordinatorOptions();
-        wrkConf->resetWorkerOptions();
+        Testing::NESBaseTest::SetUp();
+        crdConf = CoordinatorConfig::create();
+        wrkConf = WorkerConfig::create();
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
         bufferSize = 4096 + (numCPU + 1) * sizeof(CpuValues) + sizeof(CpuMetrics);
 
-        rpcPort = rpcPort + 30;
-        crdConf->setRpcPort(rpcPort);
-        wrkConf->setCoordinatorPort(rpcPort);
+        crdConf->setRpcPort(*rpcCoordinatorPort);
+        crdConf->setRestPort(*restPort);
+        wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
     }
 
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
 TEST_F(MonitoringSerializationTest, testSerializationRuntimeNesMetrics) {

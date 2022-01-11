@@ -49,6 +49,7 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #include <random>
 #include <utility>
 
@@ -70,20 +71,30 @@ static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 
 namespace Network {
-class NetworkStackIntegrationTest : public testing::Test {
+class NetworkStackIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("NetworkStackIntegrationTest.log", NES::LOG_DEBUG);
         NES_INFO("SetUpTestCase NetworkStackIntegrationTest");
     }
 
+    void SetUp() {
+        Testing::NESBaseTest::SetUp();
+        dataPort1 = Testing::NESBaseTest::getAvailablePort();
+        dataPort2 = Testing::NESBaseTest::getAvailablePort();
+    }
+
+    void TearDown() {
+        dataPort1.reset();
+        dataPort2.reset();
+        Testing::NESBaseTest::TearDown();
+    }
+
     static void TearDownTestCase() { NES_INFO("TearDownTestCase NetworkStackIntegrationTest."); }
 
-    /* Will be called before a  test is executed. */
-    void SetUp() override { NES_INFO("Setup NetworkStackIntegrationTest"); }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { NES_INFO("TearDown NetworkStackIntegrationTest"); }
+  protected:
+    Testing::BorrowedPortPtr dataPort1;
+    Testing::BorrowedPortPtr dataPort2;
 };
 
 class TestSink : public SinkMedium {
@@ -137,11 +148,11 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
+        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
-    auto nodeLocation = NodeLocation(0, "127.0.0.1", 31337);
+    auto nodeLocation = NodeLocation(0, "127.0.0.1", *dataPort1);
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
     auto networkSource = std::make_shared<NetworkSource>(schema,
                                                          nodeEngine->getBufferManager(),
@@ -166,7 +177,7 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
+        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -183,7 +194,7 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
     EXPECT_TRUE(networkSource->start());
 
     auto networkSink = std::make_shared<NetworkSink>(schema,
-                                                     0,
+                                                     *dataPort1,
                                                      0,
                                                      nodeEngine->getNetworkManager(),
                                                      nodeLocation,
@@ -259,7 +270,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
     auto sendingThreads = std::vector<std::thread>();
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
 
-    NodeLocation nodeLocation{0, "127.0.0.1", 31337};
+    NodeLocation nodeLocation{0, "127.0.0.1", *dataPort1};
     NesPartition nesPartition{1, 22, 33, 44};
 
     class MockedNodeEngine : public Runtime::NodeEngine {
@@ -319,7 +330,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
     };
 
     auto nodeEngine =
-        createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337, bufferSize, buffersManaged, completed, nesPartition, bufferCnt);
+        createMockedEngine<MockedNodeEngine>("127.0.0.1", *dataPort1, bufferSize, buffersManaged, completed, nesPartition, bufferCnt);
     try {
         auto netManager = nodeEngine->getNetworkManager();
 
@@ -348,7 +359,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
         auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31338, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
@@ -410,7 +421,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     NesPartition nesPartition{1, 22, 33, 44};
     auto nodeEngineSender = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                         31337,
+                                                                         *dataPort1,
                                                                          {physicalSource},
                                                                          1,
                                                                          bufferSize,
@@ -421,7 +432,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     auto netManagerSender = nodeEngineSender->getNetworkManager();
     NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
     auto nodeEngineReceiver = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                           31338,
+                                                                           *dataPort2,
                                                                            {physicalSource},
                                                                            1,
                                                                            bufferSize,
@@ -568,17 +579,17 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
         auto netManager =
             NetworkManager::create(0,
                                    "127.0.0.1",
-                                   31339,
+                                   *dataPort2,
                                    ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(eventReceived, completedProm)),
                                    buffMgr);
 
         struct DataEmitterImpl : public DataEmitter {
             void emitWork(TupleBuffer&) override {}
         };
-        std::thread t([&netManager, &nesPartition, &completedProm] {
+        std::thread t([&netManager, &nesPartition, &completedProm, this] {
             // register the incoming channel
             sleep(3);// intended stalling to simulate latency
-            auto nodeLocation = NodeLocation(0, "127.0.0.1", 31339);
+            auto nodeLocation = NodeLocation(0, "127.0.0.1", *dataPort2);
             netManager->registerSubpartitionConsumer(nesPartition, nodeLocation, std::make_shared<DataEmitterImpl>());
             auto future = completedProm.get_future();
             if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
@@ -589,7 +600,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });
 
-        NodeLocation nodeLocation(0, "127.0.0.1", 31339);
+        NodeLocation nodeLocation(0, "127.0.0.1", *dataPort2);
         auto senderChannel =
             netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
 
@@ -610,8 +621,8 @@ TEST_F(NetworkStackIntegrationTest, testSendEvent) {
 
 TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
 
-    NodeLocation nodeLocationSender{0, "127.0.0.1", 31337};
-    NodeLocation nodeLocationReceiver{0, "127.0.0.1", 31338};
+    NodeLocation nodeLocationSender{0, "127.0.0.1", *dataPort1};
+    NodeLocation nodeLocationReceiver{0, "127.0.0.1", *dataPort2};
     NesPartition nesPartition{1, 22, 33, 44};
     SchemaPtr schema = Schema::create()
                            ->addField("test$id", DataTypeFactory::createInt64())
@@ -621,7 +632,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngineSender = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                         31337,
+                                                                         *dataPort1,
                                                                          {physicalSource},
                                                                          1,
                                                                          bufferSize,
@@ -630,7 +641,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                                          12,
                                                                          NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto nodeEngineReceiver = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                           31338,
+                                                                           *dataPort2,
                                                                            {physicalSource},
                                                                            1,
                                                                            bufferSize,

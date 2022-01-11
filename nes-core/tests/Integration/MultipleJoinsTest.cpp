@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -31,30 +32,21 @@ namespace NES {
 
 using namespace Configurations;
 
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
 
-class MultipleJoinsTest : public testing::Test {
+class MultipleJoinsTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("MultipleJoinsTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultipleJoinsTest test class.");
     }
 
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-
-    void TearDown() override { std::cout << "Tear down MultipleJoinsTest class." << std::endl; }
-
     std::string ipAddress = "127.0.0.1";
 };
 
 TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -75,7 +67,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(1);
@@ -83,14 +75,14 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setSourceFrequency(1);
@@ -98,14 +90,14 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleJoinsTest: Worker2 started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
-    workerConfig3->setCoordinatorPort(port);
+    workerConfig3->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType3->setSourceFrequency(1);
@@ -113,12 +105,12 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     csvSourceType3->setNumberOfBuffersToProduce(2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
     workerConfig3->addPhysicalSource(physicalSource3);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
-    std::string outputFilePath = "testTwoJoinsWithDifferentStreamTumblingWindowOnCoodinator.out";
+    std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -186,8 +178,8 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
  */
 TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDistributed) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -208,22 +200,22 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port););
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
@@ -231,14 +223,14 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
 
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
-    workerConfig3->setCoordinatorPort(port);
+    workerConfig3->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
     workerConfig3->addPhysicalSource(physicalSource3);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
@@ -246,20 +238,20 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
 
     NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
-    workerConfig4->setCoordinatorPort(port);
+    workerConfig4->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType4->setNumberOfBuffersToProduce(2);
     auto physicalSource4 = PhysicalSource::create("window3", "test_stream", csvSourceType4);
     workerConfig4->addPhysicalSource(physicalSource4);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig4);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     wrk4->replaceParent(1, 2);
     NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
-    std::string outputFilePath = "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
+    std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamTumblingWindowDistributed.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -324,8 +316,8 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinatorSequential) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -350,61 +342,61 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleJoinsTest: Worker2 started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
-    workerConfig3->setCoordinatorPort(port);
+    workerConfig3->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
     workerConfig3->addPhysicalSource(physicalSource3);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
-    workerConfig4->setCoordinatorPort(port);
+    workerConfig4->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType4->setNumberOfBuffersToProduce(2);
     auto physicalSource4 = PhysicalSource::create("window4", "test_stream", csvSourceType4);
     workerConfig4->addPhysicalSource(physicalSource4);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig4);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
-    std::string outputFilePath = "testJoin4WithDifferentStreamTumblingWindowOnCoodinator.out";
+    std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -471,8 +463,8 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinatorNested) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -497,61 +489,61 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleJoinsTest: Worker1 started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleJoinsTest: Worker2 started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
-    workerConfig3->setCoordinatorPort(port);
+    workerConfig3->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
     workerConfig3->addPhysicalSource(physicalSource3);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
-    workerConfig4->setCoordinatorPort(port);
+    workerConfig4->setCoordinatorPort(*rpcCoordinatorPort);
     auto csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType4->setNumberOfBuffersToProduce(2);
     auto physicalSource4 = PhysicalSource::create("window4", "test_stream", csvSourceType4);
     workerConfig4->addPhysicalSource(physicalSource4);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig4);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
-    std::string outputFilePath = "testJoin4WithDifferentStreamTumblingWindowOnCoodinator.out";
+    std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamTumblingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -624,8 +616,8 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
 
 TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -652,7 +644,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleJoinsTest: Worker1 started successfully");
@@ -666,7 +658,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleJoinsTest: Worker2 started successfully");
@@ -680,12 +672,12 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     csvSourceType3->setNumberOfBuffersToProduce(2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
     workerConfig3->addPhysicalSource(physicalSource3);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("MultipleJoinsTest: Worker3 started successfully");
 
-    std::string outputFilePath = "testTwoJoinsWithDifferentStreamSlidingWindowOnCoodinator.out";
+    std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -762,8 +754,8 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
  */
 TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDistributed) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -835,7 +827,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     wrk4->replaceParent(1, 2);
     NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
-    std::string outputFilePath = "testTwoJoinsWithDifferentStreamSlidingWindowDistributed.out";
+    std::string outputFilePath = getTestResourceFolder() / "testTwoJoinsWithDifferentStreamSlidingWindowDistributed.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -909,8 +901,8 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorSequential) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -942,7 +934,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleJoinsTest: Worker1 started successfully");
@@ -956,7 +948,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleJoinsTest: Worker2 started successfully");
@@ -970,7 +962,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     csvSourceType3->setNumberOfBuffersToProduce(2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
     workerConfig3->addPhysicalSource(physicalSource3);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("MultipleJoinsTest: Worker3 started successfully");
@@ -984,12 +976,12 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     csvSourceType4->setNumberOfBuffersToProduce(2);
     auto physicalSource4 = PhysicalSource::create("window4", "test_stream", csvSourceType4);
     workerConfig4->addPhysicalSource(physicalSource4);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig4);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
-    std::string outputFilePath = "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
+    std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -1077,8 +1069,8 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorNested) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1110,7 +1102,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleJoinsTest: Worker1 started successfully");
@@ -1124,7 +1116,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleJoinsTest: Worker2 started successfully");
@@ -1138,7 +1130,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     csvSourceType3->setNumberOfBuffersToProduce(2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
     workerConfig3->addPhysicalSource(physicalSource3);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("MultipleJoinsTest: Worker3 started successfully");
@@ -1152,12 +1144,12 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     csvSourceType4->setNumberOfBuffersToProduce(2);
     auto physicalSource4 = PhysicalSource::create("window4", "test_stream", csvSourceType4);
     workerConfig4->addPhysicalSource(physicalSource4);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig4);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
     NES_INFO("MultipleJoinsTest: Worker4 started successfully");
 
-    std::string outputFilePath = "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
+    std::string outputFilePath = getTestResourceFolder() / "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();

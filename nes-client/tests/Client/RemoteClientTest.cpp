@@ -21,6 +21,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include "../../nes-core/tests/util/NesBaseTest.hpp"
 
 #include <unistd.h>
 
@@ -28,28 +29,21 @@ using namespace std;
 
 namespace NES {
 using namespace Configurations;
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 1289;
-uint64_t dataPort = 1489;
-uint64_t restPort = 8089;
 
-class RemoteClientTest : public testing::Test {
+class RemoteClientTest : public Testing::NESBaseTest {
   protected:
     static void SetUpTestCase() { NES::setupLogging("RemoteClientTest.log", NES::LOG_DEBUG); }
-    static void TearDownTestCase() { NES_DEBUG("Tear down RemoteClientTest class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down RemoteClientTest test class."); }
 
     void SetUp() override {
-        rpcPort += 10;
-        dataPort += 10;
-        restPort += 10;
+        Testing::NESBaseTest::SetUp();
 
         auto crdConf = CoordinatorConfiguration::create();
         auto wrkConf = WorkerConfiguration::create();
 
-        crdConf->setRpcPort(rpcPort);
-        crdConf->setRestPort(restPort);
-        wrkConf->setCoordinatorPort(rpcPort);
+        crdConf->setRpcPort(*rpcCoordinatorPort);
+        crdConf->setRestPort(*restPort);
+        wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
         NES_DEBUG("RemoteClientTest: Start coordinator");
         crd = std::make_shared<NesCoordinator>(crdConf);
         uint64_t port = crd->startCoordinator(false);
@@ -58,22 +52,20 @@ class RemoteClientTest : public testing::Test {
         TestUtils::waitForWorkers(restPort, 5, 0);
 
         NES_DEBUG("RemoteClientTest: Start worker 1");
-        wrkConf->setCoordinatorPort(port);
-        wrkConf->setRpcPort(port + 10);
-        wrkConf->setDataPort(port + 11);
         wrk = std::make_shared<NesWorker>(wrkConf);
         bool retStart1 = wrk->start(false, true);
         EXPECT_TRUE(retStart1);
         NES_DEBUG("RemoteClientTest: Worker1 started successfully");
         TestUtils::waitForWorkers(restPort, 5, 1);
 
-        client = std::make_shared<Client::RemoteClient>("localhost", restPort);
+        client = std::make_shared<Client::RemoteClient>("localhost", *restPort);
     }
 
     void TearDown() override {
         NES_DEBUG("Tear down RemoteClientTest class.");
         wrk->stop(true);
         crd->stopCoordinator(true);
+        Testing::NESBaseTest::TearDown();
     }
 
     bool stopQuery(int64_t queryId) {

@@ -16,6 +16,7 @@
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -40,25 +41,14 @@ namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-static uint64_t restPort = 8081;
-static uint64_t rpcPort = 4000;
 static uint64_t workerThreads = 4;
 
-class ConcurrentWindowDeploymentTest : public testing::Test {
+class ConcurrentWindowDeploymentTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("WindowDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowDeploymentTest test class.");
     }
-
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-
-    void TearDown() override { std::cout << "Tear down WindowDeploymentTest class." << std::endl; }
 };
 
 /**
@@ -66,8 +56,9 @@ class ConcurrentWindowDeploymentTest : public testing::Test {
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -78,7 +69,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->setNumWorkerThreads(workerThreads);
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
@@ -92,7 +83,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -140,8 +131,9 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
  */
 TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+
     NES_INFO("ConcurrentWindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -154,7 +146,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     NES_DEBUG("ConcurrentWindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->setNumWorkerThreads(workerThreads);
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     auto ysbSchema = Schema::create()
                          ->addField("ysb$user_id", UINT64)
@@ -273,9 +265,15 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
 
 //TODO test needs to be fixed, since it fails randomly. Covered in issue #2258
 TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
+
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+    workerConfig->setNumWorkerThreads(workerThreads);
+
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -307,7 +305,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -351,8 +349,9 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
 TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTimeUnit) {
 
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -366,7 +365,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->setNumWorkerThreads(workerThreads);
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType->setSourceFrequency(0);
@@ -382,7 +381,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -427,8 +426,8 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
  */
 TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -458,7 +457,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "outputLog.out";
+    std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -477,10 +476,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
 
     NES_DEBUG("wakeup");
 
-    ifstream my_file("outputLog.out");
+    ifstream my_file(getTestResourceFolder() /  "outputLog.out");
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs("outputLog.out");
+    std::ifstream ifs(getTestResourceFolder() /  "outputLog.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
@@ -513,8 +512,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -529,7 +528,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setNumWorkerThreads(workerThreads);
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(0);
@@ -558,7 +557,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    std::string outputFilePath = "testDeployOneWorkerDistributedWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -608,8 +607,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -654,7 +653,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
-    std::string outputFilePath = "testDeployOneWorkerDistributedWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -704,8 +703,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -719,7 +718,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     workerConfig1->setNumWorkerThreads(workerThreads);
     workerConfig1->setCoordinatorPort(port);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
@@ -736,9 +735,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
     workerConfig2->setNumWorkerThreads(workerThreads);
-    workerConfig2->setCoordinatorPort(port);
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType2->setSourceFrequency(0);
@@ -754,7 +752,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "outputLog.out";
+    std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -772,10 +770,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
-    ifstream my_file("outputLog.out");
+    ifstream my_file(getTestResourceFolder() /  "outputLog.out");
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs("outputLog.out");
+    std::ifstream ifs(getTestResourceFolder() /  "outputLog.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
@@ -812,8 +810,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
  */
 TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -829,7 +827,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime)
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(workerThreads);
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(0);
@@ -845,7 +843,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime)
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testGlobalTumblingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -889,8 +887,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime)
  */
 TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -923,7 +921,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "outputLog.out";
+    std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -939,12 +937,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    NES_DEBUG("wakeup");
-
-    ifstream my_file("outputLog.out");
+    ifstream my_file(getTestResourceFolder() /  "outputLog.out");
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs("outputLog.out");
+    std::ifstream ifs(getTestResourceFolder() /  "outputLog.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$value:INTEGER\n"
@@ -973,8 +969,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -988,9 +984,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventT
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(workerThreads);
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(0);
@@ -1023,7 +1018,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventT
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testGlobalTumblingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1072,8 +1067,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventT
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1089,7 +1084,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
     workerConfig1->setNumWorkerThreads(workerThreads);
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(0);
@@ -1122,7 +1117,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "outputLog.out";
+    std::string outputFilePath = getTestResourceFolder() / "outputLog.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1167,8 +1162,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
 
 TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1182,9 +1177,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     workerConfig1->setNumWorkerThreads(workerThreads);
-    workerConfig1->setCoordinatorPort(port);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(5);
@@ -1200,7 +1194,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1232,8 +1226,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
 
 TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1247,9 +1241,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     workerConfig1->setNumWorkerThreads(workerThreads);
-    workerConfig1->setCoordinatorPort(port);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(5);
@@ -1265,7 +1258,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1299,8 +1292,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
  */
 TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort););
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1332,7 +1325,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testGlobalTumblingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1366,8 +1359,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1416,7 +1409,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testGlobalTumblingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
@@ -1455,8 +1448,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
 TEST_F(ConcurrentWindowDeploymentTest,
        testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1550,7 +1543,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
     EXPECT_TRUE(retStart5);
     NES_INFO("WindowDeploymentTest: Worker 6 started successfully");
 
-    std::string outputFilePath = "testDeployOneWorkerDistributedWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -1608,8 +1601,8 @@ TEST_F(ConcurrentWindowDeploymentTest,
 TEST_F(ConcurrentWindowDeploymentTest,
        testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1703,7 +1696,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
     EXPECT_TRUE(retStart5);
     NES_INFO("WindowDeploymentTest: Worker 6 started successfully");
 
-    std::string outputFilePath = "testDeployOneWorkerDistributedWindowQueryEventTime.out";
+    std::string outputFilePath = getTestResourceFolder() / "testDeployOneWorkerDistributedWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -1778,7 +1771,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation)
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Avg(Attribute("value1"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1, 2, 2, 1000}, 2)
@@ -1828,7 +1821,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation)
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1, 15, 1000}, 2)
@@ -1877,7 +1870,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationW
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1, -15, 1000}, 2)
@@ -1934,7 +1927,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationW
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("id")).apply(Max(Attribute("value"))))";
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
                                   .validate()
@@ -1979,7 +1972,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMinAggregation)
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1, 15, 1000}, 2)
@@ -2028,7 +2021,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggrega
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1, 15.0, 1000}, 2)
@@ -2079,7 +2072,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithCountAggregatio
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Count()))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, 2)
@@ -2115,8 +2108,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithCountAggregatio
  */
 TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -2128,7 +2121,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->setNumWorkerThreads(workerThreads);
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
     std::atomic<int> recordCounter = 0;
     auto func = [&recordCounter](Runtime::TupleBuffer& buffer, uint64_t) {
         struct __attribute__((packed)) Record {
@@ -2166,12 +2159,12 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     auto lambdaSourceType = LambdaSourceType::create(func, 100, 0, "frequency");
     auto physicalSource = PhysicalSource::create("schema", "Source_phy", lambdaSourceType);
     workerConfig->addPhysicalSource(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    std::string outputFilePath = "source.out";
+    std::string outputFilePath = getTestResourceFolder() / "source.out";
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

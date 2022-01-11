@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <regex>
+#include "../util/NesBaseTest.hpp"
 
 //used tests: QueryCatalogTest, QueryTest
 namespace fs = std::filesystem;
@@ -33,11 +34,8 @@ namespace NES {
 
 using namespace Configurations;
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 4000;
 
-class SimplePatternTest : public testing::Test {
+class SimplePatternTest : public Testing::NESBaseTest {
   public:
     CoordinatorConfigurationPtr coConf;
     static void SetUpTestCase() {
@@ -46,16 +44,14 @@ class SimplePatternTest : public testing::Test {
     }
 
     void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
+        Testing::NESBaseTest::SetUp();
         coConf = CoordinatorConfiguration::create();
 
-        coConf->setRpcPort(rpcPort);
-        coConf->setRestPort(restPort);
+        coConf->setRpcPort(*rpcCoordinatorPort);
+        coConf->setRestPort(*restPort);
     }
 
-    void TearDown() override { std::cout << "Tear down SimplePatternTest class." << std::endl; }
-    uint64_t restPort = 8081;
+
 
     string removeRandomKey(string contentString) {
         std::regex r1("cep_leftkey([0-9]+)");
@@ -85,8 +81,6 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->setCoordinatorPort(port);
-    worker1Configuration->setRpcPort(port + 10);
-    worker1Configuration->setDataPort(port + 11);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short.csv");
@@ -94,7 +88,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     //register physical stream
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream", csvSourceType1);
     worker1Configuration->addPhysicalSource(conf70);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(worker1Configuration);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
@@ -102,7 +96,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testPatternWithTestStream.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPatternWithTestStream.out";
     remove(outputFilePath.c_str());
 
     //register query
@@ -158,8 +152,6 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
     worker1Configuration->setCoordinatorPort(port);
-    worker1Configuration->setRpcPort(port + 10);
-    worker1Configuration->setDataPort(port + 11);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short_intID.csv");
@@ -167,7 +159,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     //register physical stream
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream", csvSourceType1);
     worker1Configuration->addPhysicalSource(conf70);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(worker1Configuration);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
@@ -175,7 +167,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = "testPatternWithIterationOperator.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
 
     //register query

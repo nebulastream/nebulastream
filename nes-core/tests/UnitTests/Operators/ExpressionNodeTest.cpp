@@ -26,13 +26,14 @@
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <iostream>
 #include <memory>
 #include <stdint.h>
 
 namespace NES {
 
-class ExpressionNodeTest : public testing::Test {
+class ExpressionNodeTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() { setupLogging(); }
 

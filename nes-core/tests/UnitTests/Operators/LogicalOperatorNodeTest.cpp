@@ -20,7 +20,8 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>//
+#include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"//
 
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -38,7 +39,7 @@
 using namespace std;
 namespace NES {
 
-class LogicalOperatorNodeTest : public testing::Test {
+class LogicalOperatorNodeTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("LogicalOperatorNodeTest.log", NES::LOG_DEBUG);

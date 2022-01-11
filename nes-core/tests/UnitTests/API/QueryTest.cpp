@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include "../../util/NesBaseTest.hpp"
 #include "gtest/gtest.h"
-
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -52,7 +52,7 @@ namespace NES {
 
 using namespace Configurations;
 
-class QueryTest : public testing::Test {
+class QueryTest : public Testing::NESBaseTest {
   public:
     PhysicalSourcePtr physicalSource;
     LogicalSourcePtr logicalSource;

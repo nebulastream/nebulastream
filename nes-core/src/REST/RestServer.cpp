@@ -68,7 +68,7 @@ bool RestServer::start() {
         restEngine.reset();
         NES_DEBUG("RestServer: after waitForUserInterrupt");
     } catch (const std::exception& e) {
-        NES_ERROR("RestServer: Unable to start REST server << " << e.what());
+        NES_ERROR("RestServer: Unable to start REST server << [" << host + ":" + std::to_string(port) << "] " << e.what());
         return false;
     } catch (...) {
         RuntimeUtils::printStackTrace();

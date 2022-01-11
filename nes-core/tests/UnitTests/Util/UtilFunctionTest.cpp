@@ -15,6 +15,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 namespace NES {
 class UtilFunctionTest : public testing::Test {

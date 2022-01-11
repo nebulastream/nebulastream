@@ -22,12 +22,13 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <iostream>
 
 using namespace std;
 namespace NES {
 
-class TupleBufferTest : public testing::Test {
+class TupleBufferTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
 

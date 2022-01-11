@@ -21,13 +21,14 @@
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
 
 namespace NES {
 
-class StringQueryTest : public testing::Test {
+class StringQueryTest : public Testing::NESBaseTest {
   public:
     /// Return the pointer to instance of Schema.
     template<std::size_t s>
@@ -92,15 +93,10 @@ class StringQueryTest : public testing::Test {
         NES::setupLogging("StringQueryTest.log", NES::LOG_WARNING);
         NES_INFO("Setup StringQuery test class.");
     }
-    void SetUp() noexcept final {
-        restPort += 2;
-        rpcPort += 30;
-    }
+
 
     static void TearDownTestCase() noexcept { NES_INFO("Tear down StringQuery test class."); }
 
-    uint16_t restPort{8080};
-    uint16_t rpcPort{4000};
 };
 
 /// Test that padding has no influence on the actual size of an element in NES' implementation.
@@ -118,7 +114,7 @@ TEST_F(StringQueryTest, conditionOnAttribute) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") == Attribute("value")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", schema)
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -149,7 +145,7 @@ TEST_F(StringQueryTest, DISABLED_neqOnChars) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") != "112"))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", schema)
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -180,7 +176,7 @@ TEST_F(StringQueryTest, eqOnCharsMultipleReturn) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") == "112"))";
-    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", schema)
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -212,7 +208,7 @@ TEST_F(StringQueryTest, eqOnString) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") == std::string("113")))";
-    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", schema)
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -244,7 +240,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntNotComparator) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", schema)
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -277,7 +273,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnInt) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", schema)
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -310,7 +306,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntSame) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", schema)
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")
@@ -341,7 +337,7 @@ TEST_F(StringQueryTest, testHarnessUtilizeOneStruct) {
     ASSERT_EQ(8U, carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    auto testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")

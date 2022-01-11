@@ -238,8 +238,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->setCoordinatorIp(rpcIp);
         workerConfig->setLocalWorkerIp(rpcIp);
         workerConfig->setCoordinatorPort(rpcPort);
-        workerConfig->setRpcPort(rpcPort + 1);
-        workerConfig->setDataPort(rpcPort + 2);
+        workerConfig->setRpcPort(0);
+        workerConfig->setDataPort(0);
         workerConfig->setNumberOfSlots(numberOfSlots);
         workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
         workerConfig->setBufferSizeInBytes(bufferSizeInBytes);

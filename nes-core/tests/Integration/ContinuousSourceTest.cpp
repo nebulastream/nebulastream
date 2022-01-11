@@ -16,6 +16,7 @@
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #pragma clang diagnostic pop
 
 #include <Catalogs/Query/QueryCatalog.hpp>
@@ -43,28 +44,21 @@ using namespace Configurations;
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
 
-class ContinuousSourceTest : public testing::Test {
+
+class ContinuousSourceTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("ContinuousSourceTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup ContinuousSourceTest test class.");
     }
 
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-
-    void TearDown() override { std::cout << "Tear down ContinuousSourceTest class." << std::endl; }
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -73,7 +67,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
@@ -84,7 +78,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    std::string filePath = "contTestOut.csv";
+    std::string filePath = getTestResourceFolder() / "contTestOut.csv";
     remove(filePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -167,8 +161,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -179,7 +173,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     auto defaultSourceType1 = DefaultSourceType::create();
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
@@ -217,8 +211,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -268,8 +262,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -291,7 +285,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFile.txt";
+    std::string outputFilePath = getTestResourceFolder() / "testMultipleOutputBufferFromDefaultSourceWriteFile.txt";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -378,8 +372,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -401,7 +395,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency.txt";
+    std::string outputFilePath = getTestResourceFolder() / "testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency.txt";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -488,8 +482,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -548,8 +542,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -582,7 +576,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    std::string outputFilePath = "testMultipleOutputBufferFromCSVSourceWriteTest.out";
+    std::string outputFilePath = getTestResourceFolder() / "testMultipleOutputBufferFromCSVSourceWriteTest.out";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -635,8 +629,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
 
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -645,7 +639,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     csvSourceType1->setSourceFrequency(0);
@@ -658,7 +652,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
-    std::string outputFilePath = "testExdraUseCaseWithOutput.csv";
+    std::string outputFilePath = getTestResourceFolder() / "testExdraUseCaseWithOutput.csv";
     remove(outputFilePath.c_str());
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -797,7 +791,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     csvSourceType->setSkipHeader(false);
 
     std::string queryWithFilterOperator = R"(Query::from("car"))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
                                   .validate()

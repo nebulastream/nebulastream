@@ -16,6 +16,7 @@ add_source_nes(
         SharedLibrary.cpp
         TimeMeasurement.cpp
         Logger.cpp
+        FileMutex.cpp
         StacktraceLoader.cpp
         ThreadNaming.cpp
         BufferSequenceNumber.cpp

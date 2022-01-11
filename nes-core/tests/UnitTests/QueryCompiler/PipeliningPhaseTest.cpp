@@ -38,6 +38,7 @@
 #include <Util/Logger.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <iostream>
 
 using namespace std;
@@ -47,7 +48,7 @@ namespace NES {
 using namespace NES::API;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class PipeliningPhaseTest : public testing::Test {
+class PipeliningPhaseTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("PipeliningPhaseTest.log", NES::LOG_DEBUG);

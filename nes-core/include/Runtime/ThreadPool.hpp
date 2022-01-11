@@ -52,6 +52,7 @@ class ThreadPool {
      */
     ~ThreadPool();
 
+  private:
     /**
      * @brief start the Thread pool
      * 1.) check if thread pool is already running,
@@ -62,6 +63,7 @@ class ThreadPool {
      */
     bool start();
 
+  public:
     /**
        * @brief stop the Thread pool
        * 1.) check if thread pool is already running,
@@ -97,7 +99,7 @@ class ThreadPool {
     //indicating if the thread pool is running, used for multi-thread execution
     const uint64_t nodeId;
     std::atomic<bool> running{false};
-    uint32_t numThreads;
+    const uint32_t numThreads;
     std::vector<std::thread> threads{};
     mutable std::recursive_mutex reconfigLock;
     std::shared_ptr<QueryManager> queryManager;

@@ -13,6 +13,7 @@
 */
 
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include "../../../tests/util/MetricValidator.hpp"
 
 #include <Monitoring/MetricValues/CpuMetrics.hpp>

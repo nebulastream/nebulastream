@@ -24,13 +24,14 @@
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <string>
 
 using namespace std;
 using namespace NES;
 using namespace Configurations;
 
-class StreamCatalogServiceTest : public testing::Test {
+class StreamCatalogServiceTest : public Testing::NESBaseTest {
   public:
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";

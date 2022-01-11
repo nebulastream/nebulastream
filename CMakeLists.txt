@@ -534,7 +534,7 @@ add_subdirectory(cmake/docs)
 
 
 # Custom test commands --------------------------------------------------------
-add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
+add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j8 --output-on-failure DEPENDS ${UNITTESTS})
 
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})

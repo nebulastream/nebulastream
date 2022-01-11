@@ -20,37 +20,28 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 
 using std::cout;
 using std::endl;
 #define DEBUG_OUTPUT
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-// TODO use grpc async queue to fix this issue - I am currently increasing the rpc port by 30 on every test! this is very bad!
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
-
-class WorkerCoordinatorStarterTest : public testing::Test {
+class WorkerCoordinatorStarterTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("WorkerCoordinatorStarterTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
     }
-
-    void SetUp() override { rpcPort = rpcPort + 30; }
-
-    void TearDown() override { std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl; }
 };
 
 TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -75,16 +66,15 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     bool retStopCord = crd->stopCoordinator(false);
     cout << crd.use_count() << " use cnt coord" << endl;
     EXPECT_TRUE(retStopCord);
-    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     cout << "start coordinator" << endl;
     for (uint64_t i = 0; i < 10; i++) {
@@ -122,9 +112,9 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -148,16 +138,15 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
-    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -181,16 +170,15 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
-    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -214,16 +202,15 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
 
     bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
-    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -251,16 +238,15 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
-    rpcPort += 30;
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);

@@ -19,6 +19,7 @@
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_client.h>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #include <sstream>
 #include <stdio.h>
 #include <string>
@@ -36,25 +37,13 @@ using namespace concurrency::streams;
 //#define _XPLATSTR(x) _XPLATSTR(x)
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 4200;
-uint64_t dataPort = 4400;
-uint64_t restPort = 8000;
 uint16_t timeout = 5;
 
-class E2ECoordinatorSingleWorkerTest : public testing::Test {
+class E2ECoordinatorSingleWorkerTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
-    }
-
-    void SetUp() override {
-        cout << "setUp" << endl;
-        rpcPort += 10;
-        dataPort += 10;
-        restPort += 10;
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
@@ -62,11 +51,11 @@ class E2ECoordinatorSingleWorkerTest : public testing::Test {
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutput) {
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(rpcPort + 3), TestUtils::dataPort(dataPort), TestUtils::coordinatorPort(rpcPort),
+        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
          TestUtils::sourceType("DefaultSource"),
          TestUtils::logicalStreamName("default_logical"),
          TestUtils::physicalStreamName("test")});
@@ -79,26 +68,26 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 }
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = "ValidUserQueryWithFileOutputTestResult.txt";
+    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(rpcPort + 3), TestUtils::dataPort(dataPort), TestUtils::coordinatorPort(rpcPort),
+        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
          TestUtils::sourceType("DefaultSource"),
          TestUtils::logicalStreamName("default_logical"),
          TestUtils::physicalStreamName("test")});
@@ -113,15 +102,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
 
     QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     ifstream my_file(outputFilePath);
     EXPECT_TRUE(my_file.good());
@@ -151,13 +140,13 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = "UserQueryWithFileOutputWithFilterTestResult.txt";
+    std::string outputFilePath = getTestResourceFolder() / "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
     auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(rpcPort + 3), TestUtils::dataPort(dataPort), TestUtils::coordinatorPort(rpcPort),
+        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
          TestUtils::sourceType("DefaultSource"),
          TestUtils::logicalStreamName("default_logical"),
          TestUtils::physicalStreamName("test")});
@@ -172,15 +161,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     // if filter is applied correctly, no output is generated
     NES_INFO("read file=" << outputFilePath);
@@ -206,20 +195,20 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = "ValidUserQueryWithFileOutputAndRegisterPhyStreamTestResult.txt";
+    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputAndRegisterPhyStreamTestResult.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("DefaultSource"),
                                           TestUtils::physicalStreamName("test_stream"),
                                           TestUtils::logicalStreamName("default_logical"),
                                           TestUtils::numberOfBuffersToProduce(2),
                                           TestUtils::sourceFrequency(1)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -230,15 +219,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     ss << endl;
     NES_INFO("string submit=" << ss.str());
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
     NES_INFO("try to acc return");
 
     QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     ifstream my_file(outputFilePath);
     EXPECT_TRUE(my_file.good());
@@ -270,12 +259,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     std::string testFile = "exdra.csv";
     remove(testFile.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv"),
                                           TestUtils::physicalStreamName("test_stream"),
@@ -283,7 +272,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(11),
                                           TestUtils::sourceFrequency(1)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -295,15 +284,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     NES_INFO("string submit=" << ss.str());
     string body = ss.str();
 
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     // XXX:
     string expectedContent =
@@ -357,10 +346,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
+    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
@@ -369,11 +358,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::physicalStreamName("test_stream"),
@@ -381,7 +370,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::sourceFrequency(1)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -395,15 +384,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     // if filter is applied correctly, no output is generated
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
@@ -418,10 +407,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
     NES_INFO(" start coordinator");
-    std::string outputFilePath = "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
+    std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
@@ -430,11 +419,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                          TestUtils::dataPort(0),
+                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::physicalStreamName("test_stream"),
@@ -443,7 +432,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::sourceFrequency(1)});
 
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -457,15 +446,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     ss << endl;
 
     NES_INFO("query string submit=" << ss.str());
-    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
 
     NES_INFO("try to acc return");
     QueryId queryId = json_return.at("queryId").as_integer();
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,51\n"

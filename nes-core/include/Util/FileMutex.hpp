@@ -1,4 +1,6 @@
 /*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -11,18 +13,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
-#define NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
 
-#include <Exceptions/NesRuntimeException.hpp>
+#ifndef NES_INCLUDE_UTIL_FILEMUTEX_HPP_
+#define NES_INCLUDE_UTIL_FILEMUTEX_HPP_
 
-namespace NES::Client {
+#include <string>
 
-    class ClientException : public NesRuntimeException{
+namespace NES::Util {
+
+    class FileMutex {
       public:
-        explicit ClientException(const std::string& message);
+        explicit FileMutex(const std::string filePath);
+
+        ~FileMutex();
+
+        FileMutex& operator=(const FileMutex&) = delete;
+
+        void lock();
+
+        bool try_lock();
+
+        void unlock();
+
+      private:
+        int fd;
+        std::string fileName;
     };
 
-}
+}// namespace NES::Util
 
-#endif//NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
+#endif//NES_INCLUDE_UTIL_FILEMUTEX_HPP_

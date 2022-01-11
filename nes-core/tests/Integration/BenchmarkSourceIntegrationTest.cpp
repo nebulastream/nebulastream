@@ -25,33 +25,25 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
+#include "../util/NesBaseTest.hpp"
 #include <iostream>
 
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
-
-class BenchmarkSourceIntegrationTest : public testing::Test {
+class BenchmarkSourceIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("BenchmarkSourceIntegrationTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup BenchmarkSourceIntegrationTest test class.");
     }
 
-    void SetUp() override {
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
 };
 
 /// This test checks that a deployed BenchmarkSource can write M records spanning exactly N records
 TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -77,7 +69,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
     constexpr auto memAreaSize = 4096;           // 1 MB
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
@@ -150,8 +142,9 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
+
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -177,7 +170,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
     constexpr auto memAreaSize = sizeof(Record) * 5;
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
@@ -251,8 +244,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 
 TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -279,7 +272,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start worker 1");
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto memAreaSize = bufferSizeInNodeEngine * 64 + (bufferSizeInNodeEngine / 2);

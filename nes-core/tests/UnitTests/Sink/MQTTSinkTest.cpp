@@ -13,6 +13,7 @@
 */
 #ifdef ENABLE_MQTT_BUILD
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -43,7 +44,7 @@ using namespace NES;
 //FIXME tests right now rely on setting up a broker manually. Moreover, they intentionally fail. (covered in issue #1599)
 // - find a way to fully automate tests (e.time::WorkerContext workerContext(g. using redBoltz c++ MQTT library, which offers a broker
 // - fix tests, so they do not intentionally fail, but always succeed, if right behaviour is shown
-class MQTTTSinkTest : public testing::Test {
+class MQTTTSinkTest : public Testing::NESBaseTest {
   public:
     // constants used throughout the tests
     const std::string LOCAL_ADDRESS = "127.0.0.1:1883";

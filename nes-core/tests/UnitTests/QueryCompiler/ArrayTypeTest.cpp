@@ -15,11 +15,12 @@
 #include <Common/ExecutableType/Array.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include "../../util/NesBaseTest.hpp"
 #include <type_traits>
 
 namespace NES {
 
-class ArrayTypeTest : public testing::Test {
+class ArrayTypeTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("ArrayTypeTest.log", NES::LOG_DEBUG);

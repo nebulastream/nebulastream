@@ -22,7 +22,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <iostream>
-
+#include "../../util/NesBaseTest.hpp"
 #include <API/Schema.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -37,7 +37,7 @@ std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
 const std::string defaultLogicalStreamName = "default_logical";
 
 /* - nesTopologyManager ---------------------------------------------------- */
-class StreamCatalogTest : public testing::Test {
+class StreamCatalogTest : public Testing::NESBaseTest {
   public:
     std::shared_ptr<SourceCatalog> streamCatalog;
 
