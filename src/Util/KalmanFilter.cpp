@@ -123,6 +123,10 @@ void KalmanFilter::update(const Eigen::VectorXd& measuredValues, double newTimeS
     this->update(measuredValues);
 }
 
+double KalmanFilter::getTotalEstimationError() {
+    return this->calculateTotalEstimationError();
+}
+
 float KalmanFilter::calculateTotalEstimationError() {
     float j = 1;// eq. 9 iterator
     float totalError = 0;

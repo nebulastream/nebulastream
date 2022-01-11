@@ -91,6 +91,13 @@ class KalmanFilter {
      */
     std::chrono::milliseconds getNewFrequency(); // eq. 7 and 10
 
+    /**
+     * @return the total estimation error, calculated
+     * from the window. This just exposes it in a
+     * public API.
+     */
+    double getTotalEstimationError();
+
   protected:
     int m, n;// system model dimensions
 
