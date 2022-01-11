@@ -22,10 +22,12 @@
 namespace NES::Experimental::MaterializedView {
 
 bool MaterializedViewManager::containsView(uint64_t viewId) {
+    std::unique_lock<std::mutex> lock(mutex);
     return viewMap.contains(viewId);
 }
 
 MaterializedViewPtr MaterializedViewManager::getView(uint64_t viewId) {
+    std::unique_lock<std::mutex> lock(mutex);
     MaterializedViewPtr view = nullptr;
     auto it = viewMap.find(viewId);
     if (it != viewMap.end()){
@@ -38,11 +40,13 @@ MaterializedViewPtr MaterializedViewManager::getView(uint64_t viewId) {
 }
 
 MaterializedViewPtr MaterializedViewManager::createView(ViewType type){
+    std::unique_lock<std::mutex> lock(mutex);
     while (!containsView(nextViewId++)) {};
     return createView(type, nextViewId);
 }
 
 MaterializedViewPtr MaterializedViewManager::createView(ViewType type, uint64_t viewId){
+    std::unique_lock<std::mutex> lock(mutex);
     MaterializedViewPtr view = nullptr;
     if (!viewMap.contains(viewId)){
         if (type == TUPLE_VIEW) {
@@ -58,10 +62,12 @@ MaterializedViewPtr MaterializedViewManager::createView(ViewType type, uint64_t 
 }
 
 bool MaterializedViewManager::deleteView(uint64_t viewId){
+    std::unique_lock<std::mutex> lock(mutex);
     return viewMap.erase(viewId);
 }
 
 std::string MaterializedViewManager::to_string(){
+    std::unique_lock<std::mutex> lock(mutex);
     std::string out = "";
     for(const auto& elem : viewMap)
     {
