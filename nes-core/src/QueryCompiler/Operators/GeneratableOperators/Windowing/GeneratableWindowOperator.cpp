@@ -15,7 +15,9 @@
 */
 
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
@@ -26,5 +28,11 @@ GeneratableWindowOperator::GeneratableWindowOperator(OperatorId id,
                                                      Windowing::WindowOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       operatorHandler(std::move(operatorHandler)) {}
+
+void GeneratableWindowOperator::generateHeaders(PipelineContextPtr context){
+    context->addHeaders( {});
+
+}
+
 
 }// namespace NES::QueryCompilation::GeneratableOperators

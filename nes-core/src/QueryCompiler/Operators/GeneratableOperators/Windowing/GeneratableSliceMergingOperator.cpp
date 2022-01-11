@@ -70,5 +70,6 @@ std::string GeneratableSliceMergingOperator::toString() const { return "Generata
 OperatorNodePtr GeneratableSliceMergingOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler, windowAggregation);
 }
+void GeneratableSliceMergingOperator::generateHeaders(PipelineContextPtr) {}
 
 }// namespace NES::QueryCompilation::GeneratableOperators
