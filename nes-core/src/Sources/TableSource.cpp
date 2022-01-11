@@ -40,15 +40,15 @@
 #include <utility>
 #include <fstream>
 
-namespace NES {
+namespace NES::Experimental {
 
 TableSource::TableSource(SchemaPtr schema,
                            std::string pathTableFile,
-                           Runtime::BufferManagerPtr bufferManager,
-                           Runtime::QueryManagerPtr queryManager,
+                           ::NES::Runtime::BufferManagerPtr bufferManager,
+                           ::NES::Runtime::QueryManagerPtr queryManager,
                            OperatorId operatorId,
                            size_t numSourceLocalBuffers,
-                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+                           std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),
                       std::move(queryManager),
@@ -86,10 +86,10 @@ TableSource::TableSource(SchemaPtr schema,
 
 
     // setup a (fake) dynamic buffer around the memoryArea, so that the CSV parser can fill it
-    Runtime::MemoryLayouts::RowLayoutPtr rowLayout = Runtime::MemoryLayouts::RowLayout::create(this->schema, memoryAreaSize);
-    auto fakeCallback = [](__attribute__((unused)) Runtime::detail::MemorySegment* segment, __attribute__((unused)) BufferRecycler* recycler) {};
-    auto fakeBuffer = Runtime::TupleBuffer::wrapMemory(memoryAreaPtr, memoryAreaSize, fakeCallback);
-    auto dynamicFakeBuffer = Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, fakeBuffer);
+    ::NES::Runtime::MemoryLayouts::RowLayoutPtr rowLayout = ::NES::Runtime::MemoryLayouts::RowLayout::create(this->schema, memoryAreaSize);
+    auto fakeCallback = [](__attribute__((unused)) ::NES::Runtime::detail::MemorySegment* segment, __attribute__((unused)) BufferRecycler* recycler) {};
+    auto fakeBuffer = ::NES::Runtime::TupleBuffer::wrapMemory(memoryAreaPtr, memoryAreaSize, fakeCallback);
+    auto dynamicFakeBuffer = ::NES::Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, fakeBuffer);
 
     // setup file parser
     std::vector<PhysicalTypePtr> physicalTypes;
@@ -131,7 +131,7 @@ TableSource::TableSource(SchemaPtr schema,
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
-std::optional<Runtime::TupleBuffer> TableSource::receiveData() {
+std::optional<::NES::Runtime::TupleBuffer> TableSource::receiveData() {
     NES_DEBUG("TableSource::receiveData called on " << operatorId);
     auto buffer = this->bufferManager->getBufferBlocking();
     fillBuffer(buffer);
@@ -143,7 +143,7 @@ std::optional<Runtime::TupleBuffer> TableSource::receiveData() {
     return buffer;
 }
 
-void TableSource::fillBuffer(Runtime::TupleBuffer& buffer) {
+void TableSource::fillBuffer(::NES::Runtime::TupleBuffer& buffer) {
     NES_DEBUG("TableSource::fillBuffer: start at pos=" << currentPositionInBytes << " memoryAreaSize=" << memoryAreaSize);
     if (generatedTuples >= numTuples) {
         NES_WARNING("TableSource::fillBuffer: but file has already ended");
@@ -188,4 +188,4 @@ void TableSource::fillBuffer(Runtime::TupleBuffer& buffer) {
 std::string TableSource::toString() const { return "TableSource"; }
 
 NES::SourceType TableSource::getType() const { return TABLE_SOURCE; }
-}// namespace NES
+}// namespace NES::Experimental

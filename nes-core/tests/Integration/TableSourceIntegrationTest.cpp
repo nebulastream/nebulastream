@@ -28,7 +28,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-namespace NES {
+namespace NES::Experimental {
 
 auto schema_customer = Schema::create()
         ->addField("C_CUSTKEY", BasicType::UINT64)

@@ -147,14 +147,14 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                           successors);
 }
 
-DataSourcePtr createTableSource(const SchemaPtr& schema,
+DataSourcePtr Experimental::createTableSource(const SchemaPtr& schema,
                                  const std::string pathTableFile,
                                  const Runtime::BufferManagerPtr& bufferManager,
                                  const Runtime::QueryManagerPtr& queryManager,
                                  OperatorId operatorId,
                                  size_t numSourceLocalBuffers,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
-    return std::make_shared<TableSource>(schema,
+    return std::make_shared<Experimental::TableSource>(schema,
                                          pathTableFile,
                                           bufferManager,
                                           queryManager,
