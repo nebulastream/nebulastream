@@ -29,5 +29,5 @@ void GeneratableOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
 
 void GeneratableOperator::generateClose(CodeGeneratorPtr, PipelineContextPtr) {}
 
-std::unordered_set<std::string> GeneratableOperator::getHeaders() const { return {}; }
+void GeneratableOperator::generateHeaders(PipelineContextPtr) {}
 }// namespace NES::QueryCompilation::GeneratableOperators
