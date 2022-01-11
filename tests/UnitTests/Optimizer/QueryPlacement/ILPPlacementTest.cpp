@@ -289,8 +289,6 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1U);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(1)->instanceOf<SourceLogicalOperatorNode>());
-            EXPECT_TRUE(actualRootOperator->getChildWithOperatorId(2)->instanceOf<FilterLogicalOperatorNode>());
             ASSERT_EQ(actualRootOperator->getChildren().size(), 1U);
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->instanceOf<FilterLogicalOperatorNode>());
             EXPECT_TRUE(actualRootOperator->getChildren()[0]->getChildren()[0]->instanceOf<SourceLogicalOperatorNode>());
