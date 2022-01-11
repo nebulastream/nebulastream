@@ -66,6 +66,10 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         NES_TRACE("LogicalSourceExpansionRule: Found " << sourceLocations.size()
                                                        << " physical source locations in the topology.");
 
+        if(sourceLocations.empty()){
+            //Throw exception as this should never occur
+        }
+
         removeConnectedBlockingOperators(sourceOperator);
         NES_TRACE("LogicalSourceExpansionRule: Create " << sourceLocations.size() - 1
                                                         << " duplicated logical sub-graph and add to original graph");
