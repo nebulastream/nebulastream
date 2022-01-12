@@ -50,7 +50,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          Runtime::QueryManagerPtr queryManager,
                          Runtime::BufferStoragePtr bufferStorage,
                          size_t numOfProducers,
-                         std::chrono::seconds waitTime = std::chrono::seconds(5),
+                         std::chrono::milliseconds waitTime = std::chrono::milliseconds(5),
                          uint8_t retryTimes = 10);
 
     /**
@@ -107,7 +107,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     Runtime::BufferStoragePtr bufferStorage;
     NesPartition nesPartition;
     size_t numOfProducers;
-    const std::chrono::seconds waitTime;
+    const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
 };
 
