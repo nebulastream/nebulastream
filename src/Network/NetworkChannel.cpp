@@ -19,7 +19,10 @@
 #include <Runtime/BufferManager.hpp>
 
 namespace NES::Network {
-static constexpr int DEFAULT_LINGER_VALUE = 60 * 1000;// 60s as linger time: http://api.zeromq.org/2-1:zmq-setsockopt
+/// 60s as linger time: http://api.zeromq.org/2-1:zmq-setsockopt
+static constexpr int DEFAULT_LINGER_VALUE = 10 * 1000;
+/// 10s as ZMQ_RCVTIMEO: Maximum time before a recv operation returns with EAGAIN : http://api.zeromq.org/3-0:zmq-setsockopt
+static constexpr int DEFAULT_RCVTIMEO_VALUE = 10 * 1000;
 namespace detail {
 template<typename T>
 std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& zmqContext,
@@ -43,10 +46,16 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
     constexpr auto channelName = nameHelper();
     try {
         const int linger = DEFAULT_LINGER_VALUE;
+        const int rcvtimeo = DEFAULT_RCVTIMEO_VALUE;
         ChannelId channelId(nesPartition, Runtime::NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         NES_DEBUG(channelName << ": Connecting with zmq-socketopt linger=" << std::to_string(linger) << ", id=" << channelId);
         zmqSocket.set(zmq::sockopt::linger, linger);
+        // Sets the timeout for receive operation on the socket. If the value is 0, zmq_recv(3) will return immediately,
+        // with a EAGAIN error if there is no message to receive. If the value is -1, it will block until a message is available.
+        // For all other values, it will wait for a message for that amount of time before returning with an EAGAIN error.
+        zmqSocket.set(zmq::sockopt::rcvtimeo, rcvtimeo);
+
         zmqSocket.set(zmq::sockopt::routing_id, zmq::const_buffer{&channelId, sizeof(ChannelId)});
         zmqSocket.connect(socketAddr);
         int i = 0;
@@ -58,6 +67,12 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
 
             zmq::message_t recvHeaderMsg;
             auto optRecvStatus = zmqSocket.recv(recvHeaderMsg, kZmqRecvDefault);
+            if constexpr (mode == Network::Messages::ChannelType::EventOnlyChannel) {
+                if (!optRecvStatus.has_value()) {
+                    NES_DEBUG("recv failed on network channel");
+                    return nullptr;
+                }
+            }
             NES_ASSERT2_FMT(optRecvStatus.has_value(), "invalid recv");
 
             auto* recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
@@ -124,6 +139,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
             NES_ERROR(channelName << ": Zmq error " << err.what());
             throw;
         }
+        return nullptr;
     }
     return nullptr;
 }
