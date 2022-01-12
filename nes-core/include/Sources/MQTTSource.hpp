@@ -168,7 +168,7 @@ class MQTTSource : public DataSource {
      * serialization/deserialization process
      */
     friend class DataSource;
-    Configurations::MQTTSourceTypeConfigPtr sourceConfigPtr;
+    Configurations::MQTTSourceTypeConfigPtr sourceConfig;
     bool connected;
     std::string serverAddress;
     std::string clientId;

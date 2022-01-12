@@ -134,15 +134,8 @@ std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
 std::string MQTTSource::toString() const {
     std::stringstream ss;
     ss << "MQTTSOURCE(";
-    ss << "SCHEMA(" << schema->toString() << "), ";
-    ss << "SERVERADDRESS=" << serverAddress << ", ";
-    ss << "CLIENTID=" << clientId << ", ";
-    ss << "USER=" << user << ", ";
-    ss << "TOPIC=" << topic << ", ";
-    ss << "DATATYPE=" << inputFormat << ", ";
-    ss << "QOS=" << qualityOfService << ", ";
-    ss << "CLEANSESSION=" << cleanSession << ". ";
-    ss << "BUFFERFLUSHINTERVALMS=" << bufferFlushIntervalMs << ". ";
+    ss << "SCHEMA(" << schema->toString() << ")";
+    ss << sourceConfig->toString() << ")";
     return ss.str();
 }
 
@@ -311,7 +304,7 @@ bool MQTTSource::getCleanSession() const { return cleanSession; }
 
 std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const { return physicalTypes; }
 
-const Configurations::MQTTSourceConfigPtr& MQTTSource::getSourceConfigPtr() const { return sourceConfigPtr; }
+const Configurations::MQTTSourceTypeConfigPtr& MQTTSource::getSourceConfigPtr() const { return sourceConfig; }
 
 }// namespace NES
 #endif

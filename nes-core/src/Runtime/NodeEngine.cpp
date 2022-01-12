@@ -462,8 +462,8 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescri
     AbstractPhysicalStreamConfigPtr retPtr;
     auto streamName = sourceDescriptor->getStreamName();
     for (auto conf = configs.begin(); conf != configs.end();) {
-        if (conf->get()->getLogicalStreamName() == streamName) {
-            NES_DEBUG("config for stream " << streamName << " phy stream=" << conf->get()->getPhysicalStreamName());
+        if (conf->get()->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue() == streamName) {
+            NES_DEBUG("config for stream " << streamName << " phy stream=" << conf->get()->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
             retPtr = *conf;
             configs.erase(conf);
             break;

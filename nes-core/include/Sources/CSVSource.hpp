@@ -18,7 +18,7 @@
 #define NES_INCLUDE_SOURCES_CSV_SOURCE_HPP_
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/CSVSourceTypeConfig.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>
@@ -47,7 +47,7 @@ class CSVSource : public DataSource {
     explicit CSVSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       Configurations::CSVSourceConfigPtr sourceConfigPtr,
+                       Configurations::CSVSourceTypeConfigPtr sourceConfigPtr,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
@@ -101,7 +101,7 @@ class CSVSource : public DataSource {
      * @brief getter for source config
      * @return sourceConfigPtr
      */
-    const Configurations::CSVSourceConfigPtr& getSourceConfigPtr() const;
+    const Configurations::CSVSourceTypeConfigPtr& getSourceConfigPtr() const;
 
   protected:
     std::ifstream input;
@@ -109,7 +109,7 @@ class CSVSource : public DataSource {
     bool loopOnFile;
 
   private:
-    Configurations::CSVSourceConfigPtr sourceConfigPtr;
+    Configurations::CSVSourceTypeConfigPtr sourceConfigPtr;
     std::string filePath;
     uint64_t tupleSize;
     uint64_t numberOfTuplesToProducePerBuffer;

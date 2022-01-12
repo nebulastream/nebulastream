@@ -65,12 +65,6 @@ The serializable wrapper for the source config object
  */
 message SerializableSourceConfig{
   string sourceType = 1;
-  string inputFormat = 2;
-  uint32 sourceFrequency = 4;
-  uint32 numberOfBuffersToProduce = 5;
-  uint32 numberOfTuplesToProducePerBuffer = 6;
-  string physicalStreamName = 7;
-  string logicalStreamName = 8;
 
   /**
   The serializable wrapper for the sense source config object
@@ -93,6 +87,10 @@ message SerializableSourceConfig{
     string filePath = 1;
     bool skipHeader = 2;
     string delimiter = 3;
+    uint32 numberOfBuffersToProduce = 4;
+    uint32 numberOfTuplesToProducePerBuffer = 5;
+    uint32 sourceFrequency = 6;
+    string inputFormat = 7;
   }
 
   /**
@@ -106,6 +104,7 @@ message SerializableSourceConfig{
     uint32 qos = 5;
     bool cleanSession = 6;
     float flushIntervalMS = 7;
+    string inputFormat = 8;
   }
 
   /**
@@ -136,7 +135,7 @@ message SerializableSourceConfig{
     uint32 id = 1;
   }
 
-  google.protobuf.Any specificSourceConfig = 9;
+  google.protobuf.Any specificSourceConfig = 2;
 }
 
 /*

@@ -17,7 +17,7 @@
 #ifndef NES_SOURCETYPECONFIGFACTORY_HPP
 #define NES_SOURCETYPECONFIGFACTORY_HPP
 
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -74,23 +74,6 @@ class SourceTypeConfigFactory {
      */
     static SourceTypeConfigPtr createSourceConfig();
 
-  private:
-    /**
-     * @brief read YAML file for configurations
-     * @param filePath path to yaml configuration file
-     * @return configuration map with yaml file configs
-     */
-    static std::map<std::string, std::list<std::string>> readYAMLFile(const std::string& filePath);
-
-    /**
-     * @brief overwrites configurations with command line input params
-     * @param commandLineParams
-     * @param configurationMap map with current configurations from yaml file
-     * @return map with configurations, overwritten if command line configs change yaml file configs
-     */
-    static std::map<std::string, std::string>
-    overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineParams,
-                                        std::map<std::string, std::string> configurationMap);
 };
 }// namespace Configurations
 }// namespace NES
