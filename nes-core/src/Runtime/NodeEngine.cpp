@@ -510,14 +510,17 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t sinkOperator
         //below code will be added in #2395
         //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,BufferData,networkSink);
         //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
+        throw NES::NesRuntimeException("Function not yet implemented", NES::Runtime::collectAndPrintStacktrace());
         return true;
     }
     //query sub plan did not have network sink with specified id
+    NES_DEBUG("Query Sub Plan with ID" << querySubPlanId << "did not contain a Network Sink with ID " << sinkOperatorId);
     return false;
 }
 
 bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string &newHostname, uint32_t newPort,
                                    QuerySubPlanId querySubPlanId, uint64_t sinkOperatorId) {
+
     //TODO: #2412 add error handling/return false in some cases
     NES_ERROR("NodeEngine: Received request to update Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
@@ -534,9 +537,11 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string &newHos
         //below code will be added in #2402
         //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,networkSink, newNodeLocation);
         //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
+        throw NES::NesRuntimeException("Function not yet implemented", NES::Runtime::collectAndPrintStacktrace());
         return true;
     }
     //query sub plan did not have network sink with specified id
+    NES_DEBUG("Query Sub Plan with ID" << querySubPlanId << "did not contain a Network Sink with ID " << sinkOperatorId);
     return false;
 }
 }// namespace NES::Runtime
