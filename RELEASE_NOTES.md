@@ -13,6 +13,7 @@
 ### - Fault Tolerance
 ### - Monitoring
 ### - Build Management
+- add `NES_USE_LLD` option to use LLD on unix builds. This can improve compilation time.
 ### - UDF Support
 ### - Network Stack
 
