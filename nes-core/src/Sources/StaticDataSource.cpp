@@ -85,11 +85,10 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     memoryArea = static_cast<const std::shared_ptr<uint8_t>>(memoryAreaPtr);
 
 
-    // setup a (fake) dynamic buffer around the memoryArea, so that the CSV parser can fill it
-    ::NES::Runtime::MemoryLayouts::RowLayoutPtr rowLayout = ::NES::Runtime::MemoryLayouts::RowLayout::create(this->schema, memoryAreaSize);
-    auto fakeCallback = [](__attribute__((unused)) ::NES::Runtime::detail::MemorySegment* segment, __attribute__((unused)) BufferRecycler* recycler) {};
-    auto fakeBuffer = ::NES::Runtime::TupleBuffer::wrapMemory(memoryAreaPtr, memoryAreaSize, fakeCallback);
-    auto dynamicFakeBuffer = ::NES::Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, fakeBuffer);
+    // setup a dynamic buffer around the memoryArea, so that the CSV parser can fill it
+    auto rowLayout = ::NES::Runtime::MemoryLayouts::RowLayout::create(this->schema, memoryAreaSize);
+    auto wrappedMemory = ::NES::Runtime::TupleBuffer::wrapMemory(memoryAreaPtr, memoryAreaSize, this);
+    auto dynamicBuffer = ::NES::Runtime::MemoryLayouts::DynamicTupleBuffer(rowLayout, wrappedMemory);
 
     // setup file parser
     std::vector<PhysicalTypePtr> physicalTypes;
@@ -106,26 +105,28 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
     for (size_t tupleCount = 0; tupleCount < numTuples; tupleCount++) {
         std::getline(input, line);
         NES_TRACE("StaticDataSource line=" << tupleCount << " val=" << line);
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicFakeBuffer, this->schema);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicBuffer, this->schema);
     }
 
     // if the memory area is smaller than a buffer
     if (memoryAreaSize <= bufferSize) {
-        numberOfTuplesToProducePerBuffer = std::floor(double(memoryAreaSize) / double(this->tupleSizeInBytes));
+        numTuplesPerBuffer = std::floor(double(memoryAreaSize) / double(this->tupleSizeInBytes));
     } else {
         //if the memory area spans multiple buffers
         auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->tupleSizeInBytes;
         auto numberOfTuplesPerBuffer = std::floor(double(bufferSize) / double(this->tupleSizeInBytes));
         if (restTuples > numberOfTuplesPerBuffer) {
-            numberOfTuplesToProducePerBuffer = numberOfTuplesPerBuffer;
+            numTuplesPerBuffer = numberOfTuplesPerBuffer;
         } else {
-            numberOfTuplesToProducePerBuffer = restTuples;
+            numTuplesPerBuffer = restTuples;
         }
     }
 
     // we know how many buffers this static source contains.
     // the last buffer might not be full but every tuple will get emitted.
-    this->numBuffersToProcess = (memoryAreaSize + bufferSize - 1) / bufferSize;
+    numTuplesPerBuffer = bufferSize / tupleSizeInBytes;
+    this->numBuffersToProcess = (numTuples + numTuplesPerBuffer - 1) / numTuplesPerBuffer; // same div trick as above
+
 
     NES_DEBUG("StaticDataSource() memoryAreaSize=" << memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
@@ -153,10 +154,10 @@ void StaticDataSource::fillBuffer(::NES::Runtime::TupleBuffer& buffer) {
 
     uint64_t generatedTuplesThisPass = 0;
     // fill buffer maximally
-    if (numberOfTuplesToProducePerBuffer == 0) {
+    if (numTuplesPerBuffer == 0) {
         generatedTuplesThisPass = buffer.getBufferSize() / tupleSizeInBytes;
     } else {
-        generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
+        generatedTuplesThisPass = numTuplesPerBuffer;
     }
     // with all tuples remaining
     if (generatedTuples + generatedTuplesThisPass > numTuples) {
@@ -173,19 +174,18 @@ void StaticDataSource::fillBuffer(::NES::Runtime::TupleBuffer& buffer) {
     generatedTuples += generatedTuplesThisPass;
     currentPositionInBytes = generatedTuples * tupleSizeInBytes;
     generatedBuffers++;
-//    NES_TRACE("CSVSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << );
+
+    NES_TRACE("StaticDataSource::fillBuffer: emitted buffer. generatedBuffers=" << generatedBuffers << " generatedTuples="
+                << generatedTuples << " currentPositionInBytes=" << currentPositionInBytes);
     NES_TRACE("StaticDataSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer, schema));
 }
 
-//std::string CSVSource::toString() const {
-//    std::stringstream ss;
-//    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count()
-//    << "ms"
-//    << " numBuff=" << this->numBuffersToProcess << ")";
-//    return ss.str();
-//}
-
-std::string StaticDataSource::toString() const { return "StaticDataSource"; }
+std::string StaticDataSource::toString() const {
+    std::stringstream ss;
+    ss << "STATIC_DATA_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << pathTableFile
+       << " numTuples=" << this->numTuples << " numBuff=" << this->numBuffersToProcess << ")";
+    return ss.str();
+}
 
 NES::SourceType StaticDataSource::getType() const { return STATIC_DATA_SOURCE; }
 }// namespace NES::Experimental
