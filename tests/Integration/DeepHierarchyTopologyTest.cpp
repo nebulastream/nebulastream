@@ -179,7 +179,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 }
 
 /**
- * @brief  * @brief This tests just outputs the default stream for a hierarchy with one relay which does not produce data
+ * @brief This tests just outputs the default stream for a hierarchy with one relay which does not produce data
  * Topology:
     PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=1, usedResource=0]
@@ -202,11 +202,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     std::string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query);
 
-    testHarness.addMemorySource("test", testSchema, "test1");                            //idx=0
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));                          // idx=1
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=2
-    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=3
+    testHarness.addMemorySource("test", testSchema, "test1");                            //idx=2
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));                          // idx=3
     testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=4
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=5
+    testHarness.addMemorySource("test", testSchema, "test1", testHarness.getWorkerId(0));//idx=6
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());

@@ -952,11 +952,11 @@ TEST_F(LogicalOperatorNodeTest, findRecurisivelyOperatorNotExists) {
 
     NodePtr x = nullptr;
     // case 1: filterOp7 not in this graph
-    x = filterOp6->findRecursively(filterOp6, filterOp7);
+    x = Node::findRecursively(filterOp6, filterOp7);
     EXPECT_TRUE(x == nullptr);
     // case 2: filterOp6 is in this graph, but not the
     // children of filterOp1
-    x = filterOp6->findRecursively(filterOp1, filterOp6);
+    x = Node::findRecursively(filterOp1, filterOp6);
     EXPECT_TRUE(x == nullptr);
 }
 

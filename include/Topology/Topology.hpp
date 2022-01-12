@@ -191,7 +191,7 @@ class Topology {
     * @param id : the id of the topology node that is being searched for
     * @return nullptr if node is not found, otherwise TopologyNodePtr
     */
-    TopologyNodePtr findTopologyNodeInSubgraphById(uint64_t id, std::vector<TopologyNodePtr> sourceNodes);
+    static TopologyNodePtr findTopologyNodeInSubgraphById(uint64_t id, const std::vector<TopologyNodePtr>& sourceNodes);
 
   private:
     static constexpr int BASE_MULTIPLIER = 10000;
@@ -213,7 +213,7 @@ class Topology {
      * @param id :  the id of the topology node that is being searched for
      * @return nullptr if node is not found, otherwise TopologyNodePtr
      */
-    TopologyNodePtr findTopologyNodeInParentsById(TopologyNodePtr sourceNode, uint64_t id);
+    static TopologyNodePtr findTopologyNodeInParentsById(const TopologyNodePtr& sourceNode, uint64_t id);
 
     //TODO: At present we assume that we have only one root node
     TopologyNodePtr rootNode;
