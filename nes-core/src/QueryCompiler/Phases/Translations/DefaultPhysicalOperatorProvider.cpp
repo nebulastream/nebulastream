@@ -41,6 +41,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedSlidingWindowSink.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedGlobalSliceStoreAppendOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedThreadLocalPreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/EventTimeWindow/PhysicalKeyedTumblingWindowSink.hpp>
@@ -308,30 +310,37 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         if (options->getWindowingStrategy() == QueryCompilerOptions::THREAD_LOCAL) {
+            NES_DEBUG("Create Thread local window aggregation");
+
+            auto windowHandler = std::make_shared<Windowing::Experimental::KeyedEventTimeWindowHandler>(windowDefinition);
+
+            // Translate a central window operator in ->
+            // PhysicalKeyedThreadLocalPreAggregationOperator ->
+            // PhysicalKeyedSliceMergingOperator
+            auto preAggregationOperator =
+                PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator::create(windowInputSchema,
+                                                                                          windowOutputSchema,
+                                                                                          windowHandler);
+            operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
+            auto merging = PhysicalOperators::PhysicalKeyedSliceMergingOperator::create(windowInputSchema,
+                                                                                        windowOutputSchema,
+                                                                                        windowHandler);
+            operatorNode->insertBetweenThisAndChildNodes(merging);
             if (windowDefinition->getWindowType()->isTumblingWindow()) {
-                NES_DEBUG("Create Thread local window aggregation");
-
-                auto windowHandler = std::make_shared<Windowing::Experimental::KeyedEventTimeWindowHandler>(windowDefinition);
-
-                // Translate a central window operator in ->
-                // PhysicalKeyedThreadLocalPreAggregationOperator ->
-                // PhysicalKeyedSliceMergingOperator
-                auto preAggregationOperator =
-                    PhysicalOperators::PhysicalKeyedThreadLocalPreAggregationOperator::create(windowInputSchema,
-                                                                                              windowOutputSchema,
-                                                                                              windowHandler);
-                operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
-                auto merging = PhysicalOperators::PhysicalKeyedSliceMergingOperator::create(windowInputSchema,
-                                                                                            windowOutputSchema,
-                                                                                            windowHandler);
-                operatorNode->insertBetweenThisAndChildNodes(merging);
                 auto windowSink = PhysicalOperators::PhysicalKeyedTumblingWindowSink::create(windowInputSchema,
                                                                                              windowOutputSchema,
                                                                                              windowHandler);
                 operatorNode->replace(windowSink);
                 return;
             } else {
-                NES_FATAL_ERROR("Thread local window aggregation is currently only supported for tumbling windows");
+                auto globalSliceStoreAppend = PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema,
+                                                                                            windowOutputSchema,
+                                                                                            windowHandler);
+                operatorNode->insertBetweenThisAndChildNodes(globalSliceStoreAppend);
+                auto windowSink = PhysicalOperators::PhysicalKeyedSlidingWindowSink::create(windowInputSchema,
+                                                                                             windowOutputSchema,
+                                                                                             windowHandler);
+                operatorNode->replace(windowSink);
             }
         } else {
             // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator

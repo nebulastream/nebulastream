@@ -16,4 +16,6 @@ add_source_nes(
         GeneratableKeyedThreadLocalPreAggregationOperator.cpp
         GeneratableKeyedSliceMergingOperator.cpp
         GeneratableKeyedTumblingWindowSink.cpp
+        GeneratableKeyedSlidingWindowSink.cpp
+        GeneratableKeyedGlobalSliceStoreAppendOperator.cpp
 )
