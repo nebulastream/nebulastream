@@ -21,6 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BufferSequenceNumber.hpp>
 #include <Util/BufferStorageUnit.hpp>
+#include <Util/SequenceNumberTrackerUnit.hpp>
 #include <queue>
 #include <unordered_map>
 
@@ -75,11 +76,17 @@ class BufferStorage : public AbstractBufferStorage {
      */
     BufferStorageUnitPtr getTopElementFromQueue(uint64_t queueId) const;
 
+    /**
+     * @brief Return the sequence number tracker structure
+     * @return sequence number tracker
+     */
+    std::unordered_map<uint64_t, SequenceNumberTrackerUnitPtr>& getSequenceNumberTracker();
+
   private:
     std::unordered_map<uint64_t, BufferStoragePriorityQueue> buffers;
+    std::unordered_map<uint64_t, SequenceNumberTrackerUnitPtr> sequenceNumberTracker;
     mutable std::mutex mutex;
 };
-
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
 }// namespace NES::Runtime

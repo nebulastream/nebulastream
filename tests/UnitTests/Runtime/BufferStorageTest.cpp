@@ -69,6 +69,33 @@ TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
 }
 
 /**
+     * @brief test checks that in case of out of order insertion the sequence number tracker is aware
+     * of the highest linear increasing sequnce number
+*/
+TEST_F(BufferStorageTest, bufferInsertionOutOfOrderInBufferStorage) {
+    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
+    for (size_t i = 0; i < buffersInserted; i++) {
+        auto buffer = bufferManager->getUnpooledBuffer(16384);
+        bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
+        ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
+        ASSERT_EQ(bufferStorage->getStorageSizeForQueue(0), i + 1);
+    }
+    ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
+    auto buffer1 = bufferManager->getUnpooledBuffer(16384);
+    bufferStorage->insertBuffer(BufferSequenceNumber(buffersInserted + 2, 0), buffer1.value());
+    auto buffer2 = bufferManager->getUnpooledBuffer(16384);
+    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getSequenceNumberTrackerPriorityQueue().size(), 1);
+    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getCurrentHighestSequenceNumber(), buffersInserted - 1);
+    bufferStorage->insertBuffer(BufferSequenceNumber(buffersInserted + 1, 0), buffer2.value());
+    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getSequenceNumberTrackerPriorityQueue().size(), 2);
+    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getCurrentHighestSequenceNumber(), buffersInserted - 1);
+    auto buffer3 = bufferManager->getUnpooledBuffer(16384);
+    bufferStorage->insertBuffer(BufferSequenceNumber(buffersInserted, 0), buffer3.value());
+    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getSequenceNumberTrackerPriorityQueue().size(), 0);
+    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getCurrentHighestSequenceNumber(), buffersInserted + 2);
+}
+
+/**
      * @brief test checks that if trimming is called on an empty buffer it doesn't cause an error
 */
 TEST_F(BufferStorageTest, emptyBufferCheck) {

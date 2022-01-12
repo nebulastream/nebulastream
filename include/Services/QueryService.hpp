@@ -53,7 +53,6 @@ class QueryService {
                           StreamCatalogPtr streamCatalog,
                           QueryParsingServicePtr queryParsingService,
                           bool enableSemanticQueryValidation);
-
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryString : query in string form.

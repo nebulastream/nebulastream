@@ -125,7 +125,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
 
     // perform the assignment
     std::map<TopologyNodePtr, std::vector<std::string>> topologyNodeToStreamName;
-    std::vector<OperatorId> placedOperatorIds;// bookkeeping: each operator should be placed once
+    std::vector<OperatorId> placedOperatorIds;// sequenceNumberTracker: each operator should be placed once
     // loop over all logical stream
     for (auto srcOp : queryPlan->getSourceOperators()) {
         LogicalOperatorNodePtr currentOperator = srcOp;
@@ -144,7 +144,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
                 placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
                 placedOperatorIds.push_back(currentOperator->getId());
 
-                // bookkeeping the assignment of source operators
+                // sequenceNumberTracker the assignment of source operators
                 if (topologyNodeToStreamName.find(topologyNode) == topologyNodeToStreamName.end()) {
                     std::vector<std::string> placedLogicalStreams = {srcOp->getSourceDescriptor()->getStreamName()};
                     topologyNodeToStreamName.insert(std::make_pair(topologyNode, placedLogicalStreams));

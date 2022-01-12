@@ -23,6 +23,7 @@ add_source_nes(
         TestUtils.cpp
         FaultToleranceType.cpp
         LineageType.cpp
+        SequenceNumberTrackerUnit.cpp
 )
 if (NES_USE_MQTT)
     add_source_nes(

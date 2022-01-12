@@ -21,21 +21,42 @@
 namespace NES::Runtime {
 
 void BufferStorage::insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) {
-    std::unique_lock<std::mutex> lock(mutex);
     auto iterator = this->buffers.find(id.getOriginId());
     if (iterator == this->buffers.end()) {
         auto queue = BufferStoragePriorityQueue();
         NES_TRACE("Insert tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> into buffer storage");
         queue.push(std::make_shared<BufferStorageUnit>(id, bufferPtr));
         this->buffers[id.getOriginId()] = std::move(queue);
+        this->sequenceNumberTracker[id.getOriginId()] = SequenceNumberTrackerUnitPtr();
     } else {
+        uint64_t currentMaxSequenceNumber = this->buffers[id.getOriginId()].top()->getSequenceNumber().getSequenceNumber();
+        if (currentMaxSequenceNumber != id.getSequenceNumber() - 1) {
+            std::unique_lock<std::mutex> lock(mutex);
+            this->sequenceNumberTracker[id.getOriginId()]->getSequenceNumberTrackerPriorityQueue().push(
+                std::make_shared<BufferStorageUnit>(id, bufferPtr));
+            std::unique_lock<std::mutex> unlock(mutex);
+        } else {
+            uint64_t currentMaxSequenceNumberAddition = 1;
+            auto sequenceNumberTrackerPriorityQueue =
+                this->sequenceNumberTracker[id.getOriginId()]->getSequenceNumberTrackerPriorityQueue();
+            while (!sequenceNumberTrackerPriorityQueue.empty()) {
+                if (sequenceNumberTrackerPriorityQueue.top()->getSequenceNumber().getSequenceNumber()
+                    == currentMaxSequenceNumber + currentMaxSequenceNumberAddition + 1) {
+                    sequenceNumberTrackerPriorityQueue.pop();
+                    currentMaxSequenceNumberAddition++;
+                } else {
+                    break;
+                }
+            }
+            this->sequenceNumberTracker[id.getOriginId()]->setCurrentHighestSequenceNumber(currentMaxSequenceNumber
+                                                                                           + currentMaxSequenceNumberAddition);
+        }
         NES_TRACE("Insert tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> into buffer storage");
         iterator->second.push(std::make_shared<BufferStorageUnit>(id, bufferPtr));
     }
 }
 
 bool BufferStorage::trimBuffer(BufferSequenceNumber id) {
-    std::unique_lock<std::mutex> lock(mutex);
     NES_TRACE("Trying to delete tuple<" << id.getSequenceNumber() << "," << id.getOriginId() << "> from buffer storage");
     auto iterator = this->buffers.find(id.getOriginId());
     if (iterator != this->buffers.end()) {
@@ -81,6 +102,9 @@ BufferStorageUnitPtr BufferStorage::getTopElementFromQueue(uint64_t queueId) con
     } else {
         return iterator->second.top();
     }
+}
+std::unordered_map<uint64_t, SequenceNumberTrackerUnitPtr>& BufferStorage::getSequenceNumberTracker() {
+    return sequenceNumberTracker;
 }
 
 }// namespace NES::Runtime

@@ -20,7 +20,7 @@ namespace NES::Network {
 /**
  * @brief This enum represent the life-cycle of a nes partition in the partition manager:
  * NotFound: partition was never registered in the current partition manager.
- * Deleted: partition was unregistered at some point in time (we keep it for bookkeeping).
+ * Deleted: partition was unregistered at some point in time (we keep it for sequenceNumberTracker).
  * Registered: partition was registered and alive (meaning its ref cnt is greater than 0).
  */
 enum class PartitionRegistrationStatus : uint8_t {

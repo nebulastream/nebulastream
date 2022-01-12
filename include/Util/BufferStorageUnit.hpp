@@ -17,6 +17,9 @@
 #ifndef NES_INCLUDE_UTIL_BUFFER_STORAGE_UNIT_HPP_
 #define NES_INCLUDE_UTIL_BUFFER_STORAGE_UNIT_HPP_
 
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/BufferSequenceNumber.hpp>
+
 namespace NES::Runtime {
 /**
  * @brief The Buffer Storage Unit class encapsulates a pair<tuple id, pointer to the tuple>

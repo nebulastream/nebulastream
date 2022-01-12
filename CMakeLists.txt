@@ -125,7 +125,7 @@ set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-ide
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
-add_link_options("-fuse-ld=lld")
+#add_link_options("-fuse-ld=lld")
 include(cmake/Sanitizers.cmake)
 
 if (ENABLE_IWYU)
