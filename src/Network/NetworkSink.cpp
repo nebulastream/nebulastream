@@ -32,7 +32,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          Runtime::QueryManagerPtr queryManager,
                          Runtime::BufferStoragePtr bufferStorage,
                          size_t numOfProducers,
-                         std::chrono::seconds waitTime,
+                         std::chrono::milliseconds waitTime,
                          uint8_t retryTimes)
     : inherited0(std::make_shared<NesFormat>(schema, bufferManager), queryManager, querySubPlanId),
       networkManager(std::move(networkManager)), queryManager(queryManager), receiverLocation(destination),
