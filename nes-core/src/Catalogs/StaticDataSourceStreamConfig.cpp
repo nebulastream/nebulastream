@@ -20,15 +20,15 @@
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::Experimental {
 
 using namespace Configurations;
 
 namespace detail {
 
-struct MemoryAreaDeleter {
-    void operator()(uint8_t* ptr) const { free(ptr); }
-};
+//struct MemoryAreaDeleter {
+//    void operator()(uint8_t* ptr) const { free(ptr); }
+//};
 
 }// namespace detail
 
