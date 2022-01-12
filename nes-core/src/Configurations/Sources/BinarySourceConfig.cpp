@@ -15,7 +15,7 @@
 */
 
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/Sources/BinarySourceConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/BinarySourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 #include <utility>
@@ -24,54 +24,69 @@ namespace NES {
 
 namespace Configurations {
 
-BinarySourceConfigPtr BinarySourceConfig::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<BinarySourceConfig>(BinarySourceConfig(std::move(sourceConfigMap)));
+BinarySourceTypeConfigPtr BinarySourceTypeConfig::create(ryml::NodeRef sourcTypeConfig) {
+    return std::make_shared<BinarySourceTypeConfig>(BinarySourceTypeConfig(sourcTypeConfig));
 }
 
-BinarySourceConfigPtr BinarySourceConfig::create() { return std::make_shared<BinarySourceConfig>(BinarySourceConfig()); }
+BinarySourceTypeConfig::BinarySourceTypeConfig(ryml::NodeRef sourcTypeConfig)
+    : SourceTypeConfig(BINARY_SOURCE_CONFIG),
+      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")) {
+    NES_INFO("BinarySourceTypeConfig: Init source config object.");
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (FILE_PATH_CONFIG)).has_val()) {
+        filePath->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (FILE_PATH_CONFIG)).val().str);
+    } else {
+        NES_THROW_RUNTIME_ERROR("BinarySourceTypeConfig:: no filePath defined! Please define a filePath.");
+    }
+}
 
-BinarySourceConfig::BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceConfig(sourceConfigMap, BINARY_SOURCE_CONFIG),
+BinarySourceTypeConfigPtr BinarySourceTypeConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<BinarySourceTypeConfig>(BinarySourceTypeConfig(std::move(sourceConfigMap)));
+}
+
+BinarySourceTypeConfig::BinarySourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
+    : SourceTypeConfig(BINARY_SOURCE_CONFIG),
       filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceConfig: Init source config object.");
-    /*if (sourceConfigMap.find(BINARY_SOURCE_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find(BINARY_SOURCE_FILE_PATH_CONFIG)->second);
+    if (sourceConfigMap.find(FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find(FILE_PATH_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("BinarySourceConfig:: no filePath defined! Please define a filePath.");
-    }*/
+    }
 }
 
-BinarySourceConfig::BinarySourceConfig()
-    : SourceConfig(BINARY_SOURCE_CONFIG),
+BinarySourceTypeConfigPtr BinarySourceTypeConfig::create() { return std::make_shared<BinarySourceTypeConfig>(BinarySourceTypeConfig()); }
+
+BinarySourceTypeConfig::BinarySourceTypeConfig()
+    : SourceTypeConfig(BINARY_SOURCE_CONFIG),
       filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG,
                                                  "../tests/test_data/QnV_short.csv",
                                                  "file path, needed for: CSVSource, BinarySource")) {
-    NES_INFO("BinarySourceConfig: Init source config object with default params.");
+    NES_INFO("BinarySourceTypeConfig: Init source config object with default params.");
 }
 
-void BinarySourceConfig::resetSourceOptions() {
+void BinarySourceTypeConfig::resetSourceOptions() {
     setFilePath(filePath->getDefaultValue());
-    SourceConfig::resetSourceOptions(BINARY_SOURCE_CONFIG);
+    SourceTypeConfig::resetSourceOptions(BINARY_SOURCE_CONFIG);
 }
 
-std::string BinarySourceConfig::toString() {
+std::string BinarySourceTypeConfig::toString() {
     std::stringstream ss;
-    ss << filePath->toStringNameCurrentValue();
-    ss << SourceConfig::toString();
+    ss << FILE_PATH_CONFIG + ":" +  filePath->toStringNameCurrentValue();
+    ss << SourceTypeConfig::toString();
     return ss.str();
 }
 
-bool BinarySourceConfig::equal(const SourceConfigPtr& other) {
-    if (!other->instanceOf<BinarySourceConfig>()) {
+bool BinarySourceTypeConfig::equal(const SourceTypeConfigPtr& other) {
+    if (!other->instanceOf<BinarySourceTypeConfig>()) {
         return false;
     }
-    auto otherSourceConfig = other->as<BinarySourceConfig>();
-    return filePath->getValue() == otherSourceConfig->filePath->getValue() && SourceConfig::equal(other);
+    auto otherSourceConfig = other->as<BinarySourceTypeConfig>();
+    return filePath->getValue() == otherSourceConfig->filePath->getValue() && SourceTypeConfig::equal(other);
 }
 
-StringConfigOption BinarySourceConfig::getFilePath() const { return filePath; }
+StringConfigOption BinarySourceTypeConfig::getFilePath() const { return filePath; }
 
-void BinarySourceConfig::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }
+void BinarySourceTypeConfig::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }
 
 }// namespace Configurations
 }// namespace NES

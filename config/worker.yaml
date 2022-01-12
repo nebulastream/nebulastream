@@ -75,95 +75,109 @@ physicalStreamsConfig:
   - logicalStreamName: default_stream_log
     # Set physical stream name
     physicalStreamName: default_stream_phy
+    # Define source type, also need to specify source configurations for source type below
+    SourceType: CSVSource
     # CSVSource and its needed configuration params
-    CSVSourceType:
+    CSVSource:
       # Set file path
-      - filePath: /tests/test_data/exdra.csv
+      filePath: /tests/test_data/exdra.csv
         # Skip first line of the file
-        skipHeader: false
+      skipHeader: false
         # Set delimiter, e.g. , or .
-        delimiter: ","
+      delimiter: ","
         # Set number of buffers to produce, i.e. how often the read csv file is repeated
-        numberOfBuffersToProduce: 1
+      numberOfBuffersToProduce: 1
         # Set number of tuples to produce per buffer
-        numberOfTuplesToProducePerBuffer: 1
+      numberOfTuplesToProducePerBuffer: 1
         # Set sampling frequency of source
-        sourceFrequency: 1
+      sourceFrequency: 1
         # Set input data format
-        inputFormat: JSON
+      inputFormat: JSON
   # Set logical stream name where this stream is added to
   - logicalStreamName:
   # Set physical stream name
     physicalStreamName:
+    # Define source type, also need to specify source configurations for source type below
+    SourceType: DefaultSource
     # DefaultSource: A simple source with default data created inside NES, useful for testing
-    DefaultSourceType:
+    DefaultSource:
       # Set number of buffers to produce, i.e. how often the default data is repeated for this source
-      - numberOfBuffersToProduce: 1
+      numberOfBuffersToProduce: 1
   # Set logical stream name where this stream is added to
   - logicalStreamName:
     # Set physical stream name
     physicalStreamName:
+    # Define source type, also need to specify source configurations for source type below
+    SourceType: SenseSource
     # SenseSource: Creates a Sense source
-    SenseSourceType:
+    SenseSource:
     # Set user defined function
-      - udfs:
+      udfs:
   # Set logical stream name where this stream is added to
   - logicalStreamName:
     # Set physical stream name
     physicalStreamName:
+    # Define source type, also need to specify source configurations for source type below
+    SourceType: BinarySource
     # BinarySource: read from a binary source file
-    BinarySourceType:
+    BinarySource:
       # Set file path
-      - filePath:
+      filePath:
   # Set logical stream name where this stream is added to
   - logicalStreamName:
     # Set physical stream name
     physicalStreamName:
+    # Define source type, also need to specify source configurations for source type below
+    SourceType: MQTTSource
     # MQTTSource: Connect to an MQTT broker and read data from there
-    MQTTSourceType:
+    MQTTSource:
       # Set url to connect to
-      - url:
+      url:
       # Set clientId
-        clientId:
+       clientId:
       # Set userName
-        userName:
+      userName:
       # Set topic to listen to
-        topic:
+      topic:
       # set quality of service
-        qos: 2
+      qos: 2
       # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-        cleanSession: true
+      cleanSession: true
       # set tupleBuffer flush interval in milliseconds
-        flushIntervalMS: -1
+      flushIntervalMS: -1
       # Set input data format
-        inputFormat: JSON
+      inputFormat: JSON
   # Set logical stream name where this stream is added to
   - logicalStreamName:
     # Set physical stream name
     physicalStreamName:
+    # Define source type, also need to specify source configurations for source type below
+    SourceType: KafkaSource
     # KafkaSource: Connect to a kafka broker and read data form there
-    KafkaSourceType:
+    KafkaSource:
       # Set kafka broker string
-      - brokers:
+      brokers:
       # Set auto commit, boolean value where 1 equals true, and 0 equals false
-        autoCommit: 1
+      autoCommit: 1
       # Set groupId
-        groupId:
+      groupId:
       # Set topic to listen to
-        topic: "test"
+      topic: "test"
       # Set connection time out for source
-        connectionTimeout: 10
+      connectionTimeout: 10
   # Set logical stream name where this stream is added to
   - logicalStreamName:
     # Set physical stream name
     physicalStreamName:
+    # Define source type, also need to specify source configurations for source type below
+    SourceType: OPCSource
     # OPCSource: connect to an OPC server and read data from there
-    OPCSourceType:
+    OPCSource:
     # Set namespaceIndex for node, needed for: OPCSource
-      - namespaceIndex:
+      namespaceIndex:
       # Set node identifier, needed for: OPCSource
-        nodeIdentifier:
+      nodeIdentifier:
       # Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
-        userName:
+      userName:
       # Set password, needed for: OPCSource
-        password:
+      password:

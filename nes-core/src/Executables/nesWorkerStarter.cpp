@@ -26,7 +26,7 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
 #include <Configurations/Worker/WorkerConfig.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
@@ -68,11 +68,14 @@ int main(int argc, char** argv) {
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");
 
+    //if workerConfigPath to a yaml file is provided, system will use configs in yaml file
     if (workerConfigPath != commandLineParams.end()) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
 
-    if (argc >= 1) {
+    //if command line params are provided that do not contain a path to a yaml file for worker config,
+    //command line param configs are used to overwrite default configs
+    if (argc >= 1 && !commandLineParams.contains("--workerConfigPath")) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
 
@@ -82,16 +85,18 @@ int main(int argc, char** argv) {
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
     //register phy stream if necessary
-    if (sourceConfig->getSourceType()->getValue() != "NoSource") {
-        NES_INFO("start with dedicated source=" << sourceConfig->getSourceType()->getValue() << "\n");
-        PhysicalStreamConfigPtr physicalStreamConfig = PhysicalStreamConfig::create(sourceConfig);
+    for (Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig: workerConfig->getPhysicalStreamsConfig()) {
+        if (physicalStreamTypeConfig->getSourceTypeConfig()->getSourceType()->getValue() != "NoSource") {
+            NES_INFO("start with dedicated source=" << physicalStreamTypeConfig->getSourceTypeConfig()->getSourceType()->getValue() << "\n");
+            PhysicalStreamConfigPtr physicalStreamConfig = PhysicalStreamConfig::create(physicalStreamTypeConfig);
 
-        NES_INFO("NESWORKERSTARTER: Source Config: " << sourceConfig->toString());
+            NES_INFO("NESWORKERSTARTER: Source Config: " << physicalStreamTypeConfig->getSourceTypeConfig()->toString());
 
-        wrk->setWithRegister(physicalStreamConfig);
-    } else if (workerConfig->getParentId()->getValue() != "-1") {
-        NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());
-        wrk->setWithParent(workerConfig->getParentId()->getValue());
+            wrk->setWithRegister(physicalStreamConfig);
+        } else if (workerConfig->getParentId()->getValue() != "-1") {
+            NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());
+            wrk->setWithParent(workerConfig->getParentId()->getValue());
+        }
     }
 
     try {

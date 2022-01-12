@@ -43,6 +43,13 @@ class BinarySourceConfig : public SourceConfig {
     static BinarySourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
+     * @brief create a BinarySourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return BinarySourceConfigPtr
+     */
+    static BinarySourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+
+    /**
      * @brief create a BinarySourceConfigPtr object with default values
      * @return BinarySourceConfigPtr
      */
@@ -65,7 +72,7 @@ class BinarySourceConfig : public SourceConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceConfigPtr const& other) override;
+    bool equal(SourceTypeConfigPtr const& other) override;
 
     /**
      * @brief Get file path
@@ -82,6 +89,11 @@ class BinarySourceConfig : public SourceConfig {
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
     explicit BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
+     */
+    explicit BinarySourceTypeConfig(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with default values as set below

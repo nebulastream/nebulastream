@@ -38,11 +38,8 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      */
     explicit LambdaSourceStreamConfig(
-        std::string sourceType,
-        std::string physicalStreamName,
-        std::string logicalStreamName,
+        const Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig,
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-        uint64_t numBuffersToProcess,
         uint64_t gatheringValue,
         std::string gatheringMode);
 
@@ -62,24 +59,6 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
     std::string toString() override;
 
     /**
-    * @brief The source type as a string
-    * @return The source type as a string
-    */
-    std::string getSourceType() override;
-
-    /**
-     * @brief Provides the physical stream name of the source
-     * @return the physical stream name of the source
-     */
-    std::string getPhysicalStreamName() override;
-
-    /**
-     * @brief Provides the logical stream name of the source
-     * @return the logical stream name of the source
-     */
-    std::string getLogicalStreamName() override;
-
-    /**
      * @brief Factory method of LambdaSourceStreamConfig
      * @param sourceType the type of the source
      * @param physicalStreamName the name of the physical stream
@@ -88,16 +67,14 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
      * @return a constructed LambdaSourceStreamConfig
      */
     static AbstractPhysicalStreamConfigPtr
-    create(const std::string& sourceType,
-           const std::string& physicalStreamName,
-           const std::string& logicalStreamName,
+    create(const Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig,
            std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProcess,
            uint64_t gatheringValue,
            const std::string& gatheringMode);
 
   private:
-    std::string sourceType;
+    Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig;
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t gatheringValue;
     DataSource::GatheringMode gatheringMode;

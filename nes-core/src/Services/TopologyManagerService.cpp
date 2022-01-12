@@ -66,15 +66,17 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         //add default logical
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         //check if logical stream exists
-        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf->getLogicalStreamName())) {
+        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(
+                streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue())) {
             NES_ERROR("TopologyManagerService::registerNode: error logical stream"
-                      << streamConf->getLogicalStreamName() << " does not exist when adding physical stream "
-                      << streamConf->getPhysicalStreamName());
+                      << streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue()
+                      << " does not exist when adding physical stream "
+                      << streamConf->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
             throw Exception("TopologyManagerService::registerNode logical stream does not exist "
-                            + streamConf->getLogicalStreamName());
+                            + streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue());
         }
 
-        std::string sourceType = streamConf->getSourceType();
+        std::string sourceType = streamConf->getPhysicalStreamTypeConfig()->getSourceTypeConfig()->getSourceType()->getValue();
         if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
             NES_ERROR("TopologyManagerService::registerNode: error source type " << sourceType << " is not supported");
             throw Exception("TopologyManagerService::registerNode: error source type " + sourceType + " is not supported");
@@ -82,11 +84,14 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
 
         StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
 
-        bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
+        bool success =
+            streamCatalog->addPhysicalStream(streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue(), sce);
         if (!success) {
-            NES_ERROR("TopologyManagerService::registerNode: physical stream " << streamConf->getPhysicalStreamName()
-                                                                               << " could not be added to catalog");
-            throw Exception("TopologyManagerService::registerNode: physical stream " + streamConf->getPhysicalStreamName()
+            NES_ERROR("TopologyManagerService::registerNode: physical stream "
+                      << streamConf->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue()
+                      << " could not be added to catalog");
+            throw Exception("TopologyManagerService::registerNode: physical stream "
+                            + streamConf->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue()
                             + " could not be added to catalog");
         }
 

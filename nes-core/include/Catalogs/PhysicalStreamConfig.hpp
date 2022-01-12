@@ -18,7 +18,8 @@
 #define NES_INCLUDE_CATALOGS_PHYSICAL_STREAM_CONFIG_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
-#include <Configurations/Sources/SourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
+#include <Configurations/ConfigOption.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <memory>
 #include <string>
@@ -36,7 +37,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
     static PhysicalStreamConfigPtr createEmpty();
-    static PhysicalStreamConfigPtr create(const Configurations::SourceConfigPtr& sourceConfig);
+    static PhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypeConfigPtr & sourceConfig);
 
     ~PhysicalStreamConfig() noexcept override = default;
 
@@ -44,51 +45,16 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @brief get sourceConfig
      * @return returns the source configuration
      */
-    [[nodiscard]] Configurations::SourceConfigPtr getSourceConfigPtr() const;
-
-    /**
-     * @brief get the number of tuples to produce in a buffer
-     * @return returns the number of tuples to produce in a buffer
-     */
-    [[nodiscard]] uint32_t getNumberOfTuplesToProducePerBuffer() const;
-
-    /**
-     * @brief get the number of buffers to produce
-     * @return returns the number of buffers to produce
-     */
-    [[nodiscard]] uint32_t getNumberOfBuffersToProduce() const;
-
-    /**
-     * @brief get physical stream name
-     * @return physical stream name
-     */
-    std::string getPhysicalStreamName() override;
-
-    /**
-     * @brief get logical stream name
-     * @return logical stream name
-     */
-    std::string getLogicalStreamName() override;
-
-    /**
-     * @brief get source type
-     * @return source type
-     */
-    std::string getSourceType() override;
+    [[nodiscard]] Configurations::PhysicalStreamTypeConfigPtr getPhysicalStreamTypeConfig() override;
 
     std::string toString() override;
 
     SourceDescriptorPtr build(SchemaPtr) override;
 
   protected:
-    explicit PhysicalStreamConfig(const Configurations::SourceConfigPtr& sourceConfig);
+    explicit PhysicalStreamConfig(const Configurations::PhysicalStreamTypeConfigPtr& physicalStreamTypeConfig);
 
-    Configurations::SourceConfigPtr sourceConfig;
-    uint32_t numberOfTuplesToProducePerBuffer;
-    uint32_t numberOfBuffersToProduce;
-    std::string physicalStreamName;
-    std::string logicalStreamName;
-    std::string sourceType;
+    Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig;
 };
 
 }// namespace NES

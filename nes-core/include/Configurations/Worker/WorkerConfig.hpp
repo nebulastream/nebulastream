@@ -19,6 +19,7 @@
 
 #include <map>
 #include <string>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
 
 namespace NES {
 
@@ -273,8 +274,8 @@ class WorkerConfig {
     * @brief getter/setter to obtain physicalStreamsConfig
     * @return
     */
-    std::vector<PhysicalStreamConfigPtr> getPhysicalStreamsConfig();
-    void setPhysicalStreamsConfig(std::vector<PhysicalStreamConfigPtr> physicalStreamsConfig);
+    std::vector<PhysicalStreamTypeConfigPtr> getPhysicalStreamsConfig();
+    void setPhysicalStreamsConfig(std::vector<PhysicalStreamTypeConfigPtr> physicalStreamsConfig);
 
   private:
     StringConfigOption localWorkerIp;
@@ -302,7 +303,7 @@ class WorkerConfig {
     BoolConfigOption enableMonitoring;
     StringConfigOption sourcePinList;
     StringConfigOption workerPinList;
-    std::vector<PhysicalStreamConfigPtr> physicalStreamsConfig;
+    std::vector<PhysicalStreamTypeConfigPtr> physicalStreamsConfig;
 };
 }// namespace Configurations
 }// namespace NES

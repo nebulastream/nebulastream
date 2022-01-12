@@ -31,6 +31,5 @@ if (NES_USE_MQTT)
         MQTTClientWrapper.cpp
     )
 endif ()
-add_subdirectory(yaml)
 add_subdirectory(Subprocess)
 

@@ -80,12 +80,6 @@ using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 class SourceTypeConfig : public std::enable_shared_from_this<SourceTypeConfig> {
 
   public:
-    /**
-     * @brief constructor to create a new source option object initialized with values from sourceConfigMap
-     * @param sourceConfigMap with input params
-     * @param sourceType type of source from where object was initialized
-     */
-    explicit SourceTypeConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType);
 
     /**
      * @brief constructor to create a new source option object initialized with default values as set below

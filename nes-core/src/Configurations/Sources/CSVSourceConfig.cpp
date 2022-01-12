@@ -24,14 +24,57 @@ namespace NES {
 
 namespace Configurations {
 
-CSVSourceTypeConfigPtr CSVSourceTypeConfig::create(std::map<std::string, std::string> sourceConfigMap) {
-    return std::make_shared<CSVSourceTypeConfig>(CSVSourceTypeConfig(std::move(sourceConfigMap)));
+CSVSourceTypeConfigPtr CSVSourceTypeConfig::create(ryml::NodeRef sourcTypeConfig) {
+    return std::make_shared<CSVSourceTypeConfig>(CSVSourceTypeConfig(std::move(sourcTypeConfig)));
 }
 
 CSVSourceTypeConfigPtr CSVSourceTypeConfig::create() { return std::make_shared<CSVSourceTypeConfig>(CSVSourceTypeConfig()); }
 
+CSVSourceTypeConfigPtr CSVSourceTypeConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+    return std::make_shared<CSVSourceTypeConfig>(CSVSourceTypeConfig(std::move(sourceConfigMap)));
+}
+
 CSVSourceTypeConfig::CSVSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceTypeConfig(sourceConfigMap, CSV_SOURCE_CONFIG),
+    : SourceTypeConfig(CSV_SOURCE_CONFIG),
+      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
+      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
+      delimiter(
+          ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")),
+      numberOfBuffersToProduce(
+          ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
+      numberOfTuplesToProducePerBuffer(ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
+                                                                      1,
+                                                                      "Number of tuples to produce per buffer.")),
+      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
+      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
+    NES_INFO("CSVSourceConfig: Init source config object.");
+    if (sourceConfigMap.find(FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find(FILE_PATH_CONFIG)->second);
+    } else {
+        NES_THROW_RUNTIME_ERROR("CSVSourceConfig:: no filePath defined! Please define a filePath.");
+    }
+    if (sourceConfigMap.find(DELIMITER_CONFIG) != sourceConfigMap.end()) {
+        delimiter->setValue(sourceConfigMap.find(DELIMITER_CONFIG)->second);
+    }
+    if (sourceConfigMap.find(SKIP_HEADER_CONFIG) != sourceConfigMap.end()) {
+        skipHeader->setValue((sourceConfigMap.find(SKIP_HEADER_CONFIG)->second == "true"));
+    }
+    if (sourceConfigMap.find(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
+        numberOfBuffersToProduce->setValue(std::stoi(sourceConfigMap.find(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
+    }
+    if (sourceConfigMap.find(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG) != sourceConfigMap.end()) {
+        numberOfTuplesToProducePerBuffer->setValue(std::stoi(sourceConfigMap.find(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
+    }
+    if (sourceConfigMap.find(SOURCE_FREQUENCY_CONFIG) != sourceConfigMap.end()) {
+        sourceFrequency->setValue(std::stoi(sourceConfigMap.find(SOURCE_FREQUENCY_CONFIG)->second));
+    }
+    if (sourceConfigMap.find(INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
+        inputFormat->setValue(sourceConfigMap.find(INPUT_FORMAT_CONFIG)->second);
+    }
+}
+
+CSVSourceTypeConfig::CSVSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
+    : SourceTypeConfig(CSV_SOURCE_CONFIG),
       filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
       skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
       delimiter(
@@ -43,18 +86,30 @@ CSVSourceTypeConfig::CSVSourceTypeConfig(std::map<std::string, std::string> sour
                                                                       "Number of tuples to produce per buffer.")),
       sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
       inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")){
-    NES_INFO("CSVSourceConfig: Init source config object.");
-    /*if (sourceConfigMap.find(CSV_SOURCE_FILE_PATH_CONFIG) != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find(CSV_SOURCE_FILE_PATH_CONFIG)->second);
+    NES_INFO("CSVSourceTypeConfig: Init source config object.");
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (FILE_PATH_CONFIG)).has_val()) {
+        filePath->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (FILE_PATH_CONFIG)).val().str);
     } else {
-        NES_THROW_RUNTIME_ERROR("CSVSourceConfig:: no filePath defined! Please define a filePath.");
+        NES_THROW_RUNTIME_ERROR("CSVSourceTypeConfig:: no filePath defined! Please define a filePath.");
     }
-    if (sourceConfigMap.find(CSV_SOURCE_DELIMITER_CONFIG) != sourceConfigMap.end()) {
-        delimiter->setValue(sourceConfigMap.find(CSV_SOURCE_DELIMITER_CONFIG)->second);
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (DELIMITER_CONFIG)).has_val()) {
+        delimiter->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (DELIMITER_CONFIG)).val().str);
     }
-    if (sourceConfigMap.find(CSV_SOURCE_SKIP_HEADER_CONFIG) != sourceConfigMap.end()) {
-        skipHeader->setValue((sourceConfigMap.find(CSV_SOURCE_SKIP_HEADER_CONFIG)->second == "true"));
-    }*/
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (SKIP_HEADER_CONFIG)).has_val()) {
+        skipHeader->setValue((strcasecmp(sourcTypeConfig.find_child(ryml::to_csubstr(SKIP_HEADER_CONFIG)).val().str, "true")));
+    }
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)).has_val()) {
+        numberOfBuffersToProduce->setValue(std::stoi(sourcTypeConfig.find_child(ryml::to_csubstr (NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)).val().str));
+    }
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)).has_val()) {
+        numberOfTuplesToProducePerBuffer->setValue(std::stoi(sourcTypeConfig.find_child(ryml::to_csubstr (NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)).val().str));
+    }
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (SOURCE_FREQUENCY_CONFIG)).has_val()) {
+        sourceFrequency->setValue(std::stoi(sourcTypeConfig.find_child(ryml::to_csubstr (SOURCE_FREQUENCY_CONFIG)).val().str));
+    }
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (INPUT_FORMAT_CONFIG)).has_val()) {
+        inputFormat->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (INPUT_FORMAT_CONFIG)).val().str);
+    }
 }
 
 CSVSourceTypeConfig::CSVSourceTypeConfig()
@@ -70,7 +125,7 @@ CSVSourceTypeConfig::CSVSourceTypeConfig()
                                                                       "Number of tuples to produce per buffer.")),
       sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
       inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
-    NES_INFO("CSVSourceConfig: Init source config object with default values.");
+    NES_INFO("CSVSourceTypeConfig: Init source config object with default values.");
 }
 
 void CSVSourceTypeConfig::resetSourceOptions() {
@@ -86,13 +141,13 @@ void CSVSourceTypeConfig::resetSourceOptions() {
 
 std::string CSVSourceTypeConfig::toString() {
     std::stringstream ss;
-    ss << filePath->toStringNameCurrentValue();
-    ss << skipHeader->toStringNameCurrentValue();
-    ss << delimiter->toStringNameCurrentValue();
-    ss << inputFormat->toStringNameCurrentValue();
-    ss << sourceFrequency->toStringNameCurrentValue();
-    ss << numberOfBuffersToProduce->toStringNameCurrentValue();
-    ss << numberOfTuplesToProducePerBuffer->toStringNameCurrentValue();
+    ss << FILE_PATH_CONFIG + ":" + filePath->toStringNameCurrentValue();
+    ss << SKIP_HEADER_CONFIG + ":" +  skipHeader->toStringNameCurrentValue();
+    ss << DELIMITER_CONFIG + ":" +  delimiter->toStringNameCurrentValue();
+    ss << INPUT_FORMAT_CONFIG + ":" +  inputFormat->toStringNameCurrentValue();
+    ss << SOURCE_FREQUENCY_CONFIG + ":" +  sourceFrequency->toStringNameCurrentValue();
+    ss << NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + ":" +  numberOfBuffersToProduce->toStringNameCurrentValue();
+    ss << NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + ":" +  numberOfTuplesToProducePerBuffer->toStringNameCurrentValue();
     ss << SourceTypeConfig::toString();
     return ss.str();
 }

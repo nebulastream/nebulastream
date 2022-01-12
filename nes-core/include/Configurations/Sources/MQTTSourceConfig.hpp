@@ -43,6 +43,13 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     static MQTTSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
+     * @brief create a MQTTSourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return MQTTSourceConfigPtr
+     */
+    static MQTTSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+
+    /**
      * @brief create a MQTTSourceConfigPtr object with default values
      * @return MQTTSourceConfigPtr
      */
@@ -150,6 +157,11 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
      * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
      */
     explicit MQTTSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
+     */
+    explicit MQTTSourceTypeConfig(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief constructor to create a new MQTT source config object initialized with default values as set below

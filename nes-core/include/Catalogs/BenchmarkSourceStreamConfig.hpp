@@ -38,12 +38,9 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @param source mode on how to bring data into the buffer
      * @param sourceAffinity id of cpu where to pin the source
      */
-    explicit BenchmarkSourceStreamConfig(std::string sourceType,
-                                         std::string physicalStreamName,
-                                         std::string logicalStreamName,
+    explicit BenchmarkSourceStreamConfig(const Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig,
                                          uint8_t* memoryArea,
                                          size_t memoryAreaSize,
-                                         uint64_t numBuffersToProcess,
                                          uint64_t gatheringValue,
                                          const std::string& gatheringMode,
                                          const std::string& sourceMode,
@@ -65,22 +62,10 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
     std::string toString() override;
 
     /**
-    * @brief The source type as a string
-    * @return The source type as a string
-    */
-    std::string getSourceType() override;
-
-    /**
-     * @brief Provides the physical stream name of the source
-     * @return the physical stream name of the source
+     * @brief The physicalStreamTypeConfiguration Object with all needed configurations
+     * @return The physicalStreamTypeConfiguration
      */
-    std::string getPhysicalStreamName() override;
-
-    /**
-     * @brief Provides the logical stream name of the source
-     * @return the logical stream name of the source
-     */
-    std::string getLogicalStreamName() override;
+    virtual Configurations::PhysicalStreamTypeConfigPtr getPhysicalStreamTypeConfig() override;
 
     /**
      * @brief Factory method of BenchmarkSourceStreamConfig
@@ -93,12 +78,9 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @param sourceAffinity id of cpu where to pin the source
      * @return a constructed BenchmarkSourceStreamConfig
      */
-    static AbstractPhysicalStreamConfigPtr create(const std::string& sourceType,
-                                                  const std::string& physicalStreamName,
-                                                  const std::string& logicalStreamName,
+    static AbstractPhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig,
                                                   uint8_t* memoryArea,
                                                   size_t memoryAreaSize,
-                                                  uint64_t numBuffersToProcess,
                                                   uint64_t gatheringValue,
                                                   const std::string& gatheringMode,
                                                   const std::string& sourceMode,
@@ -107,7 +89,7 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
     static BenchmarkSource::SourceMode getSourceModeFromString(const std::string& mode);
 
   private:
-    std::string sourceType;
+    Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t gatheringValue;

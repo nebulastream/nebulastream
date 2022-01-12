@@ -24,11 +24,15 @@ namespace NES {
 
 namespace Configurations {
 
-std::shared_ptr<OPCSourceTypeConfig> OPCSourceTypeConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+OPCSourceTypeConfigPtr OPCSourceTypeConfig::create(ryml::NodeRef sourcTypeConfig) {
+    return std::make_shared<OPCSourceTypeConfig>(OPCSourceTypeConfig(std::move(sourcTypeConfig)));
+}
+
+OPCSourceTypeConfigPtr OPCSourceTypeConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<OPCSourceTypeConfig>(OPCSourceTypeConfig(std::move(sourceConfigMap)));
 }
 
-std::shared_ptr<OPCSourceTypeConfig> OPCSourceTypeConfig::create() { return std::make_shared<OPCSourceTypeConfig>(OPCSourceTypeConfig()); }
+OPCSourceTypeConfigPtr OPCSourceTypeConfig::create() { return std::make_shared<OPCSourceTypeConfig>(OPCSourceTypeConfig()); }
 
 OPCSourceTypeConfig::OPCSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceTypeConfig(sourceConfigMap, OPC_SOURCE_CONFIG),
@@ -40,22 +44,50 @@ OPCSourceTypeConfig::OPCSourceTypeConfig(std::map<std::string, std::string> sour
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
       password(ConfigOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
     NES_INFO("OPCSourceConfig: Init source config object with values from sourceConfigMap.");
-    /*if (sourceConfigMap.find(OPC_SOURCE_NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
-        namespaceIndex->setValue(std::stoi(sourceConfigMap.find(OPC_SOURCE_NAME_SPACE_INDEX_CONFIG)->second));
+    if (sourceConfigMap.find(OPC_SOURCE_CONFIG) != sourceConfigMap.end()) {
+        namespaceIndex->setValue(std::stoi(sourceConfigMap.find(OPC_SOURCE_CONFIG)->second));
     }
-    if (sourceConfigMap.find(OPC_SOURCE_NODE_IDENTIFIER_CONFIG) != sourceConfigMap.end()) {
-        nodeIdentifier->setValue(sourceConfigMap.find(OPC_SOURCE_NODE_IDENTIFIER_CONFIG)->second);
+    if (sourceConfigMap.find(NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
+        nodeIdentifier->setValue(sourceConfigMap.find(NAME_SPACE_INDEX_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no nodeIdentifier defined! Please define a nodeIdentifier.");
     }
-    if (sourceConfigMap.find(OPC_SOURCE_USERNAME_CONFIG) != sourceConfigMap.end()) {
-        userName->setValue(sourceConfigMap.find(OPC_SOURCE_USERNAME_CONFIG)->second);
+    if (sourceConfigMap.find(USER_NAME_CONFIG) != sourceConfigMap.end()) {
+        userName->setValue(sourceConfigMap.find(USER_NAME_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no userName defined! Please define a userName.");
     }
-    if (sourceConfigMap.find(OPC_SOURCE_PASSWORD_CONFIG) != sourceConfigMap.end()) {
-        password->setValue(sourceConfigMap.find(OPC_SOURCE_PASSWORD_CONFIG)->second);
-    }*/
+    if (sourceConfigMap.find(PASSWORD_CONFIG) != sourceConfigMap.end()) {
+        password->setValue(sourceConfigMap.find(PASSWORD_CONFIG)->second);
+    }
+}
+
+OPCSourceTypeConfig::OPCSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
+    : SourceTypeConfig(OPC_SOURCE_CONFIG),
+      namespaceIndex(
+          ConfigOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
+      nodeIdentifier(ConfigOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "", "node identifier, needed for: OPCSource")),
+      userName(ConfigOption<std::string>::create(USER_NAME_CONFIG,
+                                                 "",
+                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
+      password(ConfigOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
+    NES_INFO("OPCSourceTypeConfig: Init source config object with new values.");
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (NAME_SPACE_INDEX_CONFIG)).has_val()) {
+        namespaceIndex->setValue(std::stoi(sourcTypeConfig.find_child(ryml::to_csubstr (NAME_SPACE_INDEX_CONFIG)).val().str));
+    }
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (NODE_IDENTIFIER_CONFIG)).has_val()) {
+        nodeIdentifier->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (NODE_IDENTIFIER_CONFIG)).val().str);
+    } else {
+        NES_THROW_RUNTIME_ERROR("OPCSourceTypeConfig:: no nodeIdentifier defined! Please define a nodeIdentifier.");
+    }
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (USER_NAME_CONFIG)).has_val()) {
+        userName->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (USER_NAME_CONFIG)).val().str);
+    } else {
+        NES_THROW_RUNTIME_ERROR("OPCSourceTypeConfig:: no userName defined! Please define a userName.");
+    }
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (PASSWORD_CONFIG)).has_val()) {
+        password->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (PASSWORD_CONFIG)).val().str);
+    }
 }
 
 OPCSourceTypeConfig::OPCSourceTypeConfig()
@@ -68,7 +100,7 @@ OPCSourceTypeConfig::OPCSourceTypeConfig()
                                                  "testUser",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
       password(ConfigOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
-    NES_INFO("OPCSourceConfig: Init source config object with default values.");
+    NES_INFO("OPCSourceTypeConfig: Init source config object with default values.");
 }
 
 void OPCSourceTypeConfig::resetSourceOptions() {
@@ -81,10 +113,10 @@ void OPCSourceTypeConfig::resetSourceOptions() {
 
 std::string OPCSourceTypeConfig::toString() {
     std::stringstream ss;
-    ss << namespaceIndex->toStringNameCurrentValue();
-    ss << nodeIdentifier->toStringNameCurrentValue();
-    ss << userName->toStringNameCurrentValue();
-    ss << password->toStringNameCurrentValue();
+    ss << NAME_SPACE_INDEX_CONFIG + ":" + namespaceIndex->toStringNameCurrentValue();
+    ss << NODE_IDENTIFIER_CONFIG + ":" + nodeIdentifier->toStringNameCurrentValue();
+    ss << USER_NAME_CONFIG + ":" + userName->toStringNameCurrentValue();
+    ss << PASSWORD_CONFIG + ":" + password->toStringNameCurrentValue();
     ss << SourceTypeConfig::toString();
     return ss.str();
 }

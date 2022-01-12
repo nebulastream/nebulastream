@@ -35,7 +35,7 @@ namespace NES {
 CSVSource::CSVSource(SchemaPtr schema,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
-                     Configurations::CSVSourceConfigPtr sourceConfigPtr,
+                     Configurations::CSVSourceTypeConfigPtr sourceConfigPtr,
                      OperatorId operatorId,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
