@@ -21,7 +21,6 @@
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/yaml/rapidyaml.hpp>
 #include <functional>
 #include <map>
 #include <string>
@@ -104,7 +103,6 @@ size_t file_get_contents(const char *filename, CharContainer *container)
     {
         ::rewind(filestream);
         size_t ret = ::fread(&(*container)[0], 1, container->size(), filestream);
-        C4_CHECK(ret == (size_t)size);
     }
     ::fclose(filestream);
     return container->size();

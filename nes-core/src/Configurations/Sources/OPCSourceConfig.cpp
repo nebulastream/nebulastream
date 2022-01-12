@@ -35,7 +35,7 @@ OPCSourceTypeConfigPtr OPCSourceTypeConfig::create(std::map<std::string, std::st
 OPCSourceTypeConfigPtr OPCSourceTypeConfig::create() { return std::make_shared<OPCSourceTypeConfig>(OPCSourceTypeConfig()); }
 
 OPCSourceTypeConfig::OPCSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceTypeConfig(sourceConfigMap, OPC_SOURCE_CONFIG),
+    : SourceTypeConfig(OPC_SOURCE_CONFIG),
       namespaceIndex(
           ConfigOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
       nodeIdentifier(ConfigOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "", "node identifier, needed for: OPCSource")),

@@ -175,5 +175,5 @@ uint64_t CSVSource::getNumberOfTuplesToProducePerBuffer() const { return numberO
 
 bool CSVSource::getSkipHeader() const { return skipHeader; }
 
-const Configurations::CSVSourceConfigPtr& CSVSource::getSourceConfigPtr() const { return sourceConfigPtr; }
+const Configurations::CSVSourceTypeConfigPtr& CSVSource::getSourceConfigPtr() const { return sourceConfigPtr; }
 }// namespace NES
