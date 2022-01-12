@@ -183,7 +183,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
  * SEQ operator in combination with filter
  * TODO: output changes #2357
  */
-TEST_F(SeqOperatorTest, DISABLE_testPatternOneSeq) {
+TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
