@@ -29,7 +29,7 @@ std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(con
                                                                              const StreamCatalogPtr& streamCatalog,
                                                                              const z3::ContextPtr& z3Context) {
     switch (stringToPlacementStrategyType[strategyName]) {
-        case ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
+        case PlacementType::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
         default: return getStrategy(strategyName, globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     }
 }
@@ -40,9 +40,9 @@ std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(con
                                                                              const TypeInferencePhasePtr& typeInferencePhase,
                                                                              const StreamCatalogPtr& streamCatalog) {
     switch (stringToPlacementStrategyType[strategyName]) {
-        case BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-        case TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-        case IFCOP: return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+        case PlacementType::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+        case PlacementType::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+        case PlacementType::IFCOP: return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
         // FIXME: enable them with issue #755
         //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
         //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);

@@ -19,10 +19,12 @@
 
 namespace NES {
 
-std::string NES::toString(const PlacementType placementType) {
+std::string toString(const PlacementType placementType) {
     switch (placementType) {
         case PlacementType::TopDown: return "TopDown";
         case PlacementType::BottomUp: return "BottomUp";
+        case PlacementType::IFCOP: return "IFCOP";
+        case PlacementType::ILP:  return "ILP";
     }
 }
 
