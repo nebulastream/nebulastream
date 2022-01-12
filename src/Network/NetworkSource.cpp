@@ -35,7 +35,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                              NodeLocation sinkLocation,
                              size_t numSourceLocalBuffers,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                             std::chrono::seconds waitTime,
+                             std::chrono::milliseconds waitTime,
                              uint8_t retryTimes)
     : DataSource(std::move(schema),
                  std::move(bufferManager),

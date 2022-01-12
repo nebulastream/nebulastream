@@ -30,12 +30,12 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                         NesPartition nesPartition,
                                         ExchangeProtocol& protocol,
                                         Runtime::BufferManagerPtr bufferManager,
-                                        std::chrono::seconds waitTime,
+                                        std::chrono::milliseconds waitTime,
                                         uint8_t retryTimes) {
     // TODO create issue to make the network channel allocation async
     // TODO currently, we stall the worker threads
     // TODO as a result, this kills performance of running queries if we submit a new query
-    std::chrono::seconds backOffTime = waitTime;
+    std::chrono::milliseconds backOffTime = waitTime;
     constexpr auto nameHelper = []() {
         if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>) {
             return "EventOnlyNetworkChannel";
@@ -95,7 +95,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                                               << "->Wrong server ready message! Reason: Partitions are not matching");
                         break;
                     }
-                    NES_INFO(channelName << ": Connection established with server " << socketAddr << " for " << channelId);
+                    NES_DEBUG(channelName << ": Connection established with server " << socketAddr << " for " << channelId);
                     return std::make_unique<T>(std::move(zmqSocket), channelId, std::move(socketAddr), std::move(bufferManager));
                 }
                 case Messages::MessageType::ErrorMessage: {
@@ -114,6 +114,7 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                             return nullptr;
                         }
                     }
+
                     NES_ERROR(channelName << ": Received error from server-> " << errorMsg.getErrorTypeAsString());
                     protocol.onChannelError(errorMsg);
                     break;
@@ -124,9 +125,9 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     return nullptr;
                 }
             }
+            NES_DEBUG(channelName << ": Connection with server failed! Reconnecting attempt " << i << " backoff time " << std::to_string(backOffTime.count()));
             std::this_thread::sleep_for(backOffTime);// TODO make this async
             backOffTime *= 2;
-            NES_INFO(channelName << ": Connection with server failed! Reconnecting attempt " << i);
             i++;
         }
         NES_ERROR(channelName << ": Error establishing a connection with server: " << channelId << " Closing socket!");
@@ -163,7 +164,7 @@ NetworkChannelPtr NetworkChannel::create(std::shared_ptr<zmq::context_t> const& 
                                          NesPartition nesPartition,
                                          ExchangeProtocol& protocol,
                                          Runtime::BufferManagerPtr bufferManager,
-                                         std::chrono::seconds waitTime,
+                                         std::chrono::milliseconds waitTime,
                                          uint8_t retryTimes) {
     return detail::createNetworkChannel<NetworkChannel>(zmqContext,
                                                         std::move(socketAddr),
@@ -191,7 +192,7 @@ EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(std::shared_ptr<zmq::
                                                            NesPartition nesPartition,
                                                            ExchangeProtocol& protocol,
                                                            Runtime::BufferManagerPtr bufferManager,
-                                                           std::chrono::seconds waitTime,
+                                                           std::chrono::milliseconds waitTime,
                                                            uint8_t retryTimes) {
     return detail::createNetworkChannel<EventOnlyNetworkChannel>(zmqContext,
                                                                  std::move(socketAddr),

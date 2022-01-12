@@ -123,7 +123,7 @@ class NetworkManager {
     NetworkChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation,
                                                    const NesPartition& nesPartition,
                                                    Runtime::BufferManagerPtr bufferManager,
-                                                   std::chrono::seconds waitTime,
+                                                   std::chrono::milliseconds waitTime,
                                                    uint8_t retryTimes);
 
     /**
@@ -139,7 +139,7 @@ class NetworkManager {
     EventOnlyNetworkChannelPtr registerSubpartitionEventProducer(const NodeLocation& nodeLocation,
                                                                  const NesPartition& nesPartition,
                                                                  Runtime::BufferManagerPtr bufferManager,
-                                                                 std::chrono::seconds waitTime,
+                                                                 std::chrono::milliseconds waitTime,
                                                                  uint8_t retryTimes);
 
     /**
