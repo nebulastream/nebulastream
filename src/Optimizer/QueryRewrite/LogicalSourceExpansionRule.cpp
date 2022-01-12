@@ -67,7 +67,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                                                        << " physical source locations in the topology.");
 
         if (sourceLocations.empty()) {
-            //Throw exception as this should never occur
             throw Exception("LogicalSourceExpansionRule: Unable to find physical stream locations for the logical stream "
                             + streamName);
         }
@@ -97,7 +96,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                 const std::any& value = operatorNode->getProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS);
                 //Check if the operator need to be connected to a blocking parent
                 if (value.has_value()) {
-                    auto listOfConnectedBlockingParents = std::any_cast<std::vector<uint64_t>>(value);
+                    auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
                     //Iterate over all blocking parent ids and connect the duplicated operator
                     for (auto blockingParentId : listOfConnectedBlockingParents) {
                         auto blockingOperator = blockingOperators[blockingParentId];
@@ -136,17 +135,16 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const Operator
 
             if (!parent->removeChild(operatorNode)) {
                 throw Exception("LogicalSourceExpansionRule: Unable to remove non-blocking child operator from the blocking operator");
-                //Throw exception as we expect to freely add or remove nodes in a query plan
             }
 
             //extract the list of connected blocking parents and add the current parent to the list
             std::any value = operatorNode->getProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS);
             if (value.has_value()) {//update the existing list
-                auto listOfConnectedBlockingParents = std::any_cast<std::vector<uint64_t>>(value);
+                auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
                 listOfConnectedBlockingParents.emplace_back(parentOperator->getId());
                 operatorNode->addProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
             } else {//create a new entry if value doesn't exist
-                std::vector<uint64_t> listOfConnectedBlockingParents;
+                std::vector<OperatorId> listOfConnectedBlockingParents;
                 listOfConnectedBlockingParents.emplace_back(parentOperator->getId());
                 operatorNode->addProperty(LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
             }

@@ -419,7 +419,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
     streamCatalog->addPhysicalStream("example", streamCatalogEntry1);
 
-
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase =
         Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
