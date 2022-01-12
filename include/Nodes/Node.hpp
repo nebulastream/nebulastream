@@ -314,12 +314,12 @@ class Node : public std::enable_shared_from_this<Node> {
     virtual std::vector<std::string> toMultilineString();
 
     /**
-     * @brief check if an nodeToFind is in given graph
-     * @param root
-     * @param nodeToFind
+     * @brief check if a node is the child or grandchild of the given root node
+     * @param root the root node
+     * @param nodeToFind the node to find
      * @return return true if the given nodeToFind is found in the graph of root, otherwise false
      */
-    NodePtr findRecursively(NodePtr const& root, NodePtr const& nodeToFind);
+    static NodePtr findRecursively(NodePtr const& root, NodePtr const& nodeToFind);
 
     /**
      * @brief Get all nodes that are parents to this node.

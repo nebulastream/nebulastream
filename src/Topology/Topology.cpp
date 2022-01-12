@@ -573,7 +573,8 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(std::vector<TopologyNode
 
     return findNodesBetween(commonAncestorForChildren, commonChildForParents);
 }
-TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, std::vector<TopologyNodePtr> sourceNodes) {
+
+TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std::vector<TopologyNodePtr>& sourceNodes) {
     TopologyNodePtr found = nullptr;
     for (const auto& sourceNode : sourceNodes) {
         //Perform DFS on each source node and its parents for TopologyNode with matching identifier
@@ -585,18 +586,16 @@ TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, std::vecto
     return found;
 }
 
-TopologyNodePtr Topology::findTopologyNodeInParentsById(TopologyNodePtr sourceNode, uint64_t id) {
+TopologyNodePtr Topology::findTopologyNodeInParentsById(const TopologyNodePtr& sourceNode, uint64_t id) {
     auto topologyIterator = NES::DepthFirstNodeIterator(sourceNode).begin();
-    TopologyNodePtr resultNode = nullptr;
     while (topologyIterator != NES::DepthFirstNodeIterator::end()) {
         auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
         if (currentTopologyNode->getId() == id) {
-            resultNode = currentTopologyNode;
-            break;
+            return currentTopologyNode;
         }
         ++topologyIterator;
     }
-    return resultNode;
+    return nullptr;
 }
 
 }// namespace NES

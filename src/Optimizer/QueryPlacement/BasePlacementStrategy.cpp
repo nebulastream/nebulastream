@@ -74,7 +74,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
 
     //NOTE: This step pins the sink operators
     NES_TRACE("BasePlacementStrategy: Locating node to pin sink operator.");
-    //TODO: change here if the topology can have more than one root node
+    //TODO: change here if the topology can have more than one root node (this is not supported currently)
     std::vector<NodePtr> rootNodes = selectedTopologyForPlacement[0]->getAllRootNodes();
     if (rootNodes.empty()) {
         NES_ERROR("BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
@@ -94,17 +94,14 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
             //throw exception
         }
         auto nodeId = std::any_cast<uint64_t>(value);
-        auto found = std::find_if(selectedTopologyForPlacement.begin(),
-                                  selectedTopologyForPlacement.end(),
-                                  [&nodeId](const TopologyNodePtr& sourceNodeToUse) {
-                                      return nodeId == sourceNodeToUse->getId();
-                                  });
-        if (found == selectedTopologyForPlacement.end()) {
+        auto topologyNode = Topology::findTopologyNodeInSubgraphById(nodeId, selectedTopologyForPlacement);
+
+        if (!topologyNode) {
             NES_ERROR("BasePlacementStrategy: unable to locate a node in the selected topology for placing the source operator.");
             throw Exception(
                 "BasePlacementStrategy: unable to locate a node in the selected topology for placing the source operator.");
         }
-        pinnedOperatorLocationMap[sourceOperator->getId()] = *found;
+        pinnedOperatorLocationMap[sourceOperator->getId()] = topologyNode;
     }
 }
 
