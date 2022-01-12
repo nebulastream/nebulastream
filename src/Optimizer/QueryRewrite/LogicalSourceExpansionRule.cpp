@@ -61,20 +61,22 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     for (auto& sourceOperator : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
-        std::vector<TopologyNodePtr> sourceLocations =
-            streamCatalog->getSourceNodesForLogicalStream(sourceDescriptor->getStreamName());
+        auto streamName = sourceDescriptor->getStreamName();
+        std::vector<TopologyNodePtr> sourceLocations = streamCatalog->getSourceNodesForLogicalStream(streamName);
         NES_TRACE("LogicalSourceExpansionRule: Found " << sourceLocations.size()
                                                        << " physical source locations in the topology.");
 
-        if(sourceLocations.empty()){
+        if (sourceLocations.empty()) {
             //Throw exception as this should never occur
+            throw Exception("LogicalSourceExpansionRule: Unable to find physical stream locations for the logical stream "
+                            + streamName);
         }
 
         removeConnectedBlockingOperators(sourceOperator);
         NES_TRACE("LogicalSourceExpansionRule: Create " << sourceLocations.size() - 1
                                                         << " duplicated logical sub-graph and add to original graph");
 
-        //Create one duplicate operator fro each physical source
+        //Create one duplicate operator for each physical source
         for (auto& sourceLocation : sourceLocations) {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
             OperatorNodePtr duplicateOperator = sourceOperator->duplicate();
@@ -100,7 +102,8 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                     for (auto blockingParentId : listOfConnectedBlockingParents) {
                         auto blockingOperator = blockingOperators[blockingParentId];
                         if (!blockingOperator) {
-                            //Throw an exception as this should never occur
+                            throw Exception("LogicalSourceExpansionRule: Unable to find blocking operator with id "
+                                            + std::to_string(blockingParentId));
                         }
                         blockingOperator->addChild(operatorNode);
                     }
@@ -132,6 +135,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const Operator
             // We use this information post expansion to re-add the connection later.
 
             if (!parent->removeChild(operatorNode)) {
+                throw Exception("LogicalSourceExpansionRule: Unable to remove non-blocking child operator from the blocking operator");
                 //Throw exception as we expect to freely add or remove nodes in a query plan
             }
 
