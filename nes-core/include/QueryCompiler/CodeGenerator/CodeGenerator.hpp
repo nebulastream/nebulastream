@@ -153,6 +153,10 @@ class CodeGenerator {
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) = 0;
 
+    virtual bool generateCodeForSliceStoreAppend(
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) = 0;
+
     virtual bool generateCodeForThreadLocalPreAggregationOperator(
         Windowing::LogicalWindowDefinitionPtr window,
         QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,

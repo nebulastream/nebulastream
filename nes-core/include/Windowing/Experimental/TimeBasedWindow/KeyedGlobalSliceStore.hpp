@@ -9,7 +9,7 @@
 #include <mutex>
 namespace NES::Windowing::Experimental {
 class KeyedSlice;
-using KeyedSlicePtr = std::shared_ptr<KeyedSlice>;
+using KeyedSliceSharedPtr = std::shared_ptr<KeyedSlice>;
 
 class KeyedGlobalSliceStore {
 
@@ -19,14 +19,14 @@ class KeyedGlobalSliceStore {
      * @param sliceIndex index of the slice
      * @param slice
      */
-    std::tuple<uint64_t, uint64_t> addSlice(uint64_t sequenceNumber, uint64_t sliceIndex, KeyedSlicePtr slice);
+    std::tuple<uint64_t, uint64_t> addSlice(uint64_t sequenceNumber, uint64_t sliceIndex, KeyedSliceSharedPtr slice);
 
     /**
      * @brief Looksup an individual slice by the slice index
      * @param sliceIndex index of the slice
      * @return KeyedSlicePtr
      */
-    KeyedSlicePtr getSlice(uint64_t sliceIndex);
+    KeyedSliceSharedPtr getSlice(uint64_t sliceIndex);
 
     /**
      * @brief Triggers a specific slice and garbage collects all slices
@@ -37,9 +37,10 @@ class KeyedGlobalSliceStore {
 
   private:
     std::mutex sliceStagingMutex;
-    std::map<uint64_t, KeyedSlicePtr> sliceMap;
+    std::map<uint64_t, KeyedSliceSharedPtr> sliceMap;
     WatermarkProcessor sliceAddSequenceLog;
     WatermarkProcessor sliceTriggerSequenceLog;
+    uint64_t slicesPerWindow;
 };
 
 }// namespace NES::Windowing::Experimental

@@ -668,9 +668,9 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
          * if(minWatermark < allowedLateness)
          *      minWatermark = 0
          */
-      //  TODO check if needed
+        //  TODO check if needed
         //auto zero = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "0");
-       // auto setWatermarkToZero = IF(VarRef(currentWatermarkVariableDeclaration) < Constant(tf->createValueType(
+        // auto setWatermarkToZero = IF(VarRef(currentWatermarkVariableDeclaration) < Constant(tf->createValueType(
         //                                 DataTypeFactory::createBasicValue(eventTimeWatermarkStrategy->getAllowedLateness()))),
         //                             VarRef(currentWatermarkVariableDeclaration).assign(VarRef(zero)));
         //context->code->currentCodeInsertionPoint->addStatement(setWatermarkToZero.createCopy());
@@ -1077,6 +1077,29 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
     }
     context->code->variableInitStmts.push_back(partitionLoop);
     return 0;
+}
+
+bool CCodeGenerator::generateCodeForSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) {
+    auto tf = getTypeFactory();
+    auto code = context->code;
+    auto globalSlice = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "globalSlice");
+
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedEventTimeWindowHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+    auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
+                                       .assign(VarRef(code->varDeclarationExecutionContext).accessRef(getOperatorHandlerCall));
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+    auto triggerSliceMergingCall = call("triggerSliceMerging");
+    triggerSliceMergingCall->addParameter(VarRef(code->varDeclarationWorkerContext));
+    triggerSliceMergingCall->addParameter(VarRef(code->varDeclarationExecutionContext));
+    triggerSliceMergingCall->addParameter(VarRef(globalSlice).accessPtr(call("getSliceIndex")));
+    triggerSliceMergingCall->addParameter(VarRef(globalSlice));
+    auto triggerSliceStatement = VarDeclStatement(windowOperatorHandlerDeclaration).accessRef(triggerSliceMergingCall);
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+    return true;
 }
 
 bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWindowDefinitionPtr window,

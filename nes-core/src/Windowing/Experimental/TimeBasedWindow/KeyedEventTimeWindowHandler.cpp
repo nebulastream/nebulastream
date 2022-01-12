@@ -97,6 +97,7 @@ void KeyedEventTimeWindowHandler::triggerSliceMerging(Runtime::WorkerContext& wc
     if (newMaxSliceIndex > oldMaxSliceIndex) {
         auto buffer = wctx.allocateTupleBuffer();
         auto task = buffer.getBuffer<WindowTriggerTask>();
+        // we trigger the compleation of all windows that end between startSlice and <= endSlice.
         task->startSlice = oldMaxSliceIndex;
         task->endSlice = newMaxSliceIndex;
         task->sequenceNumber = newMaxSliceIndex;

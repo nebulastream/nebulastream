@@ -79,7 +79,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForMap(AttributeFieldPtr field, LegacyExpressionPtr pred, PipelineContextPtr context) override;
-
+    bool generateCodeForSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) override;
     /**
     * @brief Code generation for an emit, which depends on a particular output schema.
     * @param schema The output schema.

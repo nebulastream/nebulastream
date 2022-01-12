@@ -16,5 +16,7 @@ add_source_nes(
         PhysicalKeyedSliceMergingOperator.cpp
         PhysicalKeyedThreadLocalPreAggregationOperator.cpp
         PhysicalKeyedTumblingWindowSink.cpp
+        PhysicalKeyedSlidingWindowSink.cpp
+        PhysicalKeyedGlobalSliceStoreAppendOperator.cpp
 )
 

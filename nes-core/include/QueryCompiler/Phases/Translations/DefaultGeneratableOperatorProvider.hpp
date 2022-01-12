@@ -114,6 +114,8 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
     void lowerKeyedThreadLocalSlicePreAggregation(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
     void lowerKeyedSliceMergingOperator(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
     void lowerKeyedTumblingWindowSink(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerKeyedSlidingWindowSink(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+    void lowerPhysicalKeyedGlobalSliceStoreAppendOperator(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
      * @brief Lowers a join build operator.
