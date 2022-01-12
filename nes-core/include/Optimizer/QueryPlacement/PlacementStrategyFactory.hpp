@@ -19,6 +19,7 @@
 
 #include <map>
 #include <memory>
+#include <Util/PlacementType.hpp>
 
 namespace z3 {
 class expr;
@@ -44,24 +45,11 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 namespace NES::Optimizer {
 
-enum NESPlacementStrategyType {
-    TopDown,
-    BottomUp,
-    IFCOP,
-    ILP,
-    // FIXME: enable them with issue #755
-    LowLatency,
-    HighThroughput,
-    MinimumResourceConsumption,
-    MinimumEnergyConsumption,
-    HighAvailability
-};
-
-static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategyType{
-    {"BottomUp", BottomUp},
-    {"TopDown", TopDown},
-    {"IFCOP", IFCOP},
-    {"ILP", ILP},
+static std::map<std::string, PlacementType> stringToPlacementStrategyType{
+    {"BottomUp", PlacementType::BottomUp},
+    {"TopDown", PlacementType::TopDown},
+    {"IFCOP", PlacementType::IFCOP},
+    {"ILP", PlacementType::ILP},
     // FIXME: enable them with issue #755
     //    {"Latency", LowLatency},
     //    {"HighThroughput", HighThroughput},

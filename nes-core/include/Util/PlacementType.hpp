@@ -22,10 +22,20 @@
 #include <unordered_map>
 
 namespace NES {
-enum class PlacementType : std::int8_t { TopDown = 0, BottomUp = 1 };
+enum class PlacementType : std::int8_t {
+    TopDown = 0,
+    BottomUp = 1,
+    IFCOP = 2,
+    ILP = 3,
+    // FIXME: enable them with issue #755
+    // LowLatency,
+    //  HighThroughput,
+    //  MinimumResourceConsumption,
+    //  MinimumEnergyConsumption,
+    // HighAvailability
+};
 
 std::string toString(const PlacementType placementType);
-
 
 }// namespace NES
 #endif//NES_PLACEMENTYPE_H
