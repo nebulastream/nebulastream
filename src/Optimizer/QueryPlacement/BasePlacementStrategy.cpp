@@ -45,9 +45,9 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
 
     NES_DEBUG("BasePlacementStrategy: Prepare a map of source to physical nodes");
 
+    QueryId queryId = queryPlan->getQueryId();
     //Clear the previous pinned operator mapping
     pinnedOperatorLocationMap.clear();
-
     //Fetch all source and sink operators for pinning
     auto sourceOperators = queryPlan->getSourceOperators();
     auto sinkOperators = queryPlan->getSinkOperators();
@@ -78,7 +78,8 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
     std::vector<NodePtr> rootNodes = selectedTopologyForPlacement[0]->getAllRootNodes();
     if (rootNodes.empty()) {
         NES_ERROR("BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
-        throw Exception("BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
+        throw QueryPlacementException(
+            queryId, "BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
     }
     //Fetch one root node and pin all sink operators to the node
     TopologyNodePtr rootNode = rootNodes[0]->as<TopologyNode>();
@@ -98,7 +99,8 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
 
         if (!topologyNode) {
             NES_ERROR("BasePlacementStrategy: unable to locate a node in the selected topology for placing the source operator.");
-            throw Exception(
+            throw QueryPlacementException(
+                queryId,
                 "BasePlacementStrategy: unable to locate a node in the selected topology for placing the source operator.");
         }
         pinnedOperatorLocationMap[sourceOperator->getId()] = topologyNode;
