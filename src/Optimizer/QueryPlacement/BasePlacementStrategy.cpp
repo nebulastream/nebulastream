@@ -59,7 +59,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
 
         auto value = sourceOperator->getProperty(PINNED_NODE_ID);
         if (!value.has_value()) {
-            //throw exception
+            throw Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical source operator.");
         }
         auto nodeId = std::any_cast<uint64_t>(value);
         auto nodeWithPhysicalStream = topology->findNodeWithId(nodeId);
@@ -91,12 +91,8 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
     //NOTE: This step pins all source nodes
     for (const auto& sourceOperator : sourceOperators) {
         auto value = sourceOperator->getProperty(PINNED_NODE_ID);
-        if (!value.has_value()) {
-            //throw exception
-        }
         auto nodeId = std::any_cast<uint64_t>(value);
         auto topologyNode = Topology::findTopologyNodeInSubgraphById(nodeId, selectedTopologyForPlacement);
-
         if (!topologyNode) {
             NES_ERROR("BasePlacementStrategy: unable to locate a node in the selected topology for placing the source operator.");
             throw QueryPlacementException(
