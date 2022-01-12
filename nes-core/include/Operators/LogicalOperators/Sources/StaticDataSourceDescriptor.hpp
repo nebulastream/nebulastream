@@ -21,7 +21,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/StaticDataSource.hpp>
 
-namespace NES {
+namespace NES::Experimental {
 /**
  * @brief Descriptor defining properties used for creating physical table source
  */

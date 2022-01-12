@@ -18,7 +18,7 @@
 #include <Sources/DataSource.hpp>
 #include <utility>
 
-namespace NES {
+namespace NES::Experimental {
 
 StaticDataSourceDescriptor::StaticDataSourceDescriptor(SchemaPtr schema, std::string pathTableFile)
 : SourceDescriptor(std::move(schema)), pathTableFile(std::move(pathTableFile)) {}

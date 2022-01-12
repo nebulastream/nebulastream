@@ -20,7 +20,7 @@
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 
-namespace NES {
+namespace NES::Experimental {
 
 /**
  * @brief A stream config for a static data source
