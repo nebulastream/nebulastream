@@ -89,7 +89,7 @@ bool NetworkManager::unregisterSubpartitionProducer(const NesPartition& nesParti
 NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation,
                                                                const NesPartition& nesPartition,
                                                                Runtime::BufferManagerPtr bufferManager,
-                                                               std::chrono::seconds waitTime,
+                                                               std::chrono::milliseconds waitTime,
                                                                uint8_t retryTimes) {
     NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
@@ -105,7 +105,7 @@ NetworkChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocatio
 EventOnlyNetworkChannelPtr NetworkManager::registerSubpartitionEventProducer(const NodeLocation& nodeLocation,
                                                                              const NesPartition& nesPartition,
                                                                              Runtime::BufferManagerPtr bufferManager,
-                                                                             std::chrono::seconds waitTime,
+                                                                             std::chrono::milliseconds waitTime,
                                                                              uint8_t retryTimes) {
     NES_INFO("NetworkManager: Registering SubpartitionEvent Producer: " << nesPartition.toString());
     return EventOnlyNetworkChannel::create(server->getContext(),

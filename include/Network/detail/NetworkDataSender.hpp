@@ -72,11 +72,11 @@ class NetworkDataSender : public BaseChannelType {
             zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()),
             kZmqSendDefault);
         if (sentBytesOpt.has_value()) {
-            NES_TRACE("DataChannel: Sending buffer with " << inputBuffer.getNumberOfTuples() << "/" << inputBuffer.getBufferSize()
+            NES_DEBUG("DataChannel: Sending buffer with " << inputBuffer.getNumberOfTuples() << "/" << inputBuffer.getBufferSize()
                                                           << "-" << inputBuffer.getOriginId());
             return true;
         }
-        NES_ERROR("DataChannel: Error sending buffer for " << this->channelId);
+        NES_DEBUG("DataChannel: Error sending buffer for " << this->channelId);
         return false;
     }
 };

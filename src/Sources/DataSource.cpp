@@ -224,7 +224,8 @@ void DataSource::open() { bufferManager = localBufferManager->createFixedSizeBuf
 void DataSource::close() {}
 
 void DataSource::runningRoutine() {
-
+    //TDOD startup delay
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
     if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
         runningRoutineWithFrequency();
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {

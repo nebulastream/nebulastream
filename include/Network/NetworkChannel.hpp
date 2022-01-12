@@ -82,7 +82,7 @@ class NetworkChannel : public detail::NetworkEventSender<detail::NetworkDataSend
                                     NesPartition nesPartition,
                                     ExchangeProtocol& protocol,
                                     Runtime::BufferManagerPtr bufferManager,
-                                    std::chrono::seconds waitTime,
+                                    std::chrono::milliseconds waitTime,
                                     uint8_t retryTimes);
 };
 
@@ -136,7 +136,7 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
                                              NesPartition nesPartition,
                                              ExchangeProtocol& protocol,
                                              Runtime::BufferManagerPtr bufferManager,
-                                             std::chrono::seconds waitTime,
+                                             std::chrono::milliseconds waitTime,
                                              uint8_t retryTimes);
 };
 
