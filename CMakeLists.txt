@@ -34,6 +34,7 @@ option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the sys
 option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
+option(NES_USE_LLD "Use LLD" OFF)
 
 
 if (NOT CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
@@ -126,7 +127,14 @@ set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-ide
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
-add_link_options("-fuse-ld=lld")
+
+if (NOT APPLE)
+    if (NES_USE_LLD)
+        message(STATUS "we use LLD for linking")
+        add_link_options("-fuse-ld=lld")
+    endif ()
+endif ()
+
 include(cmake/Sanitizers.cmake)
 
 if (ENABLE_IWYU)
