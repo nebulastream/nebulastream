@@ -35,6 +35,7 @@ option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 
+
 if (NOT CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
     message(FATAL_ERROR "Disabling CMAKE_USE_LATCH_FREE_BUFFER_MANAGER is not supported for now, please enable it")
 endif ()
@@ -117,8 +118,8 @@ endif ()
 if (NES_LOGGING_LEVEL)
     get_nes_log_level_value(NES_LOGGING_VALUE)
 else (NES_LOGGING_LEVEL)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_LOGGING_TRACE_LEVEL=1")
-    message("---Everything will be logged")
+    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_LOGGING_DEBUG_LEVEL=1")
+    message("---Debug log level is the default. Use NES_SPECIFIC_FLAGS to change log level")
 endif (NES_LOGGING_LEVEL)
 # Set Optimization Flags
 set(NES_WARNINGS "-Wall -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations ")
