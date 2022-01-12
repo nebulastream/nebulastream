@@ -26,16 +26,13 @@ TupleViewPtr TupleView::createTupleView(uint64_t id){
 };
 
 std::optional<Runtime::TupleBuffer> TupleView::receiveData(){
+    // TODO: check performance of mutex since it could be a bottleneck. Replace with a workerContext
     std::unique_lock<std::mutex> lock(mutex);
-    if(!queue.empty()){
-        NES_INFO("TupleView::receiveData: success. new queue size: " << queue.size());
-
-        auto elem = queue.front();
-        queue.pop();
-        return elem;
+    if(consumePosition < vector.size()){
+        NES_INFO("TupleView::receiveData: success. current consumePosition: " << consumePosition);
+        return vector[consumePosition++];
     } else {
-        NES_INFO("TupleView::receiveData: return nullopt. new queue size: " << queue.size());
-
+        NES_INFO("TupleView::receiveData: failed. current consumePosition: " << consumePosition);
         return std::nullopt;
     }
 };
@@ -46,8 +43,8 @@ bool TupleView::writeData(Runtime::TupleBuffer buffer){
         NES_ERROR("TupleView::writeData: input buffer invalid");
         return false;
     }
-    queue.push(buffer);
-    NES_INFO("TupleView::writeData: success. new queue size: " << queue.size());
+    vector.push_back(buffer);
+    NES_INFO("TupleView::writeData: success. new vector size: " << vector.size());
     return true;
 };
 
@@ -55,8 +52,9 @@ void TupleView::clear(){
     std::unique_lock<std::mutex> lock(mutex);
 
     // clear queue
-    std::queue<Runtime::TupleBuffer> empty;
-    std::swap(queue, empty);
+    std::vector<Runtime::TupleBuffer> empty;
+    std::swap(vector, empty);
+    consumePosition = 0;
 }
 
 } // namespace NES::Experimental::MaterializedView

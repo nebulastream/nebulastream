@@ -26,7 +26,8 @@ class TupleView;
 using TupleViewPtr = std::shared_ptr<TupleView>;
 
 /**
- * @brief this materialized view stores incomming tuples in a FIFO queue.
+ * @brief this materialized view stores incoming tuples as buffers.
+ * @note this experimental mv allows only one consumer
  */
 class TupleView : public MaterializedView {
 
@@ -54,7 +55,9 @@ public:
 
 private:
     mutable std::mutex mutex;
-    std::queue<Runtime::TupleBuffer> queue;
+    std::vector<Runtime::TupleBuffer> vector;
+    // current position to receive data from. It is currently shared between all consumers
+    uint64_t consumePosition = 0;
 
 }; // class TupleView
 } // namespace NES::Experimental::MaterializedView
