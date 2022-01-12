@@ -80,7 +80,7 @@ class AndOperatorTest : public testing::Test {
 };
 
 /* 1.Test
- * Here, we test if we can use and operator without any additional operator
+ * AND operator standalone with Tumbling Window
  */
 TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     coConf->resetCoordinatorOptions();
@@ -179,7 +179,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
 }
 
 /* 2.Test
- * Here, we test if we can use and operator for patterns in combination with filter
+ * And operator in combination with filter
  */
 TEST_F(AndOperatorTest, testPatternOneAnd) {
     coConf->resetCoordinatorOptions();
@@ -292,7 +292,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
 }
 
 /* 3. Test
- * Here, we test if we can use and operator with sliding window (5 Minutes, 1 Minute) for patterns and create complex events with it
+ * And operator in combination with sliding window, currently disabled as output is inconsistent
  * TODO: sliding windows create different outputs #2357
  */
 TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
@@ -397,7 +397,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
 }
 
 /* 4.Test
- * Here, we test if we can use and operator with isEarlyTermination for patterns and create complex events with it
+ * And Operator in combination with early termination strategy, currently disabled as early termination implementation is in PR
  */
 //TODO Ariane issue 2339
 TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
@@ -513,7 +513,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
 }
 
 /* 5.Test
- * Here, we test if we can use and operator for patterns and create complex events with it
+ * Multi-AND Operators in one Query
  */
 //TODO Ariane issue 2303
 TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
@@ -538,26 +538,6 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
-
-    //    NES_INFO("QueryDeploymentTest: Start worker 2");
-    //    wrkConf->setCoordinatorPort(port);
-    //    wrkConf->setRpcPort(port + 20);
-    //    wrkConf->setDataPort(port + 21);
-    //    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
-    //    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    //    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    //    EXPECT_TRUE(retStart2);
-    //    NES_INFO("SimplePatternTest: Worker2 started successfully");
-    //
-    //    NES_INFO("QueryDeploymentTest: Start worker 3");
-    //    wrkConf->setCoordinatorPort(port);
-    //    wrkConf->setRpcPort(port + 30);
-    //    wrkConf->setDataPort(port + 31);
-    //    wrkConf->setQueryCompilerCompilationStrategy("DEBUG");
-    //    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    //    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-    //    EXPECT_TRUE(retStart3);
-    //    NES_INFO("SimplePatternTest: Worker3 started successfully");
 
     std::string outputFilePath = "testMultiAndPatternWithTestStream.out";
     remove(outputFilePath.c_str());
@@ -662,7 +642,6 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
         "1543622580000|73.166664|5|1|R2000070|1543622640000|70.222221|7|1|\n"
         "+----------------------------------------------------+";
 
-    //EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
     NES_INFO("QueryDeploymentTest: Remove query");
 
     queryService->validateAndQueueStopRequest(queryId);
@@ -675,16 +654,9 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     NES_DEBUG("contents=" << content);
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
-    //    NES_INFO("SimplePatternTest: Remove query");
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-
-    //    bool retStopWrk2 = wrk2->stop(false);
-    //    EXPECT_TRUE(retStopWrk2);
-    //
-    //    bool retStopWrk3 = wrk3->stop(false);
-    //    EXPECT_TRUE(retStopWrk3);
 
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);

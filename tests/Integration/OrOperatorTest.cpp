@@ -72,7 +72,7 @@ class OrOperatorTest : public testing::Test {
 };
 
 /* 1.Test
- * Here, we test simplest case for the OR operator, combining two streams
+ * OR operator standalone
  */
 TEST_F(OrOperatorTest, testPatternOneOr) {
     coConf->resetCoordinatorOptions();
@@ -175,7 +175,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
 }
 
 /* 2.Test
- * Here, we test if we can use union operator in combination with other operators, i.e., map and filter
+ * OR operator in combination with additional map and filter
  */
 TEST_F(OrOperatorTest, testPatternOrMap) {
     coConf->resetCoordinatorOptions();
@@ -282,7 +282,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
 }
 
 /* 3.Test
- * Here, we test if we can use multi or operator for patterns and create complex events with it
+ * Multi-OR Operators in one Query
  * TODO OR(C,OR(A,B)) second Or does not work due to schema mismatch #2398
  */
 TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
@@ -412,8 +412,8 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
 }
 
 
-/* 6.Test
- * Here, we test if we can use and operator for patterns and create complex events with it
+/* 4.Test
+ * OR Operators with filters left and right stream
  */
 TEST_F(OrOperatorTest, testOrPatternFilter) {
     coConf->resetCoordinatorOptions();
