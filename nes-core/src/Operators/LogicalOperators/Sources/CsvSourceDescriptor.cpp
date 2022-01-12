@@ -20,14 +20,14 @@
 
 namespace NES {
 
-CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfig)
+CsvSourceDescriptor::CsvSourceDescriptor(SchemaPtr schema, Configurations::CSVSourceTypeConfigPtr sourceConfig)
     : SourceDescriptor(std::move(schema)), sourceConfig(std::move(sourceConfig)) {}
 
-SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, Configurations::CSVSourceConfigPtr sourceConfigPtr) {
+SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema, Configurations::CSVSourceTypeConfigPtr sourceConfigPtr) {
     return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(std::move(schema), std::move(sourceConfigPtr)));
 }
 
-Configurations::CSVSourceConfigPtr CsvSourceDescriptor::getSourceConfig() const { return sourceConfig; }
+Configurations::CSVSourceTypeConfigPtr CsvSourceDescriptor::getSourceConfig() const { return sourceConfig; }
 
 bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     if (!other->instanceOf<CsvSourceDescriptor>()) {
@@ -38,9 +38,7 @@ bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 }
 
 std::string CsvSourceDescriptor::toString() {
-    return "CsvSourceDescriptor(" + sourceConfig->getFilePath()->getValue() + "," + sourceConfig->getDelimiter()->getValue()
-        + ", " + std::to_string(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()) + ", "
-        + std::to_string(std::chrono::milliseconds(sourceConfig->getSourceFrequency()->getValue()).count()) + "ms)";
+    return "CsvSourceDescriptor(" + sourceConfig->toString() + ")";
 }
 
 }// namespace NES

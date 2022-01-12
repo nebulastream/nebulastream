@@ -44,6 +44,13 @@ class KafkaSourceTypeConfig : public SourceTypeConfig {
 
     /**
      * @brief create a KafkaSourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return KafkaSourceConfigPtr
+     */
+    static KafkaSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+
+    /**
+     * @brief create a KafkaSourceConfigPtr object
      * @return KafkaSourceConfigPtr
      */
     static KafkaSourceTypeConfigPtr create();
@@ -120,6 +127,11 @@ class KafkaSourceTypeConfig : public SourceTypeConfig {
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
      */
     explicit KafkaSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
+     */
+    explicit KafkaSourceTypeConfig(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief constructor to create a new Kafka source config object initialized with default values

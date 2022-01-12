@@ -36,9 +36,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
      */
-    explicit MemorySourceStreamConfig(std::string sourceType,
-                                      std::string physicalStreamName,
-                                      std::string logicalStreamName,
+    explicit MemorySourceStreamConfig(const Configurations::PhysicalStreamTypeConfigPtr& physicalStreamTypeConfig,
                                       uint8_t* memoryArea,
                                       size_t memoryAreaSize,
                                       uint64_t numBuffersToProcess,
@@ -61,24 +59,6 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
     std::string toString() override;
 
     /**
-    * @brief The source type as a string
-    * @return The source type as a string
-    */
-    std::string getSourceType() override;
-
-    /**
-     * @brief Provides the physical stream name of the source
-     * @return the physical stream name of the source
-     */
-    std::string getPhysicalStreamName() override;
-
-    /**
-     * @brief Provides the logical stream name of the source
-     * @return the logical stream name of the source
-     */
-    std::string getLogicalStreamName() override;
-
-    /**
      * @brief Factory method of MemorySourceStreamConfig
       * @param sourceType the type of the source
      * @param physicalStreamName the name of the physical stream
@@ -87,9 +67,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      * @return a constructed MemorySourceStreamConfig
      */
-    static AbstractPhysicalStreamConfigPtr create(const std::string& sourceType,
-                                                  const std::string& physicalStreamName,
-                                                  const std::string& logicalStreamName,
+    static AbstractPhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypeConfigPtr& physicalStreamTypeConfig,
                                                   uint8_t* memoryArea,
                                                   size_t memoryAreaSize,
                                                   uint64_t numBuffersToProcess,
@@ -97,7 +75,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                                   const std::string& gatheringMode);
 
   private:
-    std::string sourceType;
+    Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t gatheringValue;

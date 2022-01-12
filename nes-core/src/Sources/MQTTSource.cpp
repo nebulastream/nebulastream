@@ -48,7 +48,7 @@ namespace NES {
 MQTTSource::MQTTSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       const Configurations::MQTTSourceConfigPtr& sourceConfig,
+                       const Configurations::MQTTSourceTypeConfigPtr& sourceConfig,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,

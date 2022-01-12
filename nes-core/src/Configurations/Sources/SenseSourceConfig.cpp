@@ -24,29 +24,44 @@ namespace NES {
 
 namespace Configurations {
 
-std::shared_ptr<SenseSourceTypeConfig> SenseSourceTypeConfig::create(std::map<std::string, std::string> sourceConfigMap) {
+SenseSourceTypeConfigPtr SenseSourceTypeConfig::create(std::map<std::string, std::string> sourceConfigMap) {
     return std::make_shared<SenseSourceTypeConfig>(SenseSourceTypeConfig(std::move(sourceConfigMap)));
 }
 
-std::shared_ptr<SenseSourceTypeConfig> SenseSourceTypeConfig::create() {
+SenseSourceTypeConfigPtr SenseSourceTypeConfig::create(ryml::NodeRef sourcTypeConfig) {
+    return std::make_shared<SenseSourceTypeConfig>(SenseSourceTypeConfig(std::move(sourcTypeConfig)));
+}
+
+SenseSourceTypeConfigPtr SenseSourceTypeConfig::create() {
     return std::make_shared<SenseSourceTypeConfig>(SenseSourceTypeConfig());
 }
 
 SenseSourceTypeConfig::SenseSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
-    : SourceTypeConfig(sourceConfigMap, SENSE_SOURCE_CONFIG),
+    : SourceTypeConfig(SENSE_SOURCE_CONFIG),
       udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
-    /*if (sourceConfigMap.find(SENSE_SOURCE_UDFS_CONFIG) != sourceConfigMap.end()) {
-        udfs->setValue(sourceConfigMap.find(SENSE_SOURCE_UDFS_CONFIG)->second);
+    if (sourceConfigMap.find(UDFS_CONFIG) != sourceConfigMap.end()) {
+        udfs->setValue(sourceConfigMap.find(UDFS_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no udfs defined! Please define a udfs.");
-    }*/
+    }
+}
+
+SenseSourceTypeConfig::SenseSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
+    : SourceTypeConfig(SENSE_SOURCE_CONFIG),
+      udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
+    NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
+    if (sourcTypeConfig.find_child(ryml::to_csubstr (UDFS_CONFIG)).has_val()) {
+        udfs->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (UDFS_CONFIG)).val().str);
+    } else {
+        NES_THROW_RUNTIME_ERROR("SenseSourceTypeConfig:: no udfs defined! Please define a udfs.");
+    }
 }
 
 SenseSourceTypeConfig::SenseSourceTypeConfig()
     : SourceTypeConfig(SENSE_SOURCE_CONFIG),
       udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
-    NES_INFO("SenseSourceConfig: Init source config object with default values.");
+    NES_INFO("SenseSourceTypeConfig: Init source config object with default values.");
 }
 
 void SenseSourceTypeConfig::resetSourceOptions() {
@@ -56,7 +71,7 @@ void SenseSourceTypeConfig::resetSourceOptions() {
 
 std::string SenseSourceTypeConfig::toString() {
     std::stringstream ss;
-    ss << udfs->toStringNameCurrentValue();
+    ss << UDFS_CONFIG + ":" + udfs->toStringNameCurrentValue();
     ss << SourceTypeConfig::toString();
     return ss.str();
 }

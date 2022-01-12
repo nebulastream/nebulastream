@@ -18,6 +18,7 @@
 #define NES_INCLUDE_CATALOGS_ABSTRACT_PHYSICAL_STREAM_CONFIG_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
 
 namespace NES {
 
@@ -41,22 +42,11 @@ class AbstractPhysicalStreamConfig {
     virtual std::string toString() = 0;
 
     /**
-     * @brief The source type as a string
-     * @return The source type as a string
+     * @brief The physicalStreamTypeConfiguration Object with all needed configurations
+     * @return The physicalStreamTypeConfiguration
      */
-    virtual std::string getSourceType() = 0;
+    virtual Configurations::PhysicalStreamTypeConfigPtr getPhysicalStreamTypeConfig() = 0;
 
-    /**
-     * @brief Provides the physical stream name of the source
-     * @return the physical stream name of the source
-     */
-    virtual std::string getPhysicalStreamName() = 0;
-
-    /**
-     * @brief Provides the logical stream name of the source
-     * @return the logical stream name of the source
-     */
-    virtual std::string getLogicalStreamName() = 0;
 };
 
 using AbstractPhysicalStreamConfigPtr = std::shared_ptr<AbstractPhysicalStreamConfig>;

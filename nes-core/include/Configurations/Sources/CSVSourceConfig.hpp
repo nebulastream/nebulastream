@@ -44,6 +44,13 @@ class CSVSourceConfig : public SourceConfig {
 
     /**
      * @brief create a CSVSourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return CSVSourceConfigPtr
+     */
+    static CSVSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+
+    /**
+     * @brief create a CSVSourceConfigPtr object
      * @return CSVSourceConfigPtr
      */
     static CSVSourceConfigPtr create();
@@ -142,6 +149,11 @@ class CSVSourceConfig : public SourceConfig {
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
     explicit CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
+     */
+    explicit CSVSourceTypeConfig(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with default values

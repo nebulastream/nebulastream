@@ -43,6 +43,13 @@ class DefaultSourceTypeConfig : public SourceTypeConfig {
     static DefaultSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
+     * @brief create a DefaultSourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return DefaultSourceConfigPtr
+     */
+    static DefaultSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+
+    /**
      * @brief create defaultSourceConfig with default values
      * @return defaultSourceConfig with default values
      */
@@ -74,6 +81,16 @@ class DefaultSourceTypeConfig : public SourceTypeConfig {
      */
     void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
+    /**
+     * @brief gets a ConfigOption object with sourceFrequency
+     */
+    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getSourceFrequency() const;
+
+    /**
+     * @brief set the value for sourceFrequency with the appropriate data format
+     */
+    void setSourceFrequency(uint32_t sourceFrequencyValue);
+
   private:
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for configs
@@ -81,10 +98,16 @@ class DefaultSourceTypeConfig : public SourceTypeConfig {
     explicit DefaultSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
 
     /**
+     * @brief constructor to create a new Default source config object using the sourceConfigMap for configs
+     */
+    explicit DefaultSourceTypeConfig(ryml::NodeRef sourceTypeConfig);
+
+    /**
      * @brief constructor to create a new Default source config object initialized with default values
      */
     DefaultSourceTypeConfig();
     IntConfigOption numberOfBuffersToProduce;
+    IntConfigOption sourceFrequency;
 
 };
 }// namespace Configurations

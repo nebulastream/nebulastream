@@ -39,13 +39,20 @@ class SenseSourceTypeConfig : public SourceTypeConfig {
      * @param sourceConfigMap inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static SenseSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create a SenseSourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return SenseSourceConfigPtr
+     */
+    static SenseSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceConfigPtr create();
+    static SenseSourceTypeConfigPtr create();
 
     ~SenseSourceTypeConfig() override = default;
 
@@ -80,7 +87,12 @@ class SenseSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    explicit SenseSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
+    SenseSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
+     */
+    SenseSourceTypeConfig(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with default values

@@ -44,6 +44,13 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
 
     /**
      * @brief create a OPCSourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return OPCSourceConfigPtr
+     */
+    static OPCSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+
+    /**
+     * @brief create a OPCSourceConfigPtr object
      * @return OPCSourceConfigPtr
      */
     static OPCSourceTypeConfigPtr create();
@@ -109,6 +116,11 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
     explicit OPCSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
+     */
+    explicit OPCSourceTypeConfig(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with default values

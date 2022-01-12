@@ -24,44 +24,13 @@ namespace NES {
 
 namespace Configurations {
 
-SourceTypeConfig::SourceTypeConfig(std::map<std::string, std::string> sourceConfigMap, std::string _sourceType)
+SourceTypeConfig::SourceTypeConfig(std::string _sourceType)
     :
       sourceType(ConfigOption<std::string>::create(SOURCE_TYPE_CONFIG,
                                                    std::move(_sourceType),
                                                    "Type of the Source (available options: NoSource, DefaultSource, CSVSource, "
                                                    "BinarySource, MQTTSource, KafkaSource, OPCSource).")) {
     NES_INFO("NesSourceConfig: Init source config object with new values.");
-
-    if (sourceConfigMap.find(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
-        numberOfBuffersToProduce->setValue(std::stoi(sourceConfigMap.find(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
-    }
-    if (sourceConfigMap.find(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG) != sourceConfigMap.end()) {
-        numberOfTuplesToProducePerBuffer->setValue(
-            std::stoi(sourceConfigMap.find(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
-    }
-    if (sourceConfigMap.find(PHYSICAL_STREAM_NAME_CONFIG) != sourceConfigMap.end()) {
-        physicalStreamName->setValue(sourceConfigMap.find(PHYSICAL_STREAM_NAME_CONFIG)->second);
-    }
-    if (sourceConfigMap.find(LOGICAL_STREAM_NAME_CONFIG) != sourceConfigMap.end()) {
-        logicalStreamName->setValue(sourceConfigMap.find(LOGICAL_STREAM_NAME_CONFIG)->second);
-    }
-    if (sourceConfigMap.find(SOURCE_FREQUENCY_CONFIG) != sourceConfigMap.end()) {
-        sourceFrequency->setValue(std::stoi(sourceConfigMap.find(SOURCE_FREQUENCY_CONFIG)->second));
-    }
-    if (sourceConfigMap.find(INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
-        inputFormat->setValue(sourceConfigMap.find(INPUT_FORMAT_CONFIG)->second);
-    }
-    if (sourceConfigMap.find(SOURCE_TYPE_CONFIG) != sourceConfigMap.end()) {
-        sourceType->setValue(sourceConfigMap.find(SOURCE_TYPE_CONFIG)->second);
-    }
-}
-
-SourceTypeConfig::SourceTypeConfig(std::string _sourceType)
-    : sourceType(
-          ConfigOption<std::string>::create(SOURCE_TYPE_CONFIG,
-                                            std::move(_sourceType),
-                                            "Type of the Source (available options: DefaultSource, CSVSource, BinarySource).")) {
-    NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
 void SourceTypeConfig::resetSourceOptions(std::string _sourceType) {
@@ -70,7 +39,7 @@ void SourceTypeConfig::resetSourceOptions(std::string _sourceType) {
 
 std::string SourceTypeConfig::toString() {
     std::stringstream ss;
-    ss << sourceType->toStringNameCurrentValue();
+    ss << SOURCE_TYPE_CONFIG + ":" + sourceType->toStringNameCurrentValue();
     return ss.str();
 }
 

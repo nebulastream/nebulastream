@@ -35,8 +35,8 @@ namespace Configurations {
 const std::string PHYSICAL_STREAM_NAME_CONFIG = "physicalStreamName";
 const std::string LOGICAL_STREAM_NAME_CONFIG = "logicalStreamName";
 
-class PhysicalStreamConfig;
-using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
+class PhysicalStreamTypeConfig;
+using PhysicalStreamTypeConfigPtr = std::shared_ptr<PhysicalStreamTypeConfig>;
 
 template<class T>
 class ConfigOption;
@@ -45,22 +45,35 @@ using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
 /**
  * @brief Configuration object for source config
  */
-class PhysicalStreamConfig : public std::enable_shared_from_this<PhysicalStreamConfig> {
+class PhysicalStreamTypeConfig : public std::enable_shared_from_this<PhysicalStreamTypeConfig> {
 
   public:
+
     /**
      * @brief create a PhysicalStreamConfigPtr object
      * @return PhysicalStreamConfigPtr
      */
-    static PhysicalStreamConfigPtr create();
+    static PhysicalStreamTypeConfigPtr create(const std::map<std::string, std::string>& inputParams);
 
     /**
-     * @brief constructor to create a new source option object initialized with values from sourceConfigMap
+     * @brief create a PhysicalStreamConfigPtr object
+     * @return PhysicalStreamConfigPtr
      */
-    explicit PhysicalStreamConfig();
+    static PhysicalStreamTypeConfigPtr create(ryml::NodeRef physicalStreamConfigNode);
 
+    /**
+     * @brief create a PhysicalStreamConfigPtr object
+     * @return PhysicalStreamConfigPtr
+     */
+    static PhysicalStreamTypeConfigPtr create(std::string sourceType);
 
-    ~PhysicalStreamConfig() = default;
+    /**
+     * @brief create a PhysicalStreamConfigPtr object
+     * @return PhysicalStreamConfigPtr
+     */
+    static PhysicalStreamTypeConfigPtr create();
+
+    ~PhysicalStreamTypeConfig() = default;
 
     /**
      * @brief resets all options to default values
@@ -77,7 +90,7 @@ class PhysicalStreamConfig : public std::enable_shared_from_this<PhysicalStreamC
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(PhysicalStreamConfigPtr const& other);
+    bool equal(PhysicalStreamTypeConfigPtr const& other);
 
     /**
      * @brief gets a ConfigOption object with physicalStreamName
@@ -100,37 +113,29 @@ class PhysicalStreamConfig : public std::enable_shared_from_this<PhysicalStreamC
     void setLogicalStreamName(std::string logicalStreamName);
 
     const SourceTypeConfigPtr& getSourceTypeConfig() const;
-    void setSourceTypeConfig(const SourceTypeConfigPtr& sourceTypeConfig);
-
-    /**
-     * @brief Checks if the current Source is of type SourceConfig
-     * @tparam SourceConfig
-     * @return bool true if Source is of SourceConfig
-     */
-    template<class PhysicalStreamConfig>
-    bool instanceOf() {
-        if (dynamic_cast<PhysicalStreamConfig*>(this)) {
-            return true;
-        };
-        return false;
-    };
-
-    /**
-    * @brief Dynamically casts the Source to a SourceConfigType
-    * @tparam SourceConfigType
-    * @return returns a shared pointer of the SourceConfigType
-    */
-    template<class PhysicalStreamConfig>
-    std::shared_ptr<PhysicalStreamConfig> as() {
-        if (instanceOf<PhysicalStreamConfig>()) {
-            return std::dynamic_pointer_cast<PhysicalStreamConfig>(this->shared_from_this());
-        }
-        throw std::logic_error("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
-                               + typeid(PhysicalStreamConfig).name());
-        return nullptr;
-    }
+    void setSourceTypeConfig(const SourceTypeConfigPtr& sourceTypeConfigValue);
 
   private:
+    /**
+     * @brief constructor to create a new source option object initialized with values from sourceConfigMap
+     */
+    explicit PhysicalStreamTypeConfig(const std::map<std::string, std::string>& inputParams);
+
+    /**
+     * @brief constructor to create a new source option object initialized with values from sourceConfigMap
+     */
+    explicit PhysicalStreamTypeConfig(ryml::NodeRef physicalStreamConfigNode);
+
+    /**
+     * @brief constructor to create a new source option object initialized with values from sourceConfigMap
+     */
+    explicit PhysicalStreamTypeConfig(std::string sourceType);
+
+    /**
+     * @brief constructor to create a new source option object initialized with values from sourceConfigMap
+     */
+    explicit PhysicalStreamTypeConfig();
+
     StringConfigOption physicalStreamName;
     StringConfigOption logicalStreamName;
     SourceTypeConfigPtr sourceTypeConfig;

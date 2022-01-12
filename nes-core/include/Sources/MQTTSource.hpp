@@ -23,6 +23,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <Configurations/Worker/PhysicalStreamConfig/MQTTSourceTypeConfig.hpp>
 
 namespace mqtt {
 class async_client;
@@ -30,9 +31,6 @@ using async_clientPtr = std::shared_ptr<async_client>;
 }// namespace mqtt
 
 namespace NES {
-
-class MQTTSourceConfig;
-using MQTTSourceConfigPtr = std::shared_ptr<MQTTSourceConfig>;
 
 class TupleBuffer;
 /**
@@ -54,7 +52,7 @@ class MQTTSource : public DataSource {
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
-                        const Configurations::MQTTSourceConfigPtr& sourceConfig,
+                        const Configurations::MQTTSourceTypeConfigPtr& sourceConfig,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
@@ -143,7 +141,7 @@ class MQTTSource : public DataSource {
      * @brief getter for source config
      * @return sourceConfig
      */
-    const Configurations::MQTTSourceConfigPtr& getSourceConfigPtr() const;
+    const Configurations::MQTTSourceTypeConfigPtr& getSourceConfigPtr() const;
 
   private:
     /**
@@ -170,7 +168,7 @@ class MQTTSource : public DataSource {
      * serialization/deserialization process
      */
     friend class DataSource;
-    Configurations::MQTTSourceConfigPtr sourceConfigPtr;
+    Configurations::MQTTSourceTypeConfigPtr sourceConfigPtr;
     bool connected;
     std::string serverAddress;
     std::string clientId;
