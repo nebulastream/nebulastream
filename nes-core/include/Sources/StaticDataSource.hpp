@@ -77,7 +77,7 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
 
   private:
     std::string pathTableFile;
-    uint64_t numberOfTuplesToProducePerBuffer;
+    uint64_t numTuplesPerBuffer;
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
     uint64_t currentPositionInBytes;
