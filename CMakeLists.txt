@@ -364,12 +364,12 @@ if (NES_USE_MQTT)
 endif (NES_USE_MQTT)
 
 # Eigen 3.3 linear algebra library
-if (NES_USE_ADAPTIVE)
+if (NES_USE_ADAPTIVE_SAMPLING)
     find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
     set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
-    message("Adaptive dependencies OK")
-    add_compile_definitions(ENABLE_ADAPTIVE_BUILD)
-endif (NES_USE_ADAPTIVE)
+    message("Adaptive sampling dependencies OK")
+    add_compile_definitions(ENABLE_ADAPTIVE_SAMPLING)
+endif (NES_USE_ADAPTIVE_SAMPLING)
 
 if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)

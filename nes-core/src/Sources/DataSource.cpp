@@ -68,7 +68,7 @@ DataSource::DataSource(SchemaPtr pSchema,
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
-#ifdef ENABLE_ADAPTIVE_BUILD
+#ifdef ENABLE_ADAPTIVE_SAMPLING
     this->kFilter.setDefaultValues();
 #endif
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
@@ -436,7 +436,7 @@ void DataSource::runningRoutineAdaptive() {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
 
-#ifdef ENABLE_ADAPTIVE_BUILD
+#ifdef ENABLE_ADAPTIVE_SAMPLING
     // TODO: add issue to remove the ifdef in the project
     // TODO: add issue to properly parameterize frequency range and defaults
     this->kFilter.setFrequency(this->gatheringInterval);
@@ -493,7 +493,7 @@ void DataSource::runningRoutineAdaptive() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
-#ifdef ENABLE_ADAPTIVE_BUILD
+#ifdef ENABLE_ADAPTIVE_SAMPLING
                 // TODO: handle "continuous" case (interval == 0)
                 if (this->gatheringInterval.count() != 0) {
                     this->kFilter.updateFromTupleBuffer(buf);
