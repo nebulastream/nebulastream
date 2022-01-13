@@ -5,12 +5,13 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedEventTimeWindowHandler.hpp>
 #include <memory>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-class PhysicalKeyedSlidingWindowSink : public PhysicalUnaryOperator {
+class PhysicalKeyedSlidingWindowSink : public PhysicalUnaryOperator, public AbstractScanOperator , public AbstractEmitOperator {
   public:
     PhysicalKeyedSlidingWindowSink(
         OperatorId id,

@@ -62,9 +62,9 @@ void GeneratableKeyedSlidingWindowSink::generateOpen(CodeGeneratorPtr, PipelineC
 }
 
 void GeneratableKeyedSlidingWindowSink::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto handler = context->getHandlerIndex(windowHandler);
+    auto handler = context->registerOperatorHandler(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
-    codegen->generateCodeForKeyedTumblingWindowSink(windowDefinition, windowAggregation, context, handler, outputSchema);
+    codegen->generateCodeForKeyedSlidingWindowSink(windowDefinition, windowAggregation, context, handler, outputSchema);
 }
 
 std::string GeneratableKeyedSlidingWindowSink::toString() const { return "GeneratableKeyedSlidingWindowSink"; }

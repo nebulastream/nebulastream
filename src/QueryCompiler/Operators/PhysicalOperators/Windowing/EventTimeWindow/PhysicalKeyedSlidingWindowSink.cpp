@@ -9,16 +9,12 @@ PhysicalKeyedSlidingWindowSink::PhysicalKeyedSlidingWindowSink(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(), AbstractEmitOperator(),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
 
-std::string PhysicalKeyedSlidingWindowSink::toString() const {
-    return "PhysicalKeyedSlidingWindowSink";
-}
+std::string PhysicalKeyedSlidingWindowSink::toString() const { return "PhysicalKeyedSlidingWindowSink"; }
 
-OperatorNodePtr PhysicalKeyedSlidingWindowSink::copy() {
-    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler);
-}
+OperatorNodePtr PhysicalKeyedSlidingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

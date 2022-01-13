@@ -62,6 +62,11 @@ class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler, 
     NES::Experimental::Hashmap getHashMap();
     KeyedSlicePtr createKeyedSlice(uint64_t sliceIndex);
 
+    void triggerSliceMerging(Runtime::WorkerContext& wctx,
+                             Runtime::Execution::PipelineExecutionContext& ctx,
+                             uint64_t sequenceNumber,
+                             KeyedSlicePtr slice);
+
   private:
     std::atomic<bool> isRunning;
     uint64_t sliceSize;
@@ -71,10 +76,7 @@ class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler, 
     std::shared_ptr<::NES::Experimental::LockFreeMultiOriginWatermarkProcessor> watermarkProcessor;
     const Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
-    void triggerSliceMerging(Runtime::WorkerContext& wctx,
-                             Runtime::Execution::PipelineExecutionContext& ctx,
-                             uint64_t sequenceNumber,
-                             KeyedSlicePtr slice);
+
 };
 
 }// namespace NES::Windowing::Experimental

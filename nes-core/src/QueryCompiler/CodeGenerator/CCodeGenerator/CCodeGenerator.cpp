@@ -1091,15 +1091,76 @@ bool CCodeGenerator::generateCodeForSliceStoreAppend(PipelineContextPtr context,
     getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
     auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
                                        .assign(VarRef(code->varDeclarationExecutionContext).accessRef(getOperatorHandlerCall));
-    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+   // context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
     auto triggerSliceMergingCall = call("triggerSliceMerging");
     triggerSliceMergingCall->addParameter(VarRef(code->varDeclarationWorkerContext));
     triggerSliceMergingCall->addParameter(VarRef(code->varDeclarationExecutionContext));
-    triggerSliceMergingCall->addParameter(VarRef(globalSlice).accessPtr(call("getSliceIndex")));
+    triggerSliceMergingCall->addParameter(VarRef(globalSlice).accessPtr(call("getIndex")));
     triggerSliceMergingCall->addParameter(VarRef(globalSlice));
-    auto triggerSliceStatement = VarDeclStatement(windowOperatorHandlerDeclaration).accessRef(triggerSliceMergingCall);
-    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+    auto triggerSliceStatement = VarRefStatement(windowOperatorHandlerDeclaration).accessPtr(triggerSliceMergingCall);
+    context->code->variableInitStmts.push_back(triggerSliceStatement.copy());
     return true;
+}
+
+bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(
+    Windowing::LogicalWindowDefinitionPtr window,
+    GeneratableOperators::GeneratableWindowAggregationPtr aggregation,
+    PipelineContextPtr context,
+    uint64_t windowOperatorIndex,
+    SchemaPtr) {
+    auto tf = getTypeFactory();
+    auto code = context->code;
+    auto td = context->code;
+    StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, aggregation);
+    context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
+
+    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    auto physicalKeyType = tf->createDataType(keyStamp);
+    auto keyVariableDeclaration = partialAggregationEntry.getVariableDeclaration(window->getOnKey()->getFieldName());
+
+    auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
+    auto workerContextType = tf->createAnonymusDataType("Runtime::WorkerContext");
+    VariableDeclaration varDeclarationInputBuffer =
+        VariableDeclaration::create(tf->createReference(tupleBufferType), "inputTupleBuffer");
+
+    VariableDeclaration varDeclarationPipelineExecutionContext =
+        VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+
+    VariableDeclaration varDeclarationWorkerContext =
+        VariableDeclaration::create(tf->createReference(workerContextType), "workerContext");
+
+    code->varDeclarationInputBuffer = varDeclarationInputBuffer;
+    code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
+    code->varDeclarationWorkerContext = varDeclarationWorkerContext;
+
+    /* ExecutionResult ret = Ok; */
+    // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
+    code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
+        VariableDeclaration::create(tf->createAnonymusDataType("ExecutionResult"),
+                                    "ret",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"))
+            .copy());
+    code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
+
+    code->returnStmt = ReturnStatement::create(VarRefStatement(*code->varDeclarationReturnValue).createCopy());
+
+    auto mergeTask = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "mergeTask");
+    code->variableInitStmts.push_back(
+        VarDeclStatement(mergeTask)
+            .assign(TypeCast(getBuffer(code->varDeclarationInputBuffer),
+                             tf->createAnonymusDataType("NES::Windowing::Experimental::WindowTriggerTask*")))
+            .copy());
+    auto windowOperatorHandlerDeclaration =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowOperatorHandler");
+    auto getOperatorHandlerCall = call("getOperatorHandler<Windowing::Experimental::KeyedEventTimeWindowHandler>");
+    auto constantOperatorHandlerIndex = Constant(tf->createValueType(DataTypeFactory::createBasicValue(windowOperatorIndex)));
+    getOperatorHandlerCall->addParameter(constantOperatorHandlerIndex);
+    auto windowOperatorStatement = VarDeclStatement(windowOperatorHandlerDeclaration)
+                                       .assign(VarRef(code->varDeclarationExecutionContext).accessRef(getOperatorHandlerCall));
+    context->code->variableInitStmts.push_back(windowOperatorStatement.copy());
+
+    return 0;
 }
 
 bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWindowDefinitionPtr window,
