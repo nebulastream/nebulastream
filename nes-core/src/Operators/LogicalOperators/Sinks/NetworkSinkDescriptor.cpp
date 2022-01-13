@@ -22,17 +22,17 @@ namespace NES::Network {
 NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::milliseconds waitTime,
-                                             uint32_t retryTimes,
-                                             OperatorId operatorId)
-    : nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes), operatorId(operatorId) {}
+                                             uint64_t uniqueNetworkSinkDescriptorId,
+                                             uint32_t retryTimes)
+    : nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime), uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), retryTimes(retryTimes) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
                                                 uint32_t retryTimes,
-                                                OperatorId operatorId ) {
+                                                uint64_t uniqueNetworkSinkOperatorId) {
     return std::make_shared<NetworkSinkDescriptor>(
-        NetworkSinkDescriptor(std::move(nodeLocation), nesPartition, waitTime, retryTimes, operatorId));
+        NetworkSinkDescriptor(std::move(nodeLocation), nesPartition, waitTime, uniqueNetworkSinkOperatorId, retryTimes));
 }
 
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
@@ -56,6 +56,6 @@ std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return wa
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 
-    OperatorId NetworkSinkDescriptor::getOperatorId() { return operatorId; }
+uint64_t NetworkSinkDescriptor::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
 
 }// namespace NES::Network

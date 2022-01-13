@@ -277,7 +277,7 @@ message SerializableOperator{
       NesPartition nesPartition = 2;
       uint64 waitTime = 3;
       uint32 retryTimes = 4;
-      uint64 operatorId = 5;
+      uint64 uniqueNetworkSinkDescriptorId = 5;
     }
 
     google.protobuf.Any sinkDescriptor = 1;

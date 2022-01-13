@@ -19,6 +19,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -493,29 +494,33 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
     std::cerr << "Exception: " << exception->what() << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
-bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t sinkOperatorId) {
+
+bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Received request to buffer Data on network Sink");
     std::unique_lock lock(engineMutex);
     auto qep = deployedQEPs[querySubPlanId];
     auto sinks = qep->getSinks();
     //make sure that query sub plan has network sink with specified id
-    auto it = std::find_if(sinks.begin(), sinks.end(),[sinkOperatorId](const DataSinkPtr& dataSink){
-                    return dataSink->getOperatorId() == sinkOperatorId && dataSink->getSinkMediumType() == NETWORK_SINK;
-            });
+    auto it = std::find_if(sinks.begin(), sinks.end(),[uniqueNetworkSinkDescriptorId](const DataSinkPtr& dataSink){
+        Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
+        return networkSink && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
+    });
     if(it != sinks.end()){
         auto networkSink = *it;
         //below code will be added in #2395
         //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,BufferData,networkSink);
         //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
+        throw NES::NesRuntimeException("Function not yet implemented", NES::Runtime::collectAndPrintStacktrace());
         return true;
     }
     //query sub plan did not have network sink with specified id
+    NES_DEBUG("Query Sub Plan with ID" << querySubPlanId << "did not contain a Network Sink with a Descriptor with ID " << uniqueNetworkSinkDescriptorId);
     return false;
 }
 
 bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string &newHostname, uint32_t newPort,
-                                   QuerySubPlanId querySubPlanId, uint64_t sinkOperatorId) {
+                                   QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_ERROR("NodeEngine: Received request to update Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
@@ -523,17 +528,20 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string &newHos
     auto qep = deployedQEPs[querySubPlanId];
     auto networkSinks = qep->getSinks();
     //make sure that query sub plan has network sink with specified id
-    auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[sinkOperatorId](const DataSinkPtr& dataSink){
-        return dataSink->getOperatorId() == sinkOperatorId && dataSink->getSinkMediumType() == NETWORK_SINK;
+    auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[uniqueNetworkSinkDescriptorId](const DataSinkPtr& dataSink){
+        Network::NetworkSinkPtr networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(dataSink);
+        return networkSink && networkSink->getUniqueNetworkSinkDescriptorId() == uniqueNetworkSinkDescriptorId;
     });
     if(it != networkSinks.end()){
         auto networkSink = *it;
         //below code will be added in #2402
         //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,networkSink, newNodeLocation);
         //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
+        throw NES::NesRuntimeException("Function not yet implemented", NES::Runtime::collectAndPrintStacktrace());
         return true;
     }
     //query sub plan did not have network sink with specified id
+    NES_DEBUG("Query Sub Plan with ID" << querySubPlanId << "did not contain a Network Sink with a Descriptor with ID " << uniqueNetworkSinkDescriptorId);
     return false;
 }
 }// namespace NES::Runtime

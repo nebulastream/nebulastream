@@ -24,7 +24,7 @@
 namespace NES::Network {
 
 NetworkSink::NetworkSink(const SchemaPtr& schema,
-                         OperatorId operatorId,
+                         uint64_t uniqueNetworkSinkDescriptorId,
                          QuerySubPlanId querySubPlanId,
                          NetworkManagerPtr networkManager,
                          const NodeLocation& destination,
@@ -36,7 +36,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes)
     : inherited0(std::make_shared<NesFormat>(schema, bufferManager), queryManager, querySubPlanId),
-      operatorId(operatorId),
+      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId),
       networkManager(std::move(networkManager)), queryManager(queryManager), receiverLocation(destination),
       bufferManager(std::move(bufferManager)), bufferStorage(std::move(bufferStorage)), nesPartition(nesPartition),
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
@@ -125,6 +125,6 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
     qep->onEvent(event);
 }
 
-OperatorId NetworkSink::getOperatorId() { return operatorId; }
+OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() { return uniqueNetworkSinkDescriptorId; }
 
 }// namespace NES::Network
