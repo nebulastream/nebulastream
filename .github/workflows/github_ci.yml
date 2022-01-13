@@ -157,7 +157,7 @@ jobs:
       #TODO: 2268 remove the environment variable to allow test execution on arm server
       - name: Run build
         run: |
-          bash $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build.sh
+          bash $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
