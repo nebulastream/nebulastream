@@ -66,6 +66,9 @@ struct TestStruct {
     int64_t value;
 };
 
+static constexpr auto NSOURCE_RETRIES = 100;
+static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
+
 namespace Network {
 class NetworkStackIntegrationTest : public testing::Test {
   public:
@@ -145,7 +148,9 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
                                                          netManager,
                                                          nesPartition,
                                                          nodeLocation,
-                                                         64);
+                                                         64,
+                                                         NSOURCE_RETRY_WAIT,
+                                                         NSOURCE_RETRIES);
     EXPECT_TRUE(networkSource->start());
 
     ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionConsumerCounter(nesPartition), 1UL);
@@ -170,7 +175,9 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
                                                          nodeEngine->getNetworkManager(),
                                                          nesPartition,
                                                          nodeLocation,
-                                                         64);
+                                                         64,
+                                                         NSOURCE_RETRY_WAIT,
+                                                         NSOURCE_RETRIES);
     EXPECT_TRUE(networkSource->start());
 
     auto networkSink = std::make_shared<NetworkSink>(schema,
@@ -181,7 +188,9 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
                                                      nodeEngine->getBufferManager(),
                                                      nullptr,
                                                      nodeEngine->getBufferStorage(),
-                                                     1);
+                                                     1,
+                                                     NSOURCE_RETRY_WAIT,
+                                                     NSOURCE_RETRIES);
 
     nodeEngine->getNetworkManager()->unregisterSubpartitionConsumer(nesPartition);
 
@@ -316,7 +325,9 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                           netManager,
                                                           nesPartition,
                                                           nodeLocation,
-                                                          64);
+                                                          64,
+                                                          NSOURCE_RETRY_WAIT,
+                                                          NSOURCE_RETRIES);
             EXPECT_TRUE(source->start());
             EXPECT_EQ(nodeEngine->getPartitionManager()->getConsumerRegistrationStatus(nesPartition),
                       PartitionRegistrationStatus::Registered);
@@ -340,7 +351,9 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                          nodeEngine->getBufferManager(),
                                                          nullptr,
                                                          nodeEngine->getBufferStorage(),
-                                                         numSendingThreads);
+                                                         numSendingThreads,
+                                                         NSOURCE_RETRY_WAIT,
+                                                         NSOURCE_RETRIES);
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
@@ -425,6 +438,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                    nesPartition,
                                                    nodeLocationSender,
                                                    numSourceLocalBuffers,
+                                                   NSOURCE_RETRY_WAIT,
+                                                   NSOURCE_RETRIES,
                                                    successors);
         });
 
@@ -467,7 +482,9 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                      nodeEngineSender->getBufferManager(),
                                                      nodeEngineSender->getQueryManager(),
                                                      nodeEngineSender->getBufferStorage(),
-                                                     1);
+                                                     1,
+                                                     NSOURCE_RETRY_WAIT,
+                                                     NSOURCE_RETRIES);
     auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
 
@@ -642,6 +659,8 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                    nesPartition,
                                                    nodeLocationSender,
                                                    numSourceLocalBuffers,
+                                                   NSOURCE_RETRY_WAIT,
+                                                   NSOURCE_RETRIES,
                                                    successors);
         });
 
@@ -727,7 +746,9 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                          nodeEngineSender->getBufferManager(),
                                                          nodeEngineSender->getQueryManager(),
                                                          nodeEngineSender->getBufferStorage(),
-                                                         1);
+                                                         1,
+                                                         NSOURCE_RETRY_WAIT,
+                                                         NSOURCE_RETRIES);
     auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
 

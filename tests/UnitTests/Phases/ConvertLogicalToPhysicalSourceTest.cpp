@@ -31,7 +31,8 @@
 
 namespace NES {
 using namespace Configurations;
-
+static constexpr auto NSOURCE_RETRIES = 100;
+static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 class ConvertLogicalToPhysicalSourceTest : public testing::Test {
   public:
     Runtime::NodeEnginePtr engine;
@@ -125,7 +126,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingNetworkLogicalToPhysica
     SchemaPtr schema = Schema::create();
     Network::NesPartition nesPartition{1, 22, 33, 44};
     Network::NodeLocation nodeLocation(0, "*", 31337);
-    SourceDescriptorPtr sourceDescriptor = Network::NetworkSourceDescriptor::create(schema, nesPartition, nodeLocation);
+    SourceDescriptorPtr sourceDescriptor = Network::NetworkSourceDescriptor::create(schema, nesPartition, nodeLocation, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES);
     DataSourcePtr networkSource = ConvertLogicalToPhysicalSource::createDataSource(1, sourceDescriptor, engine, 12);
     EXPECT_EQ(networkSource->getType(), NETWORK_SOURCE);
 }
