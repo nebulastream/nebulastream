@@ -22,7 +22,7 @@
 #include <iostream>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-#include <Runtime/internal/backtrace.hpp>
+#include <Runtime/internal/backward.hpp>
 #include <mutex>
 #include <thread>
 #endif
