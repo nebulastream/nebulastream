@@ -59,7 +59,8 @@ using Runtime::TupleBuffer;
 
 const uint64_t buffersManaged = 8 * 1024;
 const uint64_t bufferSize = 32 * 1024;
-
+static constexpr auto NSOURCE_RETRIES = 100;
+static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 struct TestStruct {
     int64_t id;
     int64_t one;
@@ -671,7 +672,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
         });
 
         auto networkSink =
-            std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr, bSt, 1);
+            std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr, bSt, 1, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto nodeEngine =
             Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
