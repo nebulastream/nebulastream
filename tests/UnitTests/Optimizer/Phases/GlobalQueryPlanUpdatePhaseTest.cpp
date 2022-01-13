@@ -36,6 +36,9 @@ namespace NES {
 
 class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
   public:
+    StreamCatalogPtr streamCatalog;
+    QueryCatalogPtr queryCatalog;
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::setupLogging("GlobalQueryPlanUpdatePhaseTest.log", NES::LOG_DEBUG);
@@ -43,7 +46,19 @@ class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
     }
 
     /* Will be called before a  test is executed. */
-    void SetUp() override { context = std::make_shared<z3::context>(); }
+    void SetUp() override {
+        context = std::make_shared<z3::context>();
+        queryCatalog = std::make_shared<QueryCatalog>();
+        //Setup stream catalog
+        streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+        auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
+        auto sourceConfig = Configurations::DefaultSourceConfig::create();
+        sourceConfig->setPhysicalStreamName("test1");
+        sourceConfig->setLogicalStreamName("default_logical");
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
+        streamCatalog->addPhysicalStream("default_logical", streamCatalogEntry1);
+    }
 
     /* Will be called before a test is executed. */
     void TearDown() override { NES_INFO("Tear down GlobalQueryPlanUpdatePhaseTest test case."); }
@@ -63,17 +78,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query without assigning it a query id.");
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto queryCatalog = std::make_shared<QueryCatalog>();
 
-    //Setup stream catalog
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto sourceConfig = Configurations::DefaultSourceConfig::create();
-    sourceConfig->setPhysicalStreamName("test1");
-    sourceConfig->setLogicalStreamName("default_logical");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
-    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
@@ -92,26 +97,15 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
 /**
  * @brief In this test we execute query merger phase on a single query plan.
  */
-TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan) {
+TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan)  {
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
     const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    auto queryCatalog = std::make_shared<QueryCatalog>();
     queryCatalog->addNewQuery(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-
-    //Setup stream catalog
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto sourceConfig = Configurations::DefaultSourceConfig::create();
-    sourceConfig->setPhysicalStreamName("test1");
-    sourceConfig->setLogicalStreamName("default_logical");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
-    streamCatalog->addPhysicalStream("default_logical", streamCatalogEntry1);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
@@ -141,19 +135,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
     const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q1.getQueryPlan()->setQueryId(1);
-    auto queryCatalog = std::make_shared<QueryCatalog>();
     queryCatalog->addNewQuery(queryString, q1.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-
-    //Setup stream catalog
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto sourceConfig = Configurations::DefaultSourceConfig::create();
-    sourceConfig->setPhysicalStreamName("test1");
-    sourceConfig->setLogicalStreamName("default_logical");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
-    streamCatalog->addPhysicalStream("default_logical", streamCatalogEntry1);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
@@ -182,20 +165,9 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto* queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
-    auto queryCatalog = std::make_shared<QueryCatalog>();
     queryCatalog->addNewQuery(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->addNewQuery(queryString2, q2.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-
-    //Setup stream catalog
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto sourceConfig = Configurations::DefaultSourceConfig::create();
-    sourceConfig->setPhysicalStreamName("test1");
-    sourceConfig->setLogicalStreamName("default_logical");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
-    streamCatalog->addPhysicalStream("default_logical", streamCatalogEntry1);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
@@ -229,20 +201,9 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
     int queryId = 1;
     q1.getQueryPlan()->setQueryId(queryId);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-    auto queryCatalog = std::make_shared<QueryCatalog>();
     auto catalogEntry1 = queryCatalog->addNewQuery("", q1.getQueryPlan(), "topdown");
     //Explicitly fail the query
     queryCatalog->setQueryFailureReason(queryId, "Random reason");
-
-    //Setup stream catalog
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto sourceConfig = Configurations::DefaultSourceConfig::create();
-    sourceConfig->setPhysicalStreamName("test1");
-    sourceConfig->setLogicalStreamName("default_logical");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
-    streamCatalog->addPhysicalStream("default_logical", streamCatalogEntry1);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
@@ -271,20 +232,9 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     const auto* queryString2 = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
     auto q2 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     q2.getQueryPlan()->setQueryId(2);
-    auto queryCatalog = std::make_shared<QueryCatalog>();
     queryCatalog->addNewQuery(queryString1, q1.getQueryPlan(), "TopDown");
     queryCatalog->addNewQuery(queryString2, q2.getQueryPlan(), "TopDown");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-
-    //Setup stream catalog
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto sourceConfig = Configurations::DefaultSourceConfig::create();
-    sourceConfig->setPhysicalStreamName("test1");
-    sourceConfig->setLogicalStreamName("default_logical");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
-    streamCatalog->addPhysicalStream("default_logical", streamCatalogEntry1);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
@@ -322,7 +272,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
     const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
 
-    auto queryCatalog = std::make_shared<QueryCatalog>();
     for (int i = 1; i <= 10; i++) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
         auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
@@ -336,16 +285,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
         auto nesRequest = RunQueryRequest::create(value->getInputQueryPlan(), value->getQueryPlacementStrategy());
         batchOfNesRequests.emplace_back(nesRequest);
     }
-
-    //Setup stream catalog
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto sourceConfig = Configurations::DefaultSourceConfig::create();
-    sourceConfig->setPhysicalStreamName("test1");
-    sourceConfig->setLogicalStreamName("default_logical");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
-    streamCatalog->addPhysicalStream("default_logical", streamCatalogEntry1);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase =
@@ -372,7 +311,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
     const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
 
-    auto queryCatalog = std::make_shared<QueryCatalog>();
+//    auto queryCatalog = std::make_shared<QueryCatalog>();
     for (int i = 1; i <= 1; i++) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
         auto q1 = Query::from("example")
