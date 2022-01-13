@@ -92,7 +92,7 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
     for (const auto& sourceOperator : sourceOperators) {
         auto value = sourceOperator->getProperty(PINNED_NODE_ID);
         auto nodeId = std::any_cast<uint64_t>(value);
-        auto topologyNode = Topology::findTopologyNodeInSubgraphById(nodeId, selectedTopologyForPlacement);
+        auto topologyNode = Topology::findTopologyNodeInSubgraphById(nodeId, {rootNode});
         if (!topologyNode) {
             NES_ERROR("BasePlacementStrategy: unable to locate a node in the selected topology for placing the source operator.");
             throw QueryPlacementException(

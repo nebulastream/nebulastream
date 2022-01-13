@@ -207,14 +207,6 @@ class Topology {
     TopologyNodePtr
     find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
 
-    /**
-     * @brief Looks for TopologyNode with matching identifier in sourceNode and its parents by performing a Depth First Search
-     * @param sourceNode : a single source topology node
-     * @param id :  the id of the topology node that is being searched for
-     * @return nullptr if node is not found, otherwise TopologyNodePtr
-     */
-    static TopologyNodePtr findTopologyNodeInParentsById(const TopologyNodePtr& sourceNode, uint64_t id);
-
     //TODO: At present we assume that we have only one root node
     TopologyNodePtr rootNode;
     std::mutex topologyLock;

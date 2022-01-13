@@ -575,19 +575,17 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(std::vector<TopologyNode
 }
 
 TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std::vector<TopologyNodePtr>& sourceNodes) {
-    TopologyNodePtr found = nullptr;
+    //First look in all source nodes
     for (const auto& sourceNode : sourceNodes) {
-        //Perform DFS on each source node and its parents for TopologyNode with matching identifier
-        found = findTopologyNodeInParentsById(sourceNode, id);
-        if (found) {
-            break;
+        if (sourceNode->getId() == id) {
+            return sourceNode;
         }
     }
-    return found;
-}
 
-TopologyNodePtr Topology::findTopologyNodeInParentsById(const TopologyNodePtr& sourceNode, uint64_t id) {
-    auto topologyIterator = NES::DepthFirstNodeIterator(sourceNode).begin();
+    //TODO: When we support more than 1 sink location please change the logic
+    //Perform DFS from the root node to find TopologyNode with matching identifier
+    auto rootNode = sourceNodes[0]->getAllRootNodes()[0];
+    auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
     while (topologyIterator != NES::DepthFirstNodeIterator::end()) {
         auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
         if (currentTopologyNode->getId() == id) {
