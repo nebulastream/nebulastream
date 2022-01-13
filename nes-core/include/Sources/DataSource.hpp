@@ -28,7 +28,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
-#ifdef ENABLE_ADAPTIVE_BUILD
+#ifdef ENABLE_ADAPTIVE_SAMPLING
 #include <Util/KalmanFilter.hpp>
 #endif
 
@@ -284,7 +284,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     * @brief running routine with an adaptive rate (defaults to KF)
     */
     virtual void runningRoutineAdaptive();
-#ifdef ENABLE_ADAPTIVE_BUILD
+#ifdef ENABLE_ADAPTIVE_SAMPLING
     // TODO: remove the ifdef in the project
     // https://github.com/nebulastream/nebulastream/issues/2400
     /**
