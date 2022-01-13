@@ -40,7 +40,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr
-    create(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::seconds waitTime, uint32_t retryTimes);
+    create(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::milliseconds waitTime, uint32_t retryTimes);
 
     /**
      * @brief returns the string representation of the network sink
@@ -71,7 +71,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @brief getter for the wait time
      * @return the wait time
      */
-    std::chrono::seconds getWaitTime() const;
+    std::chrono::milliseconds getWaitTime() const;
 
     /**
      * @brief getter for the retry times
@@ -82,12 +82,12 @@ class NetworkSinkDescriptor : public SinkDescriptor {
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
                                    NesPartition nesPartition,
-                                   std::chrono::seconds waitTime,
-                                   uint32_t retryTimes = 5);
+                                   std::chrono::milliseconds waitTime,
+                                   uint32_t retryTimes);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
-    std::chrono::seconds waitTime;
+    std::chrono::milliseconds waitTime;
     uint32_t retryTimes;
 };
 
