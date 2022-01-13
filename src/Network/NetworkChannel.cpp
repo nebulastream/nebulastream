@@ -125,7 +125,8 @@ std::unique_ptr<T> createNetworkChannel(std::shared_ptr<zmq::context_t> const& z
                     return nullptr;
                 }
             }
-            NES_DEBUG(channelName << ": Connection with server failed! Reconnecting attempt " << i << " backoff time " << std::to_string(backOffTime.count()));
+            NES_DEBUG(channelName << ": Connection with server failed! Reconnecting attempt " << i << " backoff time "
+                                  << std::to_string(backOffTime.count()));
             std::this_thread::sleep_for(backOffTime);// TODO make this async
             backOffTime *= 2;
             i++;
