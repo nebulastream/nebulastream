@@ -21,7 +21,7 @@
 if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${RequireBuild}; fi
 # RequireTest indicates if the build should succeed if we fail during tests.
 # This is important to check the log to identify test errors on new platforms.
-if [ -z "${RequireTest}" ]; then RequireTest="true"; else RequireTest=${RequireTest}; fi
+if [ -z "${RequireTest}" ]; then RequireTest="false"; else RequireTest=${RequireTest}; fi
 echo "Required Build Failed=$RequireBuild"
 echo "Required Test Failed=$RequireTest"
 if [ $# -eq 0 ]
