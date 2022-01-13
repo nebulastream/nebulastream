@@ -90,7 +90,7 @@ const std::string LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS = "ListOfBlockingParent
  */
 class LogicalSourceExpansionRule : public BaseRewriteRule {
   public:
-    static LogicalSourceExpansionRulePtr create(StreamCatalogPtr);
+    static LogicalSourceExpansionRulePtr create(StreamCatalogPtr, bool expandSourceOnly = false);
 
     /**
      * @brief Apply Logical source expansion rule on input query plan
@@ -102,8 +102,9 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
     virtual ~LogicalSourceExpansionRule() = default;
 
   private:
-    explicit LogicalSourceExpansionRule(StreamCatalogPtr);
+    explicit LogicalSourceExpansionRule(StreamCatalogPtr, bool expandSourceOnly);
     StreamCatalogPtr streamCatalog;
+    bool expandSourceOnly;
 
     /**
      * @brief This method starts from an operator and traverse upstream if the corresponding upstream(parent) operator is not a
@@ -112,6 +113,13 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
      * @param operatorNode : operator to check for connected blocking operator
      */
     void removeConnectedBlockingOperators(const OperatorNodePtr& operatorNode);
+
+    /**
+     * @brief Remove the upstream blocking operator from the operator and add the upstream operator id to its properties
+     * @param operatorNode operator to add property and remove upstream operator from
+     * @param upstreamOperator operator to remove
+     */
+    void removeAndAddBlockingUpstreamOperator(const OperatorNodePtr& operatorNode, const OperatorNodePtr& upstreamOperator);
 
     /**
      * @brief Check if the input operator is a blocking operator or not (operator that can't be expanded, for example, Window Join or Union)
