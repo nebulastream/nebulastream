@@ -1014,6 +1014,9 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         networkSerializedSourceDescriptor.mutable_nodelocation()->set_port(nodeLocation.getPort());
         networkSerializedSourceDescriptor.mutable_nodelocation()->set_hostname(nodeLocation.getHostname());
         networkSerializedSourceDescriptor.mutable_nodelocation()->set_nodeid(nodeLocation.getNodeId());
+        auto s = std::chrono::duration_cast<std::chrono::milliseconds>(networkSourceDescriptor->getWaitTime());
+        networkSerializedSourceDescriptor.set_waittime(s.count());
+        networkSerializedSourceDescriptor.set_retrytimes(networkSourceDescriptor->getRetryTimes());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(networkSerializedSourceDescriptor);
     } else if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>()) {
         // serialize default source descriptor
@@ -1184,7 +1187,12 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         NES::Network::NodeLocation nodeLocation(networkSerializedSourceDescriptor.nodelocation().nodeid(),
                                                 networkSerializedSourceDescriptor.nodelocation().hostname(),
                                                 networkSerializedSourceDescriptor.nodelocation().port());
-        auto ret = Network::NetworkSourceDescriptor::create(schema, nesPartition, nodeLocation);
+        auto waitTime = std::chrono::milliseconds(networkSerializedSourceDescriptor.waittime());
+        auto ret = Network::NetworkSourceDescriptor::create(schema,
+                                                            nesPartition,
+                                                            nodeLocation,
+                                                            waitTime,
+                                                            networkSerializedSourceDescriptor.retrytimes());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor>()) {
         // de-serialize default stream source descriptor
@@ -1446,7 +1454,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         Network::NodeLocation nodeLocation{serializedSinkDescriptor.nodelocation().nodeid(),
                                            serializedSinkDescriptor.nodelocation().hostname(),
                                            serializedSinkDescriptor.nodelocation().port()};
-        auto waitTime = std::chrono::milliseconds (serializedSinkDescriptor.waittime());
+        auto waitTime = std::chrono::milliseconds(serializedSinkDescriptor.waittime());
         return Network::NetworkSinkDescriptor::create(nodeLocation,
                                                       nesPartition,
                                                       waitTime,

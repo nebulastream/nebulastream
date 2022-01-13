@@ -81,6 +81,8 @@ class BasePlacementStrategy {
   private:
     static constexpr auto NSINK_RETRIES = 100;
     static constexpr auto NSINK_RETRY_WAIT = std::chrono::milliseconds(5);
+    static constexpr auto NSOURCE_RETRIES = 100;
+    static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 
   public:
     explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,

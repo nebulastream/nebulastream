@@ -247,6 +247,8 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   Network::NesPartition nesPartition,
                                   Network::NodeLocation sinkLocation,
                                   size_t numSourceLocalBuffers,
+                                  std::chrono::milliseconds waitTime,
+                                  uint8_t retryTimes,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 #ifdef ENABLE_KAFKA_BUILD

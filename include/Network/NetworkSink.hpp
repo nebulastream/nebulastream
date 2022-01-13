@@ -50,8 +50,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          Runtime::QueryManagerPtr queryManager,
                          Runtime::BufferStoragePtr bufferStorage,
                          size_t numOfProducers,
-                         std::chrono::milliseconds waitTime = std::chrono::milliseconds(5),
-                         uint8_t retryTimes = 10);
+                         std::chrono::milliseconds waitTime,
+                         uint8_t retryTimes);
 
     /**
     * @brief Writes data to the underlying output channel

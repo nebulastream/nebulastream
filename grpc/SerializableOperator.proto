@@ -194,8 +194,8 @@ message SerializableOperator{
 
     message SerializableMQTTSourceDescriptor {
       enum InputFormat{
-        JSON=0;
-        CSV=1;
+        JSON = 0;
+        CSV = 1;
       };
       SerializableSourceConfig sourceConfig = 1;
       InputFormat inputFormat = 2;
@@ -206,6 +206,8 @@ message SerializableOperator{
       SerializableSchema sourceSchema = 1;
       NesPartition nesPartition = 2;
       NodeLocation nodeLocation = 3;
+      uint64 waitTime = 4;
+      uint32 retryTimes = 5;
     }
 
     google.protobuf.Any sourceDescriptor = 1;
@@ -250,14 +252,14 @@ message SerializableOperator{
 
     message SerializableMQTTSinkDescriptor {
       enum TimeUnits{
-        nanoseconds=0;
-        milliseconds=1;
-        seconds=2;
+        nanoseconds = 0;
+        milliseconds = 1;
+        seconds = 2;
       };
       enum ServiceQualities{
-        atMostOnce=0;
-        atLeastOnce=1;
-        exactlyOnce=2;
+        atMostOnce = 0;
+        atLeastOnce = 1;
+        exactlyOnce = 2;
       };
       string address = 1;
       string clientId = 2;

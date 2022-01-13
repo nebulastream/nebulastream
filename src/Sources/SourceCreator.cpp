@@ -244,6 +244,8 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                   Network::NesPartition nesPartition,
                                   Network::NodeLocation sinkLocation,
                                   size_t numSourceLocalBuffers,
+                                  std::chrono::milliseconds waitTime,
+                                  uint8_t retryTimes,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<Network::NetworkSource>(schema,
                                                     bufferManager,
@@ -252,6 +254,8 @@ DataSourcePtr createNetworkSource(const SchemaPtr& schema,
                                                     nesPartition,
                                                     sinkLocation,
                                                     numSourceLocalBuffers,
+                                                    waitTime,
+                                                    retryTimes,
                                                     successors);
 }
 

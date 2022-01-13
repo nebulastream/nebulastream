@@ -37,10 +37,10 @@ class NetworkSource : public DataSource {
                   NesPartition nesPartition,
                   NodeLocation sinkLocation,
                   size_t numSourceLocalBuffers,
+                  std::chrono::milliseconds waitTime,
+                  uint8_t retryTimes,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors =
-                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
-                  std::chrono::milliseconds waitTime = std::chrono::milliseconds(5),
-                  uint8_t retryTimes = 10);
+                      std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     /**
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
