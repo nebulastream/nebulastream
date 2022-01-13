@@ -32,7 +32,6 @@ namespace Network {
 class NetworkSinkDescriptor : public SinkDescriptor {
 
   public:
-
     /**
      * @brief The constructor for the network sink descriptor
      * @param nodeLocation
@@ -91,16 +90,15 @@ class NetworkSinkDescriptor : public SinkDescriptor {
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
                                    NesPartition nesPartition,
-                                   std::chrono::seconds waitTime,
-                                   uint64_t uniqueNetworkSinkDescriptorId,
-                                   uint32_t retryTimes = 5);
+                                   std::chrono::milliseconds waitTime,
+                                   uint32_t retryTimes,
+                                   uint64_t uniqueNetworkSinkDescriptorId);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::milliseconds waitTime;
-    uint64_t uniqueNetworkSinkDescriptorId;
     uint32_t retryTimes;
-
+    uint64_t uniqueNetworkSinkDescriptorId;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
