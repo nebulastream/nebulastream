@@ -67,5 +67,4 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
     }
 }
-uint64_t SinkMedium::getOperatorId() { return 0; }
 }// namespace NES
