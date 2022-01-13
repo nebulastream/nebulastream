@@ -582,10 +582,13 @@ TopologyNodePtr Topology::findTopologyNodeInSubgraphById(uint64_t id, const std:
         }
     }
 
-    //TODO: When we support more than 1 sink location please change the logic
     //Perform DFS from the root node to find TopologyNode with matching identifier
-    auto rootNode = sourceNodes[0]->getAllRootNodes()[0];
-    auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
+    auto rootNodes = sourceNodes[0]->getAllRootNodes();
+    //TODO: When we support more than 1 sink location please change the logic
+    if (rootNodes.size() > 1) {
+        NES_NOT_IMPLEMENTED();
+    }
+    auto topologyIterator = NES::DepthFirstNodeIterator(rootNodes[0]).begin();
     while (topologyIterator != NES::DepthFirstNodeIterator::end()) {
         auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
         if (currentTopologyNode->getId() == id) {
