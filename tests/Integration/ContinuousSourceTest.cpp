@@ -938,7 +938,6 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
-
 }
 
 }// namespace NES
