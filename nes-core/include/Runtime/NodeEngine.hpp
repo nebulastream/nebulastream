@@ -156,10 +156,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief method to trigger the buffering of data on a NetworkSink of a Query Sub Plan with the given id
      * @param querySubPlanId : the id of the Query Sub Plan to which the Network Sink belongs to
-     * @param sinkOperatorId : the id of the Network Sink on which to buffer data
+     * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink on which to buffer data
      * @return bool indicating success
      */
-    bool bufferData(QuerySubPlanId querySubPlanId, uint64_t sinkOperatorId);
+    bool bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId);
 
     /**
      * @brief method to trigger the reconfiguration of a NetworkSink so that it points to a new downstream node.
@@ -167,10 +167,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param newHostname : the hostname of the new node
      * @param newPort : the port of the new node
      * @param querySubPlanId : the id of the Query Sub Plan to which the Network Sink belongs to
-     * @param sinkOperatorId : the id of the Network Sink to reconfigure
+     * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink to reconfigure.
      * @return bool indicating success
      */
-    bool updateNetworkSink(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort, QuerySubPlanId querySubPlanId, uint64_t sinkOperatorId);
+    bool updateNetworkSink(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort, QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId);
 
     /**
      * @brief release all resource of the node engine
