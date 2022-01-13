@@ -555,10 +555,11 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-# Add client
+# Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
+# Add target for client
 add_subdirectory(nes-client)
-#Add benchmarks with command
+# Add target for benchmarks
 add_subdirectory(benchmark)
 
 # Custom test commands --------------------------------------------------------
