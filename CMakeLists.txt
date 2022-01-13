@@ -22,6 +22,7 @@ option(NES_SELF_HOSTING "use self hosting compiler" ON)
 option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
 # Enable local dependency building (this may take a long time)
 option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
+
 # Enable prebuild dependencies only if NES_BUILD_DEPENDENCIES_LOCAL is OFF and CMAKE_TOOLCHAIN_FILE is not set.
 cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies" ON "NOT NES_BUILD_NATIVE; NOT CMAKE_TOOLCHAIN_FILE" OFF)
 
@@ -30,6 +31,7 @@ option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detecto
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
 option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" ON)
 option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
+option(CMAKE_NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)

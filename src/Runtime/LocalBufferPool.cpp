@@ -60,7 +60,7 @@ void LocalBufferPool::destroy() {
         return;// already destroyed
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    if (numberOfReservedBuffers != exclusiveBuffers.size()) {
+    if (numberOfReservedBuffers != (size_t) exclusiveBuffers.size()) {
         for (auto segment : allSegments) {
             segment->controlBlock->dumpOwningThreadInfo();
         }
