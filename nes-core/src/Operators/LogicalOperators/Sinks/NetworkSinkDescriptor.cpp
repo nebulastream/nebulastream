@@ -22,15 +22,17 @@ namespace NES::Network {
 NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::milliseconds waitTime,
-                                             uint32_t retryTimes)
-    : nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes) {}
+                                             uint32_t retryTimes,
+                                             OperatorId operatorId)
+    : nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes), operatorId(operatorId) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,
                                                 std::chrono::milliseconds waitTime,
-                                                uint32_t retryTimes) {
+                                                uint32_t retryTimes,
+                                                OperatorId operatorId ) {
     return std::make_shared<NetworkSinkDescriptor>(
-        NetworkSinkDescriptor(std::move(nodeLocation), nesPartition, waitTime, retryTimes));
+        NetworkSinkDescriptor(std::move(nodeLocation), nesPartition, waitTime, retryTimes, operatorId));
 }
 
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
@@ -53,5 +55,7 @@ NesPartition NetworkSinkDescriptor::getNesPartition() const { return nesPartitio
 std::chrono::milliseconds NetworkSinkDescriptor::getWaitTime() const { return waitTime; }
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
+
+    OperatorId NetworkSinkDescriptor::getOperatorId() { return operatorId; }
 
 }// namespace NES::Network

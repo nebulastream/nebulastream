@@ -236,7 +236,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedSinkDescriptor);
         // de-serialize sink descriptor
         auto sinkDescriptor = deserializeSinkDescriptor(&serializedSinkDescriptor);
-        operatorNode = LogicalOperatorFactory::createSinkOperator(sinkDescriptor,serializedOperator.operatorid());
+        operatorNode = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
     } else if (details.Is<SerializableOperator_FilterDetails>()) {
         // de-serialize filter operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to FilterLogicalOperator");
@@ -1358,6 +1358,8 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
         auto s = std::chrono::duration_cast<std::chrono::milliseconds>(networkSinkDescriptor->getWaitTime());
         serializedSinkDescriptor.set_waittime(s.count());
         serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
+        //set global Id
+        serializedSinkDescriptor.set_operatorid(networkSinkDescriptor->getOperatorId());
         //pack to output
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
     } else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
@@ -1458,7 +1460,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         return Network::NetworkSinkDescriptor::create(nodeLocation,
                                                       nesPartition,
                                                       waitTime,
-                                                      serializedSinkDescriptor.retrytimes());
+                                                      serializedSinkDescriptor.retrytimes(),
+                                                      serializedSinkDescriptor.operatorid());
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
         // de-serialize file sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
