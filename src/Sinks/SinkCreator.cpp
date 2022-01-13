@@ -126,7 +126,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               Network::NesPartition nesPartition,
                               Runtime::NodeEnginePtr const& nodeEngine,
                               size_t numOfProducers,
-                              std::chrono::seconds waitTime,
+                              std::chrono::milliseconds waitTime,
                               uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema,
                                                   querySubPlanId,

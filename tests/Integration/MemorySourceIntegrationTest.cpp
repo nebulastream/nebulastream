@@ -199,8 +199,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     NES_INFO("MemorySourceIntegrationTest: Worker1 started successfully");
 
     constexpr auto memAreaSize = sizeof(Record) * 5;
-    constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
-    constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
+    //constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
+    constexpr auto buffersToExpect = 1;
     auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
     auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
     auto* records = reinterpret_cast<Record*>(memArea);

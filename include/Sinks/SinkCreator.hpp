@@ -206,7 +206,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               Network::NesPartition nesPartition,
                               const Runtime::NodeEnginePtr& nodeEngine,
                               size_t numOfProducers,
-                              std::chrono::seconds waitTime = std::chrono::seconds(2),
+                              std::chrono::milliseconds waitTime,
                               uint8_t retryTimes = 5);
 
 #ifdef ENABLE_KAFKA_BUILD

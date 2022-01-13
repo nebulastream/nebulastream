@@ -1347,7 +1347,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
         serializedNodeLocation->set_hostname(nodeLocation.getHostname());
         serializedNodeLocation->set_port(nodeLocation.getPort());
         // set reconnection details
-        auto s = std::chrono::duration_cast<std::chrono::seconds>(networkSinkDescriptor->getWaitTime());
+        auto s = std::chrono::duration_cast<std::chrono::milliseconds>(networkSinkDescriptor->getWaitTime());
         serializedSinkDescriptor.set_waittime(s.count());
         serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
         //pack to output
@@ -1446,7 +1446,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         Network::NodeLocation nodeLocation{serializedSinkDescriptor.nodelocation().nodeid(),
                                            serializedSinkDescriptor.nodelocation().hostname(),
                                            serializedSinkDescriptor.nodelocation().port()};
-        auto waitTime = std::chrono::seconds(serializedSinkDescriptor.waittime());
+        auto waitTime = std::chrono::milliseconds (serializedSinkDescriptor.waittime());
         return Network::NetworkSinkDescriptor::create(nodeLocation,
                                                       nesPartition,
                                                       waitTime,
