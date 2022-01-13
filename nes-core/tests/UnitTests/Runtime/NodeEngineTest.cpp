@@ -605,6 +605,18 @@ TEST_F(NodeEngineTest, testStartStopStartStop) {
     testOutput();
 }
 
+TEST_F(NodeEngineTest, testBufferData) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    EXPECT_FALSE(engine->bufferData(0, 0));
+}
+
+TEST_F(NodeEngineTest, testReconfigureSink) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    EXPECT_FALSE(engine->updateNetworkSink(0, "test", 0, 0, 0));
+}
+
 namespace detail {
 void segkiller() { raise(SIGSEGV); }
 
