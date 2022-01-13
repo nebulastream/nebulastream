@@ -27,7 +27,9 @@
 #include <NesBaseTest.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/OriginIdInferenceRule.hpp>
@@ -359,11 +361,20 @@ TEST_F(QueryExecutionTest, filterQuery) {
                 // The output buffer should contain 5 tuple;
                 EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
-                auto resultRecordIndexFields =
+                auto resultRecordIndexField =
                     Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
+                auto resultRecordOneField =
+                    Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, resultBuffer);
+                auto resultRecordValueField =
+                    Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, resultBuffer);
+
                 for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
                     // id
-                    EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+                    EXPECT_EQ(resultRecordIndexField[recordIndex], recordIndex);
+                    // one
+                    EXPECT_EQ(resultRecordOneField[recordIndex], 1LL);
+                    // id
+                    EXPECT_EQ(resultRecordValueField[recordIndex], recordIndex % 2);
                 }
 
             } else {
@@ -443,6 +454,194 @@ TEST_F(QueryExecutionTest, projectionQuery) {
         }
     }
     cleanUpPlan(plan);
+    testSink->cleanupBuffers();// need to be called manually here
+    ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
+}
+
+// todo janky in-class type definition
+struct __attribute__((packed)) InputProbeTuple { // this is from our real iput buffer
+    int64_t right$id;
+    int64_t right$one;
+    int64_t right$value;
+};
+struct __attribute__((packed)) InputBuildTuple { // we fake this input stream for now
+    int64_t left$id;
+    int64_t left$value;
+};
+
+struct __attribute__((packed)) ResultTuple {
+    int64_t right$id;
+    int64_t right$one;
+    int64_t right$value;
+
+    int64_t left$id;
+    int64_t left$value;
+
+    bool operator==(const ResultTuple& other) const {
+        return  (
+            this->right$id == other.right$id &&
+            this->right$one == other.right$one &&
+            this->right$value == other.right$value &&
+            this->left$id == other.left$id &&
+            this->left$value == other.left$value
+            );
+    };
+
+};
+
+std::ostream& operator<<(std::ostream& os, ResultTuple tup) {
+    os << tup.right$id << " "
+       << tup.right$one << " "
+       << tup.right$value << " "
+       << tup.left$id << " "
+       << tup.left$value << std::endl;
+    return os;
+}
+
+class CustomPipelineStageFilter : public Runtime::Execution::ExecutablePipelineStage {
+
+
+    ExecutionResult execute(
+        Runtime::TupleBuffer &inputTupleBuffer,
+        NES::Runtime::Execution::PipelineExecutionContext &pipelineExecutionContext,
+        __attribute__((unused)) Runtime::WorkerContext &workerContext) {
+        /* variable declarations */
+        ExecutionResult ret = ExecutionResult::Ok;
+        int64_t numberOfResultTuples = 0;
+        /* statements section */
+        InputProbeTuple *inputTuples = (InputProbeTuple *)inputTupleBuffer.getBuffer();
+        uint64_t numberOfTuples = inputTupleBuffer.getNumberOfTuples();
+        NES::Runtime::TupleBuffer resultTupleBuffer = inputTupleBuffer;
+        ResultTuple *resultTuples = (ResultTuple *)resultTupleBuffer.getBuffer();
+
+        for (uint64_t recordIndex = 0; recordIndex < numberOfTuples;
+             ++recordIndex) {
+            int64_t tmp_right$id = inputTuples[recordIndex].right$id;
+            int64_t tmp_right$one = inputTuples[recordIndex].right$one;
+            int64_t tmp_right$value = inputTuples[recordIndex].right$value;
+
+            auto range = hashTable.equal_range(tmp_right$id);
+            for (auto it = range.first; it != range.second; ++it) {
+                ResultTuple resTuple = {tmp_right$id,tmp_right$one,tmp_right$value,
+                                        it->second.left$id, it->second.left$value};
+                resultTuples[numberOfResultTuples] = resTuple;
+                ++numberOfResultTuples;
+            }
+        };
+
+        resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
+        resultTupleBuffer.setWatermark(inputTupleBuffer.getWatermark());
+        resultTupleBuffer.setOriginId(inputTupleBuffer.getOriginId());
+        resultTupleBuffer.setSequenceNumber(inputTupleBuffer.getSequenceNumber());
+        pipelineExecutionContext.emitBuffer(resultTupleBuffer, workerContext);
+        return ret;
+        ;
+    }
+    uint32_t setup(
+        __attribute__((unused)) Runtime::Execution::PipelineExecutionContext &pipelineExecutionContext) {
+        /* variable declarations */
+
+        std::vector<InputBuildTuple> buildSide = {{5,50}, {5,51}, {6,60}};
+        for (auto tup : buildSide) {
+            hashTable.insert({tup.left$id, tup});
+        }
+
+        /* statements section */
+        return 0;
+        ;
+    }
+
+  private:
+    std::unordered_multimap<uint64_t, InputBuildTuple> hashTable;
+};
+
+TEST_F(QueryExecutionTest, externalJoinProbeOperatorQuery) {
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+
+    // creating query plan
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t numSourceLocalBuffers,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 numSourceLocalBuffers,
+                                                                 std::move(successors));
+        });
+
+    auto outputSchema = Schema::create()
+                            ->addField("right$id", BasicType::INT64)
+                            ->addField("right$one", BasicType::INT64)
+                            ->addField("right$value", BasicType::INT64)
+                            ->addField("left$id", BasicType::INT64)
+                            ->addField("left$value", BasicType::INT64);
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+    auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    // add external physical operator behind the projection
+    auto sourceOperator = queryPlan->getOperatorByType<SourceLogicalOperatorNode>()[0];
+
+    auto customPipelineStage = std::make_shared<CustomPipelineStageFilter>();
+    auto externalOperator = NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(
+        SchemaPtr(), SchemaPtr(), customPipelineStage);
+
+    sourceOperator->insertBetweenThisAndParentNodes(externalOperator);
+
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+
+    // The plan should have one pipeline
+    ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Created);
+    EXPECT_EQ(plan->getPipelines().size(), 1U);
+    Runtime::WorkerContext workerContext{1, nodeEngine->getBufferManager(), 4};
+    if (auto buffer = nodeEngine->getBufferManager()->getBufferBlocking(); !!buffer) {
+        auto memoryLayout =
+            Runtime::MemoryLayouts::RowLayout::create(testSchema, nodeEngine->getBufferManager()->getBufferSize());
+        fillBuffer(buffer, memoryLayout);
+        plan->setup();
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Deployed);
+        plan->start(nodeEngine->getStateManager());
+        ASSERT_EQ(plan->getStatus(), Runtime::Execution::ExecutableQueryPlanStatus::Running);
+        plan->getPipelines()[0]->execute(buffer, workerContext);
+
+        // This plan should produce one output buffer
+        EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1U);
+
+        auto resultBuffer = testSink->get(0);
+        // The output buffer should contain 5 tuple;
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3UL);
+
+        NES_DEBUG("Result Buffer: " << Util::prettyPrintTupleBuffer(resultBuffer, outputSchema));
+
+        auto resultLayout =
+            Runtime::MemoryLayouts::RowLayout::create(outputSchema, nodeEngine->getBufferManager()->getBufferSize());
+        auto resultRecordIndexFields =
+            Runtime::MemoryLayouts::RowLayoutField<ResultTuple, true>::create(0, resultLayout, resultBuffer);
+
+        std::vector<ResultTuple> expectedTuples = {
+            {5, 1, 1, 5, 51},
+            {5, 1, 1, 5, 50},
+            {6, 1, 0, 6, 60}
+        };
+        // id
+        for (int i=0; i<3; ++i) {
+            EXPECT_EQ(resultRecordIndexFields[i], expectedTuples[i]);
+        }
+
+    }
+    ASSERT_TRUE(plan->stop());
     testSink->cleanupBuffers();// need to be called manually here
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
