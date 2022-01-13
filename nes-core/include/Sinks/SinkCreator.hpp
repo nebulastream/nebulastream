@@ -201,7 +201,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
  * @return a data sink pointer
  */
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,
-                              OperatorId globalOperatorId,
+                              uint64_t uniqueNetworkSinkDescriptorId,
                               QuerySubPlanId querySubPlanId,
                               const Network::NodeLocation& nodeLocation,
                               Network::NesPartition nesPartition,

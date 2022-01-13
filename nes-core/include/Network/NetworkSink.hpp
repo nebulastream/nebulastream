@@ -42,7 +42,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param nesPartition
     */
     explicit NetworkSink(const SchemaPtr& schema,
-                         OperatorId operatorId,
+                         uint64_t uniqueNetworkSinkDescriptorId,
                          QuerySubPlanId querySubPlanId,
                          NetworkManagerPtr networkManager,
                          NodeLocation const& destination,
@@ -101,13 +101,13 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     SinkMediumTypes getSinkMediumType() override;
 
     /**
-     * @brief method to return the network sinks operator id
-     * @return operator Id
+     * @brief method to return the network sinks descriptor id
+     * @return id
      */
-    OperatorId getOperatorId() override;
+    uint64_t getUniqueNetworkSinkDescriptorId();
 
   private:
-    OperatorId operatorId;
+    uint64_t uniqueNetworkSinkDescriptorId;
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
     const NodeLocation receiverLocation;
