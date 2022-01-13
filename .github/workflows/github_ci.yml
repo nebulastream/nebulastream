@@ -145,7 +145,6 @@ jobs:
     timeout-minutes: 120
     continue-on-error: true
     steps:
-      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
