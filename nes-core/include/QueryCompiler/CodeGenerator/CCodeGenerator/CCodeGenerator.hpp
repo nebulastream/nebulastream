@@ -151,6 +151,14 @@ class CCodeGenerator : public CodeGenerator {
                                            uint64_t windowOperatorIndex,
                                            SchemaPtr ptr) override;
 
+    bool
+    generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWindowDefinitionPtr window,
+                                           GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                           PipelineContextPtr context,
+                                           uint64_t windowOperatorIndex,
+                                           SchemaPtr ptr) override;
+
+
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
     * @param window The window definition, which contains all properties of the window.
