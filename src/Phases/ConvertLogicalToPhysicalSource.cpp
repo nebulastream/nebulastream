@@ -173,6 +173,8 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                    networkSourceDescriptor->getNesPartition(),
                                    networkSourceDescriptor->getNodeLocation(),
                                    numSourceLocalBuffers,
+                                   networkSourceDescriptor->getWaitTime(),
+                                   networkSourceDescriptor->getRetryTimes(),
                                    successors);
     } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");

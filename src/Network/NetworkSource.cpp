@@ -34,9 +34,9 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                              NesPartition nesPartition,
                              NodeLocation sinkLocation,
                              size_t numSourceLocalBuffers,
-                             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
                              std::chrono::milliseconds waitTime,
-                             uint8_t retryTimes)
+                             uint8_t retryTimes,
+                             std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(std::move(schema),
                  std::move(bufferManager),
                  std::move(queryManager),

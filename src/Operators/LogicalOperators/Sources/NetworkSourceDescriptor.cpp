@@ -20,11 +20,21 @@
 
 namespace NES::Network {
 
-NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition, NodeLocation nodeLocation)
-    : SourceDescriptor(std::move(schema)), nesPartition(nesPartition), nodeLocation(nodeLocation) {}
+NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema,
+                                                 NesPartition nesPartition,
+                                                 NodeLocation nodeLocation,
+                                                 std::chrono::milliseconds waitTime,
+                                                 uint32_t retryTimes)
+    : SourceDescriptor(std::move(schema)), nesPartition(nesPartition), nodeLocation(nodeLocation), waitTime(waitTime),
+      retryTimes(retryTimes) {}
 
-SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema, NesPartition nesPartition, NodeLocation nodeLocation) {
-    return std::make_shared<NetworkSourceDescriptor>(NetworkSourceDescriptor(std::move(schema), nesPartition, nodeLocation));
+SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema,
+                                                    NesPartition nesPartition,
+                                                    NodeLocation nodeLocation,
+                                                    std::chrono::milliseconds waitTime,
+                                                    uint32_t retryTimes) {
+    return std::make_shared<NetworkSourceDescriptor>(
+        NetworkSourceDescriptor(std::move(schema), nesPartition, nodeLocation, waitTime, retryTimes));
 }
 
 bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const& other) {
@@ -42,5 +52,9 @@ std::string NetworkSourceDescriptor::toString() {
 NesPartition NetworkSourceDescriptor::getNesPartition() const { return nesPartition; }
 
 NodeLocation NetworkSourceDescriptor::getNodeLocation() const { return nodeLocation; }
+
+std::chrono::milliseconds NetworkSourceDescriptor::getWaitTime() const { return waitTime; }
+
+uint8_t NetworkSourceDescriptor::getRetryTimes() const { return retryTimes; }
 
 }// namespace NES::Network

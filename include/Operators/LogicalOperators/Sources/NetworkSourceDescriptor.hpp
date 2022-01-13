@@ -38,7 +38,11 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      * @param nodeLocation
      * @return instance of network source descriptor
      */
-    static SourceDescriptorPtr create(SchemaPtr schema, NesPartition nesPartition, NodeLocation nodeLocation);
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      NesPartition nesPartition,
+                                      NodeLocation nodeLocation,
+                                      std::chrono::milliseconds waitTime,
+                                      uint32_t retryTimes);
 
     /**
      * @brief equal method for the NetworkSourceDescriptor
@@ -61,11 +65,29 @@ class NetworkSourceDescriptor : public SourceDescriptor {
 
     NodeLocation getNodeLocation() const;
 
+    /**
+     * @brief getter for the wait time
+     * @return the wait time
+     */
+    std::chrono::milliseconds getWaitTime() const;
+
+    /**
+     * @brief getter for the retry times
+     * @return the retry times
+     */
+    uint8_t getRetryTimes() const;
+
   private:
-    explicit NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition, NodeLocation nodeLocation);
+    explicit NetworkSourceDescriptor(SchemaPtr schema,
+                                     NesPartition nesPartition,
+                                     NodeLocation nodeLocation,
+                                     std::chrono::milliseconds waitTime,
+                                     uint32_t retryTimes);
 
     NesPartition nesPartition;
     NodeLocation nodeLocation;
+    std::chrono::milliseconds waitTime;
+    uint32_t retryTimes;
 };
 
 using networkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
