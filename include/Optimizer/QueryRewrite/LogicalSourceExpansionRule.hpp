@@ -44,7 +44,10 @@ const std::string LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS = "ListOfBlockingParent
  * graph by adding additional replicated operators.
  *
  * Note: Apart from replicating the logical source operator we also replicate its down stream operators till we
- * encounter first n-ary operator or we encounter sink operator.
+ * encounter first blocking operator as defined by method @see LogicalSourceExpansionRule:isBlockingOperator.
+ *
+ * Note: if expandSourceOnly is set to true then only source operators will be expanded and @see LogicalSourceExpansionRule:isBlockingOperator
+ * will be ignored.
  *
  * Example: a query :                       Sink
  *                                           |
@@ -90,7 +93,7 @@ const std::string LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS = "ListOfBlockingParent
  */
 class LogicalSourceExpansionRule : public BaseRewriteRule {
   public:
-    static LogicalSourceExpansionRulePtr create(StreamCatalogPtr, bool expandSourceOnly = false);
+    static LogicalSourceExpansionRulePtr create(StreamCatalogPtr, bool expandSourceOnly);
 
     /**
      * @brief Apply Logical source expansion rule on input query plan

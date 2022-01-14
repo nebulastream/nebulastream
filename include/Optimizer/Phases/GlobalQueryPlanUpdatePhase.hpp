@@ -79,6 +79,7 @@ class GlobalQueryPlanUpdatePhase {
      * @param enableQueryMerging: enable or disable query merging
      * @param queryMergerRule: Rule to be used fro performing query merging if merging enabled
      * @param memoryLayoutPolicy: Layout selection policy
+     * @param performOnlySourceOperatorExpansion: perform expansion of only logical source operator
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog,
@@ -86,7 +87,8 @@ class GlobalQueryPlanUpdatePhase {
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
                                                 QueryMergerRule queryMergerRule,
-                                                MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy);
+                                                MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
+                                                bool performOnlySourceOperatorExpansion);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -101,7 +103,8 @@ class GlobalQueryPlanUpdatePhase {
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
                                         QueryMergerRule queryMergerRule,
-                                        MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy);
+                                        MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
+                                        bool performOnlySourceOperatorExpansion);
 
     QueryCatalogPtr queryCatalog;
     GlobalQueryPlanPtr globalQueryPlan;

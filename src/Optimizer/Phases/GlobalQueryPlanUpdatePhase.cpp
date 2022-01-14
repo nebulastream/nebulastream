@@ -38,7 +38,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
                                                        QueryMergerRule queryMergerRule,
-                                                       MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy)
+                                                       MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
+                                                       bool performOnlySourceOperatorExpansion)
     : queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)), z3Context(std::move(z3Context)) {
     queryMergerPhase = QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -52,7 +53,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
         applyRulesImprovingSharingIdentification = true;
     }
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
-    topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog, performOnlySourceOperatorExpansion);
     signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, queryMergerRule);
     setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(memoryLayoutPolicy);
 }
@@ -63,13 +64,15 @@ GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
                                    QueryMergerRule queryMergerRule,
-                                   MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy) {
+                                   MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
+                                   bool performOnlySourceOperatorExpansion) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalog),
                                                                                    std::move(streamCatalog),
                                                                                    std::move(globalQueryPlan),
                                                                                    std::move(z3Context),
                                                                                    queryMergerRule,
-                                                                                   memoryLayoutPolicy));
+                                                                                   memoryLayoutPolicy,
+                                                                                   performOnlySourceOperatorExpansion));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {

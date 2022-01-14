@@ -82,7 +82,8 @@ class NESRequestProcessorService {
                                         const WorkerRPCClientPtr& workerRpcClient,
                                         NESRequestQueuePtr queryRequestQueue,
                                         Optimizer::QueryMergerRule queryMergerRule,
-                                        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy);
+                                        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
+                                        bool performOnlySourceOperatorExpansion);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog

@@ -48,3 +48,6 @@ queryMergerRule: DefaultQueryMergerRule
 # Semantic Query Validation Feature
 enableSemanticQueryValidation: false
 
+# Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule
+performOnlySourceOperatorExpansion: false
+

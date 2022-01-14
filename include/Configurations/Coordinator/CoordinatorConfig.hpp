@@ -258,6 +258,18 @@ class CoordinatorConfig {
      */
     void setMemoryLayoutPolicy(std::string memoryLayoutPolicy);
 
+    /**
+     * @brief fetch the values for PerformOnlySourceOperatorExpansion
+     * @return bool configuration value
+     */
+    BoolConfigOption getPerformOnlySourceOperatorExpansion();
+
+    /**
+     * @brief set the value for PerformOnlySourceOperatorExpansion
+     * @param performOnlySourceOperatorExpansion
+     */
+    void setPerformOnlySourceOperatorExpansion(bool performOnlySourceOperatorExpansion);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -279,6 +291,7 @@ class CoordinatorConfig {
     StringConfigOption queryMergerRule;
     BoolConfigOption enableMonitoring;
     StringConfigOption memoryLayoutPolicy;
+    BoolConfigOption performOnlySourceOperatorExpansion;
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;

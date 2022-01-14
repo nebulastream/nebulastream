@@ -49,11 +49,9 @@ CoordinatorConfig::CoordinatorConfig() {
     bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
     numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
     queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
-
     queryMergerRule = ConfigOption<std::string>::create("queryMergerRule",
                                                         "DefaultQueryMergerRule",
                                                         "The rule to be used for performing query merging");
-
     enableSemanticQueryValidation =
         ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
     enableMonitoring = ConfigOption<bool>::create("enableMonitoring", false, "Enable monitoring");
@@ -61,6 +59,10 @@ CoordinatorConfig::CoordinatorConfig() {
         "memoryLayoutPolicy",
         "FORCE_ROW_LAYOUT",
         "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]");
+    performOnlySourceOperatorExpansion = ConfigOption<bool>::create(
+        "performOnlySourceOperatorExpansion",
+        false,
+        "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -129,6 +131,10 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
                 && config["memoryLayoutPolicy"].As<std::string>() != "\n") {
                 setMemoryLayoutPolicy(config["memoryLayoutPolicy"].As<std::string>());
             }
+            if (!config["performOnlySourceOperatorExpansion"].As<std::string>().empty()
+                && config["performOnlySourceOperatorExpansion"].As<std::string>() != "\n") {
+                setPerformOnlySourceOperatorExpansion(config["performOnlySourceOperatorExpansion"].As<bool>());
+            }
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfig: Keeping default values.");
@@ -177,6 +183,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setEnableMonitoring((it->second == "true"));
             } else if (it->first == "--memoryLayoutPolicy" && !it->second.empty()) {
                 setMemoryLayoutPolicy(it->second);
+            } else if (it->first == "--performOnlySourceOperatorExpansion" && !it->second.empty()) {
+                setPerformOnlySourceOperatorExpansion((it->second == "true"));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -206,6 +214,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setEnableSemanticQueryValidation(enableSemanticQueryValidation->getDefaultValue());
     setEnableMonitoring(enableMonitoring->getDefaultValue());
     setMemoryLayoutPolicy(memoryLayoutPolicy->getDefaultValue());
+    setPerformOnlySourceOperatorExpansion(performOnlySourceOperatorExpansion->getDefaultValue());
 }
 
 std::string CoordinatorConfig::toString() {
@@ -227,6 +236,7 @@ std::string CoordinatorConfig::toString() {
     ss << enableSemanticQueryValidation->toStringNameCurrentValue();
     ss << enableMonitoring->toStringNameCurrentValue();
     ss << memoryLayoutPolicy->toStringNameCurrentValue();
+    ss << performOnlySourceOperatorExpansion->toStringNameCurrentValue();
     return ss.str();
 }
 
@@ -295,6 +305,7 @@ BoolConfigOption CoordinatorConfig::getEnableSemanticQueryValidation() { return 
 void CoordinatorConfig::setEnableSemanticQueryValidation(bool enableSemanticQueryValidation) {
     CoordinatorConfig::enableSemanticQueryValidation->setValue(enableSemanticQueryValidation);
 }
+
 BoolConfigOption CoordinatorConfig::getEnableMonitoring() { return enableMonitoring; }
 
 void CoordinatorConfig::setEnableMonitoring(bool enableMonitoring) {
@@ -306,6 +317,11 @@ void CoordinatorConfig::setMemoryLayoutPolicy(std::string memoryLayoutPolicy) {
 }
 
 StringConfigOption CoordinatorConfig::getMemoryLayoutPolicy() { return memoryLayoutPolicy; }
+
+BoolConfigOption CoordinatorConfig::getPerformOnlySourceOperatorExpansion() { return performOnlySourceOperatorExpansion; }
+void CoordinatorConfig::setPerformOnlySourceOperatorExpansion(bool performOnlySourceOperatorExpansion) {
+    this->performOnlySourceOperatorExpansion->setValue(performOnlySourceOperatorExpansion);
+}
 
 }// namespace Configurations
 }// namespace NES
