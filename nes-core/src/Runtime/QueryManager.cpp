@@ -1028,7 +1028,7 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
                 .count();
         auto diff = now - creation;
 //        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
-        NES_ASSERT(creation <= now, "timestamp is in the past");
+        NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
         statistics->incLatencySum(diff);
 
         auto qSize = 0;

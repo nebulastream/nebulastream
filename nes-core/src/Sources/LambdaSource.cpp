@@ -74,6 +74,10 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
 
     Runtime::TupleBuffer buffer;
     generationFunction(buffer, numberOfTuplesToProduce);
+    if(!buffer.isValid())
+    {
+        return std::nullopt;
+    }
     buffer.setNumberOfTuples(numberOfTuplesToProduce);
 
     generatedTuples += buffer.getNumberOfTuples();

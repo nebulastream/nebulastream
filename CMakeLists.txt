@@ -93,7 +93,7 @@ endif ()
 # this is an experimental feature; do not rely on it yet
 #if(NES_COMPUTE_COVERAGE)
 #    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-#endif()
+#endif
 
 if (NES_USE_ONE_QUEUE_PER_QUERY)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_QUERY=1")
