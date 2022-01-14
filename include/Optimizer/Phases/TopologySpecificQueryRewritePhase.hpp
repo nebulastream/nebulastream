@@ -47,7 +47,7 @@ using DistributeJoinRulePtr = std::shared_ptr<DistributeJoinRule>;
  */
 class TopologySpecificQueryRewritePhase {
   public:
-    static TopologySpecificQueryRewritePhasePtr create(StreamCatalogPtr streamCatalog);
+    static TopologySpecificQueryRewritePhasePtr create(StreamCatalogPtr streamCatalog, bool performOnlySourceOperatorExpansion);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -57,7 +57,7 @@ class TopologySpecificQueryRewritePhase {
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
   private:
-    explicit TopologySpecificQueryRewritePhase(StreamCatalogPtr streamCatalog);
+    explicit TopologySpecificQueryRewritePhase(StreamCatalogPtr streamCatalog, bool performOnlySourceOperatorExpansion);
     LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
     DistributeWindowRulePtr distributeWindowRule;
     DistributeJoinRulePtr distributeJoinRule;

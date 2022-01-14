@@ -106,6 +106,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     std::string queryMergerRuleName = coordinatorConfig->getQueryMergerRule()->getValue();
     auto found = Optimizer::stringToMergerRuleEnum.find(queryMergerRuleName);
 
+    bool performOnlySourceOperatorExpansion = coordinatorConfig->getPerformOnlySourceOperatorExpansion()->getValue();
     if (found != Optimizer::stringToMergerRuleEnum.end()) {
         queryRequestProcessorService = std::make_shared<NESRequestProcessorService>(globalExecutionPlan,
                                                                                     topology,
@@ -115,7 +116,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
                                                                                     workerRpcClient,
                                                                                     queryRequestQueue,
                                                                                     found->second,
-                                                                                    memoryLayoutPolicy);
+                                                                                    memoryLayoutPolicy,
+                                                                                    performOnlySourceOperatorExpansion);
     } else {
         NES_FATAL_ERROR("Unrecognized Query Merger Rule Detected " << queryMergerRuleName);
     }

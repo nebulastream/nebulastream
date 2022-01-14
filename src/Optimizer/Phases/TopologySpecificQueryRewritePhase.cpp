@@ -23,12 +23,15 @@
 
 namespace NES::Optimizer {
 
-TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(StreamCatalogPtr streamCatalog) {
-    return std::make_shared<TopologySpecificQueryRewritePhase>(TopologySpecificQueryRewritePhase(std::move(streamCatalog)));
+TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(StreamCatalogPtr streamCatalog,
+                                                                               bool performOnlySourceOperatorExpansion) {
+    return std::make_shared<TopologySpecificQueryRewritePhase>(
+        TopologySpecificQueryRewritePhase(std::move(streamCatalog), performOnlySourceOperatorExpansion));
 }
 
-TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(StreamCatalogPtr streamCatalog) {
-    logicalSourceExpansionRule = LogicalSourceExpansionRule::create(std::move(streamCatalog));
+TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(StreamCatalogPtr streamCatalog,
+                                                                     bool performOnlySourceOperatorExpansion) {
+    logicalSourceExpansionRule = LogicalSourceExpansionRule::create(std::move(streamCatalog), performOnlySourceOperatorExpansion);
     distributeWindowRule = DistributeWindowRule::create();
     distributeJoinRule = DistributeJoinRule::create();
 }

@@ -55,7 +55,8 @@ NESRequestProcessorService::NESRequestProcessorService(
     const WorkerRPCClientPtr& workerRpcClient,
     NESRequestQueuePtr queryRequestQueue,
     Optimizer::QueryMergerRule queryMergerRule,
-    Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy)
+    Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
+    bool performOnlySourceOperatorExpansion)
     : queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(std::move(queryRequestQueue)),
       globalQueryPlan(globalQueryPlan) {
 
@@ -75,7 +76,8 @@ NESRequestProcessorService::NESRequestProcessorService(
                                                                                globalQueryPlan,
                                                                                z3Context,
                                                                                queryMergerRule,
-                                                                               memoryLayoutPolicy);
+                                                                               memoryLayoutPolicy,
+                                                                               performOnlySourceOperatorExpansion);
 }
 
 void NESRequestProcessorService::start() {
