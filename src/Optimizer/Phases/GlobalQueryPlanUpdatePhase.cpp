@@ -53,7 +53,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
         applyRulesImprovingSharingIdentification = true;
     }
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
-    topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog, performOnlySourceOperatorExpansion);
+    topologySpecificQueryRewritePhase =
+        TopologySpecificQueryRewritePhase::create(streamCatalog, performOnlySourceOperatorExpansion);
     signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, queryMergerRule);
     setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(memoryLayoutPolicy);
 }

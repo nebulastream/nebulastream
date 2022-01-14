@@ -201,12 +201,12 @@ class TestUtils {
                 NES_TRACE("TestUtils: Query " << queryId << " is now in running status.");
                 return isQueryRunning;
             }
-            
-            if(status == QueryStatus::Failed || status == QueryStatus::Stopped){
-                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found "+ queryStatusToStringMap[status]);
+
+            if (status == QueryStatus::Failed || status == QueryStatus::Stopped) {
+                NES_ERROR("Query failed to start. Expected: Running or Scheduling but found " + queryStatusToStringMap[status]);
                 return false;
             }
-            
+
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
         }
         NES_DEBUG("checkCompleteOrTimeout: waitForStart expected results are not reached after timeout");
