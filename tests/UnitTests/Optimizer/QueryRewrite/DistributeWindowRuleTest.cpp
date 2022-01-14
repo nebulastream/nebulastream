@@ -164,7 +164,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan = Optimizer::TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 
@@ -197,7 +197,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
     queryPlan = Optimizer::TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 
