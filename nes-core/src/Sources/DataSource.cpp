@@ -55,8 +55,9 @@ DataSource::DataSource(SchemaPtr pSchema,
                        uint64_t taskQueueId
                        )
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
-      executableSuccessors(std::move(executableSuccessors)), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), operatorId(operatorId), schema(std::move(pSchema)),
-      numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
+      executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),
+      numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId)
+      {
     this->kFilter.setDefaultValues();
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
@@ -125,14 +126,15 @@ bool DataSource::start() {
             if (rc != 0) {
                 NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
             } else {
-                int cpu = sched_getcpu();
-                auto numaNode = numa_node_of_cpu(cpu);
+
                 unsigned long cur_mask;
                 auto ret = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
                 if (ret != 0) {
                     NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
                 }
-                std::cout << "source " << operatorId << " pins to core=" << sourceAffinity << " on numaNode=" << numaNode << " ";
+//                int cpu = sched_getcpu();
+//                auto numaNode = numa_node_of_cpu(cpu);
+                std::cout << "source " << operatorId << " pins to core=" << sourceAffinity;// << " on numaNode=" << numaNode << " ";
                 printf("setted affinity after assignment: %08lx\n", cur_mask);
             }
         } else {
