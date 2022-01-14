@@ -11,7 +11,7 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-class PhysicalKeyedSlidingWindowSink : public PhysicalUnaryOperator, public AbstractScanOperator , public AbstractEmitOperator {
+class PhysicalKeyedSlidingWindowSink : public PhysicalUnaryOperator, public AbstractScanOperator  {
   public:
     PhysicalKeyedSlidingWindowSink(
         OperatorId id,

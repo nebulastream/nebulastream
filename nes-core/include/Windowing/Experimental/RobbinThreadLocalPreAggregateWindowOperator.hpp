@@ -169,8 +169,14 @@ class RobinThreadLocalPreAggregateWindowOperator : public Runtime::Execution::Ex
         auto records = inputTupleBuffer.getNumberOfTuples();
         uint64_t currentWatermark = 0;
         for (uint64_t recordIndex = 0; recordIndex < records; ++recordIndex) {
+
             uint64_t key = inputTuples[recordIndex].test$key;
             auto current_ts = inputTuples[recordIndex].test$ts;
+
+
+            view.update(key, value)
+
+
 
             currentWatermark = std::max(currentWatermark, current_ts - allowedLateness);
             // pre aggregate in local slice store

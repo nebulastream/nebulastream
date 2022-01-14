@@ -50,7 +50,8 @@ class Hashmap {
         return (T*) getKeyPtr(entry);
     };
 
-    std::unique_ptr<std::vector<Runtime::TupleBuffer>> getEntries() { return std::move(storageBuffers); };
+    std::unique_ptr<std::vector<Runtime::TupleBuffer>> extractEntries() { return std::move(storageBuffers); };
+    std::unique_ptr<std::vector<Runtime::TupleBuffer>>& getEntries() { return storageBuffers; };
 
     /**
      * @brief Get the value for a specific entry

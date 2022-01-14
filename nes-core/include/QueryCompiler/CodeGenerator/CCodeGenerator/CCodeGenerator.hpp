@@ -22,6 +22,7 @@
 
 namespace NES {
 namespace QueryCompilation {
+class ForLoopStatement;
 /**
  * @brief A code generator that generates C++ code optimized for X86 architectures.
  */
@@ -80,7 +81,14 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForMap(AttributeFieldPtr field, LegacyExpressionPtr pred, PipelineContextPtr context) override;
     bool generateCodeForSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) override;
-    /**
+    std::shared_ptr<ForLoopStatement>
+    keyedSliceMergeLoop(VariableDeclaration& buffers,
+                                        FunctionCallStatement& tupleBufferGetNumberOfTupleCall,
+                                        StructDeclaration& partialAggregationEntry,
+                                        VariableDeclaration& keyVariableDeclaration,
+                                        DataTypePtr keyStamp,
+                                        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr aggregation);
+        /**
     * @brief Code generation for an emit, which depends on a particular output schema.
     * @param schema The output schema.
     * @param bufferStrategy Strategy for allocation of and writing to result buffer.
