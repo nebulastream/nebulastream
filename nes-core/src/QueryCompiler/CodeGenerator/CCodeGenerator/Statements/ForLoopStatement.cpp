@@ -36,6 +36,18 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
     }
 }
 
+ForLoopStatement::ForLoopStatement(ExpressionStatementPtr condition,
+                                   ExpressionStatementPtr advance,
+                                   std::vector<StatementPtr> loop_body)
+    : varDeclaration(nullptr), condition(std::move(condition)), advance(std::move(advance)),
+      body(std::make_shared<CompoundStatement>()) {
+    for (auto const& stmt : loop_body) {
+        if (stmt) {
+            body->addStatement(stmt);
+        }
+    }
+}
+
 StatementPtr ForLoopStatement::createCopy() const { return std::make_shared<ForLoopStatement>(*this); }
 
 CompoundStatementPtr ForLoopStatement::getCompoundStatement() { return body; }
@@ -44,8 +56,11 @@ StatementType ForLoopStatement::getStamentType() const { return StatementType::F
 
 CodeExpressionPtr ForLoopStatement::getCode() const {
     std::stringstream code;
-    code << "for(" << varDeclaration->getCode() << ";" << condition->getCode()->code_ << ";" << advance->getCode()->code_ << "){"
-         << std::endl;
+    code << "for(";
+    if (varDeclaration != nullptr) {
+        code << varDeclaration->getCode();
+    }
+    code << ";" << condition->getCode()->code_ << ";" << advance->getCode()->code_ << "){" << std::endl;
     code << body->getCode()->code_ << std::endl;
     code << "}" << std::endl;
     return std::make_shared<CodeExpression>(code.str());

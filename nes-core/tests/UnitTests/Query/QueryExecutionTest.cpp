@@ -751,7 +751,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
+TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5)  {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(

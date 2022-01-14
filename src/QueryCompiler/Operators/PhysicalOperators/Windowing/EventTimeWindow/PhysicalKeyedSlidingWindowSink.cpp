@@ -9,7 +9,7 @@ PhysicalKeyedSlidingWindowSink::PhysicalKeyedSlidingWindowSink(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     std::shared_ptr<Windowing::Experimental::KeyedEventTimeWindowHandler> keyedEventTimeWindowHandler)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(), AbstractEmitOperator(),
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), AbstractScanOperator(),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
 
 std::string PhysicalKeyedSlidingWindowSink::toString() const { return "PhysicalKeyedSlidingWindowSink"; }

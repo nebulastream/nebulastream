@@ -27,6 +27,7 @@ class KeyedGlobalSliceStore {
      * @return KeyedSlicePtr
      */
     KeyedSliceSharedPtr getSlice(uint64_t sliceIndex);
+    bool hasSlice(uint64_t sliceIndex);
 
     /**
      * @brief Triggers a specific slice and garbage collects all slices

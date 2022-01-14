@@ -59,14 +59,14 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
         for (uint64_t si = firstIndex; si <= lastIndex; si++) {
 
             const auto& slice = threadLocalSliceStore[si];
-            if (slice->getEnd() >= newGlobalWatermark) {
+            if (slice->getEnd() > newGlobalWatermark) {
                 break;
             }
 
             // put partitions to global slice store
             auto& sliceState = slice->getState();
             // each worker adds its local state to the staging area
-            auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging.addToSlice(slice->getIndex(), sliceState.getEntries());
+            auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging.addToSlice(slice->getIndex(), sliceState.extractEntries());
             if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                 if (numberOfBuffers != 0) {
                     NES_DEBUG("Deploy merge task for slice " << slice->getIndex() << " with " << numberOfBuffers << " buffers.");
@@ -94,10 +94,12 @@ void KeyedEventTimeWindowHandler::triggerSliceMerging(Runtime::WorkerContext& wc
     // add pre-aggregated slice to slice store
     auto [oldMaxSliceIndex, newMaxSliceIndex] = globalSliceStore.addSlice(sequenceNumber, slice->getIndex(), std::move(slice));
     // check if we can trigger window computation
+    // ignore first sequence number
     if (newMaxSliceIndex > oldMaxSliceIndex) {
         auto buffer = wctx.allocateTupleBuffer();
         auto task = buffer.getBuffer<WindowTriggerTask>();
         // we trigger the compleation of all windows that end between startSlice and <= endSlice.
+        NES_DEBUG("Deploy window trigger task for slice  ( " << oldMaxSliceIndex << "-" << newMaxSliceIndex << ")");
         task->startSlice = oldMaxSliceIndex;
         task->endSlice = newMaxSliceIndex;
         task->sequenceNumber = newMaxSliceIndex;

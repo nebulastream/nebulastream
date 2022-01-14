@@ -42,5 +42,8 @@ void KeyedGlobalSliceStore::finalizeSlice(uint64_t sequenceNumber, uint64_t slic
         sliceMap.erase(si);
     }
 }
+bool KeyedGlobalSliceStore::hasSlice(uint64_t sliceIndex) {
+    return sliceMap.contains(sliceIndex);
+}
 
 }// namespace NES::Windowing::Experimental

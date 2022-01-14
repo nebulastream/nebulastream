@@ -67,6 +67,9 @@ class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler, 
                              uint64_t sequenceNumber,
                              KeyedSlicePtr slice);
 
+    KeyedGlobalSliceStore& getGlobalSliceStore(){
+        return globalSliceStore;
+    }
   private:
     std::atomic<bool> isRunning;
     uint64_t sliceSize;
