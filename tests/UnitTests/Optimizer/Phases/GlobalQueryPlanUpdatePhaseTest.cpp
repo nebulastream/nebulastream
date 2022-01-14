@@ -18,6 +18,7 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Configurations/Sources/DefaultSourceConfig.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -30,7 +31,6 @@
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
-#include <Configurations/Sources/DefaultSourceConfig.hpp>
 
 namespace NES {
 
@@ -79,14 +79,14 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
     auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
 
-
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
                                                                streamCatalog,
                                                                globalQueryPlan,
                                                                context,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule,
-                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT,
+                                                               false);
     auto catalogEntry1 = QueryCatalogEntry(INVALID_QUERY_ID, "", "topdown", q1.getQueryPlan(), Scheduling);
     auto request = RunQueryRequest::create(catalogEntry1.getInputQueryPlan(), catalogEntry1.getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
@@ -97,7 +97,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForSingle
 /**
  * @brief In this test we execute query merger phase on a single query plan.
  */
-TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan)  {
+TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan) {
 
     //Prepare
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
@@ -113,7 +113,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
                                                                globalQueryPlan,
                                                                context,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule,
-                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT,
+                                                               false);
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto request = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {request};
@@ -144,7 +145,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForDuplic
                                                                globalQueryPlan,
                                                                context,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule,
-                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT,
+                                                               false);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto request = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
@@ -175,7 +177,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
                                                                globalQueryPlan,
                                                                context,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule,
-                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT,
+                                                               false);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
@@ -211,7 +214,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, DISABLED_executeQueryMergerPhaseForAValid
                                                                globalQueryPlan,
                                                                context,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule,
-                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT,
+                                                               false);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto nesRequest1 = RunQueryRequest::create(catalogEntry1->getInputQueryPlan(), catalogEntry1->getQueryPlacementStrategy());
     std::vector<NESRequestPtr> batchOfQueryRequests = {nesRequest1};
@@ -242,7 +246,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
                                                                globalQueryPlan,
                                                                context,
                                                                Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule,
-                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+                                                               Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT,
+                                                               false);
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
@@ -293,7 +298,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
                                                       globalQueryPlan,
                                                       context,
                                                       Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule,
-                                                      Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+                                                      Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT,
+                                                      false);
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
@@ -311,7 +317,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
     const auto* queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
 
-//    auto queryCatalog = std::make_shared<QueryCatalog>();
+    //    auto queryCatalog = std::make_shared<QueryCatalog>();
     for (int i = 1; i <= 1; i++) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
         auto q1 = Query::from("example")
@@ -365,7 +371,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
                                                       globalQueryPlan,
                                                       context,
                                                       Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule,
-                                                      Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT);
+                                                      Optimizer::MemoryLayoutSelectionPhase::FORCE_ROW_LAYOUT,
+                                                      false);
 
     auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert

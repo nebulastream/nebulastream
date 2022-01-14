@@ -87,7 +87,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
@@ -121,7 +121,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     queryPlan->setQueryId(queryId);
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
@@ -158,7 +158,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     queryPlan->setQueryId(queryId);
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
@@ -181,7 +181,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
@@ -209,7 +209,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
     QueryPlanPtr queryPlan = query.getQueryPlan();
 
     // Execute
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog, false);
     const QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
 
     // Validate
