@@ -76,14 +76,15 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
     NES_TRACE("BasePlacementStrategy: Locating node to pin sink operator.");
     std::vector<NodePtr> rootNodes = selectedTopologyForPlacement[0]->getAllRootNodes();
     //TODO: change here if the topology can have more than one root node (this is not supported currently)
-    if(rootNodes.size()>1){
+    if (rootNodes.size() > 1) {
         NES_NOT_IMPLEMENTED();
     }
 
     if (rootNodes.empty()) {
         NES_ERROR("BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
         throw QueryPlacementException(
-            queryId, "BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
+            queryId,
+            "BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
     }
     //Fetch one root node and pin all sink operators to the node
     TopologyNodePtr rootNode = rootNodes[0]->as<TopologyNode>();

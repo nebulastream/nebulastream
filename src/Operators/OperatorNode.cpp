@@ -163,9 +163,7 @@ NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorId) {
     return nullptr;
 }
 
-void OperatorNode::addProperty(const std::string& key, const std::any value) {
-    properties[key] = value;
-}
+void OperatorNode::addProperty(const std::string& key, const std::any value) { properties[key] = value; }
 
 std::any OperatorNode::getProperty(const std::string& key) { return properties[key]; }
 

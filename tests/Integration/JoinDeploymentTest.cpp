@@ -80,12 +80,10 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
 
-
     string query =
         R"(Query::from("window").as("w1").joinWith(Query::from("window").as("w2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
 
     //Setup first physical stream
     SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
@@ -99,9 +97,9 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     testHarness.addCSVSource(conf, windowSchema);
 
     //Setup second physical stream for same logical stream
-//    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
-//    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
-//    testHarness.addCSVSource(conf2, windowSchema);
+    //    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
+    //    PhysicalStreamConfigPtr conf2 = PhysicalStreamConfig::create(srcConf);
+    //    testHarness.addCSVSource(conf2, windowSchema);
 
     struct Output {
         int64_t start;
@@ -126,7 +124,6 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
                                           {2000, 3000, 1, 2, 1, 2000, 2, 1, 2000},
                                           {2000, 3000, 11, 2, 11, 2001, 2, 11, 2001},
                                           {2000, 3000, 16, 2, 16, 2002, 2, 16, 2002}};
-
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown", "NONE", "IN_MEMORY");
 
