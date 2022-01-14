@@ -81,7 +81,8 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
 
 namespace CEPOperatorBuilder {
 
-And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
+And::And(const Query& subQueryRhs, Query& originalQuery)
+    : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the streams in order to reuse the join-logic later
     std::string cepLeftKey = keyAssignmentLeft();
@@ -100,7 +101,8 @@ Query& And::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery.andWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original andWith() function
 }
 
-Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
+Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
+    : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
     NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the streams in order to reuse the join-logic later
     std::string cepLeftKey = keyAssignmentLeft();

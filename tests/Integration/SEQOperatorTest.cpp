@@ -13,8 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Components/NesCoordinator.hpp>
+#include "Configurations/Sources/SourceConfigFactory.hpp"
 #include <API/QueryAPI.hpp>
+#include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
@@ -23,12 +24,11 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <chrono>//for timing execution
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <regex>
-#include <chrono> //for timing execution
-#include "Configurations/Sources/SourceConfigFactory.hpp"
 
 //used tests: QueryCatalogTest, QueryTest
 namespace fs = std::filesystem;
@@ -269,16 +269,22 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622640000|64.777779|10|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622880000|69.388885|7|1|\n"
         "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622940000|66.222221|12|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543623300000|1543623600000|1|R2000070|1543623480000|78.555557|5|1|R2000073|1543623540000|62.055557|10|1|\n"
         "+----------------------------------------------------+";
@@ -388,30 +394,40 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543622040000|1543622640000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543622280000|1543622880000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622160000|1543622760000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622280000|1543622880000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
         "|1543622160000|1543622760000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543622400000|1543623000000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622400000|1543623000000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
         "|1543622400000|1543623000000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543622520000|1543623120000|1|R2000070|1543622520000|66.566666|3|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622520000|1543623120000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
         "|1543622520000|1543623120000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543622640000|1543623240000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622700000|64.111115|7|1|\n"
         "|1543622880000|1543623480000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
@@ -419,7 +435,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
         "|1543622640000|1543623240000|1|R2000070|1543622880000|68.944443|8|1|R2000073|1543622940000|66.222221|12|1|\n"
         "+----------------------------------------------------+";
 
-    EXPECT_EQ(removeRandomKey(content),expectedContent);
+    EXPECT_EQ(removeRandomKey(content), expectedContent);
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -693,4 +709,4 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
-}
+}// namespace NES
