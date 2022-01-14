@@ -25,54 +25,57 @@ namespace NES{
 MaintenanceController::MaintenanceController(MaintenanceServicePtr maintenanceService) :maintenanceService{maintenanceService}{}
 
 
-void MaintenanceController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) {
-    NES_DEBUG("MaintenanceController: POST");
-
+void MaintenanceController::handlePost(const std::vector<utility::string_t>& path, web::http::http_request& request) {
     if (path[1] == "mark") {
-
-
         NES_DEBUG("MaintenanceController: handlePost -mark: REST received request to mark node for maintenance "
-                      << message.to_string());
-        message.extract_string(true)
-            .then([this, message](utility::string_t body) {
+                      << request.to_string());
+        request.extract_string(true)
+            .then([this, request](utility::string_t body) {
               try {
                   NES_DEBUG("MaintenanceController: handlePost -mark: Start trying to mark nodes for maintenance");
-                  //Parse IDs of nodes to mark for maintenance
+                  //Parse ID of node to mark for maintenance
                   std::string payload(body.begin(), body.end());
                   NES_DEBUG("MaintenanceController: handlePost -mark: userRequest: " << payload);
                   web::json::value req = web::json::value::parse(payload);
                   NES_DEBUG("MaintenanceController: handlePost -mark: Json Parse Value: " << req);
-                  //TODO: handle multiple IDs
-
-                  uint64_t id = req.at("ids").as_integer();
+                  if (!req.has_field("id")) {
+                      NES_ERROR("MaintenanceController: Unable to find Field: id ");
+                      web::json::value errorResponse{};
+                      errorResponse["detail"] = web::json::value::string("Field id must be provided");
+                      badRequestImpl(request, errorResponse);
+                      return;
+                  }
+                  if (!req.has_field("strategy")) {
+                      NES_ERROR("MaintenanceController: Unable to find Field: strategy ");
+                      web::json::value errorResponse{};
+                      errorResponse["detail"] = web::json::value::string("Field strategy must be provided");
+                      badRequestImpl(request, errorResponse);
+                      return;
+                  }
+                  uint64_t id = req.at("id").as_integer();
                   uint8_t strategy = req.at("strategy").as_integer();
-
                   maintenanceService->submitMaintenanceRequest(id,strategy);
-
                   web::json::value result{};
-
-                      result["Test"] = web::json::value::string("This is a test");
+                      result["Info"] = web::json::value::string("Succesfully submitted Maintenance Request");
                       result["Node Id"] = web::json::value::number(id);
                       result["Strategy"] = web::json::value::number(strategy);
-                      successMessageImpl(message, result);
+                      successMessageImpl(request, result);
                   return;
 
               } catch (const std::exception& exc) {
-                  NES_ERROR("MaintenanceController: handlePost -mark: Exception occurred while trying to mark node for maintenance "
+                  NES_ERROR("MaintenanceController: handlePost -mark: Exception occurred during handling of Maintenance Request"
                                 << exc.what());
-                  handleException(message, exc);
+                  handleException(request, exc);
                   return;
               } catch (...) {
                   RuntimeUtils::printStackTrace();
-                  internalServerErrorImpl(message);
+                  internalServerErrorImpl(request);
                   return;
               }
             })
             .wait();
-
     }else {
-        resourceNotFoundImpl(message);
-
+        resourceNotFoundImpl(request);
     }
 }
 
