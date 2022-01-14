@@ -27,8 +27,7 @@
 
 namespace NES::Runtime {
 
-using BufferStoragePriorityQueue =
-    std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>;
+using BufferStorageQueue = std::queue<BufferStorageUnitPtr>;
 
 /**
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
@@ -83,7 +82,7 @@ class BufferStorage : public AbstractBufferStorage {
     std::unordered_map<uint64_t, SequenceNumberTrackerUnitPtr>& getSequenceNumberTracker();
 
   private:
-    std::unordered_map<uint64_t, BufferStoragePriorityQueue> buffers;
+    std::unordered_map<uint64_t, BufferStorageQueue> buffers;
     std::unordered_map<uint64_t, SequenceNumberTrackerUnitPtr> sequenceNumberTracker;
     mutable std::mutex mutex;
 };

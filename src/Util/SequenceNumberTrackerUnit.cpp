@@ -20,9 +20,9 @@ namespace NES::Runtime {
 
 uint64_t SequenceNumberTrackerUnit::getCurrentHighestSequenceNumber() const { return currentHighestSequenceNumber; }
 
-std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>&
+std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>*
 SequenceNumberTrackerUnit::getSequenceNumberTrackerPriorityQueue() {
-    return SequenceNumberTrackerPriorityQueue;
+    return &sequenceNumberTrackerPriorityQueue;
 }
 
 void SequenceNumberTrackerUnit::setCurrentHighestSequenceNumber(uint64_t currentHighestSequenceNumber) {

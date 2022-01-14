@@ -30,11 +30,7 @@ class SequenceNumberTrackerUnit {
      * @param sequenceNumberTrackerPriorityQueue priority queue with tuples that came out of order and need to be stored until the linear order of arrival tuples is restored
      * @return sequence number tracker unit
      */
-    SequenceNumberTrackerUnit()
-        : currentHighestSequenceNumber(0),
-          SequenceNumberTrackerPriorityQueue(std::priority_queue<BufferStorageUnitPtr,
-                                                                 std::vector<BufferStorageUnitPtr>,
-                                                                 std::greater<BufferStorageUnitPtr>>()) {}
+    SequenceNumberTrackerUnit() : currentHighestSequenceNumber(0), sequenceNumberTrackerPriorityQueue() {}
 
     /**
      * @brief Getter for a current highest linearly increasing sequence number for a given origin id
@@ -46,7 +42,7 @@ class SequenceNumberTrackerUnit {
      * @brief Getter for a current highest linearly increasing sequence number for a given origin id
      * @return sequence number
      */
-    std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>&
+    std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>*
     getSequenceNumberTrackerPriorityQueue();
 
     /**
@@ -58,7 +54,7 @@ class SequenceNumberTrackerUnit {
   private:
     uint64_t currentHighestSequenceNumber;
     std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>
-        SequenceNumberTrackerPriorityQueue;
+        sequenceNumberTrackerPriorityQueue;
     friend bool operator<(const std::shared_ptr<SequenceNumberTrackerUnit>& lhs,
                           const std::shared_ptr<SequenceNumberTrackerUnit>& rhs) {
         return lhs->currentHighestSequenceNumber < rhs->currentHighestSequenceNumber;

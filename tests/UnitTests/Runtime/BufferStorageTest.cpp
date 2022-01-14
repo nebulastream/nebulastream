@@ -52,23 +52,6 @@ TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
 }
 
 /**
-     * @brief test inserts five buffers into one queue but starts from the biggest sequence number.
-     * The queue is then checked to be sorted to be exact to have biggest elements at the top.
-*/
-TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
-    for (int i = buffersInserted - 1; i >= 0; i--) {
-        bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
-    }
-    ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
-    for (uint64_t i = 0; i < buffersInserted - 1; i++) {
-        bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, 0));
-        ASSERT_EQ(bufferStorage->getTopElementFromQueue(0)->getSequenceNumber().getSequenceNumber(), i + 1);
-    }
-}
-
-/**
      * @brief test checks that in case of out of order insertion the sequence number tracker is aware
      * of the highest linear increasing sequnce number
 */
@@ -84,14 +67,14 @@ TEST_F(BufferStorageTest, bufferInsertionOutOfOrderInBufferStorage) {
     auto buffer1 = bufferManager->getUnpooledBuffer(16384);
     bufferStorage->insertBuffer(BufferSequenceNumber(buffersInserted + 2, 0), buffer1.value());
     auto buffer2 = bufferManager->getUnpooledBuffer(16384);
-    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getSequenceNumberTrackerPriorityQueue().size(), 1);
+    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getSequenceNumberTrackerPriorityQueue()->size(), 1);
     ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getCurrentHighestSequenceNumber(), buffersInserted - 1);
     bufferStorage->insertBuffer(BufferSequenceNumber(buffersInserted + 1, 0), buffer2.value());
-    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getSequenceNumberTrackerPriorityQueue().size(), 2);
+    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getSequenceNumberTrackerPriorityQueue()->size(), 2);
     ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getCurrentHighestSequenceNumber(), buffersInserted - 1);
     auto buffer3 = bufferManager->getUnpooledBuffer(16384);
     bufferStorage->insertBuffer(BufferSequenceNumber(buffersInserted, 0), buffer3.value());
-    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getSequenceNumberTrackerPriorityQueue().size(), 0);
+    ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getSequenceNumberTrackerPriorityQueue()->size(), 0);
     ASSERT_EQ(bufferStorage->getSequenceNumberTracker()[0]->getCurrentHighestSequenceNumber(), buffersInserted + 2);
 }
 
@@ -118,7 +101,7 @@ TEST_F(BufferStorageTest, trimmingOfNonExistingElement) {
 /**
      * @brief test inserts one buffer and deletes it
 */
-TEST_F(BufferStorageTest, oneBufferDeletionFromBufferStorage) {
+TEST_F(BufferStorageTest, oneBufferTrimmingFromBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
     bufferStorage->insertBuffer(BufferSequenceNumber(0, 0), buffer.value());
@@ -131,7 +114,7 @@ TEST_F(BufferStorageTest, oneBufferDeletionFromBufferStorage) {
 /**
      * @brief test inserts five buffers in different queues and deletes them.
 */
-TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
+TEST_F(BufferStorageTest, manyBufferTrimmingFromBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     for (size_t i = 0; i < buffersInserted; i++) {
         auto buffer = bufferManager->getUnpooledBuffer(16384);
@@ -143,21 +126,6 @@ TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
         bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, i));
         ASSERT_EQ(bufferStorage->getStorageSizeForQueue(i), emptyBuffer);
     }
-}
-
-/**
-     * @brief test inserts five buffers in one queue and deletes three of them. The test checks that
-     * the deleted buffers are smaller that passed id.
-*/
-TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
-    for (size_t i = 0; i < buffersInserted; i++) {
-        bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
-        ASSERT_EQ(bufferStorage->getStorageSizeForQueue(0), i + 1);
-    }
-    bufferStorage->trimBuffer(BufferSequenceNumber(buffersInserted - 2, 0));
-    ASSERT_EQ(bufferStorage->getStorageSizeForQueue(0), expectedStorageSize);
 }
 
 /**
