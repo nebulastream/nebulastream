@@ -23,11 +23,11 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <chrono>//for timing execution
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <regex>
-#include <chrono> //for timing execution
 
 //used tests: QueryCatalogTest, QueryTest
 namespace fs = std::filesystem;
@@ -68,7 +68,6 @@ class OrOperatorTest : public testing::Test {
 
     void TearDown() override { std::cout << "Tear down OrOperatorTest class." << std::endl; }
     uint64_t restPort = 8081;
-
 };
 
 /* 1.Test
@@ -411,7 +410,6 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     EXPECT_TRUE(retStopCord);
 }
 
-
 /* 4.Test
  * OR Operators with filters left and right stream
  */
@@ -532,4 +530,4 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     EXPECT_TRUE(retStopCord);
 }
 
-}
+}// namespace NES

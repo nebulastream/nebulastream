@@ -13,8 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Components/NesCoordinator.hpp>
+#include "Configurations/Sources/SourceConfigFactory.hpp"
 #include <API/QueryAPI.hpp>
+#include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfig.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
@@ -23,12 +24,11 @@
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <chrono>//for timing execution
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <regex>
-#include <chrono> //for timing execution
-#include "Configurations/Sources/SourceConfigFactory.hpp"
 
 //used tests: QueryCatalogTest, QueryTest
 namespace fs = std::filesystem;
@@ -267,7 +267,9 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622400000|1543622700000|1|R2000070|1543622640000|70.222221|7|1|R2000073|1543622580000|73.166664|5|1|\n"
@@ -343,7 +345,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
     PhysicalStreamConfigPtr conf73 = PhysicalStreamConfig::create(srcConf1);
-    wrk1 ->registerPhysicalStream(conf73);
+    wrk1->registerPhysicalStream(conf73);
 
     std::string outputFilePath = "testPatternAndSliding.out";
     remove(outputFilePath.c_str());
@@ -378,7 +380,9 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
         "|1543622580000|1543622880000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622520000|1543622820000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
@@ -387,7 +391,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
         "|1543622340000|1543622640000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
         "+----------------------------------------------------+";
 
-    EXPECT_EQ(removeRandomKey(content),expectedContent);
+    EXPECT_EQ(removeRandomKey(content), expectedContent);
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -662,4 +666,4 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     EXPECT_TRUE(retStopCord);
 }
 
-}
+}// namespace NES
