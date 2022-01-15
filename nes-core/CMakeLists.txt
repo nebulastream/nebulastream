@@ -79,3 +79,18 @@ if (NES_ENABLES_TESTS)
 else ()
     message(STATUS "Tests are disabled")
 endif ()
+
+
+#Add the nes lib and headers to cpack
+install(TARGETS nes
+        COMPONENT nesLibrary
+        DESTINATION lib)
+
+install(TARGETS nesCoordinator nesWorker
+        COMPONENT nesExecutables
+        RUNTIME
+        DESTINATION "/opt/local/nebula-stream")
+
+install(DIRECTORY "include"
+        COMPONENT nesHeaders
+        DESTINATION "/nebulastream")

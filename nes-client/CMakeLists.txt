@@ -26,11 +26,6 @@ target_include_directories(nes_client PUBLIC "include")
 #target_include_directories(nes_client PUBLIC "../" "../include")
 target_link_libraries(nes_client PRIVATE nes)
 
-#Change to alter behaviour of cpack and installation directory of deb package
-install(TARGETS nes_client
-        COMPONENT nesLibrary
-        DESTINATION lib)
-
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
@@ -39,19 +34,11 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-SET(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
-set(CPACK_PACKAGE_NAME "NebulaStream")
-set(CPACK_PACKAGE_RELEASE 1)
-set(CPACK_PACKAGE_CONTACT "Team NebulaStream")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Team NebulaStream") #required
-set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
-set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-set(CPACK_COMPONENTS_ALL nesExecutables nesLibrary nesHeaders)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "cmake, libdwarf-dev, libdwarf1, binutils-dev, libdw-dev, libssl-dev")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}.${CMAKE_SYSTEM_PROCESSOR}")
+#Add the nes client and headers to cpack
+install(TARGETS nes_client
+        COMPONENT nesLibrary
+        DESTINATION lib)
 
-##This allows call to ldconfig to load the configuration after installation
-set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/triggers")
-set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
-INCLUDE(CPack)
+install(DIRECTORY "include"
+        COMPONENT nesHeaders
+        DESTINATION "/nebulastream")
