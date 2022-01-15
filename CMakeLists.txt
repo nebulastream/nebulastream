@@ -22,7 +22,6 @@ option(NES_SELF_HOSTING "use self hosting compiler" ON)
 option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
 # Enable local dependency building (this may take a long time)
 option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
-
 # Enable prebuild dependencies only if NES_BUILD_DEPENDENCIES_LOCAL is OFF and CMAKE_TOOLCHAIN_FILE is not set.
 cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies" ON "NOT NES_BUILD_NATIVE; NOT CMAKE_TOOLCHAIN_FILE" OFF)
 
