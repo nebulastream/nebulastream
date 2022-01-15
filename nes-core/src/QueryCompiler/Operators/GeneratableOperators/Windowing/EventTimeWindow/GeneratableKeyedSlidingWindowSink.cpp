@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/EventTimeWindow/GeneratableKeyedSlidingWindowSink.hpp>
-#include <QueryCompiler/PipelineContext.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include "QueryCompiler/CodeGenerator/CodeGenerator.hpp"
+#include "QueryCompiler/Operators/GeneratableOperators/Windowing/EventTimeWindow/GeneratableKeyedSlidingWindowSink.hpp"
+#include "QueryCompiler/PipelineContext.hpp"
+#include "Util/UtilityFunctions.hpp"
+#include "Windowing/WindowHandler/WindowOperatorHandler.hpp"
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
