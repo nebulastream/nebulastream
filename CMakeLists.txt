@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 3.20.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v11)
+set(VCPKG_BINARY_VERSION v12mqtt)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -359,7 +359,7 @@ endif (NES_USE_OPC)
 if (NES_USE_MQTT)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
     find_package(PahoMqttCpp CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3)
+    set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3-static)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
 
