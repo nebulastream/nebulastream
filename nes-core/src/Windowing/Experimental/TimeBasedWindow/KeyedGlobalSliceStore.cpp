@@ -1,5 +1,5 @@
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
+#include "Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp"
+#include "Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp"
 
 namespace NES::Windowing::Experimental {
 
