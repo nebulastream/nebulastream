@@ -171,4 +171,6 @@ bool OperatorNode::checkIfPropertyExist(const std::string& key) { return propert
 
 void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
 
+std::string OperatorNode::getClassName() { return "OperatorNode"; }
+
 }// namespace NES

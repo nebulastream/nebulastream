@@ -78,6 +78,12 @@ using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 class UdfCatalogController;
 using UdfCatalogControllerPtr = std::shared_ptr<UdfCatalogController>;
 
+class DumpFileController;
+using DumpFileControllerPtr = std::shared_ptr<DumpFileController>;
+
+class WorkerRPCClient;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
+
 class RestEngine {
 
   public:
@@ -90,7 +96,8 @@ class RestEngine {
                const MonitoringServicePtr& monitoringService,
                const GlobalQueryPlanPtr& globalQueryPlan,
                const Catalogs::UdfCatalogPtr& udfCatalog,
-               const Runtime::BufferManagerPtr bufferManager);
+               const Runtime::BufferManagerPtr bufferManager,
+               const WorkerRPCClientPtr workerClient);
 
     void handleGet(web::http::http_request request);
     void handlePost(web::http::http_request request);
@@ -142,6 +149,7 @@ class RestEngine {
     MonitoringControllerPtr monitoringController;
     TopologyControllerPtr topologyController;
     UdfCatalogControllerPtr udfCatalogController;
+    DumpFileControllerPtr dumpFileController;
 };
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;

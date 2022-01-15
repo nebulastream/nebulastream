@@ -100,4 +100,9 @@ void MapLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
+std::string MapLogicalOperatorNode::getClassName(){
+    return "MapLogicalOperatorNode";
+}
+
 }// namespace NES

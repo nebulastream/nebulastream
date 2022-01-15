@@ -42,6 +42,8 @@ class DefaultQueryCompiler : public QueryCompiler {
     */
     QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) override;
 
+    std::map<std::string, std::map<std::string, std::string>> getDumpContextInfo() override;
+
   protected:
     DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
                          Phases::PhaseFactoryPtr const& phaseFactory,
@@ -54,6 +56,7 @@ class DefaultQueryCompiler : public QueryCompiler {
     BufferOptimizationPhasePtr bufferOptimizationPhase;
     PredicationOptimizationPhasePtr predicationOptimizationPhase;
     CodeGenerationPhasePtr codeGenerationPhase;
+
 };
 
 }// namespace NES::QueryCompilation

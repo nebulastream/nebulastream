@@ -116,4 +116,9 @@ void ProjectionLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
+std::string ProjectionLogicalOperatorNode::getClassName(){
+    return "ProjectionLogicalOperatorNode";
+}
+
 }// namespace NES

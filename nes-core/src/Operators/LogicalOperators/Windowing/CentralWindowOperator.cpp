@@ -93,4 +93,9 @@ bool CentralWindowOperator::inferSchema() {
 }
 
 void CentralWindowOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
+
+std::string CentralWindowOperator::getClassName(){
+    return "CentralWindowOperator";
+}
+
 }// namespace NES

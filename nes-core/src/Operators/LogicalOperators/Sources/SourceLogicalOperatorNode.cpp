@@ -77,4 +77,9 @@ void SourceLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getStreamName() + ")");
     hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getStreamName() + ")"};
 }
+
+std::string SourceLogicalOperatorNode::getClassName(){
+    return "SourceLogicalOperatorNode";
+}
+
 }// namespace NES

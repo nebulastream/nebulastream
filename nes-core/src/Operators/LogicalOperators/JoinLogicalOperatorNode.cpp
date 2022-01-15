@@ -172,4 +172,9 @@ void JoinLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
+std::string JoinLogicalOperatorNode::getClassName(){
+    return "JoinLogicalOperatorNode";
+}
+
 }// namespace NES

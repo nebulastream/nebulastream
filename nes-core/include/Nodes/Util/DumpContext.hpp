@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace NES {
 
@@ -74,6 +75,8 @@ class DumpContext {
     * @param queryPlan
     */
     void dump(std::string const& scope, QueryCompilation::PipelineQueryPlanPtr const& queryPlan);
+
+    std::map<std::string, std::map<std::string, std::string>> getDumpContextInfo();
 
   private:
     std::string context;

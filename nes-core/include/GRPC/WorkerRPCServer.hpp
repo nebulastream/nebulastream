@@ -52,6 +52,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
+    Status GetDumpContextInfo(ServerContext* context, const DumpContextRequest* request, DumpContextReply* reply) override;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;

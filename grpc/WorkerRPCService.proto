@@ -31,6 +31,7 @@ service WorkerRPCService {
 
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
+  rpc GetDumpContextInfo (DumpContextRequest) returns (DumpContextReply) {}
 }
 
 message DeployQueryRequest {
@@ -94,4 +95,15 @@ message MonitoringDataRequest {
 
 message MonitoringDataReply {
   bytes buffer = 1;
+}
+
+message DumpContextRequest {
+}
+
+message DumpContextReply {
+  map<string, DumpContextPlanInformation> details = 1;
+}
+
+message DumpContextPlanInformation {
+  map<string, string> planInformation = 1;
 }

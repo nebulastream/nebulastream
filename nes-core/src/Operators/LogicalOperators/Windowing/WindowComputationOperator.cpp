@@ -87,4 +87,9 @@ bool WindowComputationOperator::inferSchema() {
 }
 
 void WindowComputationOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
+
+std::string WindowComputationOperator::getClassName(){
+    return "WindowComputationOperator";
+}
+
 }// namespace NES

@@ -125,5 +125,25 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     }
     return Status::CANCELLED;
 }
+Status WorkerRPCServer::GetDumpContextInfo(ServerContext*, const DumpContextRequest*, DumpContextReply* reply) {
+    try {
+        NES_DEBUG("WorkerRPCServer::GetDumpContextInfo: Got request");
+        std::map<std::string, std::map<std::string, std::string>> dumpContext = nodeEngine->getDumpContextInfo();
+
+        auto& replyMap = *reply->mutable_details();
+        for (auto const& [key, val] : dumpContext) {
+            DumpContextPlanInformation planInformation;
+            auto& planInformationMap = *planInformation.mutable_planinformation();
+            for (auto const& [planKey, planVal] : val) {
+                planInformationMap[planKey] = planVal;
+            }
+            replyMap[key] = planInformation;
+        }
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: Requesting dump information failed" << ex.what());
+    }
+    return Status::CANCELLED;
+}
 
 }// namespace NES

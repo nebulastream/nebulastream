@@ -25,6 +25,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <google/protobuf/util/json_util.h>
 namespace NES {
 
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
@@ -355,6 +356,26 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     NES_THROW_RUNTIME_ERROR("WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
                                                                             << status.error_message());
 
+    return false;
+}
+
+bool WorkerRPCClient::getDumpInfoFromNode(const std::string& address, std::string* mapAsJson) {
+    DumpContextRequest request;
+    DumpContextReply reply;
+    ClientContext context;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->GetDumpContextInfo(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::getDumpInfoFromNode: return Dump Context Info");
+        google::protobuf::util::MessageToJsonString(reply, mapAsJson);
+        return true;
+    }
+    NES_DEBUG(" WorkerRPCClient::getDumpInfoFromNode "
+              "error="
+              << status.error_code() << ": " << status.error_message());
+    throw Exception("Error while WorkerRPCClient::getDumpInfoFromNode");
     return false;
 }
 

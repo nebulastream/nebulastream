@@ -90,4 +90,9 @@ void RenameStreamOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
+std::string RenameStreamOperatorNode::getClassName(){
+    return "RenameStreamOperatorNode";
+}
+
 }// namespace NES

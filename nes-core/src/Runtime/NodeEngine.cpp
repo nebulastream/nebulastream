@@ -494,4 +494,8 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
 
+std::map<std::string, std::map<std::string, std::string>> NodeEngine::getDumpContextInfo() {
+    return queryCompiler->getDumpContextInfo();
+}
+
 }// namespace NES::Runtime

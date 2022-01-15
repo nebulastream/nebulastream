@@ -53,6 +53,8 @@ class ProjectionLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
 
+    std::string getClassName() override;
+
   private:
     std::vector<ExpressionNodePtr> expressions;
 };

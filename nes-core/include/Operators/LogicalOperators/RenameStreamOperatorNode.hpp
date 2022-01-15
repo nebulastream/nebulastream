@@ -48,6 +48,8 @@ class RenameStreamOperatorNode : public LogicalUnaryOperatorNode {
     void inferStringSignature() override;
     std::string getNewStreamName();
 
+    std::string getClassName() override;
+
   private:
     const std::string newStreamName;
 };

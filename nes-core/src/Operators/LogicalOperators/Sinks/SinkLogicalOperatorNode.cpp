@@ -76,4 +76,9 @@ void SinkLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
+std::string SinkLogicalOperatorNode::getClassName(){
+    return "SinkLogicalOperatorNode";
+}
+
 }// namespace NES

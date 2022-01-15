@@ -46,6 +46,8 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
 
+    std::string getClassName() override;
+
   private:
     Join::LogicalJoinDefinitionPtr joinDefinition;
 };

@@ -116,4 +116,9 @@ void WindowLogicalOperatorNode::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
+std::string WindowLogicalOperatorNode::getClassName(){
+    return "WindowLogicalOperatorNode";
+}
+
 }// namespace NES

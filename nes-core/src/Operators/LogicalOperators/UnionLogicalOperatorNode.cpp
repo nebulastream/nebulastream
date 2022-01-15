@@ -102,4 +102,8 @@ void UnionLogicalOperatorNode::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
+std::string UnionLogicalOperatorNode::getClassName(){
+    return "UnionLogicalOperatorNode";
+}
+
 }// namespace NES

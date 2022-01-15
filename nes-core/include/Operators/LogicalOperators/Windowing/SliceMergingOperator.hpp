@@ -35,6 +35,7 @@ class SliceMergingOperator : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;
+    std::string getClassName() override;
 };
 
 }// namespace NES

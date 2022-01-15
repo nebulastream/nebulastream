@@ -89,4 +89,8 @@ bool SliceMergingOperator::inferSchema() {
 
 void SliceMergingOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
 
+std::string SliceMergingOperator::getClassName(){
+    return "SliceMergingOperator";
+}
+
 }// namespace NES

@@ -91,4 +91,9 @@ bool SliceCreationOperator::inferSchema() {
 }
 
 void SliceCreationOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
+
+std::string SliceCreationOperator::getClassName(){
+    return "SliceCreationOperator";
+}
+
 }// namespace NES

@@ -23,4 +23,8 @@ WindowOperatorNode::WindowOperatorNode(Windowing::LogicalWindowDefinitionPtr con
 
 Windowing::LogicalWindowDefinitionPtr WindowOperatorNode::getWindowDefinition() const { return windowDefinition; }
 
+std::string WindowOperatorNode::getClassName(){
+    return "WindowOperatorNode";
+}
+
 }// namespace NES

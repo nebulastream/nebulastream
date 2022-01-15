@@ -46,6 +46,8 @@ class WatermarkAssignerLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool inferSchema() override;
     void inferStringSignature() override;
 
+    std::string getClassName() override;
+
   private:
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };

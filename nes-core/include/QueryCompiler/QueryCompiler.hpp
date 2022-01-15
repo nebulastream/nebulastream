@@ -16,6 +16,7 @@
 #ifndef NES_INCLUDE_QUERY_COMPILER_QUERY_COMPILER_HPP_
 #define NES_INCLUDE_QUERY_COMPILER_QUERY_COMPILER_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <map>
 
 namespace NES::QueryCompilation {
 
@@ -32,11 +33,14 @@ class QueryCompiler {
      */
     virtual QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) = 0;
     virtual ~QueryCompiler() = default;
+    virtual std::map<std::string, std::map<std::string, std::string>> getDumpContextInfo() = 0;
 
-  protected:
+        protected:
     explicit QueryCompiler(QueryCompilerOptionsPtr const& options) noexcept : queryCompilerOptions(options) {}
 
     QueryCompilerOptionsPtr const queryCompilerOptions;
+
+    std::map<std::string, std::map<std::string, std::string>> dumpContextInfo;
 };
 
 }// namespace NES::QueryCompilation

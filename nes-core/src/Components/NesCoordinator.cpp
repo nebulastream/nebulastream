@@ -248,7 +248,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               monitoringService,
                                               globalQueryPlan,
                                               udfCatalog,
-                                              worker->getNodeEngine()->getBufferManager());
+                                              worker->getNodeEngine()->getBufferManager(),
+                                              workerRpcClient);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking

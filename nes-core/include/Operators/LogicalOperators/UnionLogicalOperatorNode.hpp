@@ -37,6 +37,8 @@ class UnionLogicalOperatorNode : public LogicalBinaryOperatorNode {
     void inferStringSignature() override;
     OperatorNodePtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+
+    std::string getClassName() override;
 };
 }// namespace NES
 #endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_UNION_LOGICAL_OPERATOR_NODE_HPP_

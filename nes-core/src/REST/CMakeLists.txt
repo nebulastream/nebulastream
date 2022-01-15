@@ -22,5 +22,6 @@ add_source_nes(
         Controller/QueryController.cpp
         Controller/StreamCatalogController.cpp
         Controller/TopologyController.cpp
+        Controller/DumpFileController.cpp
         RestServer.cpp
 )

@@ -14,8 +14,10 @@
     limitations under the License.
 */
 #include <Catalogs/StreamCatalog.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <REST/Controller/BaseController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
+#include <REST/Controller/DumpFileController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/QueryController.hpp>
@@ -39,7 +41,8 @@ RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
                        const MonitoringServicePtr& monitoringService,
                        const GlobalQueryPlanPtr& globalQueryPlan,
                        const Catalogs::UdfCatalogPtr& udfCatalog,
-                       const Runtime::BufferManagerPtr bufferManager) {
+                       const Runtime::BufferManagerPtr bufferManager,
+                       const WorkerRPCClientPtr workerClient) {
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator, globalQueryPlan);
     queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);
@@ -47,6 +50,7 @@ RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
     monitoringController = std::make_shared<MonitoringController>(monitoringService, bufferManager);
     topologyController = std::make_shared<TopologyController>(topology);
     udfCatalogController = std::make_shared<UdfCatalogController>(udfCatalog);
+    dumpFileController = std::make_shared<DumpFileController>(topology, workerClient);
 }
 
 void RestEngine::initRestOpHandlers() {
@@ -118,6 +122,9 @@ void RestEngine::handleGet(web::http::http_request request) {
             return;
         } else if (paths[0] == UdfCatalogController::path_prefix) {
             udfCatalogController->handleGet(paths, request);
+            return;
+        } else if (paths[0] == "dumpFiles") {
+            dumpFileController->handleGet(paths, request);
             return;
         }
     }

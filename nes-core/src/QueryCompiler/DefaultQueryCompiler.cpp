@@ -105,12 +105,17 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         timer.pause();
         NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);
 
+        dumpContextInfo = dumpContext->getDumpContextInfo(); //change context info
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
     } catch (const QueryCompilationException& exception) {
         auto currentException = std::current_exception();
         return QueryCompilationResult::create(currentException);
     }
+}
+
+std::map<std::string, std::map<std::string, std::string>> DefaultQueryCompiler::getDumpContextInfo() {
+    return dumpContextInfo;
 }
 
 }// namespace NES::QueryCompilation

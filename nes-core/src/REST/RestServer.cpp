@@ -15,7 +15,7 @@
 */
 
 #include <REST/RestServer.hpp>
-
+#include <GRPC/WorkerRPCClient.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Catalogs/UdfCatalog.hpp>
 #include <REST/RestEngine.hpp>
@@ -40,7 +40,8 @@ RestServer::RestServer(std::string host,
                        const MonitoringServicePtr& monitoringService,
                        const GlobalQueryPlanPtr& globalQueryPlan,
                        const Catalogs::UdfCatalogPtr& udfCatalog,
-                       const Runtime::BufferManagerPtr& bufferManager)
+                       const Runtime::BufferManagerPtr& bufferManager,
+                       const WorkerRPCClientPtr workerClient)
     : restEngine(std::make_shared<RestEngine>(streamCatalog,
                                               coordinator,
                                               queryCatalog,
@@ -50,7 +51,8 @@ RestServer::RestServer(std::string host,
                                               monitoringService,
                                               globalQueryPlan,
                                               udfCatalog,
-                                              bufferManager)),
+                                              bufferManager,
+                                              workerClient)),
       host(std::move(host)), port(port) {}
 
 bool RestServer::start() {

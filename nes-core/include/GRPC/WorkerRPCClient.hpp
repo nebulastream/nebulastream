@@ -155,6 +155,8 @@ class WorkerRPCClient {
      */
     static bool checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
 
+    static bool getDumpInfoFromNode(const std::string& address, std::string* mapAsJson);
+
   private:
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;

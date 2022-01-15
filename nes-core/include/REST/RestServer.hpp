@@ -18,6 +18,7 @@
 #define NES_INCLUDE_REST_REST_SERVER_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 #include <memory>
 #include <string>
 
@@ -79,7 +80,8 @@ class RestServer {
                const MonitoringServicePtr& monitoringService,
                const GlobalQueryPlanPtr& globalQueryPlan,
                const Catalogs::UdfCatalogPtr& udfCatalog,
-               const Runtime::BufferManagerPtr& bufferManager);
+               const Runtime::BufferManagerPtr& bufferManager,
+               const WorkerRPCClientPtr workerClient);
 
     /**
    * @brief method to start the rest server

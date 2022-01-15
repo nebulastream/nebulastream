@@ -159,6 +159,8 @@ void VizDumpHandler::dump(std::string scope, std::string name, QueryCompilation:
 }
 
 void VizDumpHandler::writeToFile(const std::string& scope, const std::string& name, const std::string& content) {
+    dumpAsMap.insert(std::pair<std::string, std::string>(name, content));
+
     std::ofstream outputFile;
     auto scopeDir = rootDir + std::filesystem::path::preferred_separator + scope;
     auto fileName = scopeDir + std::filesystem::path::preferred_separator + name + ".nesviz";
@@ -174,7 +176,7 @@ void VizDumpHandler::writeToFile(const std::string& scope, const std::string& na
 void VizDumpHandler::extractNodeProperties(detail::VizNode& node, const OperatorNodePtr& operatorNode) {
     node.addProperty({"StackTrace", operatorNode->getNodeSourceLocation(), "stacktrace"});
     // node.addProperty({"StackTrace", to_string(boost::stacktrace::stacktrace())});
-    node.addProperty({"ClassName", typeid(operatorNode).name(), ""});
+    node.addProperty({"ClassName", operatorNode->getClassName(), ""});
     if (operatorNode->instanceOf<QueryCompilation::ExecutableOperator>()) {
         auto executableOperator = operatorNode->as<QueryCompilation::ExecutableOperator>();
         auto code = executableOperator->getExecutablePipelineStage()->getCodeAsString();
@@ -184,6 +186,10 @@ void VizDumpHandler::extractNodeProperties(detail::VizNode& node, const Operator
         node.addProperty({"InputSchema", unaryOperator->getInputSchema()->toString(), ""});
         node.addProperty({"OutputSchema", unaryOperator->getOutputSchema()->toString(), ""});
     }
+}
+
+std::map<std::string, std::string> VizDumpHandler::getDumpAsMap() {
+    return dumpAsMap;
 }
 
 }// namespace NES

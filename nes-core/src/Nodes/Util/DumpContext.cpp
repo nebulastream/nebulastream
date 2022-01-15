@@ -60,4 +60,13 @@ void DumpContext::dump(const std::string& scope, const QueryCompilation::Pipelin
     }
 }
 
+std::map<std::string, std::map<std::string, std::string>> DumpContext::getDumpContextInfo() {
+    std::map<std::string, std::map<std::string, std::string>> allContextInfo;
+    for (auto& handler : dumpHandlers) {
+        allContextInfo.insert(std::pair<std::string, std::map<std::string, std::string>>(context, handler->getDumpAsMap()));
+    }
+    return allContextInfo;
+}
+
+
 }// namespace NES

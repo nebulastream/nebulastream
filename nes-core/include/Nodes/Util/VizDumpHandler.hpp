@@ -147,11 +147,14 @@ class VizDumpHandler : public DumpHandler {
      */
     void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr pipelinePlan) override;
 
+    std::map<std::string, std::string> getDumpAsMap() override;
+
   private:
     static void extractNodeProperties(detail::VizNode& node, const OperatorNodePtr& operatorNode);
     void dump(QueryPlanPtr queryPlan, const std::string& parent, detail::VizGraph& graph);
     void writeToFile(const std::string& scope, const std::string& name, const std::string& content);
     std::string rootDir;
+    std::map<std::string , std::string> dumpAsMap;
 };
 
 }// namespace NES

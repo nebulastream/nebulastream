@@ -88,4 +88,8 @@ void WatermarkAssignerLogicalOperatorNode::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
+std::string WatermarkAssignerLogicalOperatorNode::getClassName(){
+    return "WatermarkAssignerLogicalOperatorNode";
+}
+
 }// namespace NES

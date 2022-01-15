@@ -20,6 +20,7 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
+#include <map>
 
 namespace NES {
 
@@ -58,6 +59,8 @@ class DumpHandler {
     * @param plan the pipelined query plan
     */
     virtual void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) = 0;
+
+    virtual std::map<std::string, std::string> getDumpAsMap() = 0;
 };
 
 using DebugDumpHandlerPtr = std::shared_ptr<DumpHandler>;

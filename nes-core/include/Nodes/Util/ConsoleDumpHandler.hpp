@@ -58,6 +58,8 @@ class ConsoleDumpHandler : public DumpHandler {
      */
     void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) override;
 
+    std::map<std::string, std::string> getDumpAsMap() override;
+
   private:
     std::ostream& out;
     void dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;

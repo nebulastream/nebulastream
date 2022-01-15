@@ -49,6 +49,8 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
     std::string toString() const override;
     OperatorNodePtr copy() override;
 
+    std::string getClassName() override;
+
   private:
     const FieldAssignmentExpressionNodePtr mapExpression;
 };

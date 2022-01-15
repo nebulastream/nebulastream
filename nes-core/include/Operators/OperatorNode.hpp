@@ -159,6 +159,8 @@ class OperatorNode : public Node {
      */
     bool checkIfPropertyExist(const std::string& key);
 
+    virtual std::string getClassName();
+
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
