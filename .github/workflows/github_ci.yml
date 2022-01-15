@@ -151,7 +151,7 @@ jobs:
           fi
       - name: Build and Release NES Executable Image
         run: |
-          nes_version="$(grep -o "NES_VERSION.*" include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
+          nes_version="$(grep -o "NES_VERSION.*" nes-core/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
           cd $GITHUB_WORKSPACE
           echo "Preparing and Releasing new executable image with version $nes_version and latest"
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin

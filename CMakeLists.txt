@@ -565,20 +565,6 @@ add_subdirectory(benchmark)
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
 
-#Change to alter behaviour of cpack and installation directory of deb package
-install(TARGETS nes
-        COMPONENT nesLibrary
-        DESTINATION lib)
-
-install(TARGETS nesCoordinator nesWorker
-        COMPONENT nesExecutables
-        RUNTIME
-        DESTINATION "/opt/local/nebula-stream")
-
-install(DIRECTORY "include"
-        COMPONENT nesHeaders
-        DESTINATION "/nebulastream")
-
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")
