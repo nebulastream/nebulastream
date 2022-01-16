@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_BASE_WINDOW_ACTION_DESCRIPTOR_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_BASE_WINDOW_ACTION_DESCRIPTOR_HPP_
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES::Windowing {
 
@@ -34,6 +35,8 @@ class BaseWindowActionDescriptor {
     std::string toString();
 
     std::string getTypeAsString();
+
+    virtual void generateHeaders(QueryCompilation::PipelineContextPtr context) = 0;
 
   protected:
     explicit BaseWindowActionDescriptor(ActionType action);

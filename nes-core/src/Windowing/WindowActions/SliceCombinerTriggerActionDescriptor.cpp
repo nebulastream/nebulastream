@@ -26,5 +26,6 @@ ActionType SliceCombinerTriggerActionDescriptor::getActionType() { return this->
 
 SliceCombinerTriggerActionDescriptor::SliceCombinerTriggerActionDescriptor()
     : BaseWindowActionDescriptor(SliceCombinerTriggerAction) {}
+void SliceCombinerTriggerActionDescriptor::generateHeaders(QueryCompilation::PipelineContextPtr) {}
 
 }// namespace NES::Windowing

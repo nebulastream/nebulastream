@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_COMPLETE_AGGREGATION_TRIGGER_ACTION_DESCRIPTOR_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_ACTIONS_COMPLETE_AGGREGATION_TRIGGER_ACTION_DESCRIPTOR_HPP_
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES::Windowing {
 
@@ -25,6 +26,7 @@ class CompleteAggregationTriggerActionDescriptor : public BaseWindowActionDescri
     ~CompleteAggregationTriggerActionDescriptor() noexcept override = default;
     static WindowActionDescriptorPtr create();
     ActionType getActionType() override;
+    void generateHeaders(QueryCompilation::PipelineContextPtr context) override;
 
   private:
     CompleteAggregationTriggerActionDescriptor();
