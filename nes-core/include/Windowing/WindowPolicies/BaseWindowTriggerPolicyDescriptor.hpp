@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_POLICIES_BASE_WINDOW_TRIGGER_POLICY_DESCRIPTOR_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_POLICIES_BASE_WINDOW_TRIGGER_POLICY_DESCRIPTOR_HPP_
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES::Windowing {
 
@@ -33,6 +34,8 @@ class BaseWindowTriggerPolicyDescriptor {
     virtual std::string toString() = 0;
 
     virtual ~BaseWindowTriggerPolicyDescriptor() = default;
+
+    virtual void generateHeaders(QueryCompilation::PipelineContextPtr context);
 
     std::string getTypeAsString();
 

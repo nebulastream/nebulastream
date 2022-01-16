@@ -15,6 +15,7 @@
 */
 
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 #include <sstream>
 namespace NES::Windowing {
 
@@ -32,6 +33,9 @@ std::string OnTimeTriggerPolicyDescription::toString() {
     std::stringstream ss;
     ss << getTypeAsString() << "triggerTimeInMs=" << triggerTimeInMs;
     return ss.str();
+}
+void OnTimeTriggerPolicyDescription::generateHeaders(QueryCompilation::PipelineContextPtr context) {
+    context->addHeaders({QueryCompilation::EXECUTABLE_ON_TIME_TRIGGER_POLICY});
 }
 
 }// namespace NES::Windowing
