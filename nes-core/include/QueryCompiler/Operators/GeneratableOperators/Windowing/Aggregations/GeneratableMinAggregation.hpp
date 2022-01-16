@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_WINDOWING_AGGREGATIONS_GENERATABLE_MIN_AGGREGATION_HPP_
 #define NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_WINDOWING_AGGREGATIONS_GENERATABLE_MIN_AGGREGATION_HPP_
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
@@ -42,6 +43,8 @@ class GeneratableMinAggregation : public GeneratableWindowAggregation {
     void compileLiftCombine(CompoundStatementPtr currentCode,
                             BinaryOperatorStatement partialRef,
                             RecordHandlerPtr recordHandler) override;
+
+    void generateHeaders(PipelineContextPtr context) override;
 };
 
 }// namespace GeneratableOperators

@@ -17,6 +17,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
@@ -40,5 +41,8 @@ void GeneratableMinAggregation::compileLiftCombine(CompoundStatementPtr currentC
 
     auto ifStatement = IF(partialRef > *fieldReference, partialRef.assign(fieldReference));
     currentCode->addStatement(ifStatement.createCopy());
+}
+void GeneratableMinAggregation::generateHeaders(PipelineContextPtr context) {
+    context->addHeaders({MIN_AGGR});
 }
 }// namespace NES::QueryCompilation::GeneratableOperators

@@ -17,6 +17,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableAvgAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -48,5 +49,8 @@ void GeneratableAvgAggregation::compileLiftCombine(CompoundStatementPtr currentC
 
     currentCode->addStatement(updateSumStatement.copy());
     currentCode->addStatement(updateCountStatement.copy());
+}
+void GeneratableAvgAggregation::generateHeaders(PipelineContextPtr context) {
+    context->addHeaders({AVG_AGGR});
 }
 }// namespace NES::QueryCompilation::GeneratableOperators

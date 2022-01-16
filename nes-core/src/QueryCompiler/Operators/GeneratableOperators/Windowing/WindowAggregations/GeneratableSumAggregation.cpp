@@ -17,6 +17,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -41,5 +42,8 @@ void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto sum = partialRef + *fieldReference;
     auto updatedPartial = partialRef.assign(sum);
     currentCode->addStatement(updatedPartial.copy());
+}
+void GeneratableSumAggregation::generateHeaders(PipelineContextPtr context) {
+    context->addHeaders({SUM_AGGR});
 }
 }// namespace NES::QueryCompilation::GeneratableOperators

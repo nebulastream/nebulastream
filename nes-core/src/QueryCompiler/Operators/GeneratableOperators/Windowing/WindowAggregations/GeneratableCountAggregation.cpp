@@ -17,6 +17,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -38,6 +39,9 @@ void GeneratableCountAggregation::compileLiftCombine(CompoundStatementPtr curren
     auto increment = ++partialRef;
     auto updatedPartial = partialRef.assign(increment);
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
+}
+void GeneratableCountAggregation::generateHeaders(PipelineContextPtr context) {
+    context->addHeaders({COUNT_AGGR});
 }
 
 }// namespace NES::QueryCompilation::GeneratableOperators
