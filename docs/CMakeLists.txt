@@ -34,7 +34,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in"
                "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
                ESCAPE_QUOTES)
 
-add_custom_target(nes-doc ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+add_custom_target(nes-doc COMMAND ${CMAKE_COMMAND} -E env "DOX_PROJECT_NUMBER=${${PROJECT_NAME}_VERSION}" ${DOXYGEN_EXECUTABLE}  "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
                   DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
 
 
