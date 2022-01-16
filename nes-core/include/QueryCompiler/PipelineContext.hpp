@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_QUERY_COMPILER_PIPELINE_CONTEXT_HPP_
 #define NES_INCLUDE_QUERY_COMPILER_PIPELINE_CONTEXT_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <unordered_set>
 
 namespace NES {
