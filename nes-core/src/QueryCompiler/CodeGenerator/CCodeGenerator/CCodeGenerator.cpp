@@ -1021,10 +1021,11 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
     context->code->variableInitStmts.push_back(
         VarDeclStatement(globalSliceState).assign(VarRef(globalSlice).accessPtr(call("getState"))).copy());
     auto buffers = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "buffers");
+    auto partitionBuffers = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "partitionBuffers");
     context->code->variableInitStmts.push_back(
-        VarDeclStatement(buffers).assign(VarRef(partitions).accessPtr(VarRef(buffers))).copy());
+        VarDeclStatement(partitionBuffers).assign(VarRef(partitions).accessPtr(VarRef(buffers))).copy());
     // for (auto& partition : (*partitions.get())) {
-    context->code->variableInitStmts.push_back(keyedSliceMergeLoop(buffers,
+    context->code->variableInitStmts.push_back(keyedSliceMergeLoop(partitionBuffers,
                                                                    code->tupleBufferGetNumberOfTupleCall,
                                                                    partialAggregationEntry,
                                                                    keyVariableDeclaration,
@@ -1206,8 +1207,7 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWin
         hasSliceCall->addParameter(VarRef(startSlice));
 
         // if(!windowOperatorHandler->getGlobalSliceStore().hasSlice(0)) continue;
-        auto ifStm =IF(! VarRef(windowOperatorHandlerDeclaration)
-               .accessPtr(getGlobalSliceStoreCall).accessRef(hasSliceCall));
+        auto ifStm = IF(!VarRef(windowOperatorHandlerDeclaration).accessPtr(getGlobalSliceStoreCall).accessRef(hasSliceCall));
         ifStm.getCompoundStatement()->addStatement(Continue().createCopy());
         body->addStatement(ifStm.createCopy());
 
@@ -1299,8 +1299,8 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWin
                                                            VarRef(entry).accessPtr(VarRef(key)).copy());
             // assign value field
             auto value = aggregation->getPartialAggregate();
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[3]->getName(),
-                                                           VarRef(entry).accessPtr(VarRef(value)).copy());
+            auto finalAggValue = aggregation->lower(VarRef(entry).accessPtr(VarRef(value)).copy());
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[3]->getName(), finalAggValue);
 
             context->code->currentCodeInsertionPoint = scanBody;
         }
@@ -1382,8 +1382,8 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWi
                                                            VarRef(entry).accessPtr(VarRef(key)).copy());
             // assign value field
             auto value = aggregation->getPartialAggregate();
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[3]->getName(),
-                                                           VarRef(entry).accessPtr(VarRef(value)).copy());
+            auto finalAggValue = aggregation->lower(VarRef(entry).accessPtr(VarRef(value)).copy());
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[3]->getName(), finalAggValue);
 
             context->code->currentCodeInsertionPoint = scanBody;
         }
@@ -2737,9 +2737,15 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
     auto constantKeySize = Constant(
         tf->createValueType(DataTypeFactory::createBasicValue(physicalDataTypeFactory.getPhysicalType(keyStamp)->size())));
     createCall->addParameter(constantKeySize);
-    auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(
-        physicalDataTypeFactory.getPhysicalType(window->getWindowAggregation()->getPartialAggregateStamp())->size())));
-    createCall->addParameter(constantValueSize);
+    if (window->getWindowAggregation()->getType() == Windowing::WindowAggregationDescriptor::Avg) {
+        auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
+        createCall->addParameter(constantValueSize);
+    } else {
+        auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(
+            physicalDataTypeFactory.getPhysicalType(window->getWindowAggregation()->getPartialAggregateStamp())->size())));
+        createCall->addParameter(constantValueSize);
+    }
+
     auto constantNumberOfEntries = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 100000)));
     createCall->addParameter(constantNumberOfEntries);
 

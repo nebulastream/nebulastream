@@ -19,6 +19,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableAvgAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
+#include "QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp"
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
@@ -54,6 +55,16 @@ void GeneratableAvgAggregation::compileCombine(CompoundStatementPtr currentCode,
                               .assign(partialValueRef1.accessPtr(VarRef(getPartialAggregate()))
                                       + partialValueRef2.accessPtr(VarRef(getPartialAggregate())));
     currentCode->addStatement(updatedPartial.copy());
+}
+VariableDeclarationPtr GeneratableAvgAggregation::getPartialAggregate() {
+    auto tf = GeneratableTypesFactory();
+    return std::make_shared<VariableDeclaration>(VariableDeclaration::create(tf.createAnonymusDataType("NES::Windowing::AVGDouble"), "partial"));
+}
+ExpressionStatementPtr GeneratableAvgAggregation::lower(ExpressionStatementPtr partialValue) {
+    auto tf = GeneratableTypesFactory();
+    auto sum = VariableDeclaration::create(tf.createAnonymusDataType("auto"), "sum");
+    auto count = VariableDeclaration::create(tf.createAnonymusDataType("auto"), "count");
+    return (partialValue->accessRef(VarRef(sum)) / partialValue->accessRef(VarRef(count))).copy();
 }
 
 }// namespace NES::QueryCompilation::GeneratableOperators
