@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOW_POLICIES_ON_TIME_TRIGGER_POLICY_DESCRIPTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOW_POLICIES_ON_TIME_TRIGGER_POLICY_DESCRIPTION_HPP_
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES::Windowing {
 
@@ -39,6 +40,8 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
     [[nodiscard]] uint64_t getTriggerTimeInMs() const;
 
     std::string toString() override;
+
+    void generateHeaders(QueryCompilation::PipelineContextPtr context) override;
 
   protected:
     explicit OnTimeTriggerPolicyDescription(uint64_t triggerTimeInMs);

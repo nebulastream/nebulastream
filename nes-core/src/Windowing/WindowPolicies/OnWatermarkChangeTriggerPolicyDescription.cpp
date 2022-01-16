@@ -15,6 +15,7 @@
 */
 
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 
 namespace NES::Windowing {
 
@@ -28,5 +29,8 @@ TriggerType OnWatermarkChangeTriggerPolicyDescription::getPolicyType() { return 
 
 OnWatermarkChangeTriggerPolicyDescription::OnWatermarkChangeTriggerPolicyDescription()
     : BaseWindowTriggerPolicyDescriptor(triggerOnWatermarkChange) {}
+void OnWatermarkChangeTriggerPolicyDescription::generateHeaders(QueryCompilation::PipelineContextPtr context) {
+    context->addHeaders({QueryCompilation::EXECUTABLE_ON_WATERMARK_CHANGE_TRIGGER_POLICY});
+}
 
 }// namespace NES::Windowing

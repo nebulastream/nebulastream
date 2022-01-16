@@ -34,5 +34,8 @@ std::string BaseWindowTriggerPolicyDescriptor::getTypeAsString() {
         return "Unknown Policy";
     }
 }
+void BaseWindowTriggerPolicyDescriptor::generateHeaders(QueryCompilation::PipelineContextPtr) {
+
+}
 
 }// namespace NES::Windowing

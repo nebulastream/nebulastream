@@ -18,6 +18,7 @@
 #define NES_INCLUDE_WINDOWING_WINDOW_POLICIES_ON_WATERMARK_CHANGE_TRIGGER_POLICY_DESCRIPTION_HPP_
 
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 
 namespace NES::Windowing {
 
@@ -27,6 +28,7 @@ class OnWatermarkChangeTriggerPolicyDescription : public BaseWindowTriggerPolicy
     ~OnWatermarkChangeTriggerPolicyDescription() override = default;
     TriggerType getPolicyType() override;
     std::string toString() override;
+    void generateHeaders(QueryCompilation::PipelineContextPtr context) override;
 
   private:
     OnWatermarkChangeTriggerPolicyDescription();
