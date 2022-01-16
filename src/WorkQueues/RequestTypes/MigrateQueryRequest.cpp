@@ -23,20 +23,20 @@
 namespace NES {
 
 
-MigrateQueryRequestPtr MigrateQueryRequest::create(QueryId queryId, TopologyNodeId nodeId,bool withBuffer) {
-    return std::make_shared<MigrateQueryRequest>(MigrateQueryRequest(queryId,nodeId,withBuffer));
+MigrateQueryRequestPtr MigrateQueryRequest::create(QueryId queryId, TopologyNodeId nodeId, MigrationType migrationType) {
+    return std::make_shared<MigrateQueryRequest>(MigrateQueryRequest(queryId, nodeId, migrationType));
 
 }
 
-MigrateQueryRequest::MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, bool withBuffer) :
-                              NESRequest(queryId),withBuffer(withBuffer),nodeId(nodeId){};
+MigrateQueryRequest::MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, MigrationType migrationType) :
+                              NESRequest(queryId), nodeId(nodeId), migrationType(migrationType) {};
 
 
-bool MigrateQueryRequest::isWithBuffer() { return withBuffer; }
+MigrationType MigrateQueryRequest::getMigrationType() { return migrationType; }
 
 std::string MigrateQueryRequest::toString() {
     return "MigrateQueryRequest { QueryId: " + std::to_string(getQueryId()) + ", Topology Node: " + std::to_string(nodeId)
-           + ", withBuffer: " + std::to_string(withBuffer) + "}";
+           + ", withBuffer: " + std::to_string(migrationType) + "}";
 }
 TopologyNodeId MigrateQueryRequest::getTopologyNode() { return nodeId; }
 }// namespace NES
