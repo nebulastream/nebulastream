@@ -19,6 +19,9 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
@@ -72,6 +75,13 @@ std::string GeneratableSlicePreAggregationOperator::toString() const { return "G
 OperatorNodePtr GeneratableSlicePreAggregationOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler, windowAggregation);
 }
-void GeneratableSlicePreAggregationOperator::generateHeaders(PipelineContextPtr) {};
+void GeneratableSlicePreAggregationOperator::generateHeaders(PipelineContextPtr context) {
+    //generate headers of aggregation type
+    windowAggregation->generateHeaders(context);
+    //generate headers of trigger policy
+    operatorHandler->getWindowDefinition()->getTriggerPolicy()->generateHeaders(context);
+    //generate headers of parent class
+    GeneratableWindowOperator::generateHeaders(context);
+};
 
 }// namespace NES::QueryCompilation::GeneratableOperators
