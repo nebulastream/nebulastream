@@ -17,7 +17,6 @@
 // Created by balint on 20.04.21.
 //
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
 #include <string>
 
 namespace NES {
