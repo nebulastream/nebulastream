@@ -19,9 +19,13 @@
 
 #ifndef NES_MIGRATEQUERYREQUEST_HPP
 #define NES_MIGRATEQUERYREQUEST_HPP
-#include "NESRequest.hpp"
+#include <WorkQueues/RequestTypes/NESRequest.hpp>
 #include <Topology/TopologyNodeId.hpp>
+#include <Phases/MigrationTypes.hpp>
 #include <memory>
+#include <string>
+
+
 namespace NES {
 
     class MigrateQueryRequest;
@@ -31,19 +35,27 @@ namespace NES {
 
     public:
 
-        static MigrateQueryRequestPtr create(QueryId queryId,TopologyNodeId nodeId, bool withBuffer);
+        static MigrateQueryRequestPtr create(QueryId queryId,TopologyNodeId nodeId, MigrationType migrationType);
 
-        bool isWithBuffer();
+         std::string toString() override;
 
-        std::string toString() override;
+        /**
+         *  gets the Migration Type for this Query Migration Request
+         * @return MigrationType
+         */
+        MigrationType getMigrationType();
 
+        /**
+         *  gets the topology node on which the query can be found
+         * @return topology node id
+         */
         TopologyNodeId getTopologyNode();
 
     private:
-        explicit MigrateQueryRequest(QueryId queryId,TopologyNodeId nodeId, bool withBuffer);
+        explicit MigrateQueryRequest(QueryId queryId,TopologyNodeId nodeId, MigrationType migrationType);
 
-        bool withBuffer;
         TopologyNodeId nodeId;
+        MigrationType migrationType;
 
     };
 } // namespace NES
