@@ -25,6 +25,7 @@ class SliceCombinerTriggerActionDescriptor : public BaseWindowActionDescriptor {
     ~SliceCombinerTriggerActionDescriptor() noexcept override = default;
     static WindowActionDescriptorPtr create();
     ActionType getActionType() override;
+    void generateHeaders(QueryCompilation::PipelineContextPtr context) override;
 
   private:
     SliceCombinerTriggerActionDescriptor();

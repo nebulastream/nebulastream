@@ -15,6 +15,7 @@
 */
 
 #include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 
 namespace NES::Windowing {
 
@@ -26,5 +27,8 @@ ActionType SliceAggregationTriggerActionDescriptor::getActionType() { return thi
 
 SliceAggregationTriggerActionDescriptor::SliceAggregationTriggerActionDescriptor()
     : BaseWindowActionDescriptor(SliceAggregationTriggerAction) {}
+void SliceAggregationTriggerActionDescriptor::generateHeaders(QueryCompilation::PipelineContextPtr context) {
+    context->addHeaders({QueryCompilation::EXECUTABLE_SLICE_AGGR_TRIGGER_ACTION});
+}
 
 }// namespace NES::Windowing
