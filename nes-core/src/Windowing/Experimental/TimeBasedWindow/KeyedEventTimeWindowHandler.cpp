@@ -51,7 +51,9 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
         if (threadLocalSliceStore.getLastWatermark() == 0) {
             // special case for the first watermark handling
             auto currentSliceIndex = newGlobalWatermark / sliceSize;
-            threadLocalSliceStore.setFirstSliceIndex(currentSliceIndex - 1);
+            if (currentSliceIndex > 0) {
+                threadLocalSliceStore.setFirstSliceIndex(currentSliceIndex - 1);
+            }
         }
         // push the local slices to the global slice store.
         auto firstIndex = threadLocalSliceStore.getFirstIndex();
@@ -66,7 +68,8 @@ void KeyedEventTimeWindowHandler::triggerThreadLocalState(Runtime::WorkerContext
             // put partitions to global slice store
             auto& sliceState = slice->getState();
             // each worker adds its local state to the staging area
-            auto [addedPartitionsToSlice, numberOfBuffers] = sliceStaging.addToSlice(slice->getIndex(), sliceState.extractEntries());
+            auto [addedPartitionsToSlice, numberOfBuffers] =
+                sliceStaging.addToSlice(slice->getIndex(), sliceState.extractEntries());
             if (addedPartitionsToSlice == threadLocalSliceStores.size()) {
                 if (numberOfBuffers != 0) {
                     NES_DEBUG("Deploy merge task for slice " << slice->getIndex() << " with " << numberOfBuffers << " buffers.");

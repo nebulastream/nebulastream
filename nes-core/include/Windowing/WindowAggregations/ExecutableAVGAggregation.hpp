@@ -32,11 +32,30 @@ class AVGPartialType {
 
     void addToSum(SumType value) { sum += value; }
     void addToCount(int64_t value = 1) { count += value; }
+    void operator+(SumType value) {
+        sum += value;
+        count++;
+    }
 
-  private:
+    AVGPartialType<SumType>& operator+(AVGPartialType<SumType> value) {
+        sum += value.sum;
+        count += value.count;
+        return *this;
+    }
+
+    AVGPartialType& operator=(AVGPartialType<SumType>& other)
+    {
+        this->sum = other.sum;
+        this->count = other.count;
+        return *this;
+    }
+
+
     SumType sum;
     int64_t count{0};
 };
+
+using AVGDouble = AVGPartialType<double>;
 
 using AVGResultType = double;
 

@@ -391,10 +391,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
 class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStage {
   public:
     ExecutionResult
-    execute(Runtime::TupleBuffer& buffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, Runtime::WorkerContext&) override {
-        for(int i = 0 ; i < buffer.getNumberOfTuples(); i++){
-            buffer.getBuffer()
-        }
+    execute(Runtime::TupleBuffer&, Runtime::Execution::PipelineExecutionContext&, Runtime::WorkerContext&) override {
         return ExecutionResult::Ok;
     }
 };

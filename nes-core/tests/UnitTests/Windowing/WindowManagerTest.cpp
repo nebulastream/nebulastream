@@ -28,7 +28,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/Experimental/SliceStore.hpp>
-#include <Windowing/Experimental/PartitionedWindowOperator.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
