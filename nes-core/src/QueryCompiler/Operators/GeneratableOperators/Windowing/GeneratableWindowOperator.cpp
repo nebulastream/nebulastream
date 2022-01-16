@@ -30,7 +30,15 @@ GeneratableWindowOperator::GeneratableWindowOperator(OperatorId id,
       operatorHandler(std::move(operatorHandler)) {}
 
 void GeneratableWindowOperator::generateHeaders(PipelineContextPtr context){
-    context->addHeaders( {});
+    context->addHeaders({ WINDOW_OPERATOR_HANDLER,
+                          AGGREGATION_WINDOW_HANDLER,
+                          EXECUTABLE_COMPLETE_AGGR_TRIGGER_ACTION,
+                          LOGICAL_WINDOW_DEFINITION,
+                          WINDOW_MANAGER,
+                          //transitive headers:
+                          STATE_VARIABLE,
+                          WINDOW_SLICE_STORE,
+                           });
 
 }
 
