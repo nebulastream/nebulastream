@@ -43,100 +43,50 @@ MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr que
 MaintenanceService::~MaintenanceService() {
     NES_DEBUG("Destroying MaintenanceService");
 }
-std::vector<MaintenanceService::QueryMigrationMessage> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, uint8_t strategy){
-    std::vector<MaintenanceService::QueryMigrationMessage> results = {};
-    if(strategy >3 ){
-        NES_DEBUG("Not a valid strategy");
-        MaintenanceService::QueryMigrationMessage  message {0,false,"Not a valid strategy"};
-        results.push_back(message);
-        return results;
+std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType type){
+    std::pair<bool, std::string> result;
+    //check if topology node exists
+    if(!topology->findNodeWithId(nodeId)){
+        NES_DEBUG("MaintenanceService: TopologyNode with ID: " << nodeId << " does not exist");
+        result.first = false;
+        result.second = "No Topology Node with ID " + std::to_string(nodeId);
+        return result;
     }
-    TopologyNodePtr topologyNode = topology->findNodeWithId(nodeId);
-    if(!topologyNode){
-        NES_INFO("MaintenanceService: Node with ID " + std::to_string(nodeId) + " does not exit.");
-        MaintenanceService::QueryMigrationMessage  message {0,false,"Topology with supplied ID doesnt exist"};
-        results.push_back(message);
-        return results;
+    //check if topology has corresponding execution node
+    if(!globalExecutionPlan->checkIfExecutionNodeExists(nodeId)){
+        NES_DEBUG("MaintenanceService: No ExecutionNode for TopologyNodeID: " << nodeId << ". Node can be taken down for maintenance immediately");
+        topology->findNodeWithId(nodeId)->setMaintenanceFlag(true);
+        result.first = true;
+        result.second = "No ExecutionNode for TopologyNode with ID: " + std::to_string(nodeId) +". Node can be taken down for maintenance immediately";
+        return result;
     }
-    markNodeForMaintenance(nodeId);
-    ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
-    if(!executionNode){
-        NES_DEBUG("No queries deployed on node with id " << std::to_string(nodeId) << " can be immediatly taken down");
-        MaintenanceService::QueryMigrationMessage  message {0,true,"No queries deployed on Topology Node. Node can be taken down immediately"};
-        results.push_back(message);
-        return results;
+    //check if valid Migration Type
+    if(std::find(migrationTypes.begin(), migrationTypes.end(), type ) == migrationTypes.end()){
+        NES_DEBUG("MaintenanceService: MigrationType: " << type << " is not a valid type. Type must be 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)");
+        result.first = false;
+        result.second = "MigrationType: " + std::to_string(type) + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)";
+        return result;
     }
-    //collect all Parent Querys on Exec. Node
-    auto map = executionNode->getAllQuerySubPlans();
+    //get keys of map
+    auto map = globalExecutionPlan->getExecutionNodeByNodeId(nodeId)->getAllQuerySubPlans();
     std::vector<uint64_t> queryIds;
     for(auto it: map){
         queryIds.push_back(it.first);
     }
-
-    if(strategy == 1){
-        return executeQueryMigrationWithRestart(queryIds);
+    //for each query on node, create migration request
+    for(auto queryId : queryIds){
+        //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
+        if(type == RESTART){
+            queryCatalog->markQueryAs(queryId,QueryStatus::Restart);
+            queryRequestQueue->add(RestartQueryRequest::create(queryId));
+        }
+        else {
+            queryCatalog->markQueryAs(queryId,QueryStatus::Migrating);
+            queryRequestQueue->add(MigrateQueryRequest::create(queryId,nodeId,type));
+        }
     }
-    if(strategy == 2){
-        return executeQueryMigrationWithBuffer(queryIds,nodeId);
-    }
-    if(strategy == 3){
-        return executeQueryMigrationWithoutBuffer(queryIds,nodeId);
-
-    }
-    results.push_back(QueryMigrationMessage { 0, false, "Shouldnt reach here"});
-    return results;
-}
-
-
-std::vector<MaintenanceService::QueryMigrationMessage> MaintenanceService::executeQueryMigrationWithRestart(std::vector<QueryId> queryIds) {
-    NES_DEBUG("Applying Migration with restart for all queries on given topology node");
-    std::vector<MaintenanceService::QueryMigrationMessage> results = {};
-    for(auto id : queryIds){
-        queryCatalog->markQueryAs(id,QueryStatus::Restart);
-        queryRequestQueue->add(RestartQueryRequest::create(id));
-        results.push_back( MaintenanceService::QueryMigrationMessage{id,true,"Strat1"});
-    }
-    return results;
-}
-
-std::vector<MaintenanceService::QueryMigrationMessage> MaintenanceService::executeQueryMigrationWithBuffer(std::vector<QueryId> queryIds, TopologyNodeId nodeId) {
-    NES_DEBUG("Applying Migration with buffer for all queries on given topology node");
-    std::vector<MaintenanceService::QueryMigrationMessage> results = {};
-    for(auto id : queryIds){
-        queryCatalog->markQueryAs(id,QueryStatus::Migrating);
-        queryRequestQueue->add(MigrateQueryRequest::create(id,nodeId,true));
-        results.push_back( MaintenanceService::QueryMigrationMessage{id,true,"Strat2"});
-    }
-    return results;
-}
-
-std::vector<MaintenanceService::QueryMigrationMessage> MaintenanceService::executeQueryMigrationWithoutBuffer(std::vector<QueryId> queryIds, TopologyNodeId nodeId) {
-    NES_DEBUG("Applying Migration without buffer for all queries on given topology node");
-    std::vector<MaintenanceService::QueryMigrationMessage> results = {};
-    for(auto id : queryIds){
-        queryCatalog->markQueryAs(id,QueryStatus::Migrating);
-        queryRequestQueue->add(MigrateQueryRequest::create(id,nodeId,false));
-        results.push_back( MaintenanceService::QueryMigrationMessage{id,true,"Strat3"});
-        NES_DEBUG(id);
-    }
-
-    NES_DEBUG("Applying third strategy for maintenance on node" << std::to_string(nodeId));
-    TopologyNodePtr topologyNode = topology->findNodeWithId(nodeId);
-    if(!topologyNode){
-        throw std::runtime_error("MaintenanceService: Node with ID " + std::to_string(nodeId) + " does not exit.");
-    }
-    return results;
-}
-
-bool MaintenanceService::markNodeForMaintenance(uint64_t nodeId) {
-    TopologyNodePtr node = topology->findNodeWithId(nodeId);
-    bool maintenanceFlag = node->getMaintenanceFlag();
-    if(maintenanceFlag){
-        NES_DEBUG("MaintenanceService: Node with id " << nodeId << " already marked for maintenance");
-        return true;
-    }
-    NES_DEBUG("Setting maintenance flag for node with id: " + std::to_string(nodeId));
-    node->setMaintenanceFlag(true);
-    return true;
+    result.first = true;
+    result.second = "Successfully submitted Query Migration Requests for all queries on Topology Node with ID: " + std::to_string(nodeId);
+    return result;
 }
 }//namespace NES

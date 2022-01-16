@@ -20,6 +20,7 @@
 #include <REST/runtime_utils.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
+#include <Phases/MigrationTypes.hpp>
 namespace NES{
 
 MaintenanceController::MaintenanceController(MaintenanceServicePtr maintenanceService) :maintenanceService{maintenanceService}{}
@@ -45,20 +46,20 @@ void MaintenanceController::handlePost(const std::vector<utility::string_t>& pat
                       badRequestImpl(request, errorResponse);
                       return;
                   }
-                  if (!req.has_field("strategy")) {
-                      NES_ERROR("MaintenanceController: Unable to find Field: strategy ");
+                  if (!req.has_field("migrationType")) {
+                      NES_ERROR("MaintenanceController: Unable to find Field: migrationType ");
                       web::json::value errorResponse{};
-                      errorResponse["detail"] = web::json::value::string("Field strategy must be provided");
+                      errorResponse["detail"] = web::json::value::string("Field migrationType must be provided");
                       badRequestImpl(request, errorResponse);
                       return;
                   }
                   uint64_t id = req.at("id").as_integer();
-                  uint8_t strategy = req.at("strategy").as_integer();
-                  maintenanceService->submitMaintenanceRequest(id,strategy);
+                  MigrationType migrationType = req.at("migrationType").as_integer();
+                  maintenanceService->submitMaintenanceRequest(id,migrationType);
                   web::json::value result{};
-                      result["Info"] = web::json::value::string("Succesfully submitted Maintenance Request");
+                      result["Info"] = web::json::value::string("Successfully submitted Maintenance Request");
                       result["Node Id"] = web::json::value::number(id);
-                      result["Strategy"] = web::json::value::number(strategy);
+                      result["Strategy"] = web::json::value::number(migrationType);
                       successMessageImpl(request, result);
                   return;
 
