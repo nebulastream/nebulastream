@@ -15,6 +15,7 @@
 */
 
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 
 namespace NES::Windowing {
 
@@ -26,5 +27,8 @@ ActionType CompleteAggregationTriggerActionDescriptor::getActionType() { return 
 
 CompleteAggregationTriggerActionDescriptor::CompleteAggregationTriggerActionDescriptor()
     : BaseWindowActionDescriptor(WindowAggregationTriggerAction) {}
+void CompleteAggregationTriggerActionDescriptor::generateHeaders(QueryCompilation::PipelineContextPtr context) {
+    context->addHeaders({QueryCompilation::EXECUTABLE_COMPLETE_AGGR_TRIGGER_ACTION});
+}
 
 }// namespace NES::Windowing
