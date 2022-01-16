@@ -16,6 +16,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/RuntimeHeaders.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMedianAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
@@ -45,5 +46,9 @@ void GeneratableMedianAggregation::compileLiftCombine(CompoundStatementPtr curre
     auto updatedPartial = partialRef.accessRef(pushBackFunctionCall);
 
     currentCode->addStatement(updatedPartial.copy());
+}
+
+void GeneratableMedianAggregation::generateHeaders(PipelineContextPtr context) {
+    context->addHeaders({MEDIAN_AGGR});
 }
 }// namespace NES::QueryCompilation::GeneratableOperators

@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_WINDOWING_AGGREGATIONS_GENERATABLE_WINDOW_AGGREGATION_HPP_
 #define NES_INCLUDE_QUERY_COMPILER_OPERATORS_GENERATABLE_OPERATORS_WINDOWING_AGGREGATIONS_GENERATABLE_WINDOW_AGGREGATION_HPP_
 #include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
 
@@ -46,6 +47,8 @@ class GeneratableWindowAggregation {
     virtual void compileLiftCombine(CompoundStatementPtr currentCode,
                                     BinaryOperatorStatement partialValueRef,
                                     RecordHandlerPtr recordHandler) = 0;
+
+    virtual void generateHeaders(PipelineContextPtr context) = 0;
 
     virtual ~GeneratableWindowAggregation() noexcept = default;
 
