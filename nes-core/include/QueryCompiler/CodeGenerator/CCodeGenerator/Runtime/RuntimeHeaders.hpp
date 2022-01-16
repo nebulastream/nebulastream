@@ -47,6 +47,12 @@ namespace QueryCompilation {
 [[maybe_unused]] inline static const std::string EXECUTABLE_SLICE_AGGR_TRIGGER_ACTION           = "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>";
 [[maybe_unused]] inline static const std::string EXECUTABLE_COMPLETE_AGGR_TRIGGER_ACTION        = "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>";
 
+[[maybe_unused]] inline static const std::string TUPLE_BUFFER                                   = "#include <Runtime/TupleBuffer.hpp>";
+[[maybe_unused]] inline static const std::string EXECUTION_RESULT                               = "#include <Runtime/ExecutionResult.hpp>";
+[[maybe_unused]] inline static const std::string WORKER_CONTEXT                                 = "#include <Runtime/WorkerContext.hpp>";
+[[maybe_unused]] inline static const std::string PIPELINE_EXECUTION_CONTEXT                     = "#include <Runtime/Execution/PipelineExecutionContext.hpp>";
+[[maybe_unused]] inline static const std::string EXECUTION_PIPELINE_STAGE                       = "#include <Runtime/Execution/ExecutablePipelineStage.hpp>";
+
 }// namespace QueryCompilation
 }// namesapce NES
 
