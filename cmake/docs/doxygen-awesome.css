@@ -31,7 +31,7 @@ html {
     /* primary theme color. This will affect the entire websites color scheme: links, arrows, labels, ... */
     --primary-color: #9400a5;
     --primary-dark-color: #00559f;
-    --primary-light-color: #f078ff;
+    --primary-light-color: #9400a5;
     --primary-lighter-color: #cae1f1;
     --primary-lightest-color: #e9f1f8;
 
@@ -217,6 +217,7 @@ html {
     }
 }
 
+
 /* dark mode variables are defined twice, to support both the dark-mode without and with doxygen-awesome-darkmode-toggle.js */
 html.dark-mode {
     color-scheme: dark;
@@ -332,11 +333,13 @@ a:link, a:visited, a:hover, a:focus, a:active {
 }
 
 #projectname {
+    color: var(--primary-color);
     font-size: var(--title-font-size);
     font-weight: 600;
 }
 
 #projectnumber {
+    color: var(--primary-light-color);
     font-family: inherit;
     font-size: 60%;
 }
