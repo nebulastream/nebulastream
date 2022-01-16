@@ -159,6 +159,21 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
 /**
  * @brief Input Query Plan:
  *
+ * |Source| -- |Map| -- |Sink|
+ *
+ */
+TEST_F(QueryCompilerTest, mapQuery) {
+    schema->addField("F1", INT32);
+    streamCatalog->addLogicalStream("streamName", schema);
+    nodeEngine = startNodeEngine();
+
+    auto query = Query::from("streamName").map(Attribute("F1") = Attribute("F1") * 42).sink(NullOutputSinkDescriptor::create());
+    executeCommonQueryCompilerTest(query);
+}
+
+/**
+ * @brief Input Query Plan:
+ *
  * |Source| -- |window| -- |Sink|
  *
  */
