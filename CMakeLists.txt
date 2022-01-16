@@ -496,7 +496,7 @@ endif ()
 
 
 # Documentation
-add_subdirectory(docs)
+add_subdirectory(cmake/docs)
 
 ExternalProject_Add(
         gtest
