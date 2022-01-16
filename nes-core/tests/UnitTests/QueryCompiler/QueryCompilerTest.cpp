@@ -200,6 +200,46 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
 /**
  * @brief Input Query Plan:
  *
+ * |Source| -- |window| -- |Sink|
+ *
+ */
+TEST_F(QueryCompilerTest, tumblingWindowQueryIngestionTime) {
+    schema->addField("key", INT32);
+    schema->addField("value", INT32);
+    streamCatalog->addLogicalStream("streamName", schema);
+    nodeEngine = startNodeEngine();
+
+    auto query = Query::from("streamName")
+                     .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                     .byKey(Attribute("key"))
+                     .apply(Avg(Attribute("value")))
+                     .sink(NullOutputSinkDescriptor::create());
+    executeCommonQueryCompilerTest(query);
+}
+
+/**
+ * @brief Input Query Plan:
+ *
+ * |Source| -- |window| -- |Sink|
+ *
+ */
+TEST_F(QueryCompilerTest, tumblingWindowQueryEventTime) {
+    schema->addField("key", INT32);
+    schema->addField("ts", INT64);
+    streamCatalog->addLogicalStream("streamName", schema);
+    nodeEngine = startNodeEngine();
+
+    auto query = Query::from("streamName")
+                     .window(TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10)))
+                     .byKey(Attribute("key"))
+                     .apply(Count())
+                     .sink(NullOutputSinkDescriptor::create());
+    executeCommonQueryCompilerTest(query);
+}
+
+/**
+ * @brief Input Query Plan:
+ *
  * |Source| --          --
  *                          \
  * |Source| -- |Filter| -- |Union| --- |Sink|
@@ -207,7 +247,6 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
  */
 TEST_F(QueryCompilerTest, unionQuery) {
     schema->addField("key", INT32);
-    schema->addField("value", INT32);
     streamCatalog->addLogicalStream("streamName", schema);
     nodeEngine = startNodeEngine();
 
