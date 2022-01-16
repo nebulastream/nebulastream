@@ -633,18 +633,14 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
     auto recordHandler = context->getRecordHandler();
     if (watermarkStrategy->getType() == Windowing::WatermarkStrategy::EventTimeWatermark) {
         auto eventTimeWatermarkStrategy = watermarkStrategy->as<Windowing::EventTimeWatermarkStrategy>();
-        auto watermarkFieldName = eventTimeWatermarkStrategy->getField()->getFieldName();
-        NES_ASSERT(recordHandler->hasAttribute(watermarkFieldName),
-                   "CCodeGenerator: watermark assigner could not get field \"" << watermarkFieldName << "\" from struct");
-
-        auto attribute = AttributeField::create(watermarkFieldName, DataTypeFactory::createUInt64());
 
         auto tf = getTypeFactory();
+        auto watermarkFieldName = eventTimeWatermarkStrategy->getField()->getFieldName();
+        auto maxWatermarkVariableDeclaration =
+            VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()), "maxWatermark");
 
         // initiate maxWatermark variable
         // auto maxWatermark = 0;
-        auto maxWatermarkVariableDeclaration =
-            VariableDeclaration::create(tf->createDataType(attribute->getDataType()), "maxWatermark");
         auto maxWatermarkInitStatement =
             VarDeclStatement(maxWatermarkVariableDeclaration)
                 .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 0))));
@@ -655,7 +651,17 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
         // uint64_t currentWatermark = record[index].ts;
         auto currentWatermarkVariableDeclaration =
             VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "currentWatermark");
-        auto tsVariableDeclaration = recordHandler->getAttribute(attribute->getName());
+
+        auto getCreationTimestamp = call("getCreationTimestamp");
+        auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
+
+        if (watermarkFieldName != "creationTS") {
+
+            NES_ASSERT(recordHandler->hasAttribute(watermarkFieldName),
+                       "CCodeGenerator: watermark assigner could not get field \"" << watermarkFieldName << "\" from struct");
+            auto attribute = AttributeField::create(watermarkFieldName, DataTypeFactory::createUInt64());
+            tsVariableDeclaration = recordHandler->getAttribute(attribute->getName());
+        }
 
         auto calculateMaxTupleStatement = (*tsVariableDeclaration)
                 * Constant(tf->createValueType(DataTypeFactory::createBasicValue(eventTimeWatermarkStrategy->getMultiplier())))
@@ -898,7 +904,11 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     }
 
     auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
-    auto tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
+    auto getCreationTimestamp = call("getCreationTimestamp");
+    auto tsVariableDeclaration = VarRef(context->code->varDeclarationInputBuffer).accessRef(getCreationTimestamp).copy();
+    if (timeCharacteristicField != "creationTS") {
+        tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
+    }
 
     //  auto& slice = threadLocalSliceStore.findSliceByTs(current_ts);
     auto slice = VariableDeclaration::create(tf->createAnonymusDataType("auto&"), "slice");
