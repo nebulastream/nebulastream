@@ -17,6 +17,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/PhysicalStream.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -40,9 +41,10 @@
 #include <Util/UtilityFunctions.hpp>
 #include <string>
 #include <utility>
+
 namespace NES::Runtime {
 
-NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
+NodeEngine::NodeEngine(std::vector<Configurations::PhysicalStreamPtr> physicalStreams,
                        HardwareManagerPtr&& hardwareManager,
                        std::vector<BufferManagerPtr>&& bufferManagers,
                        QueryManagerPtr&& queryManager,
@@ -56,7 +58,7 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker)
-    : queryManager(std::move(queryManager)), hardwareManager(std::move(hardwareManager)),
+    : physicalStreams(std::move(physicalStreams)), queryManager(std::move(queryManager)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)),
       materializedViewManager(std::move(materializedViewManager)),
@@ -65,7 +67,6 @@ NodeEngine::NodeEngine(const PhysicalStreamConfigPtr& config,
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker) {
 
-    configs.push_back(config);
     NES_TRACE("Runtime() id=" << nodeEngineId);
     // here shared_from_this() does not work because of the machinery behind make_shared
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
@@ -461,26 +462,28 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescri
     //search for right config
     AbstractPhysicalStreamConfigPtr retPtr;
     auto streamName = sourceDescriptor->getStreamName();
-    for (auto conf = configs.begin(); conf != configs.end();) {
-        if (conf->get()->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue() == streamName) {
-            NES_DEBUG("config for stream " << streamName << " phy stream=" << conf->get()->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
-            retPtr = *conf;
-            configs.erase(conf);
+    for (auto physicalStream = physicalStreams.begin(); physicalStream != physicalStreams.end();) {
+        if (physicalStream->getLogicalStreamName() == streamName) {
+            NES_DEBUG("config for stream " << streamName << " phy stream="
+                                           << physicalStream->get()->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
+            retPtr = *physicalStream;
+            //@Steffen what is the intended behaviour here? Why do we need to erase it from physicalStreams?
+            physicalStreams.erase(physicalStream);
             break;
         } else {
-            conf++;
+            physicalStream++;
         }
     }
     if (!retPtr) {
         NES_WARNING("returning default config");
-        retPtr = configs[0];
+        retPtr = physicalStreams[0];
     }
     return retPtr->build(sourceDescriptor->getSchema());
 }
 
 void NodeEngine::setConfig(const AbstractPhysicalStreamConfigPtr& config) {
     NES_ASSERT(config, "physical source config is not specified");
-    this->configs.emplace_back(config);
+    this->physicalStreams.emplace_back(config);
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {

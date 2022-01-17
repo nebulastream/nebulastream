@@ -69,13 +69,13 @@ int main(int argc, char** argv) {
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");
 
-    //if workerConfigPath to a yaml file is provided, system will use configs in yaml file
+    //if workerConfigPath to a yaml file is provided, system will use physicalStreams in yaml file
     if (workerConfigPath != commandLineParams.end()) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
 
     //if command line params are provided that do not contain a path to a yaml file for worker config,
-    //command line param configs are used to overwrite default configs
+    //command line param physicalStreams are used to overwrite default physicalStreams
     if (argc >= 1 && !commandLineParams.contains("--workerConfigPath")) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }

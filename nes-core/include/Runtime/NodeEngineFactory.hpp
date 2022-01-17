@@ -17,7 +17,15 @@
 #ifndef NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_
 #define NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
-namespace NES::Runtime {
+
+namespace NES {
+
+namespace Configurations {
+class PhysicalStream;
+using PhysicalStreamPtr = std::shared_ptr<PhysicalStream>;
+}// namespace Configurations
+
+namespace Runtime {
 enum class NumaAwarenessFlag { ENABLED, DISABLED };
 /**
  * @brief A general factory to create a node engine given some configuration.
@@ -31,7 +39,7 @@ class NodeEngineFactory {
      * @param config
      * @return
      */
-    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config);
+    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<Configurations::PhysicalStreamPtr> configs);
 
     /**
     * @brief this creates a new Runtime
@@ -44,7 +52,7 @@ class NodeEngineFactory {
     */
     static NodeEnginePtr createNodeEngine(const std::string& hostname,
                                           uint16_t port,
-                                          PhysicalStreamConfigPtr config,
+                                          std::vector<Configurations::PhysicalStreamPtr> configs,
                                           uint16_t numThreads,
                                           uint64_t bufferSize,
                                           uint64_t numberOfBuffersInGlobalBufferManager,
@@ -69,6 +77,6 @@ class NodeEngineFactory {
     static uint64_t getNextNodeEngineId();
 };
 
-}// namespace NES::Runtime
-
+}// namespace Runtime
+}// namespace NES
 #endif// NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_

@@ -67,7 +67,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         //check if logical stream exists
         if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(
-                streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue())) {
+                streamConf->getLogicalStreamName()->getValue())) {
             NES_ERROR("TopologyManagerService::registerNode: error logical stream"
                       << streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue()
                       << " does not exist when adding physical stream "

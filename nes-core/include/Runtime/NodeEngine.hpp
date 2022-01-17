@@ -42,9 +42,12 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class PhysicalStreamConfig;
 using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
-}// namespace NES
+namespace Configurations {
+class PhysicalStream;
+using PhysicalStreamPtr = std::shared_ptr<PhysicalStream>;
+}// namespace Configurations
 
-namespace NES::Runtime {
+namespace Runtime {
 
 /**
  * @brief this class represents the interface and entrance point into the
@@ -67,7 +70,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(const PhysicalStreamConfigPtr& config,
+    explicit NodeEngine(std::vector<Configurations::PhysicalStreamPtr> physicalStreams,
                         HardwareManagerPtr&&,
                         std::vector<BufferManagerPtr>&&,
                         QueryManagerPtr&&,
@@ -300,7 +303,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     HardwareManagerPtr getHardwareManager() const;
 
   private:
-    std::vector<AbstractPhysicalStreamConfigPtr> configs;
+    std::vector<PhysicalStreamPtr> physicalStreams;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
@@ -323,5 +326,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
-}// namespace NES::Runtime
+}// namespace Runtime
+}// namespace NES
 #endif// NES_INCLUDE_RUNTIME_NODE_ENGINE_HPP_

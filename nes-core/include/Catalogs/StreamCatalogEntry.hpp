@@ -98,7 +98,6 @@ class StreamCatalogEntry {
 
   private:
     PhysicalStreamConfigPtr physicalStreamConfig;
-    LogicalStreamPtr
     TopologyNodePtr node;
 };
 
