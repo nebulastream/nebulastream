@@ -10,25 +10,11 @@ __global__ void simpleAdditionKernel(const InputRecord* recordValue, const int64
     }
 }
 
-void SimpleKernelWrapper::execute(int64_t numberOfTuple, InputRecord* record) {
-    // allocate GPU memory to work with the record
-    InputRecord* d_record;
-    cudaMalloc(&d_record, numberOfTuple * sizeof(InputRecord));
-
-    // copy the record to the GPU memory
-    cudaMemcpy(d_record, record, numberOfTuple * sizeof(InputRecord), cudaMemcpyHostToDevice);
-
+void SimpleKernelWrapper::execute(int64_t numberOfTuple, InputRecord* d_record, InputRecord* d_result) {
     // prepare kernel launch configuration
     dim3 dimBlock(1024, 1, 1);// using 1D kernel, vx * vy * vz must be <= 1024
     dim3 dimGrid((numberOfTuple + dimBlock.x - 1) / dimBlock.x, 1, 1);
 
-    // allocate GPU memory to store the result
-    InputRecord* d_result;
-    cudaMalloc(&d_result, numberOfTuple * sizeof(InputRecord));
-
     // launch the kernel
     simpleAdditionKernel<<<dimGrid, dimBlock>>>(d_record, numberOfTuple, d_result);
-
-    // copy the result back to host record
-    cudaMemcpy(record, d_result, numberOfTuple * sizeof(InputRecord), cudaMemcpyDeviceToHost);
 }

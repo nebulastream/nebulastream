@@ -384,7 +384,9 @@ endif (NES_USE_MQTT)
 
 if (NES_USE_GPU)
     enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
     set(CMAKE_CUDA_STANDARD 17)
+    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     message("CUDA dependencies OK")
 endif (NES_USE_GPU)
 
