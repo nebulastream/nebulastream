@@ -224,9 +224,11 @@ target_link_libraries(query-execution-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-execution-test COMMAND query-execution-test)
 
 ### GPUEnabledQueryExecutionTest ###
+if (NES_USE_GPU)
 add_executable(gpu-pipeline-query-execution-test "UnitTests/Query/GPUPipelineQueryExecutionTest.cpp")
 target_link_libraries(gpu-pipeline-query-execution-test nes ${GTEST_LIBRARIES})
 add_test(NAME gpu-pipeline-query-execution-test COMMAND gpu-pipeline-query-execution-test)
+endif (NES_USE_GPU)
 
 ### ProjectionTest ###
 add_executable(projection-test "UnitTests/Query/ProjectionTest.cpp")

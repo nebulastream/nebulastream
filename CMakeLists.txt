@@ -55,7 +55,7 @@ execute_process(COMMAND uname -m OUTPUT_VARIABLE NES_HOST_PROCESSOR)
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/ImportDependencies.cmake)
-project(NES CXX CUDA)
+project(NES CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
 
@@ -78,7 +78,6 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 # C++ Standard
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set NES Flags
@@ -382,6 +381,12 @@ if (NES_USE_MQTT)
     set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3-static)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
+
+if (NES_USE_GPU)
+    enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+    message("CUDA dependencies OK")
+endif (NES_USE_GPU)
 
 if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)
