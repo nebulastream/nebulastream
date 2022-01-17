@@ -15,7 +15,7 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <Catalogs/TableSourceStreamConfig.hpp>
+#include <Catalogs/StaticDataSourceStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -66,11 +66,11 @@ struct __attribute__((packed)) record_nation {
 const std::string table_path_customer_l0200 = "./test_data/tpch_l0200_customer.tbl";
 const std::string table_path_nation_s0001 = "./test_data/tpch_s0001_nation.tbl";
 
-class TableSourceIntegrationTest : public testing::Test {
+class StaticDataSourceIntegrationTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES_INFO("Setup TableSourceIntegrationTest test class.");
-        NES::setupLogging("TableSourceIntegrationTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup StaticDataSourceIntegrationTest test class.");
+        NES::setupLogging("StaticDataSourceIntegrationTest.log", NES::LOG_DEBUG);
 
         // check validity of schemas and table files to be used
         ASSERT_EQ(sizeof(record_customer), 236UL);
@@ -107,8 +107,8 @@ class TableSourceIntegrationTest : public testing::Test {
 };
 
 
-// This test checks that a deployed TableSource can be initialized and wueried with a simple query
-TEST_F(TableSourceIntegrationTest, testCustomerTable) {
+// This test checks that a deployed StaticDataSource can be initialized and wueried with a simple query
+TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
 
@@ -116,27 +116,27 @@ TEST_F(TableSourceIntegrationTest, testCustomerTable) {
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
 
-    NES_INFO("TableSourceIntegrationTest: Start coordinator");
+    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TableSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     auto streamCatalog = crd->getStreamCatalog();
     streamCatalog->addLogicalStream("tpch_customer", schema_customer);
 
-    NES_INFO("TableSourceIntegrationTest: Start worker 1");
+    NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("TableSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
-    AbstractPhysicalStreamConfigPtr conf = TableSourceStreamConfig::create("TableSource",
+    AbstractPhysicalStreamConfigPtr conf = StaticDataSourceStreamConfig::create("StaticDataSource",
                                                                             "tpch_l0200_customer",
                                                                             "tpch_customer",
                                                                             table_path_customer_l0200,
@@ -158,7 +158,7 @@ TEST_F(TableSourceIntegrationTest, testCustomerTable) {
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
-    NES_INFO("TableSourceIntegrationTest: Remove query");
+    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
@@ -187,7 +187,7 @@ TEST_F(TableSourceIntegrationTest, testCustomerTable) {
 }
 
 // simple test for nation table
-TEST_F(TableSourceIntegrationTest, testNationTable) {
+TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
 
@@ -195,27 +195,27 @@ TEST_F(TableSourceIntegrationTest, testNationTable) {
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
 
-    NES_INFO("TableSourceIntegrationTest: Start coordinator");
+    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TableSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     auto streamCatalog = crd->getStreamCatalog();
     streamCatalog->addLogicalStream("tpch_nation", schema_nation);
 
-    NES_INFO("TableSourceIntegrationTest: Start worker 1");
+    NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("TableSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
-    AbstractPhysicalStreamConfigPtr conf = TableSourceStreamConfig::create("TableSource",
+    AbstractPhysicalStreamConfigPtr conf = StaticDataSourceStreamConfig::create("StaticDataSource",
                                                                             "tpch_s0001_nation",
                                                                             "tpch_nation",
                                                                             table_path_nation_s0001,
@@ -237,7 +237,7 @@ TEST_F(TableSourceIntegrationTest, testNationTable) {
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
-    NES_INFO("TableSourceIntegrationTest: Remove query");
+    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
@@ -262,7 +262,7 @@ TEST_F(TableSourceIntegrationTest, testNationTable) {
 
 // incomplete
 // this test is supposed to join two table sources relying on the streaming join operator
-TEST_F(TableSourceIntegrationTest, DISABLED_testTwoTableJoin) {
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
 
@@ -270,11 +270,11 @@ TEST_F(TableSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
 
-    NES_INFO("TableSourceIntegrationTest: Start coordinator");
+    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("TableSourceIntegrationTest: Coordinator started successfully");
+    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -282,22 +282,22 @@ TEST_F(TableSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     streamCatalog->addLogicalStream("tpch_customer", schema_customer);
     streamCatalog->addLogicalStream("tpch_nation", schema_nation);
 
-    NES_INFO("TableSourceIntegrationTest: Start worker 1");
+    NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("TableSourceIntegrationTest: Worker1 started successfully");
+    NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
-    AbstractPhysicalStreamConfigPtr confCustomer = TableSourceStreamConfig::create("TableSource",
+    AbstractPhysicalStreamConfigPtr confCustomer = StaticDataSourceStreamConfig::create("StaticDataSource",
                                                                            "tpch_l0200_customer",
                                                                            "tpch_customer",
                                                                            table_path_customer_l0200,
                                                                            0);  // <-- placeholder
     wrk1->registerPhysicalStream(confCustomer);
-    AbstractPhysicalStreamConfigPtr confNation = TableSourceStreamConfig::create("TableSource",
+    AbstractPhysicalStreamConfigPtr confNation = StaticDataSourceStreamConfig::create("StaticDataSource",
                                                                             "tpch_s0001_nation",
                                                                             "tpch_nation",
                                                                             table_path_nation_s0001,
@@ -323,7 +323,7 @@ TEST_F(TableSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     int buffersToExpect = 1;
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
 
-    NES_INFO("TableSourceIntegrationTest: Remove query");
+    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 

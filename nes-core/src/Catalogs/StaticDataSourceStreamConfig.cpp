@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include <Catalogs/TableSourceStreamConfig.hpp>
+#include <Catalogs/StaticDataSourceStreamConfig.hpp>
 #include <Configurations/Sources/DefaultSourceConfig.hpp>
-#include <Operators/LogicalOperators/Sources/TableSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
@@ -32,7 +32,7 @@ struct MemoryAreaDeleter {
 
 }// namespace detail
 
-TableSourceStreamConfig::TableSourceStreamConfig(std::string sourceType,
+StaticDataSourceStreamConfig::StaticDataSourceStreamConfig(std::string sourceType,
                                                    std::string physicalStreamName,
                                                    std::string logicalStreamName,
                                                    std::string pathTableFile,
@@ -44,24 +44,24 @@ TableSourceStreamConfig::TableSourceStreamConfig(std::string sourceType,
     this->numberOfBuffersToProduce = numBuffersToProcess;
 }
 
-std::string TableSourceStreamConfig::getSourceType() { return sourceType; }
+std::string StaticDataSourceStreamConfig::getSourceType() { return sourceType; }
 
-std::string TableSourceStreamConfig::toString() { return sourceType; }
+std::string StaticDataSourceStreamConfig::toString() { return sourceType; }
 
-std::string TableSourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
+std::string StaticDataSourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-std::string TableSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+std::string StaticDataSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
-SourceDescriptorPtr TableSourceStreamConfig::build(SchemaPtr ptr) {
-    return std::make_shared<TableSourceDescriptor>(ptr, this->pathTableFile);
+SourceDescriptorPtr StaticDataSourceStreamConfig::build(SchemaPtr ptr) {
+    return std::make_shared<StaticDataSourceDescriptor>(ptr, this->pathTableFile);
 }
 
-AbstractPhysicalStreamConfigPtr TableSourceStreamConfig::create(const std::string& sourceType,
+AbstractPhysicalStreamConfigPtr StaticDataSourceStreamConfig::create(const std::string& sourceType,
                                                                  const std::string& physicalStreamName,
                                                                  const std::string& logicalStreamName,
                                                                  const std::string& pathTableFile,
                                                                  uint64_t numBuffersToProcess) {
-    return std::make_shared<TableSourceStreamConfig>(sourceType,
+    return std::make_shared<StaticDataSourceStreamConfig>(sourceType,
                                                       physicalStreamName,
                                                       logicalStreamName,
                                                       pathTableFile,

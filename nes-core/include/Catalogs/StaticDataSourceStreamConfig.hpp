@@ -23,23 +23,23 @@
 namespace NES {
 
 /**
- * @brief A stream config for a memory source
+ * @brief A stream config for a static data source
  */
-class TableSourceStreamConfig : public PhysicalStreamConfig {
+class StaticDataSourceStreamConfig : public PhysicalStreamConfig {
   public:
     /**
-     * @brief Create a TableSourceStreamConfig using a set of parameters
+     * @brief Create a StaticDataSourceStreamConfig using a set of parameters
      * @param sourceType the type of the source
      * @param physicalStreamName the name of the physical stream
      * @param logicalStreamName the name of the logical stream
      */
-    explicit TableSourceStreamConfig(std::string sourceType,
+    explicit StaticDataSourceStreamConfig(std::string sourceType,
                                       std::string physicalStreamName,
                                       std::string logicalStreamName,
                                       std::string pathTableFile,
                                       uint64_t numBuffersToProcess);
 
-    ~TableSourceStreamConfig() noexcept override = default;
+    ~StaticDataSourceStreamConfig() noexcept override = default;
 
     /**
      * @brief Creates the source descriptor for the underlying source
@@ -73,13 +73,13 @@ class TableSourceStreamConfig : public PhysicalStreamConfig {
     std::string getLogicalStreamName() override;
 
     /**
-     * @brief Factory method of TableSourceStreamConfig
+     * @brief Factory method of StaticDataSourceStreamConfig
       * @param sourceType the type of the source
      * @param physicalStreamName the name of the physical stream
      * @param logicalStreamName the name of the logical stream
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
-     * @return a constructed TableSourceStreamConfig
+     * @return a constructed StaticDataSourceStreamConfig
      */
     static AbstractPhysicalStreamConfigPtr create(const std::string& sourceType,
                                                   const std::string& physicalStreamName,

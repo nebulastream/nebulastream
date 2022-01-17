@@ -22,7 +22,7 @@ add_source_nes(
         SenseSource.cpp
         MonitoringSource.cpp
         MemorySource.cpp
-        TableSource.cpp
+        StaticDataSource.cpp
         LambdaSource.cpp
         BenchmarkSource.cpp
         MaterializedViewSource.cpp

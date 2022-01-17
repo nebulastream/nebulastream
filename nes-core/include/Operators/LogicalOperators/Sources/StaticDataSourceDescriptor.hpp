@@ -19,26 +19,26 @@
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
-#include <Sources/TableSource.hpp>
+#include <Sources/StaticDataSource.hpp>
 
 namespace NES {
 /**
  * @brief Descriptor defining properties used for creating physical table source
  */
-class TableSourceDescriptor : public SourceDescriptor {
+class StaticDataSourceDescriptor : public SourceDescriptor {
   public:
     /**
-     * @brief Ctor of a TableSourceDescriptor
+     * @brief Ctor of a StaticDataSourceDescriptor
      * @param schema the schema of the source
      */
-    explicit TableSourceDescriptor(SchemaPtr schema, std::string pathTableFile);
+    explicit StaticDataSourceDescriptor(SchemaPtr schema, std::string pathTableFile);
 
     /**
-     * @brief Factory method to create a TableSourceDescriptor object
+     * @brief Factory method to create a StaticDataSourceDescriptor object
      * @param schema the schema of the source
-     * @return a correctly initialized shared ptr to TableSourceDescriptor
+     * @return a correctly initialized shared ptr to StaticDataSourceDescriptor
      */
-    static std::shared_ptr<TableSourceDescriptor> create(const SchemaPtr& schema, std::string pathTableFile);
+    static std::shared_ptr<StaticDataSourceDescriptor> create(const SchemaPtr& schema, std::string pathTableFile);
 
     /**
      * @brief Provides the string representation of the table source
