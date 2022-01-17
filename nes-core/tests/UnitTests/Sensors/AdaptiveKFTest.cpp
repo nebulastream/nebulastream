@@ -96,10 +96,7 @@ class KFProxy : public KalmanFilter {
     FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorEmptyWindowTest);
     FRIEND_TEST(AdaptiveKFTest, kfEstimationErrorFilledWindowTest);
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerTest);
-    FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalTest);
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalMillisTest);
-    FRIEND_TEST(AdaptiveKFTest, kfUpdateSameValueFrequency);
-    FRIEND_TEST(AdaptiveKFTest, kfUpdateNewValueFrequency);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
