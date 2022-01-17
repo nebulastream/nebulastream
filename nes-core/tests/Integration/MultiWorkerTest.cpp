@@ -19,9 +19,9 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Sources/DefaultSourceConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -51,8 +51,8 @@ class MultiWorkerTest : public testing::Test {
 };
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -84,8 +84,8 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
 }
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -130,8 +130,8 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
 }
 
 TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -176,8 +176,8 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
 }
 
 TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -227,8 +227,8 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
 }
 
 TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -270,8 +270,8 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
 }
 
 TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -321,8 +321,8 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
 }
 
 TEST_F(MultiWorkerTest, testMultipleWorker) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);

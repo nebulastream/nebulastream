@@ -25,9 +25,9 @@
  ********************************************************/
 
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
     std::map<string, string> commandLineParams;
 
@@ -82,26 +82,26 @@ int main(int argc, char** argv) {
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
 
     NES_INFO("NESWORKERSTARTER: Start with " << workerConfig->toString());
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr nesWorker = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
     //register phy stream if necessary
-    for (Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig: workerConfig->getPhysicalStreamsConfig()) {
+    for (auto physicalStreamTypeConfig: workerConfig->getPhysicalStreamsConfig()) {
         if (physicalStreamTypeConfig->getSourceTypeConfig()->getSourceType()->getValue() != "NoSource") {
             NES_INFO("start with dedicated source=" << physicalStreamTypeConfig->getSourceTypeConfig()->getSourceType()->getValue() << "\n");
             PhysicalStreamConfigPtr physicalStreamConfig = PhysicalStreamConfig::create(physicalStreamTypeConfig);
 
             NES_INFO("NESWORKERSTARTER: Source Config: " << physicalStreamTypeConfig->getSourceTypeConfig()->toString());
 
-            wrk->setWithRegister(physicalStreamConfig);
+            nesWorker->setWithRegister(physicalStreamConfig);
         } else if (workerConfig->getParentId()->getValue() != "-1") {
             NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());
-            wrk->setWithParent(workerConfig->getParentId()->getValue());
+            nesWorker->setWithParent(workerConfig->getParentId()->getValue());
         }
     }
 
     try {
-        wrk->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
-        wrk->stop(/**force*/ true);
+        nesWorker->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
+        nesWorker->stop(/**force*/ true);
     } catch (std::exception& exp) {
         NES_ERROR("Problem with worker:  << " << exp.what());
         return 1;

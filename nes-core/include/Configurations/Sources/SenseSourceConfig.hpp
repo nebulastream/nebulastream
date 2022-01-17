@@ -76,7 +76,7 @@ class SenseSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get udsf
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUdfs() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getUdfs() const;
 
     /**
      * @brief Set udsf

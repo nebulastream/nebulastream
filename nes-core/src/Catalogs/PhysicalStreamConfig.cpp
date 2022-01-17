@@ -15,7 +15,7 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/CSVSourceTypeConfig.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/DefaultSourceTypeConfig.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/MQTTSourceTypeConfig.hpp>

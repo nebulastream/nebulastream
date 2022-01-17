@@ -72,9 +72,9 @@ class DefaultSourceTypeConfig : public SourceTypeConfig {
     bool equal(SourceTypeConfigPtr const& other) override;
 
     /**
-     * @brief gets a ConfigOption object with numberOfBuffersToProduce
+     * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersToProduce() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
 
     /**
      * @brief set the value for numberOfBuffersToProduce with the appropriate data format
@@ -82,9 +82,9 @@ class DefaultSourceTypeConfig : public SourceTypeConfig {
     void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
     /**
-     * @brief gets a ConfigOption object with sourceFrequency
+     * @brief gets a ConfigurationOption object with sourceFrequency
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getSourceFrequency() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getSourceFrequency() const;
 
     /**
      * @brief set the value for sourceFrequency with the appropriate data format

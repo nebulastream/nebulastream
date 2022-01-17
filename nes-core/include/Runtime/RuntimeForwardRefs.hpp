@@ -25,8 +25,8 @@ namespace NES {
 
 namespace Configurations {
 
-class WorkerConfig;
-using WorkerConfigPtr = std::shared_ptr<WorkerConfig>;
+class WorkerConfiguration;
+using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 
 }// namespace Configurations
 

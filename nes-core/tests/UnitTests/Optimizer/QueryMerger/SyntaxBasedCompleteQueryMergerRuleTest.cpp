@@ -19,7 +19,7 @@
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfigFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
@@ -62,7 +62,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public testing::Test {
         streamCatalog->addLogicalStream("bike", schema);
         streamCatalog->addLogicalStream("truck", schema);
 
-        SourceConfigPtr sourceConfigCar = SourceConfigFactory::createSourceConfig();
+        SourceTypeConfigPtr sourceConfigCar = SourceTypeConfigFactory::createSourceConfig();
         sourceConfigCar->setSourceFrequency(0);
         sourceConfigCar->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfigCar->setPhysicalStreamName("testCar");

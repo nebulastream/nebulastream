@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/KafkaSourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
@@ -36,16 +36,16 @@ KafkaSourceTypeConfigPtr KafkaSourceTypeConfig::create() { return std::make_shar
 
 KafkaSourceTypeConfig::KafkaSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceTypeConfig( KAFKA_SOURCE_CONFIG),
-      brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
-      autoCommit(ConfigOption<uint32_t>::create(
+      brokers(ConfigurationOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
+      autoCommit(ConfigurationOption<uint32_t>::create(
           AUTO_COMMIT_CONFIG,
           1,
           "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
-      groupId(ConfigOption<std::string>::create(GROUP_ID_CONFIG,
+      groupId(ConfigurationOption<std::string>::create(GROUP_ID_CONFIG,
                                                 "",
                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to")),
-      connectionTimeout(ConfigOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG,
+      topic(ConfigurationOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to")),
+      connectionTimeout(ConfigurationOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG,
                                                        10,
                                                        "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceConfig: Init source config object with values from sourceConfigMap.");
@@ -75,16 +75,16 @@ KafkaSourceTypeConfig::KafkaSourceTypeConfig(std::map<std::string, std::string> 
 
 KafkaSourceTypeConfig::KafkaSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
     : SourceTypeConfig(KAFKA_SOURCE_CONFIG),
-      brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
-      autoCommit(ConfigOption<uint32_t>::create(
+      brokers(ConfigurationOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
+      autoCommit(ConfigurationOption<uint32_t>::create(
           AUTO_COMMIT_CONFIG,
           1,
           "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
-      groupId(ConfigOption<std::string>::create(GROUP_ID_CONFIG,
+      groupId(ConfigurationOption<std::string>::create(GROUP_ID_CONFIG,
                                                 "",
                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to")),
-      connectionTimeout(ConfigOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG,
+      topic(ConfigurationOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to")),
+      connectionTimeout(ConfigurationOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG,
                                                        10,
                                                        "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceTypeConfig: Init source config object with new values.");
@@ -113,16 +113,16 @@ KafkaSourceTypeConfig::KafkaSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
 }
 
 KafkaSourceTypeConfig::KafkaSourceTypeConfig()
-    : SourceTypeConfig(KAFKA_SOURCE_CONFIG), brokers(ConfigOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
-      autoCommit(ConfigOption<uint32_t>::create(
+    : SourceTypeConfig(KAFKA_SOURCE_CONFIG), brokers(ConfigurationOption<std::string>::create(BROKERS_CONFIG, "", "brokers")),
+      autoCommit(ConfigurationOption<uint32_t>::create(
           AUTO_COMMIT_CONFIG,
           1,
           "auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource")),
-      groupId(ConfigOption<std::string>::create(GROUP_ID_CONFIG,
+      groupId(ConfigurationOption<std::string>::create(GROUP_ID_CONFIG,
                                                 "testGroup",
                                                 "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create(TOPIC_CONFIG, "testTopic", "topic to listen to")),
-      connectionTimeout(ConfigOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG,
+      topic(ConfigurationOption<std::string>::create(TOPIC_CONFIG, "testTopic", "topic to listen to")),
+      connectionTimeout(ConfigurationOption<uint32_t>::create(CONNECTION_TIMEOUT_CONFIG,
                                                        10,
                                                        "connection time out for source, needed for: KafkaSource")) {
     NES_INFO("KafkaSourceTypeConfig: Init source config object with default values.");

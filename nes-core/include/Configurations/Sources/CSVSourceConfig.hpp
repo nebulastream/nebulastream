@@ -77,7 +77,7 @@ class CSVSourceConfig : public SourceConfig {
     /**
      * @brief Get file path, needed for: CSVSource, BinarySource
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getFilePath() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getFilePath() const;
 
     /**
      * @brief Set file path, needed for: CSVSource, BinarySource
@@ -85,9 +85,9 @@ class CSVSourceConfig : public SourceConfig {
     void setFilePath(std::string filePath);
 
     /**
-     * @brief gets a ConfigOption object with skipHeader
+     * @brief gets a ConfigurationOption object with skipHeader
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getSkipHeader() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<bool>> getSkipHeader() const;
 
     /**
      * @brief set the value for skipHeader with the appropriate data format
@@ -95,9 +95,9 @@ class CSVSourceConfig : public SourceConfig {
     void setSkipHeader(bool skipHeader);
 
     /**
-     * @brief gets a ConfigOption object with skipHeader
+     * @brief gets a ConfigurationOption object with skipHeader
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getDelimiter() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getDelimiter() const;
 
     /**
      * @brief set the value for skipHeader with the appropriate data format
@@ -105,9 +105,9 @@ class CSVSourceConfig : public SourceConfig {
     void setDelimiter(std::string delimiter);
 
     /**
-     * @brief gets a ConfigOption object with sourceFrequency
+     * @brief gets a ConfigurationOption object with sourceFrequency
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getSourceFrequency() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getSourceFrequency() const;
 
     /**
      * @brief set the value for sourceFrequency with the appropriate data format
@@ -115,9 +115,9 @@ class CSVSourceConfig : public SourceConfig {
     void setSourceFrequency(uint32_t sourceFrequencyValue);
 
     /**
-     * @brief gets a ConfigOption object with numberOfBuffersToProduce
+     * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersToProduce() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
 
     /**
      * @brief set the value for numberOfBuffersToProduce with the appropriate data format
@@ -125,9 +125,9 @@ class CSVSourceConfig : public SourceConfig {
     void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
     /**
-     * @brief gets a ConfigOption object with numberOfTuplesToProducePerBuffer
+     * @brief gets a ConfigurationOption object with numberOfTuplesToProducePerBuffer
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
 
     /**
      * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
@@ -137,7 +137,7 @@ class CSVSourceConfig : public SourceConfig {
     /**
      * @brief Get input data format
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getInputFormat() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getInputFormat() const;
 
     /**
      * @brief Set input data format

@@ -18,8 +18,8 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -38,7 +38,7 @@ static uint64_t rpcPort = 4000;
 class MQTTSinkDeploymentTest : public testing::Test {
   public:
     CoordinatorConfigPtr coConf;
-    WorkerConfigPtr wrkConf;
+    WorkerConfigurationPtr wrkConf;
     SourceConfigPtr srcConf;
 
     static void SetUpTestCase() {
@@ -50,8 +50,8 @@ class MQTTSinkDeploymentTest : public testing::Test {
 
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-        coConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
+        coConf = CoordinatorConfiguration::create();
+        wrkConf = WorkerConfiguration::create();
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);
         wrkConf->setCoordinatorPort(rpcPort);

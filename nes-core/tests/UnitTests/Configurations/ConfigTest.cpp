@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Sources/KafkaSourceConfig.hpp>
 #include <Configurations/Sources/MQTTSourceConfig.hpp>
 #include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
@@ -46,7 +46,7 @@ class ConfigTest : public testing::Test {
  */
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
-    CoordinatorConfigPtr coordinatorConfigPtr = CoordinatorConfig::create();
+    CoordinatorConfigPtr coordinatorConfigPtr = CoordinatorConfiguration::create();
     coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyCoordinator.yaml");
 
     EXPECT_EQ(coordinatorConfigPtr->getRestPort()->getValue(), coordinatorConfigPtr->getRestPort()->getDefaultValue());
@@ -76,7 +76,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
 TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 
-    CoordinatorConfigPtr coordinatorConfigPtr = CoordinatorConfig::create();
+    CoordinatorConfigPtr coordinatorConfigPtr = CoordinatorConfiguration::create();
     std::string argv[] = {"--restIp=localhost",
                           "--coordinatorIp=",
                           "--dataPort=",
@@ -125,7 +125,7 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
 
-    WorkerConfigPtr workerConfigPtr = WorkerConfig::create();
+    WorkerConfigPtr workerConfigPtr = WorkerConfiguration::create();
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml");
 
     EXPECT_NE(workerConfigPtr->getLocalWorkerIp()->getValue(), workerConfigPtr->getLocalWorkerIp()->getDefaultValue());
@@ -147,7 +147,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
-    WorkerConfigPtr workerConfigPtr = WorkerConfig::create();
+    WorkerConfigurationPtr workerConfigPtr = WorkerConfiguration::create();
     std::string argv[] = {
         "--localWorkerIp=localhost",
         "--coordinatorIp=",

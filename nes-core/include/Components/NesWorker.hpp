@@ -18,7 +18,7 @@
 #define NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
@@ -45,7 +45,7 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(const Configurations::WorkerConfigPtr& workerConfig, NesNodeType type);
+    explicit NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig, NesNodeType type);
 
     /**
      * @brief default dtor
@@ -195,7 +195,7 @@ class NesWorker {
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
-    const Configurations::WorkerConfigPtr workerConfig;
+    const Configurations::WorkerConfigurationPtr workerConfig;
     PhysicalStreamConfigPtr conf;
     bool connected{false};
     bool withRegisterStream{false};

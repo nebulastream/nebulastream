@@ -16,9 +16,9 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -42,7 +42,7 @@ uint64_t rpcPort = 4000;
 class OrOperatorTest : public testing::Test {
   public:
     CoordinatorConfigPtr coConf;
-    WorkerConfigPtr wrkConf;
+    WorkerConfigurationPtr wrkConf;
     CSVSourceConfigPtr srcConf;
     CSVSourceConfigPtr srcConf1;
     CSVSourceConfigPtr srcConf2;
@@ -55,8 +55,8 @@ class OrOperatorTest : public testing::Test {
     void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-        coConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
+        coConf = CoordinatorConfiguration::create();
+        wrkConf = WorkerConfiguration::create();
         srcConf = CSVSourceConfig::create();
         srcConf1 = CSVSourceConfig::create();
         srcConf2 = CSVSourceConfig::create();

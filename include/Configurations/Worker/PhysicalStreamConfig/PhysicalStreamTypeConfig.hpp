@@ -39,8 +39,8 @@ class PhysicalStreamTypeConfig;
 using PhysicalStreamTypeConfigPtr = std::shared_ptr<PhysicalStreamTypeConfig>;
 
 template<class T>
-class ConfigOption;
-using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
+class ConfigurationOption;
+using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
 
 /**
  * @brief Configuration object for source config
@@ -93,9 +93,9 @@ class PhysicalStreamTypeConfig : public std::enable_shared_from_this<PhysicalStr
     bool equal(PhysicalStreamTypeConfigPtr const& other);
 
     /**
-     * @brief gets a ConfigOption object with physicalStreamName
+     * @brief gets a ConfigurationOption object with physicalStreamName
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getPhysicalStreamName() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getPhysicalStreamName() const;
 
     /**
      * @brief set the value for physicalStreamName with the appropriate data format
@@ -103,9 +103,9 @@ class PhysicalStreamTypeConfig : public std::enable_shared_from_this<PhysicalStr
     void setPhysicalStreamName(std::string physicalStreamName);
 
     /**
-     * @brief gets a ConfigOption object with logicalStreamName
+     * @brief gets a ConfigurationOption object with logicalStreamName
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getLogicalStreamName() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getLogicalStreamName() const;
 
     /**
      * @brief set the value for logicalStreamName with the appropriate data format

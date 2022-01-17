@@ -39,9 +39,9 @@
 //GRPC Includes
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/ConfigOption.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Services/MonitoringService.hpp>
@@ -61,7 +61,7 @@ namespace NES {
 
 using namespace Configurations;
 
-NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig, WorkerConfigPtr workerConfigInput)
+NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig, WorkerConfigurationPtr workerConfigInput)
     : NesCoordinator(coordinatorConfig) {
     workerConfig = workerConfigInput;
 }
@@ -216,7 +216,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         NES_DEBUG("Use provided external worker config");
     } else {
         NES_DEBUG("Use provided default worker config");
-        workerConfig = WorkerConfig::create();
+        workerConfig = WorkerConfiguration::create();
         workerConfig->resetWorkerOptions();
         workerConfig->setCoordinatorIp(rpcIp);
         workerConfig->setLocalWorkerIp(rpcIp);

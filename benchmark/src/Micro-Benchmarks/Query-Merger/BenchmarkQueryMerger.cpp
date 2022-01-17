@@ -125,7 +125,7 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
  */
 void setUp(std::string queryMergerRule, uint64_t noOfPhysicalSources, uint64_t batchSize) {
     std::cout << "setup and start coordinator" << std::endl;
-    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
+    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfiguration::create();
     crdConf->setQueryMergerRule(queryMergerRule);
     crdConf->setQueryBatchSize(batchSize);
     coordinator = std::make_shared<NES::NesCoordinator>(crdConf);

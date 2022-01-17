@@ -77,7 +77,7 @@ class BinarySourceConfig : public SourceConfig {
     /**
      * @brief Get file path
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getFilePath() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getFilePath() const;
 
     /**
      * @brief Set file path

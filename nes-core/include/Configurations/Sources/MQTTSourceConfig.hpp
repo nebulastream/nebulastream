@@ -75,7 +75,7 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get url to connect
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUrl() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getUrl() const;
 
     /**
      * @brief Set url to connect to
@@ -85,7 +85,7 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get clientId
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getClientId() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getClientId() const;
 
     /**
      * @brief Set clientId
@@ -95,7 +95,7 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get userName
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUserName() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getUserName() const;
 
     /**
      * @brief Set userName
@@ -105,7 +105,7 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get topic to listen to
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getTopic() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getTopic() const;
 
     /**
      * @brief Set topic to listen to
@@ -115,7 +115,7 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get quality of service
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getQos() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getQos() const;
 
     /**
      * @brief Set quality of service
@@ -125,7 +125,7 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<bool>> getCleanSession() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<bool>> getCleanSession() const;
 
     /**
      * @brief Set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
@@ -135,7 +135,7 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get tupleBuffer flush interval in milliseconds
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<float>> getFlushIntervalMS() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<float>> getFlushIntervalMS() const;
 
     /**
      * @brief Set tupleBuffer flush interval in milliseconds
@@ -145,7 +145,7 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get input data format
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getInputFormat() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getInputFormat() const;
 
     /**
      * @brief Set input data format
