@@ -57,12 +57,18 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class JoinLogicalOperatorNode;
 using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
 
+class BatchJoinLogicalOperatorNode;
+using BatchJoinLogicalOperatorNodePtr = std::shared_ptr<BatchJoinLogicalOperatorNode>;
+
 namespace Join {
 class LogicalJoinDefinition;
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
+
+class BatchJoinOperatorHandler;
+using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
 }// namespace Join
 
 namespace CEP {

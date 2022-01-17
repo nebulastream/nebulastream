@@ -16,6 +16,7 @@ add_source_files(nes-core
         TimeCharacteristic.cpp
         LogicalWindowDefinition.cpp
         LogicalJoinDefinition.cpp
+        LogicalBatchJoinDefinition.cpp
 )
 add_subdirectory(Watermark)
 add_subdirectory(Runtime)

@@ -1,4 +1,6 @@
 /*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -11,9 +13,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinOperator.hpp>
+#include <utility>
 
-namespace NES::QueryCompilation {
-bool OperatorAtATimePolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr) { return true; } // todo I believe this should be false -> never fuse
-OperatorFusionPolicyPtr OperatorAtATimePolicy::create() { return std::make_shared<OperatorAtATimePolicy>(); }
-}// namespace NES::QueryCompilation
+namespace NES::QueryCompilation::PhysicalOperators {
+
+PhysicalBatchJoinOperator::PhysicalBatchJoinOperator(Join::BatchJoinOperatorHandlerPtr operatorHandler)
+    : operatorHandler(std::move(operatorHandler)){};
+
+Join::BatchJoinOperatorHandlerPtr PhysicalBatchJoinOperator::getBatchJoinHandler() { return operatorHandler; }
+
+}// namespace NES::QueryCompilation::PhysicalOperators

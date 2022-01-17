@@ -40,7 +40,7 @@ class GeneratableOperator : public UnaryOperatorNode {
     /**
     * @brief Code generation function for the execute call of an operator.
     * The execute function is called for each tuple buffer consumed by this operator.
-    *  @param codegen reference to the code generator.
+    * @param codegen reference to the code generator.
     * @param context reference to the current pipeline context.
     */
     virtual void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) = 0;
