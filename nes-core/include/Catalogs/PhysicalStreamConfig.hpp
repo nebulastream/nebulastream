@@ -18,7 +18,6 @@
 #define NES_INCLUDE_CATALOGS_PHYSICAL_STREAM_CONFIG_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <memory>

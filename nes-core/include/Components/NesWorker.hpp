@@ -17,18 +17,18 @@
 #ifndef NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
 #define NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
+#include <vector>
 
 namespace grpc {
 class Server;
 class ServerCompletionQueue;
 };// namespace grpc
 
-class NodeEngine;
 namespace NES {
 
 class WorkerRPCServer;
@@ -37,6 +37,11 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
+
+namespace Configurations {
+class PhysicalStream;
+using PhysicalStreamPtr = std::shared_ptr<PhysicalStream>;
+}// namespace Configurations
 
 enum NesNodeType : int { Worker, Sensor };
 class NesWorker {
@@ -65,7 +70,7 @@ class NesWorker {
      * @param new stream of this system
      * @return bool indicating success
      */
-    bool setWithRegister(PhysicalStreamConfigPtr conf);
+    bool setWithRegister(Configurations::PhysicalStreamPtr physicalStream);
 
     /**
      * @brief configure setup with set of parent id
@@ -109,10 +114,10 @@ class NesWorker {
 
     /**
      * @brief method to register physical stream with the coordinator
-     * @param config of the stream
+     * @param physicalStream: physical stream containing relevant information
      * @return bool indicating success
      */
-    bool registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& conf);
+    bool registerPhysicalStream(const Configurations::PhysicalStreamPtr& physicalStream);
 
     /**
     * @brief method to deregister physical stream with the coordinator
@@ -196,7 +201,7 @@ class NesWorker {
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     const Configurations::WorkerConfigurationPtr workerConfig;
-    PhysicalStreamConfigPtr conf;
+    std::vector<Configurations::PhysicalStreamPtr> physicalStreams;
     bool connected{false};
     bool withRegisterStream{false};
     bool withParent{false};

@@ -16,6 +16,7 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalStream.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
@@ -46,8 +47,7 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig, NesNodeType type)
-    : conf(PhysicalStreamConfig::createEmpty()), coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
-      localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
+    : coordinatorIp(workerConfig->getCoordinatorIp()->getValue()), localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
       workerToCoreMapping(workerConfig->getWorkerPinList()->getValue()),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()), localWorkerRpcPort(workerConfig->getRpcPort()->getValue()),
       localWorkerZmqPort(workerConfig->getDataPort()->getValue()), numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
@@ -67,9 +67,9 @@ NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig,
 
 NesWorker::~NesWorker() { stop(true); }
 
-bool NesWorker::setWithRegister(PhysicalStreamConfigPtr conf) {
+bool NesWorker::setWithRegister(Configurations::PhysicalStreamPtr physicalStream) {
     withRegisterStream = true;
-    this->conf = std::move(conf);
+    this->physicalStreams.emplace_back(physicalStream);
     return true;
 }
 
@@ -135,7 +135,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     try {
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(localWorkerIp,
                                                                   localWorkerZmqPort,
-                                                                  conf,
+                                                                  physicalStream,
                                                                   numWorkerThreads,
                                                                   bufferSizeInBytes,
                                                                   numberOfBuffersInGlobalBufferManager,
@@ -175,7 +175,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
     if (withRegisterStream) {
         NES_DEBUG("NesWorker: start with register stream");
-        bool success = registerPhysicalStream(conf);
+        bool success = registerPhysicalStream(physicalStream);
         NES_DEBUG("registered= " << success);
         NES_ASSERT(success, "cannot register");
     }

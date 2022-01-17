@@ -18,7 +18,7 @@
 #define NES_INCLUDE_CATALOGS_ABSTRACT_PHYSICAL_STREAM_CONFIG_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
+#include "Configurations/Worker/PhysicalStreamTypes/PhysicalStreamTypeConfiguration.hpp"
 
 namespace NES {
 

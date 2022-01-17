@@ -1895,7 +1895,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
 
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    //    wrk1->registerPhysicalStream(conf);
+    //    wrk1->registerPhysicalStream(physicalStream);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
     wrk4->registerPhysicalStream(conf);
