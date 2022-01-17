@@ -52,6 +52,8 @@ class PhysicalStream {
         PhysicalStream::physicalStreamTypeConfiguration = physicalStreamTypeConfiguration;
     }
 
+    std::string toString();
+
   private:
     std::string logicalStreamName;
     std::string physicalStreamName;

@@ -38,7 +38,7 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @param source mode on how to bring data into the buffer
      * @param sourceAffinity id of cpu where to pin the source
      */
-    explicit BenchmarkSourceStreamConfig(const Configurations::PhysicalStreamTypeConfigurationPtr physicalStreamTypeConfig,
+    explicit BenchmarkSourceStreamConfig(const Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig,
                                          uint8_t* memoryArea,
                                          size_t memoryAreaSize,
                                          uint64_t gatheringValue,
@@ -65,7 +65,7 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @brief The physicalStreamTypeConfiguration Object with all needed configurations
      * @return The physicalStreamTypeConfiguration
      */
-    virtual Configurations::PhysicalStreamTypeConfigurationPtr getPhysicalStreamTypeConfig() override;
+    virtual Configurations::PhysicalStreamTypePtr getPhysicalStreamTypeConfig() override;
 
     /**
      * @brief Factory method of BenchmarkSourceStreamConfig
@@ -78,7 +78,7 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @param sourceAffinity id of cpu where to pin the source
      * @return a constructed BenchmarkSourceStreamConfig
      */
-    static AbstractPhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypeConfigurationPtr physicalStreamTypeConfig,
+    static AbstractPhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig,
                                                   uint8_t* memoryArea,
                                                   size_t memoryAreaSize,
                                                   uint64_t gatheringValue,
@@ -89,7 +89,7 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
     static BenchmarkSource::SourceMode getSourceModeFromString(const std::string& mode);
 
   private:
-    Configurations::PhysicalStreamTypeConfigurationPtr physicalStreamTypeConfig;
+    Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t gatheringValue;

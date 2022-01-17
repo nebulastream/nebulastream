@@ -28,35 +28,36 @@ namespace NES {
 
 namespace Configurations {
 
-class PhysicalStreamTypeConfiguration;
-using PhysicalStreamTypeConfigurationPtr = std::shared_ptr<PhysicalStreamTypeConfiguration>;
+enum StreamType { CSV, BINARY, OPC, MQTT, KAFKA, SENSE };
+
+class StreamTypeConfiguration;
+using PhysicalStreamTypePtr = std::shared_ptr<StreamTypeConfiguration>;
 
 /**
  * @brief Configuration object for source config
  */
-class PhysicalStreamTypeConfiguration : public std::enable_shared_from_this<PhysicalStreamTypeConfiguration> {
+class StreamTypeConfiguration : public std::enable_shared_from_this<StreamTypeConfiguration> {
 
   public:
+    /**
+     * @brief create a PhysicalStreamConfigPtr object
+     * @return PhysicalStreamConfigPtr
+     */
+    static PhysicalStreamTypePtr create(const std::map<std::string, std::string>& inputParams);
 
     /**
      * @brief create a PhysicalStreamConfigPtr object
      * @return PhysicalStreamConfigPtr
      */
-    static PhysicalStreamTypeConfigurationPtr create(const std::map<std::string, std::string>& inputParams);
+    static PhysicalStreamTypePtr create(ryml::NodeRef yamlConfigs);
 
     /**
      * @brief create a PhysicalStreamConfigPtr object
      * @return PhysicalStreamConfigPtr
      */
-    static PhysicalStreamTypeConfigurationPtr create(ryml::NodeRef yamlConfigs);
+    static PhysicalStreamTypePtr create(std::string streamType);
 
-    /**
-     * @brief create a PhysicalStreamConfigPtr object
-     * @return PhysicalStreamConfigPtr
-     */
-    static PhysicalStreamTypeConfigurationPtr create(std::string streamType);
-
-    ~PhysicalStreamTypeConfiguration() = default;
+    ~StreamTypeConfiguration() = default;
 
     /**
      * @brief resets all options to default values
@@ -73,23 +74,29 @@ class PhysicalStreamTypeConfiguration : public std::enable_shared_from_this<Phys
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    virtual bool equal(PhysicalStreamTypeConfigurationPtr const& other) = 0;
+    virtual bool equal(PhysicalStreamTypePtr const& other) = 0;
+
+    /**
+     * @brief Return stream type
+     * @return enum representing stream type
+     */
+    virtual StreamType getStreamType() = 0;
 
   private:
     /**
      * @brief constructor to create a new source option object initialized with values from sourceConfigMap
      */
-    explicit PhysicalStreamTypeConfiguration(const std::map<std::string, std::string>& inputParams);
+    explicit StreamTypeConfiguration(const std::map<std::string, std::string>& inputParams);
 
     /**
      * @brief constructor to create a new source option object initialized with values from sourceConfigMap
      */
-    explicit PhysicalStreamTypeConfiguration(ryml::NodeRef yamlConfigs);
+    explicit StreamTypeConfiguration(ryml::NodeRef yamlConfigs);
 
     /**
      * @brief constructor to create a new source option object initialized with default values
      */
-    explicit PhysicalStreamTypeConfiguration(std::string streamType);
+    explicit StreamTypeConfiguration(std::string streamType);
 };
 }// namespace Configurations
 }// namespace NES

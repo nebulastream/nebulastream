@@ -18,7 +18,7 @@
 #define NES_INCLUDE_CATALOGS_ABSTRACT_PHYSICAL_STREAM_CONFIG_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include "Configurations/Worker/PhysicalStreamTypes/PhysicalStreamTypeConfiguration.hpp"
+#include "Configurations/Worker/PhysicalStreamTypes/StreamTypeConfiguration.hpp"
 
 namespace NES {
 
@@ -45,7 +45,7 @@ class AbstractPhysicalStreamConfig {
      * @brief The physicalStreamTypeConfiguration Object with all needed configurations
      * @return The physicalStreamTypeConfiguration
      */
-    virtual Configurations::PhysicalStreamTypeConfigurationPtr getPhysicalStreamTypeConfig() = 0;
+    virtual Configurations::PhysicalStreamTypePtr getPhysicalStreamTypeConfig() = 0;
 
 };
 
