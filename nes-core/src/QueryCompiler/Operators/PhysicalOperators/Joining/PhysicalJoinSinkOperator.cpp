@@ -46,7 +46,7 @@ PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id,
 std::string PhysicalJoinSinkOperator::toString() const { return "PhysicalJoinSinkOperator"; }
 
 OperatorNodePtr PhysicalJoinSinkOperator::copy() {
-    return create(id, leftInputSchema, rightInputSchema, outputSchema, operatorHandler);
+    return create(id, leftInputSchema, rightInputSchema, outputSchema, operatorHandler); // todo is this a valid copy? looks like we could loose the schemas and handlers at the move operator
 }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

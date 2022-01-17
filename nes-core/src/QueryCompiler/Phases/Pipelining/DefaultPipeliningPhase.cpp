@@ -98,7 +98,7 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(const PipelineQueryP
                                                             std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                                             const OperatorPipelinePtr& currentPipeline,
                                                             const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
-    // for pipeline breakers we create an new pipeline
+    // for pipeline breakers we create a new pipeline
     currentPipeline->prependOperator(currentOperator->as<PhysicalOperators::PhysicalOperator>()->copy());
     for (const auto& node : currentOperator->getChildren()) {
         auto newPipeline = OperatorPipeline::create();
@@ -131,14 +131,14 @@ void DefaultPipeliningPhase::processSink(const PipelineQueryPlanPtr& pipelinePla
     }
 }
 
-void DefaultPipeliningPhase::processSource(const PipelineQueryPlanPtr& pipeline,
+void DefaultPipeliningPhase::processSource(const PipelineQueryPlanPtr& pipelinePlan,
                                            std::map<OperatorNodePtr, OperatorPipelinePtr>&,
                                            OperatorPipelinePtr currentPipeline,
                                            const PhysicalOperators::PhysicalOperatorPtr& sourceOperator) {
     // Source operators will always be part of their own pipeline.
     if (currentPipeline->hasOperators()) {
         auto newPipeline = OperatorPipeline::create();
-        pipeline->addPipeline(newPipeline);
+        pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
         currentPipeline = newPipeline;
     }
@@ -146,7 +146,7 @@ void DefaultPipeliningPhase::processSource(const PipelineQueryPlanPtr& pipeline,
     currentPipeline->prependOperator(sourceOperator->copy());
 }
 
-void DefaultPipeliningPhase::process(const PipelineQueryPlanPtr& pipeline,
+void DefaultPipeliningPhase::process(const PipelineQueryPlanPtr& pipelinePlan,
                                      std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                      const OperatorPipelinePtr& currentPipeline,
                                      const PhysicalOperators::PhysicalOperatorPtr& currentOperators) {
@@ -159,17 +159,17 @@ void DefaultPipeliningPhase::process(const PipelineQueryPlanPtr& pipeline,
 
     // Depending on the operator we apply different pipelining strategies
     if (currentOperators->instanceOf<PhysicalOperators::PhysicalSourceOperator>()) {
-        processSource(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
+        processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     } else if (currentOperators->instanceOf<PhysicalOperators::PhysicalSinkOperator>()) {
-        processSink(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
+        processSink(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     } else if (currentOperators->instanceOf<PhysicalOperators::PhysicalMultiplexOperator>()) {
-        processMultiplex(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
+        processMultiplex(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     } else if (currentOperators->instanceOf<PhysicalOperators::PhysicalDemultiplexOperator>()) {
-        processDemultiplex(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
+        processDemultiplex(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     } else if (operatorFusionPolicy->isFusible(currentOperators)) {
-        processFusibleOperator(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
+        processFusibleOperator(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     } else {
-        processPipelineBreakerOperator(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
+        processPipelineBreakerOperator(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     }
 }
 }// namespace NES::QueryCompilation

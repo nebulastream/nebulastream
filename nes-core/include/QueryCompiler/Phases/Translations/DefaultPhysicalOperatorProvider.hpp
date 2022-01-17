@@ -103,6 +103,13 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerJoinOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
 
     /**
+    * @brief Lowers a batch join operator
+    * @param queryPlan current plan
+    * @param operatorNode current operator
+    */
+    void lowerBatchJoinOperator(const QueryPlanPtr& queryPlan, const LogicalOperatorNodePtr& operatorNode);
+
+    /**
     * @brief Lowers a join build operator
     * @param queryPlan current plan
     * @param operatorNode current operator
@@ -110,6 +117,11 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     OperatorNodePtr getJoinBuildInputOperator(const JoinLogicalOperatorNodePtr& joinOperator,
                                               SchemaPtr schema,
                                               std::vector<OperatorNodePtr> children);
+
+    // todo might need super class of join and batch join, this function is a duplicate of above
+    static OperatorNodePtr getBatchJoinChildInputOperator(const BatchJoinLogicalOperatorNodePtr& batchJoinOperator,
+                                                           SchemaPtr outputSchema,
+                                                           std::vector<OperatorNodePtr> children);
 
     /**
     * @brief Lowers a cep iteration operator

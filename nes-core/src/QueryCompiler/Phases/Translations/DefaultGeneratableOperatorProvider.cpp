@@ -69,6 +69,8 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #ifdef PYTHON_UDF_ENABLED
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
 #endif
@@ -123,6 +125,10 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator>()) {
         return lowerPhysicalKeyedGlobalSliceStoreAppendOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalExternalOperator>()) {
+        return; // todo qc
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalBatchJoinBuildOperator>()) {
+        return; // todo qc
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalBatchJoinProbeOperator>()) {
         return;
     }
 #ifdef PYTHON_UDF_ENABLED

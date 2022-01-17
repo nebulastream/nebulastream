@@ -1308,7 +1308,6 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     EXPECT_EQ(executionNodes.size(), 3UL);
-    // check if map is placed two times
 
     bool isSinkPlacementValid = false;
     bool isSource1PlacementValid = false;
@@ -1421,7 +1420,6 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(sharedQueryId);
 
     EXPECT_EQ(executionNodes.size(), 3UL);
-    // check if map is placed two times
 
     bool isSinkPlacementValid = false;
     bool isSource1PlacementValid = false;

@@ -158,6 +158,15 @@ class LogicalOperatorFactory {
     static LogicalBinaryOperatorNodePtr createJoinOperator(const Join::LogicalJoinDefinitionPtr& joinDefinition,
                                                            OperatorId id = Util::getNextOperatorId());
 
+    // todo put in experimental namespace
+    /**
+    * @brief Create a specialized batch join operator.
+    * @param id: the id of the operator if not defined then next free operator id is used.
+    * @return BinaryOperatorNode
+    */
+    static LogicalBinaryOperatorNodePtr createBatchJoinOperator(const Join::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
+                                                           OperatorId id = Util::getNextOperatorId());
+
     /**
      * @brief Create a broadcast operator.
      * @param id: the id of the operator if not defined then next free operator id is used.

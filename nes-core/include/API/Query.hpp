@@ -21,6 +21,7 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
+#include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <memory>
 #include <string>
@@ -148,6 +149,62 @@ class JoinCondition {
 
 }//namespace JoinOperatorBuilder
 
+namespace BatchJoinOperatorBuilder {
+    /**
+     * @brief BatchJoinOperatorBuilder.
+     * @note Initialize as Join between originalQuery and subQueryRhs.
+     * @note In contrast to the JoinOperatorBuilder only .where() and .key() need to be applied to join the query.
+     * @note No windowing is required.
+     */
+
+class JoinWhere;
+
+class Join {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @param subQueryRhs
+     * @param originalQuery
+     */
+    Join(const Query& subQueryRhs, Query& originalQuery);
+
+    /**
+     * @brief sets the left key item, after that it can be compared with the function implemented in Condition
+     * @param onLeftKey
+     * @return object of type JoinWhere on which equalsTo function is defined and can be called.
+     */
+    [[nodiscard]] JoinWhere where(const ExpressionItem& onLeftKey) const;
+
+  private:
+    const Query& subQueryRhs;
+    Query& originalQuery;
+};
+
+class JoinWhere {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs, original Query and onLeftKey
+     * @param subQueryRhs
+     * @param originalQuery
+     * @param onLeftKey
+     */
+    JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey);
+
+    /**
+     * @brief sets the rightKey item
+     * @param onRightKey
+     * @return Joined Query.
+     */
+    [[nodiscard]] Query& equalsTo(const ExpressionItem& onRightKey) const;
+
+  private:
+    const Query& subQueryRhs;
+    Query& originalQuery;
+    ExpressionNodePtr onLeftKey;
+};
+
+}//namespace BatchJoinOperatorBuilder
+
 namespace CEPOperatorBuilder {
 
 class And {
@@ -271,6 +328,7 @@ class Query {
 
     //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinCondition;
+    friend class BatchJoinOperatorBuilder::JoinWhere;
     friend class CEPOperatorBuilder::And;
     friend class CEPOperatorBuilder::Seq;
     friend class WindowOperatorBuilder::WindowedQuery;
@@ -284,6 +342,13 @@ class Query {
      * @return object where where() function is defined and can be called by user
      */
     JoinOperatorBuilder::Join joinWith(const Query& subQueryRhs);
+
+    /**
+     * @brief can be called on the original query with the query to be joined with and sets this query in the class BatchJoinOperatorBuilder::Join.
+     * @param subQueryRhs
+     * @return object where where() function is defined and can be called by user
+     */
+    BatchJoinOperatorBuilder::Join batchJoinWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
@@ -428,6 +493,20 @@ class Query {
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
+     * We call it only internal as a last step during the Join operation
+     * @brief This methods adds the joinType to the join operator and calls the join function to add the operator to a query
+     * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
+     * @param subQueryRhs subQuery to be joined
+     * @param onLeftKey key attribute of the left stream
+     * @param onLeftKey key attribute of the right stream
+     * @return the query
+     */
+    Query& batchJoinWith(const Query& subQueryRhs,
+                    ExpressionItem onLeftKey,
+                    ExpressionItem onRightKey);
+
+    /**
+     * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the AND operation
      * @brief This methods adds the joinType to the join operator and calls join function to add the operator to a query
      * @param subQueryRhs subQuery to be composed
@@ -471,6 +550,21 @@ class Query {
                 ExpressionItem onRightKey,
                 Windowing::WindowTypePtr const& windowType,
                 Join::LogicalJoinDefinition::JoinType joinType);
+
+    /**
+     * We call it only internal as a last step during the Join/AND operation
+     * @brief This methods add the join operator to a query
+     * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
+     * @param subQueryRhs subQuery to be joined
+     * @param onLeftKey key attribute of the left stream
+     * @param onLeftKey key attribute of the right stream
+     * @param joinType the definition of how the composition of the streams should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
+     * @return the query
+     */
+    Query& batchJoin(const Query& subQueryRhs,
+                ExpressionItem onLeftKey,
+                ExpressionItem onRightKey,
+                Join::LogicalBatchJoinDefinition::JoinType joinType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
