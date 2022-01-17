@@ -126,7 +126,7 @@ if (NES_BUILD_BENCHMARKS)
     #add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
 
     ### Query Merger Benchmark ###
-    add_executable(query-merger-benchmark "src/Micro-Benchmarks/Query-Merger/BenchmarkQueryMerger.cpp")
+    add_executable(query-merger-benchmark "src/Micro-Benchmarks/Query-Merger/BenchmarkQueryMerger.cpp" ../nes-core/src/API/NePSLPattern.cpp ../nes-core/include/API/NePSLPattern.h)
     target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=BenchmarkQueryMerger.log --benchmark_out_format=json)
 
