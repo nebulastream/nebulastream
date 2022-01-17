@@ -19,7 +19,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Util/Logger.hpp>

@@ -75,7 +75,7 @@ class KafkaSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get broker string
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getBrokers() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getBrokers() const;
 
     /**
      * @brief Set broker string
@@ -85,7 +85,7 @@ class KafkaSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getAutoCommit() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getAutoCommit() const;
 
     /**
      * @brief Set auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
@@ -95,7 +95,7 @@ class KafkaSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief get groupId
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getGroupId() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getGroupId() const;
 
     /**
       * @brief set groupId
@@ -105,7 +105,7 @@ class KafkaSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get topic to listen to
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getTopic() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getTopic() const;
 
     /**
      * @brief Set topic to listen to
@@ -115,7 +115,7 @@ class KafkaSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get connection time out for source, needed for: KafkaSource
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<uint32_t>> getConnectionTimeout() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getConnectionTimeout() const;
 
     /**
      * @brief Set connection time out for source, needed for: KafkaSource

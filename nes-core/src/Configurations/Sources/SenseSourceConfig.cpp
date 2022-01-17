@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/SenseSourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
@@ -38,7 +38,7 @@ SenseSourceTypeConfigPtr SenseSourceTypeConfig::create() {
 
 SenseSourceTypeConfig::SenseSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceTypeConfig(SENSE_SOURCE_CONFIG),
-      udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
+      udfs(ConfigurationOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
     if (sourceConfigMap.find(UDFS_CONFIG) != sourceConfigMap.end()) {
         udfs->setValue(sourceConfigMap.find(UDFS_CONFIG)->second);
@@ -49,7 +49,7 @@ SenseSourceTypeConfig::SenseSourceTypeConfig(std::map<std::string, std::string> 
 
 SenseSourceTypeConfig::SenseSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
     : SourceTypeConfig(SENSE_SOURCE_CONFIG),
-      udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
+      udfs(ConfigurationOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
     if (sourcTypeConfig.find_child(ryml::to_csubstr (UDFS_CONFIG)).has_val()) {
         udfs->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (UDFS_CONFIG)).val().str);
@@ -60,7 +60,7 @@ SenseSourceTypeConfig::SenseSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
 
 SenseSourceTypeConfig::SenseSourceTypeConfig()
     : SourceTypeConfig(SENSE_SOURCE_CONFIG),
-      udfs(ConfigOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
+      udfs(ConfigurationOption<std::string>::create(UDFS_CONFIG, "", "udfs, needed for: SenseSource")) {
     NES_INFO("SenseSourceTypeConfig: Init source config object with default values.");
 }
 

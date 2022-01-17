@@ -21,9 +21,9 @@
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Sources/SourceTypeConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 
 namespace NES {
 

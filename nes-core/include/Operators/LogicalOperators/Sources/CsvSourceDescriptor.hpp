@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_CSV_SOURCE_DESCRIPTOR_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_CSV_SOURCE_DESCRIPTOR_HPP_
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/CSVSourceTypeConfig.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <chrono>

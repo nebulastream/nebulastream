@@ -25,10 +25,10 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -63,8 +63,8 @@ class ContinuousSourceTest : public testing::Test {
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -176,8 +176,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -243,8 +243,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -310,8 +310,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -436,8 +436,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -562,8 +562,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -638,8 +638,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -741,8 +741,8 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
  * */
 
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);

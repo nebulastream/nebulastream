@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
@@ -26,7 +26,8 @@ namespace Configurations {
 
 SourceTypeConfig::SourceTypeConfig(std::string _sourceType)
     :
-      sourceType(ConfigOption<std::string>::create(SOURCE_TYPE_CONFIG,
+      sourceType(
+        ConfigurationOption<std::string>::create(SOURCE_TYPE_CONFIG,
                                                    std::move(_sourceType),
                                                    "Type of the Source (available options: NoSource, DefaultSource, CSVSource, "
                                                    "BinarySource, MQTTSource, KafkaSource, OPCSource).")) {

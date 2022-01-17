@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_COMPONENTS_NES_COORDINATOR_HPP_
 #define NES_INCLUDE_COMPONENTS_NES_COORDINATOR_HPP_
 
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/ErrorListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -96,7 +96,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
   public:
     explicit NesCoordinator(CoordinatorConfigPtr coordinatorConfig);
 
-    explicit NesCoordinator(CoordinatorConfigPtr coordinatorConfig, WorkerConfigPtr workerConfigPtr);
+    explicit NesCoordinator(CoordinatorConfigPtr coordinatorConfig, WorkerConfigurationPtr workerConfigPtr);
 
     /**
      * @brief dtor
@@ -222,7 +222,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     WorkerRPCClientPtr workerRpcClient;
     NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
-    WorkerConfigPtr workerConfig;
+    WorkerConfigurationPtr workerConfig;
     Catalogs::UdfCatalogPtr udfCatalog;
     bool enableMonitoring;
 };

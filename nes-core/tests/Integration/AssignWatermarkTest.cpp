@@ -18,9 +18,9 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -61,15 +61,15 @@ class AssignWatermarkTest : public testing::Test {
  * @brief test event time watermark for central tumbling window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
-    crdConf = CoordinatorConfig::create();
+    crdConf = CoordinatorConfiguration::create();
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
 
-    wrkConf = WorkerConfig::create();
+    wrkConf = WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
     srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -157,15 +157,15 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
  * @brief test event time watermark for distributed tumbling window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
-    crdConf = CoordinatorConfig::create();
+    crdConf = CoordinatorConfiguration::create();
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
 
-    wrkConf = WorkerConfig::create();
+    wrkConf = WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
     srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -275,15 +275,15 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
  * @brief test event time watermark for central sliding window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
-    crdConf = CoordinatorConfig::create();
+    crdConf = CoordinatorConfiguration::create();
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
 
-    wrkConf = WorkerConfig::create();
+    wrkConf = WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
     srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -374,15 +374,15 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
  * @brief test event time watermark for distributed sliding window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
-    crdConf = CoordinatorConfig::create();
+    crdConf = CoordinatorConfiguration::create();
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
 
-    wrkConf = WorkerConfig::create();
+    wrkConf = WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(rpcPort);
 
     srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");

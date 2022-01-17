@@ -1654,7 +1654,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
 }
 
 TEST_F(SourceTest, testIngestionRateFromQuery) {
-    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
+    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfiguration::create();
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
 
@@ -1663,7 +1663,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
-    NES::WorkerConfigPtr wrkConf = NES::WorkerConfig::create();
+    NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setBufferSizeInBytes(72);
     wrkConf->setRpcPort(port + 10);
@@ -1887,7 +1887,7 @@ TEST_F(SourceTest, testMemorySource) {
 }
 
 TEST_F(SourceTest, testTwoLambdaSources) {
-    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
+    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfiguration::create();
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
 
@@ -1896,7 +1896,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
-    NES::WorkerConfigPtr wrkConf = NES::WorkerConfig::create();
+    NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
@@ -1985,7 +1985,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
 }
 
 TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
-    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
+    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfiguration::create();
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
     crdConf->setNumWorkerThreads(4);

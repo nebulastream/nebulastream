@@ -51,8 +51,8 @@ class MultipleWindowsTest : public testing::Test {
 };
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -136,8 +136,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -243,8 +243,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -338,8 +338,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -447,8 +447,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -550,8 +550,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -661,8 +661,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
  * @brief Test all three windows in a row
  */
 TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -808,8 +808,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
 |  |  |      WATERMARKASSIGNER(7)
 |  |  |        SOURCE(8,window)
      */
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -975,8 +975,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
 |  |  |      FILTER(11)
 |  |  |        SOURCE(10,window)
      */
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);

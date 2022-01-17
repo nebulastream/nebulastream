@@ -82,7 +82,7 @@ struct __attribute__((packed)) ysbRecord {
 class MillisecondIntervalTest : public testing::Test {
   public:
     CoordinatorConfigPtr crdConf;
-    WorkerConfigPtr wrkConf;
+    WorkerConfigurationPtr wrkConf;
     CSVSourceConfigPtr srcConf;
 
     static void SetUpTestCase() {
@@ -100,11 +100,11 @@ class MillisecondIntervalTest : public testing::Test {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
-        crdConf = CoordinatorConfig::create();
+        crdConf = CoordinatorConfiguration::create();
         crdConf->setRpcPort(rpcPort);
         crdConf->setRestPort(restPort);
 
-        wrkConf = WorkerConfig::create();
+        wrkConf = WorkerConfiguration::create();
         wrkConf->setCoordinatorPort(rpcPort);
 
         srcConf = CSVSourceConfig::create();

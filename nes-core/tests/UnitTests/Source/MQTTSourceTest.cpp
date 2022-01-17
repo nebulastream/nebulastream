@@ -28,9 +28,9 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Sources/MQTTSourceConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -173,8 +173,8 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 
 // Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
 TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);

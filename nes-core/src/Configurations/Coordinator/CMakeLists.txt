@@ -13,6 +13,6 @@
 # limitations under the License.
 
 add_source_nes(
-        CoordinatorConfig.cpp
+        CoordinatorConfiguration.cpp
 )
 

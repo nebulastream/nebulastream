@@ -82,12 +82,12 @@ class TestHarness {
         : ipAddress("127.0.0.1"), queryWithoutSink(std::move(queryWithoutSink)), bufferSize(4096),
           memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess) {
         NES_INFO("TestHarness: Start coordinator");
-        crdConf = CoordinatorConfig::create();
+        crdConf = CoordinatorConfiguration::create();
         crdConf->resetCoordinatorOptions();
         crdConf->setCoordinatorIp(ipAddress);
         crdConf->setRestPort(restPort);
         crdConf->setRpcPort(rpcPort);
-        wrkConf = WorkerConfig::create();
+        wrkConf = WorkerConfiguration::create();
         crd = std::make_shared<NesCoordinator>(crdConf);
         crdPort = crd->startCoordinator(/**blocking**/ false);
         nonSourceWorkerCount = 0;
@@ -409,7 +409,7 @@ class TestHarness {
 
   private:
     CoordinatorConfigPtr crdConf;
-    WorkerConfigPtr wrkConf;
+    WorkerConfigurationPtr wrkConf;
     NesCoordinatorPtr crd;
     uint64_t crdPort;
     std::string ipAddress;

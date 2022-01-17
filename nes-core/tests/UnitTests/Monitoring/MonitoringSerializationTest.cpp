@@ -16,8 +16,8 @@
 
 #include <gtest/gtest.h>
 
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
@@ -53,7 +53,7 @@ class MonitoringSerializationTest : public testing::Test {
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
     CoordinatorConfigPtr crdConf;
-    WorkerConfigPtr wrkConf;
+    WorkerConfigurationPtr wrkConf;
     uint64_t bufferSize = 0;
 
     static void SetUpTestCase() {
@@ -65,8 +65,8 @@ class MonitoringSerializationTest : public testing::Test {
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        crdConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
+        crdConf = CoordinatorConfiguration::create();
+        wrkConf = WorkerConfiguration::create();
         crdConf->resetCoordinatorOptions();
         wrkConf->resetWorkerOptions();
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;

@@ -24,8 +24,8 @@
  *
  ********************************************************/
 #include <Components/NesCoordinator.hpp>
-#include <Configurations/ConfigOption.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -49,7 +49,7 @@ const std::string logo = "/*****************************************************
 int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
     NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
 
     map<string, string> commandLineParams;
     for (int i = 1; i < argc; ++i) {

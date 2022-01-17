@@ -74,7 +74,7 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
      */
     bool equal(SourceTypeConfigPtr const& other) override;
 
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::uint32_t>> getNamespaceIndex() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::uint32_t>> getNamespaceIndex() const;
 
     /**
      * @brief Set namespaceIndex for node
@@ -84,7 +84,7 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get node identifier
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getNodeIdentifier() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getNodeIdentifier() const;
 
     /**
      * @brief Set node identifier
@@ -94,7 +94,7 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get userName
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getUserName() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getUserName() const;
 
     /**
      * @brief Set userName
@@ -104,7 +104,7 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get password
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getPassword() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getPassword() const;
 
     /**
      * @brief Set password

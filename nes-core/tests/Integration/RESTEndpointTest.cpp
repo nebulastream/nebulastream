@@ -53,7 +53,7 @@ class RESTEndpointTest : public testing::Test {
 
     NesCoordinatorPtr createAndStartCoordinator() const {
         NES_INFO("RESTEndpointTest: Start coordinator");
-        CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+        CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->setRpcPort(coordinatorRpcPort);
         coordinatorConfig->setRestPort(coordinatorRestPort);
         auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -71,7 +71,7 @@ class RESTEndpointTest : public testing::Test {
     // The test code also works if the id parameter is omitted.
     NesWorkerPtr createAndStartWorker(NesNodeType nodeType, uint8_t id = 1) {
         NES_INFO("RESTEndpointTest: Start worker " << id);
-        WorkerConfigPtr workerConfig = WorkerConfig::create();
+        WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
         workerConfig->setCoordinatorPort(coordinatorRpcPort);
         workerConfig->setRpcPort(getNextFreePort());
         workerConfig->setDataPort(getNextFreePort());

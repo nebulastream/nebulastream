@@ -19,7 +19,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
+#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -54,9 +54,9 @@ class MultipleJoinsTest : public testing::Test {
 };
 
 TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -221,9 +221,9 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDistributed) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -393,9 +393,9 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinatorSequential) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -580,9 +580,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinatorNested) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -773,9 +773,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
  */
 
 TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -944,9 +944,9 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDistributed) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -1124,9 +1124,9 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorSequential) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -1332,9 +1332,9 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorNested) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);

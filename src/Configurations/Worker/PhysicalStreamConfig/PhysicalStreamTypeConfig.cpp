@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/DefaultSourceTypeConfig.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfigFactory.hpp>
@@ -31,10 +31,8 @@ PhysicalStreamTypeConfigPtr PhysicalStreamTypeConfig::create(ryml::NodeRef physi
 }
 
 PhysicalStreamTypeConfig::PhysicalStreamTypeConfig(ryml::NodeRef physicalStreamConfigNode)
-    : physicalStreamName(
-        ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
-      logicalStreamName(
-          ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")) {
+    : physicalStreamName(ConfigurationOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
+      logicalStreamName(ConfigurationOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")) {
     NES_INFO("NesSourceConfig: Init physical stream config object with new values.");
 
     std::string sourceType = physicalStreamConfigNode.find_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG)).val().str;
@@ -49,10 +47,8 @@ PhysicalStreamTypeConfigPtr PhysicalStreamTypeConfig::create(const std::map<std:
 }
 
 PhysicalStreamTypeConfig::PhysicalStreamTypeConfig(const std::map<std::string, std::string>& inputParams)
-    : physicalStreamName(
-        ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
-      logicalStreamName(
-          ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")) {
+    : physicalStreamName(ConfigurationOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
+      logicalStreamName(ConfigurationOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")) {
     NES_INFO("NesSourceConfig: Init physical stream config object with new values.");
 
     if (inputParams.find("--" + PHYSICAL_STREAM_NAME_CONFIG) != inputParams.end()
@@ -72,10 +68,8 @@ PhysicalStreamTypeConfigPtr PhysicalStreamTypeConfig::create(std::string sourceT
 }
 
 PhysicalStreamTypeConfig::PhysicalStreamTypeConfig(std::string sourceType)
-    : physicalStreamName(
-        ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
-      logicalStreamName(
-          ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")) {
+    : physicalStreamName(ConfigurationOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
+      logicalStreamName(ConfigurationOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")) {
     NES_INFO("NesSourceConfig: Init physical stream config object with new values.");
 
     sourceTypeConfig = SourceTypeConfigFactory::createSourceConfig(sourceType);
@@ -86,10 +80,9 @@ PhysicalStreamTypeConfigPtr PhysicalStreamTypeConfig::create() {
 }
 
 PhysicalStreamTypeConfig::PhysicalStreamTypeConfig()
-    : physicalStreamName(
-        ConfigOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
+    : physicalStreamName(ConfigurationOption<std::string>::create(PHYSICAL_STREAM_NAME_CONFIG, "default_physical", "Physical name of the stream.")),
       logicalStreamName(
-          ConfigOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
+          ConfigurationOption<std::string>::create(LOGICAL_STREAM_NAME_CONFIG, "default_logical", "Logical name of the stream.")),
       sourceTypeConfig(DefaultSourceTypeConfig::create()) {
     NES_INFO("NesSourceConfig: Init physical Stream config object with default values.");
 }

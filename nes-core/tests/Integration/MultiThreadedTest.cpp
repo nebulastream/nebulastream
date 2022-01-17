@@ -54,8 +54,8 @@ class MultiThreadedTest : public testing::Test {
 };
 
 TEST_F(MultiThreadedTest, testFilterQuery) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
@@ -139,8 +139,8 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 }
 
 TEST_F(MultiThreadedTest, testProjectQuery) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
@@ -225,8 +225,8 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
 }
 
 TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -318,8 +318,8 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
  * This test only test if there is something crash but not the result
  */
 TEST_F(MultiThreadedTest, testMultipleWindows) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -410,8 +410,8 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 }
 
 TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     coordinatorConfig->setRpcPort(rpcPort);
@@ -502,8 +502,8 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
  * Test deploying join with different three sources
  */
 TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
@@ -610,8 +610,8 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 }
 
 TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
@@ -734,8 +734,8 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
 }
 
 TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);
@@ -908,8 +908,8 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
  * Test deploying join with different three sources
  */
 TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
     crdConf->setRpcPort(rpcPort);

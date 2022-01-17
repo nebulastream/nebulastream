@@ -20,8 +20,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -50,8 +50,8 @@ class BenchmarkSourceIntegrationTest : public testing::Test {
 
 /// This test checks that a deployed BenchmarkSource can write M records spanning exactly N records
 TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -161,8 +161,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -274,8 +274,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 /// with the invariant that the N+1-th buffer is half full
 
 TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);

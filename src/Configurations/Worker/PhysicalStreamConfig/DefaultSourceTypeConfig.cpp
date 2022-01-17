@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/DefaultSourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
@@ -39,7 +39,7 @@ DefaultSourceTypeConfigPtr DefaultSourceTypeConfig::create() {
 DefaultSourceTypeConfig::DefaultSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceTypeConfig(DEFAULT_SOURCE_CONFIG),
       numberOfBuffersToProduce(
-          ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")) {
+          ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")) {
 
     if (sourceConfigMap.find(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
         numberOfBuffersToProduce->setValue(std::stoi(sourceConfigMap.find(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
@@ -53,8 +53,8 @@ DefaultSourceTypeConfig::DefaultSourceTypeConfig(std::map<std::string, std::stri
 DefaultSourceTypeConfig::DefaultSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
     : SourceTypeConfig(DEFAULT_SOURCE_CONFIG),
       numberOfBuffersToProduce(
-          ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
-      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")) {
+          ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
+      sourceFrequency(ConfigurationOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")) {
     if (sourcTypeConfig.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)).has_val()) {
         numberOfBuffersToProduce->setValue(
             std::stoi(sourcTypeConfig.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)).val().str));
@@ -68,8 +68,8 @@ DefaultSourceTypeConfig::DefaultSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
 DefaultSourceTypeConfig::DefaultSourceTypeConfig()
     : SourceTypeConfig(DEFAULT_SOURCE_CONFIG),
       numberOfBuffersToProduce(
-          ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
-      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")) {
+          ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
+      sourceFrequency(ConfigurationOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")) {
     NES_INFO("DefaultSourceTypeConfig: Init source config object with default values.");
 }
 

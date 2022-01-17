@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/OPCSourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
@@ -37,12 +37,13 @@ OPCSourceTypeConfigPtr OPCSourceTypeConfig::create() { return std::make_shared<O
 OPCSourceTypeConfig::OPCSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceTypeConfig(OPC_SOURCE_CONFIG),
       namespaceIndex(
-          ConfigOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
-      nodeIdentifier(ConfigOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "", "node identifier, needed for: OPCSource")),
-      userName(ConfigOption<std::string>::create(USER_NAME_CONFIG,
+          ConfigurationOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
+      nodeIdentifier(
+          ConfigurationOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "", "node identifier, needed for: OPCSource")),
+      userName(ConfigurationOption<std::string>::create(USER_NAME_CONFIG,
                                                  "",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      password(ConfigOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
+      password(ConfigurationOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
     NES_INFO("OPCSourceConfig: Init source config object with values from sourceConfigMap.");
     if (sourceConfigMap.find(OPC_SOURCE_CONFIG) != sourceConfigMap.end()) {
         namespaceIndex->setValue(std::stoi(sourceConfigMap.find(OPC_SOURCE_CONFIG)->second));
@@ -65,12 +66,13 @@ OPCSourceTypeConfig::OPCSourceTypeConfig(std::map<std::string, std::string> sour
 OPCSourceTypeConfig::OPCSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
     : SourceTypeConfig(OPC_SOURCE_CONFIG),
       namespaceIndex(
-          ConfigOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
-      nodeIdentifier(ConfigOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "", "node identifier, needed for: OPCSource")),
-      userName(ConfigOption<std::string>::create(USER_NAME_CONFIG,
+          ConfigurationOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
+      nodeIdentifier(
+          ConfigurationOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "", "node identifier, needed for: OPCSource")),
+      userName(ConfigurationOption<std::string>::create(USER_NAME_CONFIG,
                                                  "",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      password(ConfigOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
+      password(ConfigurationOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
     NES_INFO("OPCSourceTypeConfig: Init source config object with new values.");
     if (sourcTypeConfig.find_child(ryml::to_csubstr (NAME_SPACE_INDEX_CONFIG)).has_val()) {
         namespaceIndex->setValue(std::stoi(sourcTypeConfig.find_child(ryml::to_csubstr (NAME_SPACE_INDEX_CONFIG)).val().str));
@@ -93,13 +95,12 @@ OPCSourceTypeConfig::OPCSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
 OPCSourceTypeConfig::OPCSourceTypeConfig()
     : SourceTypeConfig(OPC_SOURCE_CONFIG),
       namespaceIndex(
-          ConfigOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
-      nodeIdentifier(
-          ConfigOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "the.answer", "node identifier, needed for: OPCSource")),
-      userName(ConfigOption<std::string>::create(USER_NAME_CONFIG,
+          ConfigurationOption<uint32_t>::create(NAME_SPACE_INDEX_CONFIG, 1, "namespaceIndex for node, needed for: OPCSource")),
+      nodeIdentifier(ConfigurationOption<std::string>::create(NODE_IDENTIFIER_CONFIG, "the.answer", "node identifier, needed for: OPCSource")),
+      userName(ConfigurationOption<std::string>::create(USER_NAME_CONFIG,
                                                  "testUser",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      password(ConfigOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
+      password(ConfigurationOption<std::string>::create(PASSWORD_CONFIG, "", "password, needed for: OPCSource")) {
     NES_INFO("OPCSourceTypeConfig: Init source config object with default values.");
 }
 

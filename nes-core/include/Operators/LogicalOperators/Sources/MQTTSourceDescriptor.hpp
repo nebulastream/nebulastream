@@ -19,7 +19,7 @@
 
 #ifdef ENABLE_MQTT_BUILD
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/MQTTSourceTypeConfig.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 

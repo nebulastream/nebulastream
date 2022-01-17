@@ -19,7 +19,7 @@
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <memory>
 #include <string>

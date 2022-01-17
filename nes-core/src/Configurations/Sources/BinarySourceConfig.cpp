@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/BinarySourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
@@ -30,7 +30,7 @@ BinarySourceTypeConfigPtr BinarySourceTypeConfig::create(ryml::NodeRef sourcType
 
 BinarySourceTypeConfig::BinarySourceTypeConfig(ryml::NodeRef sourcTypeConfig)
     : SourceTypeConfig(BINARY_SOURCE_CONFIG),
-      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")) {
+      filePath(ConfigurationOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceTypeConfig: Init source config object.");
     if (sourcTypeConfig.find_child(ryml::to_csubstr (FILE_PATH_CONFIG)).has_val()) {
         filePath->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (FILE_PATH_CONFIG)).val().str);
@@ -45,7 +45,7 @@ BinarySourceTypeConfigPtr BinarySourceTypeConfig::create(std::map<std::string, s
 
 BinarySourceTypeConfig::BinarySourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceTypeConfig(BINARY_SOURCE_CONFIG),
-      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")) {
+      filePath(ConfigurationOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceConfig: Init source config object.");
     if (sourceConfigMap.find(FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find(FILE_PATH_CONFIG)->second);
@@ -58,7 +58,7 @@ BinarySourceTypeConfigPtr BinarySourceTypeConfig::create() { return std::make_sh
 
 BinarySourceTypeConfig::BinarySourceTypeConfig()
     : SourceTypeConfig(BINARY_SOURCE_CONFIG),
-      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG,
+      filePath(ConfigurationOption<std::string>::create(FILE_PATH_CONFIG,
                                                  "../tests/test_data/QnV_short.csv",
                                                  "file path, needed for: CSVSource, BinarySource")) {
     NES_INFO("BinarySourceTypeConfig: Init source config object with default params.");

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/CSVSourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
@@ -36,17 +36,16 @@ CSVSourceTypeConfigPtr CSVSourceTypeConfig::create(std::map<std::string, std::st
 
 CSVSourceTypeConfig::CSVSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceTypeConfig(CSV_SOURCE_CONFIG),
-      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
-      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
-      delimiter(
-          ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")),
+      filePath(ConfigurationOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
+      skipHeader(ConfigurationOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
+      delimiter(ConfigurationOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")),
       numberOfBuffersToProduce(
-          ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
-      numberOfTuplesToProducePerBuffer(ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
+          ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
+      numberOfTuplesToProducePerBuffer(ConfigurationOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
                                                                       1,
                                                                       "Number of tuples to produce per buffer.")),
-      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
-      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
+      sourceFrequency(ConfigurationOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
+      inputFormat(ConfigurationOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
     NES_INFO("CSVSourceConfig: Init source config object.");
     if (sourceConfigMap.find(FILE_PATH_CONFIG) != sourceConfigMap.end()) {
         filePath->setValue(sourceConfigMap.find(FILE_PATH_CONFIG)->second);
@@ -75,17 +74,16 @@ CSVSourceTypeConfig::CSVSourceTypeConfig(std::map<std::string, std::string> sour
 
 CSVSourceTypeConfig::CSVSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
     : SourceTypeConfig(CSV_SOURCE_CONFIG),
-      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
-      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
-      delimiter(
-          ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")),
+      filePath(ConfigurationOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
+      skipHeader(ConfigurationOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
+      delimiter(ConfigurationOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")),
       numberOfBuffersToProduce(
-          ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
-      numberOfTuplesToProducePerBuffer(ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
+          ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
+      numberOfTuplesToProducePerBuffer(ConfigurationOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
                                                                       1,
                                                                       "Number of tuples to produce per buffer.")),
-      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
-      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")){
+      sourceFrequency(ConfigurationOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
+      inputFormat(ConfigurationOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")){
     NES_INFO("CSVSourceTypeConfig: Init source config object.");
     if (sourcTypeConfig.find_child(ryml::to_csubstr (FILE_PATH_CONFIG)).has_val()) {
         filePath->setValue(sourcTypeConfig.find_child(ryml::to_csubstr (FILE_PATH_CONFIG)).val().str);
@@ -114,17 +112,16 @@ CSVSourceTypeConfig::CSVSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
 
 CSVSourceTypeConfig::CSVSourceTypeConfig()
     : SourceTypeConfig(CSV_SOURCE_CONFIG),
-      filePath(ConfigOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
-      skipHeader(ConfigOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
-      delimiter(
-          ConfigOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")),
+      filePath(ConfigurationOption<std::string>::create(FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource")),
+      skipHeader(ConfigurationOption<bool>::create(SKIP_HEADER_CONFIG, false, "Skip first line of the file.")),
+      delimiter(ConfigurationOption<std::string>::create(DELIMITER_CONFIG, ",", "delimiter for distinguishing between values in a file")),
       numberOfBuffersToProduce(
-          ConfigOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
-      numberOfTuplesToProducePerBuffer(ConfigOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
+          ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 1, "Number of buffers to produce.")),
+      numberOfTuplesToProducePerBuffer(ConfigurationOption<uint32_t>::create(NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG,
                                                                       1,
                                                                       "Number of tuples to produce per buffer.")),
-      sourceFrequency(ConfigOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
-      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
+      sourceFrequency(ConfigurationOption<uint32_t>::create(SOURCE_FREQUENCY_CONFIG, 1, "Sampling frequency of the source.")),
+      inputFormat(ConfigurationOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
     NES_INFO("CSVSourceTypeConfig: Init source config object with default values.");
 }
 

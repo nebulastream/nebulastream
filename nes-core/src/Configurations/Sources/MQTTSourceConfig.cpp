@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigOption.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/MQTTSourceTypeConfig.hpp>
 #include <Util/Logger.hpp>
 #include <string>
@@ -36,24 +36,25 @@ MQTTSourceTypeConfigPtr MQTTSourceTypeConfig::create() { return std::make_shared
 
 MQTTSourceTypeConfig::MQTTSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap)
     : SourceTypeConfig( MQTT_SOURCE_CONFIG),
-      url(ConfigOption<std::string>::create(URL_CONFIG,
+      url(ConfigurationOption<std::string>::create(URL_CONFIG,
                                             "",
                                             "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
-      clientId(ConfigOption<std::string>::create(CLIENT_ID_CONFIG,
+      clientId(ConfigurationOption<std::string>::create(CLIENT_ID_CONFIG,
                                                  "",
                                                  "clientId, needed for: MQTTSource (needs to be unique for each connected "
                                                  "MQTTSource), KafkaSource (use this for groupId)")),
-      userName(ConfigOption<std::string>::create(USER_NAME_CONFIG,
+      userName(ConfigurationOption<std::string>::create(USER_NAME_CONFIG,
                                                  "",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to, needed for: MQTTSource, KafkaSource")),
-      qos(ConfigOption<uint32_t>::create(QOS_CONFIG, 2, "quality of service, needed for: MQTTSource")),
-      cleanSession(
-          ConfigOption<bool>::create(CLEAN_SESSION_CONFIG,
+      topic(
+          ConfigurationOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to, needed for: MQTTSource, KafkaSource")),
+      qos(ConfigurationOption<uint32_t>::create(QOS_CONFIG, 2, "quality of service, needed for: MQTTSource")),
+      cleanSession(ConfigurationOption<bool>::create(CLEAN_SESSION_CONFIG,
                                      true,
                                      "cleanSession true = clean up session after client loses connection, false = keep data for "
                                      "client after connection loss (persistent session), needed for: MQTTSource")),
-      flushIntervalMS(ConfigOption<float>::create(FLUSH_INTERVAL_MS_CONFIG, -1, "tupleBuffer flush interval in milliseconds")) {
+      flushIntervalMS(
+          ConfigurationOption<float>::create(FLUSH_INTERVAL_MS_CONFIG, -1, "tupleBuffer flush interval in milliseconds")) {
     NES_INFO("NesSourceConfig: Init source config object with new values.");
 
     if (sourceConfigMap.find(URL_CONFIG) != sourceConfigMap.end()) {
@@ -89,25 +90,25 @@ MQTTSourceTypeConfig::MQTTSourceTypeConfig(std::map<std::string, std::string> so
 
 MQTTSourceTypeConfig::MQTTSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
     : SourceTypeConfig(MQTT_SOURCE_CONFIG),
-      url(ConfigOption<std::string>::create(URL_CONFIG,
+      url(ConfigurationOption<std::string>::create(URL_CONFIG,
                                             "",
                                             "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
-      clientId(ConfigOption<std::string>::create(CLIENT_ID_CONFIG,
+      clientId(ConfigurationOption<std::string>::create(CLIENT_ID_CONFIG,
                                                  "",
                                                  "clientId, needed for: MQTTSource (needs to be unique for each connected "
                                                  "MQTTSource), KafkaSource (use this for groupId)")),
-      userName(ConfigOption<std::string>::create(USER_NAME_CONFIG,
+      userName(ConfigurationOption<std::string>::create(USER_NAME_CONFIG,
                                                  "",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to, needed for: MQTTSource, KafkaSource")),
-      qos(ConfigOption<uint32_t>::create(QOS_CONFIG, 2, "quality of service, needed for: MQTTSource")),
-      cleanSession(
-          ConfigOption<bool>::create(CLEAN_SESSION_CONFIG,
+      topic(
+          ConfigurationOption<std::string>::create(TOPIC_CONFIG, "", "topic to listen to, needed for: MQTTSource, KafkaSource")),
+      qos(ConfigurationOption<uint32_t>::create(QOS_CONFIG, 2, "quality of service, needed for: MQTTSource")),
+      cleanSession(ConfigurationOption<bool>::create(CLEAN_SESSION_CONFIG,
                                      true,
                                      "cleanSession true = clean up session after client loses connection, false = keep data for "
                                      "client after connection loss (persistent session), needed for: MQTTSource")),
-      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
-      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
+      flushIntervalMS(ConfigurationOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
+      inputFormat(ConfigurationOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
     NES_INFO("NesSourceConfig: Init source config object with new values.");
 
     if (sourcTypeConfig.find_child(ryml::to_csubstr (URL_CONFIG)).has_val()) {
@@ -146,27 +147,26 @@ MQTTSourceTypeConfig::MQTTSourceTypeConfig(ryml::NodeRef sourcTypeConfig)
 
 MQTTSourceTypeConfig::MQTTSourceTypeConfig()
     : SourceTypeConfig(MQTT_SOURCE_CONFIG),
-      url(ConfigOption<std::string>::create(URL_CONFIG,
+      url(ConfigurationOption<std::string>::create(URL_CONFIG,
                                             "ws://127.0.0.1:9001",
                                             "url to connect to needed for: MQTTSource, ZMQSource, OPCSource, KafkaSource")),
-      clientId(ConfigOption<std::string>::create(CLIENT_ID_CONFIG,
+      clientId(ConfigurationOption<std::string>::create(CLIENT_ID_CONFIG,
                                                  "testClient",
                                                  "clientId, needed for: MQTTSource (needs to be unique for each connected "
                                                  "MQTTSource), KafkaSource (use this for groupId)")),
-      userName(ConfigOption<std::string>::create(USER_NAME_CONFIG,
+      userName(ConfigurationOption<std::string>::create(USER_NAME_CONFIG,
                                                  "testUser",
                                                  "userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource")),
-      topic(ConfigOption<std::string>::create(TOPIC_CONFIG,
+      topic(ConfigurationOption<std::string>::create(TOPIC_CONFIG,
                                               "demoTownSensorData",
                                               "topic to listen to, needed for: MQTTSource, KafkaSource")),
-      qos(ConfigOption<uint32_t>::create(QOS_CONFIG, 2, "quality of service, needed for: MQTTSource")),
-      cleanSession(
-          ConfigOption<bool>::create(CLEAN_SESSION_CONFIG,
+      qos(ConfigurationOption<uint32_t>::create(QOS_CONFIG, 2, "quality of service, needed for: MQTTSource")),
+      cleanSession(ConfigurationOption<bool>::create(CLEAN_SESSION_CONFIG,
                                      true,
                                      "cleanSession true = clean up session after client loses connection, false = keep data for "
                                      "client after connection loss (persistent session), needed for: MQTTSource")),
-      flushIntervalMS(ConfigOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
-      inputFormat(ConfigOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
+      flushIntervalMS(ConfigurationOption<float>::create("flushIntervalMS", -1, "tupleBuffer flush interval in milliseconds")),
+      inputFormat(ConfigurationOption<std::string>::create(INPUT_FORMAT_CONFIG, "JSON", "input data format")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 

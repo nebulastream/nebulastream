@@ -68,11 +68,11 @@ class SourceTypeConfig;
 using SourceTypeConfigPtr = std::shared_ptr<SourceTypeConfig>;
 
 template<class T>
-class ConfigOption;
-using FloatConfigOption = std::shared_ptr<ConfigOption<float>>;
-using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
-using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
-using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
+class ConfigurationOption;
+using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
+using IntConfigOption = std::shared_ptr<ConfigurationOption<uint32_t>>;
+using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
+using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
 
 /**
  * @brief Configuration object for source config
@@ -113,9 +113,9 @@ class SourceTypeConfig : public std::enable_shared_from_this<SourceTypeConfig> {
     virtual bool equal(SourceTypeConfigPtr const& other);
 
     /**
-     * @brief gets a ConfigOption object with sourceType
+     * @brief gets a ConfigurationOption object with sourceType
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::string>> getSourceType() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getSourceType() const;
 
     /**
      * @brief set the value for sourceType with the appropriate data format
