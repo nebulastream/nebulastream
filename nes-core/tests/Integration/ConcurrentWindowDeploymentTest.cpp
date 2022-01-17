@@ -66,7 +66,7 @@ class ConcurrentWindowDeploymentTest : public testing::Test {
  * @brief test central tumbling window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -150,7 +150,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
  * @brief test central tumbling window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -296,7 +296,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
 
 //TODO test needs to be fixed, since it fails randomly. Covered in issue #2258
 TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -387,7 +387,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
 
 //TODO test needs to be fixed, since it fails randomly. Covered in issue #2234
 TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTimeUnit) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -480,7 +480,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
  * @brief test central sliding window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -583,7 +583,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
  * @brief test distributed tumbling window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -686,7 +686,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
  * @brief test distributed tumbling window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -789,7 +789,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
  * @brief test distributed sliding window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -905,7 +905,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
  * @brief test central tumbling window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -997,7 +997,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime)
  * @brief test central sliding window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -1095,7 +1095,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
  * @brief test central tumbling window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -1202,7 +1202,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventT
  * @brief test central sliding window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -1305,7 +1305,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
 }
 
 TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -1385,7 +1385,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
 }
 
 TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -1476,7 +1476,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
  * @brief test central tumbling window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -1558,7 +1558,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
  * @brief test central tumbling window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -1655,7 +1655,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
  */
 TEST_F(ConcurrentWindowDeploymentTest,
        testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -1803,7 +1803,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
  */
 TEST_F(ConcurrentWindowDeploymentTest,
        testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -2298,7 +2298,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithCountAggregatio
  * @brief test central tumbling window and event time
  */
 TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 

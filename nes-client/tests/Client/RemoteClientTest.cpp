@@ -53,7 +53,7 @@ class RemoteClientTest : public testing::Test {
  * @result deployed query ID is valid
  */
 TEST_F(RemoteClientTest, DeployQueryTest) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfig::create();
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
 

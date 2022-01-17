@@ -51,7 +51,7 @@ class MultiWorkerTest : public testing::Test {
 };
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -84,7 +84,7 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
 }
 
 TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -130,7 +130,7 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
 }
 
 TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -176,7 +176,7 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
 }
 
 TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -227,7 +227,7 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
 }
 
 TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -270,7 +270,7 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
 }
 
 TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -321,7 +321,7 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
 }
 
 TEST_F(MultiWorkerTest, testMultipleWorker) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 

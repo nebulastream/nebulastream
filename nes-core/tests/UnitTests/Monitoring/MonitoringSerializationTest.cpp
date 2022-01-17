@@ -52,7 +52,7 @@ class MonitoringSerializationTest : public testing::Test {
     Runtime::BufferManagerPtr bufferManager;
     std::string ipAddress = "127.0.0.1";
     uint64_t restPort = 8081;
-    CoordinatorConfigPtr crdConf;
+    CoordinatorConfigurationPtr crdConf;
     WorkerConfigurationPtr wrkConf;
     uint64_t bufferSize = 0;
 

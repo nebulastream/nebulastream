@@ -28,7 +28,7 @@ namespace NES {
 
 namespace Configurations {
 
-CoordinatorConfigPtr CoordinatorConfiguration::create() { return std::make_shared<CoordinatorConfiguration>(CoordinatorConfiguration()); }
+CoordinatorConfigurationPtr CoordinatorConfiguration::create() { return std::make_shared<CoordinatorConfiguration>(CoordinatorConfiguration()); }
 
 CoordinatorConfiguration::CoordinatorConfiguration() {
     NES_INFO("Generated new Coordinator Config object. Configurations initialized with default values.");

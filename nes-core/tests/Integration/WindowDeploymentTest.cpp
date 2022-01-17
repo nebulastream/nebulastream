@@ -67,7 +67,7 @@ class WindowDeploymentTest : public testing::Test {
  * @brief test central tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -150,7 +150,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
  * @brief test central tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testYSBWindow) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
 
@@ -463,7 +463,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
  * @brief test distributed tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -873,7 +873,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
 }
 
 TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -951,7 +951,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
 }
 
 TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -1040,7 +1040,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
  * @brief test central tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -1120,7 +1120,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
  * @brief test central tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -1270,7 +1270,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
  * @brief test distributed tumbling window and event time
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 

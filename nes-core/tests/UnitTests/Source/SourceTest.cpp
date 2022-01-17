@@ -1654,7 +1654,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
 }
 
 TEST_F(SourceTest, testIngestionRateFromQuery) {
-    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
 
@@ -1887,7 +1887,7 @@ TEST_F(SourceTest, testMemorySource) {
 }
 
 TEST_F(SourceTest, testTwoLambdaSources) {
-    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
 
@@ -1985,7 +1985,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
 }
 
 TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
-    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfiguration::create();
+    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
     crdConf->setNumWorkerThreads(4);

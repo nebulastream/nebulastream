@@ -18,7 +18,7 @@
 #define NES_INCLUDE_CATALOGS_PHYSICAL_STREAM_CONFIG_HPP_
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <memory>
@@ -37,7 +37,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
     static PhysicalStreamConfigPtr createEmpty();
-    static PhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypeConfigPtr & sourceConfig);
+    static PhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypeConfigurationPtr& sourceConfig);
 
     ~PhysicalStreamConfig() noexcept override = default;
 
@@ -45,16 +45,16 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @brief get sourceConfig
      * @return returns the source configuration
      */
-    [[nodiscard]] Configurations::PhysicalStreamTypeConfigPtr getPhysicalStreamTypeConfig() override;
+    [[nodiscard]] Configurations::PhysicalStreamTypeConfigurationPtr getPhysicalStreamTypeConfig() override;
 
     std::string toString() override;
 
     SourceDescriptorPtr build(SchemaPtr) override;
 
   protected:
-    explicit PhysicalStreamConfig(const Configurations::PhysicalStreamTypeConfigPtr& physicalStreamTypeConfig);
+    explicit PhysicalStreamConfig(const Configurations::PhysicalStreamTypeConfigurationPtr& physicalStreamTypeConfig);
 
-    Configurations::PhysicalStreamTypeConfigPtr physicalStreamTypeConfig;
+    Configurations::PhysicalStreamTypeConfigurationPtr physicalStreamTypeConfig;
 };
 
 }// namespace NES

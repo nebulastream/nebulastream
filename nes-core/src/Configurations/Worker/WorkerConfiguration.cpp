@@ -17,7 +17,7 @@
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
 #include <Util/Logger.hpp>
 #include <Util/yaml/rapidyaml.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -160,7 +160,7 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
             }
             if (root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG)).has_val()){
                 for(ryml::NodeRef const& child : root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG))){
-                    physicalStreamsConfig.push_back(PhysicalStreamTypeConfig::create(child));
+                    physicalStreams.push_back(PhysicalStreamTypeConfiguration::create(child));
                 }
             }
         } catch (std::exception& e) {
@@ -222,7 +222,7 @@ void WorkerConfiguration::overwriteConfigWithCommandLineInput(const std::map<std
             }
         }
         //Despite being a vector, there is only one physical source definition possible using command line params
-        physicalStreamsConfig.push_back(PhysicalStreamTypeConfig::create(inputParams));
+        physicalStreams.push_back(PhysicalStreamTypeConfiguration::create(inputParams));
 
     } catch (std::exception& e) {
         NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from command line. Keeping default "
@@ -251,7 +251,7 @@ void WorkerConfiguration::resetWorkerOptions() {
     setWorkerPinList(workerPinList->getDefaultValue());
     setSourcePinList(sourcePinList->getDefaultValue());
     setEnableMonitoring(enableMonitoring->getDefaultValue());
-    for (PhysicalStreamTypeConfigPtr physicalStreamTypeConfig : physicalStreamsConfig){
+    for (PhysicalStreamTypeConfigurationPtr physicalStreamTypeConfig : physicalStreams){
         physicalStreamTypeConfig->resetPhysicalStreamOptions();
     }
 }
@@ -274,7 +274,7 @@ std::string WorkerConfiguration::toString() {
     ss << workerPinList->toStringNameCurrentValue();
     ss << sourcePinList->toStringNameCurrentValue();
     ss << enableMonitoring->toStringNameCurrentValue();
-    for (PhysicalStreamTypeConfigPtr physicalStreamTypeConfig : physicalStreamsConfig){
+    for (PhysicalStreamTypeConfigurationPtr physicalStreamTypeConfig : physicalStreams){
         ss << physicalStreamTypeConfig->toString();
     }
     return ss.str();
@@ -375,11 +375,11 @@ BoolConfigOption WorkerConfiguration::getEnableMonitoring() { return enableMonit
 
 void WorkerConfiguration::setEnableMonitoring(bool enableMonitoring) {
     WorkerConfiguration::enableMonitoring->setValue(enableMonitoring); }
-void WorkerConfiguration::setPhysicalStreamsConfig(std::vector<PhysicalStreamTypeConfigPtr> physicalStreamsConfigValues) {
-    physicalStreamsConfig = physicalStreamsConfigValues;
+void WorkerConfiguration::setPhysicalStreamsConfig(std::vector<PhysicalStreamTypeConfigurationPtr> physicalStreamsConfigValues) {
+    physicalStreams = physicalStreamsConfigValues;
 }
-std::vector<PhysicalStreamTypeConfigPtr> WorkerConfiguration::getPhysicalStreamsConfig() {
-    return physicalStreamsConfig;
+std::vector<PhysicalStreamTypeConfigurationPtr> WorkerConfiguration::getPhysicalStreams() {
+    return physicalStreams;
 }
 
 }// namespace Configurations

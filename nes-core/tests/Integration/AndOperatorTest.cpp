@@ -43,7 +43,7 @@ uint64_t rpcPort = 4000;
 
 class AndOperatorTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coConf;
+    CoordinatorConfigurationPtr coConf;
     WorkerConfigurationPtr wrkConf;
     CSVSourceConfigPtr srcConf;
     CSVSourceConfigPtr srcConf1;

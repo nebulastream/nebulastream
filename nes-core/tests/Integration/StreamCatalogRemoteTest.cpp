@@ -48,7 +48,7 @@ class StreamCatalogRemoteTest : public testing::Test {
     void TearDown() override { std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl; }
 };
 TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -94,7 +94,7 @@ TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -151,7 +151,7 @@ TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -203,7 +203,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
 
@@ -241,7 +241,7 @@ TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -290,7 +290,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
 
@@ -349,7 +349,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     DefaultSourceConfigPtr sourceConfig = DefaultSourceConfig::create();
 
@@ -389,7 +389,7 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
 }
 
 TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     DefaultSourceConfigPtr sourceConfig = DefaultSourceConfig::create();
 

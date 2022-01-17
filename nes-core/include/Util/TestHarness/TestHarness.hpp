@@ -408,7 +408,7 @@ class TestHarness {
     uint64_t getWorkerId(uint64_t workerIdx) { return testHarnessWorkers.at(workerIdx).wrk->getTopologyNodeId(); }
 
   private:
-    CoordinatorConfigPtr crdConf;
+    CoordinatorConfigurationPtr crdConf;
     WorkerConfigurationPtr wrkConf;
     NesCoordinatorPtr crd;
     uint64_t crdPort;

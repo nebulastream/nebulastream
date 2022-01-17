@@ -17,7 +17,7 @@
 #ifndef NES_SOURCETYPECONFIGFACTORY_HPP
 #define NES_SOURCETYPECONFIGFACTORY_HPP
 
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
 #include <map>
 #include <memory>
 #include <string>

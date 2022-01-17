@@ -76,7 +76,8 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
                             + streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue());
         }
 
-        std::string sourceType = streamConf->getPhysicalStreamTypeConfig()->getSourceTypeConfig()->getSourceType()->getValue();
+        std::string sourceType =
+            streamConf->getPhysicalStreamTypeConfig()->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue();
         if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
             NES_ERROR("TopologyManagerService::registerNode: error source type " << sourceType << " is not supported");
             throw Exception("TopologyManagerService::registerNode: error source type " + sourceType + " is not supported");

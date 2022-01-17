@@ -26,44 +26,6 @@ namespace NES {
 
 namespace Configurations {
 
-/*
- * Constant config strings to read specific values from yaml or command line input
- */
-const std::string SOURCE_TYPE_CONFIG = "sourceType";
-const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
-const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
-const std::string SOURCE_FREQUENCY_CONFIG = "sourceFrequency";
-const std::string INPUT_FORMAT_CONFIG = "inputFormat";
-const std::string UDFS_CONFIG = "udfs";
-const std::string SENSE_SOURCE_CONFIG = "SenseSource";
-const std::string CSV_SOURCE_CONFIG = "CSVSource";
-const std::string FILE_PATH_CONFIG = "filePath";
-const std::string SKIP_HEADER_CONFIG = "skipHeader";
-const std::string DELIMITER_CONFIG = "delimiter";
-const std::string BINARY_SOURCE_CONFIG = "BinarySource";
-const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
-const std::string URL_CONFIG = "url";
-const std::string CLIENT_ID_CONFIG = "clientId";
-const std::string USER_NAME_CONFIG = "userName";
-const std::string TOPIC_CONFIG = "topic";
-const std::string QOS_CONFIG = "qos";
-const std::string CLEAN_SESSION_CONFIG = "cleanSession";
-const std::string FLUSH_INTERVAL_MS_CONFIG = "flushIntervalMS";
-const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
-const std::string BROKERS_CONFIG = "brokers";
-const std::string AUTO_COMMIT_CONFIG = "autoCommit";
-const std::string GROUP_ID_CONFIG = "groupId";
-const std::string CONNECTION_TIMEOUT_CONFIG = "connectionTimeout";
-const std::string NAME_SPACE_INDEX_CONFIG = "namespaceIndex";
-const std::string OPC_SOURCE_CONFIG = "OPCSource";
-const std::string NODE_IDENTIFIER_CONFIG = "nodeIdentifier";
-const std::string PASSWORD_CONFIG = "password";
-const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
-const std::string MATERIALIZEDVIEW_SOURCE_CONFIG = "MaterializedViewSource";
-const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
-const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
-const std::string NO_SOURCE_CONFIG = "NoSource";
-
 class SourceTypeConfig;
 using SourceTypeConfigPtr = std::shared_ptr<SourceTypeConfig>;
 

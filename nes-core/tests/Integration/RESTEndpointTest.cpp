@@ -53,7 +53,7 @@ class RESTEndpointTest : public testing::Test {
 
     NesCoordinatorPtr createAndStartCoordinator() const {
         NES_INFO("RESTEndpointTest: Start coordinator");
-        CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig->setRpcPort(coordinatorRpcPort);
         coordinatorConfig->setRestPort(coordinatorRestPort);
         auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);

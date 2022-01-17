@@ -97,7 +97,8 @@ class StreamCatalogEntry {
     std::string toString();
 
   private:
-
+    PhysicalStreamConfigPtr physicalStreamConfig;
+    LogicalStreamPtr
     TopologyNodePtr node;
 };
 

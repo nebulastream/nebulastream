@@ -43,7 +43,8 @@ bool CoordinatorRPCClient::registerPhysicalStream(const AbstractPhysicalStreamCo
 
     RegisterPhysicalStreamRequest request;
     request.set_id(workerId);
-    request.set_sourcetype(conf->getPhysicalStreamTypeConfig()->getSourceTypeConfig()->getSourceType()->getValue());
+    request.set_sourcetype(
+        conf->getPhysicalStreamTypeConfig()->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue());
     request.set_physicalstreamname(conf->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
     request.set_logicalstreamname(conf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue());
     NES_DEBUG("RegisterPhysicalStreamRequest::RegisterLogicalStreamRequest request=" << request.DebugString());

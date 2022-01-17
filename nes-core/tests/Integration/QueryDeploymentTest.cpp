@@ -62,7 +62,7 @@ class QueryDeploymentTest : public testing::Test {
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig();
 
@@ -220,7 +220,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig();
 
@@ -569,7 +569,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenTwoSourcesRunning) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -646,7 +646,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenOneSourceRunning) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -726,7 +726,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenNoSourceRunning) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -841,7 +841,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -897,7 +897,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -1005,7 +1005,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -1189,7 +1189,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
  * ToDo: Should be moved to Unit Test ? Open a grpc folder there?
  */
 TEST_F(QueryDeploymentTest, testGrpcNotifyQueryFailure) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig();
 

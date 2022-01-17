@@ -61,7 +61,7 @@ class AssignWatermarkTest : public testing::Test {
  * @brief test event time watermark for central tumbling window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
@@ -157,7 +157,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
  * @brief test event time watermark for distributed tumbling window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
@@ -275,7 +275,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
  * @brief test event time watermark for central sliding window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 
@@ -374,7 +374,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
  * @brief test event time watermark for distributed sliding window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     CSVSourceConfigPtr srcConf = CSVSourceConfig::create();
 

@@ -14,5 +14,4 @@
 
 add_subdirectory(Coordinator)
 add_subdirectory(Worker)
-add_subdirectory(Worker/PhysicalStreamConfig)
 

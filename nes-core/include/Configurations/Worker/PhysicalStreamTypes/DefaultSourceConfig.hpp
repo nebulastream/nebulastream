@@ -17,7 +17,7 @@
 #ifndef NES_DEFAULTSOURCETYPECONFIG_HPP
 #define NES_DEFAULTSOURCETYPECONFIG_HPP
 
-#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
 #include <map>
 #include <string>
 
@@ -32,7 +32,7 @@ using DefaultSourceTypeConfigPtr = std::shared_ptr<DefaultSourceTypeConfig>;
  * @brief Configuration object for default source config
  * A simple source with default data created inside NES, useful for testing
  */
-class DefaultSourceTypeConfig : public SourceTypeConfig {
+class DefaultSourceTypeConfig : public PhysicalStreamTypeConfiguration {
 
   public:
     /**
@@ -69,7 +69,7 @@ class DefaultSourceTypeConfig : public SourceTypeConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceTypeConfigPtr const& other) override;
+    bool equal(PhysicalStreamTypeConfigurationPtr const& other) override;
 
     /**
      * @brief gets a ConfigurationOption object with numberOfBuffersToProduce

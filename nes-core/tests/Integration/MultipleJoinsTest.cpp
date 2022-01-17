@@ -54,7 +54,7 @@ class MultipleJoinsTest : public testing::Test {
 };
 
 TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -221,7 +221,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDistributed) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -393,7 +393,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinatorSequential) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -580,7 +580,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinatorNested) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -773,7 +773,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
  */
 
 TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -944,7 +944,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDistributed) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -1124,7 +1124,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorSequential) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -1332,7 +1332,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
 }
 
 TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorNested) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 

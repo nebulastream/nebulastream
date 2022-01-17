@@ -50,7 +50,7 @@ class BenchmarkSourceIntegrationTest : public testing::Test {
 
 /// This test checks that a deployed BenchmarkSource can write M records spanning exactly N records
 TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -161,7 +161,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -274,7 +274,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 /// with the invariant that the N+1-th buffer is half full
 
 TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
