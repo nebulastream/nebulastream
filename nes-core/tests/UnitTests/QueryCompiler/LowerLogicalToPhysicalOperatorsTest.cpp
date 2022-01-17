@@ -19,6 +19,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
+#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
@@ -34,6 +35,8 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -52,6 +55,7 @@
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -400,6 +404,56 @@ TEST_F(LowerLogicalToPhysicalOperatorsTest, translateSimpleJoinQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalJoinBuildOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSimpleBatchJoinQuery) {
+    BatchJoinLogicalOperatorNodePtr batchJoinOp1;
+    {
+        auto joinType = Join::LogicalBatchJoinDefinition::JoinType::INNER_JOIN;
+
+        Join::LogicalBatchJoinDefinitionPtr batchJoinDef =
+                Join::LogicalBatchJoinDefinition::create(
+                FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                1,
+                1,
+                joinType);
+
+        batchJoinOp1 = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<BatchJoinLogicalOperatorNode>();
+    }
+
+    auto queryPlan = QueryPlan::create(sourceOp1);
+
+    auto leftSchema = Schema::create()->addField("left$f1", DataTypeFactory::createInt64());
+    auto rightSchema = Schema::create()->addField("right$f2", DataTypeFactory::createInt64());
+    batchJoinOp1->setLeftInputSchema(leftSchema);
+    batchJoinOp1->setRightInputSchema(rightSchema);
+    sourceOp1->setOutputSchema(leftSchema);
+    queryPlan->appendOperatorAsNewRoot(batchJoinOp1);
+
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    batchJoinOp1->addChild(sourceOp2);
+    sourceOp2->setOutputSchema(rightSchema);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalBatchJoinProbeOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalBatchJoinBuildOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }

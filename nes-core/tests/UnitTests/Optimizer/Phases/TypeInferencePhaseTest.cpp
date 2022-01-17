@@ -21,11 +21,14 @@
 #include <NesBaseTest.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -984,6 +987,118 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$cnt"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f1"));
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$f3"));
+}
+
+/**
+ * @brief Inference test for query with manually inserted batch Join.
+ */
+TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    streamCatalog->removeLogicalStream("default_logical");
+
+    SchemaPtr schemaProbeSide = Schema::create()
+            ->addField("id1", BasicType::INT64)
+            ->addField("one", BasicType::INT64)
+            ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
+            ;
+    streamCatalog->addLogicalStream("probe", schemaProbeSide);
+
+
+    SchemaPtr schemaBuildSide = Schema::create()
+            ->addField("id2", BasicType::INT64)
+            ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
+            ;
+    streamCatalog->addLogicalStream("build", schemaBuildSide);
+
+    auto subQuery = Query::from("build");
+
+    auto query = Query::from("probe")
+            .joinWith(subQuery)
+            .where(Attribute("id1")).equalsTo(Attribute("id2"))
+            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+            .sink(FileSinkDescriptor::create(""))
+            ;
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    JoinLogicalOperatorNodePtr joinOp = queryPlan->getOperatorByType<JoinLogicalOperatorNode>()[0];
+    BatchJoinLogicalOperatorNodePtr batchJoinOp;
+    {
+        auto joinType = Join::LogicalBatchJoinDefinition::JoinType::INNER_JOIN;
+
+        Join::LogicalBatchJoinDefinitionPtr batchJoinDef =
+                Join::LogicalBatchJoinDefinition::create(
+                        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id1")->as<FieldAccessExpressionNode>(),
+                        FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "id2")->as<FieldAccessExpressionNode>(),
+                        1,
+                        1,
+                        joinType);
+
+        batchJoinOp = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDef)->as<BatchJoinLogicalOperatorNode>();
+    }
+    joinOp->replace(batchJoinOp);
+    ASSERT_TRUE(batchJoinOp->inferSchema());
+
+    for (auto wmaOp : queryPlan->getOperatorByType<WatermarkAssignerLogicalOperatorNode>()) {
+        ASSERT_TRUE(wmaOp->removeAndJoinParentAndChildren());
+    }
+
+    // after cutting the wmaOps, infer schema of the operator tree again
+    ASSERT_TRUE(queryPlan->getSinkOperators()[0]->inferSchema());
+
+    auto sinkOperator = queryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    NES_DEBUG("inferred output schema = " << sinkOperator[0]->getOutputSchema()->toString());
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 5);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("probe$id1"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("probe$one"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("probe$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("build$id2"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("build$timestamp"));
+}
+
+/**
+ * @brief Inference test for query with batch Join.
+ */
+TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    streamCatalog->removeLogicalStream("default_logical");
+
+    SchemaPtr schemaProbeSide = Schema::create()
+            ->addField("id1", BasicType::INT64)
+            ->addField("one", BasicType::INT64)
+            ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
+            ;
+    streamCatalog->addLogicalStream("probe", schemaProbeSide);
+
+
+    SchemaPtr schemaBuildSide = Schema::create()
+            ->addField("id2", BasicType::INT64)
+            ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
+            ;
+    streamCatalog->addLogicalStream("build", schemaBuildSide);
+
+    auto subQuery = Query::from("build");
+
+    auto query = Query::from("probe")
+            .batchJoinWith(subQuery)
+            .where(Attribute("id1")).equalsTo(Attribute("id2"))
+            .sink(FileSinkDescriptor::create(""))
+            ;
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    auto sinkOperator = queryPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    NES_DEBUG("inferred output schema = " << sinkOperator[0]->getOutputSchema()->toString());
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 5);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("probe$id1"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("probe$one"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("probe$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("build$id2"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("build$timestamp"));
 }
 
 /**

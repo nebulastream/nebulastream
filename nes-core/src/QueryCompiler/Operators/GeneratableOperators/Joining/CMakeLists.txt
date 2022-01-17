@@ -12,6 +12,9 @@
 # limitations under the License.
 
 add_source_files(nes-core
+        GeneratableBatchJoinOperator.cpp
+        GeneratableBatchJoinBuildOperator.cpp
+        GeneratableBatchJoinProbeOperator.cpp
         GeneratableJoinOperator.cpp
         GeneratableJoinBuildOperator.cpp
         GeneratableJoinSinkOperator.cpp

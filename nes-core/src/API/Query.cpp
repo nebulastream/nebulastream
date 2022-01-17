@@ -25,6 +25,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -46,6 +47,8 @@ namespace NES {
 ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem) { return expressionItem.getExpressionNode(); }
 
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
+
+BatchJoinOperatorBuilder::Join Query::batchJoinWith(const Query& subQueryRhs) { return BatchJoinOperatorBuilder::Join(subQueryRhs, *this); }
 
 CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
@@ -84,6 +87,21 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
       onRightKey(onRightKey.getExpressionNode()) {}
 
 }// namespace JoinOperatorBuilder
+
+namespace BatchJoinOperatorBuilder {
+
+JoinWhere Join::where(const ExpressionItem& onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
+
+Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
+
+Query& JoinWhere::equalsTo(const ExpressionItem& onRightKey) const {
+    return originalQuery.batchJoinWith(subQueryRhs, onLeftKey, onRightKey);
+}
+
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey.getExpressionNode()) {}
+
+}// namespace BatchJoinOperatorBuilder
 
 namespace CEPOperatorBuilder {
 
@@ -352,21 +370,80 @@ Query& Query::join(const Query& subQueryRhs,
     return *this;
 }
 
+Query& Query::batchJoin(const Query& subQueryRhs,
+                   ExpressionItem onLeftKey,
+                   ExpressionItem onRightKey,
+                   Join::LogicalBatchJoinDefinition::JoinType joinType) {
+    NES_DEBUG("Query: batchJoinWith the subQuery to current query");
+
+    auto subQuery = const_cast<Query&>(subQueryRhs);
+
+    auto leftKeyExpression = onLeftKey.getExpressionNode();
+    if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + leftKeyExpression->toString());
+        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
+    }
+    auto rightKeyExpression = onRightKey.getExpressionNode();
+    if (!rightKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + rightKeyExpression->toString());
+        NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
+    }
+    auto leftKeyFieldAccess = leftKeyExpression->as<FieldAccessExpressionNode>();
+    auto rightKeyFieldAccess = rightKeyExpression->as<FieldAccessExpressionNode>();
+
+    auto rightQueryPlan = subQuery.getQueryPlan();
+    NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid right query plan");
+    auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
+    auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
+    auto rightJoinType = rootOperatorRhs->getOutputSchema();
+
+    // todo here again we wan't to extend to distributed joins:
+    //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
+    //TODO(Ventura?>Steffen) can we know this at this query submission time?
+    auto joinDefinition = Join::LogicalBatchJoinDefinition::create(leftKeyFieldAccess,
+                                                              rightKeyFieldAccess,
+                                                              1,
+                                                              1,
+                                                              joinType);
+
+    auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
+    queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
+    queryPlan->appendOperatorAsNewRoot(op);
+    //Update the Source names by sorting and then concatenating the source names from the sub query plan
+    std::vector<std::string> sourceNames;
+    sourceNames.emplace_back(rightQueryPlan->getSourceConsumed());
+    sourceNames.emplace_back(queryPlan->getSourceConsumed());
+    std::sort(sourceNames.begin(), sourceNames.end());
+    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
+    queryPlan->setSourceConsumed(updatedSourceName);
+
+    return *this;
+}
+
 Query& Query::joinWith(const Query& subQueryRhs,
                        ExpressionItem onLeftKey,
                        ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr& windowType) {
-    NES_DEBUG("Query: add JoinType to Join Operator");
+    NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
 
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::INNER_JOIN;
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
+}
+
+Query& Query::batchJoinWith(const Query& subQueryRhs,
+                       ExpressionItem onLeftKey,
+                       ExpressionItem onRightKey) {
+    NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
+
+    Join::LogicalBatchJoinDefinition::JoinType joinType = Join::LogicalBatchJoinDefinition::INNER_JOIN;
+    return Query::batchJoin(subQueryRhs, onLeftKey, onRightKey, joinType);
 }
 
 Query& Query::andWith(const Query& subQueryRhs,
                       ExpressionItem onLeftKey,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
-    NES_DEBUG("Query: add JoinType to AND Operator");
+    NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to AND Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }
@@ -375,7 +452,7 @@ Query& Query::seqWith(const Query& subQueryRhs,
                       ExpressionItem onLeftKey,
                       ExpressionItem onRightKey,
                       const Windowing::WindowTypePtr& windowType) {
-    NES_DEBUG("Query: add JoinType to SEQ Operator");
+    NES_DEBUG("Query: add JoinType (CARTESIAN_PRODUCT) to SEQ Operator");
     Join::LogicalJoinDefinition::JoinType joinType = Join::LogicalJoinDefinition::CARTESIAN_PRODUCT;
     return Query::join(subQueryRhs, onLeftKey, onRightKey, windowType, joinType);
 }

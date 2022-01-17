@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
@@ -69,6 +70,12 @@ LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createUnionOperator(Operato
 LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createJoinOperator(const Join::LogicalJoinDefinitionPtr& joinDefinition,
                                                                         OperatorId id) {
     return std::make_shared<JoinLogicalOperatorNode>(joinDefinition, id);
+}
+
+// todo put in experimental namespace
+LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createBatchJoinOperator(const Join::LogicalBatchJoinDefinitionPtr& batchJoinDefinition,
+                                                                        OperatorId id) {
+    return std::make_shared<BatchJoinLogicalOperatorNode>(batchJoinDefinition, id);
 }
 
 BroadcastLogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator(OperatorId id) {

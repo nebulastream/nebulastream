@@ -20,6 +20,7 @@ add_source_files(nes-core
         LogicalOperatorFactory.cpp
         BroadcastLogicalOperatorNode.cpp
         JoinLogicalOperatorNode.cpp
+        BatchJoinLogicalOperatorNode.cpp
         WatermarkAssignerLogicalOperatorNode.cpp
         RenameSourceOperatorNode.cpp
         LogicalBinaryOperatorNode.cpp
