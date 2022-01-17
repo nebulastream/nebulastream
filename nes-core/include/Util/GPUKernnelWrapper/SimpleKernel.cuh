@@ -13,7 +13,7 @@ class SimpleKernelWrapper {
   public:
     SimpleKernelWrapper()= default;;
 
-    void execute(int64_t numberOfTuple, InputRecord* record);
+    void execute(int64_t numberOfTuple, InputRecord* d_record, InputRecord* d_result);
 };
 
 #endif//NES_SIMPLEKERNEL_CUH

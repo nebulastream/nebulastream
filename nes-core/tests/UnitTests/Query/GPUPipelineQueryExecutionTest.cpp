@@ -47,15 +47,17 @@ limitations under the License.
 #include <Runtime/LocalBufferPool.hpp>
 
 #include <Util/GPUKernnelWrapper/SimpleKernel.cuh>
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+
 
 using namespace NES;
 using Runtime::TupleBuffer;
 
 class QueryExecutionTest : public testing::Test {
   public:
-    static void SetUpTestCase() {
-        NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
-    }
+    static void SetUpTestCase() { NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG); }
     /* Will be called before a test is executed. */
     void SetUp() override {
         // create test input buffer
@@ -72,13 +74,10 @@ class QueryExecutionTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
-        ASSERT_TRUE(nodeEngine->stop());
-    }
+    void TearDown() override { ASSERT_TRUE(nodeEngine->stop()); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-    }
+    static void TearDownTestCase() {}
 
     SchemaPtr testSchema;
     SchemaPtr windowSchema;
@@ -106,8 +105,22 @@ class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineSta
                             Runtime::WorkerContext& wc) override {
         auto record = buffer.getBuffer<InputRecord>();
 
+        // allocate GPU memory to work with the record
+        InputRecord* d_record;
+        cudaMalloc(&d_record, buffer.getNumberOfTuples() * sizeof(InputRecord));
+
+        // copy the record to the GPU memory
+        cudaMemcpy(d_record, record, buffer.getNumberOfTuples() * sizeof(InputRecord), cudaMemcpyHostToDevice);
+
+        // allocate GPU memory to store the result
+        InputRecord* d_result;
+        cudaMalloc(&d_result, buffer.getNumberOfTuples() * sizeof(InputRecord));
+
         SimpleKernelWrapper wrapper = SimpleKernelWrapper();
-        wrapper.execute(buffer.getNumberOfTuples(), record);
+        wrapper.execute(buffer.getNumberOfTuples(), d_record, d_result);
+
+        // copy the result back to host record
+        cudaMemcpy(record, d_result, buffer.getNumberOfTuples() * sizeof(InputRecord), cudaMemcpyDeviceToHost);
 
         ctx.emitBuffer(buffer, wc);
         return ExecutionResult::Ok;
