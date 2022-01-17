@@ -54,7 +54,7 @@ class MultiThreadedTest : public testing::Test {
 };
 
 TEST_F(MultiThreadedTest, testFilterQuery) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -139,7 +139,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 }
 
 TEST_F(MultiThreadedTest, testProjectQuery) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -225,7 +225,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
 }
 
 TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -318,7 +318,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
  * This test only test if there is something crash but not the result
  */
 TEST_F(MultiThreadedTest, testMultipleWindows) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -410,7 +410,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 }
 
 TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -502,7 +502,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
  * Test deploying join with different three sources
  */
 TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -610,7 +610,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 }
 
 TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -734,7 +734,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
 }
 
 TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -908,7 +908,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
  * Test deploying join with different three sources
  */
 TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 

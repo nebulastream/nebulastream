@@ -134,6 +134,86 @@ class ConfigurationOption {
     T value;
     T defaultValue;
 };
+
+using IntConfigOption = std::shared_ptr<ConfigurationOption<uint32_t>>;
+using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
+using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
+
+//Coordinator Configuration Names
+const std::string REST_PORT_CONFIG = "restPort";
+const std::string RPC_PORT_CONFIG = "rpcPort"; //used to be coordinator port, renamed to uniform naming
+const std::string DATA_PORT_CONFIG = "dataPort";
+const std::string REST_IP_CONFIG = "restIp";
+const std::string COORDINATOR_IP_CONFIG = "coordinatorIp";
+const std::string NUMBER_OF_SLOTS_CONFIG = "numberOfSlots";
+const std::string LOG_LEVEL_CONFIG = "logLevel";
+const std::string NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG = "numberOfBuffersInGlobalBufferManager";
+const std::string NUMBER_OF_BUFFERS_PER_WORKER_CONFIG = "numberOfBuffersPerWorker";
+const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG = "numberOfBuffersInSourceLocalBufferPool";
+const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
+const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
+const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
+const std::string ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG = "enableSemanticQueryValidation";
+const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
+const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
+const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
+
+
+//Worker Configuration Names
+const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
+const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
+const std::string PARENT_ID_CONFIG = "parentId";
+const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "queryCompilerCompilationStrategy";
+const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "queryCompilerPipeliningStrategy";
+const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "queryCompilerOutputBufferOptimizationLevel";
+const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
+const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
+const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
+const std::string PHYSICAL_STREAMS_CONFIG = "physicalStreams";
+
+//Different Stream Types supported in NES
+const std::string SENSE_SOURCE_CONFIG = "SenseSource";
+const std::string CSV_SOURCE_CONFIG = "CSVSource";
+const std::string FILE_PATH_CONFIG = "filePath";
+const std::string BINARY_SOURCE_CONFIG = "BinarySource";
+const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
+const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
+const std::string OPC_SOURCE_CONFIG = "OPCSource";
+const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
+
+const std::string PHYSICAL_STREAM_NAME_CONFIG = "physicalStreamName";
+const std::string LOGICAL_STREAM_NAME_CONFIG = "logicalStreamName";
+
+//Configuration names for stream types
+const std::string SOURCE_TYPE_CONFIG = "sourceType";
+const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
+const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
+const std::string SOURCE_FREQUENCY_CONFIG = "sourceFrequency";
+const std::string INPUT_FORMAT_CONFIG = "inputFormat";
+const std::string UDFS_CONFIG = "udfs";
+
+const std::string SKIP_HEADER_CONFIG = "skipHeader";
+const std::string DELIMITER_CONFIG = "delimiter";
+
+const std::string URL_CONFIG = "url";
+const std::string CLIENT_ID_CONFIG = "clientId";
+const std::string USER_NAME_CONFIG = "userName";
+const std::string TOPIC_CONFIG = "topic";
+const std::string QOS_CONFIG = "qos";
+const std::string CLEAN_SESSION_CONFIG = "cleanSession";
+const std::string FLUSH_INTERVAL_MS_CONFIG = "flushIntervalMS";
+
+const std::string BROKERS_CONFIG = "brokers";
+const std::string AUTO_COMMIT_CONFIG = "autoCommit";
+const std::string GROUP_ID_CONFIG = "groupId";
+const std::string CONNECTION_TIMEOUT_CONFIG = "connectionTimeout";
+const std::string NAME_SPACE_INDEX_CONFIG = "namespaceIndex";
+
+const std::string NODE_IDENTIFIER_CONFIG = "nodeIdentifier";
+const std::string PASSWORD_CONFIG = "password";
+
+const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
+
 }// namespace Configurations
 }// namespace NES
 

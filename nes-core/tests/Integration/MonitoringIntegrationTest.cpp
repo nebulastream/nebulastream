@@ -71,7 +71,7 @@ class MonitoringIntegrationTest : public testing::Test {
 };
 
 TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -157,7 +157,7 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
 }
 
 TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEnabled) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -246,7 +246,7 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
 
 TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDisabled) {
     // TODO Refactor this once #2239 is solved.
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     bool monitoring = false;
 

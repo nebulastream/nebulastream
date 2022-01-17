@@ -16,3 +16,4 @@ add_source_nes(
         WorkerConfiguration.cpp
 )
 
+add_subdirectory(PhysicalStreamTypeConfiguration)

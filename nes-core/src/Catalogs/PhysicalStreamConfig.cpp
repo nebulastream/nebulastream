@@ -19,7 +19,7 @@
 #include <Configurations/Worker/PhysicalStreamConfig/CSVSourceTypeConfig.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/DefaultSourceTypeConfig.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/MQTTSourceTypeConfig.hpp>
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/SenseSourceTypeConfig.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
 #include <Configurations/Sources/MaterializedViewSourceConfig.hpp>
@@ -36,17 +36,17 @@
 namespace NES {
 
 PhysicalStreamConfigPtr
-PhysicalStreamConfig::create(const Configurations::PhysicalStreamTypeConfigPtr& physicalStreamTypeConfig) {
+PhysicalStreamConfig::create(const Configurations::PhysicalStreamTypeConfigurationPtr& physicalStreamTypeConfig) {
     return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(physicalStreamTypeConfig));
 }
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::createEmpty() {
-    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(Configurations::PhysicalStreamTypeConfig::create()));
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(Configurations::PhysicalStreamTypeConfiguration::create()));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(const Configurations::PhysicalStreamTypeConfigPtr& physicalStreamTypeConfig)
+PhysicalStreamConfig::PhysicalStreamConfig(const Configurations::PhysicalStreamTypeConfigurationPtr& physicalStreamTypeConfig)
     : physicalStreamTypeConfig(physicalStreamTypeConfig) {
-    NES_INFO("PhysicalStreamConfig: Created source with config: " << physicalStreamTypeConfig->getSourceTypeConfig()->toString());
+    NES_INFO("PhysicalStreamConfig: Created source with config: " << physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->toString());
 };
 
 std::string PhysicalStreamConfig::toString() {
@@ -57,31 +57,31 @@ std::string PhysicalStreamConfig::toString() {
 
 SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     // todo add handling for support of multiple physical streams.
-    if (physicalStreamTypeConfig->getSourceTypeConfig()->getSourceType()->getValue() == "DefaultSource") {
+    if (physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue() == "DefaultSource") {
         NES_DEBUG("PhysicalStreamConfig: create default source for one buffer");
         return DefaultSourceDescriptor::create(schema,
                                                physicalStreamTypeConfig->getLogicalStreamName()->getValue(),
-                                               physicalStreamTypeConfig->getSourceTypeConfig()
+            physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()
                                                    ->as<Configurations::DefaultSourceTypeConfig>()
                                                    ->getNumberOfBuffersToProduce()
                                                    ->getValue(),
-                                               std::chrono::milliseconds(physicalStreamTypeConfig->getSourceTypeConfig()
+                                               std::chrono::milliseconds(physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()
                                                                              ->as<Configurations::DefaultSourceTypeConfig>()
                                                                              ->getSourceFrequency()
                                                                              ->getValue())
                                                    .count());
     }
-    if (physicalStreamTypeConfig->getSourceTypeConfig()->getSourceType()->getValue() == "CSVSource") {
-        NES_DEBUG("PhysicalStreamConfig: create CSV source for " << physicalStreamTypeConfig->getSourceTypeConfig()
+    if (physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue() == "CSVSource") {
+        NES_DEBUG("PhysicalStreamConfig: create CSV source for " << physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()
                                                                         ->as<Configurations::CSVSourceTypeConfig>()
                                                                         ->getFilePath()
                                                                         ->getValue()
                                                                  << " buffers");
         return CsvSourceDescriptor::create(
             schema,
-            physicalStreamTypeConfig->getSourceTypeConfig()->as<Configurations::CSVSourceTypeConfig>());
-    } else if (physicalStreamTypeConfig->getSourceTypeConfig()->getSourceType()->getValue() == "SenseSource") {
-        NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs " << physicalStreamTypeConfig->getSourceTypeConfig()
+            physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->as<Configurations::CSVSourceTypeConfig>());
+    } else if (physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue() == "SenseSource") {
+        NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs " << physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()
                                                                                ->as<Configurations::SenseSourceTypeConfig>()
                                                                                ->getUdfs()
                                                                                ->getValue());
@@ -89,15 +89,15 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
             schema,
             physicalStreamTypeConfig->getLogicalStreamName()->getValue(),
             /**udfs*/
-            physicalStreamTypeConfig->getSourceTypeConfig()->as<Configurations::SenseSourceTypeConfig>()->getUdfs()->getValue());
+                                             physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->as<Configurations::SenseSourceTypeConfig>()->getUdfs()->getValue());
 #ifdef ENABLE_MQTT_BUILD
-    } else if (physicalStreamTypeConfig->getSourceTypeConfig()->getSourceType()->getValue() == "MQTTSource") {
+    } else if (physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue() == "MQTTSource") {
         NES_DEBUG("PhysicalStreamConfig: create MQTT source with configurations: "
-                  << physicalStreamTypeConfig->getSourceTypeConfig()->toString());
+                  << physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->toString());
 
         //init inputFormat to default value (JSON). Only flat JSON and CSV format implemented currently
         SourceDescriptor::InputFormat inputFormatEnum = MQTTSourceDescriptor::JSON;
-        if (strcasecmp(physicalStreamTypeConfig->getSourceTypeConfig()
+        if (strcasecmp(physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()
                            ->as<Configurations::MQTTSourceTypeConfig>()
                            ->getInputFormat()
                            ->getValue()
@@ -105,13 +105,19 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
                        "JSON")
             == 0) {
             inputFormatEnum = SourceDescriptor::InputFormat::JSON;
-        } else if (strcasecmp(sourceConfig->getInputFormat()->getValue().c_str(), "CSV") == 0) {
-            inputFormatEnum = SourceDescriptor::InputFormat::CSV;
+        } else if (strcasecmp(physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()
+                                  ->as<Configurations::MQTTSourceTypeConfig>()
+                                  ->getInputFormat()
+                                  ->getValue()
+                                  .c_str(),
+                              "CSV")
+                   == 0) {
+             inputFormatEnum = SourceDescriptor::InputFormat::CSV;
         }
 
         return MQTTSourceDescriptor::create(
             schema,
-            physicalStreamTypeConfig->getSourceTypeConfig()->as<Configurations::MQTTSourceTypeConfig>(),
+            physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->as<Configurations::MQTTSourceTypeConfig>(),
             inputFormatEnum);
 #endif
     } else if (sourceConfig->getSourceType()->getValue() == "MaterializedViewSource") {
@@ -121,13 +127,12 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
                 sourceConfig->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->getId()->getValue());
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type "
-                                + physicalStreamTypeConfig->getSourceTypeConfig()->getSourceType()->getValue()
+                                + physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue()
                                 + " not supported");
         return nullptr;
     }
 }
-
-Configurations::PhysicalStreamTypeConfigPtr PhysicalStreamConfig::getPhysicalStreamTypeConfig() {
+Configurations::PhysicalStreamTypeConfigurationPtr PhysicalStreamConfig::getPhysicalStreamTypeConfig() {
     return physicalStreamTypeConfig;
 }
 

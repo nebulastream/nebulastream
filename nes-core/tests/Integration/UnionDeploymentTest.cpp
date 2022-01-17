@@ -59,7 +59,7 @@ class UnionDeploymentTest : public testing::Test {
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
 
@@ -245,7 +245,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
 
@@ -431,7 +431,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
 
@@ -618,7 +618,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
 
@@ -717,7 +717,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
  *       2 filter operators are already below unionWith operator and need to be pushed down normally towards its respective source.
  */
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -885,7 +885,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
  *       1 filter operator is already below unionWith operator and needs to be pushed down normally towards its own source.
  */
 TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -1022,7 +1022,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
  *       Here the filters don't need to be pushed down over an existing unionWith operator.
  */
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 

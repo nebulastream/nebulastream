@@ -62,7 +62,7 @@ class grpcTests : public testing::Test {
 * Test of Notification from Worker to Coordinator of a failed Query.
 */
 TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig();
 

@@ -55,7 +55,7 @@ class RenameTest : public testing::Test {
 };
 
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -133,7 +133,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
 }
 
 TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -214,7 +214,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
 }
 
 TEST_F(RenameTest, testAttributeRenameAndFilter) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -282,7 +282,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
 }
 
 TEST_F(RenameTest, testCentralWindowEventTime) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 
@@ -374,7 +374,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
  * Test deploying join with different streams
  */
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
 

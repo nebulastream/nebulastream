@@ -17,7 +17,8 @@
 #ifndef NES_MQTTSOURCETYPECONFIG_HPP
 #define NES_MQTTSOURCETYPECONFIG_HPP
 
-#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
 #include <map>
 #include <string>
 
@@ -32,7 +33,7 @@ using MQTTSourceTypeConfigPtr = std::shared_ptr<MQTTSourceTypeConfig>;
  * @brief Configuration object for MQTT source config
  * Connect to an MQTT broker and read data from there
  */
-class MQTTSourceTypeConfig : public SourceTypeConfig {
+class MQTTSourceTypeConfig : public PhysicalStreamTypeConfiguration {
 
   public:
     /**
@@ -176,7 +177,6 @@ class MQTTSourceTypeConfig : public SourceTypeConfig {
     BoolConfigOption cleanSession;
     FloatConfigOption flushIntervalMS;
     StringConfigOption inputFormat;
-
 };
 }// namespace Configurations
 }// namespace NES

@@ -81,7 +81,7 @@ struct __attribute__((packed)) ysbRecord {
  */
 class MillisecondIntervalTest : public testing::Test {
   public:
-    CoordinatorConfigPtr crdConf;
+    CoordinatorConfigurationPtr crdConf;
     WorkerConfigurationPtr wrkConf;
     CSVSourceConfigPtr srcConf;
 

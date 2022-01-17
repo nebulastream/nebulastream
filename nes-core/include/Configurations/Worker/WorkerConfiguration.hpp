@@ -19,22 +19,10 @@
 
 #include <map>
 #include <string>
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfig.hpp>
 
 namespace NES {
 
 namespace Configurations {
-
-const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort"; //needs to be same as RPC Port of Coordinator
-const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
-const std::string PARENT_ID_CONFIG = "parentId";
-const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "queryCompilerCompilationStrategy";
-const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "queryCompilerPipeliningStrategy";
-const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "queryCompilerOutputBufferOptimizationLevel";
-const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
-const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
-const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
-const std::string PHYSICAL_STREAMS_CONFIG = "physicalStreamsConfig";
 
 class WorkerConfiguration;
 using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
@@ -44,6 +32,10 @@ class ConfigurationOption;
 using IntConfigOption = std::shared_ptr<ConfigurationOption<uint32_t>>;
 using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
+
+class PhysicalStream;
+using PhysicalStreamPtr = std::shared_ptr<PhysicalStream>;
+
 /**
  * @brief object for storing worker configuration
  */
@@ -271,11 +263,22 @@ class WorkerConfiguration {
     void setEnableMonitoring(bool enableMonitoring);
 
     /**
-    * @brief getter/setter to obtain physicalStreamsConfig
+    * @brief getter/setter to obtain physicalStreams
     * @return
     */
-    std::vector<PhysicalStreamTypeConfigPtr> getPhysicalStreamsConfig();
-    void setPhysicalStreamsConfig(std::vector<PhysicalStreamTypeConfigPtr> physicalStreamsConfig);
+    std::vector<PhysicalStreamPtr> getPhysicalStreams();
+
+    /**
+     * @brief Set physical stream configurations
+     * @param physicalStreams: vector of physical stream configurations
+     */
+    void setPhysicalStreams(std::vector<PhysicalStreamPtr> physicalStreams);
+
+    /**
+     * @brief add a physical stream configuration to the worker configuration
+     * @param physicalStream: physical stream configuration to add
+     */
+    void addPhysicalStream(PhysicalStreamPtr physicalStream);
 
   private:
     StringConfigOption localWorkerIp;
@@ -303,7 +306,7 @@ class WorkerConfiguration {
     BoolConfigOption enableMonitoring;
     StringConfigOption sourcePinList;
     StringConfigOption workerPinList;
-    std::vector<PhysicalStreamTypeConfigPtr> physicalStreamsConfig;
+    std::vector<PhysicalStreamPtr> physicalStreams;
 };
 }// namespace Configurations
 }// namespace NES

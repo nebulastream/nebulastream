@@ -29,7 +29,7 @@ StreamCatalogEntry::StreamCatalogEntry(std::string sourceType,
       logicalStreamName(std::move(logicalStreamName)), node(std::move(node)) {}
 
 StreamCatalogEntry::StreamCatalogEntry(const AbstractPhysicalStreamConfigPtr& config, TopologyNodePtr node)
-    : sourceType(config->getPhysicalStreamTypeConfig()->getSourceTypeConfig()->getSourceType()->getValue()),
+    : sourceType(config->getPhysicalStreamTypeConfig()->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue()),
       physicalStreamName(config->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue()),
       logicalStreamName(config->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue()), node(std::move(node)) {
     // nop

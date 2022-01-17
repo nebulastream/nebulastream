@@ -46,7 +46,7 @@ class ConfigTest : public testing::Test {
  */
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
-    CoordinatorConfigPtr coordinatorConfigPtr = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfigPtr = CoordinatorConfiguration::create();
     coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyCoordinator.yaml");
 
     EXPECT_EQ(coordinatorConfigPtr->getRestPort()->getValue(), coordinatorConfigPtr->getRestPort()->getDefaultValue());
@@ -76,7 +76,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
 TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 
-    CoordinatorConfigPtr coordinatorConfigPtr = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfigPtr = CoordinatorConfiguration::create();
     std::string argv[] = {"--restIp=localhost",
                           "--coordinatorIp=",
                           "--dataPort=",

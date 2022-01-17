@@ -17,7 +17,7 @@
 #ifndef NES_KAFKASOURCETYPECONFIG_HPP
 #define NES_KAFKASOURCETYPECONFIG_HPP
 
-#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
+#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
 #include <map>
 #include <string>
 
@@ -32,7 +32,7 @@ using KafkaSourceTypeConfigPtr = std::shared_ptr<KafkaSourceTypeConfig>;
  * @brief Configuration object for Kafka source config
  * Connect to a kafka broker and read data form there
  */
-class KafkaSourceTypeConfig : public SourceTypeConfig {
+class KafkaSourceTypeConfig : public PhysicalStreamTypeConfiguration {
 
   public:
     /**
@@ -70,7 +70,7 @@ class KafkaSourceTypeConfig : public SourceTypeConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceTypeConfigPtr const& other) override;
+    bool equal(PhysicalStreamTypeConfigurationPtr const& other) override;
 
     /**
      * @brief Get broker string
