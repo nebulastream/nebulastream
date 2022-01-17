@@ -36,7 +36,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
      */
-    explicit MemorySourceStreamConfig(const Configurations::PhysicalStreamTypeConfigurationPtr& physicalStreamTypeConfig,
+    explicit MemorySourceStreamConfig(const Configurations::PhysicalStreamTypePtr& physicalStreamTypeConfig,
                                       uint8_t* memoryArea,
                                       size_t memoryAreaSize,
                                       uint64_t numBuffersToProcess,
@@ -67,7 +67,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      * @return a constructed MemorySourceStreamConfig
      */
-    static AbstractPhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypeConfigurationPtr& physicalStreamTypeConfig,
+    static AbstractPhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypePtr& physicalStreamTypeConfig,
                                                   uint8_t* memoryArea,
                                                   size_t memoryAreaSize,
                                                   uint64_t numBuffersToProcess,
@@ -75,7 +75,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
                                                   const std::string& gatheringMode);
 
   private:
-    Configurations::PhysicalStreamTypeConfigurationPtr physicalStreamTypeConfig;
+    Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t gatheringValue;

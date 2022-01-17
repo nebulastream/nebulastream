@@ -36,7 +36,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
     static PhysicalStreamConfigPtr createEmpty();
-    static PhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypeConfigurationPtr& sourceConfig);
+    static PhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypePtr& sourceConfig);
 
     ~PhysicalStreamConfig() noexcept override = default;
 
@@ -44,16 +44,16 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @brief get sourceConfig
      * @return returns the source configuration
      */
-    [[nodiscard]] Configurations::PhysicalStreamTypeConfigurationPtr getPhysicalStreamTypeConfig() override;
+    [[nodiscard]] Configurations::PhysicalStreamTypePtr getPhysicalStreamTypeConfig() override;
 
     std::string toString() override;
 
     SourceDescriptorPtr build(SchemaPtr) override;
 
   protected:
-    explicit PhysicalStreamConfig(const Configurations::PhysicalStreamTypeConfigurationPtr& physicalStreamTypeConfig);
+    explicit PhysicalStreamConfig(const Configurations::PhysicalStreamTypePtr& physicalStreamTypeConfig);
 
-    Configurations::PhysicalStreamTypeConfigurationPtr physicalStreamTypeConfig;
+    Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig;
 };
 
 }// namespace NES

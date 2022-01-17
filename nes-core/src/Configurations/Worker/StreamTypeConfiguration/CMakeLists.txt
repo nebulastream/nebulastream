@@ -22,7 +22,8 @@ add_source_nes(
         KafkaSourceConfig.cpp
         OPCSourceConfig.cpp
         DefaultSourceConfig.cpp
-        PhysicalStreamTypeConfig.cpp
+        StreamTypeConfiguration.cpp
+        SourceTypeConfigFactory.cpp
         MaterializedViewSourceConfig.cpp
 )
 

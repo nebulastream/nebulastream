@@ -15,8 +15,7 @@
 */
 
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
-#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfigFactory.hpp>
+#include <Configurations/Worker/PhysicalStreamTypes/StreamTypeConfiguration.hpp>
 #include <Util/Logger.hpp>
 #include <string>
 #include <utility>
@@ -25,11 +24,11 @@ namespace NES {
 
 namespace Configurations {
 
-PhysicalStreamTypeConfigurationPtr PhysicalStreamTypeConfiguration::create(ryml::NodeRef physicalStreamConfigNode) {
-    return std::make_shared<PhysicalStreamTypeConfiguration>(PhysicalStreamTypeConfiguration(physicalStreamConfigNode));
+PhysicalStreamTypePtr StreamTypeConfiguration::create(ryml::NodeRef physicalStreamConfigNode) {
+    return std::make_shared<StreamTypeConfiguration>(StreamTypeConfiguration(physicalStreamConfigNode));
 }
 
-PhysicalStreamTypeConfiguration::PhysicalStreamTypeConfiguration(ryml::NodeRef physicalStreamConfigNode){
+StreamTypeConfiguration::StreamTypeConfiguration(ryml::NodeRef physicalStreamConfigNode){
     NES_INFO("NesSourceConfig: Init physical stream config object with new values.");
 
     std::string sourceType = physicalStreamConfigNode.find_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG)).val().str;
@@ -39,12 +38,11 @@ PhysicalStreamTypeConfiguration::PhysicalStreamTypeConfiguration(ryml::NodeRef p
                                                     sourceType);
 }
 
-PhysicalStreamTypeConfigurationPtr
-PhysicalStreamTypeConfiguration::create(const std::map<std::string, std::string>& inputParams) {
-    return std::make_shared<PhysicalStreamTypeConfiguration>(PhysicalStreamTypeConfiguration(inputParams));
+PhysicalStreamTypePtr StreamTypeConfiguration::create(const std::map<std::string, std::string>& inputParams) {
+    return std::make_shared<StreamTypeConfiguration>(StreamTypeConfiguration(inputParams));
 }
 
-PhysicalStreamTypeConfiguration::PhysicalStreamTypeConfiguration(const std::map<std::string, std::string>& inputParams) {
+StreamTypeConfiguration::StreamTypeConfiguration(const std::map<std::string, std::string>& inputParams) {
     NES_INFO("NesSourceConfig: Init physical stream config object with new values.");
 
     if (inputParams.find("--" + PHYSICAL_STREAM_NAME_CONFIG) != inputParams.end()
@@ -59,11 +57,11 @@ PhysicalStreamTypeConfiguration::PhysicalStreamTypeConfiguration(const std::map<
     sourceTypeConfig = SourceTypeConfigFactory::createSourceConfig(inputParams);
 }
 
-PhysicalStreamTypeConfigurationPtr PhysicalStreamTypeConfiguration::create(std::string sourceType) {
-    return std::make_shared<PhysicalStreamTypeConfiguration>(PhysicalStreamTypeConfiguration(sourceType));
+PhysicalStreamTypePtr StreamTypeConfiguration::create(std::string sourceType) {
+    return std::make_shared<StreamTypeConfiguration>(StreamTypeConfiguration(sourceType));
 }
 
-PhysicalStreamTypeConfiguration::PhysicalStreamTypeConfiguration(std::string sourceType) {
+StreamTypeConfiguration::StreamTypeConfiguration(std::string sourceType) {
     NES_INFO("NesSourceConfig: Init physical stream config object with new values.");
 
     sourceTypeConfig = SourceTypeConfigFactory::createSourceConfig(sourceType);

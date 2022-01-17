@@ -15,3 +15,13 @@
 */
 
 #include <Configurations/Worker/PhysicalStream.hpp>
+#include <Configurations/Worker/PhysicalStreamTypes/StreamTypeConfiguration.hpp>
+#include <sstream>
+
+std::string NES::Configuration::PhysicalStream::toString() {
+
+    std::stringstream ss;
+    ss<<"PhysicalStream Name: "<<physicalStreamName;
+    ss<<"LogicalSteam Name" <<logicalStreamName;
+    ss<<"Stream Type" <<physicalStreamTypeConfiguration->;
+    return ss.str(); }

@@ -36,15 +36,15 @@
 namespace NES {
 
 PhysicalStreamConfigPtr
-PhysicalStreamConfig::create(const Configurations::PhysicalStreamTypeConfigurationPtr& physicalStreamTypeConfig) {
+PhysicalStreamConfig::create(const Configurations::PhysicalStreamTypePtr& physicalStreamTypeConfig) {
     return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(physicalStreamTypeConfig));
 }
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::createEmpty() {
-    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(Configurations::PhysicalStreamTypeConfiguration::create()));
+    return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(Configurations::StreamTypeConfiguration::create()));
 }
 
-PhysicalStreamConfig::PhysicalStreamConfig(const Configurations::PhysicalStreamTypeConfigurationPtr& physicalStreamTypeConfig)
+PhysicalStreamConfig::PhysicalStreamConfig(const Configurations::PhysicalStreamTypePtr& physicalStreamTypeConfig)
     : physicalStreamTypeConfig(physicalStreamTypeConfig) {
     NES_INFO("PhysicalStreamConfig: Created source with config: " << physicalStreamTypeConfig->getPhysicalStreamTypeConfiguration()->toString());
 };
@@ -132,7 +132,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         return nullptr;
     }
 }
-Configurations::PhysicalStreamTypeConfigurationPtr PhysicalStreamConfig::getPhysicalStreamTypeConfig() {
+Configurations::PhysicalStreamTypePtr PhysicalStreamConfig::getPhysicalStreamTypeConfig() {
     return physicalStreamTypeConfig;
 }
 

@@ -17,4 +17,4 @@ add_source_nes(
         PhysicalStream.cpp
 )
 
-add_subdirectory(PhysicalStreamTypeConfiguration)
+add_subdirectory(StreamTypeConfiguration)

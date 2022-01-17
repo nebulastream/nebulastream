@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 
     NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
 
     std::map<string, string> commandLineParams;
 
@@ -90,15 +90,10 @@ int main(int argc, char** argv) {
         NES_NOT_IMPLEMENTED();
     }
 
-    //register phy stream if necessary
+    //TODO: change here to support more than 1 physical stream at a worker node
+    //register physical stream
     for (auto physicalStreamConfiguration : workerConfig->getPhysicalStreams()) {
         nesWorker->setWithRegister(physicalStreamConfiguration);
-//        if (physicalStreamConfiguration->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue() != "NoSource") {
-//            NES_INFO("start with dedicated source="
-//                     << physicalStreamConfiguration->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue() << "\n");
-            PhysicalStreamConfigPtr physicalStreamConfig = PhysicalStreamConfig::create(physicalStreamConfiguration);
-//            NES_INFO("NESWORKERSTARTER: Source Config: " << physicalStreamConfiguration->getPhysicalStreamTypeConfiguration()->toString());
-//        }
     }
 
     if (workerConfig->getParentId()->getValue() != "-1") {
