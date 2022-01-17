@@ -13,27 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        UtilityFunctions.cpp
-        SharedLibrary.cpp
-        TimeMeasurement.cpp
-        Logger.cpp
-        StacktraceLoader.cpp
-        ThreadNaming.cpp
-        BufferSequenceNumber.cpp
-        TestUtils.cpp
-        FaultToleranceType.cpp
-        LineageType.cpp
-        PlacementType.cpp
-        GatheringMode.cpp
-        SourceMode.cpp
-        KalmanFilter.cpp
+        SimpleKernel.cu
 )
-if (NES_USE_MQTT)
-    add_source_nes(
-        MQTTClientWrapper.cpp
-    )
-endif ()
-add_subdirectory(Subprocess)
-add_subdirectory(yaml)
-add_subdirectory(GPUKernelWrapper)
+
 
