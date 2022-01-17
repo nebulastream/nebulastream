@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/TableSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
@@ -192,16 +192,16 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
                                   memorySourceDescriptor->getSourceAffinity(),
                                   memorySourceDescriptor->getTaskQueueId(),
                                   successors);
-    } else if (sourceDescriptor->instanceOf<TableSourceDescriptor>()) {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
-        auto tableSourceDescriptor = sourceDescriptor->as<TableSourceDescriptor>();
-        return Experimental::createTableSource(tableSourceDescriptor->getSchema(),
-                                 tableSourceDescriptor->getPathTableFile(),
-                                  bufferManager,
-                                  queryManager,
-                                  operatorId,
-                                  numSourceLocalBuffers,
-                                  successors);
+    } else if (sourceDescriptor->instanceOf<StaticDataSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating static data source");
+        auto staticDataSourceDescriptor = sourceDescriptor->as<StaticDataSourceDescriptor>();
+        return Experimental::createStaticDataSource(staticDataSourceDescriptor->getSchema(),
+                                                    staticDataSourceDescriptor->getPathTableFile(),
+                                                    bufferManager,
+                                                    queryManager,
+                                                    operatorId,
+                                                    numSourceLocalBuffers,
+                                                    successors);
     } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();

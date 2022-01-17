@@ -27,7 +27,7 @@
 #ifdef __x86_64__
 #include <Runtime/internal/rte_memory.h>
 #endif
-#include <Sources/TableSource.hpp>
+#include <Sources/StaticDataSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cmath>
@@ -42,7 +42,7 @@
 
 namespace NES::Experimental {
 
-TableSource::TableSource(SchemaPtr schema,
+StaticDataSource::StaticDataSource(SchemaPtr schema,
                            std::string pathTableFile,
                            ::NES::Runtime::BufferManagerPtr bufferManager,
                            ::NES::Runtime::QueryManagerPtr queryManager,
@@ -60,9 +60,9 @@ TableSource::TableSource(SchemaPtr schema,
                       pathTableFile(pathTableFile),
                       currentPositionInBytes(0) {
 
-    NES_ASSERT(this->schema, "TableSource: Invalid schema passed.");
+    NES_ASSERT(this->schema, "StaticDataSource: Invalid schema passed.");
     tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
-    NES_DEBUG("TableSource: Initialize table with schema: |" + this->schema->toString() + "| size: " + std::to_string(tupleSizeInBytes));
+    NES_DEBUG("StaticDataSource: Initialize table with schema: |" + this->schema->toString() + "| size: " + std::to_string(tupleSizeInBytes));
 
     this->sourceAffinity = sourceAffinity;
     tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
@@ -70,7 +70,7 @@ TableSource::TableSource(SchemaPtr schema,
 
     std::ifstream input;
     input.open(this->pathTableFile);
-    NES_ASSERT(input.is_open(), "TableSource: "
+    NES_ASSERT(input.is_open(), "StaticDataSource: "
                                 "The following path is not a valid table file: " + pathTableFile);
 
     // check how many rows are in file/ table
@@ -105,7 +105,7 @@ TableSource::TableSource(SchemaPtr schema,
     std::string line;
     for (size_t tupleCount = 0; tupleCount < numTuples; tupleCount++) {
         std::getline(input, line);
-        NES_TRACE("TableSource line=" << tupleCount << " val=" << line);
+        NES_TRACE("StaticDataSource line=" << tupleCount << " val=" << line);
         inputParser->writeInputTupleToTupleBuffer(line, tupleCount, dynamicFakeBuffer, this->schema);
     }
 
@@ -127,15 +127,15 @@ TableSource::TableSource(SchemaPtr schema,
     // the last buffer might not be full but every tuple will get emitted.
     this->numBuffersToProcess = (memoryAreaSize + bufferSize - 1) / bufferSize;
 
-    NES_DEBUG("TableSource() memoryAreaSize=" << memoryAreaSize);
+    NES_DEBUG("StaticDataSource() memoryAreaSize=" << memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
-std::optional<::NES::Runtime::TupleBuffer> TableSource::receiveData() {
-    NES_DEBUG("TableSource::receiveData called on " << operatorId);
+std::optional<::NES::Runtime::TupleBuffer> StaticDataSource::receiveData() {
+    NES_DEBUG("StaticDataSource::receiveData called on " << operatorId);
     auto buffer = this->bufferManager->getBufferBlocking();
     fillBuffer(buffer);
-    NES_DEBUG("TableSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+    NES_DEBUG("StaticDataSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
 
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
@@ -143,10 +143,10 @@ std::optional<::NES::Runtime::TupleBuffer> TableSource::receiveData() {
     return buffer;
 }
 
-void TableSource::fillBuffer(::NES::Runtime::TupleBuffer& buffer) {
-    NES_DEBUG("TableSource::fillBuffer: start at pos=" << currentPositionInBytes << " memoryAreaSize=" << memoryAreaSize);
+void StaticDataSource::fillBuffer(::NES::Runtime::TupleBuffer& buffer) {
+    NES_DEBUG("StaticDataSource::fillBuffer: start at pos=" << currentPositionInBytes << " memoryAreaSize=" << memoryAreaSize);
     if (generatedTuples >= numTuples) {
-        NES_WARNING("TableSource::fillBuffer: but file has already ended");
+        NES_WARNING("StaticDataSource::fillBuffer: but file has already ended");
         buffer.setNumberOfTuples(0);
         return;
     }
@@ -164,7 +164,7 @@ void TableSource::fillBuffer(::NES::Runtime::TupleBuffer& buffer) {
     }
     NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSizeInBytes < buffer.getBufferSize(), "Wrong parameters");
 
-    NES_DEBUG("TableSource::fillBuffer: fill buffer with #tuples=" << generatedTuplesThisPass << " of size=" << tupleSizeInBytes);
+    NES_DEBUG("StaticDataSource::fillBuffer: fill buffer with #tuples=" << generatedTuplesThisPass << " of size=" << tupleSizeInBytes);
 
     uint8_t *tmp = memoryArea.get() + currentPositionInBytes;
     memcpy(buffer.getBuffer(), tmp, tupleSizeInBytes * generatedTuplesThisPass);
@@ -174,7 +174,7 @@ void TableSource::fillBuffer(::NES::Runtime::TupleBuffer& buffer) {
     currentPositionInBytes = generatedTuples * tupleSizeInBytes;
     generatedBuffers++;
 //    NES_TRACE("CSVSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << );
-    NES_TRACE("TableSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer, schema));
+    NES_TRACE("StaticDataSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer, schema));
 }
 
 //std::string CSVSource::toString() const {
@@ -185,7 +185,7 @@ void TableSource::fillBuffer(::NES::Runtime::TupleBuffer& buffer) {
 //    return ss.str();
 //}
 
-std::string TableSource::toString() const { return "TableSource"; }
+std::string StaticDataSource::toString() const { return "StaticDataSource"; }
 
-NES::SourceType TableSource::getType() const { return TABLE_SOURCE; }
+NES::SourceType StaticDataSource::getType() const { return STATIC_DATA_SOURCE; }
 }// namespace NES::Experimental

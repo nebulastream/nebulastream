@@ -219,7 +219,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
  * @return
  */
 namespace Experimental {
-    DataSourcePtr createTableSource(const SchemaPtr& schema,
+    DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
                                     const std::string pathTableFile,
                                     const Runtime::BufferManagerPtr& bufferManager,
                                     const Runtime::QueryManagerPtr& queryManager,

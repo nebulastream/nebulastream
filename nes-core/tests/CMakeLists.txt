@@ -640,10 +640,10 @@ add_executable(memory-source-integration-test "Integration/MemorySourceIntegrati
 target_link_libraries(memory-source-integration-test nes ${GTEST_LIBRARIES})
 add_test(NAME memory-source-integration-test COMMAND memory-source-integration-test)
 
-### TableSourceIntegrationTest ###
-add_executable(table-source-integration-test "Integration/TableSourceIntegrationTest.cpp")
-target_link_libraries(table-source-integration-test nes ${GTEST_LIBRARIES})
-add_test(NAME table-source-integration-test COMMAND table-source-integration-test)
+### StaticDataSourceIntegrationTest ###
+add_executable(static-data-source-integration-test "Integration/StaticDataSourceIntegrationTest.cpp")
+target_link_libraries(static-data-source-integration-test nes ${GTEST_LIBRARIES})
+add_test(NAME static-data-source-integration-test COMMAND static-data-source-integration-test)
 
 ### BenchmarkSourceIntegrationTest ###
 add_executable(benchmark-source-integration-test "Integration/BenchmarkSourceIntegrationTest.cpp")

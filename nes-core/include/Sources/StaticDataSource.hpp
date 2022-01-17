@@ -35,14 +35,14 @@ namespace Experimental {
  * @brief Table Source
  * todo Still under development
  */
-class TableSource : public GeneratorSource, public ::NES::Runtime::BufferRecycler {
+class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRecycler {
   public:
     /**
-     * @brief The constructor of a TableSource
+     * @brief The constructor of a StaticDataSource
      * @param // todo
      * @param operatorId the valid id of the source
      */
-    explicit TableSource(SchemaPtr schema,
+    explicit StaticDataSource(SchemaPtr schema,
                           std::string pathTableFile,
                           ::NES::Runtime::BufferManagerPtr bufferManager,
                           ::NES::Runtime::QueryManagerPtr queryManager,
@@ -88,7 +88,7 @@ class TableSource : public GeneratorSource, public ::NES::Runtime::BufferRecycle
     void fillBuffer(::NES::Runtime::TupleBuffer &buffer);
 };
 
-using TableSourcePtr = std::shared_ptr<TableSource>;
+using StaticDataSourcePtr = std::shared_ptr<StaticDataSource>;
 
 }// namespace Experimental
 }// namespace NES
