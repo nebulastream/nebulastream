@@ -29,7 +29,7 @@
 #include <optional>
 #include <thread>
 #ifdef ENABLE_ADAPTIVE_SAMPLING
-#include <Util/KalmanFilter.hpp>
+#include "../Util/KalmanFilter.hpp"
 #endif
 
 namespace NES {
