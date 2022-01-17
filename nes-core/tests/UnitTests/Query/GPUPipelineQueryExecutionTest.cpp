@@ -30,27 +30,21 @@ limitations under the License.
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <utility>
 
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 
 #include <Util/GPUKernnelWrapper/SimpleKernel.cuh>
 
@@ -61,7 +55,6 @@ class QueryExecutionTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
-        //        NES_DEBUG("QueryExecutionTest: Setup QueryCatalogTest test class.");
     }
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -80,13 +73,11 @@ class QueryExecutionTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void TearDown() override {
-        //        NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
         ASSERT_TRUE(nodeEngine->stop());
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        //        NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test class.");
     }
 
     SchemaPtr testSchema;

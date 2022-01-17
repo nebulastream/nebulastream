@@ -31,5 +31,4 @@ void SimpleKernelWrapper::execute(int64_t numberOfTuple, InputRecord* record) {
 
     // copy the result back to host record
     cudaMemcpy(record, d_result, numberOfTuple * sizeof(InputRecord), cudaMemcpyDeviceToHost);
-//    cudaFree(d_record);
 }
