@@ -330,7 +330,7 @@ find_package(ZeroMQ CONFIG REQUIRED)
 if (NOT ${ZeroMQ_FOUND})
     message(FATAL_ERROR "Unable to find libzmq")
 endif ()
-set(LIBRARIES ${LIBRARIES} libzmq libzmq-static)
+set(LIBRARIES ${LIBRARIES} libzmq libzmq)
 
 # CppZMQ
 message(STATUS "cppzmq")
@@ -338,7 +338,7 @@ find_package(cppzmq CONFIG REQUIRED)
 if (NOT ${CPPZMQ_FOUND})
     message(FATAL_ERROR "Unable to find cppzmq")
 endif ()
-set(LIBRARIES ${LIBRARIES} cppzmq cppzmq-static)
+set(LIBRARIES ${LIBRARIES} cppzmq cppzmq)
 
 # Z3 Solver
 message(STATUS "Z3")
@@ -443,7 +443,7 @@ endif (NES_USE_OPC)
 if (NES_USE_MQTT)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
     find_package(PahoMqttCpp CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3-static)
+    set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
 
@@ -465,6 +465,17 @@ if (NES_ENABLES_TESTS)
     endif ()
     set(GTEST_LIBRARIES ${GTEST_LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 endif ()
+
+# Antlr
+message(STATUS  Antlr ${_VCPKG_INSTALLED_DIR} )
+#find_package(antlr4-runtime CONFIG REQUIRED)
+#if (NOT ${ANTLR_FOUND})
+#    message(FATAL_ERROR "Unable to find antlr")
+#endif ()
+include_directories(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/include/antlr4-runtime)
+set(LIBRARIES ${LIBRARIES} ${ANTLR4_INCLUDE_DIR})
+link_libraries(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libantlr4-runtime.a)
+link_libraries(${_VCPKG_INSTALLED_DIR}/x64-linux-nes/lib/libuuid.a)
 
 # PAPI
 if (CMAKE_USE_PAPI_PROFILER)

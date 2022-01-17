@@ -481,6 +481,20 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     return *this;
 }
 
+Query& Query::multipleSink(const SinkDescriptorPtr sinkDescriptor, std::vector<OperatorNodePtr> rootOperators) {
+    NES_DEBUG("Query: add sink operator to query");
+    OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
+
+    for (auto &rootOperator : rootOperators){
+        op->addChild(rootOperator);
+        queryPlan->removeAsRootOperator(rootOperator);
+    }
+    queryPlan->addRootOperator(op);
+
+    //queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
 Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {
     NES_DEBUG("Query: add assignWatermark operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
