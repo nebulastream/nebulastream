@@ -287,6 +287,8 @@ void DataSource::runningRoutineWithIngestionRate() {
         if (nextPeriodStartTime < endPeriod) {
             NES_ERROR("Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
                       << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod);
+            std::cout << "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
+                      << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod << std::endl;
         }
 
         uint64_t sleepCnt = 0;
