@@ -37,10 +37,9 @@ using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 /**
  * @brief one entry in the catalog contains
- *    - the dataSource that can be created there
- *    - the entry in the topology that offer this stream
- *    - the name of the physical stream
- * @caution combination of node and name has to be unique
+ *    - the physical data source that can be consumed
+ *    - The logical source to which the physical source contributes towards
+ *    - the topology that offer this source
  * @Limitations
  *
  */
@@ -49,31 +48,17 @@ class SourceCatalogEntry {
   public:
     /**
      * @brief Create the shared pointer for the stream catalog entry
-     * @param sourceType: the source type
-     * @param physicalSourceName: physical stream name
-     * @param logicalSourceName: the logical stream name
-     * @param node: the topology node
-     * @return shared pointer to stream catalog
+     * @param physicalSource: physical stream name
+     * @param logicalSource: the logical stream name
+     * @param topologyNode: the topology topologyNode
+     * @return shared pointer to Source catalog entry
      */
-    static SourceCatalogEntryPtr create(const std::string& sourceType,
-                                        const std::string& physicalSourceName,
-                                        const std::string& logicalSourceName,
-                                        const TopologyNodePtr& node);
+    static SourceCatalogEntryPtr
+    create(const PhysicalSourcePtr physicalSource, const LogicalSourcePtr logicalSource, const TopologyNodePtr& topologyNode);
 
-    /**
-     * @brief Create the shared pointer for the stream catalog entry
-     * @param config : the physical stream config
-     * @param node : the topology node
-     * @return shared pointer to stream catalog
-     */
-    static SourceCatalogEntryPtr create(const AbstractPhysicalStreamConfigPtr& config, const TopologyNodePtr& node);
-
-    explicit SourceCatalogEntry(std::string sourceType,
-                                std::string physicalStreamName,
-                                std::string logicalStreamName,
-                                TopologyNodePtr node);
-
-    explicit SourceCatalogEntry(const AbstractPhysicalStreamConfigPtr& config, TopologyNodePtr node);
+    explicit SourceCatalogEntry(const PhysicalSourcePtr physicalSource,
+                                const LogicalSourcePtr logicalSource,
+                                const TopologyNodePtr& topologyNode);
 
     /**
      * @brief get source type
@@ -103,7 +88,7 @@ class SourceCatalogEntry {
 
   private:
     PhysicalSourcePtr physicalSource;
-
+    LogicalSourcePtr logicalSource;
     TopologyNodePtr node;
 };
 

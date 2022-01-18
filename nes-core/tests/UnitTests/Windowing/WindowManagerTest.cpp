@@ -224,7 +224,7 @@ createWindowHandler(const Windowing::LogicalWindowDefinitionPtr& windowDefinitio
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, conf);
 
     auto aggregation = Avg(Attribute("id", UINT64));
@@ -315,7 +315,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
@@ -408,7 +408,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31341, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
@@ -491,7 +491,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31338, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));
@@ -571,7 +571,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31339, conf);
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
@@ -656,7 +656,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, conf);
 
     auto aggregation = Sum(Attribute("id", UINT64));
@@ -740,7 +740,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31340, conf);
 
     auto aggregation = Sum(Attribute("id", INT64));

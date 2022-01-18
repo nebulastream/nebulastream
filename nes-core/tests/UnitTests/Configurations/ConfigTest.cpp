@@ -249,8 +249,8 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
     std::string argv[] = {"--sourceType=NoSource",
                           "--numberOfBuffersToProduce=5",
                           "--rowLayout=false",
-                          "--physicalStreamName=",
-                          "--logicalStreamName=default"};
+                          "--physicalSourceName=",
+                          "--logicalSourceName=default"};
     int argc = 5;
 
     std::map<string, string> commandLineParams;
@@ -274,8 +274,8 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
     EXPECT_NE(sourceConfigPtr->getLogicalStreamName()->getValue(), sourceConfigPtr->getLogicalStreamName()->getDefaultValue());
 
     std::string argv1[] = {"--sourceType=KafkaSource",
-                           "--physicalStreamName=",
-                           "--logicalStreamName=default",
+                           "--physicalSourceName=",
+                           "--logicalSourceName=default",
                            "--KafkaSourceTopic=newTopic",
                            "--KafkaSourceConnectionTimeout=100",
                            "--KafkaSourceBrokers=testBroker",

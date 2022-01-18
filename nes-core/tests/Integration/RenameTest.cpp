@@ -323,7 +323,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -435,12 +435,12 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
 
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
 
-    PhysicalSourcePtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream2);

@@ -39,7 +39,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSinkTest test class." << std::endl; }
 
     void SetUp() override {
-        PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 12345, conf);
         testPlan = QueryCompilation::PipelineQueryPlan::create(0, 0);
     }
@@ -66,7 +66,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create("127.0.0.1", 2000);
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     DataSinkPtr zmqSink =
@@ -88,7 +88,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);
@@ -103,7 +103,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalS
     Network::NesPartition nesPartition{1, 22, 33, 44};
     SinkDescriptorPtr sinkDescriptor =
         Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 1);
-    PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);

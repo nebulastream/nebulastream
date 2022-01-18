@@ -32,23 +32,6 @@
 
 namespace NES {
 
-enum SourceType {
-    OPC_SOURCE,
-    ZMQ_SOURCE,
-    CSV_SOURCE,
-    KAFKA_SOURCE,
-    TEST_SOURCE,
-    BINARY_SOURCE,
-    SENSE_SOURCE,
-    DEFAULT_SOURCE,
-    NETWORK_SOURCE,
-    MONITORING_SOURCE,
-    MEMORY_SOURCE,
-    MQTT_SOURCE,
-    LAMBDA_SOURCE,
-    MATERIALIZED_VIEW_SOURCE
-};
-
 /**
 * @brief Base class for all data sources in NES
 * we allow only three cases:

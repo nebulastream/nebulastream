@@ -13,17 +13,8 @@
 # limitations under the License.
 
 add_source_nes(
-        SourceConfig.cpp
-        CSVSourceType.cpp
-        SourceConfigFactory.cpp
-        MQTTSourceConfig.cpp
-        BinarySourceConfig.cpp
-        SenseSourceConfig.cpp
-        KafkaSourceConfig.cpp
-        OPCSourceConfig.cpp
-        DefaultSourceConfig.cpp
-        StreamTypeConfiguration.cpp
-        PhysicalSourceFactory.cpp
-        MaterializedViewSourceConfig.cpp
+        PhysicalSourceType.cpp
+        MemorySourceStreamConfig.cpp
+        LambdaSourceStreamConfig.cpp
+        BenchmarkSourceType.cpp
 )
-

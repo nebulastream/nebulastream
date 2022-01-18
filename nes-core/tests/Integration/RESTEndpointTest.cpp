@@ -222,7 +222,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     sourceConfig->setLogicalStreamName("test_stream");
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->addPhysicalStream("default_logical", sce);

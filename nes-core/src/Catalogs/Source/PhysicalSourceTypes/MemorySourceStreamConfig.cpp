@@ -43,8 +43,8 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
     : PhysicalStreamConfig(DefaultSourceConfig::create()), sourceType(std::move(sourceType)),
       memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize) {
     // nop
-    this->physicalStreamName = std::move(physicalStreamName);
-    this->logicalStreamName = std::move(logicalStreamName);
+    this->physicalSourceName = std::move(physicalStreamName);
+    this->logicalSourceName = std::move(logicalStreamName);
     this->numberOfBuffersToProduce = numBuffersToProcess;
     this->gatheringMode = DataSource::getGatheringModeFromString(std::move(gatheringMode));
     this->gatheringValue = gatheringValue;

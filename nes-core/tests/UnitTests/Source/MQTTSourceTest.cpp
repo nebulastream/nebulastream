@@ -71,7 +71,7 @@ class MQTTSourceTest : public testing::Test {
 
         test_schema = Schema::create()->addField("var", UINT32);
 
-        PhysicalSourcePtr conf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, conf);
 
         bufferManager = nodeEngine->getBufferManager();
@@ -228,7 +228,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("stream");
     //register physical stream
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
     wrk1->registerPhysicalStream(streamConf);
 
     std::string outputFilePath = "test.out";

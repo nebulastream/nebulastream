@@ -28,7 +28,7 @@ namespace NES {
 
 namespace Configurations {
 
-enum StreamType { CSV, BINARY, OPC, MQTT, KAFKA, SENSE };
+
 
 class StreamTypeConfiguration;
 using PhysicalStreamTypePtr = std::shared_ptr<StreamTypeConfiguration>;
@@ -76,11 +76,7 @@ class StreamTypeConfiguration : public std::enable_shared_from_this<StreamTypeCo
      */
     virtual bool equal(PhysicalStreamTypePtr const& other) = 0;
 
-    /**
-     * @brief Return stream type
-     * @return enum representing stream type
-     */
-    virtual StreamType getStreamType() = 0;
+
 
   private:
     /**

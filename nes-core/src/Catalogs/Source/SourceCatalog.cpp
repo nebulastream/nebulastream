@@ -192,7 +192,7 @@ bool SourceCatalog::removePhysicalStream(const std::string& logicalStreamName,
         }
     }
     NES_DEBUG("SourceCatalog: physical stream " << physicalStreamName << " does not exist on node with id" << hashId
-                                                << " and with logicalStreamName " << logicalStreamName);
+                                                << " and with logicalSourceName " << logicalStreamName);
 
     NES_DEBUG("SourceCatalog: physical stream " << physicalStreamName << " does not exist on node with id" << hashId);
     return false;

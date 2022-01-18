@@ -72,7 +72,7 @@ class ProjectionTest : public testing::Test {
                            ->addField("test$value", BasicType::INT64)
                            ->addField("test$ts", BasicType::UINT64);
 
-        auto streamConf = PhysicalStreamConfig::createEmpty();
+        auto streamConf = PhysicalSourceType::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                   31337,
                                                                   streamConf,
@@ -261,7 +261,7 @@ void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& me
 }
 
 TEST_F(ProjectionTest, projectionQueryCorrectField) {
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
 
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -330,7 +330,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 }
 
 TEST_F(ProjectionTest, projectionQueryWrongField) {
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
 
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -399,7 +399,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 }
 
 TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
 
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -471,7 +471,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 }
 
 TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
 
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -505,7 +505,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
 }
 
 TEST_F(ProjectionTest, projectNotExistingField) {
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
 
     // creating query plan
     auto query = TestQuery::from(testSchema).project(Attribute("asd")).sink(DummySink::create());
@@ -604,7 +604,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -650,7 +650,7 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
         {// created buffer per source * number of sources
             uint64_t expectedBuf = 20;
 
-            PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+            PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
 
             // auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
             //                                                                 nodeEngine->getQueryManager(), 1, 12);
@@ -684,7 +684,7 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
 // So, merge is a blocking window_scan with two children.
 TEST_F(ProjectionTest, mergeQuery) {
     // created buffer per source * number of sources
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
 
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(

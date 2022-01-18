@@ -65,7 +65,7 @@ class MemoryLayoutSelectionPhaseTest : public testing::Test {
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
 
-        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
     }
 
     /* Will be called before a test is executed. */

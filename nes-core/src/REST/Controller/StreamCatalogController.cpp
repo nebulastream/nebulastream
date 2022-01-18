@@ -51,7 +51,7 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
 
     } else if (path[1] == "allPhysicalStream") {
         //Check if the path contains the query id
-        auto param = parameters.find("logicalStreamName");
+        auto param = parameters.find("logicalSourceName");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
             web::json::value errorResponse{};
@@ -93,11 +93,11 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
         }
     } else if (path[1] == "schema") {
         //Check if the path contains the query id
-        auto param = parameters.find("logicalStreamName");
+        auto param = parameters.find("logicalSourceName");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find logical stream name for the GET schema request");
             web::json::value errorResponse{};
-            errorResponse["detail"] = web::json::value::string("Parameter logicalStreamName must be provided");
+            errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName must be provided");
             badRequestImpl(request, errorResponse);
         }
         try {

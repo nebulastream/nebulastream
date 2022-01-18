@@ -15,10 +15,6 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Query.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
-#include <Catalogs/Query/QueryCatalogEntry.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -27,6 +23,7 @@
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
@@ -36,6 +33,7 @@
 #include <iomanip>
 #include <iostream>
 #include <random>
+#include <unistd.h>
 
 namespace NES {
 

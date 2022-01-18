@@ -36,8 +36,8 @@ LambdaSourceStreamConfig::LambdaSourceStreamConfig(
     : PhysicalStreamConfig(DefaultSourceConfig::create()), sourceType(std::move(sourceType)),
       generationFunction(std::move(generationFunction)) {
     // nop
-    this->physicalStreamName = std::move(physicalStreamName);
-    this->logicalStreamName = std::move(logicalStreamName);
+    this->physicalSourceName = std::move(physicalStreamName);
+    this->logicalSourceName = std::move(logicalStreamName);
     this->numberOfBuffersToProduce = numBuffersToProcess;
     this->gatheringMode = DataSource::getGatheringModeFromString(std::move(gatheringMode));
     this->gatheringValue = gatheringValue;

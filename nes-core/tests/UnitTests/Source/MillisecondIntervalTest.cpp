@@ -97,7 +97,7 @@ class MillisecondIntervalTest : public testing::Test {
         restPort = restPort + 3;
         rpcPort = rpcPort + 40;
 
-        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
         this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
         crdConf = CoordinatorConfiguration::create();
@@ -215,7 +215,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
 }
 
 TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSecond) {
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     double frequency = 550;
@@ -292,7 +292,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     out.close();
     wrk1->registerLogicalStream("testStream", testSchemaFileName);
 
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
     //register physical stream
     wrk1->registerPhysicalStream(conf);

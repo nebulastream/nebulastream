@@ -37,7 +37,7 @@ class CSVSource : public DataSource {
    * @param schema of the source
    * @param bufferManager the buffer manager
    * @param queryManager the query manager
-   * @param sourceConfigPtr points to the current source configuration object, look at sourceConfig and CSVSourceConfig for info
+   * @param sourceConfigPtr points to the current source configuration object, look at sourceConfig and CSVSourceType for info
    * @param delimiter inside the file, default ","
    * @param operatorId current operator id
    * @param numSourceLocalBuffers
