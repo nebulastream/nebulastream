@@ -138,10 +138,11 @@ class ConfigurationOption {
 using IntConfigOption = std::shared_ptr<ConfigurationOption<uint32_t>>;
 using StringConfigOption = std::shared_ptr<ConfigurationOption<std::string>>;
 using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
+using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
 
 //Coordinator Configuration Names
 const std::string REST_PORT_CONFIG = "restPort";
-const std::string RPC_PORT_CONFIG = "rpcPort"; //used to be coordinator port, renamed to uniform naming
+const std::string RPC_PORT_CONFIG = "rpcPort";//used to be coordinator port, renamed to uniform naming
 const std::string DATA_PORT_CONFIG = "dataPort";
 const std::string REST_IP_CONFIG = "restIp";
 const std::string COORDINATOR_IP_CONFIG = "coordinatorIp";
@@ -157,7 +158,6 @@ const std::string ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG = "enableSemanticQuery
 const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
-
 
 //Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
