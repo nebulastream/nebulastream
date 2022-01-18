@@ -662,6 +662,98 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
  * WindowSource -> windowOperator -> windowScan -> TestSink
  * The source generates 2. buffers.
  */
+TEST_F(QueryExecutionTest, tumblingWindowQueryMultiKeysTest) {
+    // Create Operator Tree
+    // 1. add window source and create two buffers each second one.
+    auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        windowSchema,
+        [&](OperatorId,
+            const SourceDescriptorPtr&,
+            const Runtime::NodeEnginePtr&,
+            size_t,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return WindowSource::create(windowSchema,
+                                        nodeEngine->getBufferManager(),
+                                        nodeEngine->getQueryManager(),
+                                        /*bufferCnt*/ 2,
+                                        /*frequency*/ 0,
+                                        std::move(successors));
+        });
+    auto query = TestQuery::from(windowSourceDescriptor);
+
+    // 2. dd window operator:
+    // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
+    auto windowType = TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(10));
+
+    query = query.window(windowType).byKey({Attribute("key"), Attribute("ts")}).apply(Sum(Attribute("value", INT64)));
+
+    // 3. add sink. We expect that this sink will receive one buffer
+    //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
+    auto windowResultSchema = Schema::create()
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField(createField("test$key", INT64))
+                                  ->addField("test$value", INT64);
+
+    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+    query.sink(testSinkDescriptor);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    queryPlan = distributeWindowRule->apply(queryPlan);
+    queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    request->enableDump();
+    request->enableDebugging();
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+
+    ASSERT_TRUE(nodeEngine->registerQueryInNodeEngine(plan));
+    ASSERT_TRUE(nodeEngine->startQuery(0));
+
+    // wait till all buffers have been produced
+    ASSERT_EQ(testSink->completed.get_future().get(), 1UL);
+
+    // get result buffer, which should contain two results.
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1UL);
+    if (auto resultBuffer = testSink->get(0); !!resultBuffer) {
+
+        NES_DEBUG("QueryExecutionTest: buffer=" << Util::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+        //TODO 1 Tuple im result buffer in 312 2 results?
+        EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1UL);
+
+        auto resultLayout =
+            Runtime::MemoryLayouts::RowLayout::create(windowResultSchema, nodeEngine->getBufferManager()->getBufferSize());
+        auto startFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(0, resultLayout, resultBuffer);
+        auto endFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(1, resultLayout, resultBuffer);
+        auto keyFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(2, resultLayout, resultBuffer);
+        auto valueFields = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(3, resultLayout, resultBuffer);
+
+        for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
+            // start
+            EXPECT_EQ(startFields[recordIndex], 0UL);
+            // end
+            EXPECT_EQ(endFields[recordIndex], 10UL);
+            // key
+            EXPECT_EQ(keyFields[recordIndex], 1UL);
+            // value
+            EXPECT_EQ(valueFields[recordIndex], 10UL);
+        }
+    }
+    testSink->cleanupBuffers();
+    ASSERT_TRUE(nodeEngine->stopQuery(0));
+    ASSERT_EQ(0U, testSink->getNumberOfResultBuffers());
+}
+
+/**
+ * @brief This tests creates a windowed query.
+ * WindowSource -> windowOperator -> windowScan -> TestSink
+ * The source generates 2. buffers.
+ */
 TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
 
     // Create Operator Tree
@@ -751,7 +843,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     ASSERT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5)  {
+TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
@@ -775,7 +867,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5)  {
     auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(10), Milliseconds(5));
 
     auto aggregation = Sum(Attribute("value"));
-    query = query.window(windowType).byKey(Attribute("key")).apply(aggregation);
+    query = query.window(windowType).byKey({Attribute("key"), Attribute("ts")}).apply(aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);

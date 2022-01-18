@@ -12,13 +12,9 @@ PhysicalKeyedTumblingWindowSink::PhysicalKeyedTumblingWindowSink(
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
       keyedEventTimeWindowHandler(keyedEventTimeWindowHandler) {}
 
-std::string PhysicalKeyedTumblingWindowSink::toString() const {
-    return "PhysicalKeyedTumblingWindowSink";
-}
+std::string PhysicalKeyedTumblingWindowSink::toString() const { return "PhysicalKeyedTumblingWindowSink"; }
 
-OperatorNodePtr PhysicalKeyedTumblingWindowSink::copy() {
-    return create(inputSchema, outputSchema, keyedEventTimeWindowHandler);
-}
+OperatorNodePtr PhysicalKeyedTumblingWindowSink::copy() { return create(inputSchema, outputSchema, keyedEventTimeWindowHandler); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

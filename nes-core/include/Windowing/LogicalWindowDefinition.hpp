@@ -50,7 +50,7 @@ class LogicalWindowDefinition {
      * @param window action
      * @param allowedLateness
      */
-    explicit LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
+    explicit LogicalWindowDefinition(std::vector<FieldAccessExpressionNodePtr> onKey,
                                      WindowAggregationPtr windowAggregation,
                                      WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar,
@@ -94,6 +94,16 @@ class LogicalWindowDefinition {
                                              const WindowTriggerPolicyPtr& triggerPolicy,
                                              const WindowActionDescriptorPtr& triggerAction,
                                              uint64_t allowedLateness);
+
+    static LogicalWindowDefinitionPtr create(const std::vector<FieldAccessExpressionNodePtr>& onKey,
+                                             const WindowAggregationPtr& windowAggregation,
+                                             const WindowTypePtr& windowType,
+                                             const DistributionCharacteristicPtr& distChar,
+                                             uint64_t numberOfInputEdges,
+                                             const WindowTriggerPolicyPtr& triggerPolicy,
+                                             const WindowActionDescriptorPtr& triggerAction,
+                                             uint64_t allowedLateness);
+
 
     /**
     * @brief Create a new window definition for a keyed window
@@ -146,8 +156,8 @@ class LogicalWindowDefinition {
     /**
      * @brief getter/setter for on key
      */
-    FieldAccessExpressionNodePtr getOnKey();
-    void setOnKey(FieldAccessExpressionNodePtr onKey);
+    std::vector<FieldAccessExpressionNodePtr> getOnKey();
+    void setOnKey(std::vector<FieldAccessExpressionNodePtr> onKey);
 
     LogicalWindowDefinitionPtr copy();
 
@@ -178,7 +188,7 @@ class LogicalWindowDefinition {
     WindowTriggerPolicyPtr triggerPolicy;
     WindowActionDescriptorPtr triggerAction;
     WindowTypePtr windowType;
-    FieldAccessExpressionNodePtr onKey;
+    std::vector<FieldAccessExpressionNodePtr> onKey;
     DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges;
     uint64_t originId{};

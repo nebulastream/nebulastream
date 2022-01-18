@@ -422,7 +422,7 @@ message SerializableOperator{
     google.protobuf.Any windowType = 1;
     Aggregation windowAggregation = 2;
     DistributionCharacteristic distrChar = 3;
-    SerializableExpression onKey = 4;
+    repeated SerializableExpression onKey = 4;
     uint64 numberOfInputEdges = 5;
     TriggerPolicy triggerPolicy = 6;
     TriggerAction action = 7;
