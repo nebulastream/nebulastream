@@ -17,4 +17,6 @@ add_source_nes(
         MemorySourceStreamConfig.cpp
         LambdaSourceStreamConfig.cpp
         BenchmarkSourceType.cpp
+        CSVSourceType.cpp
+        BinarySourceType.cpp
 )

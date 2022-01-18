@@ -84,6 +84,10 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
      */
     virtual bool equal(PhysicalSourceTypePtr const& other) = 0;
 
+    /**
+     * @brief creates a string representation of the source
+     * @return
+     */
     virtual std::string toString() = 0;
 
     /**

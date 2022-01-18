@@ -46,7 +46,7 @@ class CSVSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create(ryml::NodeRef sourcTypeConfig);
+    static CSVSourceTypePtr create(ryml::NodeRef yamlConfig);
 
     /**
      * @brief create a default CSVSourceTypePtr object
@@ -148,7 +148,7 @@ class CSVSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceType(ryml::NodeRef sourceTypeConfig);
+    explicit CSVSourceType(ryml::NodeRef yamlConfig);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with default values

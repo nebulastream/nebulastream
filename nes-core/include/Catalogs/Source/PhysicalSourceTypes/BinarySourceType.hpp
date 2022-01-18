@@ -14,70 +14,56 @@
     limitations under the License.
 */
 
-#ifndef NES_BINARYSOURCECONFIG_HPP
-#define NES_BINARYSOURCECONFIG_HPP
+#ifndef NES_BINARYSOURCETYPE_HPP
+#define NES_BINARYSOURCETYPE_HPP
 
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/yaml/rapidyaml.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
-namespace Configurations {
-
-class BinarySourceConfig;
-using BinarySourceConfigPtr = std::shared_ptr<BinarySourceConfig>;
+class BinarySourceType;
+using BinarySourceTypePtr = std::shared_ptr<BinarySourceType>;
 
 /**
  * @brief Configuration object for binary source
  * A binary source reads data from a binary file
  */
-class BinarySourceConfig : public SourceConfig {
+class BinarySourceType : public PhysicalSourceType {
 
   public:
     /**
-     * @brief create a BinarySourceConfigPtr object
+     * @brief create a BinarySourceTypePtr object
      * @param sourceConfigMap inputted config options
-     * @return BinarySourceConfigPtr
+     * @return BinarySourceTypePtr
      */
-    static BinarySourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static BinarySourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief create a BinarySourceConfigPtr object
+     * @brief create a BinarySourceTypePtr object
      * @param sourceConfigMap inputted config options
-     * @return BinarySourceConfigPtr
+     * @return BinarySourceTypePtr
      */
-    static BinarySourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+    static BinarySourceTypePtr create(ryml::NodeRef yamlConfig);
 
     /**
-     * @brief create a BinarySourceConfigPtr object with default values
-     * @return BinarySourceConfigPtr
+     * @brief create a BinarySourceTypePtr object with default values
+     * @return BinarySourceTypePtr
      */
-    static BinarySourceConfigPtr create();
+    static BinarySourceTypePtr create();
 
-    ~BinarySourceConfig() override = default;
+    ~BinarySourceType() = default;
 
-    /**
-     * @brief resets alls Source configuration to default values
-     */
-    void resetSourceOptions() override;
-    /**
-     * @brief creates a string representation of the source
-     * @return
-     */
     std::string toString() override;
 
-    /**
-     * Checks equality
-     * @param other sourceConfig ot check equality for
-     * @return true if equal, false otherwise
-     */
-    bool equal(SourceTypeConfigPtr const& other) override;
+    bool equal(PhysicalSourceTypePtr const& other) override;
 
     /**
      * @brief Get file path
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getFilePath() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getFilePath() const;
 
     /**
      * @brief Set file path
@@ -88,20 +74,19 @@ class BinarySourceConfig : public SourceConfig {
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
-    explicit BinarySourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit BinarySourceType(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
-    explicit BinarySourceTypeConfig(ryml::NodeRef sourcTypeConfig);
+    explicit BinarySourceType(ryml::NodeRef yamlConfig);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with default values as set below
      */
-    BinarySourceConfig();
+    BinarySourceType();
 
-    StringConfigOption filePath;
+    Configurations::StringConfigOption filePath;
 };
-}// namespace Configurations
 }// namespace NES
 #endif

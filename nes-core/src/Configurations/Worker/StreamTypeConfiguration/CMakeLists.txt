@@ -14,10 +14,8 @@
 
 add_source_nes(
         SourceConfig.cpp
-        CSVSourceType.cpp
         SourceConfigFactory.cpp
         MQTTSourceConfig.cpp
-        BinarySourceConfig.cpp
         SenseSourceConfig.cpp
         KafkaSourceConfig.cpp
         OPCSourceConfig.cpp
