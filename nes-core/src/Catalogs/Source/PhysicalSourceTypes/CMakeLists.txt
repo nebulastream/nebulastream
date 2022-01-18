@@ -20,4 +20,5 @@ add_source_nes(
         CSVSourceType.cpp
         BinarySourceType.cpp
         DefaultSourceType.cpp
+        KafkaSourceType.cpp
 )
