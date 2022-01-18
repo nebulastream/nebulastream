@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_UTIL_TEST_UTILS_HPP_
 #define NES_INCLUDE_UTIL_TEST_UTILS_HPP_
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>

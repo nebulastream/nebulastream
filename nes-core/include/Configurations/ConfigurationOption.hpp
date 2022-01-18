@@ -181,8 +181,8 @@ const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
 const std::string OPC_SOURCE_CONFIG = "OPCSource";
 const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
 
-const std::string PHYSICAL_STREAM_NAME_CONFIG = "physicalStreamName";
-const std::string LOGICAL_STREAM_NAME_CONFIG = "logicalStreamName";
+const std::string PHYSICAL_STREAM_NAME_CONFIG = "physicalSourceName";
+const std::string LOGICAL_STREAM_NAME_CONFIG = "logicalSourceName";
 
 //Configuration names for stream types
 const std::string SOURCE_TYPE_CONFIG = "sourceType";

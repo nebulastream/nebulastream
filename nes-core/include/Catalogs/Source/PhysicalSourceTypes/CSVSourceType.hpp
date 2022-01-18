@@ -14,53 +14,48 @@
     limitations under the License.
 */
 
-#ifndef NES_CSVSOURCECONFIG_HPP
-#define NES_CSVSOURCECONFIG_HPP
+#ifndef NES_CSVSOURCETYPE_HPP
+#define NES_CSVSOURCETYPE_HPP
 
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/yaml/rapidyaml.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
-namespace Configurations {
-
-class CSVSourceConfig;
-using CSVSourceConfigPtr = std::shared_ptr<CSVSourceConfig>;
+class CSVSourceType;
+using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
 
 /**
  * @brief Configuration object for csv source config
  * define configurations for a csv source, i.e. this source reads from data from a csv file
  */
-class CSVSourceConfig : public SourceConfig {
+class CSVSourceType : public PhysicalSourceType {
 
   public:
     /**
-     * @brief create a CSVSourceConfigPtr object
+     * @brief create a CSVSourceTypePtr object
      * @param sourceConfigMap inputted config options
-     * @return CSVSourceConfigPtr
+     * @return CSVSourceTypePtr
      */
-    static CSVSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static CSVSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief create a CSVSourceConfigPtr object
+     * @brief create a CSVSourceTypePtr object
      * @param sourceConfigMap inputted config options
-     * @return CSVSourceConfigPtr
+     * @return CSVSourceTypePtr
      */
-    static CSVSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+    static CSVSourceTypePtr create(ryml::NodeRef sourcTypeConfig);
 
     /**
-     * @brief create a CSVSourceConfigPtr object
-     * @return CSVSourceConfigPtr
+     * @brief create a default CSVSourceTypePtr object
+     * @return CSVSourceTypePtr
      */
-    static CSVSourceConfigPtr create();
+    static CSVSourceTypePtr create();
 
-    ~CSVSourceConfig() override = default;
+    ~CSVSourceType() = default;
 
-    /**
-     * @brief resets alls Source configuration to default values
-     */
-    void resetSourceOptions() override;
     /**
      * @brief creates a string representation of the source
      * @return
@@ -72,12 +67,12 @@ class CSVSourceConfig : public SourceConfig {
      * @param other sourceConfig ot check equality for
      * @return true if equal, false otherwise
      */
-    bool equal(SourceTypeConfigPtr const& other) override;
+    bool equal(PhysicalSourceTypePtr const& other) override;
 
     /**
      * @brief Get file path, needed for: CSVSource, BinarySource
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getFilePath() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getFilePath() const;
 
     /**
      * @brief Set file path, needed for: CSVSource, BinarySource
@@ -87,7 +82,7 @@ class CSVSourceConfig : public SourceConfig {
     /**
      * @brief gets a ConfigurationOption object with skipHeader
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<bool>> getSkipHeader() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<bool>> getSkipHeader() const;
 
     /**
      * @brief set the value for skipHeader with the appropriate data format
@@ -97,7 +92,7 @@ class CSVSourceConfig : public SourceConfig {
     /**
      * @brief gets a ConfigurationOption object with skipHeader
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getDelimiter() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getDelimiter() const;
 
     /**
      * @brief set the value for skipHeader with the appropriate data format
@@ -107,7 +102,7 @@ class CSVSourceConfig : public SourceConfig {
     /**
      * @brief gets a ConfigurationOption object with sourceFrequency
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getSourceFrequency() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getSourceFrequency() const;
 
     /**
      * @brief set the value for sourceFrequency with the appropriate data format
@@ -117,7 +112,7 @@ class CSVSourceConfig : public SourceConfig {
     /**
      * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
 
     /**
      * @brief set the value for numberOfBuffersToProduce with the appropriate data format
@@ -127,7 +122,7 @@ class CSVSourceConfig : public SourceConfig {
     /**
      * @brief gets a ConfigurationOption object with numberOfTuplesToProducePerBuffer
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
 
     /**
      * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
@@ -137,7 +132,7 @@ class CSVSourceConfig : public SourceConfig {
     /**
      * @brief Get input data format
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getInputFormat() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getInputFormat() const;
 
     /**
      * @brief Set input data format
@@ -148,26 +143,25 @@ class CSVSourceConfig : public SourceConfig {
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit CSVSourceType(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceTypeConfig(ryml::NodeRef sourcTypeConfig);
+    explicit CSVSourceType(ryml::NodeRef sourceTypeConfig);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with default values
      */
-    CSVSourceConfig();
-    StringConfigOption filePath;
-    BoolConfigOption skipHeader;
-    StringConfigOption delimiter;
-    IntConfigOption numberOfBuffersToProduce;
-    IntConfigOption numberOfTuplesToProducePerBuffer;
-    IntConfigOption sourceFrequency;
-    StringConfigOption inputFormat;
-
+    CSVSourceType();
+    Configurations::StringConfigOption filePath;
+    Configurations::BoolConfigOption skipHeader;
+    Configurations::StringConfigOption delimiter;
+    Configurations::IntConfigOption numberOfBuffersToProduce;
+    Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
+    Configurations::IntConfigOption sourceFrequency;
+    Configurations::StringConfigOption inputFormat;
 };
-}// namespace Configurations
+
 }// namespace NES
 #endif

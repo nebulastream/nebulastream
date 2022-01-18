@@ -90,7 +90,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
                                                                    streamConf,
@@ -128,7 +128,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
                                                                    streamConf,
@@ -169,7 +169,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
                                                                    streamConf,
@@ -212,7 +212,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
                                                                    streamConf,
@@ -256,7 +256,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
                                                                    streamConf,
@@ -298,7 +298,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("leftStream", schema);
     streamCatalog->addLogicalStream("rightStream", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
                                                                    streamConf,
@@ -348,7 +348,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
                                                                    streamConf,

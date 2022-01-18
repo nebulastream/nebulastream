@@ -72,7 +72,7 @@ class QueryExecutionTest : public testing::Test {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
-        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
     }
 
@@ -318,7 +318,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
 }
 
 TEST_F(QueryExecutionTest, projectionQuery) {
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto streamConf = PhysicalSourceType::createEmpty();
 
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(

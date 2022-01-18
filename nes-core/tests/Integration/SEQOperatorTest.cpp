@@ -127,7 +127,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream1");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("Win1");
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
 
@@ -136,7 +136,7 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
     srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
     srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("Win2");
-    PhysicalSourcePtr windowStream2 = PhysicalStreamConfig::create(srcConf1);
+    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf1);
 
     wrk2->registerPhysicalStream(windowStream2);
 
@@ -229,7 +229,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
     srcConf->setPhysicalStreamName("test_stream_QnV1");
     srcConf->setLogicalStreamName("QnV1");
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
 
     srcConf1->setSourceType("CSVSource");
@@ -239,7 +239,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
     srcConf1->setPhysicalStreamName("test_stream_QnV2");
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
-    PhysicalSourcePtr conf73 = PhysicalStreamConfig::create(srcConf1);
+    PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
     wrk2->registerPhysicalStream(conf73);
 
     std::string outputFilePath = "testSeqPatternWithTestStream1.out";
@@ -348,7 +348,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     srcConf->setPhysicalStreamName("test_stream_QnV1");
     srcConf->setLogicalStreamName("QnV1");
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
 
     srcConf1->setSourceType("CSVSource");
@@ -358,7 +358,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     srcConf1->setPhysicalStreamName("test_stream_QnV2");
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
-    PhysicalSourcePtr conf73 = PhysicalStreamConfig::create(srcConf1);
+    PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
     wrk1->registerPhysicalStream(conf73);
 
     std::string outputFilePath = "testPatternSeqSliding.out";
@@ -494,7 +494,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     srcConf->setPhysicalStreamName("test_stream_QnV1");
     srcConf->setLogicalStreamName("QnV1");
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
 
     srcConf1->setSourceType("CSVSource");
@@ -504,7 +504,7 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     srcConf1->setPhysicalStreamName("test_stream_QnV2");
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
-    PhysicalSourcePtr conf73 = PhysicalStreamConfig::create(srcConf1);
+    PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
     wrk2->registerPhysicalStream(conf73);
 
     std::string outputFilePath = "testPatternSeqEarlyTermination.out";
@@ -608,7 +608,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     srcConf->setPhysicalStreamName("test_stream_R2000070");
     srcConf->setLogicalStreamName("QnV");
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
     wrk1->registerPhysicalStream(conf70);
 
     srcConf2->setSourceType("CSVSource");
@@ -618,7 +618,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     srcConf2->setPhysicalStreamName("test_stream_R2000073");
     srcConf2->setLogicalStreamName("QnV1");
     //register physical stream R2000073
-    PhysicalSourcePtr conf73 = PhysicalStreamConfig::create(srcConf2);
+    PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf2);
     wrk1->registerPhysicalStream(conf73);
 
     srcConf1->setSourceType("CSVSource");
@@ -628,7 +628,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     srcConf1->setPhysicalStreamName("test_stream_R20000702");
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R20000702
-    PhysicalSourcePtr conf701 = PhysicalStreamConfig::create(srcConf1);
+    PhysicalSourcePtr conf701 = PhysicalSourceType::create(srcConf1);
     wrk1->registerPhysicalStream(conf701);
 
     QueryServicePtr queryService = crd->getQueryService();

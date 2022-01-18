@@ -77,7 +77,7 @@ class CodeGenerationTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
-        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                   6262,
                                                                   streamConf,

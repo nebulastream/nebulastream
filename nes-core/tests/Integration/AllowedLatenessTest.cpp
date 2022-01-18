@@ -54,7 +54,7 @@ class AllowedLatenessTest : public testing::Test {
         outOfOrderSourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("OutOfOrderStream");
         outOfOrderSourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
 
-        outOfOrderConf = PhysicalStreamConfig::create(outOfOrderSourceConfig);
+        outOfOrderConf = PhysicalSourceType::create(outOfOrderSourceConfig);
 
         SourceConfigPtr inOrderSourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
         // window-out-of-order.csv contains 12 rows
@@ -66,7 +66,7 @@ class AllowedLatenessTest : public testing::Test {
         inOrderSourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("inOrderStream");
         inOrderSourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
 
-        inOrderConf = PhysicalStreamConfig::create(inOrderSourceConfig);
+        inOrderConf = PhysicalSourceType::create(inOrderSourceConfig);
 
         restPort = restPort + 2;
         rpcPort = rpcPort + 30;

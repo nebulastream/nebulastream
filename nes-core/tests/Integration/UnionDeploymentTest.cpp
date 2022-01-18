@@ -107,7 +107,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     sourceConfig->setPhysicalStreamName("physical_car");
     sourceConfig->setLogicalStreamName("car");
     //register physical stream
-    PhysicalSourcePtr confCar = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confCar = PhysicalSourceType::create(sourceConfig);
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
@@ -117,7 +117,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     sourceConfig->setPhysicalStreamName("physical_truck");
     sourceConfig->setLogicalStreamName("truck");
     //register physical stream
-    PhysicalSourcePtr confTruck = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confTruck = PhysicalSourceType::create(sourceConfig);
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -293,7 +293,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     sourceConfig->setPhysicalStreamName("physical_car");
     sourceConfig->setLogicalStreamName("car");
     //register physical stream
-    PhysicalSourcePtr confCar = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confCar = PhysicalSourceType::create(sourceConfig);
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
@@ -303,7 +303,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     sourceConfig->setPhysicalStreamName("physical_truck");
     sourceConfig->setLogicalStreamName("truck");
     //register physical stream
-    PhysicalSourcePtr confTruck = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confTruck = PhysicalSourceType::create(sourceConfig);
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -479,7 +479,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     sourceConfig->setPhysicalStreamName("physical_car");
     sourceConfig->setLogicalStreamName("car");
     //register physical stream
-    PhysicalSourcePtr confCar = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confCar = PhysicalSourceType::create(sourceConfig);
     wrk1->registerPhysicalStream(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
@@ -490,7 +490,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     sourceConfig->setPhysicalStreamName("physical_truck");
     sourceConfig->setLogicalStreamName("truck");
     //register physical stream
-    PhysicalSourcePtr confTruck = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confTruck = PhysicalSourceType::create(sourceConfig);
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -666,7 +666,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     sourceConfig->setPhysicalStreamName("physical_car");
     sourceConfig->setLogicalStreamName("car");
     //register physical stream
-    PhysicalSourcePtr confCar = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confCar = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(confCar);
 
@@ -682,7 +682,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     sourceConfig->setPhysicalStreamName("physical_truck");
     sourceConfig->setLogicalStreamName("truck");
     //register physical stream
-    PhysicalSourcePtr confTruck = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confTruck = PhysicalSourceType::create(sourceConfig);
     wrk2->registerPhysicalStream(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -768,12 +768,12 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_ruby");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("ruby");
     //register physical stream
-    PhysicalSourcePtr confStreamRuby = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confStreamRuby = PhysicalSourceType::create(sourceConfig);
 
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_diamond");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("diamond");
 
-    PhysicalSourcePtr confStreamDiamond = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confStreamDiamond = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(confStreamRuby);
     wrk2->registerPhysicalStream(confStreamDiamond);
@@ -936,12 +936,12 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_ruby");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("ruby");
     //register physical stream
-    PhysicalSourcePtr confStreamRuby = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confStreamRuby = PhysicalSourceType::create(sourceConfig);
 
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_diamond");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("diamond");
 
-    PhysicalSourcePtr confStreamDiamond = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confStreamDiamond = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(confStreamRuby);
     wrk2->registerPhysicalStream(confStreamDiamond);
@@ -1073,12 +1073,12 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setPhysicalStreamName("physical_ruby");
     sourceConfig->as<CSVSourceConfig>()->as<CSVSourceConfig>()->setLogicalStreamName("ruby");
     //register physical stream
-    PhysicalSourcePtr confStreamRuby = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confStreamRuby = PhysicalSourceType::create(sourceConfig);
 
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("physical_diamond");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("diamond");
 
-    PhysicalSourcePtr confStreamDiamond = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr confStreamDiamond = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(confStreamRuby);
     wrk2->registerPhysicalStream(confStreamDiamond);

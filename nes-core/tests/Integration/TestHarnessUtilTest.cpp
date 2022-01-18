@@ -535,7 +535,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setSkipHeader(false);
 
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     testHarness.addCSVSource(conf, carSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
@@ -589,7 +589,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setSkipHeader(false);
 
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     testHarness.addCSVSource(conf, carSchema);
 
     // add a memory source

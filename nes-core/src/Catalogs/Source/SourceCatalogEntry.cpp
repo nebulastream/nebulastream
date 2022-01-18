@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/SourceCatalogEntry.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
@@ -56,7 +56,7 @@ std::string SourceCatalogEntry::getLogicalName() { return logicalStreamName; }
 
 std::string SourceCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalName=" << physicalStreamName << " logicalStreamName=" << logicalStreamName << " sourceType=" << sourceType
+    ss << "physicalName=" << physicalStreamName << " logicalSourceName=" << logicalStreamName << " sourceType=" << sourceType
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }

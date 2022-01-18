@@ -73,7 +73,7 @@ void setupSensorNodeAndStreamCatalogTwoNodes(const SourceCatalogPtr& streamCatal
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("test_stream");
 
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr streamConf = PhysicalSourceType::create(sourceConfig);
 
     SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode1);
     SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode2);
@@ -99,7 +99,7 @@ void setupSensorNodeAndStreamCatalogFiveNodes(const SourceCatalogPtr& streamCata
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("test_stream");
 
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr streamConf = PhysicalSourceType::create(sourceConfig);
 
     SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode1);
     SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode2);
@@ -118,7 +118,7 @@ void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);

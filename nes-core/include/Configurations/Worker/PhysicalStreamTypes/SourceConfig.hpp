@@ -84,33 +84,7 @@ class SourceTypeConfig : public std::enable_shared_from_this<SourceTypeConfig> {
      */
     void setSourceType(std::string sourceTypeValue);
 
-    /**
-     * @brief Checks if the current Source is of type SourceConfig
-     * @tparam SourceConfig
-     * @return bool true if Source is of SourceConfig
-     */
-    template<class SourceConfig>
-    bool instanceOf() {
-        if (dynamic_cast<SourceConfig*>(this)) {
-            return true;
-        };
-        return false;
-    };
 
-    /**
-    * @brief Dynamically casts the Source to a SourceConfigType
-    * @tparam SourceConfigType
-    * @return returns a shared pointer of the SourceConfigType
-    */
-    template<class SourceConfig>
-    std::shared_ptr<SourceConfig> as() {
-        if (instanceOf<SourceConfig>()) {
-            return std::dynamic_pointer_cast<SourceConfig>(this->shared_from_this());
-        }
-        throw std::logic_error("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
-                               + typeid(SourceConfig).name());
-        return nullptr;
-    }
 
   private:
     StringConfigOption sourceType;

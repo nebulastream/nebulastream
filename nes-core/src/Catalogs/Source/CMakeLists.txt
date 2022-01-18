@@ -15,9 +15,8 @@
 add_source_nes(
         SourceCatalog.cpp
         SourceCatalogEntry.cpp
-        PhysicalStreamConfig.cpp
         LogicalSource.cpp
-        MemorySourceStreamConfig.cpp
-        LambdaSourceStreamConfig.cpp
-        BenchmarkSourceStreamConfig.cpp
+        PhysicalSource.cpp
 )
+
+add_subdirectory(PhysicalSourceTypes)

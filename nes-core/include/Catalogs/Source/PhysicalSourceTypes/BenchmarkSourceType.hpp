@@ -26,10 +26,10 @@ namespace NES {
 /**
  * @brief A stream config for a benchm source
  */
-class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
+class BenchmarkSourceType : public PhysicalStreamConfig {
   public:
     /**
-     * @brief Create a BenchmarkSourceStreamConfig using a set of parameters
+     * @brief Create a BenchmarkSourceType using a set of parameters
      * @param sourceType the type of the source
      * @param physicalStreamName the name of the physical stream
      * @param logicalStreamName the name of the logical stream
@@ -38,7 +38,7 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @param source mode on how to bring data into the buffer
      * @param sourceAffinity id of cpu where to pin the source
      */
-    explicit BenchmarkSourceStreamConfig(const Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig,
+    explicit BenchmarkSourceType(const Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig,
                                          uint8_t* memoryArea,
                                          size_t memoryAreaSize,
                                          uint64_t gatheringValue,
@@ -46,7 +46,7 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
                                          const std::string& sourceMode,
                                          uint64_t sourceAffinity);
 
-    ~BenchmarkSourceStreamConfig() noexcept override = default;
+    ~BenchmarkSourceType() noexcept override = default;
 
     /**
      * @brief Creates the source descriptor for the underlying source
@@ -68,7 +68,7 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
     virtual Configurations::PhysicalStreamTypePtr getPhysicalStreamTypeConfig() override;
 
     /**
-     * @brief Factory method of BenchmarkSourceStreamConfig
+     * @brief Factory method of BenchmarkSourceType
       * @param sourceType the type of the source
      * @param physicalStreamName the name of the physical stream
      * @param logicalStreamName the name of the logical stream
@@ -76,7 +76,7 @@ class BenchmarkSourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      * @param sourceMode how the benchmark source create the content, either by wrapping or by copy buffer
      * @param sourceAffinity id of cpu where to pin the source
-     * @return a constructed BenchmarkSourceStreamConfig
+     * @return a constructed BenchmarkSourceType
      */
     static AbstractPhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig,
                                                   uint8_t* memoryArea,

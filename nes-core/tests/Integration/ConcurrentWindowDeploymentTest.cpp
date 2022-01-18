@@ -99,7 +99,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
     sourceConfig->setLogicalStreamName("exdra");
 
     //register physical stream
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -341,7 +341,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -432,7 +432,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -525,7 +525,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -641,7 +641,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     sourceConfig->setPhysicalStreamName("test_stream");
     sourceConfig->setLogicalStreamName("window");
     //register physical stream
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
 
@@ -744,7 +744,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     sourceConfig->setPhysicalStreamName("test_stream");
     sourceConfig->setLogicalStreamName("window");
     //register physical stream
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
 
@@ -843,7 +843,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
@@ -950,7 +950,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime)
     sourceConfig->setLogicalStreamName("windowStream");
 
     //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(windowStream);
 
@@ -1042,7 +1042,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -1149,7 +1149,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventT
     sourceConfig->setLogicalStreamName("windowStream");
 
     //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);
@@ -1256,7 +1256,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
     wrk2->registerPhysicalStream(conf70);
@@ -1350,7 +1350,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -1439,7 +1439,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -1521,7 +1521,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
     sourceConfig->setLogicalStreamName("windowStream");
 
     //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(windowStream);
 
@@ -1612,7 +1612,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
     sourceConfig->setLogicalStreamName("windowStream");
 
     //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);
@@ -1746,7 +1746,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
     wrk4->registerPhysicalStream(conf);
@@ -1894,7 +1894,7 @@ TEST_F(ConcurrentWindowDeploymentTest,
     sourceConfig->setLogicalStreamName("window");
 
     //register physical stream
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     //    wrk1->registerPhysicalStream(physicalStream);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
@@ -2124,7 +2124,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationW
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setSkipHeader(false);
 
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     testHarness.addCSVSource(conf, carSchema);
 
     struct Output {

@@ -96,7 +96,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
     srcConf->as<CSVSourceConfig>()->setSkipHeader(false); /*register physical stream*/
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
     wrk1->registerPhysicalStream(streamConf);
 
     std::string outputFilePath = "MultiThreadedTest_testFilterQuery.out";
@@ -181,7 +181,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
     srcConf->as<CSVSourceConfig>()->setSkipHeader(false); /*register physical stream*/
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
     wrk1->registerPhysicalStream(streamConf);
 
     std::string outputFilePath = "MultiThreadedTest_testProjectQuery.out";
@@ -271,7 +271,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
     wrk1->registerPhysicalStream(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -365,7 +365,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -452,13 +452,13 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    //    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1000);
+    //    srcConf->as<CSVSourceType>()->setNumberOfBuffersToProduce(1000);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -559,12 +559,12 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
 
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
 
-    PhysicalSourcePtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk1->registerPhysicalStream(windowStream2);
@@ -673,15 +673,15 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
     srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
 
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalSourcePtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
 
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalSourcePtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream3 = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk1->registerPhysicalStream(windowStream2);
@@ -805,18 +805,18 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
     srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
 
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalSourcePtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
 
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalSourcePtr windowStream3 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream3 = PhysicalSourceType::create(srcConf);
 
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window4");
-    PhysicalSourcePtr windowStream4 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream4 = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk1->registerPhysicalStream(windowStream2);
@@ -958,7 +958,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    //    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1000);
+    //    srcConf->as<CSVSourceType>()->setNumberOfBuffersToProduce(1000);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -966,12 +966,12 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
 
     //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
 
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
 
-    PhysicalSourcePtr windowStream2 = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk1->registerPhysicalStream(windowStream2);

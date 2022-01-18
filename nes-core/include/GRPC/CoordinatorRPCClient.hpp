@@ -32,8 +32,8 @@ namespace NES {
 class StaticNesMetrics;
 using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
 
-class PhysicalStreamConfig;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalStreamConfig>;
+class PhysicalSourceType;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSourceType>;
 
 class CoordinatorRPCClient {
   public:

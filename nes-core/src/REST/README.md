@@ -63,7 +63,7 @@ Getting the execution plan for the user query.
         "nodeType": "node_type",
         "capacity": "node_capacity",
         "remainingCapacity": "remaining_capacity",
-        "physicalStreamName": "physical_stream_name"
+        "physicalSourceName": "physical_stream_name"
     }],
 "edges": [{
         "source":"source_node",    
@@ -118,7 +118,7 @@ To get the NebulaStream topology graph as JSON.
         "nodeType": "node_type",
         "capacity": "node_capacity",
         "remainingCapacity": "remaining_capacity",
-        "physicalStreamName": "physical_stream_name"
+        "physicalSourceName": "physical_stream_name"
     }],
 "edges": [{
         "source":"source_node",    
