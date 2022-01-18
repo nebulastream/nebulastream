@@ -118,12 +118,12 @@ std::string KafkaSourceType::toString() {
     return ss.str();
 }
 
-bool KafkaSourceType::equal(const SourceTypeConfigPtr& other) {
+bool KafkaSourceType::equal(const PhysicalSourceTypePtr& other) {
     if (!other->instanceOf<KafkaSourceType>()) {
         return false;
     }
     auto otherSourceConfig = other->as<KafkaSourceType>();
-    return SourceTypeConfig::equal(other) && brokers->getValue() == otherSourceConfig->brokers->getValue()
+    return brokers->getValue() == otherSourceConfig->brokers->getValue()
         && autoCommit->getValue() == otherSourceConfig->autoCommit->getValue()
         && groupId->getValue() == otherSourceConfig->groupId->getValue()
         && topic->getValue() == otherSourceConfig->topic->getValue()

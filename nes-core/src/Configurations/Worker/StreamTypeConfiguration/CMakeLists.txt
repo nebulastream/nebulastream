@@ -15,7 +15,6 @@
 add_source_nes(
         SourceConfig.cpp
         SourceConfigFactory.cpp
-        MQTTSourceConfig.cpp
         SenseSourceConfig.cpp
         OPCSourceConfig.cpp
         StreamTypeConfiguration.cpp
