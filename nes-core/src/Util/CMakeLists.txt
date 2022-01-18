@@ -36,4 +36,3 @@ endif ()
 add_subdirectory(Subprocess)
 add_subdirectory(yaml)
 add_subdirectory(GPUKernelWrapper)
-

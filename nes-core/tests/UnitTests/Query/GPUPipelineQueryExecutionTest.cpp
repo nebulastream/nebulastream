@@ -46,11 +46,9 @@ limitations under the License.
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 
-#include <Util/GPUKernnelWrapper/SimpleKernel.cuh>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <device_launch_parameters.h>
-
+#include <Util/jitify/jitify.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
@@ -61,8 +59,7 @@ class QueryExecutionTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
         // create test input buffer
-        testSchema = Schema::create()
-                         ->addField("test$value", BasicType::INT32);
+        testSchema = Schema::create()->addField("test$value", BasicType::INT32);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
     }
@@ -79,7 +76,7 @@ class QueryExecutionTest : public testing::Test {
 
 void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
 
-    auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t , true>::create(0, memoryLayout, buf);
+    auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, buf);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         valueField[recordIndex] = recordIndex;
@@ -93,9 +90,35 @@ class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineSta
                             Runtime::Execution::PipelineExecutionContext& ctx,
                             Runtime::WorkerContext& wc) override {
         auto record = buffer.getBuffer<int>();
-        for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-            record[i] = record[i] + 42;
-        }
+
+        const char* const SimpleKernel_cu =
+            "SimpleKernel.cu\n"
+            "__global__ void simpleAdditionKernel(const int* recordValue, const int count, int* result) {\n"
+            "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
+            "\n"
+            "    if (i < count) {\n"
+            "        result[i] = recordValue[i] + 42;\n"
+            "    }\n"
+            "}\n";
+
+        static jitify::JitCache kernel_cache;
+        jitify::Program program = kernel_cache.program(SimpleKernel_cu, 0);
+
+        int* d_record;
+        cudaMalloc(&d_record, buffer.getNumberOfTuples() * sizeof(int));
+        int* d_result;
+        cudaMalloc(&d_result, buffer.getNumberOfTuples() * sizeof(int));
+
+        cudaMemcpy(d_record, record, buffer.getNumberOfTuples() * sizeof(int), cudaMemcpyHostToDevice);
+        dim3 grid(1);
+        dim3 block(32);
+        using jitify::reflection::type_of;
+        program.kernel("simpleAdditionKernel")
+                       .instantiate()
+                       .configure(grid, block)
+                       .launch(d_record, buffer.getNumberOfTuples(), d_result);
+        cudaMemcpy(record, d_result, buffer.getNumberOfTuples() * sizeof(int), cudaMemcpyDeviceToHost);
+
         ctx.emitBuffer(buffer, wc);
         return ExecutionResult::Ok;
     }
@@ -161,11 +184,10 @@ TEST_F(QueryExecutionTest, GPUOperatorQuery) {
         // The output buffer should contain 5 tuple;
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
-        auto valueField =
-            Runtime::MemoryLayouts::RowLayoutField<int32_t , true>::create(0, memoryLayout, resultBuffer);
+        auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, resultBuffer);
         for (int recordIndex = 0; recordIndex < 5; ++recordIndex) {
             // id
-            EXPECT_EQ(valueField[recordIndex], recordIndex  + 42);
+            EXPECT_EQ(valueField[recordIndex], recordIndex + 42);
         }
     }
     ASSERT_TRUE(plan->stop());
