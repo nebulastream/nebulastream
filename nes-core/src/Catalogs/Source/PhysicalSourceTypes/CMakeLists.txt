@@ -19,4 +19,5 @@ add_source_nes(
         BenchmarkSourceType.cpp
         CSVSourceType.cpp
         BinarySourceType.cpp
+        DefaultSourceType.cpp
 )
