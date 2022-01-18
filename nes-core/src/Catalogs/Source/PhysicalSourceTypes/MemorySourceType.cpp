@@ -46,6 +46,16 @@ MemorySourceTypePtr MemorySourceType::create(uint8_t* memoryArea,
         MemorySourceType(memoryArea, memoryAreaSize, numBuffersToProcess, gatheringValue, gatheringMode));
 }
 
+const std::shared_ptr<uint8_t>& MemorySourceType::getMemoryArea() const { return memoryArea; }
+
+size_t MemorySourceType::getMemoryAreaSize() const { return memoryAreaSize; }
+
+uint64_t MemorySourceType::getNumberOfBufferToProduce() const { return numberOfBufferToProduce; }
+
+uint64_t MemorySourceType::getGatheringValue() const { return gatheringValue; }
+
+const std::string& MemorySourceType::getGatheringMode() const { return gatheringMode; }
+
 std::string MemorySourceType::toString() {
     std::stringstream ss;
     ss << "LambdaSourceType => {\n";
@@ -67,4 +77,5 @@ bool MemorySourceType::equal(const PhysicalSourceTypePtr& other) {
         && numberOfBufferToProduce == otherSourceConfig->numberOfBufferToProduce
         && gatheringValue == otherSourceConfig->gatheringValue && gatheringMode == otherSourceConfig->gatheringMode;
 }
+
 }// namespace NES
