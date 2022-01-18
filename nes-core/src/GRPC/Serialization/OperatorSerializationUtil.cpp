@@ -347,7 +347,10 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
     auto windowDefinition = windowOperator->getWindowDefinition();
 
     if (windowDefinition->isKeyed()) {
-        ExpressionSerializationUtil::serializeExpression(windowDefinition->getOnKey(), windowDetails.mutable_onkey());
+        for (auto& key : windowDefinition->getOnKey()) {
+            auto expression = windowDetails.mutable_onkey()->Add();
+            ExpressionSerializationUtil::serializeExpression(key, expression);
+        }
     }
     windowDetails.set_origin(windowDefinition->getOriginId());
     windowDetails.set_numberofinputedges(windowDefinition->getNumberOfInputEdges());
@@ -690,7 +693,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
 
     LogicalOperatorNodePtr ptr;
     auto allowedLateness = windowDetails->allowedlateness();
-    if (!windowDetails->has_onkey()) {
+    if (windowDetails->onkey_size() == 0) {
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
             auto windowDef =
                 Windowing::LogicalWindowDefinition::create(aggregation, window, distChar, 1, trigger, action, allowedLateness);
@@ -729,8 +732,12 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
             NES_NOT_IMPLEMENTED();
         }
     } else {
-        auto keyAccessExpression =
-            ExpressionSerializationUtil::deserializeExpression(windowDetails->mutable_onkey())->as<FieldAccessExpressionNode>();
+        std::vector<FieldAccessExpressionNodePtr> keyAccessExpression;
+        auto serializedKeys = windowDetails->mutable_onkey();
+        for (auto& key: *serializedKeys) {
+            keyAccessExpression.emplace_back(ExpressionSerializationUtil::deserializeExpression(&key)
+                                  ->as<FieldAccessExpressionNode>());
+        }
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
             auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
                                                                         aggregation,

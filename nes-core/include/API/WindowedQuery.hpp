@@ -52,7 +52,8 @@ class WindowedQuery {
     * @brief: sets the Attribute for the keyBy Operation. Creates a KeyedWindowedQuery object.
     * @param onKey
     */
-    [[nodiscard]] KeyedWindowedQuery byKey(const ExpressionItem& onKey) const;
+    [[nodiscard]] KeyedWindowedQuery byKey(ExpressionItem onKey) const;
+    [[nodiscard]] KeyedWindowedQuery byKey(std::initializer_list<ExpressionItem> onKey) const;
 
     /**
    * @brief: Calls internally the original window() function and returns the Query&
@@ -72,7 +73,7 @@ class KeyedWindowedQuery {
     * @param originalQuery
     * @param windowType
     */
-    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionNodePtr onKey);
+    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::vector<ExpressionNodePtr> onKey);
 
     /**
     * @brief: Calls internally the original windowByKey() function and returns the Query&
@@ -83,7 +84,7 @@ class KeyedWindowedQuery {
   private:
     Query& originalQuery;
     Windowing::WindowTypePtr windowType;
-    ExpressionNodePtr onKey;
+    std::vector<ExpressionNodePtr> onKey;
 };
 
 }// namespace WindowOperatorBuilder

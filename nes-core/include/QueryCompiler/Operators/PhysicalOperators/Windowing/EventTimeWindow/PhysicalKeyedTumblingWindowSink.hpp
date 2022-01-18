@@ -10,7 +10,7 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-class PhysicalKeyedTumblingWindowSink : public PhysicalUnaryOperator {
+class PhysicalKeyedTumblingWindowSink : public PhysicalUnaryOperator{
   public:
     PhysicalKeyedTumblingWindowSink(
         OperatorId id,

@@ -83,12 +83,12 @@ class CCodeGenerator : public CodeGenerator {
     bool generateCodeForSliceStoreAppend(PipelineContextPtr context, uint64_t windowOperatorIndex) override;
     std::shared_ptr<ForLoopStatement>
     keyedSliceMergeLoop(VariableDeclaration& buffers,
-                                        FunctionCallStatement& tupleBufferGetNumberOfTupleCall,
-                                        StructDeclaration& partialAggregationEntry,
-                                        VariableDeclaration& keyVariableDeclaration,
-                                        DataTypePtr keyStamp,
-                                        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr aggregation);
-        /**
+                        FunctionCallStatement& tupleBufferGetNumberOfTupleCall,
+                        StructDeclaration& partialAggregationEntry,
+                        Windowing::LogicalWindowDefinitionPtr window,
+                        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr aggregation,
+                        PipelineContextPtr context);
+    /**
     * @brief Code generation for an emit, which depends on a particular output schema.
     * @param schema The output schema.
     * @param bufferStrategy Strategy for allocation of and writing to result buffer.
@@ -159,13 +159,11 @@ class CCodeGenerator : public CodeGenerator {
                                            uint64_t windowOperatorIndex,
                                            SchemaPtr ptr) override;
 
-    bool
-    generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWindowDefinitionPtr window,
-                                           GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                           PipelineContextPtr context,
-                                           uint64_t windowOperatorIndex,
-                                           SchemaPtr ptr) override;
-
+    bool generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWindowDefinitionPtr window,
+                                               GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                               PipelineContextPtr context,
+                                               uint64_t windowOperatorIndex,
+                                               SchemaPtr ptr) override;
 
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -274,7 +272,9 @@ class CCodeGenerator : public CodeGenerator {
      * @param tupleBufferVariable
      * @return
      */
-    static StructDeclaration generatePartialAggregationEntry(const Windowing::LogicalWindowDefinitionPtr window, GeneratableOperators::GeneratableWindowAggregationPtr generatableAggregation);
+    static StructDeclaration
+    generatePartialAggregationEntry(const Windowing::LogicalWindowDefinitionPtr window,
+                                    GeneratableOperators::GeneratableWindowAggregationPtr generatableAggregation);
 
     /**
      * @brief returns getOperatorHandler<Windowing::WindowOperatorHandler>(windowOperatorIndex);
@@ -521,6 +521,7 @@ class CCodeGenerator : public CodeGenerator {
                                                const VariableDeclaration varTuples,
                                                std::vector<StatementPtr>& statements,
                                                const std::string& capacityVarName);
+    ExpressionStatementPtr createGetEntryCall(Windowing::LogicalWindowDefinitionPtr window, PipelineContextPtr context);
 };
 }// namespace QueryCompilation
 }// namespace NES

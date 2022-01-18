@@ -830,17 +830,39 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& con
     }
 }
 
+std::vector<ExpressionStatementPtr> getKeyAssignmentExpressions(Windowing::LogicalWindowDefinitionPtr window,
+                                                                std::shared_ptr<GeneratableTypesFactory>,
+                                                                RecordHandlerPtr recordHandler) {
+    std::vector<ExpressionStatementPtr> keyDeclarations;
+    for (auto& key : window->getOnKey()) {
+        keyDeclarations.push_back(recordHandler->getAttribute(key->getFieldName()));
+
+        //keyDeclarations.push_back(VariableDeclaration::create(tf->createDataType(key->getStamp()),key->getFieldName());
+    }
+    return keyDeclarations;
+}
+
+std::vector<VariableDeclaration> getKeyDeclarations(Windowing::LogicalWindowDefinitionPtr window,
+                                                    std::shared_ptr<GeneratableTypesFactory> tf) {
+    std::vector<VariableDeclaration> keyDeclarations;
+    for (auto& key : window->getOnKey()) {
+        keyDeclarations.push_back(VariableDeclaration::create(tf->createDataType(key->getStamp()), key->getFieldName()));
+    }
+    return keyDeclarations;
+}
+
 StructDeclaration
 CCodeGenerator::generatePartialAggregationEntry(const Windowing::LogicalWindowDefinitionPtr window,
                                                 GeneratableOperators::GeneratableWindowAggregationPtr generatableAggregation) {
     auto tf = getTypeFactory();
-    auto key = window->getOnKey();
-    auto keyVariableDeclaration = VariableDeclaration::create(tf->createDataType(key->getStamp()), key->getFieldName());
+    auto keyVariableDeclaration = getKeyDeclarations(window, tf);
     // create struct for entry
     StructDeclaration structDeclarationTuple = StructDeclaration::create("PartialAggregationEntry", "partialAggregationEntry");
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
     structDeclarationTuple.makeStructCompact();
-    structDeclarationTuple.addField(keyVariableDeclaration);
+    for (auto decl : keyVariableDeclaration) {
+        structDeclarationTuple.addField(decl);
+    }
     auto aggregation = window->getWindowAggregation();
     structDeclarationTuple.addField(*generatableAggregation->getPartialAggregate());
     return structDeclarationTuple;
@@ -890,18 +912,20 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     context->code->variableInitStmts.push_back(threadLocalStateStatement.copy());
 
     // Read key value from record
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
-    auto keyVariableDeclaration =
-        VariableDeclaration::create(tf->createDataType(keyStamp),
-                                    context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
+
     auto recordHandler = context->getRecordHandler();
-    if (window->isKeyed()) {
-        auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getOnKey()->getFieldName());
-        auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
-        context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
-    } else {
-        NES_ERROR("We should have keyed");
-    }
+    auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
+    //if (window->isKeyed()) {
+    //    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    //    auto keyVariableDeclaration = VariableDeclaration::create(
+    //        tf->createDataType(keyStamp),
+    //        context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
+    //    auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getOnKey()->getFieldName());
+    //    auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
+    //    context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
+    //} else {
+    //    NES_ERROR("We should have keyed");
+    // }
 
     auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
     auto getCreationTimestamp = call("getCreationTimestamp");
@@ -916,12 +940,9 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     findSliceByTs->addParameter(tsVariableDeclaration);
     auto sliceAssignmentStatement = VarDeclStatement(slice).assign(VarRef(threadLocalState).accessRef(findSliceByTs));
     context->code->currentCodeInsertionPoint->addStatement(sliceAssignmentStatement.copy());
-
-    // auto* entry = (uint64_t*) slice->map.getEntry(key);
     auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
     auto getState = call("getState");
-    auto getEntry = call("getEntry<" + TO_CODE(keyStamp) + ">");
-    getEntry->addParameter(VarRef(keyVariableDeclaration));
+    auto getEntry = createGetEntryCall(window, context);
     auto entryAssignmentStatement = VarDeclStatement(entry).assign(
         TypeCast(VarRef(slice).accessPtr(getState).accessRef(getEntry), tf->createPointer(partialAggregationEntry.getType())));
     context->code->currentCodeInsertionPoint->addStatement(entryAssignmentStatement.copy());
@@ -929,14 +950,7 @@ bool CCodeGenerator::generateCodeForThreadLocalPreAggregationOperator(
     aggregation->compileLiftCombine(context->code->currentCodeInsertionPoint,
                                     VarRef(entry).accessPtr(VarRef(aggregation->getPartialAggregate())),
                                     recordHandler);
-    /* auto aggField =
-        recordHandler->getAttribute(window->getWindowAggregation()->on()->as<FieldAccessExpressionNode>()->getFieldName());
-    auto partialAggregateStamp = tf->createDataType(window->getWindowAggregation()->getPartialAggregateStamp());
-    auto aggregateDeclaration = VariableDeclaration::create(partialAggregateStamp, "agg");
-    auto sum = VarRef(entry).accessPtr(VarRef(aggregateDeclaration)) + *aggField;
-    auto updatedPartial = VarRef(entry).accessPtr(VarRef(aggregateDeclaration)).assign(sum);
-    context->code->currentCodeInsertionPoint->addStatement(updatedPartial.copy());
-*/
+
     auto triggerThreadLocalStateCall = call("triggerThreadLocalState");
     triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationWorkerContext));
     triggerThreadLocalStateCall->addParameter(VarRef(context->code->varDeclarationExecutionContext));
@@ -963,10 +977,6 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
 
     StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, aggregation);
     context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
-
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
-    auto physicalKeyType = tf->createDataType(keyStamp);
-    auto keyVariableDeclaration = partialAggregationEntry.getVariableDeclaration(window->getOnKey()->getFieldName());
 
     auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
     auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
@@ -1038,9 +1048,9 @@ bool CCodeGenerator::generateCodeForKeyedSliceMergingOperator(
     context->code->variableInitStmts.push_back(keyedSliceMergeLoop(partitionBuffers,
                                                                    code->tupleBufferGetNumberOfTupleCall,
                                                                    partialAggregationEntry,
-                                                                   keyVariableDeclaration,
-                                                                   keyStamp,
-                                                                   aggregation));
+                                                                   window,
+                                                                   aggregation,
+                                                                   context));
 
     return 0;
 }
@@ -1070,13 +1080,30 @@ bool CCodeGenerator::generateCodeForSliceStoreAppend(PipelineContextPtr context,
     return true;
 }
 
+uint64_t getKeySpaceSize(Windowing::LogicalWindowDefinitionPtr window) {
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    uint64_t keysSize = 0;
+    for (auto key : window->getOnKey()) {
+        keysSize = keysSize + physicalDataTypeFactory.getPhysicalType(key->getStamp())->size();
+    }
+    return keysSize;
+}
+
+uint64_t getEntrySize(Windowing::LogicalWindowDefinitionPtr window) {
+    uint64_t keysSize = getKeySpaceSize(window);
+    uint64_t valueSize = 8;
+    uint64_t entryHeaderSize = 16;
+    uint64_t entrySize = entryHeaderSize + keysSize + valueSize;
+    return entrySize;
+}
+
 std::shared_ptr<ForLoopStatement>
 CCodeGenerator::keyedSliceMergeLoop(VariableDeclaration& buffers,
                                     FunctionCallStatement& tupleBufferGetNumberOfTupleCall,
                                     StructDeclaration& partialAggregationEntry,
-                                    VariableDeclaration& keyVariableDeclaration,
-                                    DataTypePtr keyStamp,
-                                    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr aggregation) {
+                                    Windowing::LogicalWindowDefinitionPtr window,
+                                    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr aggregation,
+                                    PipelineContextPtr) {
     auto tf = getTypeFactory();
     auto getSizeCall = call("size");
     auto globalSliceState = VariableDeclaration ::create(tf->createAnonymusDataType("auto&"), "globalSliceState");
@@ -1103,6 +1130,8 @@ CCodeGenerator::keyedSliceMergeLoop(VariableDeclaration& buffers,
                                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
                 .copy());
 
+        auto keyVariableDeclarations = getKeyDeclarations(window, tf);
+
         auto scanLoop =
             std::make_shared<FOR>(recordIndex,
                                   (VarRef(recordIndex) < (VarRef(buffer).accessRef(tupleBufferGetNumberOfTupleCall))).copy(),
@@ -1111,17 +1140,24 @@ CCodeGenerator::keyedSliceMergeLoop(VariableDeclaration& buffers,
             auto scanBody = scanLoop->getCompoundStatement();
             auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
             // todo fix entry size
-
-            auto entrySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 32)));
-            auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
+            uint64_t entryHeaderSize = 16;
+            auto entrySizeConst = Constant(tf->createValueType(DataTypeFactory::createBasicValue(getEntrySize(window))));
+            auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue(entryHeaderSize)));
             auto entryAssignmentStatement =
-                VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySize * VarRef(recordIndex))) + entryOffset,
+                VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySizeConst * VarRef(recordIndex))) + entryOffset,
                                                         tf->createPointer(partialAggregationEntry.getType())));
             scanBody->addStatement(entryAssignmentStatement.copy());
-
+            auto keyDeclarations = getKeyDeclarations(window, tf);
             auto globalEntry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "globalEntry");
-            auto getEntry = call("getEntry<" + TO_CODE(keyStamp) + ">");
-            getEntry->addParameter(VarRef(entry).accessPtr(VarRef(keyVariableDeclaration)));
+
+            auto tuple = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "tuple");
+            auto makeTuple = call("std::make_tuple");
+            for (auto& keyDeclaration : keyDeclarations) {
+                makeTuple->addParameter(VarRef(entry).accessPtr(VarRef(keyDeclaration)));
+            }
+            scanBody->addStatement(VarDeclStatement(tuple).assign(makeTuple).copy());
+            auto getEntry = call("getEntry<>");
+            getEntry->addParameter(VarRef(tuple));
             auto globalEntryAssignmentStatement = VarDeclStatement(globalEntry)
                                                       .assign(TypeCast(VarRef(globalSliceState).accessRef(getEntry),
                                                                        tf->createPointer(partialAggregationEntry.getType())));
@@ -1131,6 +1167,22 @@ CCodeGenerator::keyedSliceMergeLoop(VariableDeclaration& buffers,
         loopBody->addStatement(scanLoop);
     }
     return partitionLoop;
+}
+
+ExpressionStatementPtr CCodeGenerator::createGetEntryCall(Windowing::LogicalWindowDefinitionPtr window,
+                                                          PipelineContextPtr context) {
+    auto tf = getTypeFactory();
+    auto recordHandler = context->getRecordHandler();
+    auto keyDeclarations = getKeyAssignmentExpressions(window, tf, recordHandler);
+    auto tuple = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "tuple");
+    auto makeTuple = call("std::make_tuple");
+    for (auto& keyDeclaration : keyDeclarations) {
+        makeTuple->addParameter(keyDeclaration);
+    }
+    context->code->currentCodeInsertionPoint->addStatement(VarDeclStatement(tuple).assign(makeTuple).copy());
+    auto getEntry = call("getEntry<>");
+    getEntry->addParameter(VarRef(tuple));
+    return getEntry;
 }
 
 bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWindowDefinitionPtr window,
@@ -1144,9 +1196,9 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWin
     StructDeclaration partialAggregationEntry = generatePartialAggregationEntry(window, aggregation);
     context->code->structDeclarationInputTuples.push_back(partialAggregationEntry);
 
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    auto keyStamp = window->isKeyed() ? window->getOnKey()[0]->getStamp() : window->getWindowAggregation()->on()->getStamp();
     auto physicalKeyType = tf->createDataType(keyStamp);
-    auto keyVariableDeclaration = partialAggregationEntry.getVariableDeclaration(window->getOnKey()->getFieldName());
+    auto keyVariableDeclaration = partialAggregationEntry.getVariableDeclaration(window->getOnKey()[0]->getFieldName());
 
     auto tupleBufferType = tf->createAnonymusDataType("NES::Runtime::TupleBuffer");
     auto pipelineExecutionContextType = tf->createAnonymusDataType("Runtime::Execution::PipelineExecutionContext");
@@ -1239,9 +1291,9 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWin
         body->addStatement(keyedSliceMergeLoop(buffers,
                                                code->tupleBufferGetNumberOfTupleCall,
                                                partialAggregationEntry,
-                                               keyVariableDeclaration,
-                                               keyStamp,
-                                               aggregation));
+                                               window,
+                                               aggregation,
+                                               context));
     }
 
     context->code->variableInitStmts.push_back(globalSliceLoop);
@@ -1288,8 +1340,7 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWin
             auto scanBody = scanLoop->getCompoundStatement();
             auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
             // todo fix entry size
-
-            auto entrySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 32)));
+            auto entrySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(getEntrySize(window))));
             auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
             auto entryAssignmentStatement =
                 VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySize * VarRef(recordIndex))) + entryOffset,
@@ -1304,13 +1355,16 @@ bool CCodeGenerator::generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWin
             context->getRecordHandler()->registerAttribute(resultSchema->fields[1]->getName(),
                                                            VarRef(globalSlice).accessPtr(call("getEnd")).copy());
             // assign key field
-            auto key = partialAggregationEntry.getVariableDeclaration(window->getOnKey()->getFieldName());
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[2]->getName(),
-                                                           VarRef(entry).accessPtr(VarRef(key)).copy());
+            auto keyDeclarations = getKeyDeclarations(window, tf);
+            for (auto key : keyDeclarations) {
+                //auto key = partialAggregationEntry.getVariableDeclaration(window->getOnKey()[0]->getFieldName());
+                context->getRecordHandler()->registerAttribute(key.getIdentifierName(),
+                                                               VarRef(entry).accessPtr(VarRef(key)).copy());
+            }
             // assign value field
             auto value = aggregation->getPartialAggregate();
             auto finalAggValue = aggregation->lower(VarRef(entry).accessPtr(VarRef(value)).copy());
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[3]->getName(), finalAggValue);
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[resultSchema->fields.size()-1]->getName(), finalAggValue);
 
             context->code->currentCodeInsertionPoint = scanBody;
         }
@@ -1371,8 +1425,7 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWi
             auto scanBody = scanLoop->getCompoundStatement();
             auto entry = VariableDeclaration::create(tf->createAnonymusDataType("auto*"), "entry");
             // todo fix entry size
-
-            auto entrySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 32)));
+            auto entrySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(getEntrySize(window))));
             auto entryOffset = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
             auto entryAssignmentStatement =
                 VarDeclStatement(entry).assign(TypeCast(VarRef(entries) + ((entrySize * VarRef(recordIndex))) + entryOffset,
@@ -1386,14 +1439,20 @@ bool CCodeGenerator::generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWi
             // assign end field
             context->getRecordHandler()->registerAttribute(resultSchema->fields[1]->getName(),
                                                            VarRef(globalSlice).accessPtr(call("getEnd")).copy());
+
             // assign key field
-            auto key = partialAggregationEntry.getVariableDeclaration(window->getOnKey()->getFieldName());
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[2]->getName(),
-                                                           VarRef(entry).accessPtr(VarRef(key)).copy());
+            auto keyDeclarations = getKeyDeclarations(window, tf);
+            for (auto key : keyDeclarations) {
+                //auto key = partialAggregationEntry.getVariableDeclaration(window->getOnKey()[0]->getFieldName());
+                context->getRecordHandler()->registerAttribute(key.getIdentifierName(),
+                                                               VarRef(entry).accessPtr(VarRef(key)).copy());
+            }
+
             // assign value field
             auto value = aggregation->getPartialAggregate();
             auto finalAggValue = aggregation->lower(VarRef(entry).accessPtr(VarRef(value)).copy());
-            context->getRecordHandler()->registerAttribute(resultSchema->fields[3]->getName(), finalAggValue);
+            context->getRecordHandler()->registerAttribute(resultSchema->fields[resultSchema->fields.size() - 1]->getName(),
+                                                           finalAggValue);
 
             context->code->currentCodeInsertionPoint = scanBody;
         }
@@ -1420,7 +1479,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     auto windowOperatorHandlerDeclaration =
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    auto keyStamp = window->isKeyed() ? window->getOnKey()[0]->getStamp() : window->getWindowAggregation()->on()->getStamp();
     auto getWindowHandlerStatement =
         getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation());
     context->code->variableInitStmts.emplace_back(
@@ -1470,7 +1529,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
                                     context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
     auto recordHandler = context->getRecordHandler();
     if (window->isKeyed()) {
-        auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getOnKey()->getFieldName());
+        auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getOnKey()[0]->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
         context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     } else {
@@ -2430,7 +2489,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
 
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    auto keyStamp = window->isKeyed() ? window->getOnKey()[0]->getStamp() : window->getWindowAggregation()->on()->getStamp();
 
     auto getWindowHandlerStatement =
         getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation());
@@ -2476,7 +2535,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
         VariableDeclaration::create(tf->createAnonymusDataType("auto"),
                                     context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
     if (window->isKeyed()) {
-        auto keyVariableAttributeDeclaration = context->getRecordHandler()->getAttribute(window->getOnKey()->getFieldName());
+        auto keyVariableAttributeDeclaration = context->getRecordHandler()->getAttribute(window->getOnKey()[0]->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
         context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     } else {
@@ -2731,9 +2790,8 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
     auto getWindowDefinitionCall = call("getWindowDefinition");
     auto windowDefinitionStatement = VarDeclStatement(windowDefDeclaration)
                                          .assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getWindowDefinitionCall));
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
-    auto physicalKeyType = tf->createDataType(keyStamp);
-    auto keyVariableDeclaration = VariableDeclaration::create(physicalKeyType, "key");
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    uint64_t keysSize = getKeySpaceSize(window);
 
     // create struct for entry
     // consists of keys and aggregation values
@@ -2743,9 +2801,7 @@ uint64_t CCodeGenerator::generateKeyedThreadLocalPreAggregationSetup(
     auto createCall = call("std::make_shared<Experimental::HashMapFactory>");
     auto getBufferManagerCall = call("getBufferManager");
     createCall->addParameter(VarRefStatement(context->code->varDeclarationExecutionContext).accessRef(getBufferManagerCall));
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto constantKeySize = Constant(
-        tf->createValueType(DataTypeFactory::createBasicValue(physicalDataTypeFactory.getPhysicalType(keyStamp)->size())));
+    auto constantKeySize = Constant(tf->createValueType(DataTypeFactory::createBasicValue(keysSize)));
     createCall->addParameter(constantKeySize);
     if (window->getWindowAggregation()->getType() == Windowing::WindowAggregationDescriptor::Avg) {
         auto constantValueSize = Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 16)));
@@ -2809,7 +2865,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         VarDeclStatement(resultSchemaDeclaration).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getResultSchemaCall));
     setupScope->addStatement(resultSchemaStatement.copy());
 
-    auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
+    auto keyStamp = window->isKeyed() ? window->getOnKey()[0]->getStamp() : window->getWindowAggregation()->on()->getStamp();
     auto keyType = tf->createDataType(keyStamp);
 
     auto aggregation = window->getWindowAggregation();

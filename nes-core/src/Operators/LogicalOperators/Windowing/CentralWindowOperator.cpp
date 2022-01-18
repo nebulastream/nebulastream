@@ -81,9 +81,11 @@ bool CentralWindowOperator::inferSchema() {
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
-        windowDefinition->getOnKey()->inferStamp(inputSchema);
-        outputSchema->addField(
-            AttributeField::create(windowDefinition->getOnKey()->getFieldName(), windowDefinition->getOnKey()->getStamp()));
+        auto keyList = windowDefinition->getOnKey();
+        for (auto& key : keyList) {
+            key->inferStamp(inputSchema);
+            outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
+        }
     }
     outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
                                                   windowAggregation->getFinalAggregateStamp()));
