@@ -61,14 +61,8 @@ class QueryExecutionTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
         // create test input buffer
-        windowSchema = Schema::create()
-                           ->addField("test$key", BasicType::INT64)
-                           ->addField("test$value", BasicType::INT64)
-                           ->addField("test$ts", BasicType::UINT64);
         testSchema = Schema::create()
-                         ->addField("test$id", BasicType::INT64)
-                         ->addField("test$one", BasicType::INT64)
-                         ->addField("test$value", BasicType::INT64);
+                         ->addField("test$value", BasicType::INT32);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
     }
@@ -80,20 +74,15 @@ class QueryExecutionTest : public testing::Test {
     static void TearDownTestCase() {}
 
     SchemaPtr testSchema;
-    SchemaPtr windowSchema;
     Runtime::NodeEnginePtr nodeEngine;
 };
 
 void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
 
-    auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, buf);
-    auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, buf);
-    auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, buf);
+    auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t , true>::create(0, memoryLayout, buf);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        recordIndexFields[recordIndex] = recordIndex;
-        fields01[recordIndex] = 1;
-        fields02[recordIndex] = recordIndex % 2;
+        valueField[recordIndex] = recordIndex;
     }
     buf.setNumberOfTuples(10);
 }
@@ -103,25 +92,10 @@ class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineSta
     ExecutionResult execute(Runtime::TupleBuffer& buffer,
                             Runtime::Execution::PipelineExecutionContext& ctx,
                             Runtime::WorkerContext& wc) override {
-        auto record = buffer.getBuffer<InputRecord>();
-
-        // allocate GPU memory to work with the record
-        InputRecord* d_record;
-        cudaMalloc(&d_record, buffer.getNumberOfTuples() * sizeof(InputRecord));
-
-        // copy the record to the GPU memory
-        cudaMemcpy(d_record, record, buffer.getNumberOfTuples() * sizeof(InputRecord), cudaMemcpyHostToDevice);
-
-        // allocate GPU memory to store the result
-        InputRecord* d_result;
-        cudaMalloc(&d_result, buffer.getNumberOfTuples() * sizeof(InputRecord));
-
-        SimpleKernelWrapper wrapper = SimpleKernelWrapper();
-        wrapper.execute(buffer.getNumberOfTuples(), d_record, d_result);
-
-        // copy the result back to host record
-        cudaMemcpy(record, d_result, buffer.getNumberOfTuples() * sizeof(InputRecord), cudaMemcpyDeviceToHost);
-
+        auto record = buffer.getBuffer<int>();
+        for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
+            record[i] = record[i] + 42;
+        }
         ctx.emitBuffer(buffer, wc);
         return ExecutionResult::Ok;
     }
@@ -144,11 +118,11 @@ TEST_F(QueryExecutionTest, GPUOperatorQuery) {
                                                                  std::move(successors));
         });
 
-    auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
+    auto outputSchema = Schema::create()->addField("value", BasicType::INT32);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("value") < 5).sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -187,14 +161,11 @@ TEST_F(QueryExecutionTest, GPUOperatorQuery) {
         // The output buffer should contain 5 tuple;
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
-        auto resultRecordIndexFields =
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
-        auto resultRecordValueFields =
-            Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, resultBuffer);
-        for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
+        auto valueField =
+            Runtime::MemoryLayouts::RowLayoutField<int32_t , true>::create(0, memoryLayout, resultBuffer);
+        for (int recordIndex = 0; recordIndex < 5; ++recordIndex) {
             // id
-            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
-            EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
+            EXPECT_EQ(valueField[recordIndex], recordIndex  + 42);
         }
     }
     ASSERT_TRUE(plan->stop());
