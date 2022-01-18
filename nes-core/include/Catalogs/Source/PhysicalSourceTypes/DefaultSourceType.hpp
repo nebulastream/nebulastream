@@ -74,6 +74,9 @@ class DefaultSourceType : public PhysicalSourceType {
      * @brief constructor to create a new Default source config object initialized with default values
      */
     DefaultSourceType();
+
+    Configurations::IntConfigOption numberOfBuffersToProduce;
+    Configurations::IntConfigOption sourceFrequency;
 };
 }// namespace NES
 #endif

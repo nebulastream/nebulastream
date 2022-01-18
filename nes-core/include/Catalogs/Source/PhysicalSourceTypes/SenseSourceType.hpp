@@ -17,21 +17,20 @@
 #ifndef NES_SENSESOURCETYPECONFIG_HPP
 #define NES_SENSESOURCETYPECONFIG_HPP
 
-#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/yaml/rapidyaml.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
-namespace Configurations {
-
-class SenseSourceTypeConfig;
-using SenseSourceTypeConfigPtr = std::shared_ptr<SenseSourceTypeConfig>;
+class SenseSourceType;
+using SenseSourceTypePtr = std::shared_ptr<SenseSourceType>;
 
 /**
 * @brief Configuration object for source config
 */
-class SenseSourceTypeConfig : public SourceTypeConfig {
+class SenseSourceType : public PhysicalSourceType {
 
   public:
     /**
@@ -39,44 +38,31 @@ class SenseSourceTypeConfig : public SourceTypeConfig {
      * @param sourceConfigMap inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static SenseSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+    static SenseSourceTypePtr create(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief create a SenseSourceConfigPtr object
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypeConfigPtr create();
+    static SenseSourceTypePtr create();
 
-    ~SenseSourceTypeConfig() override = default;
+    ~SenseSourceType() = default;
 
-    /**
-     * @brief resets alls Source configuration to default values
-     */
-    void resetSourceOptions() override;
-    /**
-     * @brief creates a string representation of the source
-     * @return string object
-     */
     std::string toString() override;
 
-    /**
-     * Checks equality
-     * @param other sourceConfig ot check equality for
-     * @return true if equal, false otherwise
-     */
-    bool equal(SourceTypeConfigPtr const& other) override;
+    bool equal(const PhysicalSourceTypePtr& other) override;
 
     /**
      * @brief Get udsf
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getUdfs() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getUdfs() const;
 
     /**
      * @brief Set udsf
@@ -87,20 +73,19 @@ class SenseSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
+    SenseSourceType(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceTypeConfig(ryml::NodeRef sourcTypeConfig);
+    SenseSourceType(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with default values
      */
-    SenseSourceTypeConfig();
+    SenseSourceType();
 
-    StringConfigOption udfs;
+    Configurations::StringConfigOption udfs;
 };
-}// namespace Configurations
 }// namespace NES
 #endif
