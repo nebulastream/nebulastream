@@ -46,7 +46,15 @@ uint64_t LambdaSourceType::getGatheringValue() const { return gatheringValue; }
 
 const std::string& LambdaSourceType::getGatheringMode() const { return gatheringMode; }
 
-std::string LambdaSourceType::toString() { return "LambdaSourceType => {}"; }
+std::string LambdaSourceType::toString() {
+    std::stringstream ss;
+    ss << "LambdaSourceType => {\n";
+    ss << "NumberOfBuffersToProduce :" << numBuffersToProduce;
+    ss << "GatheringValue :" << gatheringValue;
+    ss << "GatheringMode :" + gatheringMode;
+    ss << "\n}";
+    return ss.str();
+}
 
 bool LambdaSourceType::equal(const PhysicalSourceTypePtr& other) {
     if (!other->instanceOf<LambdaSourceType>()) {
