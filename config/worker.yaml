@@ -70,11 +70,11 @@ enableMonitoring: false
 # Available source Types: DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
 #                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
 #                         BinarySource (ToDo: Make source available))
-physicalStreams:
+physicalSources:
   # Set logical stream name where this stream is added to
-  - logicalStreamName: default_stream_log
+  - logicalSourceName: default_source_log
     # Set physical stream name
-    physicalStreamName: default_stream_phy
+    physicalSourceName: default_source_phy
     # Define source type, also need to specify source configurations for source type below
     type: CSV
     # CSVSource and its needed configuration params

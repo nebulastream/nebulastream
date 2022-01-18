@@ -17,7 +17,6 @@ add_source_nes(
         SourceConfigFactory.cpp
         MQTTSourceConfig.cpp
         SenseSourceConfig.cpp
-        KafkaSourceConfig.cpp
         OPCSourceConfig.cpp
         StreamTypeConfiguration.cpp
         PhysicalSourceFactory.cpp

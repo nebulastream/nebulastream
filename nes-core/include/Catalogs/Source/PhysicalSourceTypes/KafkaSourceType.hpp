@@ -17,22 +17,21 @@
 #ifndef NES_KAFKASOURCETYPECONFIG_HPP
 #define NES_KAFKASOURCETYPECONFIG_HPP
 
-#include <Configurations/Worker/PhysicalStreamConfig/PhysicalStreamTypeConfiguration.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/yaml/rapidyaml.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
-namespace Configurations {
-
-class KafkaSourceTypeConfig;
-using KafkaSourceTypeConfigPtr = std::shared_ptr<KafkaSourceTypeConfig>;
+class KafkaSourceType;
+using KafkaSourceTypePtr = std::shared_ptr<KafkaSourceType>;
 
 /**
  * @brief Configuration object for Kafka source config
  * Connect to a kafka broker and read data form there
  */
-class KafkaSourceTypeConfig : public PhysicalStreamTypeConfiguration {
+class KafkaSourceType : public PhysicalSourceType {
 
   public:
     /**
@@ -40,42 +39,29 @@ class KafkaSourceTypeConfig : public PhysicalStreamTypeConfiguration {
      * @param sourceConfigMap inputted config options
      * @return KafkaSourceConfigPtr
      */
-    static KafkaSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static KafkaSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a KafkaSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return KafkaSourceConfigPtr
      */
-    static KafkaSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+    static KafkaSourceTypePtr create(ryml::NodeRef yamlConfig);
 
     /**
      * @brief create a KafkaSourceConfigPtr object
      * @return KafkaSourceConfigPtr
      */
-    static KafkaSourceTypeConfigPtr create();
+    static KafkaSourceTypePtr create();
 
-    /**
-     * @brief resets alls Source configuration to default values
-     */
-    void resetSourceOptions() override;
-    /**
-     * @brief creates a string representation of the source
-     * @return string object
-     */
     std::string toString() override;
 
-    /**
-     * Checks equality
-     * @param other sourceConfig ot check equality for
-     * @return true if equal, false otherwise
-     */
-    bool equal(PhysicalStreamTypeConfigurationPtr const& other) override;
+    bool equal(PhysicalSourceTypePtr const& other) override;
 
     /**
      * @brief Get broker string
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getBrokers() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getBrokers() const;
 
     /**
      * @brief Set broker string
@@ -85,7 +71,7 @@ class KafkaSourceTypeConfig : public PhysicalStreamTypeConfiguration {
     /**
      * @brief Get auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getAutoCommit() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getAutoCommit() const;
 
     /**
      * @brief Set auto commit, boolean value where 1 equals true, and 0 equals false, needed for: KafkaSource
@@ -95,7 +81,7 @@ class KafkaSourceTypeConfig : public PhysicalStreamTypeConfiguration {
     /**
      * @brief get groupId
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getGroupId() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getGroupId() const;
 
     /**
       * @brief set groupId
@@ -105,7 +91,7 @@ class KafkaSourceTypeConfig : public PhysicalStreamTypeConfiguration {
     /**
      * @brief Get topic to listen to
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getTopic() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getTopic() const;
 
     /**
      * @brief Set topic to listen to
@@ -115,7 +101,7 @@ class KafkaSourceTypeConfig : public PhysicalStreamTypeConfiguration {
     /**
      * @brief Get connection time out for source, needed for: KafkaSource
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<uint32_t>> getConnectionTimeout() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getConnectionTimeout() const;
 
     /**
      * @brief Set connection time out for source, needed for: KafkaSource
@@ -126,24 +112,23 @@ class KafkaSourceTypeConfig : public PhysicalStreamTypeConfiguration {
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
      */
-    explicit KafkaSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit KafkaSourceType(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
      */
-    explicit KafkaSourceTypeConfig(ryml::NodeRef sourcTypeConfig);
+    explicit KafkaSourceType(ryml::NodeRef yamlConfig);
 
     /**
      * @brief constructor to create a new Kafka source config object initialized with default values
      */
-    KafkaSourceTypeConfig();
+    KafkaSourceType();
 
-    StringConfigOption brokers;
-    IntConfigOption autoCommit;
-    StringConfigOption groupId;
-    StringConfigOption topic;
-    IntConfigOption connectionTimeout;
+    Configurations::StringConfigOption brokers;
+    Configurations::IntConfigOption autoCommit;
+    Configurations::StringConfigOption groupId;
+    Configurations::StringConfigOption topic;
+    Configurations::IntConfigOption connectionTimeout;
 };
-}// namespace Configurations
 }// namespace NES
 #endif
