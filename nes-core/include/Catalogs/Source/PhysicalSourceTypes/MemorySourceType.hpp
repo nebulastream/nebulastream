@@ -45,6 +45,12 @@ class MemorySourceType : public PhysicalSourceType {
                                               uint64_t gatheringValue,
                                               const std::string& gatheringMode);
 
+    const std::shared_ptr<uint8_t>& getMemoryArea() const;
+    size_t getMemoryAreaSize() const;
+    uint64_t getNumberOfBufferToProduce() const;
+    uint64_t getGatheringValue() const;
+    const std::string& getGatheringMode() const;
+
     ~MemorySourceType() noexcept = default;
 
     /**

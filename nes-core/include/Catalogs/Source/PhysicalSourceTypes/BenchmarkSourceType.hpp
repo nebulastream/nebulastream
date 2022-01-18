@@ -17,84 +17,81 @@
 #ifndef NES_INCLUDE_CATALOGS_BENCHMARK_SOURCE_STREAM_CONFIG_HPP_
 #define NES_INCLUDE_CATALOGS_BENCHMARK_SOURCE_STREAM_CONFIG_HPP_
 
-#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Sources/BenchmarkSource.hpp>
 
 namespace NES {
 
+class BenchmarkSourceType;
+using BenchmarkSourceTypePtr = std::shared_ptr<BenchmarkSourceType>;
+
 /**
  * @brief A stream config for a benchm source
  */
-class BenchmarkSourceType : public PhysicalStreamConfig {
+class BenchmarkSourceType : public PhysicalSourceType {
   public:
     /**
-     * @brief Create a BenchmarkSourceType using a set of parameters
-     * @param sourceType the type of the source
-     * @param physicalStreamName the name of the physical stream
-     * @param logicalStreamName the name of the logical stream
+     * @brief Factory method of BenchmarkSourceType
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
-     * @param source mode on how to bring data into the buffer
-     * @param sourceAffinity id of cpu where to pin the source
+     * @param numBuffersToProduce the number of buffers to produce
+     * @param gatheringValue the gathering value
+     * @param gatheringMode the gathering mode
+     * @param sourceMode the source mode
+     * @param sourceAffinity the source affinity
+     * @return a constructed BenchmarkSourceType
      */
-    explicit BenchmarkSourceType(const Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig,
-                                         uint8_t* memoryArea,
+    static BenchmarkSourceTypePtr create(uint8_t* memoryArea,
                                          size_t memoryAreaSize,
+                                         uint64_t numberOfBuffersToProduce,
                                          uint64_t gatheringValue,
                                          const std::string& gatheringMode,
                                          const std::string& sourceMode,
-                                         uint64_t sourceAffinity);
+                                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 
-    ~BenchmarkSourceType() noexcept override = default;
+    const std::shared_ptr<uint8_t>& getMemoryArea() const;
 
-    /**
-     * @brief Creates the source descriptor for the underlying source
-     * @param ptr the schema to build the source with
-     * @return
-     */
-    SourceDescriptorPtr build(SchemaPtr) override;
+    size_t getMemoryAreaSize() const;
 
-    /**
-     * @brief The string representation of the object
-     * @return the string representation of the object
-     */
+    uint64_t getGatheringValue() const;
+
+    const std::string& getGatheringMode() const;
+
+    const std::string& getSourceMode() const;
+
+    uint64_t getSourceAffinity() const;
+
+    ~BenchmarkSourceType() noexcept = default;
+
     std::string toString() override;
 
-    /**
-     * @brief The physicalStreamTypeConfiguration Object with all needed configurations
-     * @return The physicalStreamTypeConfiguration
-     */
-    virtual Configurations::PhysicalStreamTypePtr getPhysicalStreamTypeConfig() override;
-
-    /**
-     * @brief Factory method of BenchmarkSourceType
-      * @param sourceType the type of the source
-     * @param physicalStreamName the name of the physical stream
-     * @param logicalStreamName the name of the logical stream
-     * @param memoryArea the pointer to the memory area
-     * @param memoryAreaSize the size of the memory area
-     * @param sourceMode how the benchmark source create the content, either by wrapping or by copy buffer
-     * @param sourceAffinity id of cpu where to pin the source
-     * @return a constructed BenchmarkSourceType
-     */
-    static AbstractPhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig,
-                                                  uint8_t* memoryArea,
-                                                  size_t memoryAreaSize,
-                                                  uint64_t gatheringValue,
-                                                  const std::string& gatheringMode,
-                                                  const std::string& sourceMode,
-                                                  uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
-
-    static BenchmarkSource::SourceMode getSourceModeFromString(const std::string& mode);
+    bool equal(const PhysicalSourceTypePtr& other) override;
 
   private:
-    Configurations::PhysicalStreamTypePtr physicalStreamTypeConfig;
+    /**
+     * @brief Create a BenchmarkSourceType using a set of parameters
+     * @param memoryArea the pointer to the memory area
+     * @param memoryAreaSize the size of the memory area
+     * @param numBuffersToProduce the number of buffers to produce
+     * @param gatheringValue the gathering value
+     * @param gatheringMode the gathering mode
+     * @param sourceMode the source mode
+     * @param sourceAffinity the source affinity
+     */
+    explicit BenchmarkSourceType(uint8_t* memoryArea,
+                                 size_t memoryAreaSize,
+                                 uint64_t numBuffersToProduce,
+                                 uint64_t gatheringValue,
+                                 const std::string& gatheringMode,
+                                 const std::string& sourceMode,
+                                 uint64_t sourceAffinity);
+
     std::shared_ptr<uint8_t> memoryArea;
-    const size_t memoryAreaSize;
+    size_t memoryAreaSize;
+    uint64_t numberOfBuffersToProduce;
     uint64_t gatheringValue;
-    DataSource::GatheringMode gatheringMode;
-    BenchmarkSource::SourceMode sourceMode;
+    std::string gatheringMode;
+    std::string sourceMode;
     uint64_t sourceAffinity;
 };
 }// namespace NES

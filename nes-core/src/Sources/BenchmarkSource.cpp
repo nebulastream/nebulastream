@@ -87,6 +87,26 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
+
+BenchmarkSource::SourceMode BenchmarkSourceStreamConfig::getSourceModeFromString(const std::string& mode) {
+    Util::trim(mode);
+    if (mode == "emptyBuffer") {
+        return BenchmarkSource::EMPTY_BUFFER;
+    } else if (mode == "wrapBuffer") {
+        return BenchmarkSource::WRAP_BUFFER;
+    } else if (mode == "copyBuffer") {
+        return BenchmarkSource::COPY_BUFFER;
+    } else if (mode == "copyBufferSimdRte") {
+        return BenchmarkSource::COPY_BUFFER_SIMD_RTE;
+    } else if (mode == "cacheCopy") {
+        return BenchmarkSource::CACHE_COPY;
+    } else if (mode == "copyBufferSimdApex") {
+        return BenchmarkSource::COPY_BUFFER_SIMD_APEX;
+    } else {
+        NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
+    }
+}
+
 void BenchmarkSource::open() {
     DataSource::open();
     auto buffer = localBufferManager->getUnpooledBuffer(memoryAreaSize);
