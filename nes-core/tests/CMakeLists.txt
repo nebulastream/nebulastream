@@ -306,6 +306,11 @@ add_executable(topology-manager-service-tests "UnitTests/ServiceTests/TopologyMa
 target_link_libraries(topology-manager-service-tests  nes ${GTEST_LIBRARIES})
 add_test(NAME topology-manager-service-tests COMMAND topology-manager-service-tests)
 
+### MaintenanceService Tests ###
+add_executable(maintenance-service-tests "UnitTests/ServiceTests/MaintenanceServiceTest.cpp")
+target_link_libraries(maintenance-service-tests  nes ${GTEST_LIBRARIES})
+add_test(NAME maintenance-service-tests COMMAND maintenance-service-tests)
+
 ### Query Plan Tests ###
 add_executable(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
 target_link_libraries(query-plan-tests nes ${GTEST_LIBRARIES})
