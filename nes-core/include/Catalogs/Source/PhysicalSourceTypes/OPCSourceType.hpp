@@ -17,22 +17,21 @@
 #ifndef NES_OPCSOURCETYPECONFIG_HPP
 #define NES_OPCSOURCETYPECONFIG_HPP
 
-#include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/yaml/rapidyaml.hpp>
 #include <map>
 #include <string>
 
 namespace NES {
 
-namespace Configurations {
-
-class OPCSourceTypeConfig;
-using OPCSourceTypeConfigPtr = std::shared_ptr<OPCSourceTypeConfig>;
+class OPCSourceType;
+using OPCSourceTypePtr = std::shared_ptr<OPCSourceType>;
 
 /**
  * @brief Configuration object for OPC source config
  * connect to an OPC server and read data from there
  */
-class OPCSourceTypeConfig : public SourceTypeConfig {
+class OPCSourceType : public PhysicalSourceType {
 
   public:
     /**
@@ -40,41 +39,28 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
      * @param sourceConfigMap inputted config options
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypeConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static OPCSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a OPCSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypeConfigPtr create(ryml::NodeRef sourcTypeConfig);
+    static OPCSourceTypePtr create(ryml::NodeRef sourcTypeConfig);
 
     /**
      * @brief create a OPCSourceConfigPtr object
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypeConfigPtr create();
+    static OPCSourceTypePtr create();
 
-    ~OPCSourceTypeConfig() override = default;
+    ~OPCSourceType() = default;
 
-    /**
-     * @brief resets alls Source configuration to default values
-     */
-    void resetSourceOptions() override;
-    /**
-     * @brief creates a string representation of the source
-     * @return string object
-     */
     std::string toString() override;
 
-    /**
-     * Checks equality
-     * @param other sourceConfig ot check equality for
-     * @return true if equal, false otherwise
-     */
-    bool equal(SourceTypeConfigPtr const& other) override;
+    bool equal(const PhysicalSourceTypePtr& other) override;
 
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::uint32_t>> getNamespaceIndex() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::uint32_t>> getNamespaceIndex() const;
 
     /**
      * @brief Set namespaceIndex for node
@@ -84,7 +70,7 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get node identifier
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getNodeIdentifier() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getNodeIdentifier() const;
 
     /**
      * @brief Set node identifier
@@ -94,7 +80,7 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get userName
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getUserName() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getUserName() const;
 
     /**
      * @brief Set userName
@@ -104,7 +90,7 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief Get password
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::string>> getPassword() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getPassword() const;
 
     /**
      * @brief Set password
@@ -115,23 +101,22 @@ class OPCSourceTypeConfig : public SourceTypeConfig {
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceTypeConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit OPCSourceType(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceTypeConfig(ryml::NodeRef sourcTypeConfig);
+    explicit OPCSourceType(ryml::NodeRef yamlConfig);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with default values
      */
-    OPCSourceTypeConfig();
+    OPCSourceType();
 
-    IntConfigOption namespaceIndex;
-    StringConfigOption nodeIdentifier;
-    StringConfigOption userName;
-    StringConfigOption password;
+    Configurations::IntConfigOption namespaceIndex;
+    Configurations::StringConfigOption nodeIdentifier;
+    Configurations::StringConfigOption userName;
+    Configurations::StringConfigOption password;
 };
-}// namespace Configurations
 }// namespace NES
 #endif

@@ -16,7 +16,6 @@ add_source_nes(
         SourceConfig.cpp
         SourceConfigFactory.cpp
         SenseSourceConfig.cpp
-        OPCSourceConfig.cpp
         StreamTypeConfiguration.cpp
         PhysicalSourceFactory.cpp
         MaterializedViewSourceConfig.cpp
