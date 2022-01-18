@@ -15,7 +15,7 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
@@ -68,7 +68,7 @@ class StreamCatalogServiceTest : public testing::Test {
 
 TEST_F(StreamCatalogServiceTest, testRegisterUnregisterLogicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     StreamCatalogServicePtr streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
 
     std::string logicalStreamName = "testStream";
@@ -91,7 +91,7 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterLogicalStream) {
 
 TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
     std::string address = ip + ":" + std::to_string(publish_port);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     StreamCatalogServicePtr streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
@@ -106,7 +106,7 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
     sourceConfig->setPhysicalStreamName("physical_test");
     sourceConfig->setLogicalStreamName("testStream");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     uint64_t nodeId = topologyManagerService->registerNode(address, 4000, 5000, 6, NodeType::Sensor);
     EXPECT_NE(nodeId, 0u);

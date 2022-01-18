@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
@@ -41,7 +41,7 @@ const std::string defaultLogicalStreamName = "default_logical";
 class StreamCatalogTest : public testing::Test {
   public:
     SourceConfigPtr sourceConfig;
-    std::shared_ptr<StreamCatalog> streamCatalog;
+    std::shared_ptr<SourceCatalog> streamCatalog;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -55,7 +55,7 @@ class StreamCatalogTest : public testing::Test {
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryParsingService = QueryParsingService::create(jitCompiler);
-        streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+        streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     }
 
     /* Will be called before a test is executed. */
@@ -66,7 +66,7 @@ class StreamCatalogTest : public testing::Test {
 };
 
 TEST_F(StreamCatalogTest, testAddGetLogStream) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
 
     streamCatalog->addLogicalStream("test_stream", Schema::create());
     SchemaPtr sPtr = streamCatalog->getSchemaForLogicalStream("test_stream");
@@ -101,7 +101,7 @@ TEST_F(StreamCatalogTest, testAddRemoveLogStream) {
 }
 
 TEST_F(StreamCatalogTest, testGetNotExistingKey) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
 
     SchemaPtr sPtr = streamCatalog->getSchemaForLogicalStream("test_stream22");
     EXPECT_EQ(sPtr, nullptr);
@@ -121,9 +121,9 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("test_stream");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
 
     EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
 
@@ -149,9 +149,9 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("test_stream");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
 
     EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
     EXPECT_TRUE(
@@ -164,9 +164,9 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
 
     EXPECT_TRUE(streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce));
 
@@ -207,11 +207,11 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("test_stream");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-    StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+    SourceCatalogEntryPtr catalogEntryPtr = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
     streamCatalog->addPhysicalStream(newLogicalStreamName, catalogEntryPtr);
-    const vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);
+    const vector<SourceCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);
     EXPECT_EQ(allPhysicalStream.size(), 1U);
 }
 

@@ -34,7 +34,7 @@
 namespace NES::Optimizer {
 
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
-                                                       const StreamCatalogPtr& streamCatalog,
+                                                       const SourceCatalogPtr& streamCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
                                                        QueryMergerRule queryMergerRule,
@@ -61,7 +61,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
 
 GlobalQueryPlanUpdatePhasePtr
 GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
-                                   StreamCatalogPtr streamCatalog,
+                                   SourceCatalogPtr streamCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
                                    QueryMergerRule queryMergerRule,

@@ -54,8 +54,8 @@ using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
 class QueryUndeploymentPhase;
 using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -78,7 +78,7 @@ class NESRequestProcessorService {
                                         const TopologyPtr& topology,
                                         const QueryCatalogPtr& queryCatalog,
                                         const GlobalQueryPlanPtr& globalQueryPlan,
-                                        const StreamCatalogPtr& streamCatalog,
+                                        const SourceCatalogPtr& streamCatalog,
                                         const WorkerRPCClientPtr& workerRpcClient,
                                         NESRequestQueuePtr queryRequestQueue,
                                         Optimizer::QueryMergerRule queryMergerRule,

@@ -30,8 +30,8 @@ using ContextPtr = std::shared_ptr<context>;
 
 namespace NES {
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -48,7 +48,7 @@ class ILPStrategy : public BasePlacementStrategy {
     static std::unique_ptr<ILPStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                TopologyPtr topology,
                                                TypeInferencePhasePtr typeInferencePhase,
-                                               StreamCatalogPtr streamCatalog,
+                                               SourceCatalogPtr streamCatalog,
                                                z3::ContextPtr z3Context);
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
@@ -82,7 +82,7 @@ class ILPStrategy : public BasePlacementStrategy {
     explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
                          TypeInferencePhasePtr typeInferencePhase,
-                         StreamCatalogPtr streamCatalog,
+                         SourceCatalogPtr streamCatalog,
                          z3::ContextPtr z3Context);
     /**
      * @brief assigns operators to topology nodes based on ILP solution

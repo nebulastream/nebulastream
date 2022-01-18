@@ -26,7 +26,7 @@
 namespace NES {
 
 class PhysicalStreamConfig;
-using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalStreamConfig>;
 
 /**
  * @brief this struct covers the information about the attached sensor
@@ -35,8 +35,8 @@ using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
-    static PhysicalStreamConfigPtr createEmpty();
-    static PhysicalStreamConfigPtr create(const Configurations::PhysicalStreamTypePtr& sourceConfig);
+    static PhysicalSourcePtr createEmpty();
+    static PhysicalSourcePtr create(const Configurations::PhysicalStreamTypePtr& sourceConfig);
 
     ~PhysicalStreamConfig() noexcept override = default;
 

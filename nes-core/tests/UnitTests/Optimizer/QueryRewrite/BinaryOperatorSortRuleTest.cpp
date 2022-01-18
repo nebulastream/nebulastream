@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -53,7 +53,7 @@ class BinaryOperatorSortRuleTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down BinaryOperatorSortRuleTest test class."); }
 };
 
-void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
+void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
     NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
     auto schema1 = Schema::create()
                        ->addField("id", BasicType::UINT32)
@@ -69,7 +69,7 @@ void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSortedChildren) {
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -100,7 +100,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedChildren) {
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -130,7 +130,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSortedChildren) {
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -167,7 +167,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedChildren) {
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -204,7 +204,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithUnSortedChildren) {
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -254,7 +254,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
 
 TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWithSortedChildren) {
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);

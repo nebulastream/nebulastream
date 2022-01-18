@@ -135,7 +135,7 @@ void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& me
 }
 
 TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine =
         Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
     auto netManager = nodeEngine->getNetworkManager();
@@ -163,7 +163,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
 }
 
 TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine =
         Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
@@ -209,7 +209,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                      uint64_t numBuffers,
                                                      ExtraParameters&&... extraParams) {
     try {
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         std::vector<Runtime::BufferManagerPtr> bufferManagers = {
             std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
@@ -266,7 +266,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         atomic<int> eosCnt = 0;
         atomic<int>& bufferCnt;
 
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr streamConf,
+        explicit MockedNodeEngine(PhysicalSourcePtr streamConf,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   NES::Runtime::QueryManagerPtr&& queryManager,
@@ -342,7 +342,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                       PartitionRegistrationStatus::Deleted);
         });
 
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
         auto nodeEngine =
             Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31338, streamConf, 1, bufferSize, buffersManaged, 64, 64);
 
@@ -402,7 +402,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                            ->addField("test$one", DataTypeFactory::createInt64())
                            ->addField("test$value", DataTypeFactory::createInt64());
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     NesPartition nesPartition{1, 22, 33, 44};
     auto nodeEngineSender = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                          31337,
@@ -613,7 +613,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                            ->addField("test$one", DataTypeFactory::createInt64())
                            ->addField("test$value", DataTypeFactory::createInt64());
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngineSender = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                          31337,
                                                                          streamConf,

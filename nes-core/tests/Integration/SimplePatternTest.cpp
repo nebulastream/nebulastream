@@ -119,7 +119,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("QnV");
     //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testPatternWithTestStream.out";
@@ -201,7 +201,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("QnV");
     //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testPatternWithIterationOperator.out";

@@ -38,12 +38,12 @@ using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
  */
 class SemanticQueryValidation {
   private:
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
 
     /**
      * @brief Checks if the stream source in the provided QueryPlan is valid
      */
-    static void sourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const StreamCatalogPtr& streamCatalog);
+    static void sourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const SourceCatalogPtr& streamCatalog);
 
     /**
      * @brief Throws InvalidQueryException with formatted exception message
@@ -69,12 +69,12 @@ class SemanticQueryValidation {
     /**
      * @brief Constructor for the SemanticQueryValidation class
      */
-    explicit SemanticQueryValidation(StreamCatalogPtr streamCatalog);
+    explicit SemanticQueryValidation(SourceCatalogPtr streamCatalog);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
      */
-    static SemanticQueryValidationPtr create(const StreamCatalogPtr& scp);
+    static SemanticQueryValidationPtr create(const SourceCatalogPtr& scp);
 };
 
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;

@@ -24,11 +24,11 @@
 #include <string>
 #include <vector>
 //#include <Topology/NESTopologyEntry.hpp>
-#include <Catalogs/StreamCatalogEntry.hpp>
+#include <Catalogs/SourceCatalogEntry.hpp>
 namespace NES {
 
-class LogicalStream;
-using LogicalStreamPtr = std::shared_ptr<LogicalStream>;
+class LogicalSource;
+using LogicalStreamPtr = std::shared_ptr<LogicalSource>;
 
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
@@ -40,7 +40,7 @@ using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
  *    - TODO: add mutex to make it secure
  *    - TODO: delete methods only delete catalog entries not the entries in the topology
  */
-class StreamCatalog {
+class SourceCatalog {
   public:
     /**
    * @brief method to add a logical stream
@@ -72,7 +72,7 @@ class StreamCatalog {
    * @caution combination of node and name has to be unique
    * @return bool indicating success of insert stream
    */
-    bool addPhysicalStream(const std::string& logicalStreamName, const StreamCatalogEntryPtr& entry);
+    bool addPhysicalStream(const std::string& logicalStreamName, const SourceCatalogEntryPtr& entry);
 
     /**
    * @brief method to remove a physical stream
@@ -171,7 +171,7 @@ class StreamCatalog {
      * @param logicalStreamName
      * @return
      */
-    std::vector<StreamCatalogEntryPtr> getPhysicalStreams(const std::string& logicalStreamName);
+    std::vector<SourceCatalogEntryPtr> getPhysicalStreams(const std::string& logicalStreamName);
 
     /**
      * @brief update an existing stream
@@ -181,7 +181,7 @@ class StreamCatalog {
      */
     bool updatedLogicalStream(std::string& streamName, std::string& streamSchema);
 
-    StreamCatalog(QueryParsingServicePtr queryParsingService);
+    SourceCatalog(QueryParsingServicePtr queryParsingService);
 
   private:
     QueryParsingServicePtr queryParsingService;
@@ -189,13 +189,13 @@ class StreamCatalog {
     std::recursive_mutex catalogMutex;
 
     //map logical stream to schema
-    std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;
+    std::map<std::string, SchemaPtr> logicalSourceNameToSchemaMapping;
 
     //map logical stream to physical source
-    std::map<std::string, std::vector<StreamCatalogEntryPtr>> logicalToPhysicalStreamMapping;
+    std::map<std::string, std::vector<SourceCatalogEntryPtr>> logicalToPhysicalSourceMapping;
 
     void addDefaultStreams();
 };
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace NES
 #endif// NES_INCLUDE_CATALOGS_STREAM_CATALOG_HPP_

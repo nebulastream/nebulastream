@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -31,10 +31,10 @@
 
 namespace NES::Optimizer {
 
-LogicalSourceExpansionRule::LogicalSourceExpansionRule(StreamCatalogPtr streamCatalog, bool expandSourceOnly)
+LogicalSourceExpansionRule::LogicalSourceExpansionRule(SourceCatalogPtr streamCatalog, bool expandSourceOnly)
     : streamCatalog(std::move(streamCatalog)), expandSourceOnly(expandSourceOnly) {}
 
-LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(StreamCatalogPtr streamCatalog, bool expandSourceOnly) {
+LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(SourceCatalogPtr streamCatalog, bool expandSourceOnly) {
     return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(std::move(streamCatalog), expandSourceOnly));
 }
 

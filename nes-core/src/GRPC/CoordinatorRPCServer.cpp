@@ -24,7 +24,7 @@
 using namespace NES;
 
 CoordinatorRPCServer::CoordinatorRPCServer(TopologyPtr topology,
-                                           StreamCatalogPtr streamCatalog,
+                                           SourceCatalogPtr streamCatalog,
                                            MonitoringManagerPtr monitoringManager)
     : topologyManagerService(std::make_shared<TopologyManagerService>(topology, streamCatalog)),
       streamCatalogService(std::make_shared<StreamCatalogService>(streamCatalog)), monitoringManager(monitoringManager){};

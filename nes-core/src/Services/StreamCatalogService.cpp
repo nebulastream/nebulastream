@@ -16,7 +16,7 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/StreamCatalogService.hpp>
 #include <Topology/Topology.hpp>
@@ -27,7 +27,7 @@
 
 namespace NES {
 
-StreamCatalogService::StreamCatalogService(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
+StreamCatalogService::StreamCatalogService(SourceCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("StreamCatalogService()");
     NES_ASSERT(this->streamCatalog, "streamCatalogPtr has to be valid");
 }
@@ -45,8 +45,8 @@ bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr physicalNode,
               << physicalNode->getId() << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
-    StreamCatalogEntryPtr sce =
-        std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
+    SourceCatalogEntryPtr sce =
+        std::make_shared<SourceCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, physicalNode);
     bool success = streamCatalog->addPhysicalStream(logicalStreamName, sce);
     if (!success) {
         NES_ERROR("StreamCatalogService::RegisterPhysicalStream: adding physical stream was not successful.");

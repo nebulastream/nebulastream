@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <REST/Controller/BaseController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
@@ -30,7 +30,7 @@
 
 namespace NES {
 
-RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
+RestEngine::RestEngine(const SourceCatalogPtr& streamCatalog,
                        const NesCoordinatorWeakPtr& coordinator,
                        const QueryCatalogPtr& queryCatalog,
                        const TopologyPtr& topology,

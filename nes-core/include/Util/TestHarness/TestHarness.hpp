@@ -200,7 +200,7 @@ class TestHarness {
          * @param csvSourceConf physical stream configuration for the csv source
          * @param parentId id of the parent to connect
          */
-    void addCSVSource(const PhysicalStreamConfigPtr& csvSourceConf, SchemaPtr schema, uint64_t parentId) {
+    void addCSVSource(const PhysicalSourcePtr& csvSourceConf, SchemaPtr schema, uint64_t parentId) {
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
         wrkConf->setRpcPort(crdPort + (testHarnessWorkers.size() + 1) * 20);
@@ -224,7 +224,7 @@ class TestHarness {
       * @param schema schema of the source
       * @param csvSourceConf physical stream configuration for the csv source
       */
-    void addCSVSource(PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema) {
+    void addCSVSource(PhysicalSourcePtr csvSourceConf, SchemaPtr schema) {
         uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
         addCSVSource(std::move(csvSourceConf), std::move(schema), crdTopologyNodeId);
     }

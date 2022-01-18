@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -32,7 +32,7 @@ namespace NES::Optimizer {
 std::unique_ptr<IFCOPStrategy> IFCOPStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                      NES::TopologyPtr topology,
                                                      NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                     NES::StreamCatalogPtr streamCatalog) {
+                                                     NES::SourceCatalogPtr streamCatalog) {
     return std::make_unique<IFCOPStrategy>(IFCOPStrategy(std::move(globalExecutionPlan),
                                                          std::move(topology),
                                                          std::move(typeInferencePhase),
@@ -42,7 +42,7 @@ std::unique_ptr<IFCOPStrategy> IFCOPStrategy::create(NES::GlobalExecutionPlanPtr
 IFCOPStrategy::IFCOPStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                              NES::TopologyPtr topology,
                              NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                             NES::StreamCatalogPtr streamCatalog)
+                             NES::SourceCatalogPtr streamCatalog)
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
                             std::move(typeInferencePhase),

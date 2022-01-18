@@ -32,8 +32,8 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -63,7 +63,7 @@ class QueryPlacementPhase {
     static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
-                                         StreamCatalogPtr streamCatalog,
+                                         SourceCatalogPtr streamCatalog,
                                          z3::ContextPtr z3Context);
 
     /**
@@ -80,12 +80,12 @@ class QueryPlacementPhase {
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
-                                 StreamCatalogPtr streamCatalog,
+                                 SourceCatalogPtr streamCatalog,
                                  z3::ContextPtr z3Context);
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
     z3::ContextPtr z3Context;
 };
 }// namespace NES::Optimizer

@@ -822,7 +822,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
  * @brief This test generates a predicate with string comparision
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
@@ -1596,7 +1596,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
  * @brief This test checks the correctness of the current CEPiteration OP
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationCEPIterationOPinitialTest) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
     Runtime::WorkerContext wctx{0, nodeEngine->getBufferManager(), 64};
     /* prepare objects for test */

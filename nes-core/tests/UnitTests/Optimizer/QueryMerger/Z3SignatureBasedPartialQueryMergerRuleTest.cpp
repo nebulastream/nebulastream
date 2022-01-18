@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -49,7 +49,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -66,7 +66,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
                      ->addField("value", BasicType::UINT64)
                      ->addField("id1", BasicType::UINT32)
                      ->addField("value1", BasicType::UINT64);
-        streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+        streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         streamCatalog->addLogicalStream("car", schema);
         streamCatalog->addLogicalStream("bike", schema);
         streamCatalog->addLogicalStream("truck", schema);
@@ -76,13 +76,13 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setPhysicalStreamName("test2");
         sourceConfig->setLogicalStreamName("car");
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+        PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
 
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(phyConfCar, sourceNode1);
-        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(phyConfCar, sourceNode2);
+        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(phyConfCar, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(phyConfCar, sourceNode2);
 
         streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
         streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
@@ -92,10 +92,10 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
         sourceConfigBike->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfigBike->setPhysicalStreamName("testBike");
         sourceConfigBike->setLogicalStreamName("bike");
-        PhysicalStreamConfigPtr phyConfBike = PhysicalStreamConfig::create(sourceConfigBike);
+        PhysicalSourcePtr phyConfBike = PhysicalStreamConfig::create(sourceConfigBike);
 
-        StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(phyConfBike, sourceNode1);
-        StreamCatalogEntryPtr streamCatalogEntry4 = std::make_shared<StreamCatalogEntry>(phyConfBike, sourceNode2);
+        SourceCatalogEntryPtr streamCatalogEntry3 = std::make_shared<SourceCatalogEntry>(phyConfBike, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry4 = std::make_shared<SourceCatalogEntry>(phyConfBike, sourceNode2);
 
         streamCatalog->addPhysicalStream("bike", streamCatalogEntry3);
         streamCatalog->addPhysicalStream("bike", streamCatalogEntry4);
@@ -105,10 +105,10 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
         sourceConfigCar->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfigCar->setPhysicalStreamName("testTruck");
         sourceConfigCar->setLogicalStreamName("truck");
-        PhysicalStreamConfigPtr phyConfTruck = PhysicalStreamConfig::create(sourceConfigTruck);
+        PhysicalSourcePtr phyConfTruck = PhysicalStreamConfig::create(sourceConfigTruck);
 
-        StreamCatalogEntryPtr streamCatalogEntry5 = std::make_shared<StreamCatalogEntry>(phyConfTruck, sourceNode1);
-        StreamCatalogEntryPtr streamCatalogEntry6 = std::make_shared<StreamCatalogEntry>(phyConfTruck, sourceNode2);
+        SourceCatalogEntryPtr streamCatalogEntry5 = std::make_shared<SourceCatalogEntry>(phyConfTruck, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry6 = std::make_shared<SourceCatalogEntry>(phyConfTruck, sourceNode2);
 
         streamCatalog->addPhysicalStream("truck", streamCatalogEntry5);
         streamCatalog->addPhysicalStream("truck", streamCatalogEntry6);

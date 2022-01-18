@@ -35,12 +35,11 @@
 #include <utility>
 namespace NES {
 
-PhysicalStreamConfigPtr
-PhysicalStreamConfig::create(const Configurations::PhysicalStreamTypePtr& physicalStreamTypeConfig) {
+PhysicalSourcePtr PhysicalStreamConfig::create(const Configurations::PhysicalStreamTypePtr& physicalStreamTypeConfig) {
     return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(physicalStreamTypeConfig));
 }
 
-PhysicalStreamConfigPtr PhysicalStreamConfig::createEmpty() {
+PhysicalSourcePtr PhysicalStreamConfig::createEmpty() {
     return std::make_shared<PhysicalStreamConfig>(PhysicalStreamConfig(Configurations::StreamTypeConfiguration::create()));
 }
 

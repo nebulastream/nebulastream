@@ -18,7 +18,7 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -65,7 +65,7 @@ class MemoryLayoutSelectionPhaseTest : public testing::Test {
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
 
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     }
 
     /* Will be called before a test is executed. */
@@ -198,7 +198,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->setLayoutType(Schema::COLUMNAR_LAYOUT);
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -225,7 +225,7 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     auto inputSchema = Schema::create();
     inputSchema->addField("default_logical$f1", BasicType::INT32);
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 

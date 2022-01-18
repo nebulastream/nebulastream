@@ -50,7 +50,7 @@ class QueryService {
   public:
     explicit QueryService(QueryCatalogPtr queryCatalog,
                           NESRequestQueuePtr queryRequestQueue,
-                          StreamCatalogPtr streamCatalog,
+                          SourceCatalogPtr streamCatalog,
                           QueryParsingServicePtr queryParsingService,
                           bool enableSemanticQueryValidation);
 

@@ -15,7 +15,7 @@
 */
 
 #include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
@@ -51,7 +51,7 @@ NESRequestProcessorService::NESRequestProcessorService(
     const TopologyPtr& topology,
     const QueryCatalogPtr& queryCatalog,
     const GlobalQueryPlanPtr& globalQueryPlan,
-    const StreamCatalogPtr& streamCatalog,
+    const SourceCatalogPtr& streamCatalog,
     const WorkerRPCClientPtr& workerRpcClient,
     NESRequestQueuePtr queryRequestQueue,
     Optimizer::QueryMergerRule queryMergerRule,

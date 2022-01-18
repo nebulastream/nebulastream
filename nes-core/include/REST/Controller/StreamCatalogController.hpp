@@ -21,20 +21,20 @@
 #include <REST/CpprestForwardedRefs.hpp>
 
 namespace NES {
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class StreamCatalogController : public BaseController {
 
   public:
-    explicit StreamCatalogController(StreamCatalogPtr streamCatalog);
+    explicit StreamCatalogController(SourceCatalogPtr streamCatalog);
 
     void handleGet(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
     void handlePost(const std::vector<utility::string_t>& path, web::http::http_request& message) override;
     void handleDelete(const std::vector<utility::string_t>& path, web::http::http_request& request) override;
 
   private:
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
 };
 using StreamCatalogControllerPtr = std::shared_ptr<StreamCatalogController>;
 

@@ -33,7 +33,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
     static std::unique_ptr<ManualPlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                            TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
-                                                           StreamCatalogPtr streamCatalog);
+                                                           SourceCatalogPtr streamCatalog);
 
     /**
      * @brief set the binary mapping of the current strategy
@@ -46,7 +46,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
     explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                      TopologyPtr topology,
                                      TypeInferencePhasePtr typeInferencePhase,
-                                     StreamCatalogPtr streamCatalog);
+                                     SourceCatalogPtr streamCatalog);
 
     // stores the binary mapping  of the current strategy
     PlacementMatrix binaryMapping;

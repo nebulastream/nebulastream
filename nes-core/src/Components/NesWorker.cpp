@@ -16,7 +16,7 @@
 
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/PhysicalStream.hpp>
+#include <Configurations/Worker/PhysicalSource.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>

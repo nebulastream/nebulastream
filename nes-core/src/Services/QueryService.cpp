@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
@@ -37,7 +37,7 @@ namespace NES {
 
 QueryService::QueryService(QueryCatalogPtr queryCatalog,
                            NESRequestQueuePtr queryRequestQueue,
-                           StreamCatalogPtr streamCatalog,
+                           SourceCatalogPtr streamCatalog,
                            std::shared_ptr<QueryParsingService> queryParsingService,
                            bool enableSemanticQueryValidation)
     : queryCatalog(std::move(queryCatalog)), queryRequestQueue(std::move(queryRequestQueue)),

@@ -17,7 +17,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/Worker/PhysicalStream.hpp>
+#include <Configurations/Worker/PhysicalSource.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <Network/NetworkSink.hpp>

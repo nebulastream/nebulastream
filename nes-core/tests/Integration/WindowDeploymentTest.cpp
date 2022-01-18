@@ -99,7 +99,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("exdra");
 
     //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -319,7 +319,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
@@ -373,7 +373,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
@@ -430,7 +430,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
@@ -519,7 +519,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
     //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
 
@@ -589,7 +589,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
     testHarness.addCSVSource(conf, testSchema);
 
@@ -643,7 +643,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
     testHarness.addCSVSource(conf, testSchema);
 
@@ -703,7 +703,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
@@ -752,7 +752,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
@@ -801,7 +801,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
     testHarness.addCSVSource(conf, testSchema);
 
@@ -851,7 +851,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, testSchema);
     testHarness.addCSVSource(conf, testSchema);
 
@@ -916,7 +916,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -1003,7 +1003,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     //register physical stream
-    PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf70 = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(conf70);
 
@@ -1083,7 +1083,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("windowStream");
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(windowStream);
 
@@ -1172,7 +1172,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("windowStream");
 
     //register physical stream R2000070
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(sourceConfig);
 
     wrk1->registerPhysicalStream(windowStream);
     wrk2->registerPhysicalStream(windowStream);
@@ -1238,7 +1238,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
     sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     testHarness.addNonSourceWorker();
     testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));
@@ -1358,7 +1358,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     //    wrk1->registerPhysicalStream(physicalStream);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
@@ -1812,7 +1812,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
     sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
     sourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
     testHarness.addCSVSource(conf, carSchema);
 
     struct Output {

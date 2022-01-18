@@ -16,7 +16,7 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
@@ -27,7 +27,7 @@
 
 namespace NES {
 
-TopologyManagerService::TopologyManagerService(TopologyPtr topology, StreamCatalogPtr streamCatalog)
+TopologyManagerService::TopologyManagerService(TopologyPtr topology, SourceCatalogPtr streamCatalog)
     : topology(std::move(topology)), streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("TopologyManagerService()");
 }
@@ -64,7 +64,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         }
 
         //add default logical
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
         //check if logical stream exists
         if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(
                 streamConf->getLogicalStreamName()->getValue())) {
@@ -83,7 +83,7 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
             throw Exception("TopologyManagerService::registerNode: error source type " + sourceType + " is not supported");
         }
 
-        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+        SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
 
         bool success =
             streamCatalog->addPhysicalStream(streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue(), sce);

@@ -14,14 +14,18 @@
     limitations under the License.
 */
 
-#include <Configurations/Worker/PhysicalStream.hpp>
-#include <Configurations/Worker/PhysicalStreamTypes/StreamTypeConfiguration.hpp>
-#include <sstream>
+#include <API/Schema.hpp>
+#include <Catalogs/LogicalSource.hpp>
+#include <utility>
 
-std::string NES::Configuration::PhysicalStream::toString() {
+namespace NES {
 
-    std::stringstream ss;
-    ss<<"PhysicalStream Name: "<<physicalStreamName;
-    ss<<"LogicalSteam Name" <<logicalStreamName;
-    ss<<"Stream Type" <<physicalStreamTypeConfiguration->;
-    return ss.str(); }
+LogicalSource::LogicalSource(std::string name, const NES::SchemaPtr& schemaPtr) : name(std::move(name)) {
+    schema = schemaPtr->copy();
+}
+
+SchemaPtr LogicalSource::getSchema() { return schema; }
+
+std::string LogicalSource::getName() { return name; }
+
+}// namespace NES

@@ -22,8 +22,8 @@
 
 namespace NES {
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -42,13 +42,13 @@ class BottomUpStrategy : public BasePlacementStrategy {
     static std::unique_ptr<BottomUpStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                     TopologyPtr topology,
                                                     TypeInferencePhasePtr typeInferencePhase,
-                                                    StreamCatalogPtr streamCatalog);
+                                                    SourceCatalogPtr streamCatalog);
 
   private:
     explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                               TopologyPtr topology,
                               TypeInferencePhasePtr typeInferencePhase,
-                              StreamCatalogPtr streamCatalog);
+                              SourceCatalogPtr streamCatalog);
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.

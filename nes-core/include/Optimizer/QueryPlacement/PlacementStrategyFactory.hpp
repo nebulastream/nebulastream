@@ -36,8 +36,8 @@ namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -81,7 +81,7 @@ class PlacementStrategyFactory {
                                                               const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                               const TopologyPtr& topology,
                                                               const TypeInferencePhasePtr& typeInferencePhase,
-                                                              const StreamCatalogPtr& streamCatalog,
+                                                              const SourceCatalogPtr& streamCatalog,
                                                               const z3::ContextPtr& z3Context);
 
     /**
@@ -97,7 +97,7 @@ class PlacementStrategyFactory {
                                                               const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                               const TopologyPtr& topology,
                                                               const TypeInferencePhasePtr& typeInferencePhase,
-                                                              const StreamCatalogPtr& streamCatalog);
+                                                              const SourceCatalogPtr& streamCatalog);
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_PLACEMENT_STRATEGY_FACTORY_HPP_

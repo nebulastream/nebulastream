@@ -22,7 +22,7 @@
 #include "../../util/TestSink.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -604,7 +604,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -650,7 +650,7 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
         {// created buffer per source * number of sources
             uint64_t expectedBuf = 20;
 
-            PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+            PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
 
             // auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
             //                                                                 nodeEngine->getQueryManager(), 1, 12);

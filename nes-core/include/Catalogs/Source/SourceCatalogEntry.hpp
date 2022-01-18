@@ -17,7 +17,6 @@
 #ifndef NES_INCLUDE_CATALOGS_STREAM_CATALOG_ENTRY_HPP_
 #define NES_INCLUDE_CATALOGS_STREAM_CATALOG_ENTRY_HPP_
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -27,8 +26,14 @@ namespace NES {
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-class StreamCatalogEntry;
-using StreamCatalogEntryPtr = std::shared_ptr<StreamCatalogEntry>;
+class SourceCatalogEntry;
+using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
+
+class LogicalSource;
+using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
+
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 /**
  * @brief one entry in the catalog contains
@@ -39,20 +44,20 @@ using StreamCatalogEntryPtr = std::shared_ptr<StreamCatalogEntry>;
  * @Limitations
  *
  */
-class StreamCatalogEntry {
+class SourceCatalogEntry {
 
   public:
     /**
      * @brief Create the shared pointer for the stream catalog entry
      * @param sourceType: the source type
-     * @param physicalStreamName: physical stream name
-     * @param logicalStreamName: the logical stream name
+     * @param physicalSourceName: physical stream name
+     * @param logicalSourceName: the logical stream name
      * @param node: the topology node
      * @return shared pointer to stream catalog
      */
-    static StreamCatalogEntryPtr create(const std::string& sourceType,
-                                        const std::string& physicalStreamName,
-                                        const std::string& logicalStreamName,
+    static SourceCatalogEntryPtr create(const std::string& sourceType,
+                                        const std::string& physicalSourceName,
+                                        const std::string& logicalSourceName,
                                         const TopologyNodePtr& node);
 
     /**
@@ -61,14 +66,14 @@ class StreamCatalogEntry {
      * @param node : the topology node
      * @return shared pointer to stream catalog
      */
-    static StreamCatalogEntryPtr create(const AbstractPhysicalStreamConfigPtr& config, const TopologyNodePtr& node);
+    static SourceCatalogEntryPtr create(const AbstractPhysicalStreamConfigPtr& config, const TopologyNodePtr& node);
 
-    explicit StreamCatalogEntry(std::string sourceType,
+    explicit SourceCatalogEntry(std::string sourceType,
                                 std::string physicalStreamName,
                                 std::string logicalStreamName,
                                 TopologyNodePtr node);
 
-    explicit StreamCatalogEntry(const AbstractPhysicalStreamConfigPtr& config, TopologyNodePtr node);
+    explicit SourceCatalogEntry(const AbstractPhysicalStreamConfigPtr& config, TopologyNodePtr node);
 
     /**
      * @brief get source type
@@ -97,7 +102,8 @@ class StreamCatalogEntry {
     std::string toString();
 
   private:
-    PhysicalStreamConfigPtr physicalStreamConfig;
+    PhysicalSourcePtr physicalSource;
+
     TopologyNodePtr node;
 };
 

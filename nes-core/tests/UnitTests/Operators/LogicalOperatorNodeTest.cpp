@@ -24,8 +24,8 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>//
 
-#include <Catalogs/LogicalStream.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/LogicalSource.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -51,7 +51,7 @@ class LogicalOperatorNodeTest : public testing::Test {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+        SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException("default_logical");
         SchemaPtr schema = sPtr->getSchema();
         auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0);

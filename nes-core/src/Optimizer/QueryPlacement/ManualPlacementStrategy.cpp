@@ -23,7 +23,7 @@ namespace NES::Optimizer {
 std::unique_ptr<ManualPlacementStrategy> ManualPlacementStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                                          NES::TopologyPtr topology,
                                                                          NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                                         NES::StreamCatalogPtr streamCatalog) {
+                                                                         NES::SourceCatalogPtr streamCatalog) {
     return std::make_unique<ManualPlacementStrategy>(ManualPlacementStrategy(std::move(globalExecutionPlan),
                                                                              std::move(topology),
                                                                              std::move(typeInferencePhase),
@@ -33,7 +33,7 @@ std::unique_ptr<ManualPlacementStrategy> ManualPlacementStrategy::create(NES::Gl
 ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                  NES::TopologyPtr topology,
                                                  NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                 NES::StreamCatalogPtr streamCatalog)
+                                                 NES::SourceCatalogPtr streamCatalog)
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
                             std::move(typeInferencePhase),

@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <CoordinatorRPCService.pb.h>
@@ -65,7 +65,7 @@ class TopologyManagerServiceTest : public testing::Test {
 };
 
 TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
 

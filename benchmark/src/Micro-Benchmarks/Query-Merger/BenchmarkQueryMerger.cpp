@@ -16,8 +16,8 @@
 
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Catalogs/StreamCatalogEntry.hpp>
+#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/SourceCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -56,7 +56,7 @@ NES::NesCoordinatorPtr coordinator;
  * @param noOfPhysicalSource : number of physical sources
  */
 void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource) {
-    NES::StreamCatalogPtr streamCatalog = nesCoordinator->getStreamCatalog();
+    NES::SourceCatalogPtr streamCatalog = nesCoordinator->getStreamCatalog();
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()
                                  ->addField("a", NES::UINT64)
@@ -108,7 +108,7 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
         // Add Physical topology node and stream catalog entry
         for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
             auto topoNode = TopologyNode::create(i, "", i, i, 2);
-            auto streamCat = StreamCatalogEntry::create("CSV",
+            auto streamCat = SourceCatalogEntry::create("CSV",
                                                         "example" + std::to_string(j + 1) + std::to_string(i),
                                                         "example" + std::to_string(j + 1),
                                                         topoNode);

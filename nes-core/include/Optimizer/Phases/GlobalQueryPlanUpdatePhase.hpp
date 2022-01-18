@@ -38,8 +38,8 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 }// namespace NES
 
@@ -83,7 +83,7 @@ class GlobalQueryPlanUpdatePhase {
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog,
-                                                StreamCatalogPtr streamCatalog,
+                                                SourceCatalogPtr streamCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
                                                 QueryMergerRule queryMergerRule,
@@ -99,7 +99,7 @@ class GlobalQueryPlanUpdatePhase {
 
   private:
     explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
-                                        const StreamCatalogPtr& streamCatalog,
+                                        const SourceCatalogPtr& streamCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
                                         QueryMergerRule queryMergerRule,

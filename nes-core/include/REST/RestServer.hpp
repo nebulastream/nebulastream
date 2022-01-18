@@ -32,8 +32,8 @@ using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -72,7 +72,7 @@ class RestServer {
                uint16_t port,
                const NesCoordinatorWeakPtr& coordinator,
                const QueryCatalogPtr& queryCatalog,
-               const StreamCatalogPtr& streamCatalog,
+               const SourceCatalogPtr& streamCatalog,
                const TopologyPtr& topology,
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,

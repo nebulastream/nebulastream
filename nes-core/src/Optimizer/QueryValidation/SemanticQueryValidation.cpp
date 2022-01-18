@@ -15,7 +15,7 @@
 */
 
 #include <API/Query.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
@@ -31,9 +31,9 @@
 
 namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {}
+SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {}
 
-SemanticQueryValidationPtr SemanticQueryValidation::create(const StreamCatalogPtr& scp) {
+SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& scp) {
     return std::make_shared<SemanticQueryValidation>(scp);
 }
 
@@ -122,7 +122,7 @@ void SemanticQueryValidation::findAndReplaceAll(std::string& data, const std::st
     }
 }
 
-void SemanticQueryValidation::sourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const StreamCatalogPtr& streamCatalog) {
+void SemanticQueryValidation::sourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const SourceCatalogPtr& streamCatalog) {
 
     // Getting the source operators from the query plan
     auto sourceOperators = queryPlan->getSourceOperators();
@@ -137,7 +137,7 @@ void SemanticQueryValidation::sourceValidityCheck(const NES::QueryPlanPtr& query
             // Making sure that all logical stream sources are present in the stream catalog
             if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName)) {
                 throw InvalidQueryException("SemanticQueryValidation: The logical stream " + streamName
-                                            + " could not be found in the StreamCatalog\n");
+                                            + " could not be found in the SourceCatalog\n");
             }
         }
     }
