@@ -14,8 +14,10 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -165,27 +167,23 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
             if (root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).has_val()) {
                 setEnableMonitoring(root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG)).has_val()) {
-                for (ryml::NodeRef const& child : root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG))) {
-                    physicalStreams.push_back(PhysicalStreamTypeConfiguration::create(child));
-                }
+            const c4::yml::NodeRef& physicalSourceConfigs = root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG));
+            if (physicalSourceConfigs.has_val()) {
+                setPhysicalSources(PhysicalSourceFactory::createPhysicalSources(physicalSourceConfigs));
             }
         } catch (std::exception& e) {
-            NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. Keeping default "
-                      "values. "
-                      << e.what());
-            resetWorkerOptions();
+            NES_THROW_RUNTIME_ERROR("NesWorkerConfig: Error while initializing configuration parameters from YAML file. "
+                                    << e.what());
         }
         return;
     }
-    NES_ERROR("NesWorkerConfig: No file path was provided or file could not be found at " << filePath << ".");
-    NES_WARNING("Keeping default values for Worker Config.");
+    NES_THROW_RUNTIME_ERROR("NesWorkerConfig: Either file could not be found at " << filePath << " or supplied empty file.");
 }
 
-void WorkerConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
+void WorkerConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineArguments) {
     try {
 
-        for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
+        for (auto it = commandLineArguments.begin(); it != commandLineArguments.end(); ++it) {
             if (it->first == "--" + LOCAL_WORKER_IP_CONFIG && !it->second.empty()) {
                 setLocalWorkerIp(it->second);
             } else if (it->first == "--" + COORDINATOR_IP_CONFIG && !it->second.empty()) {
@@ -225,17 +223,18 @@ void WorkerConfiguration::overwriteConfigWithCommandLineInput(const std::map<std
             } else if (it->first == "--" + ENABLE_MONITORING_CONFIG && !it->second.empty()) {
                 setEnableMonitoring((it->second == "true"));
             } else {
-                NES_WARNING("Unknow configuration value :" << it->first);
+                NES_WARNING("Unknown configuration value :" << it->first);
             }
         }
-        //Despite being a vector, there is only one physical source definition possible using command line params
-        physicalStreams.push_back(PhysicalStream::create(inputParams));
 
+        //NOTE: Despite being a vector, there is only one physical source definition possible using command line params
+        auto physicalSource = PhysicalSourceFactory::createSourceConfig(commandLineArguments);
+        if (physicalSource) {
+            addPhysicalSource(physicalSource);
+        }
     } catch (std::exception& e) {
-        NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from command line. Keeping default "
-                  "values. "
-                  << e.what());
-        resetWorkerOptions();
+        NES_THROW_RUNTIME_ERROR("NesWorkerConfig: Error while initializing configuration parameters from command line. "
+                                << e.what());
     }
 }
 
@@ -258,7 +257,7 @@ void WorkerConfiguration::resetWorkerOptions() {
     setWorkerPinList(workerPinList->getDefaultValue());
     setSourcePinList(sourcePinList->getDefaultValue());
     setEnableMonitoring(enableMonitoring->getDefaultValue());
-    for (PhysicalStreamPtr physicalStreamTypeConfig : physicalStreams) {
+    for (PhysicalSourcePtr physicalStreamTypeConfig : physicalSources) {
         physicalStreamTypeConfig->resetPhysicalStreamOptions();
     }
 }
@@ -281,8 +280,8 @@ std::string WorkerConfiguration::toString() {
     ss << workerPinList->toStringNameCurrentValue();
     ss << sourcePinList->toStringNameCurrentValue();
     ss << enableMonitoring->toStringNameCurrentValue();
-    for (PhysicalStreamPtr physicalStream : physicalStreams) {
-        ss << physicalStream->toString();
+    for (PhysicalSourcePtr physicalSource : physicalSources) {
+        ss << physicalSource->toString();
     }
     return ss.str();
 }
@@ -397,11 +396,15 @@ void WorkerConfiguration::setEnableMonitoring(bool enableMonitoring) {
     WorkerConfiguration::enableMonitoring->setValue(enableMonitoring);
 }
 
-void WorkerConfiguration::setPhysicalStreams(std::vector<PhysicalStreamPtr> physicalStreamsConfigValues) {
-    physicalStreams = physicalStreamsConfigValues;
+void WorkerConfiguration::setPhysicalSources(std::vector<PhysicalSourcePtr> physicalSources) {
+    this->physicalSources = physicalSources;
 }
 
-std::vector<PhysicalStreamPtr> WorkerConfiguration::getPhysicalStreams() { return physicalStreams; }
+std::vector<PhysicalSourcePtr> WorkerConfiguration::getPhysicalSources() { return physicalSources; }
+
+void WorkerConfiguration::addPhysicalSource(PhysicalSourcePtr physicalSource) {
+    this->physicalSources.emplace_back(physicalSource);
+}
 
 }// namespace Configurations
 }// namespace NES

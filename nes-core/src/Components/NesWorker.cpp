@@ -67,7 +67,7 @@ NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig,
 
 NesWorker::~NesWorker() { stop(true); }
 
-bool NesWorker::setWithRegister(Configurations::PhysicalStreamPtr physicalStream) {
+bool NesWorker::setWithRegister(Configurations::PhysicalSourcePtr physicalStream) {
     withRegisterStream = true;
     this->physicalStreams.emplace_back(physicalStream);
     return true;

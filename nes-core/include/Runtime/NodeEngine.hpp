@@ -43,8 +43,8 @@ class PhysicalSourceType;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSourceType>;
 
 namespace Configurations {
-class PhysicalStream;
-using PhysicalStreamPtr = std::shared_ptr<PhysicalStream>;
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 }// namespace Configurations
 
 namespace Runtime {
@@ -70,7 +70,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(std::vector<Configurations::PhysicalStreamPtr> physicalStreams,
+    explicit NodeEngine(std::vector<Configurations::PhysicalSourcePtr> physicalStreams,
                         HardwareManagerPtr&&,
                         std::vector<BufferManagerPtr>&&,
                         QueryManagerPtr&&,

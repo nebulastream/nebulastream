@@ -69,13 +69,13 @@ int main(int argc, char** argv) {
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");
 
-    //if workerConfigPath to a yaml file is provided, system will use physicalStreams in yaml file
+    //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
     if (workerConfigPath != commandLineParams.end()) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
 
     //if command line params are provided that do not contain a path to a yaml file for worker config,
-    //command line param physicalStreams are used to overwrite default physicalStreams
+    //command line param physicalSources are used to overwrite default physicalSources
     if (argc >= 1 && !commandLineParams.contains("--workerConfigPath")) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
@@ -86,13 +86,13 @@ int main(int argc, char** argv) {
     NesWorkerPtr nesWorker = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
     //TODO: remove this if condition when we support more than 1 physical stream at a worker
-    if (!workerConfig->getPhysicalStreams().empty() && workerConfig->getPhysicalStreams().size() > 1) {
+    if (!workerConfig->getPhysicalSources().empty() && workerConfig->getPhysicalSources().size() > 1) {
         NES_NOT_IMPLEMENTED();
     }
 
     //TODO: change here to support more than 1 physical stream at a worker node
     //register physical stream
-    for (auto physicalStreamConfiguration : workerConfig->getPhysicalStreams()) {
+    for (auto physicalStreamConfiguration : workerConfig->getPhysicalSources()) {
         nesWorker->setWithRegister(physicalStreamConfiguration);
     }
 

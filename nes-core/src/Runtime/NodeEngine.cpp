@@ -44,7 +44,7 @@
 
 namespace NES::Runtime {
 
-NodeEngine::NodeEngine(std::vector<Configurations::PhysicalStreamPtr> physicalStreams,
+NodeEngine::NodeEngine(std::vector<Configurations::PhysicalSourcePtr> physicalStreams,
                        HardwareManagerPtr&& hardwareManager,
                        std::vector<BufferManagerPtr>&& bufferManagers,
                        QueryManagerPtr&& queryManager,
@@ -467,7 +467,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescri
             NES_DEBUG("config for stream " << streamName << " phy stream="
                                            << physicalStream->get()->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
             retPtr = *physicalStream;
-            //@Steffen what is the intended behaviour here? Why do we need to erase it from physicalStreams?
+            //@Steffen what is the intended behaviour here? Why do we need to erase it from physicalSources?
             physicalStreams.erase(physicalStream);
             break;
         } else {

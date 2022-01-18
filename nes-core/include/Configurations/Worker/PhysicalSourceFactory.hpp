@@ -38,27 +38,32 @@ class PhysicalSourceFactory {
      * @param argc number of command line params
      * @return source config object
      */
-    static std::vector<PhysicalSourcePtr> createSourceConfig(const std::map<std::string, std::string>& commandLineParams);
+    static PhysicalSourcePtr createSourceConfig(const std::map<std::string, std::string>& commandLineParams);
 
     /**
      * @brief create physical stream config with yaml file
      * @param physicalStreamConfig yaml elements from yaml file
      * @return physical stream config object
      */
-    static std::vector<PhysicalSourcePtr> createSourceConfig(ryml::NodeRef sourceTypeConfigNode, std::string sourceType);
+    static std::vector<PhysicalSourcePtr> createPhysicalSources(ryml::NodeRef yamlConfig);
+
+  private:
+    /**
+     * @brief Compute Physical Source Type based on the command line arguments
+     * @param sourceType : the string representing the physical source type
+     * @param commandLineParams : the command line arguments
+     * @return PhysicalSourceType shared pointer
+     */
+    static PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType,
+                                                          const std::map<std::string, std::string>& commandLineParams);
 
     /**
-     * @brief create default source config with default values of type sourceType
-     * @param sourceType source type of source config object
-     * @return source config object of type sourceType
+     * @brief Compute Physical Source Type based on the yaml configuration
+     * @param sourceType : the string representing the physical source type
+     * @param yamlConfig : the yaml configuration
+     * @return PhysicalSourceType shared pointer
      */
-    static PhysicalSourcePtr createSourceConfig(std::string sourceType);
-
-    /**
-     * @brief create default source config
-     * @return default source config object
-     */
-    static PhysicalSourcePtr createSourceConfig();
+    static PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType, ryml::NodeRef yamlConfig);
 };
 }// namespace Configurations
 }// namespace NES

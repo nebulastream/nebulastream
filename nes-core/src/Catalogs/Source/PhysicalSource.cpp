@@ -33,24 +33,16 @@ PhysicalSource::create(std::string logicalSourceName, std::string physicalSource
 }
 
 std::string PhysicalSource::toString() {
-
     std::stringstream ss;
     ss << "PhysicalSource Name: " << physicalSourceName;
     ss << "LogicalSteam Name" << logicalSourceName;
     ss << "Stream Type" << physicalSourceType->toString();
     return ss.str();
 }
-const std::string& PhysicalSource::getLogicalSourceName() const { return logicalSourceName; }
-void PhysicalSource::setLogicalSourceName(const std::string& logicalSourceName) {
-    PhysicalSource::logicalSourceName = logicalSourceName;
-}
-const std::string& PhysicalSource::getPhysicalSourceName() const { return physicalSourceName; }
-void PhysicalSource::setPhysicalSourceName(const std::string& physicalSourceName) {
-    PhysicalSource::physicalSourceName = physicalSourceName;
-}
-const PhysicalSourceTypePtr& PhysicalSource::getPhysicalSourceType() const { return physicalSourceType; }
-void PhysicalSource::setPhysicalSourceType(const PhysicalSourceTypePtr& physicalSourceType) {
-    PhysicalSource::physicalSourceType = physicalSourceType;
-}
 
+const std::string& PhysicalSource::getLogicalSourceName() const { return logicalSourceName; }
+
+const std::string& PhysicalSource::getPhysicalSourceName() const { return physicalSourceName; }
+
+const PhysicalSourceTypePtr& PhysicalSource::getPhysicalSourceType() const { return physicalSourceType; }
 }// namespace NES
