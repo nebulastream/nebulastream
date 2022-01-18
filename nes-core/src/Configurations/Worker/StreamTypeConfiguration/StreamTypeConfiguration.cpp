@@ -45,13 +45,13 @@ PhysicalStreamTypePtr StreamTypeConfiguration::create(const std::map<std::string
 StreamTypeConfiguration::StreamTypeConfiguration(const std::map<std::string, std::string>& inputParams) {
     NES_INFO("NesSourceConfig: Init physical stream config object with new values.");
 
-    if (inputParams.find("--" + PHYSICAL_STREAM_NAME_CONFIG) != inputParams.end()
-        && !inputParams.find("--" + PHYSICAL_STREAM_NAME_CONFIG)->second.empty()) {
-        physicalStreamName->setValue(inputParams.find("--" + PHYSICAL_STREAM_NAME_CONFIG)->second);
+    if (inputParams.find("--" + PHYSICAL_SOURCE_NAME_CONFIG) != inputParams.end()
+        && !inputParams.find("--" + PHYSICAL_SOURCE_NAME_CONFIG)->second.empty()) {
+        physicalStreamName->setValue(inputParams.find("--" + PHYSICAL_SOURCE_NAME_CONFIG)->second);
     }
-    if (inputParams.find("--" + LOGICAL_STREAM_NAME_CONFIG) != inputParams.end()
-        && !inputParams.find("--" + LOGICAL_STREAM_NAME_CONFIG)->second.empty()) {
-        physicalStreamName->setValue(inputParams.find("--" + LOGICAL_STREAM_NAME_CONFIG)->second);
+    if (inputParams.find("--" + LOGICAL_SOURCE_NAME_CONFIG) != inputParams.end()
+        && !inputParams.find("--" + LOGICAL_SOURCE_NAME_CONFIG)->second.empty()) {
+        physicalStreamName->setValue(inputParams.find("--" + LOGICAL_SOURCE_NAME_CONFIG)->second);
     }
 
     sourceTypeConfig = SourceTypeConfigFactory::createSourceConfig(inputParams);

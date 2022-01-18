@@ -45,11 +45,11 @@ class PhysicalSource {
     create(std::string logicalSourceName, std::string physicalSourceName, PhysicalSourceTypePtr physicalSourceType);
 
     const std::string& getLogicalSourceName() const;
-    void setLogicalSourceName(const std::string& logicalSourceName);
+
     const std::string& getPhysicalSourceName() const;
-    void setPhysicalSourceName(const std::string& physicalSourceName);
+
     const PhysicalSourceTypePtr& getPhysicalSourceType() const;
-    void setPhysicalSourceType(const PhysicalSourceTypePtr& physicalSourceType);
+
     std::string toString();
 
   private:

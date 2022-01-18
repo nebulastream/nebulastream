@@ -78,11 +78,11 @@ class TestUtils {
     }
 
     [[nodiscard]] static std::string physicalStreamName(std::string physicalStreamName) {
-        return "--" + PHYSICAL_STREAM_NAME_CONFIG + "=" + physicalStreamName;
+        return "--" + PHYSICAL_SOURCE_NAME_CONFIG + "=" + physicalStreamName;
     }
 
     [[nodiscard]] static std::string logicalStreamName(std::string logicalStreamName) {
-        return "--" + LOGICAL_STREAM_NAME_CONFIG + "=" + logicalStreamName;
+        return "--" + LOGICAL_SOURCE_NAME_CONFIG + "=" + logicalStreamName;
     }
 
     [[nodiscard]] static std::string numberOfBuffersToProduce(uint64_t numberOfBuffersToProduce) {

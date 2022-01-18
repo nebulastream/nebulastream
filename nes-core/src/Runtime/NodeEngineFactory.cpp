@@ -37,13 +37,13 @@ extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
 NodeEnginePtr
-NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<Configurations::PhysicalStreamPtr> configs) {
+NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<Configurations::PhysicalSourcePtr> configs) {
     return createNodeEngine(hostname, port, std::move(configs), 1, 4096, 1024, 128, 12, NumaAwarenessFlag::DISABLED, "");
 }
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint16_t port,
-                                                  std::vector<Configurations::PhysicalStreamPtr> configs,
+                                                  std::vector<Configurations::PhysicalSourcePtr> configs,
                                                   const uint16_t numThreads,
                                                   const uint64_t bufferSize,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,

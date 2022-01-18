@@ -125,7 +125,7 @@ TEST_F(StreamCatalogTest, testAddGetPhysicalStream) {
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
 
-    EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
+    EXPECT_TRUE(streamCatalog->addPhysicalSource(conf->getLogicalStreamName(), sce));
 
     std::string expected = "stream name=test_stream with 1 elements:physicalName=test2 logicalSourceName=test_stream "
                            "sourceType=DefaultSource on node=1\n";
@@ -153,7 +153,7 @@ TEST_F(StreamCatalogTest, testAddRemovePhysicalStream) {
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
 
-    EXPECT_TRUE(streamCatalog->addPhysicalStream(conf->getLogicalStreamName(), sce));
+    EXPECT_TRUE(streamCatalog->addPhysicalSource(conf->getLogicalStreamName(), sce));
     EXPECT_TRUE(
         streamCatalog->removePhysicalStream(conf->getLogicalStreamName(), conf->getPhysicalStreamName(), physicalNode->getId()));
     NES_INFO(streamCatalog->getPhysicalStreamAndSchemaAsString());
@@ -168,7 +168,7 @@ TEST_F(StreamCatalogTest, testAddPhysicalForNotExistingLogicalStream) {
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
 
-    EXPECT_TRUE(streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce));
+    EXPECT_TRUE(streamCatalog->addPhysicalSource(streamConf->getLogicalStreamName(), sce));
 
     std::string expected =
         "stream name=default_logical with 1 elements:physicalName=default_physical logicalSourceName=default_logical "
@@ -210,8 +210,8 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     SourceCatalogEntryPtr catalogEntryPtr = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
-    streamCatalog->addPhysicalStream(newLogicalStreamName, catalogEntryPtr);
-    const vector<SourceCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(newLogicalStreamName);
+    streamCatalog->addPhysicalSource(newLogicalStreamName, catalogEntryPtr);
+    const vector<SourceCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalSources(newLogicalStreamName);
     EXPECT_EQ(allPhysicalStream.size(), 1U);
 }
 

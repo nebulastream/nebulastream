@@ -169,7 +169,7 @@ const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "queryCompi
 const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
 const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
-const std::string PHYSICAL_STREAMS_CONFIG = "physicalStreams";
+const std::string PHYSICAL_STREAMS_CONFIG = "physicalSources";
 
 //Different Stream Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
@@ -181,8 +181,8 @@ const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
 const std::string OPC_SOURCE_CONFIG = "OPCSource";
 const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
 
-const std::string PHYSICAL_STREAM_NAME_CONFIG = "physicalSourceName";
-const std::string LOGICAL_STREAM_NAME_CONFIG = "logicalSourceName";
+const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
+const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 
 //Configuration names for stream types
 const std::string SOURCE_TYPE_CONFIG = "sourceType";

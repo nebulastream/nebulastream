@@ -61,12 +61,12 @@ class DefaultSourceType : public PhysicalSourceType {
 
   private:
     /**
-     * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalStreams
+     * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
      */
     explicit DefaultSourceType(std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalStreams
+     * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
      */
     explicit DefaultSourceType(ryml::NodeRef sourceTypeConfig);
 

@@ -21,8 +21,8 @@
 namespace NES {
 
 namespace Configurations {
-class PhysicalStream;
-using PhysicalStreamPtr = std::shared_ptr<PhysicalStream>;
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 }// namespace Configurations
 
 namespace Runtime {
@@ -39,7 +39,7 @@ class NodeEngineFactory {
      * @param config
      * @return
      */
-    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<Configurations::PhysicalStreamPtr> configs);
+    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<Configurations::PhysicalSourcePtr> configs);
 
     /**
     * @brief this creates a new Runtime
@@ -52,7 +52,7 @@ class NodeEngineFactory {
     */
     static NodeEnginePtr createNodeEngine(const std::string& hostname,
                                           uint16_t port,
-                                          std::vector<Configurations::PhysicalStreamPtr> configs,
+                                          std::vector<Configurations::PhysicalSourcePtr> configs,
                                           uint16_t numThreads,
                                           uint64_t bufferSize,
                                           uint64_t numberOfBuffersInGlobalBufferManager,

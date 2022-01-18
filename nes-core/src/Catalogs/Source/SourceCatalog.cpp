@@ -109,7 +109,7 @@ bool SourceCatalog::removeLogicalStream(const std::string& logicalStreamName) {
 
 bool SourceCatalog::addPhysicalStream(const std::string& logicalStreamName, const SourceCatalogEntryPtr& newEntry) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("SourceCatalog: search for logical stream in addPhysicalStream() " << logicalStreamName);
+    NES_DEBUG("SourceCatalog: search for logical stream in addPhysicalSource() " << logicalStreamName);
 
     // check if logical stream exists
     if (!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {

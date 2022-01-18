@@ -39,8 +39,8 @@ class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
 namespace Configurations {
-class PhysicalStream;
-using PhysicalStreamPtr = std::shared_ptr<PhysicalStream>;
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 }// namespace Configurations
 
 enum NesNodeType : int { Worker, Sensor };
@@ -70,7 +70,7 @@ class NesWorker {
      * @param new stream of this system
      * @return bool indicating success
      */
-    bool setWithRegister(Configurations::PhysicalStreamPtr physicalStream);
+    bool setWithRegister(Configurations::PhysicalSourcePtr physicalStream);
 
     /**
      * @brief configure setup with set of parent id
@@ -117,7 +117,7 @@ class NesWorker {
      * @param physicalStream: physical stream containing relevant information
      * @return bool indicating success
      */
-    bool registerPhysicalStream(const Configurations::PhysicalStreamPtr& physicalStream);
+    bool registerPhysicalStream(const Configurations::PhysicalSourcePtr& physicalStream);
 
     /**
     * @brief method to deregister physical stream with the coordinator
@@ -201,7 +201,7 @@ class NesWorker {
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     const Configurations::WorkerConfigurationPtr workerConfig;
-    std::vector<Configurations::PhysicalStreamPtr> physicalStreams;
+    std::vector<Configurations::PhysicalSourcePtr> physicalStreams;
     bool connected{false};
     bool withRegisterStream{false};
     bool withParent{false};
