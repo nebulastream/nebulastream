@@ -17,7 +17,7 @@
 // Created by balint on 25.12.21.
 //
 
-#include "Services/MaintenanceService.hpp"
+#include <Services/MaintenanceService.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
