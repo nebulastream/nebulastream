@@ -31,7 +31,14 @@ DefaultSourceTypePtr DefaultSourceType::create(ryml::NodeRef yamlConfig) {
     return std::make_shared<DefaultSourceType>(DefaultSourceType(std::move(yamlConfig)));
 }
 
-DefaultSourceType::DefaultSourceType() : PhysicalSourceType(DEFAULT_SOURCE) {
+DefaultSourceType::DefaultSourceType()
+    : PhysicalSourceType(DEFAULT_SOURCE), numberOfBuffersToProduce(Configurations::ConfigurationOption<uint32_t>::create(
+                                              Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
+                                              1,
+                                              "Number of buffers to produce.")),
+      sourceFrequency(Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_FREQUENCY_CONFIG,
+                                                                            1,
+                                                                            "Sampling frequency of the source.")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -41,15 +48,13 @@ DefaultSourceType::DefaultSourceType(ryml::NodeRef sourceTypeConfig) : DefaultSo
 
 std::string DefaultSourceType::toString() {
     std::stringstream ss;
-    ss << "Default Source Type";
+    ss << "Default Source Type =>{\n";
+    ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG << ":" << numberOfBuffersToProduce;
+    ss << Configurations::SOURCE_FREQUENCY_CONFIG << ":" << sourceFrequency;
+    ss << "\n}";
     return ss.str();
 }
 
-bool DefaultSourceType::equal(const PhysicalSourceTypePtr& other) {
-    if (!other->instanceOf<DefaultSourceType>()) {
-        return false;
-    }
-    return true;
-}
+bool DefaultSourceType::equal(const PhysicalSourceTypePtr& other) { return !other->instanceOf<DefaultSourceType>(); }
 
 }// namespace NES
