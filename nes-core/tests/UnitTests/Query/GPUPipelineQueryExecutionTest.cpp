@@ -47,9 +47,9 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 
+#include <Util/jitify/jitify.hpp>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <Util/jitify/jitify.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
