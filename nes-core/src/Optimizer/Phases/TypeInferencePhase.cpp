@@ -14,7 +14,7 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -25,11 +25,11 @@
 
 namespace NES::Optimizer {
 
-TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
+TypeInferencePhase::TypeInferencePhase(SourceCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("TypeInferencePhase()");
 }
 
-TypeInferencePhasePtr TypeInferencePhase::create(StreamCatalogPtr streamCatalog) {
+TypeInferencePhasePtr TypeInferencePhase::create(SourceCatalogPtr streamCatalog) {
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(streamCatalog)));
 }
 
@@ -39,7 +39,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         auto sources = queryPlan->getSourceOperators();
 
         if (!sources.empty() && !streamCatalog) {
-            NES_WARNING("TypeInferencePhase: No StreamCatalog specified!");
+            NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
         }
 
         for (const auto& source : sources) {

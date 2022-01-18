@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -33,7 +33,7 @@ namespace NES::Optimizer {
 std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                            TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
-                                                           StreamCatalogPtr streamCatalog) {
+                                                           SourceCatalogPtr streamCatalog) {
     return std::make_unique<BottomUpStrategy>(BottomUpStrategy(std::move(globalExecutionPlan),
                                                                std::move(topology),
                                                                std::move(typeInferencePhase),
@@ -43,7 +43,7 @@ std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPt
 BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                    TopologyPtr topology,
                                    TypeInferencePhasePtr typeInferencePhase,
-                                   StreamCatalogPtr streamCatalog)
+                                   SourceCatalogPtr streamCatalog)
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
                             std::move(typeInferencePhase),

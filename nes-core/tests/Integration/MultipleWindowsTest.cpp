@@ -94,7 +94,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -192,7 +192,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
@@ -286,7 +286,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -390,7 +390,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
@@ -490,7 +490,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
 
@@ -604,7 +604,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
 
     wrk1->registerPhysicalStream(conf);
     wrk2->registerPhysicalStream(conf);
@@ -712,7 +712,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(conf);
 
     std::string outputFilePath = "testOutput.out";
@@ -877,7 +877,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     srcConf->setSkipHeader(false);
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     wrk2->registerPhysicalStream(windowStream);
     wrk3->registerPhysicalStream(windowStream);
@@ -1044,7 +1044,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     srcConf->setSkipHeader(false);
-    PhysicalStreamConfigPtr windowStream = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr windowStream = PhysicalStreamConfig::create(srcConf);
 
     wrk2->registerPhysicalStream(windowStream);
     wrk3->registerPhysicalStream(windowStream);

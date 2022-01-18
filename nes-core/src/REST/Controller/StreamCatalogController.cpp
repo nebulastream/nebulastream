@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <REST/Controller/StreamCatalogController.hpp>
 #include <REST/runtime_utils.hpp>
@@ -25,7 +25,7 @@
 #include <utility>
 
 namespace NES {
-StreamCatalogController::StreamCatalogController(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
+StreamCatalogController::StreamCatalogController(SourceCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("StreamCatalogController()");
 }
 
@@ -63,7 +63,7 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
             //Prepare Input query from user string
             std::string logicalStreamName = param->second;
 
-            const std::vector<StreamCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(logicalStreamName);
+            const std::vector<SourceCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(logicalStreamName);
 
             //Prepare the response
             web::json::value result{};

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PHYSICALSTREAM_HPP
-#define NES_PHYSICALSTREAM_HPP
+#ifndef NES_PHYSICALSOURCE_HPP
+#define NES_PHYSICALSOURCE_HPP
 
 #include <memory>
 #include <string>
@@ -27,29 +27,29 @@ namespace Configuration {
 class PhysicalStreamTypeConfiguration;
 using PhysicalStreamTypeConfigurationPtr = std::shared_ptr<PhysicalStreamTypeConfiguration>;
 
-class PhysicalStream;
-using PhysicalStreamPtr = std::shared_ptr<PhysicalStream>;
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 /**
  * @brief Container for storing all configurations for physical stream
  */
-class PhysicalStream {
+class PhysicalSource {
 
   public:
 
-    static PhysicalStreamPtr create(std::string logicalStream, std::string physicalStream, );
+    static PhysicalSourcePtr create(std::string logicalStream, std::string physicalStream, );
 
     const std::string& getLogicalStreamName() const { return logicalStreamName; }
-    void setLogicalStreamName(const std::string& logicalStreamName) { PhysicalStream::logicalStreamName = logicalStreamName; }
+    void setLogicalStreamName(const std::string& logicalStreamName) { PhysicalSource::logicalStreamName = logicalStreamName; }
 
     const std::string& getPhysicalStreamName() const { return physicalStreamName; }
-    void setPhysicalStreamName(const std::string& physicalStreamName) { PhysicalStream::physicalStreamName = physicalStreamName; }
+    void setPhysicalStreamName(const std::string& physicalStreamName) { PhysicalSource::physicalStreamName = physicalStreamName; }
 
     const PhysicalStreamTypeConfigurationPtr& getPhysicalStreamTypeConfiguration() const {
         return physicalStreamTypeConfiguration;
     }
     void setPhysicalStreamTypeConfiguration(const PhysicalStreamTypeConfigurationPtr& physicalStreamTypeConfiguration) {
-        PhysicalStream::physicalStreamTypeConfiguration = physicalStreamTypeConfiguration;
+        PhysicalSource::physicalStreamTypeConfiguration = physicalStreamTypeConfiguration;
     }
 
     std::string toString();
@@ -64,4 +64,4 @@ class PhysicalStream {
 
 }// namespace NES
 
-#endif//NES_PHYSICALSTREAM_HPP
+#endif//NES_PHYSICALSOURCE_HPP

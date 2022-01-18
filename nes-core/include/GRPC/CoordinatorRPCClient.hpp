@@ -33,7 +33,7 @@ class StaticNesMetrics;
 using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
 
 class PhysicalStreamConfig;
-using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalStreamConfig>;
 
 class CoordinatorRPCClient {
   public:

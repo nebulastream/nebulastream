@@ -15,7 +15,7 @@
 */
 
 #include "z3++.h"
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
@@ -44,7 +44,7 @@ namespace NES::Optimizer {
 std::unique_ptr<ILPStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                  TopologyPtr topology,
                                                  TypeInferencePhasePtr typeInferencePhase,
-                                                 StreamCatalogPtr streamCatalog,
+                                                 SourceCatalogPtr streamCatalog,
                                                  z3::ContextPtr z3Context) {
     return std::make_unique<ILPStrategy>(
         ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context));
@@ -53,7 +53,7 @@ std::unique_ptr<ILPStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalEx
 ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
                          TypeInferencePhasePtr typeInferencePhase,
-                         StreamCatalogPtr streamCatalog,
+                         SourceCatalogPtr streamCatalog,
                          z3::ContextPtr z3Context)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog), z3Context(std::move(z3Context)) {}
 

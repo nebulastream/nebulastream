@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
@@ -37,7 +37,7 @@ namespace NES::Optimizer {
 BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                              TopologyPtr topologyPtr,
                                              TypeInferencePhasePtr typeInferencePhase,
-                                             StreamCatalogPtr streamCatalog)
+                                             SourceCatalogPtr streamCatalog)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topologyPtr)),
       typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)) {}
 

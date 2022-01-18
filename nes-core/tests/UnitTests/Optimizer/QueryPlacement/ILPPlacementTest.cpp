@@ -16,8 +16,8 @@
 
 #include "z3++.h"
 #include <API/QueryAPI.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Catalogs/StreamCatalogEntry.hpp>
+#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/SourceCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
@@ -110,7 +110,7 @@ class ILPPlacementTest : public testing::Test {
                              "->addField(\"value\", BasicType::UINT64);";
         const std::string streamName = "car";
 
-        streamCatalogForILP = std::make_shared<StreamCatalog>(queryParsingService);
+        streamCatalogForILP = std::make_shared<SourceCatalog>(queryParsingService);
         streamCatalogForILP->addLogicalStream(streamName, schema);
 
         SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
@@ -119,9 +119,9 @@ class ILPPlacementTest : public testing::Test {
         sourceConfig->setPhysicalStreamName("test3");
         sourceConfig->setLogicalStreamName("car");
 
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+        PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode);
+        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, sourceNode);
 
         streamCatalogForILP->addPhysicalStream("car", streamCatalogEntry1);
     }
@@ -164,7 +164,7 @@ class ILPPlacementTest : public testing::Test {
         operatorNode->addProperty("cost", cost);
     }
 
-    StreamCatalogPtr streamCatalogForILP;
+    SourceCatalogPtr streamCatalogForILP;
     TopologyPtr topologyForILP;
 };
 

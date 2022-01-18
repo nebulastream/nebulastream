@@ -15,7 +15,7 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -72,7 +72,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -115,7 +115,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
                      .apply(Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(""));
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
@@ -141,7 +141,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     plan->appendOperatorAsNewRoot(map);
     plan->appendOperatorAsNewRoot(sink);
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
@@ -154,7 +154,7 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
     auto query = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
@@ -181,7 +181,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
@@ -211,12 +211,12 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
 
     auto plan = query.getQueryPlan();
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
@@ -238,12 +238,12 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 
     auto plan = query.getQueryPlan();
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
 
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
@@ -266,7 +266,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
     plan->appendOperatorAsNewRoot(map);
     plan->appendOperatorAsNewRoot(sink);
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto maps = plan->getOperatorByType<MapLogicalOperatorNode>();
     phase->execute(plan);
@@ -283,7 +283,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -329,7 +329,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::FLOAT64);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -383,7 +383,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -436,7 +436,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStream) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -489,7 +489,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProject) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -549,7 +549,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -595,7 +595,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -655,7 +655,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -722,7 +722,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
 TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQualifiedNamesAndJoinOperator) {
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -796,7 +796,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
 TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
@@ -907,7 +907,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
                      .apply(Sum(Attribute("id")))
                      .sink(FileSinkDescriptor::create(""));
 
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
@@ -944,7 +944,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
  * @brief In this test we infer the output and input schemas of each operator window join query
  */
 TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     streamCatalog->removeLogicalStream("default_logical");
@@ -991,7 +991,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
 TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
     auto inputSchema =
         Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->removeLogicalStream("default_logical");
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 

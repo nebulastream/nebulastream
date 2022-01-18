@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Configurations/Worker/PhysicalStreamConfig/SourceTypeConfigFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -42,7 +42,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -57,7 +57,7 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public testing::Test {
                      ->addField("value", BasicType::UINT64)
                      ->addField("type", BasicType::UINT64)
                      ->addField("ts", BasicType::UINT64);
-        streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+        streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         streamCatalog->addLogicalStream("car", schema);
         streamCatalog->addLogicalStream("bike", schema);
         streamCatalog->addLogicalStream("truck", schema);
@@ -67,10 +67,10 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public testing::Test {
         sourceConfigCar->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfigCar->setPhysicalStreamName("testCar");
         sourceConfigCar->setLogicalStreamName("car");
-        PhysicalStreamConfigPtr phyConfCar = PhysicalStreamConfig::create(sourceConfigCar);
+        PhysicalSourcePtr phyConfCar = PhysicalStreamConfig::create(sourceConfigCar);
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(phyConfCar, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(phyConfCar, sourceNode1);
         streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
 
         SourceConfigPtr sourceConfigBike = SourceConfigFactory::createSourceConfig();
@@ -78,8 +78,8 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public testing::Test {
         sourceConfigBike->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfigBike->setPhysicalStreamName("testBike");
         sourceConfigBike->setLogicalStreamName("bike");
-        PhysicalStreamConfigPtr phyConfBike = PhysicalStreamConfig::create(sourceConfigBike);
-        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(phyConfBike, sourceNode1);
+        PhysicalSourcePtr phyConfBike = PhysicalStreamConfig::create(sourceConfigBike);
+        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(phyConfBike, sourceNode1);
         streamCatalog->addPhysicalStream("bike", streamCatalogEntry2);
 
         SourceConfigPtr sourceConfigTruck = SourceConfigFactory::createSourceConfig();
@@ -87,8 +87,8 @@ class SyntaxBasedCompleteQueryMergerRuleTest : public testing::Test {
         sourceConfigCar->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfigCar->setPhysicalStreamName("testTruck");
         sourceConfigCar->setLogicalStreamName("truck");
-        PhysicalStreamConfigPtr phyConfTruck = PhysicalStreamConfig::create(sourceConfigTruck);
-        StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(phyConfTruck, sourceNode1);
+        PhysicalSourcePtr phyConfTruck = PhysicalStreamConfig::create(sourceConfigTruck);
+        SourceCatalogEntryPtr streamCatalogEntry3 = std::make_shared<SourceCatalogEntry>(phyConfTruck, sourceNode1);
         streamCatalog->addPhysicalStream("truck", streamCatalogEntry3);
     }
 

@@ -34,13 +34,13 @@ class IFCOPStrategy : public BasePlacementStrategy {
     static std::unique_ptr<IFCOPStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                  TopologyPtr topology,
                                                  TypeInferencePhasePtr typeInferencePhase,
-                                                 StreamCatalogPtr streamCatalog);
+                                                 SourceCatalogPtr streamCatalog);
 
   private:
     IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                   TopologyPtr topology,
                   TypeInferencePhasePtr typeInferencePhase,
-                  StreamCatalogPtr streamCatalog);
+                  SourceCatalogPtr streamCatalog);
 
     /**
      * Get an random operator placement candidate

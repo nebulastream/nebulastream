@@ -40,7 +40,7 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
-    explicit CoordinatorRPCServer(TopologyPtr topology, StreamCatalogPtr streamCatalog, MonitoringManagerPtr monitoringService);
+    explicit CoordinatorRPCServer(TopologyPtr topology, SourceCatalogPtr streamCatalog, MonitoringManagerPtr monitoringService);
 
     /**
      * @brief RPC Call to register a node

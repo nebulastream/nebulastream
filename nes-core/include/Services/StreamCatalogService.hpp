@@ -22,8 +22,8 @@
 
 enum NodeType : int;
 namespace NES {
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
@@ -33,7 +33,7 @@ using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 class StreamCatalogService {
 
   public:
-    StreamCatalogService(StreamCatalogPtr streamCatalog);
+    StreamCatalogService(SourceCatalogPtr streamCatalog);
 
     /**
      * @brief method to register a physical stream
@@ -78,7 +78,7 @@ class StreamCatalogService {
     bool unregisterLogicalStream(const std::string& logicalStreamName);
 
   private:
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
     std::mutex addRemoveLogicalStream;
     std::mutex addRemovePhysicalStream;
 };

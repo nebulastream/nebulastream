@@ -26,7 +26,7 @@ std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(con
                                                                              const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                              const TopologyPtr& topology,
                                                                              const TypeInferencePhasePtr& typeInferencePhase,
-                                                                             const StreamCatalogPtr& streamCatalog,
+                                                                             const SourceCatalogPtr& streamCatalog,
                                                                              const z3::ContextPtr& z3Context) {
     switch (stringToPlacementStrategyType[strategyName]) {
         case PlacementType::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
@@ -38,7 +38,7 @@ std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(con
                                                                              const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                              const TopologyPtr& topology,
                                                                              const TypeInferencePhasePtr& typeInferencePhase,
-                                                                             const StreamCatalogPtr& streamCatalog) {
+                                                                             const SourceCatalogPtr& streamCatalog) {
     switch (stringToPlacementStrategyType[strategyName]) {
         case PlacementType::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
         case PlacementType::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);

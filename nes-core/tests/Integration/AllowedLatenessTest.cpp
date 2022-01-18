@@ -34,8 +34,8 @@ using namespace Configurations;
 
 class AllowedLatenessTest : public testing::Test {
   public:
-    PhysicalStreamConfigPtr outOfOrderConf;
-    PhysicalStreamConfigPtr inOrderConf;
+    PhysicalSourcePtr outOfOrderConf;
+    PhysicalSourcePtr inOrderConf;
     SchemaPtr inputSchema;
 
     static void SetUpTestCase() {

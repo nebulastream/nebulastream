@@ -30,8 +30,8 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <gtest/gtest.h>
 
-#include <Catalogs/LogicalStream.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/LogicalSource.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>

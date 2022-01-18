@@ -120,7 +120,7 @@ template<typename MockedNodeEngine>
 std::shared_ptr<MockedNodeEngine>
 createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize = 8192, uint64_t numBuffers = 1024) {
     try {
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         std::vector<BufferManagerPtr> bufferManager = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
         auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManager, 0, 1, nullptr);
@@ -309,13 +309,13 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId) {
  *     cout << "Stats=" << ptr->getStatistics() << endl;
  */
 TEST_F(NodeEngineTest, testStartStopEngineEmpty) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
     EXPECT_TRUE(engine->stop());
 }
 
 TEST_F(NodeEngineTest, teststartDeployStop) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
@@ -328,7 +328,7 @@ TEST_F(NodeEngineTest, teststartDeployStop) {
 }
 
 TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto ptr = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
@@ -342,7 +342,7 @@ TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
 }
 
 TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto ptr = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
@@ -361,7 +361,7 @@ TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
 }
 //
 TEST_F(NodeEngineTest, testParallelDifferentSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
     //  GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
@@ -414,7 +414,7 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
 }
 //
 TEST_F(NodeEngineTest, testParallelSameSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -457,7 +457,7 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
 }
 //
 TEST_F(NodeEngineTest, testParallelSameSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
     // create two executable query plans, which emit to the same sink
@@ -510,7 +510,7 @@ TEST_F(NodeEngineTest, testParallelSameSink) {
 }
 //
 TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     auto sink1 = createTextFileSink(sch1, 0, engine, "qep3.txt", true);
@@ -588,7 +588,7 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
 }
 //
 TEST_F(NodeEngineTest, testStartStopStartStop) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
@@ -625,7 +625,7 @@ void assertKiller() {
       public:
         using Runtime::NodeEngine::NodeEngine;
 
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr config,
+        explicit MockedNodeEngine(PhysicalSourcePtr config,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
@@ -671,7 +671,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     class MockedNodeEngine : public Runtime::NodeEngine {
       public:
         std::promise<bool> completedPromise;
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config,
+        explicit MockedNodeEngine(PhysicalSourcePtr&& config,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
@@ -746,7 +746,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
       public:
         std::promise<bool> completedPromise;
 
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config,
+        explicit MockedNodeEngine(PhysicalSourcePtr&& config,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,

@@ -423,7 +423,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("testStream");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
 
     // Workers
     testHarness.addNonSourceWorker();                          // id=0
@@ -503,7 +503,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
 
     // Workers
     testHarness.addNonSourceWorker();                          // id=0
@@ -666,7 +666,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     srcConf->setNumberOfBuffersToProduce(3);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(srcConf);
 
     testHarness.addNonSourceWorker();
     testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));

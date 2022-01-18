@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
@@ -57,7 +57,7 @@ class LogicalSourceExpansionRuleTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down LogicalSourceExpansionRuleTest test class."); }
 };
 
-void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
+void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
     NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
@@ -68,16 +68,16 @@ void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("test_stream");
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::create(sourceConfig);
 
-    StreamCatalogEntryPtr sce1 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode1);
-    StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode2);
+    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode1);
+    SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode2);
     streamCatalog->addPhysicalStream("default_logical", sce1);
     streamCatalog->addPhysicalStream("default_logical", sce2);
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -99,7 +99,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinksAndJustSource) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     const std::string logicalStreamName = "default_logical";
 
@@ -133,7 +133,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMultipleSinks) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     const std::string logicalStreamName = "default_logical";
 
@@ -170,7 +170,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWit
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare
@@ -193,7 +193,7 @@ TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQuery) {
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithMergeOperator) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
     // Prepare

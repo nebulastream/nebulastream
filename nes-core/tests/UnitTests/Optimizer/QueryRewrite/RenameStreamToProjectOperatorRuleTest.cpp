@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
@@ -37,7 +37,7 @@ class RenameStreamToProjectOperatorRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
@@ -54,11 +54,11 @@ class RenameStreamToProjectOperatorRuleTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down RenameStreamToProjectOperatorRuleTest test class."); }
 
-    void setupSensorNodeAndStreamCatalog(const StreamCatalogPtr& streamCatalog) const {
+    void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) const {
         NES_INFO("Setup FilterPushDownTest test case.");
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+        SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
         streamCatalog->addPhysicalStream("src", sce);
         streamCatalog->addLogicalStream("src", schema);
     }
@@ -67,7 +67,7 @@ class RenameStreamToProjectOperatorRuleTest : public testing::Test {
 TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingSingleStreamRenameOperator) {
 
     // Prepare
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("src").map(Attribute("b") = Attribute("b") + Attribute("a")).as("x").sink(printSinkDescriptor);
@@ -94,7 +94,7 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingSingleStreamRenameOperat
 TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingMultipleStreamRenameOperator) {
 
     // Prepare
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query =
@@ -122,7 +122,7 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingMultipleStreamRenameOper
 TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingStreamRenameOperatorWithProject) {
 
     // Prepare
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     setupSensorNodeAndStreamCatalog(streamCatalog);
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("src")

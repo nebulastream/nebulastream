@@ -15,7 +15,7 @@
 */
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -268,13 +268,13 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     sourceConfig->setNumberOfBuffersToProduce(2);
     sourceConfig->setPhysicalStreamName("physical_test");
     sourceConfig->setLogicalStreamName("default_logical");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     bool success = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success);
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
+    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
     EXPECT_EQ(phys.size(), 2U);
     EXPECT_EQ(phys[0]->getPhysicalName(), "default_physical");
@@ -328,13 +328,13 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     sourceConfig->setNumberOfBuffersToProduce(2);
     sourceConfig->setPhysicalStreamName("physical_test");
     sourceConfig->setLogicalStreamName("testStream");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
     bool success2 = wrk->registerPhysicalStream(conf);
     EXPECT_TRUE(success2);
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("testStream");
+    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("testStream");
 
     EXPECT_EQ(phys.size(), 1U);
     EXPECT_EQ(phys[0]->getPhysicalName(), "physical_test");
@@ -375,7 +375,7 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     EXPECT_TRUE(success);
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
+    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
     EXPECT_EQ(phys.size(), 0U);
 
@@ -418,7 +418,7 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     EXPECT_NE(sPtr, nullptr);
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<StreamCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
+    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
 
     EXPECT_EQ(phys.size(), 1U);
 

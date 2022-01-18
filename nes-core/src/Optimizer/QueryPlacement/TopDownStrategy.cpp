@@ -15,7 +15,7 @@
 */
 
 #include <API/Query.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -34,7 +34,7 @@ namespace NES::Optimizer {
 std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                          TopologyPtr topology,
                                                          TypeInferencePhasePtr typeInferencePhase,
-                                                         StreamCatalogPtr streamCatalog) {
+                                                         SourceCatalogPtr streamCatalog) {
     return std::make_unique<TopDownStrategy>(TopDownStrategy(std::move(globalExecutionPlan),
                                                              std::move(topology),
                                                              std::move(typeInferencePhase),
@@ -44,7 +44,7 @@ std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr 
 TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
-                                 StreamCatalogPtr streamCatalog)
+                                 SourceCatalogPtr streamCatalog)
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
                             std::move(typeInferencePhase),

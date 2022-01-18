@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BASE_PLACEMENT_STRATEGY_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BASE_PLACEMENT_STRATEGY_HPP_
 
-#include <Catalogs/StreamCatalogEntry.hpp>
+#include <Catalogs/SourceCatalogEntry.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
@@ -53,8 +53,8 @@ using NESTopologyGraphPtr = std::shared_ptr<NESTopologyGraph>;
 class LogicalOperatorNode;
 using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -90,7 +90,7 @@ class BasePlacementStrategy {
     explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                    TopologyPtr topologyPtr,
                                    TypeInferencePhasePtr typeInferencePhase,
-                                   StreamCatalogPtr streamCatalog);
+                                   SourceCatalogPtr streamCatalog);
 
     virtual ~BasePlacementStrategy() = default;
 
@@ -149,7 +149,7 @@ class BasePlacementStrategy {
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
     std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
 

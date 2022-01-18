@@ -26,7 +26,7 @@ namespace NES::Optimizer {
 QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
-                                         StreamCatalogPtr streamCatalog,
+                                         SourceCatalogPtr streamCatalog,
                                          z3::ContextPtr z3Context)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
       typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)),
@@ -37,7 +37,7 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
 QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,
-                                                   StreamCatalogPtr streamCatalog,
+                                                   SourceCatalogPtr streamCatalog,
                                                    z3::ContextPtr z3Context) {
     return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(std::move(globalExecutionPlan),
                                                                      std::move(topology),

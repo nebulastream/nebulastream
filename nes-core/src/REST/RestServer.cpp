@@ -16,7 +16,7 @@
 
 #include <REST/RestServer.hpp>
 
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Catalogs/UdfCatalog.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/runtime_utils.hpp>
@@ -33,7 +33,7 @@ RestServer::RestServer(std::string host,
                        uint16_t port,
                        const NesCoordinatorWeakPtr& coordinator,
                        const QueryCatalogPtr& queryCatalog,
-                       const StreamCatalogPtr& streamCatalog,
+                       const SourceCatalogPtr& streamCatalog,
                        const TopologyPtr& topology,
                        const GlobalExecutionPlanPtr& globalExecutionPlan,
                        const QueryServicePtr& queryService,

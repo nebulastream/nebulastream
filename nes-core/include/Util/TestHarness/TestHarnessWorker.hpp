@@ -40,7 +40,7 @@ class TestHarnessWorker {
     std::string physicalStreamName;
     SchemaPtr schema;
     std::vector<uint8_t*> record;
-    PhysicalStreamConfigPtr csvSourceConfig;
+    PhysicalSourcePtr csvSourceConfig;
 };
 
 }// namespace NES

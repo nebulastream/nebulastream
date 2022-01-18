@@ -17,7 +17,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Configurations/Sources/DefaultSourceConfig.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -36,7 +36,7 @@ namespace NES {
 
 class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
   public:
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
     QueryCatalogPtr queryCatalog;
 
     /* Will be called before any test in this class are executed. */
@@ -50,13 +50,13 @@ class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<QueryCatalog>();
         //Setup stream catalog
-        streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+        streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
         auto sourceConfig = Configurations::DefaultSourceConfig::create();
         sourceConfig->setPhysicalStreamName("test1");
         sourceConfig->setLogicalStreamName("default_logical");
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
+        PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, node);
         streamCatalog->addPhysicalStream("default_logical", streamCatalogEntry1);
     }
 
@@ -348,7 +348,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     }
 
     //Setup stream catalog
-    auto streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    auto streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     NES::SchemaPtr schema = NES::Schema::create()
                                 ->addField("id", NES::UINT64)
                                 ->addField("val", NES::UINT64)
@@ -360,8 +360,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     auto sourceConfig = Configurations::DefaultSourceConfig::create();
     sourceConfig->setPhysicalStreamName("test1");
     sourceConfig->setLogicalStreamName("example");
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, node);
     streamCatalog->addPhysicalStream("example", streamCatalogEntry1);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();

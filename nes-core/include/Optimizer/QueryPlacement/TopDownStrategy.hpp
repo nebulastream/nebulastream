@@ -32,13 +32,13 @@ class TopDownStrategy : public BasePlacementStrategy {
     static std::unique_ptr<TopDownStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,
-                                                   StreamCatalogPtr streamCatalog);
+                                                   SourceCatalogPtr streamCatalog);
 
   private:
     TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                     TopologyPtr topology,
                     TypeInferencePhasePtr typeInferencePhase,
-                    StreamCatalogPtr streamCatalog);
+                    SourceCatalogPtr streamCatalog);
 
     /**
      * @brief place query operators and prepare the global execution plan

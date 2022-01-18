@@ -65,7 +65,7 @@ class SinkTest : public testing::Test {
         path_to_csv_file = std::string(TEST_DATA_DIRECTORY) + "sink.csv";
         path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "sink.bin";
         path_to_osfile_file = std::string(TEST_DATA_DIRECTORY) + "testOs.txt";
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
         this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
     }
 
@@ -82,7 +82,7 @@ class SinkTest : public testing::Test {
 };
 
 TEST_F(SinkTest, testCSVFileSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -128,7 +128,7 @@ TEST_F(SinkTest, testCSVFileSink) {
 }
 
 TEST_F(SinkTest, testTextFileSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -156,7 +156,7 @@ TEST_F(SinkTest, testTextFileSink) {
 }
 
 TEST_F(SinkTest, testNESBinaryFileSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -206,7 +206,7 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
 }
 
 TEST_F(SinkTest, testCSVPrintSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     std::filebuf fb;
@@ -255,7 +255,7 @@ TEST_F(SinkTest, testCSVPrintSink) {
 }
 
 TEST_F(SinkTest, testNullOutSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     std::filebuf fb;
@@ -279,7 +279,7 @@ TEST_F(SinkTest, testNullOutSink) {
 }
 
 TEST_F(SinkTest, testTextPrintSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     std::filebuf fb;
@@ -314,7 +314,7 @@ TEST_F(SinkTest, testTextPrintSink) {
 }
 
 TEST_F(SinkTest, testCSVZMQSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
@@ -371,7 +371,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
 
 TEST_F(SinkTest, testTextZMQSink) {
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -415,7 +415,7 @@ TEST_F(SinkTest, testTextZMQSink) {
 }
 
 TEST_F(SinkTest, testBinaryZMQSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -466,7 +466,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
 
 TEST_F(SinkTest, testWatermarkForZMQ) {
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -507,7 +507,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
 }
 
 TEST_F(SinkTest, testWatermarkCsvSource) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = this->nodeEngine;
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();

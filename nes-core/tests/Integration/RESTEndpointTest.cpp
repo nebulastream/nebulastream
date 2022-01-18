@@ -222,9 +222,9 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     sourceConfig->setLogicalStreamName("test_stream");
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     Query query = Query::from("default_logical");
@@ -485,7 +485,7 @@ TEST_F(RESTEndpointTest, DISABLED_testAddLogicalStreamEx) {
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("streamCatalog/addLogicalStream-ex");
 
-    StreamCatalogPtr streamCatalog = crd->getStreamCatalog();
+    SourceCatalogPtr streamCatalog = crd->getStreamCatalog();
 
     //create message as Protobuf encoded object
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);

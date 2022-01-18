@@ -23,8 +23,8 @@
 
 namespace NES {
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -93,7 +93,7 @@ const std::string LIST_OF_BLOCKING_UPSTREAM_OPERATOR_IDS = "ListOfBlockingParent
  */
 class LogicalSourceExpansionRule : public BaseRewriteRule {
   public:
-    static LogicalSourceExpansionRulePtr create(StreamCatalogPtr, bool expandSourceOnly);
+    static LogicalSourceExpansionRulePtr create(SourceCatalogPtr, bool expandSourceOnly);
 
     /**
      * @brief Apply Logical source expansion rule on input query plan
@@ -105,8 +105,8 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
     virtual ~LogicalSourceExpansionRule() = default;
 
   private:
-    explicit LogicalSourceExpansionRule(StreamCatalogPtr, bool expandSourceOnly);
-    StreamCatalogPtr streamCatalog;
+    explicit LogicalSourceExpansionRule(SourceCatalogPtr, bool expandSourceOnly);
+    SourceCatalogPtr streamCatalog;
     bool expandSourceOnly;
 
     /**

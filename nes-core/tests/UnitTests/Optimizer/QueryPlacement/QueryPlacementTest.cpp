@@ -16,8 +16,8 @@
 
 #include "z3++.h"
 #include <API/QueryAPI.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Catalogs/StreamCatalogEntry.hpp>
+#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/SourceCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Sources/CSVSourceConfig.hpp>
@@ -87,7 +87,7 @@ class QueryPlacementTest : public testing::Test {
                              "->addField(\"value\", BasicType::UINT64);";
         const std::string streamName = "car";
 
-        streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+        streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         streamCatalog->addLogicalStream(streamName, schema);
 
         CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
@@ -96,10 +96,10 @@ class QueryPlacementTest : public testing::Test {
         sourceConfig->setPhysicalStreamName("test2");
         sourceConfig->setLogicalStreamName("car");
 
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+        PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode1);
-        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode2);
+        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(conf, sourceNode2);
 
         streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
         streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
@@ -122,7 +122,7 @@ class QueryPlacementTest : public testing::Test {
         }
     }
 
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
     TopologyPtr topology;
 };
 
@@ -592,7 +592,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
@@ -601,8 +601,8 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("car");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, srcNode);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode);
 
     streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
 
@@ -696,7 +696,7 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
@@ -705,8 +705,8 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("car");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, srcNode);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode);
 
     streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
 
@@ -806,7 +806,7 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
@@ -815,8 +815,8 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("car");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, srcNode);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode);
 
     streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
 
@@ -934,7 +934,7 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
                          "->addField(\"value\", BasicType::UINT64);";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
@@ -943,9 +943,9 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("car");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, srcNode1);
-    StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, srcNode2);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode1);
+    SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(conf, srcNode2);
 
     streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
     streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
@@ -1075,7 +1075,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
                          "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
@@ -1084,8 +1084,8 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("car");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, srcNode1);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode1);
 
     streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
 
@@ -1195,7 +1195,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
                          "->addField(\"timestamp\", DataTypeFactory::createUInt64());";
     const std::string streamName = "car";
 
-    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
 
     CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
@@ -1204,8 +1204,8 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     sourceConfig->setPhysicalStreamName("test2");
     sourceConfig->setLogicalStreamName("car");
 
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, srcNode1);
+    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode1);
 
     streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
 

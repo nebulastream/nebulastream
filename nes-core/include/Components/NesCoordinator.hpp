@@ -48,8 +48,8 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class RestServer;
 using RestServerPtr = std::shared_ptr<RestServer>;
@@ -128,7 +128,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief catalog method for debug use only
      * @return streamCatalog
      */
-    StreamCatalogPtr getStreamCatalog() const { return streamCatalog; }
+    SourceCatalogPtr getStreamCatalog() const { return streamCatalog; }
 
     TopologyPtr getTopology() const { return topology; }
 
@@ -211,7 +211,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     StreamCatalogServicePtr streamCatalogService;
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
     TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;

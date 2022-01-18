@@ -40,20 +40,20 @@ class StreamTypeConfiguration : public std::enable_shared_from_this<StreamTypeCo
 
   public:
     /**
-     * @brief create a PhysicalStreamConfigPtr object
-     * @return PhysicalStreamConfigPtr
+     * @brief create a PhysicalSourcePtr object
+     * @return PhysicalSourcePtr
      */
     static PhysicalStreamTypePtr create(const std::map<std::string, std::string>& inputParams);
 
     /**
-     * @brief create a PhysicalStreamConfigPtr object
-     * @return PhysicalStreamConfigPtr
+     * @brief create a PhysicalSourcePtr object
+     * @return PhysicalSourcePtr
      */
     static PhysicalStreamTypePtr create(ryml::NodeRef yamlConfigs);
 
     /**
-     * @brief create a PhysicalStreamConfigPtr object
-     * @return PhysicalStreamConfigPtr
+     * @brief create a PhysicalSourcePtr object
+     * @return PhysicalSourcePtr
      */
     static PhysicalStreamTypePtr create(std::string streamType);
 

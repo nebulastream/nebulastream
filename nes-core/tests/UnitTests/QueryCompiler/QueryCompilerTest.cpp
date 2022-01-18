@@ -16,8 +16,8 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/QueryAPI.hpp>
-#include <Catalogs/LogicalStream.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/LogicalSource.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -88,7 +88,7 @@ class QueryCompilerTest : public testing::Test {
 TEST_F(QueryCompilerTest, filterQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
@@ -126,7 +126,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
 TEST_F(QueryCompilerTest, filterQueryBitmask) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
@@ -167,7 +167,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
@@ -210,7 +210,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     schema->addField("key", INT32);
     schema->addField("ts", INT64);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
@@ -254,7 +254,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
@@ -295,7 +295,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("key", INT32);
     schema->addField("value", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("leftStream", schema);
     streamCatalog->addLogicalStream("rightStream", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
@@ -346,7 +346,7 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
 TEST_F(QueryCompilerTest, externalOperatorTest) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream("streamName", schema);
     auto streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",

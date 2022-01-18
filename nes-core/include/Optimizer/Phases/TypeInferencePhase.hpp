@@ -26,8 +26,8 @@ class Node;
 using NodePtr = std::shared_ptr<Node>;
 class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -45,7 +45,7 @@ class TypeInferencePhase {
      * @brief Factory method to create a type inference phase.
      * @return TypeInferencePhasePtr
      */
-    static TypeInferencePhasePtr create(StreamCatalogPtr streamCatalog);
+    static TypeInferencePhasePtr create(SourceCatalogPtr streamCatalog);
 
     /**
      * @brief Performs type inference on the given query plan.
@@ -67,8 +67,8 @@ class TypeInferencePhase {
      * @return SourceDescriptorPtr
      */
     SourceDescriptorPtr createSourceDescriptor(std::string streamName);
-    explicit TypeInferencePhase(StreamCatalogPtr streamCatalog);
-    StreamCatalogPtr streamCatalog;
+    explicit TypeInferencePhase(SourceCatalogPtr streamCatalog);
+    SourceCatalogPtr streamCatalog;
 };
 }// namespace NES::Optimizer
 

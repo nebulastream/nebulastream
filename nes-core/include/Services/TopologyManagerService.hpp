@@ -33,7 +33,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class TopologyManagerService {
 
   public:
-    TopologyManagerService(TopologyPtr topology, StreamCatalogPtr streamCatalog);
+    TopologyManagerService(TopologyPtr topology, SourceCatalogPtr streamCatalog);
 
     /**
      * @brief registers a node
@@ -77,7 +77,7 @@ class TopologyManagerService {
 
   private:
     TopologyPtr topology;
-    StreamCatalogPtr streamCatalog;
+    SourceCatalogPtr streamCatalog;
     std::mutex registerDeregisterNode;
     std::atomic_uint64_t topologyNodeIdCounter = 0;
 

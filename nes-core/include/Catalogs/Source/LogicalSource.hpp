@@ -27,11 +27,11 @@ class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
 /**
- * @brief The LogicalStream wraps the stream name and the schema.
+ * @brief The LogicalSource wraps the stream name and the schema.
  */
-class LogicalStream {
+class LogicalSource {
   public:
-    LogicalStream(std::string name, const SchemaPtr& schema);
+    LogicalSource(std::string name, const SchemaPtr& schema);
 
     /**
      * @brief Gets the stream name
@@ -48,7 +48,7 @@ class LogicalStream {
     SchemaPtr schema;
 };
 
-using LogicalStreamPtr = std::shared_ptr<LogicalStream>;
+using LogicalStreamPtr = std::shared_ptr<LogicalSource>;
 
 }// namespace NES
 #endif// NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_

@@ -12,16 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_nes(
-        StreamCatalog.cpp
-        QueryCatalog.cpp
-        StreamCatalogEntry.cpp
-        PhysicalStreamConfig.cpp
-        QueryCatalogEntry.cpp
-        LogicalStream.cpp
-        MemorySourceStreamConfig.cpp
-        LambdaSourceStreamConfig.cpp
-        UdfCatalog.cpp
-        JavaUdfDescriptor.cpp
-        BenchmarkSourceStreamConfig.cpp
-)
+add_subdirectory(Query)
+add_subdirectory(Source)
+add_subdirectory(UDF)

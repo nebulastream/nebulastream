@@ -30,8 +30,8 @@
  */
 namespace NES {
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;

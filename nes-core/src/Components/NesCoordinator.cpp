@@ -15,7 +15,7 @@
 */
 
 #include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/SourceCatalog.hpp>
 #include <Catalogs/UdfCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -87,7 +87,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
     auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
     auto queryParsingService = QueryParsingService::create(jitCompiler);
 
-    streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+    streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     globalExecutionPlan = GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<QueryCatalog>();
 

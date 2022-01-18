@@ -15,7 +15,10 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Catalogs/QueryCatalogEntry.hpp>
+#include <API/Query.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
