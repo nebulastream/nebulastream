@@ -33,7 +33,7 @@ KafkaSourceTypePtr KafkaSourceType::create(std::map<std::string, std::string> so
 KafkaSourceTypePtr KafkaSourceType::create() { return std::make_shared<KafkaSourceType>(KafkaSourceType()); }
 
 KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfigMap) : KafkaSourceType() {
-    NES_INFO("KafkaSourceType: Init default CSV source config object with values from command line args.");
+    NES_INFO("KafkaSourceType: Init default Kafka source config object with values from command line args.");
 
     if (sourceConfigMap.find(Configurations::BROKERS_CONFIG) != sourceConfigMap.end()) {
         brokers->setValue(sourceConfigMap.find(Configurations::BROKERS_CONFIG)->second);
@@ -59,7 +59,7 @@ KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfig
 }
 
 KafkaSourceType::KafkaSourceType(ryml::NodeRef yamlConfig) : KafkaSourceType() {
-    NES_INFO("KafkaSourceType: Init default CSV source config object with values from YAML file.");
+    NES_INFO("KafkaSourceType: Init default KAFKA source config object with values from YAML file.");
 
     if (yamlConfig.find_child(ryml::to_csubstr(Configurations::BROKERS_CONFIG)).has_val()) {
         brokers->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::BROKERS_CONFIG)).val().str);

@@ -32,7 +32,7 @@ MQTTSourceTypePtr MQTTSourceType::create(std::map<std::string, std::string> sour
 MQTTSourceTypePtr MQTTSourceType::create() { return std::make_shared<MQTTSourceType>(MQTTSourceType()); }
 
 MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMap) : MQTTSourceType() {
-    NES_INFO("MQTTSourceConfig: Init default CSV source config object with values from command line args.");
+    NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from command line args.");
 
     if (sourceConfigMap.find(Configurations::URL_CONFIG) != sourceConfigMap.end()) {
         url->setValue(sourceConfigMap.find(Configurations::URL_CONFIG)->second);
@@ -66,7 +66,7 @@ MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMa
 }
 
 MQTTSourceType::MQTTSourceType(ryml::NodeRef yamlConfig) : MQTTSourceType() {
-    NES_INFO("MQTTSourceConfig: Init default CSV source config object with values from YAML file.");
+    NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from YAML file.");
 
     if (yamlConfig.find_child(ryml::to_csubstr(Configurations::URL_CONFIG)).has_val()) {
         url->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::URL_CONFIG)).val().str);

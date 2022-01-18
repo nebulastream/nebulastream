@@ -22,4 +22,5 @@ add_source_nes(
         DefaultSourceType.cpp
         KafkaSourceType.cpp
         MQTTSourceType.cpp
+        OPCSourceType.cpp
 )
