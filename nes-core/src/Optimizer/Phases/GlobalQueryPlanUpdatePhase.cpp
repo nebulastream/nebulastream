@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>

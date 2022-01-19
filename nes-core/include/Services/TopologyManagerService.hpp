@@ -17,12 +17,10 @@
 #ifndef NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_
 #define NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_
 
-#include <Services/StreamCatalogService.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>
 
-enum NodeType : int;
 namespace NES {
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -33,7 +31,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class TopologyManagerService {
 
   public:
-    TopologyManagerService(TopologyPtr topology, SourceCatalogPtr streamCatalog);
+    TopologyManagerService(TopologyPtr topology);
 
     /**
      * @brief registers a node
@@ -43,7 +41,7 @@ class TopologyManagerService {
      * @param node type
      * @return id of node
      */
-    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, NodeType type);
+    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots);
 
     /**
     * @brief unregister an existing node
@@ -77,7 +75,6 @@ class TopologyManagerService {
 
   private:
     TopologyPtr topology;
-    SourceCatalogPtr streamCatalog;
     std::mutex registerDeregisterNode;
     std::atomic_uint64_t topologyNodeIdCounter = 0;
 

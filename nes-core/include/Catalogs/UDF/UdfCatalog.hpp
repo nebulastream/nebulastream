@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <Catalogs/JavaUdfDescriptor.hpp>
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 
 namespace NES::Catalogs {
 

@@ -17,7 +17,6 @@
 #ifndef NES_INCLUDE_RUNTIME_NODE_ENGINE_HPP_
 #define NES_INCLUDE_RUNTIME_NODE_ENGINE_HPP_
 
-#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
@@ -39,13 +38,9 @@ namespace NES {
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-class PhysicalSourceType;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalSourceType>;
 
-namespace Configurations {
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
-}// namespace Configurations
 
 namespace Runtime {
 
@@ -70,7 +65,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(std::vector<Configurations::PhysicalSourcePtr> physicalStreams,
+    explicit NodeEngine(std::vector<PhysicalSourcePtr> physicalStreams,
                         HardwareManagerPtr&&,
                         std::vector<BufferManagerPtr>&&,
                         QueryManagerPtr&&,
@@ -281,13 +276,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
-    // TODO we should get rid of the following method
-    /**
-     * @brief Set the physical stream config
-     * @param config : configuration to be set
-     */
-    void setConfig(const AbstractPhysicalStreamConfigPtr& config);
-
     /**
      * @brief Creates a logical source descriptor according to a logical source descriptor
      * TODO place in proper catalog
@@ -303,7 +291,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     HardwareManagerPtr getHardwareManager() const;
 
   private:
-    std::vector<PhysicalStreamPtr> physicalStreams;
+    std::vector<PhysicalSourcePtr> physicalSources;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;

@@ -71,7 +71,7 @@ class StreamTypeConfiguration : public std::enable_shared_from_this<StreamTypeCo
 
     /**
      * Checks equality
-     * @param other sourceConfig ot check equality for
+     * @param other mqttSourceType ot check equality for
      * @return true if equal, false otherwise
      */
     virtual bool equal(PhysicalStreamTypePtr const& other) = 0;

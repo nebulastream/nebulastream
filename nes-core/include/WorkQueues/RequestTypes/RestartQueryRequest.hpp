@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RESTART_QUERY_REQUEST_HPP_
 #define NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RESTART_QUERY_REQUEST_HPP_
 
-#include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestTypes/Request.hpp>
 
 namespace NES {
 
@@ -27,7 +27,7 @@ using RestartQueryRequestPtr = std::shared_ptr<RestartQueryRequest>;
 /**
  * @brief This request restarts a query with provided id
  */
-class RestartQueryRequest : public NESRequest {
+class RestartQueryRequest : public Request {
 
   public:
     /**

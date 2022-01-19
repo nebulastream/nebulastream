@@ -14,15 +14,15 @@
     limitations under the License.
 */
 #include <Util/Logger.hpp>
-#include <WorkQueues/NESRequestQueue.hpp>
-#include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestQueue.hpp>
+#include <WorkQueues/RequestTypes/Request.hpp>
 #include <algorithm>
 
 namespace NES {
 
-NESRequestQueue::NESRequestQueue(uint64_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {}
+RequestQueue::RequestQueue(uint64_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {}
 
-bool NESRequestQueue::add(const NESRequestPtr& request) {
+bool RequestQueue::add(const NESRequestPtr& request) {
     std::unique_lock<std::mutex> lock(requestMutex);
     NES_INFO("QueryRequestQueue: Adding a new query request : " << request->toString());
     //TODO: identify and handle if more than one request for same query exists in the queue
@@ -33,7 +33,7 @@ bool NESRequestQueue::add(const NESRequestPtr& request) {
     return true;
 }
 
-std::vector<NESRequestPtr> NESRequestQueue::getNextBatch() {
+std::vector<NESRequestPtr> RequestQueue::getNextBatch() {
     std::unique_lock<std::mutex> lock(requestMutex);
     //We are using conditional variable to prevent Lost Wakeup and Spurious Wakeup
     //ref: https://www.modernescpp.com/index.php/c-core-guidelines-be-aware-of-the-traps-of-condition-variables
@@ -60,15 +60,15 @@ std::vector<NESRequestPtr> NESRequestQueue::getNextBatch() {
     return queriesToSchedule;
 }
 
-void NESRequestQueue::insertPoisonPill() {
+void RequestQueue::insertPoisonPill() {
     std::unique_lock<std::mutex> lock(requestMutex);
     NES_INFO("QueryRequestQueue: Shutdown is called. Inserting Poison pill in the query request queue.");
     setNewRequestAvailable(true);
     availabilityTrigger.notify_one();
 }
 
-bool NESRequestQueue::isNewRequestAvailable() const { return newRequestAvailable; }
+bool RequestQueue::isNewRequestAvailable() const { return newRequestAvailable; }
 
-void NESRequestQueue::setNewRequestAvailable(bool newRequestAvailable) { this->newRequestAvailable = newRequestAvailable; }
+void RequestQueue::setNewRequestAvailable(bool newRequestAvailable) { this->newRequestAvailable = newRequestAvailable; }
 
 }// namespace NES

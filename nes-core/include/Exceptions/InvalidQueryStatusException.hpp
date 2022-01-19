@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_STATUS_EXCEPTION_HPP_
 #define NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_STATUS_EXCEPTION_HPP_
 
-#include <Catalogs/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <stdexcept>
 #include <vector>
 

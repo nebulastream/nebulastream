@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/UdfCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <UdfCatalogService.pb.h>

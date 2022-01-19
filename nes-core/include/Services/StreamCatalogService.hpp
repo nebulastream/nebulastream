@@ -20,7 +20,6 @@
 #include <memory>
 #include <mutex>
 
-enum NodeType : int;
 namespace NES {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -37,30 +36,25 @@ class StreamCatalogService {
 
     /**
      * @brief method to register a physical stream
-     * @param nodeId
-     * @param sourcetype
-     * @param sourceconf
-     * @param sourcefrequency
-     * @param numberofbufferstoproduce
-     * @param physicalstreamname
-     * @param logicalstreamname
+     * @param topologyNode : the topology node
+     * @param logicalSourceName: logical source name
+     * @param physicalSourceName: physical source name
      * @return bool indicating success
      */
-    bool registerPhysicalStream(TopologyNodePtr physicalNode,
-                                const std::string& sourceType,
-                                const std::string& physicalStreamname,
-                                const std::string& logicalStreamname);
+    bool registerPhysicalStream(TopologyNodePtr topologyNode,
+                                const std::string& physicalSourceName,
+                                const std::string& logicalSourceName);
 
     /**
      * @brief method to unregister a physical stream
-     * @param nodeId
-     * @param logicalStreamName
-     * @param physicalStreamName
+     * @param topologyNode : the topology node
+     * @param logicalSourceName: logical source name
+     * @param physicalSourceName: physical source name
      * @return bool indicating success
      */
-    bool unregisterPhysicalStream(TopologyNodePtr physicalNode,
-                                  const std::string& physicalStreamName,
-                                  const std::string& logicalStreamName);
+    bool unregisterPhysicalStream(TopologyNodePtr topologyNode,
+                                  const std::string& physicalSourceName,
+                                  const std::string& logicalSourceName);
 
     /**
      * @brief method to register a logical stream

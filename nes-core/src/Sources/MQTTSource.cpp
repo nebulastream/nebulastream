@@ -48,7 +48,7 @@ namespace NES {
 MQTTSource::MQTTSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       const Configurations::MQTTSourceTypeConfigPtr& sourceConfig,
+                       const MQTTSourceTypePtr& sourceConfig,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
@@ -304,7 +304,7 @@ bool MQTTSource::getCleanSession() const { return cleanSession; }
 
 std::vector<PhysicalTypePtr> MQTTSource::getPhysicalTypes() const { return physicalTypes; }
 
-const Configurations::MQTTSourceTypeConfigPtr& MQTTSource::getSourceConfigPtr() const { return sourceConfig; }
+const MQTTSourceTypePtr& MQTTSource::getSourceConfigPtr() const { return sourceConfig; }
 
 }// namespace NES
 #endif

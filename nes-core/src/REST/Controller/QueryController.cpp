@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>

@@ -27,20 +27,20 @@
 
 namespace NES {
 
-class NESRequest;
-using NESRequestPtr = std::shared_ptr<NESRequest>;
+class Request;
+using NESRequestPtr = std::shared_ptr<Request>;
 
 /**
  * @brief This is a wrapper around a Deque for submitting arbitrary requests for the RequestProcessorService
  */
-class NESRequestQueue {
+class RequestQueue {
 
   public:
     /**
      * @brief Constructor of Query request queue
      * @param batchSize : the batch of user requests to be processed together
      */
-    explicit NESRequestQueue(uint64_t batchSize);
+    explicit RequestQueue(uint64_t batchSize);
 
     /**
      * @brief Add query request into processing queue
@@ -81,6 +81,6 @@ class NESRequestQueue {
     std::condition_variable availabilityTrigger;
     std::deque<NESRequestPtr> requestQueue;
 };
-using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
+using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 }// namespace NES
 #endif// NES_INCLUDE_WORK_QUEUES_NES_REQUEST_QUEUE_HPP_

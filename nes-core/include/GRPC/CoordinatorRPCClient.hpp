@@ -105,7 +105,6 @@ class CoordinatorRPCClient {
                       int64_t grpcPort,
                       int64_t dataPort,
                       int16_t numberOfSlots,
-                      NodeType type,
                       std::optional<StaticNesMetricsPtr> staticNesMetrics);
 
     /**

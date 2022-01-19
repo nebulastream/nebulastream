@@ -98,6 +98,14 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
     void close() override;
 
   private:
+
+    /**
+     * @brief get source mode
+     * @param mode: string representation of mode
+     * @return Enum representing the source mode
+     */
+    SourceMode getSourceModeFromString(const std::string& mode);
+
     uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;

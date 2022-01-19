@@ -168,7 +168,7 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
  * @param schema of data source
  * @param bufferManager
  * @param queryManager
- * @param sourceConfigPtr
+ * @param csvSourceType
  * @param numberOfTuplesToProducePerBuffer
  * @param numBuffersToProcess
  * @param operatorId
@@ -177,7 +177,7 @@ DataSourcePtr createSenseSource(const SchemaPtr& schema,
 DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                   const Runtime::BufferManagerPtr& bufferManager,
                                   const Runtime::QueryManagerPtr& queryManager,
-                                  const Configurations::CSVSourceTypeConfigPtr& sourceConfigPtr,
+                                  const CSVSourceTypePtr& csvSourceType,
                                   OperatorId operatorId,
                                   size_t numSourceLocalBuffers,
                                   const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
@@ -327,14 +327,14 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
 /**
  * @brief Create MQTT source
  * @param schema schema of the elements
- * @param sourceConfig sourceConfig for MQTT
+ * @param mqttSourceType mqttSourceType for MQTT
  * @param inputFormat format of input that we expect to receive
  * @return a const data source pointer
  */
 DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                const Runtime::BufferManagerPtr& bufferManager,
                                const Runtime::QueryManagerPtr& queryManager,
-                               const Configurations::MQTTSourceTypeConfigPtr& sourceConfig,
+                               const MQTTSourceTypePtr& mqttSourceType,
                                OperatorId operatorId,
                                size_t numSourceLocalBuffers,
                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,

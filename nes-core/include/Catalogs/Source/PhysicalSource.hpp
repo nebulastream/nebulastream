@@ -44,6 +44,14 @@ class PhysicalSource {
     static PhysicalSourcePtr
     create(std::string logicalSourceName, std::string physicalSourceName, PhysicalSourceTypePtr physicalSourceType);
 
+    /**
+     * @brief Create physical source without physical source type
+     * @param logicalSourceName : logical source name
+     * @param physicalSourceName : physical source name
+     * @return shared pointer to a physical source
+     */
+    static PhysicalSourcePtr create(std::string logicalSourceName, std::string physicalSourceName);
+
     const std::string& getLogicalSourceName() const;
 
     const std::string& getPhysicalSourceName() const;

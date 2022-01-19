@@ -66,21 +66,21 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-class NESRequestQueue;
-using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
+class RequestQueue;
+using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 
 /**
  * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queries requests.
  */
-class NESRequestProcessorService {
+class RequestProcessorService {
   public:
-    explicit NESRequestProcessorService(const GlobalExecutionPlanPtr& globalExecutionPlan,
+    explicit RequestProcessorService(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                         const TopologyPtr& topology,
                                         const QueryCatalogPtr& queryCatalog,
                                         const GlobalQueryPlanPtr& globalQueryPlan,
                                         const SourceCatalogPtr& streamCatalog,
                                         const WorkerRPCClientPtr& workerRpcClient,
-                                        NESRequestQueuePtr queryRequestQueue,
+                                     RequestQueuePtr queryRequestQueue,
                                         Optimizer::QueryMergerRule queryMergerRule,
                                         Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
                                         bool performOnlySourceOperatorExpansion);
@@ -109,7 +109,7 @@ class NESRequestProcessorService {
     Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
-    NESRequestQueuePtr queryRequestQueue;
+    RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     z3::ContextPtr z3Context;

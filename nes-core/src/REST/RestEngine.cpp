@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <REST/Controller/BaseController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/MonitoringController.hpp>

@@ -14,5 +14,5 @@
 
 add_subdirectory(RequestTypes)
 add_source_nes(
-        NESRequestQueue.cpp
+        RequestQueue.cpp
 )

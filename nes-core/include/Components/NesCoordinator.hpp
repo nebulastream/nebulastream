@@ -36,8 +36,8 @@ namespace NES {
 
 using namespace Configurations;
 
-class NESRequestQueue;
-using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
+class RequestQueue;
+using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -60,8 +60,8 @@ using QueryDeployerPtr = std::shared_ptr<QueryDeployer>;
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
-class NESRequestProcessorService;
-using QueryRequestProcessorServicePtr = std::shared_ptr<NESRequestProcessorService>;
+class RequestProcessorService;
+using QueryRequestProcessorServicePtr = std::shared_ptr<RequestProcessorService>;
 
 class QueryService;
 using QueryServicePtr = std::shared_ptr<QueryService>;
@@ -220,7 +220,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;
     WorkerRPCClientPtr workerRpcClient;
-    NESRequestQueuePtr queryRequestQueue;
+    RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     WorkerConfigurationPtr workerConfig;
     Catalogs::UdfCatalogPtr udfCatalog;

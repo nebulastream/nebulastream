@@ -36,8 +36,8 @@ using QueryServicePtr = std::shared_ptr<QueryService>;
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
-class NESRequestQueue;
-using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
+class RequestQueue;
+using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
@@ -49,7 +49,7 @@ class QueryService {
 
   public:
     explicit QueryService(QueryCatalogPtr queryCatalog,
-                          NESRequestQueuePtr queryRequestQueue,
+                          RequestQueuePtr queryRequestQueue,
                           SourceCatalogPtr streamCatalog,
                           QueryParsingServicePtr queryParsingService,
                           bool enableSemanticQueryValidation);
@@ -124,7 +124,7 @@ class QueryService {
 
   private:
     QueryCatalogPtr queryCatalog;
-    NESRequestQueuePtr queryRequestQueue;
+    RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     bool enableSemanticQueryValidation;

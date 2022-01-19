@@ -15,8 +15,9 @@
 */
 
 #include <API/Schema.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
@@ -27,18 +28,13 @@
 
 namespace NES {
 
-TopologyManagerService::TopologyManagerService(TopologyPtr topology, SourceCatalogPtr streamCatalog)
-    : topology(std::move(topology)), streamCatalog(std::move(streamCatalog)) {
+TopologyManagerService::TopologyManagerService(TopologyPtr topology) : topology(std::move(topology)) {
     NES_DEBUG("TopologyManagerService()");
 }
 
-uint64_t TopologyManagerService::registerNode(const std::string& address,
-                                              int64_t grpcPort,
-                                              int64_t dataPort,
-                                              uint16_t numberOfSlots,
-                                              NodeType type) {
-    NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
-                                                               << " type=" << type);
+uint64_t
+TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots) {
+    NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     NES_DEBUG("TopologyManagerService::registerNode: topology before insert");
@@ -50,62 +46,14 @@ uint64_t TopologyManagerService::registerNode(const std::string& address,
         return false;
     }
 
+    NES_DEBUG("TopologyManagerService::registerNode: register node");
     //get unique id for the new node
     uint64_t id = getNextTopologyNodeId();
+    TopologyNodePtr physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
 
-    TopologyNodePtr physicalNode;
-    if (type == NodeType::Sensor) {
-        NES_DEBUG("TopologyManagerService::registerNode: register sensor node");
-        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
-
-        if (!physicalNode) {
-            NES_ERROR("TopologyManagerService::RegisterNode : node not created");
-            return 0;
-        }
-
-        //add default logical
-        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
-        //check if logical stream exists
-        if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(
-                streamConf->getLogicalStreamName()->getValue())) {
-            NES_ERROR("TopologyManagerService::registerNode: error logical stream"
-                      << streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue()
-                      << " does not exist when adding physical stream "
-                      << streamConf->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
-            throw Exception("TopologyManagerService::registerNode logical stream does not exist "
-                            + streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue());
-        }
-
-        std::string sourceType =
-            streamConf->getPhysicalStreamTypeConfig()->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue();
-        if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
-            NES_ERROR("TopologyManagerService::registerNode: error source type " << sourceType << " is not supported");
-            throw Exception("TopologyManagerService::registerNode: error source type " + sourceType + " is not supported");
-        }
-
-        SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
-
-        bool success =
-            streamCatalog->addPhysicalStream(streamConf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue(), sce);
-        if (!success) {
-            NES_ERROR("TopologyManagerService::registerNode: physical stream "
-                      << streamConf->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue()
-                      << " could not be added to catalog");
-            throw Exception("TopologyManagerService::registerNode: physical stream "
-                            + streamConf->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue()
-                            + " could not be added to catalog");
-        }
-
-    } else if (type == NodeType::Worker) {
-        NES_DEBUG("TopologyManagerService::registerNode: register worker node");
-        physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
-
-        if (!physicalNode) {
-            NES_ERROR("TopologyManagerService::RegisterNode : node not created");
-            return 0;
-        }
-    } else {
-        NES_THROW_RUNTIME_ERROR("TopologyManagerService::registerNode type not supported ");
+    if (!physicalNode) {
+        NES_ERROR("TopologyManagerService::RegisterNode : node not created");
+        return 0;
     }
 
     const TopologyNodePtr rootNode = topology->getRoot();
@@ -133,17 +81,13 @@ bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
         NES_ERROR("CoordinatorActor: node with id not found " << nodeId);
         return false;
     }
-    NES_DEBUG("TopologyManagerService::UnregisterNode: found sensor, try to delete it in catalog");
-    //remove from catalog
-    bool successCatalog = streamCatalog->removePhysicalStreamByHashId(nodeId);
-    NES_DEBUG("TopologyManagerService::UnregisterNode: success in catalog is " << successCatalog);
 
     NES_DEBUG("TopologyManagerService::UnregisterNode: found sensor, try to delete it in toplogy");
     //remove from topology
     bool successTopology = topology->removePhysicalNode(physicalNode);
     NES_DEBUG("TopologyManagerService::UnregisterNode: success in topology is " << successTopology);
 
-    return successCatalog && successTopology;
+    return successTopology;
 }
 
 bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {

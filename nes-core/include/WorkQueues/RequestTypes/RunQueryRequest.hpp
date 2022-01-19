@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RUN_QUERY_REQUEST_HPP_
 #define NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_RUN_QUERY_REQUEST_HPP_
 
-#include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestTypes/Request.hpp>
 
 namespace NES {
 
@@ -30,7 +30,7 @@ using RunQueryRequestPtr = std::shared_ptr<RunQueryRequest>;
 /**
  * @brief This request is used for running a new query in NES cluster
  */
-class RunQueryRequest : public NESRequest {
+class RunQueryRequest : public Request {
 
   public:
     /**

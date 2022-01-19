@@ -23,8 +23,7 @@
 #include <map>
 #include <string>
 #include <vector>
-//#include <Topology/NESTopologyEntry.hpp>
-#include <Catalogs/SourceCatalogEntry.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 namespace NES {
 
 class LogicalSource;
