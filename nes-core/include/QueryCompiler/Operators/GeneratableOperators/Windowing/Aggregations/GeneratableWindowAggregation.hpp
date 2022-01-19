@@ -70,6 +70,11 @@ class GeneratableWindowAggregation {
     Windowing::WindowAggregationDescriptorPtr getAggregationDescriptor();
 
 
+    Windowing::WindowAggregationDescriptorPtr getAggregationDescriptor(){
+        return aggregationDescriptor;
+    }
+
+
   protected:
     explicit GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
     Windowing::WindowAggregationDescriptorPtr aggregationDescriptor;
