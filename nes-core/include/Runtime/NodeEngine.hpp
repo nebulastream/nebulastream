@@ -285,11 +285,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     HardwareManagerPtr getHardwareManager() const;
 
     /**
-     * @brief Create actual source descriptor from the
-     * @param physicalSource: physical source to use to create the source descriptor
-     * @return Source Descriptor of specific type
+     * @brief Get physical sources configured
+     * @return list of physical sources
      */
-    SourceDescriptorPtr createActualSourceDescriptor(PhysicalSourcePtr physicalSource);
+    const std::vector<PhysicalSourcePtr>& getPhysicalSources() const;
 
   private:
     std::vector<PhysicalSourcePtr> physicalSources;

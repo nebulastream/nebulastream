@@ -73,6 +73,7 @@ class LowerToExecutableQueryPlanPhase {
                             const Runtime::NodeEnginePtr& nodeEngine,
                             const PipelineQueryPlanPtr& pipelineQueryPlan,
                             std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
+
     /**
      * @brief Create Actual Source descriptor from default source descriptor and Physical source properties
      * @param defaultSourceDescriptor: the default source descriptor
