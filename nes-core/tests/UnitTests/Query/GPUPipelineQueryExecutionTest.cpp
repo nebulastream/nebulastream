@@ -63,34 +63,6 @@ class QueryExecutionTest : public testing::Test {
         testSchema = Schema::create()->addField("test$value", BasicType::INT32);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
-    }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { ASSERT_TRUE(nodeEngine->stop()); }
-
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {}
-
-    SchemaPtr testSchema;
-    Runtime::NodeEnginePtr nodeEngine;
-};
-
-void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
-
-    auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, buf);
-
-    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        valueField[recordIndex] = recordIndex;
-    }
-    buf.setNumberOfTuples(10);
-}
-
-class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineStage {
-  public:
-    ExecutionResult execute(Runtime::TupleBuffer& buffer,
-                            Runtime::Execution::PipelineExecutionContext& ctx,
-                            Runtime::WorkerContext& wc) override {
-        auto record = buffer.getBuffer<int>();
 
         // Prepare a simple CUDA kernel which adds 42 to the recordValue and then write it to the result
         const char* const SimpleKernel_cu =
@@ -105,7 +77,38 @@ class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineSta
 
         // create the kernel program
         static jitify::JitCache kernel_cache;
-        jitify::Program program = kernel_cache.program(SimpleKernel_cu, 0);
+        kernelProgramPtr = std::make_shared<jitify::Program>(kernel_cache.program(SimpleKernel_cu, 0));
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() override { ASSERT_TRUE(nodeEngine->stop()); }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() {}
+
+    SchemaPtr testSchema;
+    Runtime::NodeEnginePtr nodeEngine;
+    std::shared_ptr<jitify::Program> kernelProgramPtr;
+};
+
+void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout) {
+
+    auto valueField = Runtime::MemoryLayouts::RowLayoutField<int32_t, true>::create(0, memoryLayout, buf);
+
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        valueField[recordIndex] = recordIndex;
+    }
+    buf.setNumberOfTuples(10);
+}
+
+class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineStage {
+  public:
+    GPUPipelineStageExample(std::shared_ptr<jitify::Program> kernelProgramPtr) : kernelProgramPtr(kernelProgramPtr) {}
+
+    ExecutionResult execute(Runtime::TupleBuffer& buffer,
+                            Runtime::Execution::PipelineExecutionContext& ctx,
+                            Runtime::WorkerContext& wc) override {
+        auto record = buffer.getBuffer<int>();
 
         // allocate device (GPU) memory to work with record value and result in the CUDA kernel
         int* d_record;
@@ -122,7 +125,7 @@ class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineSta
 
         // execute the kernel program
         using jitify::reflection::type_of;
-        program.kernel("simpleAdditionKernel")
+        kernelProgramPtr->kernel("simpleAdditionKernel")
                        .instantiate()
                        .configure(grid, block) // the configuration
                        .launch(d_record, buffer.getNumberOfTuples(), d_result); // the parameter of the kernel program
@@ -130,9 +133,14 @@ class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineSta
         // copy the result of kernel execution back to the gpu
         cudaMemcpy(record, d_result, buffer.getNumberOfTuples() * sizeof(int), cudaMemcpyDeviceToHost);
 
+        cudaFree(d_record);
+        cudaFree(d_result);
+
         ctx.emitBuffer(buffer, wc);
         return ExecutionResult::Ok;
     }
+
+    std::shared_ptr<jitify::Program>  kernelProgramPtr;
 };
 
 TEST_F(QueryExecutionTest, GPUOperatorQuery) {
@@ -164,7 +172,7 @@ TEST_F(QueryExecutionTest, GPUOperatorQuery) {
     // add physical operator behind the filter
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
 
-    auto customPipelineStage = std::make_shared<GPUPipelineStageExample>();
+    auto customPipelineStage = std::make_shared<GPUPipelineStageExample>(kernelProgramPtr);
     auto externalOperator =
         NES::QueryCompilation::PhysicalOperators::PhysicalExternalOperator::create(SchemaPtr(), SchemaPtr(), customPipelineStage);
 

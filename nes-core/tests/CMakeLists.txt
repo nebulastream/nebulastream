@@ -226,7 +226,7 @@ add_test(NAME query-execution-test COMMAND query-execution-test)
 ### GPUPipelineQueryExecutionTest ###
 if (NES_USE_GPU)
 add_executable(gpu-pipeline-query-execution-test "UnitTests/Query/GPUPipelineQueryExecutionTest.cpp")
-target_link_libraries(gpu-pipeline-query-execution-test nes ${GTEST_LIBRARIES} CUDA::cudart CUDA::nvrtc)
+target_link_libraries(gpu-pipeline-query-execution-test nes ${GTEST_LIBRARIES})
 add_test(NAME gpu-pipeline-query-execution-test COMMAND gpu-pipeline-query-execution-test)
 endif (NES_USE_GPU)
 
