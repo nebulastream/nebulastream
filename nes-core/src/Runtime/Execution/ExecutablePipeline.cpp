@@ -87,9 +87,10 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
 bool ExecutablePipeline::stop() {
     auto expected = PipelineStatus::PipelineRunning;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineStopped)) {
-//        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-//            operatorHandler->stop(pipelineContext);
-//        }
+        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+            operatorHandler->stop(pipelineContext);
+            NES_DEBUG("Operator Handler References " << operatorHandler.use_count());
+        }
         return executablePipelineStage->stop(*pipelineContext.get()) == 0;
     }
     return expected == PipelineStatus::PipelineStopped;
@@ -165,7 +166,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
                     }
                 }
             }
-
+            //pipelineContext = PipelineExecutionContextPtr();
             break;
         }
         default: {
