@@ -66,9 +66,23 @@ class BufferControlBlock {
 
     BufferControlBlock& operator=(const BufferControlBlock&);
 
+    /**
+     * @brief Returns the underlying owning segment
+     * @return the underlying owning segment
+     */
     MemorySegment* getOwner() const;
 
+    /**
+     * @brief Resets the recycler
+     * @param recycler the new recycler
+     */
     void resetBufferRecycler(BufferRecycler* recycler);
+
+    /**
+     * @brief Add recycle callback to be called upon reaching 0 as ref cnt
+     * @param func the callbac to call
+     */
+    void addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept;
 
     /**
      * @brief This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
@@ -232,6 +246,8 @@ class MemorySegment {
                            std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction);
 
     ~MemorySegment();
+
+    uint8_t* getPointer() const { return ptr; }
 
   private:
     /**

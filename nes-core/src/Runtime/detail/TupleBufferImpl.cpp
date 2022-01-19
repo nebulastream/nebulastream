@@ -123,6 +123,14 @@ void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler) {
     NES_ASSERT2_FMT(recycler != oldRecycler, "invalid recycler");
 }
 
+void BufferControlBlock::addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept {
+    auto oldRecycleCallback = this->recycleCallback;
+    recycleCallback = [oldRecycleCallback, func](MemorySegment* memorySegment, BufferRecycler* bufferRecycler) {
+        func(memorySegment, bufferRecycler);
+        oldRecycleCallback(memorySegment, bufferRecycler);
+    };
+}
+
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 /**
  * @brief This function collects the thread name and the callstack of the calling thread

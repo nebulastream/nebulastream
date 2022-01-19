@@ -234,6 +234,11 @@ class TupleBuffer {
     ///@brief set the buffer's origin id (the operator id that creates this buffer).
     inline void setOriginId(uint64_t id) noexcept { controlBlock->setOriginId(id); }
 
+    ///@brief set the buffer's recycle callback.
+    inline void addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept {
+        controlBlock->addRecycleCallback(std::move(newCallback));
+    }
+
   private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
