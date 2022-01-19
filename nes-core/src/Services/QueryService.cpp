@@ -28,7 +28,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <WorkQueues/NESRequestQueue.hpp>
+#include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <utility>
@@ -36,7 +36,7 @@
 namespace NES {
 
 QueryService::QueryService(QueryCatalogPtr queryCatalog,
-                           NESRequestQueuePtr queryRequestQueue,
+                           RequestQueuePtr queryRequestQueue,
                            SourceCatalogPtr streamCatalog,
                            std::shared_ptr<QueryParsingService> queryParsingService,
                            bool enableSemanticQueryValidation)

@@ -72,7 +72,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
             NES_INFO("ConvertPhysicalToLogicalSource: Creating CSV File source");
             const CSVSourcePtr csvSourcePtr = std::dynamic_pointer_cast<CSVSource>(dataSource);
             const SourceDescriptorPtr csvSourceDescriptor =
-                CsvSourceDescriptor::create(csvSourcePtr->getSchema(), csvSourcePtr->getSourceConfigPtr());
+                CsvSourceDescriptor::create(csvSourcePtr->getSchema(), csvSourcePtr->getSourceConfig());
             return csvSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD

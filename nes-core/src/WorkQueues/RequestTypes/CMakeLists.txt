@@ -13,7 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        NESRequest.cpp
+        Request.cpp
         RunQueryRequest.cpp
         StopQueryRequest.cpp
         RestartQueryRequest.cpp

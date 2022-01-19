@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestTypes/Request.hpp>
 
 namespace NES {
 
-NESRequest::NESRequest(QueryId queryId) : queryId(queryId) {}
+Request::Request(QueryId queryId) : queryId(queryId) {}
 
-QueryId NESRequest::getQueryId() const { return queryId; }
+QueryId Request::getQueryId() const { return queryId; }
 }// namespace NES

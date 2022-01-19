@@ -41,18 +41,11 @@ service CoordinatorRPCService {
   rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
 }
 
-
-enum NodeType {
-  Sensor = 0;
-  Worker = 1;
-}
-
 message RegisterNodeRequest {
   string address = 1;
   uint32 grpcPort = 2;
   uint32 dataPort = 3;
   uint32 numberOfSlots = 4;
-  NodeType type = 5;
   NES.SerializableStaticNesMetrics monitoringData = 6;
 }
 

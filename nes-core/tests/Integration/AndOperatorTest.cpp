@@ -98,7 +98,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("AndOperatorTest: Worker1 started successfully");
@@ -107,7 +107,7 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("AndOperatorTest: Worker2 started successfully");
@@ -123,11 +123,11 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     wrk2->registerLogicalStream("Win2", testSchemaFileName);
 
     //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream1");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("Win1");
+    srcConf->as<CSVSourceType>()->setFilePath("../tests/test_data/window.csv");
+    srcConf->as<CSVSourceType>()->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf->as<CSVSourceType>()->setNumberOfBuffersToProduce(2);
+    srcConf->as<CSVSourceType>()->setPhysicalStreamName("test_stream1");
+    srcConf->as<CSVSourceType>()->setLogicalStreamName("Win1");
     PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
 
     wrk1->registerPhysicalStream(windowStream);
@@ -197,7 +197,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("AndOperatorTest: Worker1 started successfully");

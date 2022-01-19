@@ -14,14 +14,13 @@
     limitations under the License.
 */
 
-#include <Catalogs/LogicalSource.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cassert>
 #include <utility>
 
 namespace NES {

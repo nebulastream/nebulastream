@@ -26,12 +26,12 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/RestServer.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Services/NESRequestProcessorService.hpp>
+#include <Services/RequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger.hpp>
-#include <WorkQueues/NESRequestQueue.hpp>
+#include <WorkQueues/RequestQueue.hpp>
 #include <grpcpp/server_builder.h>
 #include <memory>
 #include <thread>
@@ -94,7 +94,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
     streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
-    queryRequestQueue = std::make_shared<NESRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
+    queryRequestQueue = std::make_shared<RequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
 
     auto memoryLayoutPolicyString = coordinatorConfig->getMemoryLayoutPolicy()->getValue();
@@ -108,7 +108,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
 
     bool performOnlySourceOperatorExpansion = coordinatorConfig->getPerformOnlySourceOperatorExpansion()->getValue();
     if (found != Optimizer::stringToMergerRuleEnum.end()) {
-        queryRequestProcessorService = std::make_shared<NESRequestProcessorService>(globalExecutionPlan,
+        queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
                                                                                     topology,
                                                                                     queryCatalog,
                                                                                     globalQueryPlan,

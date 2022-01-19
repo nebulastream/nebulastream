@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_STOP_QUERY_REQUEST_HPP_
 #define NES_INCLUDE_WORK_QUEUES_REQUEST_TYPES_STOP_QUERY_REQUEST_HPP_
 
-#include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestTypes/Request.hpp>
 
 namespace NES {
 
@@ -27,7 +27,7 @@ using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
-class StopQueryRequest : public NESRequest {
+class StopQueryRequest : public Request {
 
   public:
     /**

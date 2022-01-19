@@ -18,12 +18,12 @@
 #define NES_INCLUDE_SOURCES_MQTT_SOURCE_HPP_
 #ifdef ENABLE_MQTT_BUILD
 
+#include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <Configurations/Worker/PhysicalStreamConfig/MQTTSourceTypeConfig.hpp>
 
 namespace mqtt {
 class async_client;
@@ -44,7 +44,7 @@ class MQTTSource : public DataSource {
      * @param schema of the data
      * @param bufferManager
      * @param queryManager
-     * @param sourceConfig all source Configurations
+     * @param mqttSourceType all source Configurations
      * @param operatorId
      * @param inputFormat data format that broker sends
      * @param bufferFlushIntervalMs OPTIONAL - determine for how long to wait until buffer is flushed (before it is full)
@@ -52,7 +52,7 @@ class MQTTSource : public DataSource {
     explicit MQTTSource(SchemaPtr schema,
                         Runtime::BufferManagerPtr bufferManager,
                         Runtime::QueryManagerPtr queryManager,
-                        const Configurations::MQTTSourceTypeConfigPtr& sourceConfig,
+                        const MQTTSourceTypePtr& mqttSourceType,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
@@ -137,11 +137,12 @@ class MQTTSource : public DataSource {
      * @return physicalTypes
      */
     std::vector<PhysicalTypePtr> getPhysicalTypes() const;
+
     /**
      * @brief getter for source config
-     * @return sourceConfig
+     * @return mqttSourceType
      */
-    const Configurations::MQTTSourceTypeConfigPtr& getSourceConfigPtr() const;
+    const MQTTSourceTypePtr& getSourceConfigPtr() const;
 
   private:
     /**
@@ -168,7 +169,7 @@ class MQTTSource : public DataSource {
      * serialization/deserialization process
      */
     friend class DataSource;
-    Configurations::MQTTSourceTypeConfigPtr sourceConfig;
+    MQTTSourceTypePtr sourceConfig;
     bool connected;
     std::string serverAddress;
     std::string clientId;

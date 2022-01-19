@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_SOURCES_CSV_SOURCE_HPP_
 #define NES_INCLUDE_SOURCES_CSV_SOURCE_HPP_
 
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/PhysicalStreamConfig/CSVSourceTypeConfig.hpp>
 #include <chrono>
 #include <fstream>
 #include <string>
@@ -37,7 +37,7 @@ class CSVSource : public DataSource {
    * @param schema of the source
    * @param bufferManager the buffer manager
    * @param queryManager the query manager
-   * @param sourceConfigPtr points to the current source configuration object, look at sourceConfig and CSVSourceType for info
+   * @param csvSourceType points to the current source configuration object, look at mqttSourceType and CSVSourceType for info
    * @param delimiter inside the file, default ","
    * @param operatorId current operator id
    * @param numSourceLocalBuffers
@@ -47,7 +47,7 @@ class CSVSource : public DataSource {
     explicit CSVSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       Configurations::CSVSourceTypeConfigPtr sourceConfigPtr,
+                       CSVSourceTypePtr csvSourceType,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
@@ -99,9 +99,9 @@ class CSVSource : public DataSource {
 
     /**
      * @brief getter for source config
-     * @return sourceConfigPtr
+     * @return csvSourceType
      */
-    const Configurations::CSVSourceTypeConfigPtr& getSourceConfigPtr() const;
+    const CSVSourceTypePtr& getSourceConfig() const;
 
   protected:
     std::ifstream input;
@@ -109,7 +109,7 @@ class CSVSource : public DataSource {
     bool loopOnFile;
 
   private:
-    Configurations::CSVSourceTypeConfigPtr sourceConfigPtr;
+    CSVSourceTypePtr csvSourceType;
     std::string filePath;
     uint64_t tupleSize;
     uint64_t numberOfTuplesToProducePerBuffer;

@@ -26,12 +26,12 @@ namespace NES {
 /**
  * @brief This is the parent class for different type of requests handled by NES.
  */
-class NESRequest : public std::enable_shared_from_this<NESRequest> {
+class Request : public std::enable_shared_from_this<Request> {
 
   public:
-    explicit NESRequest(QueryId queryId);
+    explicit Request(QueryId queryId);
 
-    virtual ~NESRequest() = default;
+    virtual ~Request() = default;
 
     /**
      * @brief Get the query id to stop
@@ -40,9 +40,9 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
     QueryId getQueryId() const;
 
     /**
-     * @brief Checks if the current node is of type NodeType
-     * @tparam NodeType
-     * @return bool true if node is of NodeType
+     * @brief Checks if the current node is of type RequestType
+     * @tparam RequestType
+     * @return bool true if node is of RequestType
      */
     template<class RequestType>
     bool instanceOf() {
@@ -62,7 +62,7 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
         if (instanceOf<RequestType>()) {
             return std::dynamic_pointer_cast<RequestType>(this->shared_from_this());
         }
-        throw std::logic_error("NESRequest:: we performed an invalid cast of operator ");
+        throw std::logic_error("Request:: we performed an invalid cast of operator ");
     }
 
     virtual std::string toString() = 0;

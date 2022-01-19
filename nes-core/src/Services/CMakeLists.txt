@@ -15,7 +15,7 @@
 add_source_nes(
         MonitoringService.cpp
         QueryService.cpp
-        NESRequestProcessorService.cpp
+        RequestProcessorService.cpp
         QueryParsingService.cpp
         StreamCatalogService.cpp
         TopologyManagerService.cpp

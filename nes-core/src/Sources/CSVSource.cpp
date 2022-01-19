@@ -35,7 +35,7 @@ namespace NES {
 CSVSource::CSVSource(SchemaPtr schema,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
-                     Configurations::CSVSourceTypeConfigPtr sourceConfigPtr,
+                     CSVSourceTypePtr csvSourceType,
                      OperatorId operatorId,
                      size_t numSourceLocalBuffers,
                      GatheringMode gatheringMode,
@@ -47,11 +47,11 @@ CSVSource::CSVSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(successors)),
-      sourceConfigPtr(sourceConfigPtr), filePath(sourceConfigPtr->getFilePath()->getValue()),
-      numberOfTuplesToProducePerBuffer(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue()),
-      delimiter(sourceConfigPtr->getDelimiter()->getValue()), skipHeader(sourceConfigPtr->getSkipHeader()->getValue()) {
-    this->numBuffersToProcess = sourceConfigPtr->getNumberOfBuffersToProduce()->getValue();
-    this->gatheringInterval = std::chrono::milliseconds(sourceConfigPtr->getSourceFrequency()->getValue());
+      csvSourceType(csvSourceType), filePath(csvSourceType->getFilePath()->getValue()),
+      numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
+      delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()) {
+    this->numBuffersToProcess = csvSourceType->getNumberOfBuffersToProduce()->getValue();
+    this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getSourceFrequency()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     char* path = realpath(filePath.c_str(), nullptr);
@@ -67,7 +67,7 @@ CSVSource::CSVSource(SchemaPtr schema,
         this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
     }
 
-    this->loopOnFile = sourceConfigPtr->getNumberOfBuffersToProduce()->getValue() == 0;
+    this->loopOnFile = csvSourceType->getNumberOfBuffersToProduce()->getValue() == 0;
 
     NES_DEBUG("CSVSource: tupleSize=" << this->tupleSize << " freq=" << this->gatheringInterval.count() << "ms"
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
@@ -175,5 +175,5 @@ uint64_t CSVSource::getNumberOfTuplesToProducePerBuffer() const { return numberO
 
 bool CSVSource::getSkipHeader() const { return skipHeader; }
 
-const Configurations::CSVSourceTypeConfigPtr& CSVSource::getSourceConfigPtr() const { return sourceConfigPtr; }
+const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
 }// namespace NES

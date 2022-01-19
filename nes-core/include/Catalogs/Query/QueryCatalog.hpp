@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_CATALOGS_QUERY_CATALOG_HPP_
 #define NES_INCLUDE_CATALOGS_QUERY_CATALOG_HPP_
 
-#include <Catalogs/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <condition_variable>
 #include <map>

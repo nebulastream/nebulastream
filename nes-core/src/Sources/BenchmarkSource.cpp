@@ -88,7 +88,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
 }
 
 
-BenchmarkSource::SourceMode BenchmarkSourceStreamConfig::getSourceModeFromString(const std::string& mode) {
+BenchmarkSource::SourceMode BenchmarkSource::getSourceModeFromString(const std::string& mode) {
     Util::trim(mode);
     if (mode == "emptyBuffer") {
         return BenchmarkSource::EMPTY_BUFFER;

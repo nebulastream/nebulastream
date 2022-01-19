@@ -58,7 +58,7 @@ NodeEngine::NodeEngine(std::vector<Configurations::PhysicalSourcePtr> physicalSt
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker)
-    : physicalStreams(std::move(physicalStreams)), queryManager(std::move(queryManager)), hardwareManager(std::move(hardwareManager)),
+    : physicalSources(std::move(physicalStreams)), queryManager(std::move(queryManager)), hardwareManager(std::move(hardwareManager)),
       bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)),
       materializedViewManager(std::move(materializedViewManager)),
@@ -462,13 +462,13 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescri
     //search for right config
     AbstractPhysicalStreamConfigPtr retPtr;
     auto streamName = sourceDescriptor->getStreamName();
-    for (auto physicalStream = physicalStreams.begin(); physicalStream != physicalStreams.end();) {
+    for (auto physicalStream = physicalSources.begin(); physicalStream != physicalSources.end();) {
         if (physicalStream->getLogicalStreamName() == streamName) {
             NES_DEBUG("config for stream " << streamName << " phy stream="
                                            << physicalStream->get()->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
             retPtr = *physicalStream;
             //@Steffen what is the intended behaviour here? Why do we need to erase it from physicalSources?
-            physicalStreams.erase(physicalStream);
+            physicalSources.erase(physicalStream);
             break;
         } else {
             physicalStream++;
@@ -476,14 +476,14 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescri
     }
     if (!retPtr) {
         NES_WARNING("returning default config");
-        retPtr = physicalStreams[0];
+        retPtr = physicalSources[0];
     }
     return retPtr->build(sourceDescriptor->getSchema());
 }
 
 void NodeEngine::setConfig(const AbstractPhysicalStreamConfigPtr& config) {
     NES_ASSERT(config, "physical source config is not specified");
-    this->physicalStreams.emplace_back(config);
+    this->physicalSources.emplace_back(config);
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {

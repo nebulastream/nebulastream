@@ -14,8 +14,9 @@
     limitations under the License.
 */
 
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
@@ -34,11 +35,10 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
-#include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/RequestProcessorService.hpp>
 #include <Util/Logger.hpp>
-#include <WorkQueues/NESRequestQueue.hpp>
-#include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <exception>
 #include <utility>
@@ -46,17 +46,16 @@
 
 namespace NES {
 
-NESRequestProcessorService::NESRequestProcessorService(
-    const GlobalExecutionPlanPtr& globalExecutionPlan,
-    const TopologyPtr& topology,
-    const QueryCatalogPtr& queryCatalog,
-    const GlobalQueryPlanPtr& globalQueryPlan,
-    const SourceCatalogPtr& streamCatalog,
-    const WorkerRPCClientPtr& workerRpcClient,
-    NESRequestQueuePtr queryRequestQueue,
-    Optimizer::QueryMergerRule queryMergerRule,
-    Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
-    bool performOnlySourceOperatorExpansion)
+RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                 const TopologyPtr& topology,
+                                                 const QueryCatalogPtr& queryCatalog,
+                                                 const GlobalQueryPlanPtr& globalQueryPlan,
+                                                 const SourceCatalogPtr& streamCatalog,
+                                                 const WorkerRPCClientPtr& workerRpcClient,
+                                                 RequestQueuePtr queryRequestQueue,
+                                                 Optimizer::QueryMergerRule queryMergerRule,
+                                                 Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
+                                                 bool performOnlySourceOperatorExpansion)
     : queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(std::move(queryRequestQueue)),
       globalQueryPlan(globalQueryPlan) {
 
@@ -80,7 +79,7 @@ NESRequestProcessorService::NESRequestProcessorService(
                                                                                performOnlySourceOperatorExpansion);
 }
 
-void NESRequestProcessorService::start() {
+void RequestProcessorService::start() {
     try {
         while (isQueryProcessorRunning()) {
             NES_DEBUG("QueryRequestProcessorService: Waiting for new query request trigger");
@@ -191,12 +190,12 @@ void NESRequestProcessorService::start() {
     }
 }
 
-bool NESRequestProcessorService::isQueryProcessorRunning() {
+bool RequestProcessorService::isQueryProcessorRunning() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
     return queryProcessorRunning;
 }
 
-void NESRequestProcessorService::shutDown() {
+void RequestProcessorService::shutDown() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
     if (queryProcessorRunning) {
         this->queryProcessorRunning = false;

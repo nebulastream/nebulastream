@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <REST/Controller/StreamCatalogController.hpp>
 #include <REST/runtime_utils.hpp>

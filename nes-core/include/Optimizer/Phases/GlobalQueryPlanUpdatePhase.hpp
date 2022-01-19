@@ -29,8 +29,8 @@ using ContextPtr = std::shared_ptr<context>;
 
 namespace NES {
 
-class NESRequest;
-using NESRequestPtr = std::shared_ptr<NESRequest>;
+class Request;
+using NESRequestPtr = std::shared_ptr<Request>;
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;

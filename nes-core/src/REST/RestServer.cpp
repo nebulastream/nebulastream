@@ -16,8 +16,8 @@
 
 #include <REST/RestServer.hpp>
 
-#include <Catalogs/SourceCatalog.hpp>
-#include <Catalogs/UdfCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <REST/RestEngine.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/usr_interrupt_handler.hpp>

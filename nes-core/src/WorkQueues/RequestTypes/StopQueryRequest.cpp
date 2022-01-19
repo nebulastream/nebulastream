@@ -18,7 +18,7 @@
 #include <string>
 namespace NES {
 
-StopQueryRequest::StopQueryRequest(QueryId queryId) : NESRequest(queryId) {}
+StopQueryRequest::StopQueryRequest(QueryId queryId) : Request(queryId) {}
 
 StopQueryRequestPtr StopQueryRequest::create(QueryId queryId) {
     return std::make_shared<StopQueryRequest>(StopQueryRequest(queryId));

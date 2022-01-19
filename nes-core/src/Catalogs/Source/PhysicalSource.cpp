@@ -32,6 +32,10 @@ PhysicalSource::create(std::string logicalSourceName, std::string physicalSource
         PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), std::move(physicalSourceType)));
 }
 
+PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName) {
+    return std::make_shared<PhysicalSource>(PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), nullptr));
+}
+
 std::string PhysicalSource::toString() {
     std::stringstream ss;
     ss << "PhysicalSource Name: " << physicalSourceName;

@@ -64,7 +64,7 @@ class CSVSourceType : public PhysicalSourceType {
 
     /**
      * Checks equality
-     * @param other sourceConfig ot check equality for
+     * @param other mqttSourceType ot check equality for
      * @return true if equal, false otherwise
      */
     bool equal(PhysicalSourceTypePtr const& other) override;

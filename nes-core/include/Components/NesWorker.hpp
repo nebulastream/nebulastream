@@ -38,19 +38,13 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
-namespace Configurations {
-class PhysicalSource;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
-}// namespace Configurations
-
-enum NesNodeType : int { Worker, Sensor };
 class NesWorker {
   public:
     /**
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig, NesNodeType type);
+    explicit NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig);
 
     /**
      * @brief default dtor
@@ -70,7 +64,7 @@ class NesWorker {
      * @param new stream of this system
      * @return bool indicating success
      */
-    bool setWithRegister(Configurations::PhysicalSourcePtr physicalStream);
+    bool setWithRegister(PhysicalSourcePtr physicalSource);
 
     /**
      * @brief configure setup with set of parent id
@@ -117,7 +111,7 @@ class NesWorker {
      * @param physicalStream: physical stream containing relevant information
      * @return bool indicating success
      */
-    bool registerPhysicalStream(const Configurations::PhysicalSourcePtr& physicalStream);
+    bool registerPhysicalStream(const PhysicalSourcePtr& physicalStream);
 
     /**
     * @brief method to deregister physical stream with the coordinator
@@ -201,7 +195,7 @@ class NesWorker {
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     const Configurations::WorkerConfigurationPtr workerConfig;
-    std::vector<Configurations::PhysicalSourcePtr> physicalStreams;
+    std::vector<PhysicalSourcePtr> physicalSources;
     bool connected{false};
     bool withRegisterStream{false};
     bool withParent{false};
@@ -227,7 +221,6 @@ class NesWorker {
     std::string queryCompilerOutputBufferOptimizationLevel;
     bool enableNumaAwareness{false};
     bool enableMonitoring;
-    NesNodeType type;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
     /**

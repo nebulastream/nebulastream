@@ -18,7 +18,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_CSV_SOURCE_DESCRIPTOR_HPP_
 
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/PhysicalStreamConfig/CSVSourceTypeConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <chrono>
 
@@ -30,20 +30,20 @@ namespace NES {
 class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, Configurations::CSVSourceTypeConfigPtr sourceConfigPtr);
+    static SourceDescriptorPtr create(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
 
     /**
      * @brief get source config ptr with all configurations for csv source
      */
-    Configurations::CSVSourceTypeConfigPtr getSourceConfig() const;
+    CSVSourceTypePtr getSourceConfig() const;
 
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
 
   private:
-    explicit CsvSourceDescriptor(SchemaPtr schema, Configurations::CSVSourceTypeConfigPtr sourceConfig);
+    explicit CsvSourceDescriptor(SchemaPtr schema, CSVSourceTypePtr sourceConfig);
 
-    Configurations::CSVSourceTypeConfigPtr sourceConfig;
+    CSVSourceTypePtr csvSourceType;
 };
 
 using CsvSourceDescriptorPtr = std::shared_ptr<CsvSourceDescriptor>;
