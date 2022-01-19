@@ -75,7 +75,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @brief returns the the generator function
      * @return generator function
      */
-    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> getGeneratorFunction();
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& getGeneratorFunction();
 
     /**
      * @brief returns number of buffer to process

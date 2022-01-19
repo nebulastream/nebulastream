@@ -31,7 +31,7 @@ BenchmarkSourceType::BenchmarkSourceType(uint8_t* memoryArea,
                                          uint64_t numBuffersToProduce,
                                          uint64_t gatheringValue,
                                          GatheringMode::Value gatheringMode,
-                                         const std::string& sourceMode,
+                                         SourceMode::Value sourceMode,
                                          uint64_t sourceAffinity)
     : PhysicalSourceType(BENCHMARK_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize),
       numberOfBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
@@ -46,12 +46,13 @@ BenchmarkSourceTypePtr BenchmarkSourceType::create(uint8_t* memoryArea,
                                                    uint64_t sourceAffinity) {
     NES_ASSERT(memoryArea, "invalid memory area");
     auto gatheringModeEnum = GatheringMode::getFromString(gatheringMode);
+    auto sourceModeEnum = SourceMode::getFromString(sourceMode);
     return std::make_shared<BenchmarkSourceType>(BenchmarkSourceType(memoryArea,
                                                                      memoryAreaSize,
                                                                      numBuffersToProduce,
                                                                      gatheringValue,
                                                                      gatheringModeEnum,
-                                                                     sourceMode,
+                                                                     sourceModeEnum,
                                                                      sourceAffinity));
 }
 
@@ -63,7 +64,7 @@ uint64_t BenchmarkSourceType::getGatheringValue() const { return gatheringValue;
 
 GatheringMode::Value BenchmarkSourceType::getGatheringMode() const { return gatheringMode; }
 
-const std::string& BenchmarkSourceType::getSourceMode() const { return sourceMode; }
+SourceMode::Value BenchmarkSourceType::getSourceMode() const { return sourceMode; }
 
 uint64_t BenchmarkSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 
@@ -91,7 +92,7 @@ bool BenchmarkSourceType::equal(const PhysicalSourceTypePtr& other) {
     return memoryArea == otherSourceConfig->memoryArea && memoryAreaSize == otherSourceConfig->memoryAreaSize
         && numberOfBuffersToProduce == otherSourceConfig->numberOfBuffersToProduce
         && gatheringValue == otherSourceConfig->gatheringValue && gatheringMode == otherSourceConfig->gatheringMode
-        && sourceMode == sourceMode && sourceAffinity == otherSourceConfig->sourceAffinity;
+        && sourceMode == otherSourceConfig->sourceMode && sourceAffinity == otherSourceConfig->sourceAffinity;
 }
 
 }// namespace NES

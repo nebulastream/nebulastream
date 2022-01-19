@@ -38,7 +38,7 @@ class BinarySource : public DataSource {
                           const std::string& file_path,
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
-                          GatheringMode gatheringMode,
+                          GatheringMode::Value gatheringMode,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**

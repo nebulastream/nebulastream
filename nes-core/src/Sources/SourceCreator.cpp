@@ -102,7 +102,7 @@ createLambdaSource(const SchemaPtr& schema,
                    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
-                   DataSource::GatheringMode gatheringMode,
+                   GatheringMode::Value gatheringMode,
                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<LambdaSource>(schema,
                                           bufferManager,
@@ -125,7 +125,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  uint64_t gatheringValue,
                                  OperatorId operatorId,
                                  size_t numSourceLocalBuffers,
-                                 DataSource::GatheringMode gatheringMode,
+                                 GatheringMode::Value gatheringMode,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
     return std::make_shared<MemorySource>(schema,
                                           memoryArea,
@@ -149,8 +149,8 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     uint64_t gatheringValue,
                                     OperatorId operatorId,
                                     size_t numSourceLocalBuffers,
-                                    DataSource::GatheringMode gatheringMode,
-                                    BenchmarkSource::SourceMode sourceMode,
+                                    GatheringMode::Value gatheringMode,
+                                    SourceMode::Value sourceMode,
                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
                                     uint64_t sourceAffinity) {
     return std::make_shared<BenchmarkSource>(schema,
@@ -183,7 +183,7 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
                                        port,
                                        operatorId,
                                        numSourceLocalBuffers,
-                                       DataSource::FREQUENCY_MODE,
+                                       GatheringMode::FREQUENCY_MODE,
                                        successors);
 }
 
@@ -200,7 +200,7 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                           pathToFile,
                                           operatorId,
                                           numSourceLocalBuffers,
-                                          DataSource::FREQUENCY_MODE,
+                                          GatheringMode::FREQUENCY_MODE,
                                           successors);
 }
 
@@ -233,7 +233,7 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                        csvSourceType,
                                        operatorId,
                                        numSourceLocalBuffers,
-                                       DataSource::FREQUENCY_MODE,
+                                       GatheringMode::FREQUENCY_MODE,
                                        successors);
 }
 
@@ -323,7 +323,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                        password,
                                        operatorId,
                                        numSourceLocalBuffers,
-                                       DataSource::FREQUENCY_MODE,
+                                       GatheringMode::FREQUENCY_MODE,
                                        successors);
 }
 #endif
@@ -342,7 +342,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                         mqttSourceType,
                                         operatorId,
                                         numSourceLocalBuffers,
-                                        DataSource::FREQUENCY_MODE,
+                                        GatheringMode::FREQUENCY_MODE,
                                         successors,
                                         inputFormat);
 }

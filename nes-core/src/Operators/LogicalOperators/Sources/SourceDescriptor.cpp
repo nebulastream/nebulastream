@@ -34,4 +34,6 @@ std::string SourceDescriptor::getLogicalSourceName() { return logicalSourceName;
 
 std::string SourceDescriptor::getPhysicalSourceName() { return physicalSourceName; }
 
+void SourceDescriptor::setSchema(const SchemaPtr& schema) { this->schema = schema; }
+
 }// namespace NES

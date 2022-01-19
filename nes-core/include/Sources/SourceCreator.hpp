@@ -107,7 +107,7 @@ createLambdaSource(const SchemaPtr& schema,
                    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
                    OperatorId operatorId,
                    size_t numSourceLocalBuffers,
-                   DataSource::GatheringMode gatheringMode,
+                   GatheringMode::Value gatheringMode,
                    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -203,7 +203,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
                                  uint64_t gatheringValue,
                                  OperatorId operatorId,
                                  size_t numSourceLocalBuffers,
-                                 DataSource::GatheringMode gatheringMode,
+                                 GatheringMode::Value gatheringMode,
                                  const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 /**
@@ -227,8 +227,8 @@ DataSourcePtr createBenchmarkSource(const SchemaPtr& schema,
                                     uint64_t gatheringValue,
                                     OperatorId operatorId,
                                     size_t numSourceLocalBuffers,
-                                    DataSource::GatheringMode gatheringMode,
-                                    BenchmarkSource::SourceMode sourceMode,
+                                    GatheringMode::Value gatheringMode,
+                                    SourceMode::Value sourceMode,
                                     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
                                     uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 

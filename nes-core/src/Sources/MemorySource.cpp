@@ -43,7 +43,7 @@ MemorySource::MemorySource(SchemaPtr schema,
                            uint64_t gatheringValue,
                            OperatorId operatorId,
                            size_t numSourceLocalBuffers,
-                           GatheringMode gatheringMode,
+                           GatheringMode::Value gatheringMode,
                            std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),

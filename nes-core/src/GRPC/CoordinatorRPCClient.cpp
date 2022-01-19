@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Runtime/TupleBuffer.hpp>

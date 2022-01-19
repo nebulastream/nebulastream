@@ -470,10 +470,6 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
 
-SourceDescriptorPtr NodeEngine::createActualSourceDescriptor(PhysicalSourcePtr physicalSource) {
-
-}
-
 const std::vector<PhysicalSourcePtr>& NodeEngine::getPhysicalSources() const { return physicalSources; }
 
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {

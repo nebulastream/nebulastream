@@ -18,7 +18,8 @@
 #define NES_INCLUDE_SOURCES_MQTT_SOURCE_HPP_
 #ifdef ENABLE_MQTT_BUILD
 
-#include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <cstdint>
@@ -55,7 +56,7 @@ class MQTTSource : public DataSource {
                         const MQTTSourceTypePtr& mqttSourceType,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
-                        GatheringMode gatheringMode,
+                        GatheringMode::Value gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                         SourceDescriptor::InputFormat inputFormat);
 

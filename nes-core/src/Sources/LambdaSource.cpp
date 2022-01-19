@@ -36,7 +36,7 @@ LambdaSource::LambdaSource(
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     OperatorId operatorId,
     size_t numSourceLocalBuffers,
-    GatheringMode gatheringMode,
+    GatheringMode::Value gatheringMode,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
                       std::move(bufferManager),

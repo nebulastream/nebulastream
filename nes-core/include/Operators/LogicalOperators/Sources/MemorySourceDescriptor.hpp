@@ -90,7 +90,7 @@ class MemorySourceDescriptor : public SourceDescriptor {
     * @brief return the gathering mode
     * @return
     */
-    GatheringMode getGatheringMode() const;
+    GatheringMode::Value getGatheringMode() const;
 
     /**
      * @brief return the gathering value

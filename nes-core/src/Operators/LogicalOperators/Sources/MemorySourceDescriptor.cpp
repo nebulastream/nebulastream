@@ -63,7 +63,7 @@ size_t MemorySourceDescriptor::getMemoryAreaSize() const { return memoryAreaSize
 
 uint64_t MemorySourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
-GatheringMode MemorySourceDescriptor::getGatheringMode() const { return gatheringMode; }
+GatheringMode::Value MemorySourceDescriptor::getGatheringMode() const { return gatheringMode; }
 
 uint64_t MemorySourceDescriptor::getGatheringValue() const { return gatheringValue; }
 }// namespace NES

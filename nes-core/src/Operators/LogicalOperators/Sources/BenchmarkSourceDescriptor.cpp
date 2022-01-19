@@ -26,7 +26,7 @@ BenchmarkSourceDescriptor::BenchmarkSourceDescriptor(SchemaPtr schema,
                                                      uint64_t numBuffersToProcess,
                                                      uint64_t gatheringValue,
                                                      GatheringMode::Value gatheringMode,
-                                                     BenchmarkSource::SourceMode sourceMode,
+                                                     SourceMode::Value sourceMode,
                                                      uint64_t sourceAffinity)
     : SourceDescriptor(std::move(schema)), memoryArea(std::move(memoryArea)), memoryAreaSize(memoryAreaSize),
       numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
@@ -40,7 +40,7 @@ std::shared_ptr<BenchmarkSourceDescriptor> BenchmarkSourceDescriptor::create(con
                                                                              uint64_t numBuffersToProcess,
                                                                              uint64_t gatheringValue,
                                                                              GatheringMode::Value gatheringMode,
-                                                                             BenchmarkSource::SourceMode sourceMode,
+                                                                             SourceMode::Value sourceMode,
                                                                              uint64_t sourceAffinity) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
@@ -66,9 +66,14 @@ bool BenchmarkSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 std::shared_ptr<uint8_t> BenchmarkSourceDescriptor::getMemoryArea() { return memoryArea; }
 
 size_t BenchmarkSourceDescriptor::getMemoryAreaSize() const { return memoryAreaSize; }
+
 uint64_t BenchmarkSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
+
 uint64_t BenchmarkSourceDescriptor::getSourceAffinity() const { return sourceAffinity; }
-DataSource::GatheringMode BenchmarkSourceDescriptor::getGatheringMode() const { return gatheringMode; }
-BenchmarkSource::SourceMode BenchmarkSourceDescriptor::getSourceMode() const { return sourceMode; }
+
+GatheringMode::Value BenchmarkSourceDescriptor::getGatheringMode() const { return gatheringMode; }
+
+SourceMode::Value BenchmarkSourceDescriptor::getSourceMode() const { return sourceMode; }
+
 uint64_t BenchmarkSourceDescriptor::getGatheringValue() const { return gatheringValue; }
 }// namespace NES

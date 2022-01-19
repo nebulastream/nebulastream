@@ -100,6 +100,8 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      */
     std::string getPhysicalSourceName();
 
+    void setSchema(const SchemaPtr& schema);
+
     /**
      * @brief Returns the string representation of the source descriptor.
      * @return string

@@ -53,7 +53,7 @@ class MemorySource : public GeneratorSource, public Runtime::BufferRecycler {
                           uint64_t gatheringValue,
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
-                          GatheringMode gatheringMode,
+                          GatheringMode::Value gatheringMode,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
