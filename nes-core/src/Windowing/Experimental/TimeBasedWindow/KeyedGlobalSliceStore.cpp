@@ -43,7 +43,13 @@ void KeyedGlobalSliceStore::finalizeSlice(uint64_t sequenceNumber, uint64_t slic
     }
 }
 bool KeyedGlobalSliceStore::hasSlice(uint64_t sliceIndex) {
+    const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     return sliceMap.contains(sliceIndex);
+}
+
+void KeyedGlobalSliceStore::clear() {
+    const std::lock_guard<std::mutex> lock(sliceStagingMutex);
+    sliceMap.clear();
 }
 
 }// namespace NES::Windowing::Experimental

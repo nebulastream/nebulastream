@@ -43,6 +43,10 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                       std::vector<OperatorHandlerPtr> operatorHandlers);
 
+    ~PipelineExecutionContext(){
+        NES_DEBUG("~PipelineExecutionContext");
+    }
+
     /**
      * @brief Emits a output tuple buffer to the Runtime. Internally we call the emit function which is a callback to the correct handler.
      * @param tupleBuffer the output tuple buffer that is passed to the Runtime
