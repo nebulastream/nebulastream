@@ -220,7 +220,7 @@ TEST_F(DISABLED_Z3ValidationTest, unequalityChecks) {
     //    NES_INFO("Chk that " << s.check());
     //    NES_INFO(s.get_model());
     //
-    //    //(and (< (* (* value 40) 40) 40) (< (* value 40) 40) (= streamName "car"))
+    //    //(and (< (* (* value 40) 40) 40) (< (* value 40) 40) (= logicalSourceName "car"))
     //
     //
     //    expr value = c.int_const("value");

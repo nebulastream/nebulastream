@@ -14,7 +14,7 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -48,7 +48,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             // if the source descriptor has no schema set and is only a logical stream source we replace it with the correct
             // source descriptor form the catalog.
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>() && sourceDescriptor->getSchema()->empty()) {
-                auto streamName = sourceDescriptor->getStreamName();
+                auto streamName = sourceDescriptor->getLogicalSourceName();
                 SchemaPtr schema = Schema::create();
                 if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName)) {
                     NES_ERROR("Stream name: " + streamName + " not registered.");

@@ -39,7 +39,7 @@ bool SourceLogicalOperatorNode::equal(NodePtr const& rhs) const {
 
 std::string SourceLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SOURCE(" << id << "," << sourceDescriptor->getStreamName() << "," << sourceDescriptor->toString() << ")";
+    ss << "SOURCE(" << id << "," << sourceDescriptor->getLogicalSourceName() << "," << sourceDescriptor->toString() << ")";
     return ss.str();
 }
 
@@ -74,7 +74,7 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
 
 void SourceLogicalOperatorNode::inferStringSignature() {
     //Update the signature
-    auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getStreamName() + ")");
-    hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getStreamName() + ")"};
+    auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")");
+    hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")"};
 }
 }// namespace NES

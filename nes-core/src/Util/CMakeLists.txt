@@ -24,6 +24,8 @@ add_source_nes(
         FaultToleranceType.cpp
         LineageType.cpp
         PlacementType.cpp
+        GatheringMode.cpp
+        SourceMode.cpp
         KalmanFilter.cpp
 )
 if (NES_USE_MQTT)

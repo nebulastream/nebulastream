@@ -251,7 +251,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
-    schema << "{\"streamName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
+    schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
               "DataTypeFactory::createFixedChar(8))->addField(createField(\\\"timestamp\\\", "
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
@@ -354,7 +354,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
-    schema << "{\"streamName\" : \"window\",\"schema\" "
+    schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
@@ -456,7 +456,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
-    schema << "{\"streamName\" : \"window\",\"schema\" "
+    schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;

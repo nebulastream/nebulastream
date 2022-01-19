@@ -35,28 +35,31 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     enum InputFormat { JSON, CSV };
 
     /**
-     * @brief Creates a new source descriptor without a streamName.
+     * @brief Creates a new source descriptor with a logicalSourceName.
      * @param schema the source schema
      */
-    explicit SourceDescriptor(SchemaPtr schema);
+    SourceDescriptor(SchemaPtr schema);
 
     /**
-    * @brief Creates a new source descriptor with a streamName.
-    * @param schema the source schema
-    */
-    SourceDescriptor(SchemaPtr schema, std::string streamName);
+     * @brief Creates a new source descriptor with a logicalSourceName.
+     * @param schema the source schema
+     * @param logicalSourceName the logical source name
+     */
+    SourceDescriptor(SchemaPtr schema, std::string logicalSourceName);
+
+    /**
+     * @brief Creates a new source descriptor with a logicalSourceName.
+     * @param schema the source schema
+     * @param logicalSourceName the logical source name
+     * @param physicalSourceName the physical source name
+     */
+    SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string physicalSourceName);
 
     /**
      * @brief Returns the schema, which is produced by this source descriptor
      * @return SchemaPtr
      */
     SchemaPtr getSchema();
-
-    /**
-     * @brief Set a new schema for the descriptor
-     * @param schema : the pointer to the new schema
-     */
-    void setSchema(SchemaPtr schema);
 
     /**
     * @brief Checks if the source descriptor is of type SourceType
@@ -86,16 +89,16 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
     }
 
     /**
-     * @brief Indicates if the source descriptor has a stream name.
-     * @return returns true if the stream name is defined.
+     * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
+     * @return logicalSourceName
      */
-    bool hasStreamName();
+    std::string getLogicalSourceName();
 
     /**
-     * @brief Returns the streamName. If no streamName is defined it returns the empty string.
-     * @return streamName
+     * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
+     * @return logicalSourceName
      */
-    std::string getStreamName();
+    std::string getPhysicalSourceName();
 
     /**
      * @brief Returns the string representation of the source descriptor.
@@ -117,7 +120,8 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
 
   protected:
     SchemaPtr schema;
-    std::string streamName;
+    std::string logicalSourceName;
+    std::string physicalSourceName;
 };
 
 }// namespace NES

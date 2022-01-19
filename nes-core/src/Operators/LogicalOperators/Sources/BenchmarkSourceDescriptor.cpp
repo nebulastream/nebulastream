@@ -25,7 +25,7 @@ BenchmarkSourceDescriptor::BenchmarkSourceDescriptor(SchemaPtr schema,
                                                      size_t memoryAreaSize,
                                                      uint64_t numBuffersToProcess,
                                                      uint64_t gatheringValue,
-                                                     DataSource::GatheringMode gatheringMode,
+                                                     GatheringMode::Value gatheringMode,
                                                      BenchmarkSource::SourceMode sourceMode,
                                                      uint64_t sourceAffinity)
     : SourceDescriptor(std::move(schema)), memoryArea(std::move(memoryArea)), memoryAreaSize(memoryAreaSize),
@@ -39,7 +39,7 @@ std::shared_ptr<BenchmarkSourceDescriptor> BenchmarkSourceDescriptor::create(con
                                                                              size_t memoryAreaSize,
                                                                              uint64_t numBuffersToProcess,
                                                                              uint64_t gatheringValue,
-                                                                             DataSource::GatheringMode gatheringMode,
+                                                                             GatheringMode::Value gatheringMode,
                                                                              BenchmarkSource::SourceMode sourceMode,
                                                                              uint64_t sourceAffinity) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");

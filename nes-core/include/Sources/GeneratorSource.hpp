@@ -44,7 +44,7 @@ class GeneratorSource : public DataSource {
                     uint64_t numbersOfBufferToProduce,
                     OperatorId operatorId,
                     size_t numSourceLocalBuffers,
-                    GatheringMode gatheringMode,
+                    GatheringMode::Value gatheringMode,
                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
         : DataSource(std::move(schema),
                      std::move(bufferManager),

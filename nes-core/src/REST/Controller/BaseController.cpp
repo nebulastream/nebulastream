@@ -97,9 +97,9 @@ void BaseController::handleException(const web::http::http_request& message, con
         // define required input fields based on path
         if (paths[0] == "streamCatalog") {
             if (paths[1] == "allPhysicalStream" || paths[1] == "deleteLogicalStream") {
-                errorResponse["detail"] = web::json::value::string("Parameter streamName must be provided");
+                errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName must be provided");
             } else if (paths[1] == "addLogicalStream" || paths[1] == "updateLogicalStream") {
-                errorResponse["detail"] = web::json::value::string("Parameter streamName and schema must be provided");
+                errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName and schema must be provided");
             }
         } else if (paths[0] == "query") {
             if (paths[1] == "execution-plan" || paths[1] == "execute-query") {

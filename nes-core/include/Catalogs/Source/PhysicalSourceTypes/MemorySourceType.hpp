@@ -18,6 +18,7 @@
 #define NES_INCLUDE_CATALOGS_MEMORY_SOURCE_STREAM_CONFIG_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/GatheringMode.hpp>
 
 namespace NES {
 
@@ -29,7 +30,6 @@ using MemorySourceTypePtr = std::shared_ptr<MemorySourceType>;
  */
 class MemorySourceType : public PhysicalSourceType {
   public:
-
     /**
      * @brief Factory method of MemorySourceType
      * @param memoryArea : location from where to read data
@@ -40,16 +40,20 @@ class MemorySourceType : public PhysicalSourceType {
      * @return a constructed MemorySourceType
      */
     static MemorySourceTypePtr create(uint8_t* memoryArea,
-                                              size_t memoryAreaSize,
-                                              uint64_t numBuffersToProduce,
-                                              uint64_t gatheringValue,
-                                              const std::string& gatheringMode);
+                                      size_t memoryAreaSize,
+                                      uint64_t numBuffersToProduce,
+                                      uint64_t gatheringValue,
+                                      const std::string& gatheringMode);
 
     const std::shared_ptr<uint8_t>& getMemoryArea() const;
+
     size_t getMemoryAreaSize() const;
+
     uint64_t getNumberOfBufferToProduce() const;
+
     uint64_t getGatheringValue() const;
-    const std::string& getGatheringMode() const;
+
+    GatheringMode::Value getGatheringMode() const;
 
     ~MemorySourceType() noexcept = default;
 
@@ -71,16 +75,16 @@ class MemorySourceType : public PhysicalSourceType {
      * @param memoryAreaSize the size of the memory area
      */
     explicit MemorySourceType(uint8_t* memoryArea,
-                                      size_t memoryAreaSize,
-                                      uint64_t numBuffersToProduce,
-                                      uint64_t gatheringValue,
-                                      const std::string& gatheringMode);
+                              size_t memoryAreaSize,
+                              uint64_t numBuffersToProduce,
+                              uint64_t gatheringValue,
+                              GatheringMode::Value gatheringMode);
 
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
     uint64_t numberOfBufferToProduce;
     uint64_t gatheringValue;
-    std::string gatheringMode;
+    GatheringMode::Value gatheringMode;
 };
 }// namespace NES
 #endif// NES_INCLUDE_CATALOGS_MEMORY_SOURCE_STREAM_CONFIG_HPP_

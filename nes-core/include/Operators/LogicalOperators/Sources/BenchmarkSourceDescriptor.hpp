@@ -38,7 +38,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                        size_t memoryAreaSize,
                                        uint64_t numBuffersToProcess,
                                        uint64_t gatheringValue,
-                                       DataSource::GatheringMode gatheringMode,
+                                       GatheringMode::Value gatheringMode,
                                        BenchmarkSource::SourceMode sourceMode,
                                        uint64_t sourceAffinity);
 
@@ -54,7 +54,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                                              size_t memoryAreaSize,
                                                              uint64_t numBuffersToProcess,
                                                              uint64_t gatheringValue,
-                                                             DataSource::GatheringMode gatheringMode,
+                                                             GatheringMode::Value gatheringMode,
                                                              BenchmarkSource::SourceMode sourceMode,
                                                              uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 
@@ -93,7 +93,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     * @brief return the gathering mode
     * @return
     */
-    DataSource::GatheringMode getGatheringMode() const;
+    GatheringMode::Value getGatheringMode() const;
 
     /**
     * @brief return the source mode
@@ -118,7 +118,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     size_t memoryAreaSize;
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
-    DataSource::GatheringMode gatheringMode;
+    GatheringMode::Value gatheringMode;
     BenchmarkSource::SourceMode sourceMode;
     uint64_t sourceAffinity;
 };

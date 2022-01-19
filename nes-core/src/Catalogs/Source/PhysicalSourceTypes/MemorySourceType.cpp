@@ -32,7 +32,7 @@ MemorySourceType::MemorySourceType(uint8_t* memoryArea,
                                    size_t memoryAreaSize,
                                    uint64_t numBuffersToProduce,
                                    uint64_t gatheringValue,
-                                   const std::string& gatheringMode)
+                                   GatheringMode::Value gatheringMode)
     : PhysicalSourceType(MEMORY_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize),
       numberOfBufferToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode) {}
 
@@ -42,8 +42,9 @@ MemorySourceTypePtr MemorySourceType::create(uint8_t* memoryArea,
                                              uint64_t gatheringValue,
                                              const std::string& gatheringMode) {
     NES_ASSERT(memoryArea, "invalid memory area");
+    auto gatheringModeEnum = GatheringMode::getFromString(gatheringMode);
     return std::make_shared<MemorySourceType>(
-        MemorySourceType(memoryArea, memoryAreaSize, numBuffersToProcess, gatheringValue, gatheringMode));
+        MemorySourceType(memoryArea, memoryAreaSize, numBuffersToProcess, gatheringValue, gatheringModeEnum));
 }
 
 const std::shared_ptr<uint8_t>& MemorySourceType::getMemoryArea() const { return memoryArea; }
@@ -54,7 +55,7 @@ uint64_t MemorySourceType::getNumberOfBufferToProduce() const { return numberOfB
 
 uint64_t MemorySourceType::getGatheringValue() const { return gatheringValue; }
 
-const std::string& MemorySourceType::getGatheringMode() const { return gatheringMode; }
+GatheringMode::Value MemorySourceType::getGatheringMode() const { return gatheringMode; }
 
 std::string MemorySourceType::toString() {
     std::stringstream ss;
@@ -63,7 +64,7 @@ std::string MemorySourceType::toString() {
     ss << "MemoryAreaSize :" << memoryAreaSize;
     ss << "NumberOfBuffersToProduce :" << numberOfBufferToProduce;
     ss << "GatheringValue :" << gatheringValue;
-    ss << "GatheringMode :" + gatheringMode;
+    ss << "GatheringMode :" << GatheringMode::toString(gatheringMode);
     ss << "\n}";
     return ss.str();
 }

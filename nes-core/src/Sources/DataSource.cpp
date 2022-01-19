@@ -44,26 +44,12 @@ std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExec
     return executableSuccessors;
 }
 
-DataSource::GatheringMode DataSource::getGatheringModeFromString(const std::string& mode) {
-    Util::trim(mode);
-    if (mode == "frequency") {
-        return GatheringMode::FREQUENCY_MODE;
-    }
-    if (mode == "ingestionrate") {
-        return GatheringMode::INGESTION_RATE_MODE;
-    }
-    if (mode == "adaptive") {
-        return GatheringMode::ADAPTIVE_MODE;
-    }
-    NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
-}
-
 DataSource::DataSource(SchemaPtr pSchema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
+                       GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),

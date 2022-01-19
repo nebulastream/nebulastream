@@ -23,7 +23,7 @@ namespace NES {
 LambdaSourceType::LambdaSourceType(std::function<void(NES::Runtime::TupleBuffer&, uint64_t)>&& generationFunction,
                                    uint64_t numBuffersToProduce,
                                    uint64_t gatheringValue,
-                                   std::string gatheringMode)
+                                   GatheringMode::Value gatheringMode)
     : PhysicalSourceType(LAMBDA_SOURCE), generationFunction(std::move(generationFunction)),
       numBuffersToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(std::move(gatheringMode)) {}
 
@@ -32,11 +32,13 @@ LambdaSourceTypePtr LambdaSourceType::create(
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     const std::string& gatheringMode) {
+
+    auto gatheringModeEnum = GatheringMode::getFromString(gatheringMode);
     return std::make_shared<LambdaSourceType>(
-        LambdaSourceType(std::move(generationFunction), numBuffersToProcess, gatheringValue, std::move(gatheringMode)));
+        LambdaSourceType(std::move(generationFunction), numBuffersToProcess, gatheringValue, gatheringModeEnum));
 }
 
-const std::function<void(NES::Runtime::TupleBuffer&, uint64_t)>& LambdaSourceType::getGenerationFunction() const {
+std::function<void(NES::Runtime::TupleBuffer&, uint64_t)> LambdaSourceType::getGenerationFunction() const {
     return generationFunction;
 }
 
@@ -44,14 +46,14 @@ uint64_t LambdaSourceType::getNumBuffersToProduce() const { return numBuffersToP
 
 uint64_t LambdaSourceType::getGatheringValue() const { return gatheringValue; }
 
-const std::string& LambdaSourceType::getGatheringMode() const { return gatheringMode; }
+GatheringMode::Value LambdaSourceType::getGatheringMode() const { return gatheringMode; }
 
 std::string LambdaSourceType::toString() {
     std::stringstream ss;
     ss << "LambdaSourceType => {\n";
     ss << "NumberOfBuffersToProduce :" << numBuffersToProduce;
     ss << "GatheringValue :" << gatheringValue;
-    ss << "GatheringMode :" + gatheringMode;
+    ss << "GatheringMode :" << GatheringMode::toString(gatheringMode);
     ss << "\n}";
     return ss.str();
 }

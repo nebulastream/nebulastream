@@ -30,15 +30,18 @@ class LambdaSourceDescriptor : public SourceDescriptor {
   public:
     /**
      * @brief Ctor of a LambdaSourceDescriptor
-     * @param schema the schame of the source
+     * @param schema the schema of the source
      * @param lambda function
+     * @param numBuffersToProduce number of buffers to produce
+     * @param gatheringValue gathering value
+     * @param gatheringMode gathering mode
      */
     explicit LambdaSourceDescriptor(
         SchemaPtr schema,
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-        uint64_t numBuffersToProcess,
+        uint64_t numBuffersToProduce,
         uint64_t gatheringValue,
-        DataSource::GatheringMode gatheringMode);
+        GatheringMode::Value gatheringMode);
 
     /**
      * @brief Factory method to create a LambdaSourceDescriptor object
@@ -53,7 +56,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
            std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProcess,
            uint64_t gatheringValue,
-           DataSource::GatheringMode gatheringMode);
+           GatheringMode::Value gatheringMode);
 
     /**
      * @brief Provides the string representation of the memory source
@@ -72,7 +75,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @brief returns the the generator function
      * @return generator function
      */
-    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& getGeneratorFunction();
+    std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> getGeneratorFunction();
 
     /**
      * @brief returns number of buffer to process
@@ -84,7 +87,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @brief return the gathering mode
      * @return
      */
-    DataSource::GatheringMode getGatheringMode() const;
+    GatheringMode::Value getGatheringMode() const;
 
     /**
      * @brief return the gathering value
@@ -96,7 +99,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
-    DataSource::GatheringMode gatheringMode;
+    GatheringMode::Value gatheringMode;
 };
 }// namespace NES
 

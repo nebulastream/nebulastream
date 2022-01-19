@@ -89,7 +89,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("streamName", schema);
+    streamCatalog->addLogicalStream("logicalSourceName", schema);
     auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
@@ -104,7 +104,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from("logicalSourceName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -127,7 +127,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("streamName", schema);
+    streamCatalog->addLogicalStream("logicalSourceName", schema);
     auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
@@ -145,7 +145,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from("logicalSourceName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -168,7 +168,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     schema->addField("key", INT32);
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("streamName", schema);
+    streamCatalog->addLogicalStream("logicalSourceName", schema);
     auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
@@ -183,7 +183,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    auto query = Query::from("streamName")
+    auto query = Query::from("logicalSourceName")
                      .window(SlidingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10), Seconds(2)))
                      .byKey(Attribute("key"))
                      .apply(Sum(Attribute("value")))
@@ -211,7 +211,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     schema->addField("ts", INT64);
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("streamName", schema);
+    streamCatalog->addLogicalStream("logicalSourceName", schema);
     auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
@@ -226,7 +226,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    auto query = Query::from("streamName")
+    auto query = Query::from("logicalSourceName")
                      .window(SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10), Seconds(2)))
                      .byKey(Attribute("key"))
                      .apply(Sum(Attribute("value")))
@@ -255,7 +255,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
     schema->addField("key", INT32);
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("streamName", schema);
+    streamCatalog->addLogicalStream("logicalSourceName", schema);
     auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
@@ -269,9 +269,9 @@ TEST_F(QueryCompilerTest, unionQuery) {
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
-    auto query1 = Query::from("streamName");
+    auto query1 = Query::from("logicalSourceName");
     auto query2 =
-        Query::from("streamName").filter(Attribute("key") == 32).unionWith(query1).sink(NullOutputSinkDescriptor::create());
+        Query::from("logicalSourceName").filter(Attribute("key") == 32).unionWith(query1).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query2.getQueryPlan();
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -347,7 +347,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("streamName", schema);
+    streamCatalog->addLogicalStream("logicalSourceName", schema);
     auto streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
@@ -362,7 +362,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from("logicalSourceName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);

@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -70,7 +70,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     for (auto& sourceOperator : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
-        auto streamName = sourceDescriptor->getStreamName();
+        auto streamName = sourceDescriptor->getLogicalSourceName();
         std::vector<TopologyNodePtr> sourceLocations = streamCatalog->getSourceNodesForLogicalStream(streamName);
         NES_TRACE("LogicalSourceExpansionRule: Found " << sourceLocations.size()
                                                        << " physical source locations in the topology.");

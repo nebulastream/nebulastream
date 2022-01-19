@@ -13,8 +13,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -36,6 +51,7 @@
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <string>
 #include <utility>
 #include <variant>
 
@@ -121,7 +137,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
-        sourceDescriptor = nodeEngine->createLogicalSourceDescriptor(sourceDescriptor);
+
+        sourceDescriptor = createActualLogicalSourceDescriptor(sourceDescriptor);
     }
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
@@ -221,6 +238,78 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
     executablePipelines.emplace_back(executablePipeline);
     return executablePipeline;
+}
+
+SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createActualLogicalSourceDescriptor(SchemaPtr schema,
+                                                                                         PhysicalSourcePtr physicalSource) {
+    // todo add handling for support of multiple physical streams.
+    NES_DEBUG("PhysicalStreamConfig: create Actual source descriptor with physical source: " << physicalSource->toString());
+    auto logicalSourceName = physicalSource->getLogicalSourceName();
+    auto physicalSourceName = physicalSource->getPhysicalSourceName();
+    auto physicalSourceType = physicalSource->getPhysicalSourceType();
+
+    switch (physicalSourceType->getSourceType()) {
+        case DEFAULT_SOURCE: {
+            auto defaultSourceType = physicalSourceType->as<DefaultSourceType>();
+            return DefaultSourceDescriptor::create(
+                schema,
+                logicalSourceName,
+                defaultSourceType->getNumberOfBuffersToProduce()->getValue(),
+                std::chrono::milliseconds(defaultSourceType->getSourceFrequency()->getValue()).count());
+        }
+#ifdef ENABLE_MQTT_BUILD
+        case MQTT_SOURCE: {
+            auto mqttSourceType = physicalSourceType->as<MQTTSourceType>();
+            //init inputFormat to default value (JSON). Only flat JSON and CSV format implemented currently
+            SourceDescriptor::InputFormat inputFormatEnum = MQTTSourceDescriptor::JSON;
+            if (strcasecmp(mqttSourceType->getInputFormat()->getValue().c_str(), "JSON") == 0) {
+                inputFormatEnum = SourceDescriptor::InputFormat::JSON;
+            } else if (strcasecmp(mqttSourceType->getInputFormat()->getValue().c_str(), "CSV") == 0) {
+                inputFormatEnum = SourceDescriptor::InputFormat::CSV;
+            }
+            return MQTTSourceDescriptor::create(schema, mqttSourceType, inputFormatEnum);
+        }
+#endif
+        case CSV_SOURCE: {
+            auto csvSourceType = physicalSourceType->as<CSVSourceType>();
+            return CsvSourceDescriptor::create(schema, csvSourceType);
+        }
+        case SENSE_SOURCE: {
+            auto senseSourceType = physicalSourceType->as<SenseSourceType>();
+            return SenseSourceDescriptor::create(schema, logicalSourceName, senseSourceType->getUdfs()->getValue());
+        }
+        case MEMORY_SOURCE: {
+            auto memorySourceType = physicalSourceType->as<MemorySourceType>();
+            return MemorySourceDescriptor::create(schema,
+                                                  memorySourceType->getMemoryArea(),
+                                                  memorySourceType->getMemoryAreaSize(),
+                                                  memorySourceType->getNumberOfBufferToProduce(),
+                                                  memorySourceType->getGatheringValue(),
+                                                  memorySourceType->getGatheringMode());
+        }
+        case BENCHMARK_SOURCE: {
+            auto benchmarkSourceType = physicalSourceType->as<BenchmarkSourceType>();
+            return BenchmarkSourceDescriptor::create(schema,
+                                                     benchmarkSourceType->getMemoryArea(),
+                                                     benchmarkSourceType->getMemoryAreaSize(),
+                                                     benchmarkSourceType->getNumberOfBuffersToProduce(),
+                                                     benchmarkSourceType->getGatheringValue(),
+                                                     benchmarkSourceType->getGatheringMode(),
+                                                     benchmarkSourceType->getSourceMode(),
+                                                     benchmarkSourceType->getSourceAffinity());
+        }
+        case LAMBDA_SOURCE: {
+            auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
+            return LambdaSourceDescriptor::create(schema,
+                                                  std::move(lambdaSourceType->getGenerationFunction()),
+                                                  lambdaSourceType->getNumBuffersToProduce(),
+                                                  lambdaSourceType->getGatheringValue(),
+                                                  lambdaSourceType->getGatheringMode());
+        }
+        default:
+            throw QueryCompilationException("PhysicalStreamConfig:: source type " + physicalSourceType->getSourceTypeAsString()
+                                            + " not supported");
+    }
 }
 
 }// namespace NES::QueryCompilation

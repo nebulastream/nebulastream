@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BASE_PLACEMENT_STRATEGY_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_BASE_PLACEMENT_STRATEGY_HPP_
 
-#include <Catalogs/SourceCatalogEntry.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>

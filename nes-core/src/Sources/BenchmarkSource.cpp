@@ -44,8 +44,8 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                                  uint64_t gatheringValue,
                                  OperatorId operatorId,
                                  size_t numSourceLocalBuffers,
-                                 GatheringMode gatheringMode,
-                                 SourceMode sourceMode,
+                                 GatheringMode::Value gatheringMode,
+                                 SourceMode::Value sourceMode,
                                  uint64_t sourceAffinity,
                                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema),
@@ -87,26 +87,6 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }
 
-
-BenchmarkSource::SourceMode BenchmarkSource::getSourceModeFromString(const std::string& mode) {
-    Util::trim(mode);
-    if (mode == "emptyBuffer") {
-        return BenchmarkSource::EMPTY_BUFFER;
-    } else if (mode == "wrapBuffer") {
-        return BenchmarkSource::WRAP_BUFFER;
-    } else if (mode == "copyBuffer") {
-        return BenchmarkSource::COPY_BUFFER;
-    } else if (mode == "copyBufferSimdRte") {
-        return BenchmarkSource::COPY_BUFFER_SIMD_RTE;
-    } else if (mode == "cacheCopy") {
-        return BenchmarkSource::CACHE_COPY;
-    } else if (mode == "copyBufferSimdApex") {
-        return BenchmarkSource::COPY_BUFFER_SIMD_APEX;
-    } else {
-        NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
-    }
-}
-
 void BenchmarkSource::open() {
     DataSource::open();
     auto buffer = localBufferManager->getUnpooledBuffer(memoryAreaSize);
@@ -124,11 +104,11 @@ void BenchmarkSource::runningRoutine() {
     for (uint64_t i = 0; i < numBuffersToProcess && running; ++i) {
         Runtime::TupleBuffer buffer;
         switch (sourceMode) {
-            case EMPTY_BUFFER: {
+            case SourceMode::EMPTY_BUFFER: {
                 buffer = bufferManager->getBufferBlocking();
                 break;
             }
-            case COPY_BUFFER_SIMD_RTE: {
+            case SourceMode::COPY_BUFFER_SIMD_RTE: {
 #ifdef HAS_AVX
                 buffer = bufferManager->getBufferBlocking();
                 rte_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
@@ -137,22 +117,22 @@ void BenchmarkSource::runningRoutine() {
 #endif
                 break;
             }
-            case COPY_BUFFER_SIMD_APEX: {
+            case SourceMode::COPY_BUFFER_SIMD_APEX: {
                 buffer = bufferManager->getBufferBlocking();
                 apex_memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
                 break;
             }
-            case CACHE_COPY: {
+            case SourceMode::CACHE_COPY: {
                 buffer = bufferManager->getBufferBlocking();
                 memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer(), buffer.getBufferSize());
                 break;
             }
-            case COPY_BUFFER: {
+            case SourceMode::COPY_BUFFER: {
                 buffer = bufferManager->getBufferBlocking();
                 memcpy(buffer.getBuffer(), numaLocalMemoryArea.getBuffer() + currentPositionInBytes, buffer.getBufferSize());
                 break;
             }
-            case WRAP_BUFFER: {
+            case SourceMode::WRAP_BUFFER: {
                 buffer =
                     Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes, bufferSize, this);
                 break;
