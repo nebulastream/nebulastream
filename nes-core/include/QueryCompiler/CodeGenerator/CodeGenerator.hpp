@@ -132,7 +132,7 @@ class CodeGenerator {
                                                                  PipelineContextPtr context,
                                                                  uint64_t id,
                                                                  uint64_t windowOperatorIndex,
-                                                                 GeneratableOperators::GeneratableWindowAggregationPtr ptr) = 0;
+                                                                 std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> ptr) = 0;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -149,7 +149,7 @@ class CodeGenerator {
 
     virtual bool generateCodeForKeyedSliceMergingOperator(
         Windowing::LogicalWindowDefinitionPtr window,
-        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        std::vector<QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) = 0;
 
@@ -159,20 +159,20 @@ class CodeGenerator {
 
     virtual bool generateCodeForThreadLocalPreAggregationOperator(
         Windowing::LogicalWindowDefinitionPtr window,
-        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
         PipelineContextPtr context,
         uint64_t windowOperatorIndex) = 0;
 
     virtual bool
     generateCodeForKeyedTumblingWindowSink(Windowing::LogicalWindowDefinitionPtr window,
-                                           GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
                                            PipelineContextPtr context,
                                            uint64_t windowOperatorIndex,
                                            SchemaPtr ptr) = 0;
 
     virtual bool
     generateCodeForKeyedSlidingWindowSink(Windowing::LogicalWindowDefinitionPtr window,
-                                           GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableWindowAggregation,
                                            PipelineContextPtr context,
                                            uint64_t windowOperatorIndex,
                                            SchemaPtr ptr) = 0;

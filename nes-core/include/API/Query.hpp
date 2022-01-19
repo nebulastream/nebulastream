@@ -419,21 +419,11 @@ class Query {
      * @param aggregation Window aggregation function.
      * @return query.
      */
-    Query& window(Windowing::WindowTypePtr const& windowType, Windowing::WindowAggregationPtr const& aggregation);
-
-    /**
-      * @brief: Creates a window aggregation.
-      * @param windowType Window definition.
-      * @param aggregation Window aggregation function.
-      * @return query.
-      */
-    Query& windowByKey(ExpressionItem onKey,
-                       Windowing::WindowTypePtr const& windowType,
-                       Windowing::WindowAggregationPtr const& aggregation);
+    Query& window(Windowing::WindowTypePtr const& windowType, std::vector<Windowing::WindowAggregationPtr> aggregation);
 
     Query& windowByKey(std::vector<ExpressionNodePtr> onKey,
                        Windowing::WindowTypePtr const& windowType,
-                       Windowing::WindowAggregationPtr const& aggregation);
+                       std::vector<Windowing::WindowAggregationPtr> aggregation);
 };
 
 using QueryPtr = std::shared_ptr<Query>;

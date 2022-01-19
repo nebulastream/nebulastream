@@ -27,7 +27,7 @@ GeneratableKeyedThreadLocalPreAggregationOperator::create(OperatorId id,
                                                           SchemaPtr inputSchema,
                                                           SchemaPtr outputSchema,
                                                           Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                                          GeneratableWindowAggregationPtr windowAggregation) {
+                                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableKeyedThreadLocalPreAggregationOperator>(
         GeneratableKeyedThreadLocalPreAggregationOperator(id,
                                                           std::move(inputSchema),
@@ -40,7 +40,7 @@ GeneratableOperatorPtr
 GeneratableKeyedThreadLocalPreAggregationOperator::create(SchemaPtr inputSchema,
                                                           SchemaPtr outputSchema,
                                                           Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                                          GeneratableWindowAggregationPtr windowAggregation) {
+                                                          std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
@@ -53,7 +53,7 @@ GeneratableKeyedThreadLocalPreAggregationOperator::GeneratableKeyedThreadLocalPr
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-    GeneratableWindowAggregationPtr windowAggregation)
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
       windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 

@@ -67,7 +67,9 @@ bool CentralWindowOperator::inferSchema() {
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    windowAggregation->inferStamp(inputSchema);
+    for (auto& agg : windowAggregation) {
+        agg->inferStamp(inputSchema);
+    }
     auto windowType = windowDefinition->getWindowType();
     windowType->inferStamp(inputSchema);
 
@@ -87,8 +89,10 @@ bool CentralWindowOperator::inferSchema() {
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }
-    outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->getFinalAggregateStamp()));
+    for (auto& agg : windowAggregation) {
+        outputSchema->addField(
+            AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
+    }
     return true;
 }
 

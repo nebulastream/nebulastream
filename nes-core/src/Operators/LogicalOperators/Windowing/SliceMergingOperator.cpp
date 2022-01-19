@@ -64,7 +64,9 @@ bool SliceMergingOperator::inferSchema() {
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    windowAggregation->inferStamp(inputSchema);
+    for (auto& agg : windowAggregation) {
+        agg->inferStamp(inputSchema);
+    }
 
     //Construct output schema
     outputSchema->clear();
@@ -82,8 +84,10 @@ bool SliceMergingOperator::inferSchema() {
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }
-    outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
-                                                  windowAggregation->on()->getStamp()));
+    for (auto& agg : windowAggregation) {
+        outputSchema->addField(
+            AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
+    }
     return true;
 }
 

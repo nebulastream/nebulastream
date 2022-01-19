@@ -61,26 +61,32 @@ KeyedWindowedQuery WindowedQuery::byKey(ExpressionItem onKey) const {
 KeyedWindowedQuery WindowedQuery::byKey(std::initializer_list<ExpressionItem> onKey) const {
 
     std::vector<ExpressionNodePtr> keys;
-    for(auto keyItem: onKey){
+    for (auto keyItem : onKey) {
         keys.emplace_back(keyItem.getExpressionNode());
     }
     return KeyedWindowedQuery(originalQuery, windowType, keys);
 }
 
 Query& WindowedQuery::apply(const Windowing::WindowAggregationPtr& aggregation) {
-    return originalQuery.window(windowType, aggregation);
+    return originalQuery.window(windowType, {aggregation});
 }
 
-KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::vector<ExpressionNodePtr> onKey)
+KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery,
+                                       Windowing::WindowTypePtr windowType,
+                                       std::vector<ExpressionNodePtr> onKey)
     : originalQuery(originalQuery), windowType(std::move(windowType)), onKey(onKey) {}
 
 Query& KeyedWindowedQuery::apply(Windowing::WindowAggregationPtr aggregation) {
+    return originalQuery.windowByKey(onKey, windowType, {aggregation});
+}
+
+Query& KeyedWindowedQuery::apply(std::initializer_list<Windowing::WindowAggregationPtr> aggregation) {
     return originalQuery.windowByKey(onKey, windowType, aggregation);
 }
 
 }//namespace WindowOperatorBuilder
 
-Query& Query::window(const Windowing::WindowTypePtr& windowType, const Windowing::WindowAggregationPtr& aggregation) {
+Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<Windowing::WindowAggregationPtr> aggregation) {
     NES_DEBUG("Query: add window operator");
     //we use a on time trigger as default that triggers on each change of the watermark
     auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
@@ -132,19 +138,12 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, const Windowing
     return *this;
 }
 
-Query& Query::windowByKey(ExpressionItem onKey,
-                          const Windowing::WindowTypePtr& windowType,
-                          const Windowing::WindowAggregationPtr& aggregation) {
-    std::vector<ExpressionNodePtr> key = {onKey.getExpressionNode()};
-    return windowByKey(key, windowType, aggregation);
-}
-
 Query& Query::windowByKey(std::vector<ExpressionNodePtr> onKeys,
                           const Windowing::WindowTypePtr& windowType,
-                          const Windowing::WindowAggregationPtr& aggregation) {
+                          std::vector<Windowing::WindowAggregationPtr> aggregation) {
     NES_DEBUG("Query: add keyed window operator");
     std::vector<FieldAccessExpressionNodePtr> expressionNodes;
-    for(auto onKey : onKeys){
+    for (auto onKey : onKeys) {
         if (!onKey->instanceOf<FieldAccessExpressionNode>()) {
             NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + onKey->toString());
         }

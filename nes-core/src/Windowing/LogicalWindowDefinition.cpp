@@ -25,7 +25,7 @@
 
 namespace NES::Windowing {
 
-LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggregation,
+LogicalWindowDefinition::LogicalWindowDefinition(std::vector<WindowAggregationPtr> windowAggregation,
                                                  WindowTypePtr windowType,
                                                  DistributionCharacteristicPtr distChar,
                                                  uint64_t numberOfInputEdges,
@@ -39,7 +39,7 @@ LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggr
 }
 
 LogicalWindowDefinition::LogicalWindowDefinition(const std::vector<FieldAccessExpressionNodePtr> onKey,
-                                                 WindowAggregationPtr windowAggregation,
+                                                 std::vector<WindowAggregationPtr> windowAggregation,
                                                  WindowTypePtr windowType,
                                                  DistributionCharacteristicPtr distChar,
                                                  uint64_t numberOfInputEdges,
@@ -54,7 +54,7 @@ LogicalWindowDefinition::LogicalWindowDefinition(const std::vector<FieldAccessEx
 
 bool LogicalWindowDefinition::isKeyed() { return !onKey.empty(); }
 
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const WindowAggregationPtr& windowAggregation,
+LogicalWindowDefinitionPtr LogicalWindowDefinition::create(std::vector<WindowAggregationPtr> windowAggregation,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
                                                            uint64_t numberOfInputEdges,
@@ -73,7 +73,7 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const WindowAggregati
 
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey,
-                                                           const WindowAggregationPtr& windowAggregation,
+                                                           std::vector<WindowAggregationPtr> windowAggregation,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
                                                            uint64_t numberOfInputEdges,
@@ -92,7 +92,7 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey,
 }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const std::vector<FieldAccessExpressionNodePtr>& onKey,
-                                                           const WindowAggregationPtr& windowAggregation,
+                                                           std::vector<WindowAggregationPtr> windowAggregation,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
                                                            uint64_t numberOfInputEdges,
@@ -110,7 +110,7 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const std::vector<Fie
 }
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const FieldAccessExpressionNodePtr& onKey,
-                                                           const WindowAggregationPtr& windowAggregation,
+                                                           std::vector<WindowAggregationPtr> windowAggregation,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
                                                            uint64_t numberOfInputEdges,
@@ -137,10 +137,10 @@ uint64_t LogicalWindowDefinition::getNumberOfInputEdges() const { return numberO
 void LogicalWindowDefinition::setNumberOfInputEdges(uint64_t numberOfInputEdges) {
     this->numberOfInputEdges = numberOfInputEdges;
 }
-WindowAggregationPtr LogicalWindowDefinition::getWindowAggregation() { return windowAggregation; }
+std::vector<WindowAggregationPtr> LogicalWindowDefinition::getWindowAggregation() { return windowAggregation; }
 WindowTypePtr LogicalWindowDefinition::getWindowType() { return windowType; }
 std::vector<FieldAccessExpressionNodePtr> LogicalWindowDefinition::getOnKey() { return onKey; }
-void LogicalWindowDefinition::setWindowAggregation(WindowAggregationPtr windowAggregation) {
+void LogicalWindowDefinition::setWindowAggregation(std::vector<WindowAggregationPtr> windowAggregation) {
     this->windowAggregation = std::move(windowAggregation);
 }
 void LogicalWindowDefinition::setWindowType(WindowTypePtr windowType) { this->windowType = std::move(windowType); }
@@ -148,7 +148,7 @@ void LogicalWindowDefinition::setOnKey(std::vector<FieldAccessExpressionNodePtr>
 
 LogicalWindowDefinitionPtr LogicalWindowDefinition::copy() {
     return create(onKey,
-                  windowAggregation->copy(),
+                  windowAggregation,
                   windowType,
                   distributionType,
                   numberOfInputEdges,
@@ -167,7 +167,7 @@ std::string LogicalWindowDefinition::toString() {
     std::stringstream ss;
     ss << std::endl;
     ss << "windowType=" << windowType->toString();
-    ss << " aggregation=" << windowAggregation->toString();
+    //ss << " aggregation=" << windowAggregation->toString();
     ss << " triggerPolicy=" << triggerPolicy->toString() << std::endl;
     ss << " triggerAction=" << triggerAction->toString() << std::endl;
     if (isKeyed()) {
@@ -194,8 +194,8 @@ bool LogicalWindowDefinition::equal(LogicalWindowDefinitionPtr otherWindowDefini
        // return false;
     }
 
-    return this->windowType->equal(otherWindowDefinition->getWindowType())
-        && this->windowAggregation->equal(otherWindowDefinition->getWindowAggregation());
+    return this->windowType->equal(otherWindowDefinition->getWindowType());
+      //  && this->windowAggregation->equal(otherWindowDefinition->getWindowAggregation());
 }
 
 }// namespace NES::Windowing

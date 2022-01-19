@@ -386,34 +386,33 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
     }
 
     // serialize aggregation
-    auto* windowAggregation = windowDetails.mutable_windowaggregation();
-    ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->as(),
-                                                     windowAggregation->mutable_asfield());
-    ExpressionSerializationUtil::serializeExpression(windowDefinition->getWindowAggregation()->on(),
-                                                     windowAggregation->mutable_onfield());
+    for (auto aggregation : windowDefinition->getWindowAggregation()) {
+        auto* windowAggregation = windowDetails.mutable_windowaggregation()->Add();
+        ExpressionSerializationUtil::serializeExpression(aggregation->as(), windowAggregation->mutable_asfield());
+        ExpressionSerializationUtil::serializeExpression(aggregation->on(), windowAggregation->mutable_onfield());
 
-    switch (windowDefinition->getWindowAggregation()->getType()) {
-        case Windowing::WindowAggregationDescriptor::Count:
-            windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT);
-            break;
-        case Windowing::WindowAggregationDescriptor::Max:
-            windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MAX);
-            break;
-        case Windowing::WindowAggregationDescriptor::Min:
-            windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MIN);
-            break;
-        case Windowing::WindowAggregationDescriptor::Sum:
-            windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
-            break;
-        case Windowing::WindowAggregationDescriptor::Avg:
-            windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_AVG);
-            break;
-        case Windowing::WindowAggregationDescriptor::Median:
-            windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
-            break;
-        default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+        switch (aggregation->getType()) {
+            case Windowing::WindowAggregationDescriptor::Count:
+                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_COUNT);
+                break;
+            case Windowing::WindowAggregationDescriptor::Max:
+                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MAX);
+                break;
+            case Windowing::WindowAggregationDescriptor::Min:
+                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MIN);
+                break;
+            case Windowing::WindowAggregationDescriptor::Sum:
+                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_SUM);
+                break;
+            case Windowing::WindowAggregationDescriptor::Avg:
+                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_AVG);
+                break;
+            case Windowing::WindowAggregationDescriptor::Median:
+                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
+                break;
+            default: NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
+        }
     }
-
     auto* windowTrigger = windowDetails.mutable_triggerpolicy();
 
     switch (windowDefinition->getTriggerPolicy()->getPolicyType()) {
@@ -577,33 +576,34 @@ OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePt
 
 WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(SerializableOperator_WindowDetails* windowDetails,
                                                                            OperatorId operatorId) {
-    auto serializedWindowAggregation = windowDetails->windowaggregation();
+    auto serializedWindowAggregations = windowDetails->windowaggregation();
     auto serializedTriggerPolicy = windowDetails->triggerpolicy();
     auto serializedAction = windowDetails->action();
 
     auto serializedWindowType = windowDetails->windowtype();
 
-    auto onField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.mutable_onfield())
-                       ->as<FieldAccessExpressionNode>();
-    auto asField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.mutable_asfield())
-                       ->as<FieldAccessExpressionNode>();
-
-    Windowing::WindowAggregationPtr aggregation;
-    if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM) {
-        aggregation = Windowing::SumAggregationDescriptor::create(onField, asField);
-    } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MAX) {
-        aggregation = Windowing::MaxAggregationDescriptor::create(onField, asField);
-    } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MIN) {
-        aggregation = Windowing::MinAggregationDescriptor::create(onField, asField);
-    } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_COUNT) {
-        aggregation = Windowing::CountAggregationDescriptor::create(onField, asField);
-    } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_AVG) {
-        aggregation = Windowing::AvgAggregationDescriptor::create(onField, asField);
-    } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN) {
-        aggregation = Windowing::MedianAggregationDescriptor::create(onField, asField);
-    } else {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: "
-                        << serializedWindowAggregation.DebugString());
+    std::vector<Windowing::WindowAggregationPtr> aggregation;
+    for (auto serializedWindowAggregation : serializedWindowAggregations) {
+        auto onField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.mutable_onfield())
+                           ->as<FieldAccessExpressionNode>();
+        auto asField = ExpressionSerializationUtil::deserializeExpression(serializedWindowAggregation.mutable_asfield())
+                           ->as<FieldAccessExpressionNode>();
+        if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM) {
+            aggregation.emplace_back(Windowing::SumAggregationDescriptor::create(onField, asField));
+        } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MAX) {
+            aggregation.emplace_back(Windowing::MaxAggregationDescriptor::create(onField, asField));
+        } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MIN) {
+            aggregation.emplace_back(Windowing::MinAggregationDescriptor::create(onField, asField));
+        } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_COUNT) {
+            aggregation.emplace_back(Windowing::CountAggregationDescriptor::create(onField, asField));
+        } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_AVG) {
+            aggregation.emplace_back(Windowing::AvgAggregationDescriptor::create(onField, asField));
+        } else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN) {
+            aggregation.emplace_back(Windowing::MedianAggregationDescriptor::create(onField, asField));
+        } else {
+            NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window aggregation: "
+                            << serializedWindowAggregation.DebugString());
+        }
     }
 
     Windowing::WindowTriggerPolicyPtr trigger;
@@ -734,9 +734,9 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     } else {
         std::vector<FieldAccessExpressionNodePtr> keyAccessExpression;
         auto serializedKeys = windowDetails->mutable_onkey();
-        for (auto& key: *serializedKeys) {
-            keyAccessExpression.emplace_back(ExpressionSerializationUtil::deserializeExpression(&key)
-                                  ->as<FieldAccessExpressionNode>());
+        for (auto& key : *serializedKeys) {
+            keyAccessExpression.emplace_back(
+                ExpressionSerializationUtil::deserializeExpression(&key)->as<FieldAccessExpressionNode>());
         }
         if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Complete) {
             auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,

@@ -27,7 +27,7 @@ GeneratableKeyedGlobalSliceStoreAppendOperator::create(OperatorId id,
                                               SchemaPtr inputSchema,
                                               SchemaPtr outputSchema,
                                               Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                              GeneratableWindowAggregationPtr windowAggregation) {
+                                                       std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
         return std::make_shared<GeneratableKeyedGlobalSliceStoreAppendOperator>(GeneratableKeyedGlobalSliceStoreAppendOperator(id,
                                                                                                      std::move(inputSchema),
                                                                                                      std::move(outputSchema),
@@ -39,7 +39,7 @@ GeneratableKeyedGlobalSliceStoreAppendOperator::create(OperatorId id,
     GeneratableKeyedGlobalSliceStoreAppendOperator::create(SchemaPtr inputSchema,
                                               SchemaPtr outputSchema,
                                               Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                              GeneratableWindowAggregationPtr windowAggregation) {
+                                                           std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
         return create(Util::getNextOperatorId(),
                       std::move(inputSchema),
                       std::move(outputSchema),
@@ -52,7 +52,7 @@ GeneratableKeyedGlobalSliceStoreAppendOperator::create(OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-        GeneratableWindowAggregationPtr windowAggregation)
+        std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
         : OperatorNode(id), GeneratableOperator(id, std::move(inputSchema), std::move(outputSchema)),
           windowAggregation(std::move(windowAggregation)), windowHandler(operatorHandler) {}
 
