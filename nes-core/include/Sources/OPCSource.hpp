@@ -52,7 +52,7 @@ class OPCSource : public DataSource {
                        std::string user,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
+                       GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**

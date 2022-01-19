@@ -39,7 +39,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                        uint64_t numBuffersToProcess,
                                        uint64_t gatheringValue,
                                        GatheringMode::Value gatheringMode,
-                                       BenchmarkSource::SourceMode sourceMode,
+                                       SourceMode::Value sourceMode,
                                        uint64_t sourceAffinity);
 
     /**
@@ -55,7 +55,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
                                                              uint64_t numBuffersToProcess,
                                                              uint64_t gatheringValue,
                                                              GatheringMode::Value gatheringMode,
-                                                             BenchmarkSource::SourceMode sourceMode,
+                                                             SourceMode::Value sourceMode,
                                                              uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
 
     /**
@@ -99,7 +99,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     * @brief return the source mode
     * @return
     */
-    BenchmarkSource::SourceMode getSourceMode() const;
+    SourceMode::Value getSourceMode() const;
 
     /**
      * @brief return the gathering value
@@ -119,7 +119,7 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
     GatheringMode::Value gatheringMode;
-    BenchmarkSource::SourceMode sourceMode;
+    SourceMode::Value sourceMode;
     uint64_t sourceAffinity;
 };
 }// namespace NES

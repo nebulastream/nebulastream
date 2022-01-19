@@ -57,7 +57,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
 
     GatheringMode::Value getGatheringMode() const;
 
-    const std::string& getSourceMode() const;
+    SourceMode::Value getSourceMode() const;
 
     uint64_t getSourceAffinity() const;
 
@@ -85,7 +85,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
                                  uint64_t numBuffersToProduce,
                                  uint64_t gatheringValue,
                                  GatheringMode::Value gatheringMode,
-                                 const std::string& sourceMode,
+                                 SourceMode::Value sourceMode,
                                  uint64_t sourceAffinity);
 
     std::shared_ptr<uint8_t> memoryArea;
@@ -93,7 +93,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
     uint64_t numberOfBuffersToProduce;
     uint64_t gatheringValue;
     GatheringMode::Value gatheringMode;
-    std::string sourceMode;
+    SourceMode::Value sourceMode;
     uint64_t sourceAffinity;
 };
 }// namespace NES

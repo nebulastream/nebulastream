@@ -38,7 +38,7 @@ CSVSource::CSVSource(SchemaPtr schema,
                      CSVSourceTypePtr csvSourceType,
                      OperatorId operatorId,
                      size_t numSourceLocalBuffers,
-                     GatheringMode gatheringMode,
+                     GatheringMode::Value gatheringMode,
                      std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema,
                  std::move(bufferManager),

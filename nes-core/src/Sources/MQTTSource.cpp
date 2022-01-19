@@ -51,7 +51,7 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                        const MQTTSourceTypePtr& sourceConfig,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
+                       GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        SourceDescriptor::InputFormat inputFormat)
     : DataSource(schema,

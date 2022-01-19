@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/NetworkManager.hpp>
@@ -31,19 +32,21 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <memory>
+
 namespace NES::Runtime {
 
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
-NodeEnginePtr
-NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<Configurations::PhysicalSourcePtr> configs) {
+NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname,
+                                                         uint16_t port,
+                                                         std::vector<PhysicalSourcePtr> configs) {
     return createNodeEngine(hostname, port, std::move(configs), 1, 4096, 1024, 128, 12, NumaAwarenessFlag::DISABLED, "");
 }
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint16_t port,
-                                                  std::vector<Configurations::PhysicalSourcePtr> configs,
+                                                  std::vector<PhysicalSourcePtr> configs,
                                                   const uint16_t numThreads,
                                                   const uint64_t bufferSize,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,

@@ -271,14 +271,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void onChannelError(Network::Messages::ErrorMessage) override;
 
     /**
-     * @brief Creates a logical source descriptor according to a logical source descriptor
-     * TODO place in proper catalog
-     * @param sourceDescriptor
-     * @return
-     */
-    SourceDescriptorPtr createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor);
-
-    /**
      * @brief Provide the hardware manager
      * @return the hardware manager
      */

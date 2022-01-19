@@ -39,7 +39,7 @@ class NodeEngineFactory {
      * @param config
      * @return
      */
-    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<Configurations::PhysicalSourcePtr> configs);
+    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<PhysicalSourcePtr> configs);
 
     /**
     * @brief this creates a new Runtime
@@ -52,7 +52,7 @@ class NodeEngineFactory {
     */
     static NodeEnginePtr createNodeEngine(const std::string& hostname,
                                           uint16_t port,
-                                          std::vector<Configurations::PhysicalSourcePtr> configs,
+                                          std::vector<PhysicalSourcePtr> configs,
                                           uint16_t numThreads,
                                           uint64_t bufferSize,
                                           uint64_t numberOfBuffersInGlobalBufferManager,

@@ -19,8 +19,6 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Util/Logger.hpp>
-#include <cassert>
-#include <fstream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -41,7 +39,7 @@ SenseSource::SenseSource(SchemaPtr schema,
                  std::move(queryManager),
                  operatorId,
                  numSourceLocalBuffers,
-                 DataSource::GatheringMode::FREQUENCY_MODE,
+                 GatheringMode::FREQUENCY_MODE,
                  std::move(successors)),
       udfs(std::move(udfs)) {}
 
