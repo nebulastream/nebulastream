@@ -133,12 +133,24 @@ void LowerToExecutableQueryPlanPhase::processSource(
         throw QueryCompilationException("This is not a source pipeline.");
     }
 
+    //Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
-
-        sourceDescriptor = createActualLogicalSourceDescriptor(sourceDescriptor);
+        //Fetch logical and physical source name in the descriptor
+        auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
+        auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
+        //Iterate over all available physical sources
+        for (const auto& physicalSource : nodeEngine->getPhysicalSources()) {
+            //Check if logical and physical source name matches with any of the physical source provided by the node
+            if (physicalSource->getLogicalSourceName() == logicalSourceName
+                && physicalSource->getPhysicalSourceName() == physicalSourceName) {
+                sourceDescriptor = createActualLogicalSourceDescriptor(sourceDescriptor->getSchema(), physicalSource);
+            }
+        }
+        throw QueryCompilationException("Unable to find the Physical source with logical source name " + logicalSourceName
+                                        + " and physical source name " + physicalSourceName);
     }
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;

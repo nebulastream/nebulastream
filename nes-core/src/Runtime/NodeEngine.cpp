@@ -454,23 +454,6 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
 
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
-SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor) {
-    NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
-    auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
-    auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
-
-    for (const auto& physicalSource : physicalSources) {
-        if (physicalSource->getLogicalSourceName() == logicalSourceName
-            && physicalSource->getPhysicalSourceName() == physicalSourceName) {
-            NES_DEBUG("config for stream " << logicalSourceName << " phy stream=" << physicalSourceName);
-            return Add logic for conversion here;
-        }
-    }
-
-    NES_THROW_RUNTIME_ERROR("Unable to find the Physical source with logical source name "
-                            << logicalSourceName << " and physical source name " << physicalSourceName);
-}
-
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
     std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
@@ -490,6 +473,8 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 SourceDescriptorPtr NodeEngine::createActualSourceDescriptor(PhysicalSourcePtr physicalSource) {
 
 }
+
+const std::vector<PhysicalSourcePtr>& NodeEngine::getPhysicalSources() const { return physicalSources; }
 
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
