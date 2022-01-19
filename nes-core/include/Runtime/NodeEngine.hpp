@@ -209,12 +209,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     uint64_t getNodeEngineId();
 
     /**
-     * @brief getter of buffer manager
-     * @return bufferManager
-     */
-    QueryCompilation::QueryCompilerPtr getCompiler();
-
-    /**
      * @brief getter of network manager
      * @return network manager
      */
@@ -289,6 +283,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return the hardware manager
      */
     HardwareManagerPtr getHardwareManager() const;
+
+    /**
+     * @brief Create actual source descriptor from the
+     * @param physicalSource: physical source to use to create the source descriptor
+     * @return Source Descriptor of specific type
+     */
+    SourceDescriptorPtr createActualSourceDescriptor(PhysicalSourcePtr physicalSource);
 
   private:
     std::vector<PhysicalSourcePtr> physicalSources;

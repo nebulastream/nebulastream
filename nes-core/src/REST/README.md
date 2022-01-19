@@ -218,7 +218,7 @@ To get all physical streams for a given logical stream.
 **_Example_**: 
 
 **Request**:
-{"streamName": "logical_stream_name"}
+{"logicalSourceName": "logical_stream_name"}
 
 **Response**:
 {"Physical Streams":  [physicl_stream_string]}
@@ -233,7 +233,7 @@ To add a logical stream.
 **_Example_**: 
 
 **Request**:
-{"streamName": "logical_stream_name",
+{"logicalSourceName": "logical_stream_name",
 "schema": "Schema::create()->addField(\"test\",INT32);"}
 
 **Response**:
@@ -263,7 +263,7 @@ To Update a logical stream.
 **_Example_**: 
 
 **Request**:
-{"streamName": "logical_stream_name",
+{"logicalSourceName": "logical_stream_name",
 "schema": "Schema::create()->addField(\"test\",INT32);"}
 
 **Response**:
@@ -280,7 +280,7 @@ To delete a logical stream.
 **_Example_**: 
 
 **Request**:
-{"streamName": "logical_stream_name"}
+{"logicalSourceName": "logical_stream_name"}
 
 **Response**:
 {"Success": "true"}

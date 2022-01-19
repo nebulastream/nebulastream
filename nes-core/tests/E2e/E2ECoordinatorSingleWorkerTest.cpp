@@ -356,7 +356,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
-    schema << "{\"streamName\" : \"window\",\"schema\" "
+    schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
@@ -417,7 +417,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     std::stringstream schema;
-    schema << "{\"streamName\" : \"window\",\"schema\" "
+    schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
               ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;

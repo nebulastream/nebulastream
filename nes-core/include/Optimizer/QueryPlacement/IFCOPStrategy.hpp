@@ -18,6 +18,7 @@
 #define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_IFCOP_STRATEGY_HPP_
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Operators/OperatorId.hpp>
 #include <stack>
 
 namespace NES::Optimizer {

@@ -17,6 +17,7 @@
 #define NES_INCLUDE_CATALOGS_LAMBDA_SOURCE_STREAM_CONFIG_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/GatheringMode.hpp>
 #include <functional>
 
 namespace NES {
@@ -33,7 +34,6 @@ using LambdaSourceTypePtr = std::shared_ptr<LambdaSourceType>;
  */
 class LambdaSourceType : public PhysicalSourceType {
   public:
-
     /**
      * @brief Factory method of LambdaSourceType
      * @param sourceType the type of the source
@@ -50,10 +50,13 @@ class LambdaSourceType : public PhysicalSourceType {
 
     ~LambdaSourceType() noexcept = default;
 
-    const std::function<void(NES::Runtime::TupleBuffer&, uint64_t)>& getGenerationFunction() const;
+    std::function<void(NES::Runtime::TupleBuffer&, uint64_t)>&& getGenerationFunction() const;
+
     uint64_t getNumBuffersToProduce() const;
+
     uint64_t getGatheringValue() const;
-    const std::string& getGatheringMode() const;
+
+    GatheringMode::Value getGatheringMode() const;
 
     /**
      * @brief The string representation of the object
@@ -68,12 +71,12 @@ class LambdaSourceType : public PhysicalSourceType {
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         uint64_t numBuffersToProduce,
         uint64_t gatheringValue,
-        std::string gatheringMode);
+        GatheringMode::Value gatheringMode);
 
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProduce;
     uint64_t gatheringValue;
-    std::string gatheringMode;
+    GatheringMode::Value gatheringMode;
 };
 
 }// namespace NES

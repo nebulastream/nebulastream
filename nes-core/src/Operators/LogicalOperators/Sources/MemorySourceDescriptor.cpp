@@ -18,6 +18,7 @@
 #include <Sources/DataSource.hpp>
 #include <utility>
 
+
 namespace NES {
 
 MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema,
@@ -25,7 +26,7 @@ MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema,
                                                size_t memoryAreaSize,
                                                uint64_t numBuffersToProcess,
                                                uint64_t gatheringValue,
-                                               DataSource::GatheringMode gatheringMode)
+                                               GatheringMode::Value gatheringMode)
     : SourceDescriptor(std::move(schema)), memoryArea(std::move(memoryArea)), memoryAreaSize(memoryAreaSize),
       numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode) {
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
@@ -36,7 +37,7 @@ std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(const Sch
                                                                        size_t memoryAreaSize,
                                                                        uint64_t numBuffersToProcess,
                                                                        uint64_t gatheringValue,
-                                                                       DataSource::GatheringMode gatheringMode) {
+                                                                       GatheringMode::Value gatheringMode) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<MemorySourceDescriptor>(schema,
@@ -59,7 +60,10 @@ bool MemorySourceDescriptor::equal(SourceDescriptorPtr const& other) {
 std::shared_ptr<uint8_t> MemorySourceDescriptor::getMemoryArea() { return memoryArea; }
 
 size_t MemorySourceDescriptor::getMemoryAreaSize() const { return memoryAreaSize; }
+
 uint64_t MemorySourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
-DataSource::GatheringMode MemorySourceDescriptor::getGatheringMode() const { return gatheringMode; }
+
+GatheringMode MemorySourceDescriptor::getGatheringMode() const { return gatheringMode; }
+
 uint64_t MemorySourceDescriptor::getGatheringValue() const { return gatheringValue; }
 }// namespace NES

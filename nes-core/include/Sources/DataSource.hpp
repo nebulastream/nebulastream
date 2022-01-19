@@ -24,6 +24,7 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/GatheringMode.hpp>
 #include <Util/KalmanFilter.hpp>
 #include <atomic>
 #include <chrono>
@@ -46,8 +47,6 @@ namespace NES {
 class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
   public:
-    enum GatheringMode { FREQUENCY_MODE, INGESTION_RATE_MODE, ADAPTIVE_MODE };
-
     /**
      * @brief public constructor for data source
      * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
@@ -59,7 +58,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         Runtime::QueryManagerPtr queryManager,
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
-                        GatheringMode gatheringMode,
+                        GatheringMode::Value gatheringMode,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
@@ -188,8 +187,6 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     void setOperatorId(OperatorId operatorId);
 
-    static GatheringMode getGatheringModeFromString(const std::string& mode);
-
     /**
      * @brief Returns the list of successor pipelines.
      * @return  std::vector<Runtime::Execution::SuccessorExecutablePipeline>
@@ -233,7 +230,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t gatheringIngestionRate{};
     uint64_t sourceAffinity{std::numeric_limits<uint64_t>::max()};
     std::chrono::milliseconds gatheringInterval{0};
-    GatheringMode gatheringMode;
+    GatheringMode::Value gatheringMode;
     SourceType type;
     std::atomic<bool> wasGracefullyStopped{true};
     std::atomic_bool running{false};

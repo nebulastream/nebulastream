@@ -23,6 +23,10 @@
 #include <vector>
 
 namespace NES {
+
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
+
 namespace QueryCompilation {
 
 class LowerToExecutableQueryPlanPhase {
@@ -69,6 +73,13 @@ class LowerToExecutableQueryPlanPhase {
                             const Runtime::NodeEnginePtr& nodeEngine,
                             const PipelineQueryPlanPtr& pipelineQueryPlan,
                             std::map<uint64_t, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
+    /**
+     * @brief Create Actual Source descriptor from default source descriptor and Physical source properties
+     * @param defaultSourceDescriptor: the default source descriptor
+     * @param physicalSource : the physical source
+     * @return Shared pointer for actual source descriptor
+     */
+    SourceDescriptorPtr createActualLogicalSourceDescriptor(SchemaPtr schema, PhysicalSourcePtr physicalSource);
 };
 }// namespace QueryCompilation
 }// namespace NES

@@ -141,7 +141,7 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                     NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: userRequest: " << payload);
                     web::json::value req = web::json::value::parse(payload);
                     NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Json Parse Value: " << req);
-                    std::string streamName = req.at("streamName").as_string();
+                    std::string streamName = req.at("logicalSourceName").as_string();
                     std::string schema = req.at("schema").as_string();
                     NES_DEBUG("StreamCatalogController: handlePost -addLogicalStream: Try to add new Logical Stream "
                               << streamName << " and" << schema);
@@ -228,7 +228,7 @@ void StreamCatalogController::handlePost(const std::vector<utility::string_t>& p
                     NES_DEBUG("StreamCatalogController: handlePost -updateLogicalStream: userRequest: " << userRequest);
                     web::json::value req = web::json::value::parse(userRequest);
 
-                    std::string streamName = req.at("streamName").as_string();
+                    std::string streamName = req.at("logicalSourceName").as_string();
                     std::string schema = req.at("schema").as_string();
 
                     bool updated = streamCatalog->updatedLogicalStream(streamName, schema);
@@ -269,7 +269,7 @@ void StreamCatalogController::handleDelete(const std::vector<utility::string_t>&
 
     if (path[1] == "deleteLogicalStream") {
         //Check if the path contains the query id
-        auto param = parameters.find("streamName");
+        auto param = parameters.find("logicalSourceName");
         if (param == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
             web::json::value errorResponse{};

@@ -14,13 +14,12 @@
     limitations under the License.
 */
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/Worker/PhysicalSource.hpp>
 #include <Network/NetworkManager.hpp>
-#include <Network/PartitionManager.hpp>
 #include <Network/NetworkSink.hpp>
+#include <Network/PartitionManager.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -44,7 +43,7 @@
 
 namespace NES::Runtime {
 
-NodeEngine::NodeEngine(std::vector<Configurations::PhysicalSourcePtr> physicalStreams,
+NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalStreams,
                        HardwareManagerPtr&& hardwareManager,
                        std::vector<BufferManagerPtr>&& bufferManagers,
                        QueryManagerPtr&& queryManager,
@@ -58,11 +57,11 @@ NodeEngine::NodeEngine(std::vector<Configurations::PhysicalSourcePtr> physicalSt
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker)
-    : physicalSources(std::move(physicalStreams)), queryManager(std::move(queryManager)), hardwareManager(std::move(hardwareManager)),
-      bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
-      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)),
+    : physicalSources(std::move(physicalStreams)), queryManager(std::move(queryManager)),
+      hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
+      queryCompiler(std::move(queryCompiler)), partitionManager(std::move(partitionManager)),
+      stateManager(std::move(stateManager)), bufferStorage(std::move(bufferStorage)), nodeEngineId(nodeEngineId),
       materializedViewManager(std::move(materializedViewManager)),
-      bufferStorage(std::move(bufferStorage)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker) {
@@ -339,8 +338,6 @@ uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
 
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
 
-QueryCompilation::QueryCompilerPtr NodeEngine::getCompiler() { return queryCompiler; }
-
 HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManager; }
 
 Experimental::MaterializedView::MaterializedViewManagerPtr NodeEngine::getMaterializedViewManager() const { return materializedViewManager; }
@@ -459,31 +456,19 @@ Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitio
 
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor) {
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
-    //search for right config
-    AbstractPhysicalStreamConfigPtr retPtr;
-    auto streamName = sourceDescriptor->getStreamName();
-    for (auto physicalStream = physicalSources.begin(); physicalStream != physicalSources.end();) {
-        if (physicalStream->getLogicalStreamName() == streamName) {
-            NES_DEBUG("config for stream " << streamName << " phy stream="
-                                           << physicalStream->get()->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
-            retPtr = *physicalStream;
-            //@Steffen what is the intended behaviour here? Why do we need to erase it from physicalSources?
-            physicalSources.erase(physicalStream);
-            break;
-        } else {
-            physicalStream++;
+    auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
+    auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
+
+    for (const auto& physicalSource : physicalSources) {
+        if (physicalSource->getLogicalSourceName() == logicalSourceName
+            && physicalSource->getPhysicalSourceName() == physicalSourceName) {
+            NES_DEBUG("config for stream " << logicalSourceName << " phy stream=" << physicalSourceName);
+            return Add logic for conversion here;
         }
     }
-    if (!retPtr) {
-        NES_WARNING("returning default config");
-        retPtr = physicalSources[0];
-    }
-    return retPtr->build(sourceDescriptor->getSchema());
-}
 
-void NodeEngine::setConfig(const AbstractPhysicalStreamConfigPtr& config) {
-    NES_ASSERT(config, "physical source config is not specified");
-    this->physicalSources.emplace_back(config);
+    NES_THROW_RUNTIME_ERROR("Unable to find the Physical source with logical source name "
+                            << logicalSourceName << " and physical source name " << physicalSourceName);
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
@@ -502,15 +487,18 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
 
+SourceDescriptorPtr NodeEngine::createActualSourceDescriptor(PhysicalSourcePtr physicalSource) {
+
+}
+
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Received request to buffer Data on network Sink");
     std::unique_lock lock(engineMutex);
-    if(deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
+    if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
         NES_DEBUG("Deployed QEP with ID: " << querySubPlanId << " not found");
         return false;
-    }
-    else {
+    } else {
         auto qep = deployedQEPs.at(querySubPlanId);
         auto sinks = qep->getSinks();
         //make sure that query sub plan has network sink with specified id
@@ -533,17 +521,19 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetwor
     }
 }
 
-bool NodeEngine::updateNetworkSink(uint64_t newNodeId, const std::string &newHostname, uint32_t newPort,
-                                   QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
+bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
+                                   const std::string& newHostname,
+                                   uint32_t newPort,
+                                   QuerySubPlanId querySubPlanId,
+                                   uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_ERROR("NodeEngine: Received request to update Network Sink");
     Network::NodeLocation newNodeLocation(newNodeId, newHostname, newPort);
     std::unique_lock lock(engineMutex);
-    if(deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
+    if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
         NES_DEBUG("Deployed QEP with ID: " << querySubPlanId << " not found");
         return false;
-    }
-    else {
+    } else {
         auto qep = deployedQEPs.at(querySubPlanId);
         auto networkSinks = qep->getSinks();
         //make sure that query sub plan has network sink with specified id

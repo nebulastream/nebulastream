@@ -20,6 +20,9 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <Util/SourceMode.hpp>
+#include <Util/GatheringMode.hpp>
+
 namespace NES {
 namespace Runtime {
 namespace detail {
@@ -34,7 +37,6 @@ class MemorySegment;
  */
 class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
   public:
-    enum SourceMode { EMPTY_BUFFER, WRAP_BUFFER, CACHE_COPY, COPY_BUFFER, COPY_BUFFER_SIMD_RTE, COPY_BUFFER_SIMD_APEX };
 
     /**
      * @brief The constructor of a BenchmarkSource
@@ -55,8 +57,8 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
                              uint64_t gatheringValue,
                              OperatorId operatorId,
                              size_t numSourceLocalBuffers,
-                             GatheringMode gatheringMode,
-                             SourceMode sourceMode,
+                             GatheringMode::Value gatheringMode,
+                             SourceMode::Value sourceMode,
                              uint64_t sourceAffinity,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
     /**
@@ -99,19 +101,12 @@ class BenchmarkSource : public GeneratorSource, public Runtime::BufferRecycler {
 
   private:
 
-    /**
-     * @brief get source mode
-     * @param mode: string representation of mode
-     * @return Enum representing the source mode
-     */
-    SourceMode getSourceModeFromString(const std::string& mode);
-
     uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     Runtime::TupleBuffer numaLocalMemoryArea;
     uint64_t currentPositionInBytes;
-    SourceMode sourceMode;
+    SourceMode::Value sourceMode;
     uint64_t schemaSize;
     uint64_t bufferSize;
 };

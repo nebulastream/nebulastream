@@ -15,7 +15,7 @@
 */
 
 #include <API/Query.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
@@ -132,7 +132,7 @@ void SemanticQueryValidation::sourceValidityCheck(const NES::QueryPlanPtr& query
 
         // Filtering for logical stream sources
         if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
-            auto streamName = sourceDescriptor->getStreamName();
+            auto streamName = sourceDescriptor->getLogicalSourceName();
 
             // Making sure that all logical stream sources are present in the stream catalog
             if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName)) {

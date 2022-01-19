@@ -14,20 +14,13 @@
     limitations under the License.
 */
 
-#include "z3++.h"
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
@@ -38,6 +31,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <z3++.h>
 
 namespace NES::Optimizer {
 
@@ -75,7 +69,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
     // 1. Construct the placementVariable, compute distance, utilization and mileages
     for (const auto& sourceNode : sourceOperators) {
-        std::string streamName = sourceNode->getSourceDescriptor()->getStreamName();
+        std::string streamName = sourceNode->getSourceDescriptor()->getLogicalSourceName();
         TopologyNodePtr sourceToplogyNode = streamCatalog->getSourceNodesForLogicalStream(streamName)[0];
         std::vector<NodePtr> operatorPath = findPathToRoot(sourceNode);
         std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
@@ -211,7 +205,7 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
 
     // populate the whole distance map
     for (const auto& sourceNode : sourceOperators) {
-        std::string streamName = sourceNode->getSourceDescriptor()->getStreamName();
+        std::string streamName = sourceNode->getSourceDescriptor()->getLogicalSourceName();
         for (const auto& sourceToplogyNode : streamCatalog->getSourceNodesForLogicalStream(streamName)) {
             computeDistanceRecursive(sourceToplogyNode, mileageMap);
         }

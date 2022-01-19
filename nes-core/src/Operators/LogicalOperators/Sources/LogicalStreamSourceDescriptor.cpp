@@ -31,7 +31,7 @@ bool LogicalStreamSourceDescriptor::equal(SourceDescriptorPtr const& other) {
         return false;
     }
     auto otherLogicalStreamSource = other->as<LogicalStreamSourceDescriptor>();
-    return getStreamName() == otherLogicalStreamSource->getStreamName();
+    return getLogicalSourceName() == otherLogicalStreamSource->getLogicalSourceName();
 }
 
 std::string LogicalStreamSourceDescriptor::toString() { return "LogicalStreamSourceDescriptor()"; }

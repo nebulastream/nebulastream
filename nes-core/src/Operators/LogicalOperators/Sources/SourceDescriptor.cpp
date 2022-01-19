@@ -19,17 +19,19 @@
 #include <utility>
 namespace NES {
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema) { this->schema = schema->copy(); }
+SourceDescriptor::SourceDescriptor(SchemaPtr schema) : schema(std::move(schema)) {}
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string streamName)
-    : schema(std::move(schema)), streamName(std::move(streamName)) {}
+SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName)
+    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)) {}
+
+SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string physicalSourceName)
+    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)),
+      physicalSourceName(std::move(physicalSourceName)) {}
 
 SchemaPtr SourceDescriptor::getSchema() { return schema; }
 
-std::string SourceDescriptor::getStreamName() { return streamName; }
+std::string SourceDescriptor::getLogicalSourceName() { return logicalSourceName; }
 
-bool SourceDescriptor::hasStreamName() { return !streamName.empty(); }
-
-void SourceDescriptor::setSchema(SchemaPtr schema) { this->schema = std::move(schema); }
+std::string SourceDescriptor::getPhysicalSourceName() { return physicalSourceName; }
 
 }// namespace NES

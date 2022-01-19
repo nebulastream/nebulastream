@@ -57,4 +57,8 @@ std::string DefaultSourceType::toString() {
 
 bool DefaultSourceType::equal(const PhysicalSourceTypePtr& other) { return !other->instanceOf<DefaultSourceType>(); }
 
+const Configurations::IntConfigOption& DefaultSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
+
+const Configurations::IntConfigOption& DefaultSourceType::getSourceFrequency() const { return sourceFrequency; }
+
 }// namespace NES

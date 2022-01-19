@@ -1079,7 +1079,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         auto logicalStreamSourceDescriptor = sourceDescriptor->as<LogicalStreamSourceDescriptor>();
         auto logicalStreamSerializedSourceDescriptor =
             SerializableOperator_SourceDetails_SerializableLogicalStreamSourceDescriptor();
-        logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getStreamName());
+        logicalStreamSerializedSourceDescriptor.set_streamname(logicalStreamSourceDescriptor->getLogicalSourceName());
 
         if (!isClientOriginated) {
             // serialize source schema

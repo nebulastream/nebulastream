@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -129,7 +129,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
     // loop over all logical stream
     for (auto srcOp : queryPlan->getSourceOperators()) {
         LogicalOperatorNodePtr currentOperator = srcOp;
-        for (auto topologyNode : streamCatalog->getSourceNodesForLogicalStream(srcOp->getSourceDescriptor()->getStreamName())) {
+        for (auto topologyNode : streamCatalog->getSourceNodesForLogicalStream(srcOp->getSourceDescriptor()->getLogicalSourceName())) {
             TopologyNodePtr currentTopologyNodePtr = topologyNode;
 
             topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].first;
@@ -139,17 +139,17 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
             if (std::find(placedOperatorIds.begin(), placedOperatorIds.end(), srcOp->getId()) == placedOperatorIds.end()
                 && std::find(topologyNodeToStreamName[topologyNode].begin(),
                              topologyNodeToStreamName[topologyNode].end(),
-                             srcOp->getSourceDescriptor()->getStreamName())
+                             srcOp->getSourceDescriptor()->getLogicalSourceName())
                     == topologyNodeToStreamName[topologyNode].end()) {
                 placementCandidate[topoIdx][opIdx] = true;// the assignment is done here
                 placedOperatorIds.push_back(currentOperator->getId());
 
                 // bookkeeping the assignment of source operators
                 if (topologyNodeToStreamName.find(topologyNode) == topologyNodeToStreamName.end()) {
-                    std::vector<std::string> placedLogicalStreams = {srcOp->getSourceDescriptor()->getStreamName()};
+                    std::vector<std::string> placedLogicalStreams = {srcOp->getSourceDescriptor()->getLogicalSourceName()};
                     topologyNodeToStreamName.insert(std::make_pair(topologyNode, placedLogicalStreams));
                 } else {
-                    topologyNodeToStreamName[topologyNode].push_back(srcOp->getSourceDescriptor()->getStreamName());
+                    topologyNodeToStreamName[topologyNode].push_back(srcOp->getSourceDescriptor()->getLogicalSourceName());
                 }
 
                 // placing the rest of the operator except the sink
