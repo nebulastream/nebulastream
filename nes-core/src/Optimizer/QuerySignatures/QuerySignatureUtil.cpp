@@ -589,7 +589,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     //Compute the expression for window key
     std::string windowKey;
     if (windowDefinition->isKeyed()) {
-        if(windowDefinition->getOnKey().size() == 1){
+        if (windowDefinition->getOnKey().size() == 1) {
             NES_NOT_IMPLEMENTED();
         }
         FieldAccessExpressionNodePtr key = windowDefinition->getOnKey()[0];
@@ -657,7 +657,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     //Compute expression for aggregation method
     z3::func_decl aggregate(*context);
     z3::sort sort = context->int_sort();
-    auto windowAggregation = windowDefinition->getWindowAggregation();
+    assert(windowDefinition->getWindowAggregation().size() == 1);
+    auto windowAggregation = windowDefinition->getWindowAggregation()[0];
     switch (windowAggregation->getType()) {
         case Windowing::WindowAggregationDescriptor::Count: {
             aggregate = z3::function("Count", sort, sort);

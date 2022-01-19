@@ -35,7 +35,7 @@ class GeneratableKeyedThreadLocalPreAggregationOperator : public GeneratableOper
     static GeneratableOperatorPtr create(SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                         GeneratableWindowAggregationPtr windowAggregation);
+                                         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
 
     /**
      * @brief Creates a new generatable slice merging operator, which consumes slices and merges them in the operator state.
@@ -49,7 +49,7 @@ class GeneratableKeyedThreadLocalPreAggregationOperator : public GeneratableOper
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                         GeneratableWindowAggregationPtr windowAggregation);
+                                         std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
 
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
@@ -64,9 +64,9 @@ class GeneratableKeyedThreadLocalPreAggregationOperator : public GeneratableOper
                                                       SchemaPtr inputSchema,
                                                       SchemaPtr outputSchema,
                                                       Windowing::Experimental::KeyedEventTimeWindowHandlerPtr operatorHandler,
-                                                      GeneratableWindowAggregationPtr windowAggregation);
+                                                      std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation);
 
-    GeneratableWindowAggregationPtr windowAggregation;
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation;
     Windowing::Experimental::KeyedEventTimeWindowHandlerPtr windowHandler;
 };
 }// namespace GeneratableOperators

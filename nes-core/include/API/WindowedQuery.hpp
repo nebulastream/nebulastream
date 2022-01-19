@@ -80,6 +80,7 @@ class KeyedWindowedQuery {
     * @param aggregation
     */
     Query& apply(Windowing::WindowAggregationPtr aggregation);
+    Query& apply(std::initializer_list<Windowing::WindowAggregationPtr> aggregation);
 
   private:
     Query& originalQuery;

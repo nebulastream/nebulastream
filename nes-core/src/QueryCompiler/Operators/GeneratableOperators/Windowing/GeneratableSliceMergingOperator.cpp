@@ -24,7 +24,7 @@ GeneratableOperatorPtr GeneratableSliceMergingOperator::create(OperatorId id,
                                                                SchemaPtr inputSchema,
                                                                SchemaPtr outputSchema,
                                                                Windowing::WindowOperatorHandlerPtr operatorHandler,
-                                                               GeneratableWindowAggregationPtr windowAggregation) {
+                                                               std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableSliceMergingOperator>(GeneratableSliceMergingOperator(id,
                                                                                              std::move(inputSchema),
                                                                                              std::move(outputSchema),
@@ -35,7 +35,7 @@ GeneratableOperatorPtr GeneratableSliceMergingOperator::create(OperatorId id,
 GeneratableOperatorPtr GeneratableSliceMergingOperator::create(SchemaPtr inputSchema,
                                                                SchemaPtr outputSchema,
                                                                Windowing::WindowOperatorHandlerPtr operatorHandler,
-                                                               GeneratableWindowAggregationPtr windowAggregation) {
+                                                               std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
@@ -47,7 +47,7 @@ GeneratableSliceMergingOperator::GeneratableSliceMergingOperator(OperatorId id,
                                                                  SchemaPtr inputSchema,
                                                                  SchemaPtr outputSchema,
                                                                  Windowing::WindowOperatorHandlerPtr operatorHandler,
-                                                                 GeneratableWindowAggregationPtr windowAggregation)
+                                                                 std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id),
       GeneratableWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler)),
       windowAggregation(std::move(windowAggregation)) {}
@@ -60,7 +60,7 @@ void GeneratableSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, Pip
 void GeneratableSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->getHandlerIndex(operatorHandler);
     auto windowDefinition = operatorHandler->getWindowDefinition();
-    codegen->generateCodeForCombiningWindow(windowDefinition, windowAggregation, context, handler);
+    codegen->generateCodeForCombiningWindow(windowDefinition, windowAggregation[0], context, handler);
 }
 
 std::string GeneratableSliceMergingOperator::toString() const { return "GeneratableSliceMergingOperator"; }

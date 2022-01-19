@@ -31,7 +31,7 @@ class LogicalWindowDefinition {
      * @param window action
      * @param allowedLateness
      */
-    explicit LogicalWindowDefinition(WindowAggregationPtr windowAggregation,
+    explicit LogicalWindowDefinition(std::vector<WindowAggregationPtr> windowAggregation,
                                      WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar,
                                      uint64_t numberOfInputEdges,
@@ -51,7 +51,7 @@ class LogicalWindowDefinition {
      * @param allowedLateness
      */
     explicit LogicalWindowDefinition(std::vector<FieldAccessExpressionNodePtr> onKey,
-                                     WindowAggregationPtr windowAggregation,
+                                     std::vector<WindowAggregationPtr> windowAggregation,
                                      WindowTypePtr windowType,
                                      DistributionCharacteristicPtr distChar,
                                      uint64_t numberOfInputEdges,
@@ -69,7 +69,7 @@ class LogicalWindowDefinition {
      * @param allowedLateness
      * @return Window Definition
      */
-    static LogicalWindowDefinitionPtr create(const WindowAggregationPtr& windowAggregation,
+    static LogicalWindowDefinitionPtr create(std::vector<WindowAggregationPtr> windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
                                              uint64_t numberOfInputEdges,
@@ -87,7 +87,7 @@ class LogicalWindowDefinition {
      * @return Window Definition
      */
     static LogicalWindowDefinitionPtr create(const FieldAccessExpressionNodePtr& onKey,
-                                             const WindowAggregationPtr& windowAggregation,
+                                             std::vector<WindowAggregationPtr> windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
                                              uint64_t numberOfInputEdges,
@@ -96,7 +96,7 @@ class LogicalWindowDefinition {
                                              uint64_t allowedLateness);
 
     static LogicalWindowDefinitionPtr create(const std::vector<FieldAccessExpressionNodePtr>& onKey,
-                                             const WindowAggregationPtr& windowAggregation,
+                                             std::vector<WindowAggregationPtr> windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
                                              uint64_t numberOfInputEdges,
@@ -115,7 +115,7 @@ class LogicalWindowDefinition {
     * @return Window Definition
     */
     static LogicalWindowDefinitionPtr create(ExpressionItem onKey,
-                                             const WindowAggregationPtr& windowAggregation,
+                                             std::vector<WindowAggregationPtr> windowAggregation,
                                              const WindowTypePtr& windowType,
                                              const DistributionCharacteristicPtr& distChar,
                                              uint64_t numberOfInputEdges,
@@ -144,8 +144,8 @@ class LogicalWindowDefinition {
     /**
      * @brief getter/setter for window aggregation
      */
-    WindowAggregationPtr getWindowAggregation();
-    void setWindowAggregation(WindowAggregationPtr windowAggregation);
+    std::vector<WindowAggregationPtr> getWindowAggregation();
+    void setWindowAggregation(std::vector<WindowAggregationPtr> windowAggregation);
 
     /**
      * @brief getter/setter for window type
@@ -184,7 +184,7 @@ class LogicalWindowDefinition {
     bool equal(LogicalWindowDefinitionPtr otherWindowDefinition);
 
   private:
-    WindowAggregationPtr windowAggregation;
+    std::vector<WindowAggregationPtr> windowAggregation;
     WindowTriggerPolicyPtr triggerPolicy;
     WindowActionDescriptorPtr triggerAction;
     WindowTypePtr windowType;

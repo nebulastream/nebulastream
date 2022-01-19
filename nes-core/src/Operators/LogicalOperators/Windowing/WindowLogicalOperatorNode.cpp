@@ -64,7 +64,9 @@ bool WindowLogicalOperatorNode::inferSchema() {
 
     // infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    windowAggregation->inferStamp(inputSchema);
+    for (auto& agg : windowAggregation) {
+        agg->inferStamp(inputSchema);
+    }
     auto windowType = windowDefinition->getWindowType();
     windowType->inferStamp(inputSchema);
 
@@ -85,8 +87,10 @@ bool WindowLogicalOperatorNode::inferSchema() {
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
         }
     }
-    auto asField = windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName();
-    outputSchema->addField(AttributeField::create(asField, windowAggregation->as()->getStamp()));
+    for (auto& agg : windowAggregation) {
+        outputSchema->addField(
+            AttributeField::create(agg->as()->as<FieldAccessExpressionNode>()->getFieldName(), agg->on()->getStamp()));
+    }
     return true;
 }
 
@@ -112,7 +116,7 @@ void WindowLogicalOperatorNode::inferStringSignature() {
         signatureStream << "WINDOW(";
     }
     signatureStream << "WINDOW-TYPE: " << windowType->toString() << ",";
-    signatureStream << "AGGREGATION: " << windowAggregation->toString() << ")";
+   // signatureStream << "AGGREGATION: " << windowAggregation->toString() << ")";
     auto childSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
     signatureStream << "." << *childSignature.begin()->second.begin();
 

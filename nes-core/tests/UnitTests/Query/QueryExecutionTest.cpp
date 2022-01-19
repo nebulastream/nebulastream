@@ -685,7 +685,10 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryMultiKeysTest) {
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(10));
 
-    query = query.window(windowType).byKey({Attribute("key"), Attribute("ts")}).apply(Sum(Attribute("value", INT64)));
+    query = query.window(windowType)
+                .byKey({Attribute("key"), Attribute("ts")})
+                .apply({Sum(Attribute("value", INT64))->as(Attribute("sum_value")),
+                        Min(Attribute("value", INT64))->as(Attribute("min_value"))});
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
@@ -867,7 +870,8 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(10), Milliseconds(5));
 
     auto aggregation = Sum(Attribute("value"));
-    query = query.window(windowType).byKey({Attribute("key"), Attribute("ts")}).apply(aggregation);
+    query = query.window(windowType).byKey({Attribute("key"), Attribute("ts")}) .apply({Sum(Attribute("value", INT64))->as(Attribute("sum_value")),
+                                                                                       Min(Attribute("value", INT64))->as(Attribute("min_value"))});
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);

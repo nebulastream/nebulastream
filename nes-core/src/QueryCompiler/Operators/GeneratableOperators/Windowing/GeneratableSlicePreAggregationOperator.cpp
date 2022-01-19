@@ -24,7 +24,7 @@ GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(OperatorId
                                                                       SchemaPtr inputSchema,
                                                                       SchemaPtr outputSchema,
                                                                       Windowing::WindowOperatorHandlerPtr operatorHandler,
-                                                                      GeneratableWindowAggregationPtr windowAggregation) {
+                                                                      std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return std::make_shared<GeneratableSlicePreAggregationOperator>(
         GeneratableSlicePreAggregationOperator(id,
                                                std::move(inputSchema),
@@ -36,7 +36,7 @@ GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(OperatorId
 GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(SchemaPtr inputSchema,
                                                                       SchemaPtr outputSchema,
                                                                       Windowing::WindowOperatorHandlerPtr operatorHandler,
-                                                                      GeneratableWindowAggregationPtr windowAggregation) {
+                                                                      std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation) {
     return create(Util::getNextOperatorId(),
                   std::move(inputSchema),
                   std::move(outputSchema),
@@ -49,7 +49,7 @@ GeneratableSlicePreAggregationOperator::GeneratableSlicePreAggregationOperator(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     Windowing::WindowOperatorHandlerPtr operatorHandler,
-    GeneratableWindowAggregationPtr windowAggregation)
+    std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> windowAggregation)
     : OperatorNode(id),
       GeneratableWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(operatorHandler)),
       windowAggregation(std::move(windowAggregation)) {}
@@ -62,7 +62,7 @@ void GeneratableSlicePreAggregationOperator::generateOpen(CodeGeneratorPtr codeg
 void GeneratableSlicePreAggregationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto handler = context->getHandlerIndex(operatorHandler);
     auto windowDefinition = operatorHandler->getWindowDefinition();
-    codegen->generateCodeForSlicingWindow(windowDefinition, windowAggregation, context, handler);
+    codegen->generateCodeForSlicingWindow(windowDefinition, windowAggregation[0], context, handler);
 }
 
 std::string GeneratableSlicePreAggregationOperator::toString() const { return "GeneratableSlicePreAggregationOperator"; }

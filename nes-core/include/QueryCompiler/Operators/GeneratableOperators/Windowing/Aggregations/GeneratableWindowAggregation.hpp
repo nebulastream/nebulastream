@@ -56,6 +56,11 @@ class GeneratableWindowAggregation {
 
     virtual NES::QueryCompilation::VariableDeclarationPtr getPartialAggregate() { return partialAggregate; };
 
+    Windowing::WindowAggregationDescriptorPtr getAggregationDescriptor(){
+        return aggregationDescriptor;
+    }
+
+
   protected:
     explicit GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
     Windowing::WindowAggregationDescriptorPtr aggregationDescriptor;
