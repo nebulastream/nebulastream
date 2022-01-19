@@ -65,6 +65,7 @@ void GeneratableKeyedTumblingWindowSink::generateExecute(CodeGeneratorPtr codege
     auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
     codegen->generateCodeForKeyedTumblingWindowSink(windowDefinition, windowAggregation, context, handler, outputSchema);
+    windowHandler = nullptr;
 }
 
 std::string GeneratableKeyedTumblingWindowSink::toString() const { return "GeneratableKeyedSliceMergingOperator"; }

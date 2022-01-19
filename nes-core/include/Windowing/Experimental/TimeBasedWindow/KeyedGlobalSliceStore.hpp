@@ -35,6 +35,7 @@ class KeyedGlobalSliceStore {
      * @param sliceIndex
      */
     void finalizeSlice(uint64_t sequenceNumber, uint64_t sliceIndex);
+    void clear();
 
   private:
     std::mutex sliceStagingMutex;

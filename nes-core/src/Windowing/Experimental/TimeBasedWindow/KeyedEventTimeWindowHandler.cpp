@@ -114,17 +114,23 @@ void KeyedEventTimeWindowHandler::triggerSliceMerging(Runtime::WorkerContext& wc
 Windowing::LogicalWindowDefinitionPtr KeyedEventTimeWindowHandler::getWindowDefinition() { return windowDefinition; }
 
 void KeyedEventTimeWindowHandler::start(Runtime::Execution::PipelineExecutionContextPtr, Runtime::StateManagerPtr, uint32_t) {
-    isRunning = true;
+    NES_DEBUG("start KeyedEventTimeWindowHandler");
+    activeCounter++;
 }
 
 void KeyedEventTimeWindowHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
+    NES_DEBUG("stop KeyedEventTimeWindowHandler");
+    activeCounter--;
     bool current = true;
-    if (isRunning.compare_exchange_strong(current, false)) {
-        NES_DEBUG("stop KeyedEventTimeWindowHandler");
+    if (activeCounter == 0) {
+        NES_DEBUG("shutdown KeyedEventTimeWindowHandler");
         // todo fix shutdown, currently KeyedEventTimeWindowHandler is never destructed because operators have references.
         this->threadLocalSliceStores.clear();
+        this->globalSliceStore.clear();
+        this->sliceStaging.clear();
     }
 }
+
 KeyedSlicePtr KeyedEventTimeWindowHandler::createKeyedSlice(uint64_t sliceIndex) {
     auto startTs = sliceIndex * sliceSize;
     auto endTs = (sliceIndex + 1) * sliceSize;

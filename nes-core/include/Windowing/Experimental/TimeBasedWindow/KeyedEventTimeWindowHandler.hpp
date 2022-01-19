@@ -3,19 +3,18 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateVariable.hpp>
+#include <Windowing/Experimental/HashMap.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/SliceStaging.hpp>
-#include <Windowing/Experimental/HashMap.hpp>
-#include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
-
 
 namespace NES::Windowing::Experimental {
 class KeyedThreadLocalSliceStore;
@@ -33,7 +32,8 @@ class WindowTriggerTask {
     uint64_t endSlice;
 };
 
-class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler, public detail::virtual_enable_shared_from_this<KeyedEventTimeWindowHandler, false> {
+class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler,
+                                    public detail::virtual_enable_shared_from_this<KeyedEventTimeWindowHandler, false> {
     using inherited0 = detail::virtual_enable_shared_from_this<KeyedEventTimeWindowHandler, false>;
     using inherited1 = Runtime::Reconfigurable;
 
@@ -67,11 +67,12 @@ class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler, 
                              uint64_t sequenceNumber,
                              KeyedSlicePtr slice);
 
-    KeyedGlobalSliceStore& getGlobalSliceStore(){
-        return globalSliceStore;
-    }
+    KeyedGlobalSliceStore& getGlobalSliceStore() { return globalSliceStore; }
+
+    ~KeyedEventTimeWindowHandler() { NES_DEBUG("Destruct KeyedEventTimeWindowHandler"); }
+
   private:
-    std::atomic<bool> isRunning;
+    std::atomic<uint32_t> activeCounter;
     uint64_t sliceSize;
     std::vector<KeyedThreadLocalSliceStore> threadLocalSliceStores;
     SliceStaging sliceStaging;
@@ -79,7 +80,6 @@ class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler, 
     std::shared_ptr<::NES::Experimental::LockFreeMultiOriginWatermarkProcessor> watermarkProcessor;
     const Windowing::LogicalWindowDefinitionPtr windowDefinition;
     NES::Experimental::HashMapFactoryPtr factory;
-
 };
 
 }// namespace NES::Windowing::Experimental

@@ -72,6 +72,7 @@ void GeneratableKeyedThreadLocalPreAggregationOperator::generateExecute(CodeGene
     auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
     codegen->generateCodeForThreadLocalPreAggregationOperator(windowDefinition, windowAggregation, context, handler);
+    windowHandler = nullptr;
 }
 
 std::string GeneratableKeyedThreadLocalPreAggregationOperator::toString() const {

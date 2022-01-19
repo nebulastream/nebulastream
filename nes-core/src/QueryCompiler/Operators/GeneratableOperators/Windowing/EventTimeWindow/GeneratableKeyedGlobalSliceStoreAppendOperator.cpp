@@ -65,6 +65,7 @@ GeneratableKeyedGlobalSliceStoreAppendOperator::create(OperatorId id,
         auto handler = context->getHandlerIndex(windowHandler);
         auto windowDefinition = windowHandler->getWindowDefinition();
         codegen->generateCodeForSliceStoreAppend(context, handler);
+        windowHandler = nullptr;
     }
 
     std::string GeneratableKeyedGlobalSliceStoreAppendOperator::toString() const { return "GeneratableKeyedGlobalSliceStoreAppendOperator"; }

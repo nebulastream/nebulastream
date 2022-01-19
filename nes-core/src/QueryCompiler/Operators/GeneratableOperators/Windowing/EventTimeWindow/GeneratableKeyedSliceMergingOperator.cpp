@@ -66,6 +66,7 @@ void GeneratableKeyedSliceMergingOperator::generateExecute(CodeGeneratorPtr code
     auto handler = context->getHandlerIndex(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
     codegen->generateCodeForKeyedSliceMergingOperator(windowDefinition, windowAggregation, context, handler);
+    windowHandler = nullptr;
 }
 
 std::string GeneratableKeyedSliceMergingOperator::toString() const { return "GeneratableKeyedSliceMergingOperator"; }

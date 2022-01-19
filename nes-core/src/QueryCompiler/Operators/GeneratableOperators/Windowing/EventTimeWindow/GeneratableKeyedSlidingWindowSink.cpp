@@ -65,6 +65,7 @@ void GeneratableKeyedSlidingWindowSink::generateExecute(CodeGeneratorPtr codegen
     auto handler = context->registerOperatorHandler(windowHandler);
     auto windowDefinition = windowHandler->getWindowDefinition();
     codegen->generateCodeForKeyedSlidingWindowSink(windowDefinition, windowAggregation, context, handler, outputSchema);
+    windowHandler = nullptr;
 }
 
 std::string GeneratableKeyedSlidingWindowSink::toString() const { return "GeneratableKeyedSlidingWindowSink"; }

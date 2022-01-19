@@ -43,6 +43,10 @@ class SliceStaging {
 
    void triggerPreaggregatedSlice(uint64_t sequenceNumber, uint64_t sliceIndex, KeyedSlicePtr slice);
 
+   void clear(){
+       const std::lock_guard<std::mutex> lock(sliceStagingMutex);
+       slicePartitionMap.clear();
+   }
 
   private:
     std::mutex sliceStagingMutex;
