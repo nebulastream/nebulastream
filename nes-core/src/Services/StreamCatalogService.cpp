@@ -37,11 +37,11 @@ bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr topologyNode,
                                                   const std::string& physicalSourceName,
                                                   const std::string& logicalSourceName) {
     if (!topologyNode) {
-        NES_ERROR("StreamCatalogService::RegisterPhysicalStream node not found");
+        NES_ERROR("StreamCatalogService::RegisterPhysicalSource node not found");
         return false;
     }
 
-    NES_DEBUG("StreamCatalogService::RegisterPhysicalStream: try to register physical node id "
+    NES_DEBUG("StreamCatalogService::RegisterPhysicalSource: try to register physical node id "
               << topologyNode->getId() << " physical stream=" << physicalSourceName << " logical stream=" << logicalSourceName);
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
     auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName);
@@ -49,7 +49,7 @@ bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr topologyNode,
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
     bool success = streamCatalog->addPhysicalStream(logicalSourceName, sce);
     if (!success) {
-        NES_ERROR("StreamCatalogService::RegisterPhysicalStream: adding physical stream was not successful.");
+        NES_ERROR("StreamCatalogService::RegisterPhysicalSource: adding physical stream was not successful.");
         return false;
     }
     return success;
@@ -58,19 +58,19 @@ bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr topologyNode,
 bool StreamCatalogService::unregisterPhysicalStream(TopologyNodePtr topologyNode,
                                                     const std::string& physicalSourceName,
                                                     const std::string& logicalSourceName) {
-    NES_DEBUG("StreamCatalogService::UnregisterPhysicalStream: try to remove physical stream with name "
+    NES_DEBUG("StreamCatalogService::UnregisterPhysicalSource: try to remove physical stream with name "
               << physicalSourceName << " logical name " << logicalSourceName << " workerId=" << topologyNode->getId());
     std::unique_lock<std::mutex> lock(addRemovePhysicalStream);
 
     if (!topologyNode) {
-        NES_DEBUG("StreamCatalogService::UnregisterPhysicalStream: sensor not found with workerId" << topologyNode->getId());
+        NES_DEBUG("StreamCatalogService::UnregisterPhysicalSource: sensor not found with workerId" << topologyNode->getId());
         return false;
     }
     NES_DEBUG("StreamCatalogService: node=" << topologyNode->toString());
 
     bool success = streamCatalog->removePhysicalStream(logicalSourceName, physicalSourceName, topologyNode->getId());
     if (!success) {
-        NES_ERROR("StreamCatalogService::RegisterPhysicalStream: removing physical stream was not successful.");
+        NES_ERROR("StreamCatalogService::RegisterPhysicalSource: removing physical stream was not successful.");
         return false;
     }
     return success;

@@ -24,13 +24,13 @@ service CoordinatorRPCService {
 
   rpc UnregisterNode (UnregisterNodeRequest) returns (UnregisterNodeReply) {}
 
-  rpc RegisterPhysicalStream (RegisterPhysicalStreamRequest) returns (RegisterPhysicalStreamReply) {}
+  rpc RegisterPhysicalSource (RegisterPhysicalSourcesRequest) returns (RegisterPhysicalSourcesReply) {}
 
-  rpc UnregisterPhysicalStream (UnregisterPhysicalStreamRequest) returns (UnregisterPhysicalStreamReply) {}
+  rpc UnregisterPhysicalSource (UnregisterPhysicalSourceRequest) returns (UnregisterPhysicalSourceReply) {}
 
-  rpc RegisterLogicalStream (RegisterLogicalStreamRequest) returns (RegisterLogicalStreamReply) {}
+  rpc RegisterLogicalSource (RegisterLogicalSourceRequest) returns (RegisterLogicalSourceReply) {}
 
-  rpc UnregisterLogicalStream (UnregisterLogicalStreamRequest) returns (UnregisterLogicalStreamReply) {}
+  rpc UnregisterLogicalSource (UnregisterLogicalSourceRequest) returns (UnregisterLogicalSourceReply) {}
 
   rpc AddParent (AddParentRequest) returns (AddParentReply) {}
 
@@ -61,43 +61,47 @@ message UnregisterNodeReply {
   bool success = 1;
 }
 
-message RegisterPhysicalStreamRequest {
+message RegisterPhysicalSourcesRequest {
   uint64 id = 1;
-  string sourceType = 2;
-  string physicalStreamName = 3;
-  string logicalStreamName = 4;
+  repeated PhysicalSourceDefinition physicalSources = 2;
 }
 
-message RegisterPhysicalStreamReply {
+message PhysicalSourceDefinition {
+  string sourceType = 1;
+  string physicalSourceName = 2;
+  string logicalSourceName = 3;
+}
+
+message RegisterPhysicalSourcesReply {
   bool success = 1;
 }
 
-message UnregisterPhysicalStreamRequest {
+message UnregisterPhysicalSourceRequest {
   uint64 id = 1;
-  string physicalStreamName = 2;
-  string logicalStreamName = 3;
+  string physicalSourceName = 2;
+  string logicalSourceName = 3;
 }
 
-message UnregisterPhysicalStreamReply {
+message UnregisterPhysicalSourceReply {
   bool success = 1;
 }
 
-message RegisterLogicalStreamRequest {
+message RegisterLogicalSourceRequest {
   uint64 id = 1;
-  string streamName = 2;
-  string streamSchema = 3;
+  string logicalSourceName = 2;
+  string sourceSchema = 3;
 }
 
-message RegisterLogicalStreamReply {
+message RegisterLogicalSourceReply {
   bool success = 1;
 }
 
-message UnregisterLogicalStreamRequest {
+message UnregisterLogicalSourceRequest {
   uint64 id = 1;
-  string streamName = 2;
+  string logicalSourceName = 2;
 }
 
-message UnregisterLogicalStreamReply {
+message UnregisterLogicalSourceReply {
   bool success = 1;
 }
 

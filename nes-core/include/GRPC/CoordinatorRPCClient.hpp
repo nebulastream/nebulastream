@@ -52,21 +52,21 @@ class CoordinatorRPCClient {
      * @return bool indicating the success of the log stream
      * @note the logical stream is not saved in the worker as it is maintained on the coordinator and all logical streams can be retrieved from the physical stream map locally, if we later need the data we can add a map
      */
-    bool registerLogicalStream(const std::string& streamName, const std::string& filePath);
+    bool registerLogicalStream(const std::string& logicalSourceName, const std::string& filePath);
 
     /**
      * @brief this method removes the logical stream in the coordinator
      * @param logical stream to be deleted
      * @return bool indicating success of the removal
      */
-    bool unregisterLogicalStream(const std::string& streamName);
+    bool unregisterLogicalStream(const std::string& logicalSourceName);
 
     /**
      * @brief this method removes a physical stream from a logical stream in the coordinator
      * @param logical stream to be deleted
      * @return bool indicating success of the removal
      */
-    bool unregisterPhysicalStream(const std::string& logicalStreamName, const std::string& physicalStreamName);
+    bool unregisterPhysicalStream(const std::string& logicalSourceName, const std::string& physicalSourceName);
 
     /**
      * @brief method to add a new parent to an existing node

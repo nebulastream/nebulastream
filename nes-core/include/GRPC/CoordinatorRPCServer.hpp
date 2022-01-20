@@ -23,6 +23,7 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include "../../../cmake-build-debug/nes-core/CoordinatorRPCService.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -67,9 +68,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status RegisterPhysicalStream(ServerContext* context,
-                                  const RegisterPhysicalStreamRequest* request,
-                                  RegisterPhysicalStreamReply* reply) override;
+    Status RegisterPhysicalSource(ServerContext* context,
+                                  const RegisterPhysicalSourcesRequest* request,
+                                  RegisterPhysicalSourcesReply* reply) override;
 
     /**
      * @brief RPC Call to unregister physical stream
@@ -78,9 +79,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status UnregisterPhysicalStream(ServerContext* context,
-                                    const UnregisterPhysicalStreamRequest* request,
-                                    UnregisterPhysicalStreamReply* reply) override;
+    Status UnregisterPhysicalSource(ServerContext* context,
+                                    const UnregisterPhysicalSourceRequest* request,
+                                    UnregisterPhysicalSourceReply* reply) override;
 
     /**
      * @brief RPC Call to register logical stream
@@ -89,9 +90,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status RegisterLogicalStream(ServerContext* context,
-                                 const RegisterLogicalStreamRequest* request,
-                                 RegisterLogicalStreamReply* reply) override;
+    Status RegisterLogicalSource(ServerContext* context,
+                                 const RegisterLogicalSourceRequest* request,
+                                 RegisterLogicalSourceReply* reply) override;
 
     /**
      * @brief RPC Call to unregister logical stream
@@ -100,9 +101,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status UnregisterLogicalStream(ServerContext* context,
-                                   const UnregisterLogicalStreamRequest* request,
-                                   UnregisterLogicalStreamReply* reply) override;
+    Status UnregisterLogicalSource(ServerContext* context,
+                                   const UnregisterLogicalSourceRequest* request,
+                                   UnregisterLogicalSourceReply* reply) override;
 
     /**
      * @brief RPC Call to add parent

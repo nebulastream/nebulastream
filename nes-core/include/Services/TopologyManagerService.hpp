@@ -31,6 +31,7 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class TopologyManagerService {
 
   public:
+
     TopologyManagerService(TopologyPtr topology);
 
     /**

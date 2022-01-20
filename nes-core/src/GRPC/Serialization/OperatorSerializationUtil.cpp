@@ -940,7 +940,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         auto mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
         //init serializable source config
         auto serializedSourceConfig = new SerializableSourceConfig();
-        serializedSourceConfig->set_sourcetype(mqttSourceDescriptor->getSourceConfigPtr()->getSourceType()->getValue());
+        serializedSourceConfig->set_sourcetype(mqttSourceDescriptor->getSourceConfigPtr()->getSourceTypeAsString());
         //init serializable mqtt source config
         auto mqttSerializedSourceConfig = SerializableSourceConfig_SerializableMQTTSourceConfig();
         mqttSerializedSourceConfig.set_clientid(mqttSourceDescriptor->getSourceConfigPtr()->getClientId()->getValue());
@@ -1041,7 +1041,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         auto csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         // init serializable source config
         auto serializedSourceConfig = new SerializableSourceConfig();
-        serializedSourceConfig->set_sourcetype(csvSourceDescriptor->getSourceConfig()->getSourceType()->getValue());
+        serializedSourceConfig->set_sourcetype(csvSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
         // init serializable csv source config
         auto csvSerializedSourceConfig = SerializableSourceConfig_SerializableCSVSourceConfig();
         csvSerializedSourceConfig.set_numberofbufferstoproduce(
@@ -1119,7 +1119,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         serializedSourceDescriptor.UnpackTo(mqttSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->release_sourceschema());
-        auto sourceConfig = Configurations::MQTTSourceTypeConfig::create();
+        auto sourceConfig = MQTTSourceType::create();
         sourceConfig->setSourceType(mqttSerializedSourceDescriptor->sourceconfig().sourcetype());
         auto mqttSourceConfig = new SerializableSourceConfig_SerializableMQTTSourceConfig();
         mqttSerializedSourceDescriptor->sourceconfig().specificsourceconfig().UnpackTo(mqttSourceConfig);
@@ -1205,8 +1205,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         serializedSourceDescriptor.UnpackTo(&csvSerializedSourceDescriptor);
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.release_sourceschema());
-        auto sourceConfig = Configurations::CSVSourceTypeConfig::create();
-        sourceConfig->setSourceType(csvSerializedSourceDescriptor.sourceconfig().sourcetype());
+        auto sourceConfig = CSVSourceType::create();
         auto csvSourceConfig = new SerializableSourceConfig_SerializableCSVSourceConfig();
         csvSerializedSourceDescriptor.sourceconfig().specificsourceconfig().UnpackTo(csvSourceConfig);
         sourceConfig->setFilePath(csvSourceConfig->filepath());
