@@ -114,9 +114,9 @@ bool ThreadPool::start() {
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, i, barrier]() {
           setThreadName("Wrk-%d-%d", nodeId, i);
-          uint64_t queueIdx = 0;
           BufferManagerPtr localBufferManager;
 #if defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
+          uint64_t queueIdx = 0;
           if (workerPinningPositionList.size() != 0) {
               NES_ASSERT(numThreads <= workerPinningPositionList.size(),
                          "Not enough worker positions for pinning are provided");
