@@ -108,10 +108,10 @@ class NesWorker {
 
     /**
      * @brief method to register physical stream with the coordinator
-     * @param physicalStream: physical stream containing relevant information
+     * @param physicalSources: physical sources containing relevant information
      * @return bool indicating success
      */
-    bool registerPhysicalStream(const PhysicalSourcePtr& physicalStream);
+    bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
 
     /**
     * @brief method to deregister physical stream with the coordinator

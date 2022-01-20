@@ -96,7 +96,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     //register physical stream R2000070
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -194,8 +194,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     //register physical stream R2000070
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(conf);
-    wrk2->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
+    wrk2->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -288,7 +288,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     //register physical stream R2000070
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "outputLog.out";
     remove(outputFilePath.c_str());
@@ -392,8 +392,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     //register physical stream R2000070
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(conf);
-    wrk2->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
+    wrk2->registerPhysicalSources(conf);
 
     std::string outputFilePath = "outputLog.out";
     remove(outputFilePath.c_str());
@@ -492,7 +492,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     //register physical stream R2000070
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -606,8 +606,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     //register physical stream R2000070
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(conf);
-    wrk2->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
+    wrk2->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -713,7 +713,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     srcConf->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testOutput.out";
     remove(outputFilePath.c_str());
@@ -879,8 +879,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     srcConf->setSkipHeader(false);
     PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
 
-    wrk2->registerPhysicalStream(windowStream);
-    wrk3->registerPhysicalStream(windowStream);
+    wrk2->registerPhysicalSources(windowStream);
+    wrk3->registerPhysicalSources(windowStream);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1046,8 +1046,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     srcConf->setSkipHeader(false);
     PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
 
-    wrk2->registerPhysicalStream(windowStream);
-    wrk3->registerPhysicalStream(windowStream);
+    wrk2->registerPhysicalSources(windowStream);
+    wrk3->registerPhysicalSources(windowStream);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

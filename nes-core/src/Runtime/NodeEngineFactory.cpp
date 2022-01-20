@@ -46,7 +46,7 @@ NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& host
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint16_t port,
-                                                  std::vector<PhysicalSourcePtr> configs,
+                                                  std::vector<PhysicalSourcePtr> physicalSources,
                                                   const uint16_t numThreads,
                                                   const uint64_t bufferSize,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
@@ -138,7 +138,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             throw Exception("Error while creating compiler");
         }
         auto engine = std::make_shared<NodeEngine>(
-            configs,
+            physicalSources,
             std::move(hardwareManager),
             std::move(bufferManagers),
             std::move(queryManager),

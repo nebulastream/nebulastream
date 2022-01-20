@@ -325,7 +325,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -442,8 +442,8 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
 
     PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream2);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk2->registerPhysicalSources(windowStream2);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

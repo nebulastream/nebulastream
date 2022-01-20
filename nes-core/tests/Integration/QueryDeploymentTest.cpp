@@ -110,7 +110,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     srcConf->setLogicalStreamName("car");
     //register physical stream
     PhysicalSourcePtr confCar = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(confCar);
+    wrk1->registerPhysicalSources(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
@@ -120,7 +120,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     srcConf->setLogicalStreamName("truck");
     //register physical stream
     PhysicalSourcePtr confTruck = PhysicalSourceType::create(srcConf);
-    wrk2->registerPhysicalStream(confTruck);
+    wrk2->registerPhysicalSources(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -268,7 +268,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     srcConf->setLogicalStreamName("car");
     //register physical stream
     PhysicalSourcePtr confCar = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(confCar);
+    wrk1->registerPhysicalSources(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
@@ -278,7 +278,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     srcConf->setLogicalStreamName("truck");
     //register physical stream
     PhysicalSourcePtr confTruck = PhysicalSourceType::create(srcConf);
-    wrk2->registerPhysicalStream(confTruck);
+    wrk2->registerPhysicalSources(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -614,11 +614,11 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
     //register physical stream
     PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(streamConf);
+    wrk1->registerPhysicalSources(streamConf);
 
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
     PhysicalSourcePtr streamConf2 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(streamConf2);
+    wrk1->registerPhysicalSources(streamConf2);
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -691,14 +691,14 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
     //register physical stream
     PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(streamConf);
+    wrk1->registerPhysicalSources(streamConf);
 
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
     PhysicalSourcePtr streamConf2 = PhysicalSourceType::create(srcConf);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    wrk1->registerPhysicalStream(streamConf2);
+    wrk1->registerPhysicalSources(streamConf2);
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -771,14 +771,14 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
     //register physical stream
     PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(streamConf);
+    wrk1->registerPhysicalSources(streamConf);
 
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
     PhysicalSourcePtr streamConf2 = PhysicalSourceType::create(srcConf);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    wrk1->registerPhysicalStream(streamConf2);
+    wrk1->registerPhysicalSources(streamConf2);
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");

@@ -97,7 +97,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
     srcConf->as<CSVSourceConfig>()->setSkipHeader(false); /*register physical stream*/
     PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(streamConf);
+    wrk1->registerPhysicalSources(streamConf);
 
     std::string outputFilePath = "MultiThreadedTest_testFilterQuery.out";
 
@@ -182,7 +182,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
     srcConf->as<CSVSourceConfig>()->setSkipHeader(false); /*register physical stream*/
     PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(streamConf);
+    wrk1->registerPhysicalSources(streamConf);
 
     std::string outputFilePath = "MultiThreadedTest_testProjectQuery.out";
 
@@ -272,7 +272,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
 
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -367,7 +367,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     //register physical stream R2000070
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -460,7 +460,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     //register physical stream R2000070
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -566,8 +566,8 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 
     PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk1->registerPhysicalStream(windowStream2);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk1->registerPhysicalSources(windowStream2);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -683,9 +683,9 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
     PhysicalSourcePtr windowStream3 = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk1->registerPhysicalStream(windowStream2);
-    wrk1->registerPhysicalStream(windowStream3);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk1->registerPhysicalSources(windowStream2);
+    wrk1->registerPhysicalSources(windowStream3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -818,10 +818,10 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window4");
     PhysicalSourcePtr windowStream4 = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk1->registerPhysicalStream(windowStream2);
-    wrk1->registerPhysicalStream(windowStream3);
-    wrk1->registerPhysicalStream(windowStream4);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk1->registerPhysicalSources(windowStream2);
+    wrk1->registerPhysicalSources(windowStream3);
+    wrk1->registerPhysicalSources(windowStream4);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -973,8 +973,8 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
 
     PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk1->registerPhysicalStream(windowStream2);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk1->registerPhysicalSources(windowStream2);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

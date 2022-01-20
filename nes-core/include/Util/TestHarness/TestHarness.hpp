@@ -291,7 +291,7 @@ class TestHarness {
 
         for (const TestHarnessWorker& worker : testHarnessWorkers) {
             if (worker.type == TestHarnessWorker::CSVSource) {
-                worker.wrk->registerPhysicalStream(worker.csvSourceConfig);
+                worker.wrk->registerPhysicalSources(worker.csvSourceConfig);
             } else if (worker.type == TestHarnessWorker::MemorySource) {
                 // create and populate memory source
                 auto currentSourceNumOfRecords = worker.record.size();
@@ -315,7 +315,7 @@ class TestHarness {
                                                      /** numberOfBuffers*/ memSrcNumBuffToProcess,
                                                      /** frequency*/ memSrcFrequency,
                                                      "frequency");
-                worker.wrk->registerPhysicalStream(conf);
+                worker.wrk->registerPhysicalSources(conf);
             }
         }
 

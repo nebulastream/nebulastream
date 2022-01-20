@@ -101,7 +101,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQ
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
     remove(outputFilePath.c_str());
@@ -263,7 +263,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     NES::AbstractPhysicalStreamConfigPtr conf =
         NES::LambdaSourceStreamConfig::create("LambdaSource", "YSB_phy", "ysb", func, 10, 100, "frequency");
 
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"ysb\").window(TumblingWindow::of(EventTime(Attribute(\"current_ms\")), "
@@ -343,7 +343,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -434,7 +434,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTimeWithTi
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -527,7 +527,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralSlidingWindowEventTime) {
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "outputLog.out";
     remove(outputFilePath.c_str());
@@ -642,8 +642,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     sourceConfig->setLogicalStreamName("window");
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
-    wrk2->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
+    wrk2->registerPhysicalSources(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
@@ -745,8 +745,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     sourceConfig->setLogicalStreamName("window");
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
-    wrk2->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
+    wrk2->registerPhysicalSources(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\"), Seconds()), "
@@ -845,8 +845,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployOneWorkerDistributedSlidingWind
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(conf70);
-    wrk2->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
+    wrk2->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "outputLog.out";
     remove(outputFilePath.c_str());
@@ -952,7 +952,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime)
     //register physical stream R2000070
     PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(windowStream);
+    wrk1->registerPhysicalSources(windowStream);
 
     std::string outputFilePath = "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1044,7 +1044,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) 
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "outputLog.out";
     remove(outputFilePath.c_str());
@@ -1151,8 +1151,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowEventT
     //register physical stream R2000070
     PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk2->registerPhysicalSources(windowStream);
 
     std::string outputFilePath = "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1258,8 +1258,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeySlidingWindowEventTi
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(conf70);
-    wrk2->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
+    wrk2->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "outputLog.out";
     remove(outputFilePath.c_str());
@@ -1352,7 +1352,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralWindowIngestionTimeIngestionTi
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -1441,7 +1441,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
     //register physical stream
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -1523,7 +1523,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionT
     //register physical stream R2000070
     PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(windowStream);
+    wrk1->registerPhysicalSources(windowStream);
 
     std::string outputFilePath = "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1614,8 +1614,8 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedNonKeyTumblingWindowIngest
     //register physical stream R2000070
     PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk2->registerPhysicalSources(windowStream);
 
     std::string outputFilePath = "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1747,10 +1747,10 @@ TEST_F(ConcurrentWindowDeploymentTest,
 
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk2->registerPhysicalStream(conf);
-    wrk3->registerPhysicalStream(conf);
-    wrk4->registerPhysicalStream(conf);
-    wrk5->registerPhysicalStream(conf);
+    wrk2->registerPhysicalSources(conf);
+    wrk3->registerPhysicalSources(conf);
+    wrk4->registerPhysicalSources(conf);
+    wrk5->registerPhysicalSources(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
@@ -1896,10 +1896,10 @@ TEST_F(ConcurrentWindowDeploymentTest,
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     //    wrk1->registerPhysicalSources(physicalStream);
-    wrk2->registerPhysicalStream(conf);
-    wrk3->registerPhysicalStream(conf);
-    wrk4->registerPhysicalStream(conf);
-    wrk5->registerPhysicalStream(conf);
+    wrk2->registerPhysicalSources(conf);
+    wrk3->registerPhysicalSources(conf);
+    wrk4->registerPhysicalSources(conf);
+    wrk5->registerPhysicalSources(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
@@ -2371,7 +2371,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     NES::AbstractPhysicalStreamConfigPtr conf =
         NES::LambdaSourceStreamConfig::create("LambdaSource", "Source_phy", "schema", func, 100U, 0U, "frequency");
 
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"schema\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "

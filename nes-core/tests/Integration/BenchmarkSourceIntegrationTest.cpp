@@ -111,7 +111,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
                                                                                0,
                                                                                "frequency",
                                                                                "copyBuffer");
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     // local fs
     std::string filePath = "benchmSourceTestOut.csv";
@@ -222,7 +222,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
                                                                                0,
                                                                                "frequency",
                                                                                "copyBuffer");
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     // local fs
     std::string filePath = "benchmSourceTestOut.csv";
@@ -335,7 +335,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
                                                                                0,
                                                                                "frequency",
                                                                                "copyBuffer");
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     // local fs
     std::string filePath = "benchmSourceTestOut";

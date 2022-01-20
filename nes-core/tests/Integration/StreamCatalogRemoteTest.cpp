@@ -270,7 +270,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     sourceConfig->setLogicalStreamName("default_logical");
     PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-    bool success = wrk->registerPhysicalStream(conf);
+    bool success = wrk->registerPhysicalSources(conf);
     EXPECT_TRUE(success);
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
@@ -330,7 +330,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     sourceConfig->setLogicalStreamName("testStream");
     PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-    bool success2 = wrk->registerPhysicalStream(conf);
+    bool success2 = wrk->registerPhysicalSources(conf);
     EXPECT_TRUE(success2);
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;

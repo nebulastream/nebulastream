@@ -108,7 +108,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     sourceConfig->setLogicalStreamName("car");
     //register physical stream
     PhysicalSourcePtr confCar = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(confCar);
+    wrk1->registerPhysicalSources(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
@@ -118,7 +118,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     sourceConfig->setLogicalStreamName("truck");
     //register physical stream
     PhysicalSourcePtr confTruck = PhysicalSourceType::create(sourceConfig);
-    wrk2->registerPhysicalStream(confTruck);
+    wrk2->registerPhysicalSources(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -294,7 +294,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     sourceConfig->setLogicalStreamName("car");
     //register physical stream
     PhysicalSourcePtr confCar = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(confCar);
+    wrk1->registerPhysicalSources(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
@@ -304,7 +304,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     sourceConfig->setLogicalStreamName("truck");
     //register physical stream
     PhysicalSourcePtr confTruck = PhysicalSourceType::create(sourceConfig);
-    wrk2->registerPhysicalStream(confTruck);
+    wrk2->registerPhysicalSources(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -480,7 +480,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     sourceConfig->setLogicalStreamName("car");
     //register physical stream
     PhysicalSourcePtr confCar = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(confCar);
+    wrk1->registerPhysicalSources(confCar);
 
     wrk2->registerLogicalStream("truck", testSchemaFileName);
 
@@ -491,7 +491,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     sourceConfig->setLogicalStreamName("truck");
     //register physical stream
     PhysicalSourcePtr confTruck = PhysicalSourceType::create(sourceConfig);
-    wrk2->registerPhysicalStream(confTruck);
+    wrk2->registerPhysicalSources(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -668,7 +668,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     //register physical stream
     PhysicalSourcePtr confCar = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(confCar);
+    wrk1->registerPhysicalSources(confCar);
 
     std::string testSchema2 = R"(Schema::create()->addField("id", BasicType::UINT16)->addField("value", BasicType::UINT64);)";
     std::string testSchemaFileName2 = "testSchema2.hpp";
@@ -683,7 +683,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     sourceConfig->setLogicalStreamName("truck");
     //register physical stream
     PhysicalSourcePtr confTruck = PhysicalSourceType::create(sourceConfig);
-    wrk2->registerPhysicalStream(confTruck);
+    wrk2->registerPhysicalSources(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -775,8 +775,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
 
     PhysicalSourcePtr confStreamDiamond = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(confStreamRuby);
-    wrk2->registerPhysicalStream(confStreamDiamond);
+    wrk1->registerPhysicalSources(confStreamRuby);
+    wrk2->registerPhysicalSources(confStreamDiamond);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -943,8 +943,8 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
 
     PhysicalSourcePtr confStreamDiamond = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(confStreamRuby);
-    wrk2->registerPhysicalStream(confStreamDiamond);
+    wrk1->registerPhysicalSources(confStreamRuby);
+    wrk2->registerPhysicalSources(confStreamDiamond);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1080,8 +1080,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
 
     PhysicalSourcePtr confStreamDiamond = PhysicalSourceType::create(sourceConfig);
 
-    wrk1->registerPhysicalStream(confStreamRuby);
-    wrk2->registerPhysicalStream(confStreamDiamond);
+    wrk1->registerPhysicalSources(confStreamRuby);
+    wrk2->registerPhysicalSources(confStreamDiamond);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

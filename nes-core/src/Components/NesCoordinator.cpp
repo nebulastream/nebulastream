@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Catalogs/UdfCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
