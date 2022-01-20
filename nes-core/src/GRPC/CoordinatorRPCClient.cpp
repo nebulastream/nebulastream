@@ -15,6 +15,8 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -41,18 +43,22 @@ CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address) : address
 bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
     NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources: got " << physicalSources.size() << " physical sources to register");
 
-    RegisterPhysicalStreamRequest request;
+    RegisterPhysicalSourcesRequest request;
     request.set_id(workerId);
-    request.set_sourcetype(
-        conf->getPhysicalStreamTypeConfig()->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue());
-    request.set_physicalstreamname(conf->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue());
-    request.set_logicalstreamname(conf->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue());
+
+    for (const auto& physicalSource : physicalSources) {
+        PhysicalSourceDefinition* physicalSourceDefinition = request.add_physicalsources();
+        physicalSourceDefinition->set_sourcetype(physicalSource->getPhysicalSourceType()->getSourceTypeAsString());
+        physicalSourceDefinition->set_physicalsourcename(physicalSource->getPhysicalSourceName());
+        physicalSourceDefinition->set_logicalsourcename(physicalSource->getLogicalSourceName());
+    }
+
     NES_DEBUG("RegisterPhysicalStreamRequest::RegisterLogicalStreamRequest request=" << request.DebugString());
 
-    RegisterPhysicalStreamReply reply;
+    RegisterPhysicalSourcesReply reply;
     ClientContext context;
 
-    Status status = coordinatorStub->RegisterPhysicalStream(&context, request, &reply);
+    Status status = coordinatorStub->RegisterPhysicalSource(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources: status ok return success=" << reply.success());
@@ -62,8 +68,8 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
     return reply.success();
 }
 
-bool CoordinatorRPCClient::registerLogicalStream(const std::string& streamName, const std::string& filePath) {
-    NES_DEBUG("CoordinatorRPCClient: registerLogicalStream " << streamName << " with path" << filePath);
+bool CoordinatorRPCClient::registerLogicalStream(const std::string& logicalSourceName, const std::string& filePath) {
+    NES_DEBUG("CoordinatorRPCClient: registerLogicalStream " << logicalSourceName << " with path" << filePath);
 
     // Check if file can be found on system and read.
     std::filesystem::path path{filePath.c_str()};
@@ -76,16 +82,16 @@ bool CoordinatorRPCClient::registerLogicalStream(const std::string& streamName, 
     std::ifstream ifs(path.string().c_str());
     std::string fileContent((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    RegisterLogicalStreamRequest request;
+    RegisterLogicalSourceRequest request;
     request.set_id(workerId);
-    request.set_streamname(streamName);
-    request.set_streamschema(fileContent);
+    request.set_logicalsourcename(logicalSourceName);
+    request.set_sourceschema(fileContent);
     NES_DEBUG("CoordinatorRPCClient::RegisterLogicalStreamRequest request=" << request.DebugString());
 
-    RegisterLogicalStreamReply reply;
+    RegisterLogicalSourceReply reply;
     ClientContext context;
 
-    Status status = coordinatorStub->RegisterLogicalStream(&context, request, &reply);
+    Status status = coordinatorStub->RegisterLogicalSource(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::registerLogicalStream: status ok return success=" << reply.success());
@@ -95,19 +101,19 @@ bool CoordinatorRPCClient::registerLogicalStream(const std::string& streamName, 
     return reply.success();
 }
 
-bool CoordinatorRPCClient::unregisterPhysicalStream(const std::string& logicalStreamName, const std::string& physicalStreamName) {
-    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalStream physical stream" << physicalStreamName << " from logical stream ");
+bool CoordinatorRPCClient::unregisterPhysicalStream(const std::string& logicalSourceName, const std::string& physicalSourceName) {
+    NES_DEBUG("CoordinatorRPCClient: unregisterPhysicalStream physical stream" << physicalSourceName << " from logical stream ");
 
-    UnregisterPhysicalStreamRequest request;
+    UnregisterPhysicalSourceRequest request;
     request.set_id(workerId);
-    request.set_physicalstreamname(physicalStreamName);
-    request.set_logicalstreamname(logicalStreamName);
+    request.set_physicalsourcename(physicalSourceName);
+    request.set_logicalsourcename(logicalSourceName);
     NES_DEBUG("CoordinatorRPCClient::UnregisterPhysicalStreamRequest request=" << request.DebugString());
 
-    UnregisterPhysicalStreamReply reply;
+    UnregisterPhysicalSourceReply reply;
     ClientContext context;
 
-    Status status = coordinatorStub->UnregisterPhysicalStream(&context, request, &reply);
+    Status status = coordinatorStub->UnregisterPhysicalSource(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::unregisterPhysicalStream: status ok return success=" << reply.success());
@@ -117,18 +123,18 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(const std::string& logicalSt
     return reply.success();
 }
 
-bool CoordinatorRPCClient::unregisterLogicalStream(const std::string& streamName) {
-    NES_DEBUG("CoordinatorRPCClient: unregisterLogicalStream stream" << streamName);
+bool CoordinatorRPCClient::unregisterLogicalStream(const std::string& logicalSourceName) {
+    NES_DEBUG("CoordinatorRPCClient: unregisterLogicalStream stream" << logicalSourceName);
 
-    UnregisterLogicalStreamRequest request;
+    UnregisterLogicalSourceRequest request;
     request.set_id(workerId);
-    request.set_streamname(streamName);
+    request.set_logicalsourcename(logicalSourceName);
     NES_DEBUG("CoordinatorRPCClient::UnregisterLogicalStreamRequest request=" << request.DebugString());
 
-    UnregisterLogicalStreamReply reply;
+    UnregisterLogicalSourceReply reply;
     ClientContext context;
 
-    Status status = coordinatorStub->UnregisterLogicalStream(&context, request, &reply);
+    Status status = coordinatorStub->UnregisterLogicalSource(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::unregisterLogicalStream: status ok return success=" << reply.success());
@@ -230,14 +236,14 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         std::optional<StaticNesMetricsPtr> staticNesMetrics) {
-//    if (type == NodeType::Sensor) {
-//        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
-//    } else if (type == NodeType::Worker) {
-//        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a worker");
-//    } else {
-//        NES_ERROR("CoordinatorRPCClient::registerNode node type not supported " << type);
-//        throw Exception("CoordinatorRPCClient::registerNode wrong node type");
-//    }
+    //    if (type == NodeType::Sensor) {
+    //        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
+    //    } else if (type == NodeType::Worker) {
+    //        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a worker");
+    //    } else {
+    //        NES_ERROR("CoordinatorRPCClient::registerNode node type not supported " << type);
+    //        throw Exception("CoordinatorRPCClient::registerNode wrong node type");
+    //    }
 
     RegisterNodeRequest request;
     request.set_address(ipAddress);

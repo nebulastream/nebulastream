@@ -20,13 +20,13 @@
 #include <Monitoring/MonitoringManager.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger.hpp>
-#include <utility>
+
 using namespace NES;
 
 CoordinatorRPCServer::CoordinatorRPCServer(TopologyPtr topology,
                                            SourceCatalogPtr streamCatalog,
                                            MonitoringManagerPtr monitoringManager)
-    : topologyManagerService(std::make_shared<TopologyManagerService>(topology, streamCatalog)),
+    : topologyManagerService(std::make_shared<TopologyManagerService>(topology)),
       streamCatalogService(std::make_shared<StreamCatalogService>(streamCatalog)), monitoringManager(monitoringManager){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
@@ -65,74 +65,74 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNode
     return Status::CANCELLED;
 }
 
-Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
-                                                    const RegisterPhysicalStreamRequest* request,
-                                                    RegisterPhysicalStreamReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream: request =" << request);
+Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
+                                                    const RegisterPhysicalSourcesRequest* request,
+                                                    RegisterPhysicalSourcesReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource: request =" << request);
     TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
-    bool success = streamCatalogService->registerPhysicalStream(physicalNode,
-                                                                request->sourcetype(),
-                                                                request->physicalstreamname(),
-                                                                request->logicalstreamname());
-
-    if (success) {
-        NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream success");
-        reply->set_success(true);
-        return Status::OK;
+    for (const auto& physicalSourceDefinition : request->physicalsources()) {
+        bool success = streamCatalogService->registerPhysicalStream(physicalNode,
+                                                                    physicalSourceDefinition.physicalsourcename(),
+                                                                    physicalSourceDefinition.logicalsourcename());
+        if (success) {
+            NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource success");
+            reply->set_success(false);
+            return Status::CANCELLED;
+        }
     }
-    NES_ERROR("CoordinatorRPCServer::RegisterPhysicalStream failed");
-    reply->set_success(false);
-    return Status::CANCELLED;
+    NES_ERROR("CoordinatorRPCServer::RegisterPhysicalSource Succeed");
+    reply->set_success(true);
+    return Status::OK;
 }
 
-Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext*,
-                                                      const UnregisterPhysicalStreamRequest* request,
-                                                      UnregisterPhysicalStreamReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream: request =" << request);
+Status CoordinatorRPCServer::UnregisterPhysicalSource(ServerContext*,
+                                                      const UnregisterPhysicalSourceRequest* request,
+                                                      UnregisterPhysicalSourceReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource: request =" << request);
 
     TopologyNodePtr physicalNode = this->topologyManagerService->findNodeWithId(request->id());
     bool success =
-        streamCatalogService->unregisterPhysicalStream(physicalNode, request->physicalstreamname(), request->logicalstreamname());
+        streamCatalogService->unregisterPhysicalStream(physicalNode, request->physicalsourcename(), request->logicalsourcename());
 
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream success");
+        NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalSource success");
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("CoordinatorRPCServer::UnregisterPhysicalStream failed");
+    NES_ERROR("CoordinatorRPCServer::UnregisterPhysicalSource failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
 
-Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext*,
-                                                   const RegisterLogicalStreamRequest* request,
-                                                   RegisterLogicalStreamReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalStream: request =" << request);
+Status CoordinatorRPCServer::RegisterLogicalSource(ServerContext*,
+                                                   const RegisterLogicalSourceRequest* request,
+                                                   RegisterLogicalSourceReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request =" << request);
 
-    bool success = streamCatalogService->registerLogicalStream(request->streamname(), request->streamschema());
+    bool success = streamCatalogService->registerLogicalStream(request->logicalsourcename(), request->sourceschema());
 
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::RegisterLogicalStream success");
+        NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource success");
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("CoordinatorRPCServer::RegisterLogicalStream failed");
+    NES_ERROR("CoordinatorRPCServer::RegisterLogicalSource failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
 
-Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext*,
-                                                     const UnregisterLogicalStreamRequest* request,
-                                                     UnregisterLogicalStreamReply* reply) {
-    NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalStream: request =" << request);
+Status CoordinatorRPCServer::UnregisterLogicalSource(ServerContext*,
+                                                     const UnregisterLogicalSourceRequest* request,
+                                                     UnregisterLogicalSourceReply* reply) {
+    NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalSource: request =" << request);
 
-    bool success = streamCatalogService->unregisterLogicalStream(request->streamname());
+    bool success = streamCatalogService->unregisterLogicalStream(request->logicalsourcename());
     if (success) {
-        NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalStream success");
+        NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalSource success");
         reply->set_success(true);
         return Status::OK;
     }
-    NES_ERROR("CoordinatorRPCServer::UnregisterLogicalStream failed");
+    NES_ERROR("CoordinatorRPCServer::UnregisterLogicalSource failed");
     reply->set_success(false);
     return Status::CANCELLED;
 }
