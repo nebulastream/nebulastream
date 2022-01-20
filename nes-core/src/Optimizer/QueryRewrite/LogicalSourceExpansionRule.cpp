@@ -15,6 +15,8 @@
 */
 
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -70,13 +72,13 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
     for (auto& sourceOperator : sourceOperators) {
         SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
-        auto streamName = sourceDescriptor->getLogicalSourceName();
-        std::vector<TopologyNodePtr> sourceLocations = streamCatalog->getSourceNodesForLogicalStream(streamName);
-        NES_TRACE("LogicalSourceExpansionRule: Found " << sourceLocations.size()
+        auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
+        std::vector<SourceCatalogEntryPtr> sourceCatalogEntries = streamCatalog->getPhysicalStreams(logicalSourceName);
+        NES_TRACE("LogicalSourceExpansionRule: Found " << sourceCatalogEntries.size()
                                                        << " physical source locations in the topology.");
-        if (sourceLocations.empty()) {
+        if (sourceCatalogEntries.empty()) {
             throw Exception("LogicalSourceExpansionRule: Unable to find physical stream locations for the logical stream "
-                            + streamName);
+                            + logicalSourceName);
         }
 
         if (!expandSourceOnly) {
@@ -88,19 +90,21 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                 removeAndAddBlockingUpstreamOperator(sourceOperator, upstreamOperator);
             }
         }
-        NES_TRACE("LogicalSourceExpansionRule: Create " << sourceLocations.size()
+        NES_TRACE("LogicalSourceExpansionRule: Create " << sourceCatalogEntries.size()
                                                         << " duplicated logical sub-graph and add to original graph");
         //Create one duplicate operator for each physical source
-        for (auto& sourceLocation : sourceLocations) {
+        for (auto& sourceCatalogEntry : sourceCatalogEntries) {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
-            OperatorNodePtr duplicateOperator = sourceOperator->duplicate();
+            auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperatorNode>();
             //Add to the source operator the id of the physical node where we have to pin the operator
-            duplicateOperator->getAllLeafNodes();
             //NOTE: This is required at the time of placement to know where the source operator is pinned
-            duplicateOperator->addProperty(PINNED_NODE_ID, sourceLocation->getId());
+            duplicateSourceOperator->addProperty(PINNED_NODE_ID, sourceCatalogEntry->getNode()->getId());
+            //Add Physical Source Name to the source descriptor
+            auto sourceDescriptor = duplicateSourceOperator->getSourceDescriptor();
+            sourceDescriptor->setPhysicalSourceName(sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
 
             //Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
-            const std::vector<NodePtr>& allOperators = duplicateOperator->getAndFlattenAllAncestors();
+            const std::vector<NodePtr>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
 
             for (auto& node : allOperators) {
                 auto operatorNode = node->as<OperatorNode>();

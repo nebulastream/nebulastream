@@ -173,8 +173,9 @@ message SerializableOperator{
     }
 
     message SerializableLogicalStreamSourceDescriptor {
-      string streamName = 1;
-      optional SerializableSchema sourceSchema = 2;
+      string logicalSourceName = 1;
+      string physicalSourceName = 2;
+      optional SerializableSchema sourceSchema = 3;
     }
 
     message SerializableSenseSourceDescriptor {

@@ -14,10 +14,11 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
@@ -41,11 +42,7 @@ uint64_t rpcPort = 4000;
 
 class OrOperatorTest : public testing::Test {
   public:
-    CoordinatorConfigurationPtr coConf;
-    WorkerConfigurationPtr wrkConf;
-    CSVSourceTypePtr srcConf;
-    CSVSourceTypePtr srcConf1;
-    CSVSourceTypePtr srcConf2;
+    CoordinatorConfigurationPtr coordinatorConfiguration;
 
     static void SetUpTestCase() {
         NES::setupLogging("OrOperatorTest.log", NES::LOG_DEBUG);
@@ -55,15 +52,9 @@ class OrOperatorTest : public testing::Test {
     void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-        coConf = CoordinatorConfiguration::create();
-        wrkConf = WorkerConfiguration::create();
-        srcConf = CSVSourceType::create();
-        srcConf1 = CSVSourceType::create();
-        srcConf2 = CSVSourceType::create();
-
-        coConf->setRpcPort(rpcPort);
-        coConf->setRestPort(restPort);
-        wrkConf->setCoordinatorPort(rpcPort);
+        coordinatorConfiguration = CoordinatorConfiguration::create();
+        coordinatorConfiguration->setRpcPort(rpcPort);
+        coordinatorConfiguration->setRestPort(restPort);
     }
 
     void TearDown() override { std::cout << "Tear down OrOperatorTest class." << std::endl; }
@@ -74,62 +65,58 @@ class OrOperatorTest : public testing::Test {
  * OR operator standalone
  */
 TEST_F(OrOperatorTest, testPatternOneOr) {
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->reset();
-    srcConf1->reset();
+    coordinatorConfiguration->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("OrOperatorTest: Coordinator started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    //register logical stream qnv
+    std::string qnv =
+        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+
+    auto streamCatalogService = crd->getStreamCatalogService();
+    streamCatalogService->registerLogicalStream("QnV1", qnv);
+    streamCatalogService->registerLogicalStream("QnV2", qnv);
+
+    NES_INFO("OrOperatorTest: Start worker 1 with physical source");
+    auto worker1Configuration = WorkerConfiguration::create();
+    worker1Configuration->setCoordinatorPort(port);
+    worker1Configuration->setRpcPort(port + 10);
+    worker1Configuration->setDataPort(port + 11);
+    //Add Physical source
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
+    csvSourceType1->setNumberOfBuffersToProduce(20);
+    //register physical stream R2000070
+    PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
+    worker1Configuration->addPhysicalSource(conf70);
+
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(worker1Configuration);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("OrOperatorTest: Worker1 started successfully");
 
-    NES_INFO("OrOperatorTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf);
+    NES_INFO("OrOperatorTest: Start worker 2 with physical source");
+    auto worker2Configuration = WorkerConfiguration::create();
+    worker2Configuration->setCoordinatorPort(port);
+    worker2Configuration->setRpcPort(port + 20);
+    worker2Configuration->setDataPort(port + 21);
+    //Add Physical source
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
+    csvSourceType2->setNumberOfBuffersToProduce(20);
+    //register physical stream R2000073
+    PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
+    worker2Configuration->addPhysicalSource(conf73);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(worker2Configuration);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("OrOperatorTest: Worker2 started successfully");
 
-    //register logical stream qnv
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    std::string testSchemaFileName = "QnV.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << qnv;
-    out.close();
-    wrk1->registerLogicalStream("QnV1", testSchemaFileName);
-    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
-
-    srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf->setNumberOfBuffersToProduce(20);
-    srcConf->setPhysicalStreamName("test_stream_QnV1");
-    srcConf->setLogicalStreamName("QnV1");
-    //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(conf70);
-
-    srcConf1->setSourceType("CSVSource");
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf1->setNumberOfBuffersToProduce(20);
-    srcConf1->setPhysicalStreamName("test_stream_QnV2");
-    srcConf1->setLogicalStreamName("QnV2");
-    //register physical stream R2000073
-    PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
-    wrk2->registerPhysicalSources(conf73);
 
     std::string outputFilePath = "testPatternOr1.out";
     remove(outputFilePath.c_str());
@@ -172,361 +159,361 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     EXPECT_TRUE(retStopCord);
 }
 
-/* 2.Test
- * OR operator in combination with additional map and filter
- */
-TEST_F(OrOperatorTest, testPatternOrMap) {
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
-    srcConf1->resetSourceOptions();
-    NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("OrOperatorTest: Coordinator started successfully");
-
-    NES_INFO("OrOperatorTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("OrOperatorTest: Worker1 started successfully");
-
-    NES_INFO("OrOperatorTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("OrOperatorTest: Worker2 started successfully");
-
-    //register logical stream qnv
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    std::string testSchemaFileName = "QnV.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << qnv;
-    out.close();
-    wrk1->registerLogicalStream("QnV1", testSchemaFileName);
-    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
-
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf->setNumberOfBuffersToProduce(40);
-    srcConf->setPhysicalStreamName("test_stream_QnV1");
-    srcConf->setLogicalStreamName("QnV1");
-    //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(conf70);
-
-    srcConf1->setSourceType("CSVSource");
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf1->setNumberOfBuffersToProduce(40);
-    srcConf1->setPhysicalStreamName("test_stream_QnV2");
-    srcConf1->setLogicalStreamName("QnV2");
-    //register physical stream R2000073
-    PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
-    wrk2->registerPhysicalSources(conf73);
-
-    std::string outputFilePath = "testPatternOr2.out";
-    remove(outputFilePath.c_str());
-
-    NES_INFO("OrOperatorTest: Submit andWith pattern");
-
-    std::string query =
-        R"(Query::from("QnV1").map(Attribute("Name")="test").orWith(Query::from("QnV2").map(Attribute("Name")="test").filter(Attribute("velocity")>60)).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
-
-    NES_INFO("OrOperatorTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
-
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
-    size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
-    size_t expResult = 208L;
-
-    EXPECT_EQ(n, expResult);
-
-    bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
-
-    bool retStopWrk2 = wrk2->stop(false);
-    EXPECT_TRUE(retStopWrk2);
-
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
-/* 3.Test
- * Multi-OR Operators in one Query
- * TODO OR(C,OR(A,B)) second Or does not work due to schema mismatch #2398
- */
-TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
-    srcConf1->resetSourceOptions();
-    NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("OrOperatorTest: Coordinator started successfully");
-
-    NES_INFO("OrOperatorTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("OrOperatorTest: Worker1 started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("OrOperatorTest: Worker2 started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 30);
-    wrkConf->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart3);
-    NES_INFO("OrOperatorTest: Worker3 started successfully");
-
-    //register logical stream qnv
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    std::string testSchemaFileName = "QnV.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << qnv;
-    out.close();
-    wrk1->registerLogicalStream("QnV1", testSchemaFileName);
-    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
-    wrk3->registerLogicalStream("QnV3", testSchemaFileName);
-
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->setNumberOfBuffersToProduce(40);
-    srcConf->setPhysicalStreamName("test_stream_QnV1");
-    srcConf->setLogicalStreamName("QnV1");
-    //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(conf70);
-
-    srcConf1->setSourceType("CSVSource");
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->setNumberOfBuffersToProduce(40);
-    srcConf1->setPhysicalStreamName("test_stream_QnV2");
-    srcConf1->setLogicalStreamName("QnV2");
-    //register physical stream R2000073
-    PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
-    wrk2->registerPhysicalSources(conf73);
-
-    srcConf2->setSourceType("CSVSource");
-    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf2->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf2->setNumberOfBuffersToProduce(40);
-    srcConf2->setPhysicalStreamName("test_stream_QnV3");
-    srcConf2->setLogicalStreamName("QnV3");
-    //register physical stream R2000073
-    PhysicalSourcePtr conf732 = PhysicalSourceType::create(srcConf2);
-    wrk3->registerPhysicalSources(conf732);
-
-    std::string outputFilePath = "testPatternOR3.out";
-    remove(outputFilePath.c_str());
-
-    NES_INFO("OrOperatorTest: Submit andWith pattern");
-
-    std::string query =
-        R"(Query::from("QnV1").filter(Attribute("velocity")>50).orWith(Query::from("QnV2").filter(Attribute("quantity")>5).orWith(Query::from("QnV3").filter(Attribute("quantity")>7))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
-
-    NES_INFO("OrOperatorTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
-
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-    NES_DEBUG("contents=" << content);
-    size_t n = std::count(content.begin(), content.end(), '\n');
-    NES_DEBUG("TUPLE NUMBER=" << n);
-
-    EXPECT_EQ(content, "");
-
-    bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
-
-    bool retStopWrk2 = wrk2->stop(false);
-    EXPECT_TRUE(retStopWrk2);
-
-    bool retStopWrk3 = wrk3->stop(false);
-    EXPECT_TRUE(retStopWrk3);
-
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
-/* 4.Test
- * OR Operators with filters left and right stream
- */
-TEST_F(OrOperatorTest, testOrPatternFilter) {
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf1->resetSourceOptions();
-    NES_DEBUG("start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("SimplePatternTest: Coordinator started successfully");
-
-    NES_INFO("SimplePatternTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("SimplePatternTest: Worker1 started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("SimplePatternTest: Worker2 started successfully");
-
-    //register logical stream qnv
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    std::string testSchemaFileName = "QnV.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << qnv;
-    out.close();
-    wrk1->registerLogicalStream("QnV", testSchemaFileName);
-    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
-
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->setPhysicalStreamName("test_stream_R2000070");
-    srcConf->setLogicalStreamName("QnV");
-    //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(conf70);
-
-    srcConf1->setSourceType("CSVSource");
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf1->setPhysicalStreamName("test_stream_R2000073");
-    srcConf1->setLogicalStreamName("QnV2");
-    //register physical stream R2000073
-    PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
-    wrk2->registerPhysicalSources(conf73);
-
-    std::string outputFilePath = "testOrPatternWithTestStream.out";
-    remove(outputFilePath.c_str());
-
-    NES_INFO("SimplePatternTest: Submit orWith pattern");
-
-    std::string query =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 100).orWith(Query::from("QnV2").filter(Attribute("velocity") > 100))
-        .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
-
-    NES_INFO("SimplePatternTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    std::ifstream ifs(outputFilePath.c_str());
-    EXPECT_TRUE(ifs.good());
-
-    std::string line;
-    bool resultWrk1 = false;
-    bool resultWrk2 = false;
-
-    while (std::getline(ifs, line)) {
-        NES_INFO("print line from content" << line);
-        std::vector<string> content = Util::splitWithStringDelimiter<std::string>(line, "|");
-        if (content.size() > 1 && content.at(1) == "R2000073") {
-            NES_INFO("First content=" << content.at(2));
-            NES_INFO("First: expContent= 102.629631");
-            if (content.at(3) == "102.629631") {
-                resultWrk1 = true;
-            }
-        } else if (content.size() > 1 && content.at(1) == "R2000070") {
-            NES_INFO("Second: content=" << content.at(2));
-            NES_INFO("Second: expContent= 108.166664");
-            if (content.at(3) == "108.166664") {
-                resultWrk2 = true;
-            }
-        }
-    }
-
-    EXPECT_TRUE((resultWrk1 && resultWrk2));
-
-    bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
-
-    bool retStopWrk2 = wrk2->stop(false);
-    EXPECT_TRUE(retStopWrk2);
-
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
+///* 2.Test
+// * OR operator in combination with additional map and filter
+// */
+//TEST_F(OrOperatorTest, testPatternOrMap) {
+//    coordinatorConfiguration->resetCoordinatorOptions();
+//    workerConfiguration->resetWorkerOptions();
+//    csvSourceType1->reset();
+//    csvSourceType2->reset();
+//    NES_DEBUG("start coordinator");
+//    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
+//    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+//    EXPECT_NE(port, 0UL);
+//    NES_INFO("OrOperatorTest: Coordinator started successfully");
+//
+//    NES_INFO("OrOperatorTest: Start worker 1");
+//    workerConfiguration->setCoordinatorPort(port);
+//    workerConfiguration->setRpcPort(port + 10);
+//    workerConfiguration->setDataPort(port + 11);
+//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfiguration);
+//    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart1);
+//    NES_INFO("OrOperatorTest: Worker1 started successfully");
+//
+//    NES_INFO("OrOperatorTest: Start worker 2");
+//    workerConfiguration->setCoordinatorPort(port);
+//    workerConfiguration->setRpcPort(port + 20);
+//    workerConfiguration->setDataPort(port + 21);
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfiguration);
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("OrOperatorTest: Worker2 started successfully");
+//
+//    //register logical stream qnv
+//    std::string qnv =
+//        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+//    std::string testSchemaFileName = "QnV.hpp";
+//    std::ofstream out(testSchemaFileName);
+//    out << qnv;
+//    out.close();
+//    wrk1->registerLogicalStream("QnV1", testSchemaFileName);
+//    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
+//
+//    csvSourceType1->setSourceType("CSVSource");
+//    csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+//    csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
+//    csvSourceType1->setNumberOfBuffersToProduce(40);
+//    csvSourceType1->setPhysicalStreamName("test_stream_QnV1");
+//    csvSourceType1->setLogicalStreamName("QnV1");
+//    //register physical stream R2000070
+//    PhysicalSourcePtr conf70 = PhysicalSourceType::create(csvSourceType1);
+//    wrk1->registerPhysicalSources(conf70);
+//
+//    csvSourceType2->setSourceType("CSVSource");
+//    csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+//    csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
+//    csvSourceType2->setNumberOfBuffersToProduce(40);
+//    csvSourceType2->setPhysicalStreamName("test_stream_QnV2");
+//    csvSourceType2->setLogicalStreamName("QnV2");
+//    //register physical stream R2000073
+//    PhysicalSourcePtr conf73 = PhysicalSourceType::create(csvSourceType2);
+//    wrk2->registerPhysicalSources(conf73);
+//
+//    std::string outputFilePath = "testPatternOr2.out";
+//    remove(outputFilePath.c_str());
+//
+//    NES_INFO("OrOperatorTest: Submit andWith pattern");
+//
+//    std::string query =
+//        R"(Query::from("QnV1").map(Attribute("Name")="test").orWith(Query::from("QnV2").map(Attribute("Name")="test").filter(Attribute("velocity")>60)).sink(FileSinkDescriptor::create(")"
+//        + outputFilePath + "\"));";
+//
+//    QueryServicePtr queryService = crd->getQueryService();
+//    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+//    QueryId queryId =
+//        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+//
+//    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+//    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+//
+//    NES_INFO("OrOperatorTest: Remove query");
+//    queryService->validateAndQueueStopRequest(queryId);
+//    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+//
+//    std::ifstream ifs(outputFilePath.c_str());
+//    EXPECT_TRUE(ifs.good());
+//
+//    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+//    NES_DEBUG("contents=" << content);
+//    size_t n = std::count(content.begin(), content.end(), '\n');
+//    NES_DEBUG("TUPLE NUMBER=" << n);
+//    size_t expResult = 208L;
+//
+//    EXPECT_EQ(n, expResult);
+//
+//    bool retStopWrk1 = wrk1->stop(false);
+//    EXPECT_TRUE(retStopWrk1);
+//
+//    bool retStopWrk2 = wrk2->stop(false);
+//    EXPECT_TRUE(retStopWrk2);
+//
+//    bool retStopCord = crd->stopCoordinator(false);
+//    EXPECT_TRUE(retStopCord);
+//}
+//
+///* 3.Test
+// * Multi-OR Operators in one Query
+// * TODO OR(C,OR(A,B)) second Or does not work due to schema mismatch #2398
+// */
+//TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
+//    coordinatorConfiguration->resetCoordinatorOptions();
+//    workerConfiguration->resetWorkerOptions();
+//    csvSourceType1->resetSourceOptions();
+//    csvSourceType2->resetSourceOptions();
+//    NES_DEBUG("start coordinator");
+//    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
+//    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+//    EXPECT_NE(port, 0UL);
+//    NES_INFO("OrOperatorTest: Coordinator started successfully");
+//
+//    NES_INFO("OrOperatorTest: Start worker 1");
+//    workerConfiguration->setCoordinatorPort(port);
+//    workerConfiguration->setRpcPort(port + 10);
+//    workerConfiguration->setDataPort(port + 11);
+//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfiguration, NesNodeType::Sensor);
+//    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart1);
+//    NES_INFO("OrOperatorTest: Worker1 started successfully");
+//
+//    NES_INFO("QueryDeploymentTest: Start worker 2");
+//    workerConfiguration->setCoordinatorPort(port);
+//    workerConfiguration->setRpcPort(port + 20);
+//    workerConfiguration->setDataPort(port + 21);
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfiguration, NesNodeType::Sensor);
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("OrOperatorTest: Worker2 started successfully");
+//
+//    NES_INFO("QueryDeploymentTest: Start worker 2");
+//    workerConfiguration->setCoordinatorPort(port);
+//    workerConfiguration->setRpcPort(port + 30);
+//    workerConfiguration->setDataPort(port + 31);
+//    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfiguration, NesNodeType::Sensor);
+//    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart3);
+//    NES_INFO("OrOperatorTest: Worker3 started successfully");
+//
+//    //register logical stream qnv
+//    std::string qnv =
+//        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+//    std::string testSchemaFileName = "QnV.hpp";
+//    std::ofstream out(testSchemaFileName);
+//    out << qnv;
+//    out.close();
+//    wrk1->registerLogicalStream("QnV1", testSchemaFileName);
+//    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
+//    wrk3->registerLogicalStream("QnV3", testSchemaFileName);
+//
+//    csvSourceType1->setSourceType("CSVSource");
+//    csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+//    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+//    csvSourceType1->setNumberOfBuffersToProduce(40);
+//    csvSourceType1->setPhysicalStreamName("test_stream_QnV1");
+//    csvSourceType1->setLogicalStreamName("QnV1");
+//    //register physical stream R2000070
+//    PhysicalSourcePtr conf70 = PhysicalSourceType::create(csvSourceType1);
+//    wrk1->registerPhysicalSources(conf70);
+//
+//    csvSourceType2->setSourceType("CSVSource");
+//    csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+//    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+//    csvSourceType2->setNumberOfBuffersToProduce(40);
+//    csvSourceType2->setPhysicalStreamName("test_stream_QnV2");
+//    csvSourceType2->setLogicalStreamName("QnV2");
+//    //register physical stream R2000073
+//    PhysicalSourcePtr conf73 = PhysicalSourceType::create(csvSourceType2);
+//    wrk2->registerPhysicalSources(conf73);
+//
+//    csvSourceType3->setSourceType("CSVSource");
+//    csvSourceType3->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+//    csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
+//    csvSourceType3->setNumberOfBuffersToProduce(40);
+//    csvSourceType3->setPhysicalStreamName("test_stream_QnV3");
+//    csvSourceType3->setLogicalStreamName("QnV3");
+//    //register physical stream R2000073
+//    PhysicalSourcePtr conf732 = PhysicalSourceType::create(csvSourceType3);
+//    wrk3->registerPhysicalSources(conf732);
+//
+//    std::string outputFilePath = "testPatternOR3.out";
+//    remove(outputFilePath.c_str());
+//
+//    NES_INFO("OrOperatorTest: Submit andWith pattern");
+//
+//    std::string query =
+//        R"(Query::from("QnV1").filter(Attribute("velocity")>50).orWith(Query::from("QnV2").filter(Attribute("quantity")>5).orWith(Query::from("QnV3").filter(Attribute("quantity")>7))).sink(FileSinkDescriptor::create(")"
+//        + outputFilePath + "\"));";
+//
+//    QueryServicePtr queryService = crd->getQueryService();
+//    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+//    QueryId queryId =
+//        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+//
+//    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+//    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+//
+//    NES_INFO("OrOperatorTest: Remove query");
+//    queryService->validateAndQueueStopRequest(queryId);
+//    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+//
+//    std::ifstream ifs(outputFilePath.c_str());
+//    EXPECT_TRUE(ifs.good());
+//
+//    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+//    NES_DEBUG("contents=" << content);
+//    size_t n = std::count(content.begin(), content.end(), '\n');
+//    NES_DEBUG("TUPLE NUMBER=" << n);
+//
+//    EXPECT_EQ(content, "");
+//
+//    bool retStopWrk1 = wrk1->stop(false);
+//    EXPECT_TRUE(retStopWrk1);
+//
+//    bool retStopWrk2 = wrk2->stop(false);
+//    EXPECT_TRUE(retStopWrk2);
+//
+//    bool retStopWrk3 = wrk3->stop(false);
+//    EXPECT_TRUE(retStopWrk3);
+//
+//    bool retStopCord = crd->stopCoordinator(false);
+//    EXPECT_TRUE(retStopCord);
+//}
+//
+///* 4.Test
+// * OR Operators with filters left and right stream
+// */
+//TEST_F(OrOperatorTest, testOrPatternFilter) {
+//    coordinatorConfiguration->resetCoordinatorOptions();
+//    workerConfiguration->resetWorkerOptions();
+//    csvSourceType2->resetSourceOptions();
+//    NES_DEBUG("start coordinator");
+//    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
+//    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+//    EXPECT_NE(port, 0UL);
+//    NES_INFO("SimplePatternTest: Coordinator started successfully");
+//
+//    NES_INFO("SimplePatternTest: Start worker 1");
+//    workerConfiguration->setCoordinatorPort(port);
+//    workerConfiguration->setRpcPort(port + 10);
+//    workerConfiguration->setDataPort(port + 11);
+//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfiguration, NesNodeType::Sensor);
+//    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart1);
+//    NES_INFO("SimplePatternTest: Worker1 started successfully");
+//
+//    NES_INFO("QueryDeploymentTest: Start worker 2");
+//    workerConfiguration->setCoordinatorPort(port);
+//    workerConfiguration->setRpcPort(port + 20);
+//    workerConfiguration->setDataPort(port + 21);
+//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfiguration, NesNodeType::Sensor);
+//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart2);
+//    NES_INFO("SimplePatternTest: Worker2 started successfully");
+//
+//    //register logical stream qnv
+//    std::string qnv =
+//        R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+//    std::string testSchemaFileName = "QnV.hpp";
+//    std::ofstream out(testSchemaFileName);
+//    out << qnv;
+//    out.close();
+//    wrk1->registerLogicalStream("QnV", testSchemaFileName);
+//    wrk2->registerLogicalStream("QnV2", testSchemaFileName);
+//
+//    csvSourceType1->setSourceType("CSVSource");
+//    csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
+//    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+//    csvSourceType1->setPhysicalStreamName("test_stream_R2000070");
+//    csvSourceType1->setLogicalStreamName("QnV");
+//    //register physical stream R2000070
+//    PhysicalSourcePtr conf70 = PhysicalSourceType::create(csvSourceType1);
+//    wrk1->registerPhysicalSources(conf70);
+//
+//    csvSourceType2->setSourceType("CSVSource");
+//    csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+//    csvSourceType2->setNumberOfTuplesToProducePerBuffer(0);
+//    csvSourceType2->setPhysicalStreamName("test_stream_R2000073");
+//    csvSourceType2->setLogicalStreamName("QnV2");
+//    //register physical stream R2000073
+//    PhysicalSourcePtr conf73 = PhysicalSourceType::create(csvSourceType2);
+//    wrk2->registerPhysicalSources(conf73);
+//
+//    std::string outputFilePath = "testOrPatternWithTestStream.out";
+//    remove(outputFilePath.c_str());
+//
+//    NES_INFO("SimplePatternTest: Submit orWith pattern");
+//
+//    std::string query =
+//        R"(Query::from("QnV").filter(Attribute("velocity") > 100).orWith(Query::from("QnV2").filter(Attribute("velocity") > 100))
+//        .sink(FileSinkDescriptor::create(")"
+//        + outputFilePath + "\"));";
+//
+//    QueryServicePtr queryService = crd->getQueryService();
+//    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+//    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+//
+//    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+//    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+//
+//    NES_INFO("SimplePatternTest: Remove query");
+//    queryService->validateAndQueueStopRequest(queryId);
+//    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+//
+//    std::ifstream ifs(outputFilePath.c_str());
+//    EXPECT_TRUE(ifs.good());
+//
+//    std::string line;
+//    bool resultWrk1 = false;
+//    bool resultWrk2 = false;
+//
+//    while (std::getline(ifs, line)) {
+//        NES_INFO("print line from content" << line);
+//        std::vector<string> content = Util::splitWithStringDelimiter<std::string>(line, "|");
+//        if (content.size() > 1 && content.at(1) == "R2000073") {
+//            NES_INFO("First content=" << content.at(2));
+//            NES_INFO("First: expContent= 102.629631");
+//            if (content.at(3) == "102.629631") {
+//                resultWrk1 = true;
+//            }
+//        } else if (content.size() > 1 && content.at(1) == "R2000070") {
+//            NES_INFO("Second: content=" << content.at(2));
+//            NES_INFO("Second: expContent= 108.166664");
+//            if (content.at(3) == "108.166664") {
+//                resultWrk2 = true;
+//            }
+//        }
+//    }
+//
+//    EXPECT_TRUE((resultWrk1 && resultWrk2));
+//
+//    bool retStopWrk1 = wrk1->stop(false);
+//    EXPECT_TRUE(retStopWrk1);
+//
+//    bool retStopWrk2 = wrk2->stop(false);
+//    EXPECT_TRUE(retStopWrk2);
+//
+//    bool retStopCord = crd->stopCoordinator(false);
+//    EXPECT_TRUE(retStopCord);
+//}
 
 }// namespace NES

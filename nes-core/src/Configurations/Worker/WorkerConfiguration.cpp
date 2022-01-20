@@ -34,7 +34,7 @@ namespace Configurations {
 
 WorkerConfigurationPtr WorkerConfiguration::create() { return std::make_shared<WorkerConfiguration>(); }
 
-WorkerConfiguration::WorkerConfiguration() {
+WorkerConfiguration::WorkerConfiguration() : physicalSources() {
     NES_INFO("Generated new Worker Config object. Configurations initialized with default values.");
     localWorkerIp = ConfigurationOption<std::string>::create("localWorkerIp", "127.0.0.1", "Worker IP.");
     coordinatorIp =

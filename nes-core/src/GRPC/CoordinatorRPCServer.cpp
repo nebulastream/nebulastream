@@ -74,7 +74,7 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
         bool success = streamCatalogService->registerPhysicalStream(physicalNode,
                                                                     physicalSourceDefinition.physicalsourcename(),
                                                                     physicalSourceDefinition.logicalsourcename());
-        if (success) {
+        if (!success) {
             NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalSource success");
             reply->set_success(false);
             return Status::CANCELLED;

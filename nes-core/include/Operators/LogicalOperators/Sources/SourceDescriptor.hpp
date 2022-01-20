@@ -100,6 +100,16 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      */
     std::string getPhysicalSourceName();
 
+    /**
+     * @brief Set physical source name
+     * @param physicalSourceName : name of the physical source
+     */
+    void setPhysicalSourceName(const std::string& physicalSourceName);
+
+    /**
+     * @brief Set schema of the source
+     * @param schema the schema
+     */
     void setSchema(const SchemaPtr& schema);
 
     /**

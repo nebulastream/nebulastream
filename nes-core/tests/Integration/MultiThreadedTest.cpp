@@ -452,7 +452,7 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     wrk1->registerLogicalStream("window", testSchemaFileName);
 
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    //    srcConf->as<CSVSourceType>()->setNumberOfBuffersToProduce(1000);
+    //    csvSourceType1->as<CSVSourceType>()->setNumberOfBuffersToProduce(1000);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
@@ -958,7 +958,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     wrk1->registerLogicalStream("window2", testSchemaFileName2);
 
     srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    //    srcConf->as<CSVSourceType>()->setNumberOfBuffersToProduce(1000);
+    //    csvSourceType1->as<CSVSourceType>()->setNumberOfBuffersToProduce(1000);
     srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
     srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
