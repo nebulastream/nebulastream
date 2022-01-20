@@ -67,4 +67,8 @@ bool LambdaSourceType::equal(const PhysicalSourceTypePtr& other) {
         && gatheringMode == otherSourceConfig->gatheringMode;
 }
 
+void LambdaSourceType::reset() {
+    //Nothing
+}
+
 }// namespace NES

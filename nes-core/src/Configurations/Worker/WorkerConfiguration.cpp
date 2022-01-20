@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
@@ -257,8 +258,8 @@ void WorkerConfiguration::resetWorkerOptions() {
     setWorkerPinList(workerPinList->getDefaultValue());
     setSourcePinList(sourcePinList->getDefaultValue());
     setEnableMonitoring(enableMonitoring->getDefaultValue());
-    for (PhysicalSourcePtr physicalStreamTypeConfig : physicalSources) {
-        physicalStreamTypeConfig->resetPhysicalStreamOptions();
+    for (auto& physicalSource : physicalSources) {
+        physicalSource->getPhysicalSourceType()->reset();
     }
 }
 

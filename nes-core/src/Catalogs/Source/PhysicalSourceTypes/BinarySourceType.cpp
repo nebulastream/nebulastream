@@ -80,4 +80,8 @@ Configurations::StringConfigOption BinarySourceType::getFilePath() const { retur
 
 void BinarySourceType::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }
 
+void BinarySourceType::reset() {
+    setFilePath(filePath->getDefaultValue());
+}
+
 }// namespace NES

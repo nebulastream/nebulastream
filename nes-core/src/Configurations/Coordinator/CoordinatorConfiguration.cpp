@@ -18,8 +18,8 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Util/Logger.hpp>
 #define RYML_SINGLE_HDR_DEFINE_NOW
-#include <Util/yaml/rapidyaml.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Util/yaml/rapidyaml.hpp>
 #include <filesystem>
 #include <string>
 #include <utility>
@@ -28,7 +28,9 @@ namespace NES {
 
 namespace Configurations {
 
-CoordinatorConfigurationPtr CoordinatorConfiguration::create() { return std::make_shared<CoordinatorConfiguration>(CoordinatorConfiguration()); }
+CoordinatorConfigurationPtr CoordinatorConfiguration::create() {
+    return std::make_shared<CoordinatorConfiguration>(CoordinatorConfiguration());
+}
 
 CoordinatorConfiguration::CoordinatorConfiguration() {
     NES_INFO("Generated new Coordinator Config object. Configurations initialized with default values.");
@@ -40,20 +42,22 @@ CoordinatorConfiguration::CoordinatorConfiguration() {
     numberOfSlots =
         ConfigurationOption<uint32_t>::create("numberOfSlots", UINT16_MAX, "Number of computing slots for NES Coordinator");
     logLevel = ConfigurationOption<std::string>::create("logLevel",
-                                                 "LOG_DEBUG",
-                                                 "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
-    numberOfBuffersInGlobalBufferManager = ConfigurationOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Number buffers in global buffer pool.");
+                                                        "LOG_DEBUG",
+                                                        "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
+    numberOfBuffersInGlobalBufferManager = ConfigurationOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager",
+                                                                                 1024,
+                                                                                 "Number buffers in global buffer pool.");
     numberOfBuffersPerWorker =
         ConfigurationOption<uint32_t>::create("numberOfBuffersPerWorker", 128, "Number buffers in task local buffer pool.");
     numberOfBuffersInSourceLocalBufferPool = ConfigurationOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool",
-                                                                            64,
-                                                                            "Number buffers in source local buffer pool.");
+                                                                                   64,
+                                                                                   "Number buffers in source local buffer pool.");
     bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
     numWorkerThreads = ConfigurationOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
     queryBatchSize = ConfigurationOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
     queryMergerRule = ConfigurationOption<std::string>::create("queryMergerRule",
-                                                        "DefaultQueryMergerRule",
-                                                        "The rule to be used for performing query merging");
+                                                               "DefaultQueryMergerRule",
+                                                               "The rule to be used for performing query merging");
     enableSemanticQueryValidation =
         ConfigurationOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
     enableMonitoring = ConfigurationOption<bool>::create("enableMonitoring", false, "Enable monitoring");
@@ -76,54 +80,58 @@ void CoordinatorConfiguration::overwriteConfigWithYAMLFileInput(const std::strin
         ryml::NodeRef root = tree.rootref();
 
         try {
-            if (root.find_child(ryml::to_csubstr(REST_PORT_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(REST_PORT_CONFIG)).has_val()) {
                 setRestPort(std::stoi(root.find_child(ryml::to_csubstr(REST_PORT_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).has_val()) {
                 setRpcPort(std::stoi(root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).has_val()) {
                 setDataPort(std::stoi(root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).has_val()) {
                 setCoordinatorIp(root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).has_val()) {
                 setNumberOfSlots(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).has_val()){
-                setNumberOfBuffersInGlobalBufferManager(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).val().str));
+            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).has_val()) {
+                setNumberOfBuffersInGlobalBufferManager(
+                    std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_PER_WORKER_CONFIG)).has_val()){
-                setNumberOfBuffersPerWorker(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_PER_WORKER_CONFIG)).val().str));
+            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_PER_WORKER_CONFIG)).has_val()) {
+                setNumberOfBuffersPerWorker(
+                    std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_PER_WORKER_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).has_val()){
-                setNumberOfBuffersInSourceLocalBufferPool(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).val().str));
+            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).has_val()) {
+                setNumberOfBuffersInSourceLocalBufferPool(
+                    std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).has_val()) {
                 setBufferSizeInBytes(std::stoi(root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(QUERY_BATCH_SIZE_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(QUERY_BATCH_SIZE_CONFIG)).has_val()) {
                 setQueryBatchSize(std::stoi(root.find_child(ryml::to_csubstr(QUERY_BATCH_SIZE_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(QUERY_MERGER_RULE_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(QUERY_MERGER_RULE_CONFIG)).has_val()) {
                 setQueryMergerRule(root.find_child(ryml::to_csubstr(QUERY_MERGER_RULE_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG)).has_val()){
-                setEnableSemanticQueryValidation(std::stoi(root.find_child(ryml::to_csubstr(ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG)).val().str));
+            if (root.find_child(ryml::to_csubstr(ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG)).has_val()) {
+                setEnableSemanticQueryValidation(
+                    std::stoi(root.find_child(ryml::to_csubstr(ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).has_val()) {
                 setEnableMonitoring(root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).has_val()) {
                 setNumWorkerThreads(std::stoi(root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(MEMORY_LAYOUT_POLICY_CONFIG)).has_val()){
+            if (root.find_child(ryml::to_csubstr(MEMORY_LAYOUT_POLICY_CONFIG)).has_val()) {
                 setMemoryLayoutPolicy(root.find_child(ryml::to_csubstr(MEMORY_LAYOUT_POLICY_CONFIG)).val().str);
             }
-            if (!config["performOnlySourceOperatorExpansion"].As<std::string>().empty()
-                && config["performOnlySourceOperatorExpansion"].As<std::string>() != "\n") {
-                setPerformOnlySourceOperatorExpansion(config["performOnlySourceOperatorExpansion"].As<bool>());
+            if (root.find_child(ryml::to_csubstr(PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION)).has_val()) {
+                setPerformOnlySourceOperatorExpansion(
+                    std::stoi(root.find_child(ryml::to_csubstr(PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION)).val().str));
             }
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfiguration: Error while initializing configuration parameters from YAML file. " << e.what());
@@ -139,39 +147,39 @@ void CoordinatorConfiguration::overwriteConfigWithYAMLFileInput(const std::strin
 void CoordinatorConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
     try {
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
-            if (it->first == "--"+REST_IP_CONFIG && !it->second.empty()) {
+            if (it->first == "--" + REST_IP_CONFIG && !it->second.empty()) {
                 setRestIp(it->second);
-            } else if (it->first == "--"+COORDINATOR_IP_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + COORDINATOR_IP_CONFIG && !it->second.empty()) {
                 setCoordinatorIp(it->second);
-            } else if (it->first == "--"+RPC_PORT_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + RPC_PORT_CONFIG && !it->second.empty()) {
                 setRpcPort(stoi(it->second));
-            } else if (it->first == "--"+REST_PORT_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + REST_PORT_CONFIG && !it->second.empty()) {
                 setRestPort(stoi(it->second));
-            } else if (it->first == "--"+DATA_PORT_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + DATA_PORT_CONFIG && !it->second.empty()) {
                 setDataPort(stoi(it->second));
-            } else if (it->first == "--"+NUMBER_OF_SLOTS_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + NUMBER_OF_SLOTS_CONFIG && !it->second.empty()) {
                 setNumberOfSlots(stoi(it->second));
-            } else if (it->first == "--"+LOG_LEVEL_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + LOG_LEVEL_CONFIG && !it->second.empty()) {
                 setLogLevel(it->second);
-            } else if (it->first == "--"+NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG && !it->second.empty()) {
                 setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
-            } else if (it->first == "--"+NUMBER_OF_BUFFERS_PER_WORKER_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + NUMBER_OF_BUFFERS_PER_WORKER_CONFIG && !it->second.empty()) {
                 setNumberOfBuffersPerWorker(stoi(it->second));
-            } else if (it->first == "--"+NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG && !it->second.empty()) {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
-            } else if (it->first == "--"+BUFFERS_SIZE_IN_BYTES_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + BUFFERS_SIZE_IN_BYTES_CONFIG && !it->second.empty()) {
                 setBufferSizeInBytes(stoi(it->second));
-            } else if (it->first == "--"+NUM_WORKER_THREADS_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + NUM_WORKER_THREADS_CONFIG && !it->second.empty()) {
                 setNumWorkerThreads(stoi(it->second));
-            } else if (it->first == "--"+QUERY_BATCH_SIZE_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + QUERY_BATCH_SIZE_CONFIG && !it->second.empty()) {
                 setQueryBatchSize(stoi(it->second));
-            } else if (it->first == "--"+QUERY_MERGER_RULE_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + QUERY_MERGER_RULE_CONFIG && !it->second.empty()) {
                 setQueryMergerRule(it->second);
-            } else if (it->first == "--"+ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG && !it->second.empty()) {
                 setEnableSemanticQueryValidation((it->second == "true"));
-            } else if (it->first == "--"+ENABLE_MONITORING_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + ENABLE_MONITORING_CONFIG && !it->second.empty()) {
                 setEnableMonitoring((it->second == "true"));
-            } else if (it->first == "--"+MEMORY_LAYOUT_POLICY_CONFIG && !it->second.empty()) {
+            } else if (it->first == "--" + MEMORY_LAYOUT_POLICY_CONFIG && !it->second.empty()) {
                 setMemoryLayoutPolicy(it->second);
             } else if (it->first == "--performOnlySourceOperatorExpansion" && !it->second.empty()) {
                 setPerformOnlySourceOperatorExpansion((it->second == "true"));
@@ -256,7 +264,9 @@ IntConfigOption CoordinatorConfiguration::getNumberOfSlots() { return numberOfSl
 
 void CoordinatorConfiguration::setNumberOfSlots(uint16_t numberOfSlotsValue) { numberOfSlots->setValue(numberOfSlotsValue); }
 
-void CoordinatorConfiguration::setNumWorkerThreads(uint16_t numWorkerThreadsValue) { numWorkerThreads->setValue(numWorkerThreadsValue); }
+void CoordinatorConfiguration::setNumWorkerThreads(uint16_t numWorkerThreadsValue) {
+    numWorkerThreads->setValue(numWorkerThreadsValue);
+}
 
 IntConfigOption CoordinatorConfiguration::getNumWorkerThreads() { return numWorkerThreads; }
 
@@ -264,9 +274,13 @@ StringConfigOption CoordinatorConfiguration::getLogLevel() { return logLevel; }
 
 void CoordinatorConfiguration::setLogLevel(std::string logLevelValue) { logLevel->setValue(std::move(logLevelValue)); }
 
-IntConfigOption CoordinatorConfiguration::getNumberOfBuffersInGlobalBufferManager() { return numberOfBuffersInGlobalBufferManager; }
+IntConfigOption CoordinatorConfiguration::getNumberOfBuffersInGlobalBufferManager() {
+    return numberOfBuffersInGlobalBufferManager;
+}
 IntConfigOption CoordinatorConfiguration::getNumberOfBuffersPerWorker() { return numberOfBuffersPerWorker; }
-IntConfigOption CoordinatorConfiguration::getNumberOfBuffersInSourceLocalBufferPool() { return numberOfBuffersInSourceLocalBufferPool; }
+IntConfigOption CoordinatorConfiguration::getNumberOfBuffersInSourceLocalBufferPool() {
+    return numberOfBuffersInSourceLocalBufferPool;
+}
 
 void CoordinatorConfiguration::setNumberOfBuffersInGlobalBufferManager(uint64_t count) {
     numberOfBuffersInGlobalBufferManager->setValue(count);

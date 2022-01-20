@@ -60,6 +60,8 @@ class OPCSourceType : public PhysicalSourceType {
 
     bool equal(const PhysicalSourceTypePtr& other) override;
 
+    void reset() override;
+
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::uint32_t>> getNamespaceIndex() const;
 
     /**

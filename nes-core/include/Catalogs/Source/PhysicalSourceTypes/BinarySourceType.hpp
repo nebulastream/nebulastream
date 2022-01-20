@@ -60,6 +60,8 @@ class BinarySourceType : public PhysicalSourceType {
 
     bool equal(PhysicalSourceTypePtr const& other) override;
 
+    void reset() override;
+
     /**
      * @brief Get file path
      */

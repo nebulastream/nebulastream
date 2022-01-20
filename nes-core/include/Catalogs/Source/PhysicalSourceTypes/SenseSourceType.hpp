@@ -69,6 +69,8 @@ class SenseSourceType : public PhysicalSourceType {
      */
     void setUdfs(std::string udfs);
 
+    void reset() override;
+
   private:
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap

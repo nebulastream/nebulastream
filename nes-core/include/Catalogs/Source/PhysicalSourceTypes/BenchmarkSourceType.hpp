@@ -65,6 +65,8 @@ class BenchmarkSourceType : public PhysicalSourceType {
 
     ~BenchmarkSourceType() noexcept = default;
 
+    void reset() override;
+
     std::string toString() override;
 
     bool equal(const PhysicalSourceTypePtr& other) override;

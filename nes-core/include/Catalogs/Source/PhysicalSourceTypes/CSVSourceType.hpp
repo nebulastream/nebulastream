@@ -69,6 +69,8 @@ class CSVSourceType : public PhysicalSourceType {
      */
     bool equal(PhysicalSourceTypePtr const& other) override;
 
+    void reset() override;
+
     /**
      * @brief Get file path, needed for: CSVSource, BinarySource
      */

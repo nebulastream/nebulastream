@@ -66,6 +66,8 @@ class LambdaSourceType : public PhysicalSourceType {
 
     bool equal(const PhysicalSourceTypePtr& other) override;
 
+    void reset() override;
+
   private:
     explicit LambdaSourceType(
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,

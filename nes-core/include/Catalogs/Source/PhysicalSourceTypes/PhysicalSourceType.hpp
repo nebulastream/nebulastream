@@ -104,6 +104,11 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
     std::string getSourceTypeAsString();
 
     /**
+     * @brief reset the values to default
+     */
+    virtual void reset()=0;
+
+    /**
      * @brief Checks if the current Source is of a specific Source Type
      * @tparam PhysicalSourceType: the source type to check
      * @return bool true if Source is of PhysicalSourceType

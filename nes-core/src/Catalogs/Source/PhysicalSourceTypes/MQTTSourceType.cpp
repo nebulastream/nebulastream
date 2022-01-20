@@ -197,4 +197,15 @@ void MQTTSourceType::setFlushIntervalMS(float flushIntervalMs) { flushIntervalMS
 
 void MQTTSourceType::setInputFormat(std::string inputFormatValue) { inputFormat->setValue(std::move(inputFormatValue)); }
 
+void MQTTSourceType::reset() {
+    setUrl(url->getDefaultValue());
+    setClientId(clientId->getDefaultValue());
+    setUserName(userName->getDefaultValue());
+    setTopic(topic->getDefaultValue());
+    setQos(qos->getDefaultValue());
+    setCleanSession(cleanSession->getDefaultValue());
+    setFlushIntervalMS(flushIntervalMS->getDefaultValue());
+    setInputFormat(inputFormat->getDefaultValue());
+}
+
 }// namespace NES

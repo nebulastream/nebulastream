@@ -187,4 +187,14 @@ void CSVSourceType::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesT
 
 void CSVSourceType::setInputFormat(std::string inputFormatValue) { inputFormat->setValue(std::move(inputFormatValue)); }
 
+void CSVSourceType::reset() {
+    setFilePath(filePath->getDefaultValue());
+    setSkipHeader(skipHeader->getDefaultValue());
+    setDelimiter(delimiter->getDefaultValue());
+    setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
+    setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
+    setSourceFrequency(sourceFrequency->getDefaultValue());
+    setInputFormat(inputFormat->getDefaultValue());
+}
+
 }// namespace NES

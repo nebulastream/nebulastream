@@ -95,4 +95,8 @@ bool BenchmarkSourceType::equal(const PhysicalSourceTypePtr& other) {
         && sourceMode == otherSourceConfig->sourceMode && sourceAffinity == otherSourceConfig->sourceAffinity;
 }
 
+void BenchmarkSourceType::reset() {
+    //nothing
+}
+
 }// namespace NES

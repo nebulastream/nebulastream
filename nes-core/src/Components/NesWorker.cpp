@@ -314,11 +314,11 @@ bool NesWorker::registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& co
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "cannot connect");
-    bool success = coordinatorRpcClient->registerPhysicalStream(conf);
+    bool success = coordinatorRpcClient->registerPhysicalSources(conf);
     NES_ASSERT(success, "failed to register stream");
     // TODO we need to get rid of this
     nodeEngine->setConfig(conf);
-    NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);
+    NES_DEBUG("NesWorker::registerPhysicalSources success=" << success);
     return success;
 }
 

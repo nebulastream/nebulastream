@@ -17,7 +17,6 @@
 #ifndef NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_
 #define NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_
 
-#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <optional>
@@ -32,19 +31,19 @@ namespace NES {
 class StaticNesMetrics;
 using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
 
-class PhysicalSourceType;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalSourceType>;
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 class CoordinatorRPCClient {
   public:
     explicit CoordinatorRPCClient(const std::string& address);
 
     /**
-     * @brief this methods registers a physical stream via the coordinator to a logical stream
-     * @param configuration of the stream
+     * @brief this methods registers physical sources provided by the node at the coordinator
+     * @param physicalSources list of physical sources to register
      * @return bool indicating success
      */
-    bool registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& conf);
+    bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
 
     /**
      * @brief this method registers logical streams via the coordinator

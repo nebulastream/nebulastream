@@ -65,6 +65,8 @@ class MemorySourceType : public PhysicalSourceType {
 
     bool equal(const PhysicalSourceTypePtr& other) override;
 
+    void reset() override;
+
   private:
     /**
      * @brief Create a MemorySourceType using a set of parameters

@@ -38,8 +38,8 @@ CoordinatorRPCClient::CoordinatorRPCClient(const std::string& address) : address
     workerId = SIZE_MAX;
 }
 
-bool CoordinatorRPCClient::registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& conf) {
-    NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: got stream config=" << conf->toString() << " workerID=" << workerId);
+bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
+    NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources: got " << physicalSources.size() << " physical sources to register");
 
     RegisterPhysicalStreamRequest request;
     request.set_id(workerId);
@@ -55,10 +55,10 @@ bool CoordinatorRPCClient::registerPhysicalStream(const AbstractPhysicalStreamCo
     Status status = coordinatorStub->RegisterPhysicalStream(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: status ok return success=" << reply.success());
+        NES_DEBUG("CoordinatorRPCClient::registerPhysicalSources: status ok return success=" << reply.success());
         return reply.success();
     }
-    NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream error=" << status.error_code() << ": " << status.error_message());
+    NES_DEBUG(" CoordinatorRPCClient::registerPhysicalSources error=" << status.error_code() << ": " << status.error_message());
     return reply.success();
 }
 
@@ -229,23 +229,21 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t grpcPort,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
-                                        NodeType type,
                                         std::optional<StaticNesMetricsPtr> staticNesMetrics) {
-    if (type == NodeType::Sensor) {
-        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
-    } else if (type == NodeType::Worker) {
-        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a worker");
-    } else {
-        NES_ERROR("CoordinatorRPCClient::registerNode node type not supported " << type);
-        throw Exception("CoordinatorRPCClient::registerNode wrong node type");
-    }
+//    if (type == NodeType::Sensor) {
+//        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
+//    } else if (type == NodeType::Worker) {
+//        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a worker");
+//    } else {
+//        NES_ERROR("CoordinatorRPCClient::registerNode node type not supported " << type);
+//        throw Exception("CoordinatorRPCClient::registerNode wrong node type");
+//    }
 
     RegisterNodeRequest request;
     request.set_address(ipAddress);
     request.set_grpcport(grpcPort);
     request.set_dataport(dataPort);
     request.set_numberofslots(numberOfSlots);
-    request.set_type(type);
 
     if (staticNesMetrics.has_value()) {
         request.mutable_monitoringdata()->Swap(staticNesMetrics.value()->toProtobufSerializable().get());
