@@ -119,7 +119,7 @@ class TranslateToPhysicalOperatorPhaseTest : public Testing::NESBaseTest {
         auto windowType = TumblingWindow::of(EventTime(Attribute("test")), Seconds(10));
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-        auto windowDefinition = LogicalWindowDefinition::create(Sum(Attribute("test")),
+        auto windowDefinition = LogicalWindowDefinition::create({Sum(Attribute("test"))},
                                                                 windowType,
                                                                 Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                                 1,
