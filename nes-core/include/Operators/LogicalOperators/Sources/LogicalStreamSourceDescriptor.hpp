@@ -29,17 +29,17 @@ class LogicalStreamSourceDescriptor : public SourceDescriptor {
   public:
     /**
      * @brief Factory method to create a new logical source stream descriptor.
-     * @param streamName Name of this stream
+     * @param logicalSourceName Name of this stream
      * @return SourceDescriptorPtr
      */
-    static SourceDescriptorPtr create(std::string streamName);
+    static SourceDescriptorPtr create(std::string logicalSourceName);
 
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
 
     std::string toString() override;
 
   private:
-    explicit LogicalStreamSourceDescriptor(std::string streamName);
+    explicit LogicalStreamSourceDescriptor(std::string logicalSourceName);
 };
 
 using LogicalStreamSourceDescriptorPtr = std::shared_ptr<LogicalStreamSourceDescriptor>;

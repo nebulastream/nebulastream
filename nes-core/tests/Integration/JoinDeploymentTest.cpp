@@ -97,8 +97,8 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     testHarness.addCSVSource(conf, windowSchema);
 
     //Setup second physical stream for same logical stream
-    //    srcConf->as<CSVSourceType>()->setPhysicalStreamName("test_stream2");
-    //    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf);
+    //    csvSourceType1->as<CSVSourceType>()->setPhysicalStreamName("test_stream2");
+    //    PhysicalSourcePtr conf2 = PhysicalSourceType::create(csvSourceType1);
     //    testHarness.addCSVSource(conf2, windowSchema);
 
     struct Output {

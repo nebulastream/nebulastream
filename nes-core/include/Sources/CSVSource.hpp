@@ -99,7 +99,7 @@ class CSVSource : public DataSource {
 
     /**
      * @brief getter for source config
-     * @return csvSourceType
+     * @return csvSourceType1
      */
     const CSVSourceTypePtr& getSourceConfig() const;
 

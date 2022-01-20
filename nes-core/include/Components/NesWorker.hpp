@@ -100,13 +100,6 @@ class NesWorker {
     bool unregisterLogicalStream(std::string logicalName);
 
     /**
-     * @brief method to register physical stream with the coordinator
-     * @param physicalSources: physical sources containing relevant information
-     * @return bool indicating success
-     */
-    bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
-
-    /**
     * @brief method to deregister physical stream with the coordinator
     * @param logical and physical of the stream
      * @return bool indicating success
@@ -174,10 +167,26 @@ class NesWorker {
     uint64_t getWorkerId();
 
   private:
+
+
     /**
-   * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
-   */
+     * @brief method to register physical stream with the coordinator
+     * @param physicalSources: physical sources containing relevant information
+     * @return bool indicating success
+     */
+    bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
+
+    /**
+     * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
+     */
     void buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom);
+
+    /**
+     * @brief helper method to ensure client is connected before calling rpc functions
+     * @return
+     */
+    bool waitForConnect() const;
+
     void handleRpcs(WorkerRPCServer& service);
 
     std::unique_ptr<grpc::Server> rpcServer;
@@ -188,7 +197,6 @@ class NesWorker {
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
     const Configurations::WorkerConfigurationPtr workerConfig;
-    std::vector<PhysicalSourcePtr> physicalSources;
     bool connected{false};
     bool withParent{false};
     std::string parentId;
@@ -215,11 +223,6 @@ class NesWorker {
     bool enableMonitoring;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
-    /**
-     * @brief helper method to ensure client is connected before calling rpc functions
-     * @return
-     */
-    bool waitForConnect() const;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

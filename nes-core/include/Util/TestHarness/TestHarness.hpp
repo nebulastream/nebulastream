@@ -144,12 +144,12 @@ class TestHarness {
     }
 
     /**
-         * @brief add a memory source to be used in the test and connect to parent with specific parent id
-         * @param logical stream name
-         * @param schema schema of the source
-         * @param physical stream name
-         * @param parentId id of the parent to connect
-         */
+     * @brief add a memory source to be used in the test and connect to parent with specific parent id
+     * @param logical stream name
+     * @param schema schema of the source
+     * @param physical stream name
+     * @param parentId id of the parent to connect
+     */
     void addMemorySource(const std::string& logicalStreamName,
                          const SchemaPtr& schema,
                          std::string physicalStreamName,
@@ -184,22 +184,22 @@ class TestHarness {
     }
 
     /**
-         * @brief add a memory source to be used in the test
-         * @param logical stream name
-         * @param schema schema of the source
-         * @param physical stream name
-         */
+     * @brief add a memory source to be used in the test
+     * @param logical stream name
+     * @param schema schema of the source
+     * @param physical stream name
+     */
     void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName) {
         uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
         addMemorySource(std::move(logicalStreamName), std::move(schema), std::move(physicalStreamName), crdTopologyNodeId);
     }
 
     /**
-         * @brief add a csv source to be used in the test and connect to parent with specific parent id
-         * @param schema schema of the source
-         * @param csvSourceConf physical stream configuration for the csv source
-         * @param parentId id of the parent to connect
-         */
+     * @brief add a csv source to be used in the test and connect to parent with specific parent id
+     * @param schema schema of the source
+     * @param csvSourceConf physical stream configuration for the csv source
+     * @param parentId id of the parent to connect
+     */
     void addCSVSource(const PhysicalSourcePtr& csvSourceConf, SchemaPtr schema, uint64_t parentId) {
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
@@ -250,8 +250,8 @@ class TestHarness {
     }
 
     /**
-         * @brief add non source worker
-         */
+     * @brief add non source worker
+     */
     void addNonSourceWorker() {
         uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
         addNonSourceWorker(crdTopologyNodeId);

@@ -40,8 +40,8 @@ extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 
 NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname,
                                                          uint16_t port,
-                                                         std::vector<PhysicalSourcePtr> configs) {
-    return createNodeEngine(hostname, port, std::move(configs), 1, 4096, 1024, 128, 12, NumaAwarenessFlag::DISABLED, "");
+                                                         std::vector<PhysicalSourcePtr> physicalSources) {
+    return createNodeEngine(hostname, port, std::move(physicalSources), 1, 4096, 1024, 128, 12, NumaAwarenessFlag::DISABLED, "");
 }
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
@@ -165,8 +165,8 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         NES_ERROR("Cannot start node engine " << err.what());
         NES_THROW_RUNTIME_ERROR("Cant start node engine");
     }
-    return nullptr;
 }
+
 QueryCompilation::QueryCompilerOptionsPtr
 NodeEngineFactory::createQueryCompilationOptions(const std::string& queryCompilerCompilationStrategy,
                                                  const std::string& queryCompilerPipeliningStrategy,

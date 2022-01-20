@@ -47,7 +47,8 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig)
-    : coordinatorIp(workerConfig->getCoordinatorIp()->getValue()), localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
+    : workerConfig(std::move(workerConfig)), coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
+      localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
       workerToCoreMapping(workerConfig->getWorkerPinList()->getValue()),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()), localWorkerRpcPort(workerConfig->getRpcPort()->getValue()),
       localWorkerZmqPort(workerConfig->getDataPort()->getValue()), numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
@@ -127,7 +128,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     try {
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(localWorkerIp,
                                                                   localWorkerZmqPort,
-                                                                  physicalSources,
+                                                                  workerConfig->getPhysicalSources(),
                                                                   numWorkerThreads,
                                                                   bufferSizeInBytes,
                                                                   numberOfBuffersInGlobalBufferManager,
@@ -165,9 +166,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("connected= " << con);
         NES_ASSERT(con, "cannot connect");
     }
-    if (!physicalSources.empty()) {
+    if (!workerConfig->getPhysicalSources().empty()) {
         NES_DEBUG("NesWorker: start with register stream");
-        bool success = registerPhysicalSources(physicalSources);
+        bool success = registerPhysicalSources(workerConfig->getPhysicalSources());
         NES_DEBUG("registered= " << success);
         NES_ASSERT(success, "cannot register");
     }
@@ -286,7 +287,7 @@ bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string ph
 }
 
 bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
-    NES_ASSERT(physicalSources.empty(), "invalid physical sources");
+    NES_ASSERT(!physicalSources.empty(), "invalid physical sources");
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "cannot connect");

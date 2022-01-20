@@ -17,9 +17,12 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <utility>
+
 namespace NES {
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema) : schema(std::move(schema)) {}
+SourceDescriptor::SourceDescriptor(SchemaPtr schema) {
+    this->schema = schema->copy();
+}
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName)
     : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)) {}
@@ -35,5 +38,9 @@ std::string SourceDescriptor::getLogicalSourceName() { return logicalSourceName;
 std::string SourceDescriptor::getPhysicalSourceName() { return physicalSourceName; }
 
 void SourceDescriptor::setSchema(const SchemaPtr& schema) { this->schema = schema; }
+
+void SourceDescriptor::setPhysicalSourceName(const std::string& physicalSourceName) {
+    this->physicalSourceName = physicalSourceName;
+}
 
 }// namespace NES
