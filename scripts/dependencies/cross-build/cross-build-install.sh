@@ -93,7 +93,7 @@ sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/*crt* . && 
 sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/libsupc++.a . && \
 sudo cp -r -v -L /usr/lib/gcc-cross/aarch64-linux-gnu/"$GCC_VERSION"/libstdc++*  . && cd && \
 
-# faster clone from github mirror instead of official site (v10 is default in ubuntu LTS)
+# faster clone from github mirror instead of official site (v13 is default in ubuntu LTS)
 git clone --branch llvmorg-10.0.0 --single-branch https://github.com/llvm/llvm-project && \
 mkdir -p llvm-project/build && cd llvm-project/build && \
 cmake -G Ninja \
