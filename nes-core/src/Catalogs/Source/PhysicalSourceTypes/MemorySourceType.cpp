@@ -79,4 +79,8 @@ bool MemorySourceType::equal(const PhysicalSourceTypePtr& other) {
         && gatheringValue == otherSourceConfig->gatheringValue && gatheringMode == otherSourceConfig->gatheringMode;
 }
 
+void MemorySourceType::reset() {
+    //Nothing
+}
+
 }// namespace NES

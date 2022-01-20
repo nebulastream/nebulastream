@@ -128,4 +128,11 @@ void OPCSourceType::setUserName(std::string userNameValue) { userName->setValue(
 
 void OPCSourceType::setPassword(std::string passwordValue) { password->setValue(std::move(passwordValue)); }
 
+void OPCSourceType::reset() {
+    setNamespaceIndex(namespaceIndex->getDefaultValue());
+    setNodeIdentifier(nodeIdentifier->getDefaultValue());
+    setUserName(userName->getDefaultValue());
+    setPassword(password->getDefaultValue());
+}
+
 }// namespace NES

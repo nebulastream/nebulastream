@@ -61,4 +61,8 @@ const Configurations::IntConfigOption& DefaultSourceType::getNumberOfBuffersToPr
 
 const Configurations::IntConfigOption& DefaultSourceType::getSourceFrequency() const { return sourceFrequency; }
 
+void DefaultSourceType::reset() {
+    //nothing
+}
+
 }// namespace NES

@@ -29,9 +29,7 @@ SenseSourceTypePtr SenseSourceType::create(ryml::NodeRef sourcTypeConfig) {
     return std::make_shared<SenseSourceType>(SenseSourceType(std::move(sourcTypeConfig)));
 }
 
-SenseSourceTypePtr SenseSourceType::create() {
-    return std::make_shared<SenseSourceType>(SenseSourceType());
-}
+SenseSourceTypePtr SenseSourceType::create() { return std::make_shared<SenseSourceType>(SenseSourceType()); }
 
 SenseSourceType::SenseSourceType(std::map<std::string, std::string> sourceConfigMap) : SenseSourceType() {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
@@ -79,5 +77,7 @@ bool SenseSourceType::equal(const PhysicalSourceTypePtr& other) {
 Configurations::StringConfigOption SenseSourceType::getUdfs() const { return udfs; }
 
 void SenseSourceType::setUdfs(std::string udfsValue) { udfs->setValue(udfsValue); }
+
+void SenseSourceType::reset() { setUdfs(udfs->getDefaultValue()); }
 
 }// namespace NES

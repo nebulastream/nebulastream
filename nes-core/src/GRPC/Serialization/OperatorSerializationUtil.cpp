@@ -81,7 +81,7 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 
-#include <Configurations/Worker/PhysicalStreamConfig/CSVSourceTypeConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #ifdef ENABLE_OPC_BUILD

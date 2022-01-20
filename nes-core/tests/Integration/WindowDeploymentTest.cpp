@@ -1359,7 +1359,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    //    wrk1->registerPhysicalStream(physicalStream);
+    //    wrk1->registerPhysicalSources(physicalStream);
     wrk2->registerPhysicalStream(conf);
     wrk3->registerPhysicalStream(conf);
     wrk4->registerPhysicalStream(conf);

@@ -63,6 +63,8 @@ class DefaultSourceType : public PhysicalSourceType {
 
     bool equal(const PhysicalSourceTypePtr& other) override;
 
+    void reset() override;
+
   private:
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources

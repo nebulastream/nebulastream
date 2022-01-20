@@ -151,4 +151,12 @@ void KafkaSourceType::setTopic(std::string topicValue) { topic->setValue(std::mo
 void KafkaSourceType::setConnectionTimeout(uint32_t connectionTimeoutValue) {
     connectionTimeout->setValue(connectionTimeoutValue);
 }
+
+void KafkaSourceType::reset() {
+    setBrokers(brokers->getDefaultValue());
+    setAutoCommit(autoCommit->getDefaultValue());
+    setGroupId(groupId->getDefaultValue());
+    setTopic(topic->getDefaultValue());
+    setConnectionTimeout(connectionTimeout->getDefaultValue());
+}
 }// namespace NES

@@ -58,6 +58,8 @@ class MQTTSourceType : public PhysicalSourceType {
 
     bool equal(const PhysicalSourceTypePtr& other) override;
 
+    void reset() override;
+
     /**
      * @brief Get url to connect
      */
