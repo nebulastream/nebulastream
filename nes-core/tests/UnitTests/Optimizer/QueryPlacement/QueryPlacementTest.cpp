@@ -1102,13 +1102,13 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
 
     // Execute the placement
     placementStrategy->updateGlobalExecutionPlan(testQueryPlan);
-    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
+    uint32_t mapPlacementCount = 0;
+    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString() << mapPlacementCount);
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
 
     EXPECT_EQ(executionNodes.size(), 3UL);
     // check if map is placed two times
-    uint32_t mapPlacementCount = 0;
 
     bool isSinkPlacementValid = false;
     bool isSource1PlacementValid = false;
@@ -1218,13 +1218,13 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
 
     // Execute the placement
     placementStrategy->updateGlobalExecutionPlan(testQueryPlan);
-    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
+    uint32_t mapPlacementCount = 0;
+    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString() << mapPlacementCount) ;
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
 
     EXPECT_EQ(executionNodes.size(), 3UL);
     // check if map is placed two times
-    uint32_t mapPlacementCount = 0;
 
     bool isSinkPlacementValid = false;
     bool isSource1PlacementValid = false;

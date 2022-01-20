@@ -27,11 +27,11 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <memory>
 #include <stack>
 #include <utility>
-#include <Util/UtilityFunctions.hpp>
 
 namespace NES::Runtime {
 
@@ -96,14 +96,17 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                            std::vector<uint64_t> workerToCoreMapping,
                            std::vector<uint64_t> queuePinList)
     : nodeEngineId(nodeEngineId), bufferManagers(std::move(bufferManagers)), numThreads(numThreads),
-      workerToCoreMapping(workerToCoreMapping), hardwareManager(hardwareManager), queuePinListMapping(queuePinList)
+      workerToCoreMapping(workerToCoreMapping), hardwareManager(hardwareManager)
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
       ,
       taskQueue(
           DEFAULT_QUEUE_INITIAL_CAPACITY)// TODO consider if we could use something num of buffers in buffer manager but maybe it could be too much
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+      ,
+      queuePinListMapping(queuePinList)
 #endif
 {
-    NES_DEBUG("Init QueryManager::QueryManager");
+    NES_DEBUG("Init QueryManager::QueryManager" << queuePinList.size());
 #if defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     //the goal of the code below is to make sure that we have a even distribution of task among numa nodes
     // because we use this assumptions in the remainder for simplify the shutdown/reconfiguration
@@ -168,8 +171,7 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
 #elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
     //create the actual task queues
     numberOfQueues = queuePinListMapping.size();
-    if(numberOfQueues == 0)
-    {
+    if (numberOfQueues == 0) {
         numberOfQueues = 1;
     }
     for (uint64_t i = 0; i < numberOfQueues; i++) {
@@ -204,8 +206,15 @@ bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
                                                   bufferManagers,
                                                   numberOfBuffersPerWorker,
                                                   hardwareManager,
-                                                  workerToCoreMapping,
-                                                  queuePinListMapping);
+                                                  workerToCoreMapping
+#if defined(NES_USE_ONE_QUEUE_PER_QUERY)
+                                                  ,
+                                                  queuePinListMapping
+#else
+                                                  ,
+                                                  std::vector<uint64_t>()
+#endif
+        );
         return threadPool->start();
     }
     NES_ASSERT2_FMT(false, "Cannot start query manager workers");
@@ -1027,7 +1036,7 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
         auto diff = now - creation;
-//        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
+        //        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
         NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
         statistics->incLatencySum(diff);
 
