@@ -323,13 +323,14 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     mutable std::recursive_mutex queryMutex;
     HardwareManagerPtr hardwareManager;
     uint64_t numberOfQueues;
+    std::vector<uint64_t> queuePinListMapping;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     folly::MPMCQueue<Task> taskQueue;
 #elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     std::vector<folly::MPMCQueue<Task>> taskQueues;
     std::map<size_t, size_t> numaRegionToThreadMap;
 #elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
-    std::vector<uint64_t> queuePinListMapping;
+
     std::vector<folly::MPMCQueue<Task>> taskQueues;
 #else
     std::deque<Task> taskQueue;
