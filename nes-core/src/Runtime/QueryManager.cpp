@@ -101,7 +101,7 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
       ,
       taskQueue(
           DEFAULT_QUEUE_INITIAL_CAPACITY)// TODO consider if we could use something num of buffers in buffer manager but maybe it could be too much
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
+#elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
       ,
       queuePinListMapping(queuePinList)
 #endif
