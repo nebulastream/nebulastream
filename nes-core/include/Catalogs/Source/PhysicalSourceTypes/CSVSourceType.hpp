@@ -34,6 +34,9 @@ using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
 class CSVSourceType : public PhysicalSourceType {
 
   public:
+
+    ~CSVSourceType() noexcept override = default;
+
     /**
      * @brief create a CSVSourceTypePtr object
      * @param sourceConfigMap inputted config options
@@ -53,8 +56,6 @@ class CSVSourceType : public PhysicalSourceType {
      * @return CSVSourceTypePtr
      */
     static CSVSourceTypePtr create();
-
-    ~CSVSourceType() = default;
 
     /**
      * @brief creates a string representation of the source

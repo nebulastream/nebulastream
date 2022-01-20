@@ -55,8 +55,6 @@ class MemorySourceType : public PhysicalSourceType {
 
     GatheringMode::Value getGatheringMode() const;
 
-    ~MemorySourceType() noexcept = default;
-
     /**
      * @brief The string representation of the object
      * @return the string representation of the object

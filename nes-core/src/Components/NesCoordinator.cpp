@@ -92,7 +92,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
     queryCatalog = std::make_shared<QueryCatalog>();
 
     streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
-    topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
+    topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<RequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
@@ -232,7 +232,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->setEnableMonitoring(enableMonitoring);
     }
 
-    worker = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
+    worker = std::make_shared<NesWorker>(workerConfig);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //Start rest that accepts queries form the outsides

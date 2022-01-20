@@ -14,14 +14,13 @@
     limitations under the License.
 */
 
-#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <string>
 
 namespace NES {

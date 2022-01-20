@@ -16,7 +16,7 @@
 
 #include <string>
 
-#include <Catalogs/UdfCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <Util/Logger.hpp>
 

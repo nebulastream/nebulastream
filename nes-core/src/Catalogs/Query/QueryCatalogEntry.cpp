@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/QueryCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <utility>
 
 namespace NES {

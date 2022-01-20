@@ -60,13 +60,6 @@ class NesWorker {
     bool start(bool blocking, bool withConnect);
 
     /**
-     * @brief configure setup for register a new stream
-     * @param new stream of this system
-     * @return bool indicating success
-     */
-    bool setWithRegister(PhysicalSourcePtr physicalSource);
-
-    /**
      * @brief configure setup with set of parent id
      * @param parentId
      * @return bool indicating sucess
@@ -197,7 +190,6 @@ class NesWorker {
     const Configurations::WorkerConfigurationPtr workerConfig;
     std::vector<PhysicalSourcePtr> physicalSources;
     bool connected{false};
-    bool withRegisterStream{false};
     bool withParent{false};
     std::string parentId;
     std::string rpcAddress;
@@ -224,7 +216,7 @@ class NesWorker {
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
     /**
-     * @brief helper method to ensure client is connected before callin rpcs functions
+     * @brief helper method to ensure client is connected before calling rpc functions
      * @return
      */
     bool waitForConnect() const;

@@ -1120,7 +1120,6 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->release_sourceschema());
         auto sourceConfig = MQTTSourceType::create();
-        sourceConfig->setSourceType(mqttSerializedSourceDescriptor->sourceconfig().sourcetype());
         auto mqttSourceConfig = new SerializableSourceConfig_SerializableMQTTSourceConfig();
         mqttSerializedSourceDescriptor->sourceconfig().specificsourceconfig().UnpackTo(mqttSourceConfig);
         sourceConfig->setUrl(mqttSourceConfig->url());

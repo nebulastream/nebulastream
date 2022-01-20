@@ -71,34 +71,23 @@ int main(int argc, char** argv) {
 
     //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
     if (workerConfigPath != commandLineParams.end()) {
-        workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
+        workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
 
     //if command line params are provided that do not contain a path to a yaml file for worker config,
     //command line param physicalSources are used to overwrite default physicalSources
     if (argc >= 1 && !commandLineParams.contains("--workerConfigPath")) {
-        workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
+        workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
     }
 
-    NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
+    NES::setLogLevel(NES::getDebugLevelFromString(workerConfiguration->getLogLevel()->getValue()));
 
-    NES_INFO("NESWORKERSTARTER: Start with " << workerConfig->toString());
-    NesWorkerPtr nesWorker = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
+    NesWorkerPtr nesWorker = std::make_shared<NesWorker>(workerConfiguration);
 
-    //TODO: remove this if condition when we support more than 1 physical stream at a worker
-    if (!workerConfig->getPhysicalSources().empty() && workerConfig->getPhysicalSources().size() > 1) {
-        NES_NOT_IMPLEMENTED();
-    }
-
-    //TODO: change here to support more than 1 physical stream at a worker node
-    //register physical stream
-    for (auto physicalStreamConfiguration : workerConfig->getPhysicalSources()) {
-        nesWorker->setWithRegister(physicalStreamConfiguration);
-    }
-
-    if (workerConfig->getParentId()->getValue() != "-1") {
-        NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());
-        nesWorker->setWithParent(workerConfig->getParentId()->getValue());
+    if (workerConfiguration->getParentId()->getValue() != "-1") {
+        NES_INFO("start with dedicated parent=" << workerConfiguration->getParentId()->getValue());
+        nesWorker->setWithParent(workerConfiguration->getParentId()->getValue());
     }
 
     try {

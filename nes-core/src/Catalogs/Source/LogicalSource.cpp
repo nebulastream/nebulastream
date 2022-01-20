@@ -15,7 +15,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Catalogs/LogicalSource.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <utility>
 
 namespace NES {
