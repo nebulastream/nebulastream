@@ -76,7 +76,7 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
   public:
     PhysicalSourceType(SourceType sourceType);
 
-    ~PhysicalSourceType() noexcept = default;
+    virtual ~PhysicalSourceType() noexcept = default;
 
     /**
      * Checks equality
@@ -106,7 +106,7 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
     /**
      * @brief reset the values to default
      */
-    virtual void reset()=0;
+    virtual void reset() = 0;
 
     /**
      * @brief Checks if the current Source is of a specific Source Type

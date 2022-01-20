@@ -70,5 +70,4 @@ bool LambdaSourceType::equal(const PhysicalSourceTypePtr& other) {
 void LambdaSourceType::reset() {
     //Nothing
 }
-
 }// namespace NES

@@ -63,8 +63,6 @@ class BenchmarkSourceType : public PhysicalSourceType {
 
     uint64_t getNumberOfBuffersToProduce() const;
 
-    ~BenchmarkSourceType() noexcept = default;
-
     void reset() override;
 
     std::string toString() override;

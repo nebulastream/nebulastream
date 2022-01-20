@@ -42,9 +42,9 @@ DefaultSourceType::DefaultSourceType()
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
-DefaultSourceType::DefaultSourceType(std::map<std::string, std::string> sourceConfigMap) : DefaultSourceType() {}
+DefaultSourceType::DefaultSourceType(std::map<std::string, std::string>) : DefaultSourceType() {}
 
-DefaultSourceType::DefaultSourceType(ryml::NodeRef sourceTypeConfig) : DefaultSourceType() {}
+DefaultSourceType::DefaultSourceType(ryml::NodeRef) : DefaultSourceType() {}
 
 std::string DefaultSourceType::toString() {
     std::stringstream ss;

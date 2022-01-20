@@ -21,42 +21,25 @@
 
 namespace NES {
 
-SourceCatalogEntry::SourceCatalogEntry(std::string sourceType,
-                                       std::string physicalStreamName,
-                                       std::string logicalStreamName,
-                                       TopologyNodePtr node)
-    : sourceType(std::move(sourceType)), physicalStreamName(std::move(physicalStreamName)),
-      logicalStreamName(std::move(logicalStreamName)), node(std::move(node)) {}
+SourceCatalogEntry::SourceCatalogEntry(PhysicalSourcePtr physicalSource,
+                                       LogicalSourcePtr logicalSource,
+                                       TopologyNodePtr topologyNode)
+    : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), node(std::move(topologyNode)) {}
 
-SourceCatalogEntry::SourceCatalogEntry(const AbstractPhysicalStreamConfigPtr& config, TopologyNodePtr node)
-    : sourceType(config->getPhysicalStreamTypeConfig()->getPhysicalStreamTypeConfiguration()->getSourceType()->getValue()),
-      physicalStreamName(config->getPhysicalStreamTypeConfig()->getPhysicalStreamName()->getValue()),
-      logicalStreamName(config->getPhysicalStreamTypeConfig()->getLogicalStreamName()->getValue()), node(std::move(node)) {
-    // nop
+SourceCatalogEntryPtr
+SourceCatalogEntry::create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, TopologyNodePtr topologyNode) {
+    return std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
 }
 
-SourceCatalogEntryPtr SourceCatalogEntry::create(const std::string& sourceType,
-                                                 const std::string& physicalSourceName,
-                                                 const std::string& logicalSourceName,
-                                                 const TopologyNodePtr& node) {
-    return std::make_shared<SourceCatalogEntry>(sourceType, physicalSourceName, logicalSourceName, node);
-}
+const PhysicalSourcePtr& SourceCatalogEntry::getPhysicalSource() const { return physicalSource; }
 
-SourceCatalogEntryPtr SourceCatalogEntry::create(const AbstractPhysicalStreamConfigPtr& config, const TopologyNodePtr& node) {
-    return std::make_shared<SourceCatalogEntry>(config, node);
-}
+const LogicalSourcePtr& SourceCatalogEntry::getLogicalSource() const { return logicalSource; }
 
-std::string SourceCatalogEntry::getSourceType() { return sourceType; }
-
-TopologyNodePtr SourceCatalogEntry::getNode() { return node; }
-
-std::string SourceCatalogEntry::getPhysicalName() { return physicalStreamName; }
-
-std::string SourceCatalogEntry::getLogicalName() { return logicalStreamName; }
+const TopologyNodePtr& SourceCatalogEntry::getNode() const { return node; }
 
 std::string SourceCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalName=" << physicalStreamName << " logicalSourceName=" << logicalStreamName << " sourceType=" << sourceType
+    ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }

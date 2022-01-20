@@ -48,9 +48,7 @@ class LambdaSourceType : public PhysicalSourceType {
            uint64_t gatheringValue,
            const std::string& gatheringMode);
 
-    ~LambdaSourceType() noexcept = default;
-
-    std::function<void(NES::Runtime::TupleBuffer&, uint64_t)>&& getGenerationFunction() const;
+    std::function<void(NES::Runtime::TupleBuffer&, uint64_t)> getGenerationFunction() const;
 
     uint64_t getNumBuffersToProduce() const;
 

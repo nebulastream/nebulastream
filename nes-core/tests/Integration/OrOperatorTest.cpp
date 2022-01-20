@@ -17,7 +17,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
@@ -43,9 +43,9 @@ class OrOperatorTest : public testing::Test {
   public:
     CoordinatorConfigurationPtr coConf;
     WorkerConfigurationPtr wrkConf;
-    CSVSourceConfigPtr srcConf;
-    CSVSourceConfigPtr srcConf1;
-    CSVSourceConfigPtr srcConf2;
+    CSVSourceTypePtr srcConf;
+    CSVSourceTypePtr srcConf1;
+    CSVSourceTypePtr srcConf2;
 
     static void SetUpTestCase() {
         NES::setupLogging("OrOperatorTest.log", NES::LOG_DEBUG);
@@ -57,9 +57,9 @@ class OrOperatorTest : public testing::Test {
         restPort = restPort + 2;
         coConf = CoordinatorConfiguration::create();
         wrkConf = WorkerConfiguration::create();
-        srcConf = CSVSourceConfig::create();
-        srcConf1 = CSVSourceConfig::create();
-        srcConf2 = CSVSourceConfig::create();
+        srcConf = CSVSourceType::create();
+        srcConf1 = CSVSourceType::create();
+        srcConf2 = CSVSourceType::create();
 
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);
@@ -76,8 +76,8 @@ class OrOperatorTest : public testing::Test {
 TEST_F(OrOperatorTest, testPatternOneOr) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
-    srcConf1->resetSourceOptions();
+    srcConf->reset();
+    srcConf1->reset();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -88,7 +88,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("OrOperatorTest: Worker1 started successfully");
@@ -97,7 +97,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("OrOperatorTest: Worker2 started successfully");
@@ -112,7 +112,6 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     wrk1->registerLogicalStream("QnV1", testSchemaFileName);
     wrk2->registerLogicalStream("QnV2", testSchemaFileName);
 
-    srcConf->setSourceType("CSVSource");
     srcConf->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(5);
     srcConf->setNumberOfBuffersToProduce(20);

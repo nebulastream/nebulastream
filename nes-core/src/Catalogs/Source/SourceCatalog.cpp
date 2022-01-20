@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Services/QueryParsingService.hpp>
@@ -113,30 +114,34 @@ bool SourceCatalog::addPhysicalStream(const std::string& logicalStreamName, cons
     // check if logical stream exists
     if (!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
         NES_ERROR("SourceCatalog: logical stream " << logicalStreamName << " does not exists when inserting physical stream "
-                                                   << newEntry->getPhysicalName());
+                                                   << newEntry->getPhysicalSource()->getPhysicalSourceName());
         return false;
     } else {
         NES_DEBUG("SourceCatalog: logical stream " << logicalStreamName << " exists try to add physical stream "
-                                                   << newEntry->getPhysicalName());
+                                                   << newEntry->getPhysicalSource()->getPhysicalSourceName());
 
         //get current physical stream for this logical stream
         std::vector<SourceCatalogEntryPtr> physicalStreams = logicalToPhysicalSourceMapping[logicalStreamName];
 
         //check if physical stream does not exist yet
         for (const SourceCatalogEntryPtr& entry : physicalStreams) {
-            NES_DEBUG("test node id=" << entry->getNode()->getId() << " phyStr=" << entry->getPhysicalName());
-            NES_DEBUG("test to be inserted id=" << newEntry->getNode()->getId() << " phyStr=" << newEntry->getPhysicalName());
-            if (entry->getPhysicalName() == newEntry->getPhysicalName()) {
+            NES_DEBUG("test node id=" << entry->getNode()->getId()
+                                      << " phyStr=" << entry->getPhysicalSource()->getPhysicalSourceName());
+            NES_DEBUG("test to be inserted id=" << newEntry->getNode()->getId()
+                                                << " phyStr=" << newEntry->getPhysicalSource()->getPhysicalSourceName());
+            if (entry->getPhysicalSource()->getPhysicalSourceName() == newEntry->getPhysicalSource()->getPhysicalSourceName()) {
                 if (entry->getNode()->getId() == newEntry->getNode()->getId()) {
                     NES_ERROR("SourceCatalog: node with id=" << newEntry->getNode()->getId()
-                                                             << " name=" << newEntry->getPhysicalName() << " already exists");
+                                                             << " name=" << newEntry->getPhysicalSource()->getPhysicalSourceName()
+                                                             << " already exists");
                     return false;
                 }
             }
         }
     }
 
-    NES_DEBUG("SourceCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist, try to add");
+    NES_DEBUG("SourceCatalog: physical stream " << newEntry->getPhysicalSource()->getPhysicalSourceName()
+                                                << " does not exist, try to add");
 
     //if first one
     if (testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)) {
@@ -149,7 +154,7 @@ bool SourceCatalog::addPhysicalStream(const std::string& logicalStreamName, cons
         logicalToPhysicalSourceMapping[logicalStreamName].push_back(newEntry);
     }
 
-    NES_DEBUG("SourceCatalog: physical stream " << newEntry->getPhysicalName() << " id=" << newEntry->getNode()->getId()
+    NES_DEBUG("SourceCatalog: physical stream " << newEntry->getPhysicalSource() << " id=" << newEntry->getNode()->getId()
                                                 << " successful added");
     return true;
 }
@@ -176,9 +181,10 @@ bool SourceCatalog::removePhysicalStream(const std::string& logicalStreamName,
     for (auto entry = logicalToPhysicalSourceMapping[logicalStreamName].cbegin();
          entry != logicalToPhysicalSourceMapping[logicalStreamName].cend();
          entry++) {
-        NES_DEBUG("test node id=" << entry->get()->getNode()->getId() << " phyStr=" << entry->get()->getPhysicalName());
+        NES_DEBUG("test node id=" << entry->get()->getNode()->getId()
+                                  << " phyStr=" << entry->get()->getPhysicalSource()->getPhysicalSourceName());
         NES_DEBUG("test to be deleted id=" << hashId << " phyStr=" << physicalStreamName);
-        if (entry->get()->getPhysicalName() == physicalStreamName) {
+        if (entry->get()->getPhysicalSource()->getPhysicalSourceName() == physicalStreamName) {
             NES_DEBUG("SourceCatalog: node with name=" << physicalStreamName << " exists try match hashId" << hashId);
 
             if (entry->get()->getNode()->getId() == hashId) {
@@ -205,12 +211,12 @@ bool SourceCatalog::removePhysicalStreamByHashId(uint64_t hashId) {
              entry != logicalToPhysicalSourceMapping[logStream.first].cend();
              entry++) {
             if (entry->get()->getNode()->getId() == hashId) {
-                NES_DEBUG("SourceCatalog: found entry with nodeid=" << entry->get()->getNode()->getId()
-                                                                    << " physicalStream=" << entry->get()->getPhysicalName()
+                NES_DEBUG("SourceCatalog: found entry with nodeid=" << entry->get()->getNode()->getId() << " physicalStream="
+                                                                    << entry->get()->getPhysicalSource()->getPhysicalSourceName()
                                                                     << " logicalStream=" << logStream.first);
                 //TODO: fix this to return value of erase to update entry or if you use the foreach loop, collect the entries to remove, and remove them in a batch after
-                NES_DEBUG("SourceCatalog: deleted physical stream with hashID" << hashId << "and name"
-                                                                               << entry->get()->getPhysicalName());
+                NES_DEBUG("SourceCatalog: deleted physical stream with hashID"
+                          << hashId << "and name" << entry->get()->getPhysicalSource()->getPhysicalSourceName());
                 logicalToPhysicalSourceMapping[logStream.first].erase(entry);
                 return true;
             }

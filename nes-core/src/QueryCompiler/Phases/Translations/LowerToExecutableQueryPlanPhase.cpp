@@ -313,7 +313,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createActualLogicalSourceDe
         case LAMBDA_SOURCE: {
             auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
             return LambdaSourceDescriptor::create(schema,
-                                                  std::move(lambdaSourceType->getGenerationFunction()),
+                                                  lambdaSourceType->getGenerationFunction(),
                                                   lambdaSourceType->getNumBuffersToProduce(),
                                                   lambdaSourceType->getGatheringValue(),
                                                   lambdaSourceType->getGatheringMode());

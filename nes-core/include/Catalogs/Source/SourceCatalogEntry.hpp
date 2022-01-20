@@ -54,36 +54,32 @@ class SourceCatalogEntry {
      * @return shared pointer to Source catalog entry
      */
     static SourceCatalogEntryPtr
-    create(const PhysicalSourcePtr physicalSource, const LogicalSourcePtr logicalSource, const TopologyNodePtr& topologyNode);
+    create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, TopologyNodePtr topologyNode);
 
-    explicit SourceCatalogEntry(const PhysicalSourcePtr physicalSource,
-                                const LogicalSourcePtr logicalSource,
-                                const TopologyNodePtr& topologyNode);
+    explicit SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, TopologyNodePtr topologyNode);
 
     /**
-     * @brief get source type
-     * @return type as string
+     * @brief Get the physical source
+     * @return the shared pointer to the physical source
      */
-    std::string getSourceType();
+    const PhysicalSourcePtr& getPhysicalSource() const;
 
     /**
-     * @brief get topology pointer
-     * @return ptr to node
+     * @brief Get the logical source
+     * @return the shared pointer to the logical source
      */
-    TopologyNodePtr getNode();
+    const LogicalSourcePtr& getLogicalSource() const;
 
     /**
-     * @brief get physical stream name
-     * @return name as string
+     * @brief Get the topology node
+     * @return the shared pointer to the topology node
      */
-    std::string getPhysicalName();
+    const TopologyNodePtr& getNode() const;
 
     /**
-     * @brief get logical stream name
-     * @return name as string
+     * @brief Get the string rep of the stream catalog entry
+     * @return string rep of the stream catalog entry
      */
-    std::string getLogicalName();
-
     std::string toString();
 
   private:
