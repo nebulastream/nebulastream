@@ -538,8 +538,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     auto sum = Windowing::SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition =
-        Windowing::LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64),
-                                                   sum,
+        Windowing::LogicalWindowDefinition::create({Attribute("window$key", BasicType::UINT64)},
+                                                   {sum},
                                                    TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
                                                    DistributionCharacteristic::createCompleteWindowType(),
                                                    1,
@@ -547,7 +547,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
                                                    triggerAction,
                                                    0);
 
-    auto strategy = EventTimeWatermarkStrategy::create(windowDefinition->getOnKey(), 12, 1);
+    auto strategy = EventTimeWatermarkStrategy::create(windowDefinition->getOnKey()[0], 12, 1);
     codeGenerator->generateCodeForWatermarkAssigner(strategy, context1);
 
     /* compile code to pipeline stage */
@@ -580,8 +580,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
 
     auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
     auto windowDefinition =
-        LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64),
-                                        sum,
+        LogicalWindowDefinition::create({Attribute("window$key", BasicType::UINT64)},
+                                        {sum},
                                         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
                                         DistributionCharacteristic::createCompleteWindowType(),
                                         1,
@@ -660,8 +660,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition =
-        LogicalWindowDefinition::create(Attribute("key", UINT64),
-                                        sum,
+        LogicalWindowDefinition::create({Attribute("key", UINT64)},
+                                        {sum},
                                         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
                                         DistributionCharacteristic::createCompleteWindowType(),
                                         1,
@@ -807,8 +807,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDefinition =
-        LogicalWindowDefinition::create(Attribute("window$key", UINT64),
-                                        sum,
+        LogicalWindowDefinition::create({Attribute("window$key", UINT64)},
+                                        {sum},
                                         TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Milliseconds(10)),
                                         DistributionCharacteristic::createCompleteWindowType(),
                                         1,
@@ -1393,8 +1393,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
         auto windowDefinition =
-            LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64),
-                                            sum,
+            LogicalWindowDefinition::create({Attribute("window$key", BasicType::UINT64)},
+                                            {sum},
                                             TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
                                             DistributionCharacteristic::createCompleteWindowType(),
                                             1,
@@ -1480,8 +1480,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("window$key", BasicType::UINT64),
-        sum,
+        {Attribute("window$key", BasicType::UINT64)},
+        {sum},
         TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value")), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
         1,
@@ -1559,8 +1559,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("window$key", BasicType::UINT64),
-        sum,
+        {Attribute("window$key", BasicType::UINT64)},
+        {sum},
         TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value"), Seconds()), Seconds(10)),
         DistributionCharacteristic::createCompleteWindowType(),
         1,

@@ -120,7 +120,7 @@ TEST_F(WindowManagerTest, sliceStoreTest) {
         ASSERT_EQ(slice->start, 99 + i);
     }
 }
-
+/*
 TEST_F(WindowManagerTest, sliceStoreTest3) {
     Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
     auto sliceStore = Experimental::MapedSliceStore<uint64_t, uint64_t, 100>(bufferManager, 1);
@@ -263,7 +263,7 @@ TEST_F(WindowManagerTest, MergePartitionedHashMap) {
             // merge thread local state
             auto partitions = stage.erasePartition(0);
             std::cout <<  partitions->size() <<  std::endl;
-           /* auto& globalAggregate = slice->getGlobalState();
+          auto& globalAggregate = slice->getGlobalState();
             for(auto& partition: slice->getPartitions()){
                 for(uint64_t index = 0; index < partition->size(); index++){
                     auto* partitionEntry = (*partition)[index];
@@ -276,12 +276,13 @@ TEST_F(WindowManagerTest, MergePartitionedHashMap) {
                 auto* partitionEntry = (*globalPartition)[index];
                 std::cout <<  partitionEntry->key << " - " << partitionEntry->value  << std::endl;
             }
-*/
+
 
         }
 
     }
 }
+
 
 TEST_F(WindowManagerTest, testSumAggregation) {
     auto aggregation = ExecutableSumAggregation<int64_t>::create();
@@ -291,6 +292,7 @@ TEST_F(WindowManagerTest, testSumAggregation) {
     auto result = aggregation->lower(combined);
     ASSERT_EQ(result, 3);
 }
+
 
 TEST_F(WindowManagerTest, testMaxAggregation) {
     auto aggregation = ExecutableMaxAggregation<int64_t>::create();
@@ -1003,5 +1005,6 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     ASSERT_EQ(store->getSliceMetadata().size(), 2U);
     ASSERT_EQ(store->getPartialAggregates().size(), 2U);
 }
+ */
 
 }// namespace NES
