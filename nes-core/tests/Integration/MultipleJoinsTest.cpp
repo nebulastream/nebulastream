@@ -153,9 +153,9 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
     PhysicalSourcePtr windowStream3 = PhysicalSourceType::create(srcConf2);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream2);
-    wrk3->registerPhysicalStream(windowStream3);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk2->registerPhysicalSources(windowStream2);
+    wrk3->registerPhysicalSources(windowStream3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -328,9 +328,9 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
     PhysicalSourcePtr windowStream3 = PhysicalSourceType::create(srcConf2);
 
-    wrk2->registerPhysicalStream(windowStream);
-    wrk3->registerPhysicalStream(windowStream2);
-    wrk4->registerPhysicalStream(windowStream3);
+    wrk2->registerPhysicalSources(windowStream);
+    wrk3->registerPhysicalSources(windowStream2);
+    wrk4->registerPhysicalSources(windowStream3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -512,10 +512,10 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     srcConf3->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     PhysicalSourcePtr windowStream4 = PhysicalSourceType::create(srcConf3);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream2);
-    wrk3->registerPhysicalStream(windowStream3);
-    wrk4->registerPhysicalStream(windowStream4);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk2->registerPhysicalSources(windowStream2);
+    wrk3->registerPhysicalSources(windowStream3);
+    wrk4->registerPhysicalSources(windowStream4);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -699,10 +699,10 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     srcConf3->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     PhysicalSourcePtr windowStream4 = PhysicalSourceType::create(srcConf3);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream2);
-    wrk3->registerPhysicalStream(windowStream3);
-    wrk4->registerPhysicalStream(windowStream4);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk2->registerPhysicalSources(windowStream2);
+    wrk3->registerPhysicalSources(windowStream3);
+    wrk4->registerPhysicalSources(windowStream4);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -867,9 +867,9 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
     PhysicalSourcePtr windowStream3 = PhysicalSourceType::create(srcConf2);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream2);
-    wrk3->registerPhysicalStream(windowStream3);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk2->registerPhysicalSources(windowStream2);
+    wrk3->registerPhysicalSources(windowStream3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1050,9 +1050,9 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     srcConf2->as<CSVSourceConfig>()->setLogicalStreamName("window3");
     PhysicalSourcePtr windowStream3 = PhysicalSourceType::create(srcConf2);
 
-    wrk2->registerPhysicalStream(windowStream);
-    wrk3->registerPhysicalStream(windowStream2);
-    wrk4->registerPhysicalStream(windowStream3);
+    wrk2->registerPhysicalSources(windowStream);
+    wrk3->registerPhysicalSources(windowStream2);
+    wrk4->registerPhysicalSources(windowStream3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1243,10 +1243,10 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     srcConf3->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     PhysicalSourcePtr windowStream4 = PhysicalSourceType::create(srcConf3);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream2);
-    wrk3->registerPhysicalStream(windowStream3);
-    wrk4->registerPhysicalStream(windowStream4);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk2->registerPhysicalSources(windowStream2);
+    wrk3->registerPhysicalSources(windowStream3);
+    wrk4->registerPhysicalSources(windowStream4);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1454,10 +1454,10 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     srcConf3->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
     PhysicalSourcePtr windowStream4 = PhysicalSourceType::create(srcConf3);
 
-    wrk1->registerPhysicalStream(windowStream);
-    wrk2->registerPhysicalStream(windowStream2);
-    wrk3->registerPhysicalStream(windowStream3);
-    wrk4->registerPhysicalStream(windowStream4);
+    wrk1->registerPhysicalSources(windowStream);
+    wrk2->registerPhysicalSources(windowStream2);
+    wrk3->registerPhysicalSources(windowStream3);
+    wrk4->registerPhysicalSources(windowStream4);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

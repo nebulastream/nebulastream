@@ -295,7 +295,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
 
     //register physical stream
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

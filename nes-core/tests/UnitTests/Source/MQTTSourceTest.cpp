@@ -229,7 +229,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     srcConf->setLogicalStreamName("stream");
     //register physical stream
     PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(streamConf);
+    wrk1->registerPhysicalSources(streamConf);
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");

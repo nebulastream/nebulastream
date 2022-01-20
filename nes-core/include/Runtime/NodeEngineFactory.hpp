@@ -52,7 +52,7 @@ class NodeEngineFactory {
     */
     static NodeEnginePtr createNodeEngine(const std::string& hostname,
                                           uint16_t port,
-                                          std::vector<PhysicalSourcePtr> configs,
+                                          std::vector<PhysicalSourcePtr> physicalSources,
                                           uint16_t numThreads,
                                           uint64_t bufferSize,
                                           uint64_t numberOfBuffersInGlobalBufferManager,

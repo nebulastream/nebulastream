@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/PhysicalSource.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
@@ -46,7 +46,7 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig, NesNodeType type)
+NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig)
     : coordinatorIp(workerConfig->getCoordinatorIp()->getValue()), localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
       workerToCoreMapping(workerConfig->getWorkerPinList()->getValue()),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()), localWorkerRpcPort(workerConfig->getRpcPort()->getValue()),
@@ -59,19 +59,12 @@ NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig,
       queryCompilerCompilationStrategy(workerConfig->getQueryCompilerCompilationStrategy()->getValue()),
       queryCompilerPipeliningStrategy(workerConfig->getQueryCompilerPipeliningStrategy()->getValue()),
       queryCompilerOutputBufferOptimizationLevel(workerConfig->getQueryCompilerOutputBufferAllocationStrategy()->getValue()),
-      enableNumaAwareness(workerConfig->isNumaAware()), enableMonitoring(workerConfig->getEnableMonitoring()->getValue()),
-      type(type) {
+      enableNumaAwareness(workerConfig->isNumaAware()), enableMonitoring(workerConfig->getEnableMonitoring()->getValue()) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }
 
 NesWorker::~NesWorker() { stop(true); }
-
-bool NesWorker::setWithRegister(Configurations::PhysicalSourcePtr physicalSource) {
-    withRegisterStream = true;
-    this->physicalSources.emplace_back(physicalSource);
-    return true;
-}
 
 bool NesWorker::setWithParent(std::string parentId) {
     withParent = true;
@@ -122,10 +115,9 @@ void NesWorker::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>
 uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
 
 bool NesWorker::start(bool blocking, bool withConnect) {
-    NES_DEBUG("NesWorker: start with blocking " << blocking << " coordinatorIp=" << coordinatorIp
-                                                << " coordinatorPort=" << coordinatorPort << " localWorkerIp=" << localWorkerIp
-                                                << " localWorkerRpcPort=" << localWorkerRpcPort
-                                                << " localWorkerZmqPort=" << localWorkerZmqPort << " type=" << type);
+    NES_DEBUG("NesWorker: start with blocking "
+              << blocking << " coordinatorIp=" << coordinatorIp << " coordinatorPort=" << coordinatorPort << " localWorkerIp="
+              << localWorkerIp << " localWorkerRpcPort=" << localWorkerRpcPort << " localWorkerZmqPort=" << localWorkerZmqPort);
     NES_DEBUG("NesWorker::start: start Runtime");
     auto expected = false;
     if (!isRunning.compare_exchange_strong(expected, true)) {
@@ -135,7 +127,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     try {
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(localWorkerIp,
                                                                   localWorkerZmqPort,
-                                                                  physicalStream,
+                                                                  physicalSources,
                                                                   numWorkerThreads,
                                                                   bufferSizeInBytes,
                                                                   numberOfBuffersInGlobalBufferManager,
@@ -173,9 +165,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("connected= " << con);
         NES_ASSERT(con, "cannot connect");
     }
-    if (withRegisterStream) {
+    if (!physicalSources.empty()) {
         NES_DEBUG("NesWorker: start with register stream");
-        bool success = registerPhysicalStream(physicalStream);
+        bool success = registerPhysicalSources(physicalSources);
         NES_DEBUG("registered= " << success);
         NES_ASSERT(success, "cannot register");
     }
@@ -247,24 +239,8 @@ bool NesWorker::connect() {
     auto staticStats = monitoringAgent->getStaticNesMetrics();
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
-    bool successPRCRegister = false;
-    if (type == NesNodeType::Sensor) {
-        successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
-                                                                localWorkerRpcPort,
-                                                                localWorkerZmqPort,
-                                                                numberOfSlots,
-                                                                NodeType::Sensor,
-                                                                staticStats);
-    } else if (type == NesNodeType::Worker) {
-        successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
-                                                                localWorkerRpcPort,
-                                                                localWorkerZmqPort,
-                                                                numberOfSlots,
-                                                                NodeType::Worker,
-                                                                staticStats);
-    } else {
-        NES_NOT_IMPLEMENTED();
-    }
+    bool successPRCRegister =
+        coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, staticStats);
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {
@@ -309,15 +285,13 @@ bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string ph
     return success;
 }
 
-bool NesWorker::registerPhysicalStream(const AbstractPhysicalStreamConfigPtr& conf) {
-    NES_ASSERT(conf, "invalid configuration");
+bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {
+    NES_ASSERT(physicalSources.empty(), "invalid physical sources");
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "cannot connect");
-    bool success = coordinatorRpcClient->registerPhysicalSources(conf);
+    bool success = coordinatorRpcClient->registerPhysicalSources(physicalSources);
     NES_ASSERT(success, "failed to register stream");
-    // TODO we need to get rid of this
-    nodeEngine->setConfig(conf);
     NES_DEBUG("NesWorker::registerPhysicalSources success=" << success);
     return success;
 }

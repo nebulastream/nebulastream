@@ -1706,7 +1706,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
                                                                                        22,
                                                                                        11,
                                                                                        "ingestionrate");
-    wrk1->registerPhysicalStream(conf1);
+    wrk1->registerPhysicalSources(conf1);
 
     std::string outputFilePath = "testIngestionRateFromQuery.out";
     remove(outputFilePath.c_str());
@@ -1950,11 +1950,11 @@ TEST_F(SourceTest, testTwoLambdaSources) {
 
     NES::AbstractPhysicalStreamConfigPtr conf1 =
         NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 3, 0, "frequency");
-    wrk1->registerPhysicalStream(conf1);
+    wrk1->registerPhysicalSources(conf1);
 
     NES::AbstractPhysicalStreamConfigPtr conf2 =
         NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", std::move(func2), 3, 0, "frequency");
-    wrk1->registerPhysicalStream(conf2);
+    wrk1->registerPhysicalSources(conf2);
 
     string query =
         R"(Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
@@ -2038,7 +2038,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
                                                                                            30,
                                                                                            0,
                                                                                            "frequency");
-        crd->getNesWorker()->registerPhysicalStream(conf1);
+        crd->getNesWorker()->registerPhysicalSources(conf1);
     }
 
     string query = R"(Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());)";

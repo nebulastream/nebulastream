@@ -92,7 +92,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     sourceConfig->setLogicalStreamName("exdra");
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string filePath = "contTestOut.csv";
     remove(filePath.c_str());
@@ -214,7 +214,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
 
     //register physical stream
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -281,7 +281,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -348,7 +348,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFile.txt";
     remove(outputFilePath.c_str());
@@ -474,7 +474,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency.txt";
     remove(outputFilePath.c_str());
@@ -611,7 +611,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -687,7 +687,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     sourceConfig->setLogicalStreamName("testStream");
     //register physical stream
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromCSVSourceWriteTest.out";
     remove(outputFilePath.c_str());
@@ -771,7 +771,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     sourceConfig->setPhysicalStreamName("test_stream");
     sourceConfig->setLogicalStreamName("exdra");
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testExdraUseCaseWithOutput.csv";
     remove(outputFilePath.c_str());

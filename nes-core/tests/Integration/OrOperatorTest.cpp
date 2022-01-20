@@ -120,7 +120,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     srcConf->setLogicalStreamName("QnV1");
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     srcConf1->setSourceType("CSVSource");
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -130,7 +130,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
     PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
-    wrk2->registerPhysicalStream(conf73);
+    wrk2->registerPhysicalSources(conf73);
 
     std::string outputFilePath = "testPatternOr1.out";
     remove(outputFilePath.c_str());
@@ -223,7 +223,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     srcConf->setLogicalStreamName("QnV1");
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     srcConf1->setSourceType("CSVSource");
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -233,7 +233,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
     PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
-    wrk2->registerPhysicalStream(conf73);
+    wrk2->registerPhysicalSources(conf73);
 
     std::string outputFilePath = "testPatternOr2.out";
     remove(outputFilePath.c_str());
@@ -341,7 +341,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     srcConf->setLogicalStreamName("QnV1");
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     srcConf1->setSourceType("CSVSource");
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -351,7 +351,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
     PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
-    wrk2->registerPhysicalStream(conf73);
+    wrk2->registerPhysicalSources(conf73);
 
     srcConf2->setSourceType("CSVSource");
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -361,7 +361,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     srcConf2->setLogicalStreamName("QnV3");
     //register physical stream R2000073
     PhysicalSourcePtr conf732 = PhysicalSourceType::create(srcConf2);
-    wrk3->registerPhysicalStream(conf732);
+    wrk3->registerPhysicalSources(conf732);
 
     std::string outputFilePath = "testPatternOR3.out";
     remove(outputFilePath.c_str());
@@ -458,7 +458,7 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     srcConf->setLogicalStreamName("QnV");
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalStream(conf70);
+    wrk1->registerPhysicalSources(conf70);
 
     srcConf1->setSourceType("CSVSource");
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
@@ -467,7 +467,7 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     srcConf1->setLogicalStreamName("QnV2");
     //register physical stream R2000073
     PhysicalSourcePtr conf73 = PhysicalSourceType::create(srcConf1);
-    wrk2->registerPhysicalStream(conf73);
+    wrk2->registerPhysicalSources(conf73);
 
     std::string outputFilePath = "testOrPatternWithTestStream.out";
     remove(outputFilePath.c_str());

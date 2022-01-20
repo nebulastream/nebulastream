@@ -34,8 +34,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
     uint64_t id = topologyManagerService->registerNode(request->address(),
                                                        request->grpcport(),
                                                        request->dataport(),
-                                                       request->numberofslots(),
-                                                       (NodeType) request->type());
+                                                       request->numberofslots());
 
     auto groupedMetrics = std::make_shared<GroupedMetricValues>();
     groupedMetrics->staticNesMetrics = std::make_unique<StaticNesMetrics>(StaticNesMetrics(request->monitoringdata()));

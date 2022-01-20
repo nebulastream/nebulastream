@@ -109,7 +109,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
                                                                             buffersToExpect,
                                                                             0,
                                                                             "frequency");
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     // local fs
     std::string filePath = "memorySourceTestOut.csv";
@@ -219,7 +219,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
                                                                             1,
                                                                             0,
                                                                             "frequency");
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     // local fs
     std::string filePath = "memorySourceTestOut.csv";
@@ -331,7 +331,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
                                                                             buffersToExpect + 1,
                                                                             0,
                                                                             "frequency");
-    wrk1->registerPhysicalStream(conf);
+    wrk1->registerPhysicalSources(conf);
 
     // local fs
     std::string filePath = "memorySourceTestOut";
