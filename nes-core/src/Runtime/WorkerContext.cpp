@@ -25,8 +25,8 @@ namespace NES::Runtime {
 WorkerContext::WorkerContext(uint32_t workerId,
                              const BufferManagerPtr& bufferManager,
                              uint64_t numberOfBuffersPerWorker,
-                             uint32_t numaNode)
-    : workerId(workerId), numaNode(numaNode) {
+                             uint32_t queueId)
+    : workerId(workerId), queueId(queueId) {
     //we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the paramter
     localBufferPool = bufferManager->createLocalBufferPool(numberOfBuffersPerWorker);
     NES_ASSERT(localBufferPool != nullptr, "Local buffer is not allowed to be null");
@@ -36,7 +36,7 @@ WorkerContext::~WorkerContext() { localBufferPool->destroy(); }
 
 uint32_t WorkerContext::getId() const { return workerId; }
 
-uint32_t WorkerContext::getNumaNode() const { return numaNode; }
+uint32_t WorkerContext::getQueueId() const { return queueId; }
 
 void WorkerContext::setObjectRefCnt(void* object, uint32_t refCnt) {
     objectRefCounters[reinterpret_cast<uintptr_t>(object)] = refCnt;
