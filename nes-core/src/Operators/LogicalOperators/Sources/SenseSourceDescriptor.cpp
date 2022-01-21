@@ -46,4 +46,10 @@ bool SenseSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 
 std::string SenseSourceDescriptor::toString() { return "SenseSourceDescriptor()"; }
 
+SourceDescriptorPtr SenseSourceDescriptor::copy() {
+    auto copy = SenseSourceDescriptor::create(schema->copy(), logicalSourceName, udfs);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
+
 }// namespace NES

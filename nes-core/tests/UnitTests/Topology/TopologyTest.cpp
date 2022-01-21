@@ -103,7 +103,7 @@ TEST_F(TopologyTest, removeAnExistingNode) {
     dataPort++;
     auto childNode = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
 
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, childNode);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode);
     EXPECT_TRUE(success);
 
     success = topology->removePhysicalNode(childNode);
@@ -143,7 +143,7 @@ TEST_F(TopologyTest, createLink) {
     grpcPort++;
     dataPort++;
     auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, childNode1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
 
@@ -152,7 +152,7 @@ TEST_F(TopologyTest, createLink) {
     grpcPort++;
     dataPort++;
     auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources);
-    success = topology->addNewPhysicalNodeAsChild(childNode1, childNode2);
+    success = topology->addNewTopologyNodeAsChild(childNode1, childNode2);
     EXPECT_TRUE(success);
     EXPECT_TRUE(childNode1->containAsChild(childNode2));
 }
@@ -174,11 +174,11 @@ TEST_F(TopologyTest, createExistingLink) {
     grpcPort++;
     dataPort++;
     auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, childNode1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
 
-    success = topology->addNewPhysicalNodeAsChild(rootNode, childNode1);
+    success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_FALSE(success);
 }
 
@@ -200,7 +200,7 @@ TEST_F(TopologyTest, removeLink) {
     grpcPort++;
     dataPort++;
     auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, childNode1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
 
@@ -258,25 +258,25 @@ TEST_F(TopologyTest, printGraph) {
     topology->setAsRoot(workers.at(0));
 
     // link each worker with its neighbor
-    topology->addNewPhysicalNodeAsChild(workers.at(0), workers.at(1));
-    topology->addNewPhysicalNodeAsChild(workers.at(0), workers.at(2));
+    topology->addNewTopologyNodeAsChild(workers.at(0), workers.at(1));
+    topology->addNewTopologyNodeAsChild(workers.at(0), workers.at(2));
 
-    topology->addNewPhysicalNodeAsChild(workers.at(1), workers.at(3));
-    topology->addNewPhysicalNodeAsChild(workers.at(1), workers.at(4));
+    topology->addNewTopologyNodeAsChild(workers.at(1), workers.at(3));
+    topology->addNewTopologyNodeAsChild(workers.at(1), workers.at(4));
 
-    topology->addNewPhysicalNodeAsChild(workers.at(2), workers.at(5));
-    topology->addNewPhysicalNodeAsChild(workers.at(2), workers.at(6));
+    topology->addNewTopologyNodeAsChild(workers.at(2), workers.at(5));
+    topology->addNewTopologyNodeAsChild(workers.at(2), workers.at(6));
 
     // each worker has three sensors
     for (uint32_t i = 0; i < 15; i++) {
         if (i < 4) {
-            topology->addNewPhysicalNodeAsChild(workers.at(3), sensors.at(i));
+            topology->addNewTopologyNodeAsChild(workers.at(3), sensors.at(i));
         } else if (i >= 4 && i < 8) {
-            topology->addNewPhysicalNodeAsChild(workers.at(4), sensors.at(i));
+            topology->addNewTopologyNodeAsChild(workers.at(4), sensors.at(i));
         } else if (i >= 8 && i < 12) {
-            topology->addNewPhysicalNodeAsChild(workers.at(5), sensors.at(i));
+            topology->addNewTopologyNodeAsChild(workers.at(5), sensors.at(i));
         } else {
-            topology->addNewPhysicalNodeAsChild(workers.at(6), sensors.at(i));
+            topology->addNewTopologyNodeAsChild(workers.at(6), sensors.at(i));
         }
     }
 
@@ -311,7 +311,7 @@ TEST_F(TopologyTest, findPathBetweenTwoNodes) {
     grpcPort++;
     dataPort++;
     auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, childNode1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
 
@@ -320,7 +320,7 @@ TEST_F(TopologyTest, findPathBetweenTwoNodes) {
     grpcPort++;
     dataPort++;
     auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources);
-    success = topology->addNewPhysicalNodeAsChild(childNode1, childNode2);
+    success = topology->addNewTopologyNodeAsChild(childNode1, childNode2);
     EXPECT_TRUE(success);
     EXPECT_TRUE(childNode1->containAsChild(childNode2));
 
@@ -350,20 +350,20 @@ TEST_F(TopologyTest, findPathBetweenNodesWithMultipleParentsAndChildren) {
     topology->setAsRoot(workers.at(0));
 
     // link each worker with its neighbor
-    topology->addNewPhysicalNodeAsChild(workers.at(0), workers.at(1));
-    topology->addNewPhysicalNodeAsChild(workers.at(0), workers.at(2));
+    topology->addNewTopologyNodeAsChild(workers.at(0), workers.at(1));
+    topology->addNewTopologyNodeAsChild(workers.at(0), workers.at(2));
 
-    topology->addNewPhysicalNodeAsChild(workers.at(1), workers.at(3));
-    topology->addNewPhysicalNodeAsChild(workers.at(1), workers.at(4));
+    topology->addNewTopologyNodeAsChild(workers.at(1), workers.at(3));
+    topology->addNewTopologyNodeAsChild(workers.at(1), workers.at(4));
 
-    topology->addNewPhysicalNodeAsChild(workers.at(2), workers.at(5));
-    topology->addNewPhysicalNodeAsChild(workers.at(2), workers.at(6));
+    topology->addNewTopologyNodeAsChild(workers.at(2), workers.at(5));
+    topology->addNewTopologyNodeAsChild(workers.at(2), workers.at(6));
 
-    topology->addNewPhysicalNodeAsChild(workers.at(4), workers.at(7));
-    topology->addNewPhysicalNodeAsChild(workers.at(5), workers.at(7));
+    topology->addNewTopologyNodeAsChild(workers.at(4), workers.at(7));
+    topology->addNewTopologyNodeAsChild(workers.at(5), workers.at(7));
 
-    topology->addNewPhysicalNodeAsChild(workers.at(7), workers.at(8));
-    topology->addNewPhysicalNodeAsChild(workers.at(7), workers.at(9));
+    topology->addNewTopologyNodeAsChild(workers.at(7), workers.at(8));
+    topology->addNewTopologyNodeAsChild(workers.at(7), workers.at(9));
 
     const std::optional<TopologyNodePtr> startNode = topology->findAllPathBetween(workers.at(9), workers.at(2));
 
@@ -390,7 +390,7 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     grpcPort++;
     dataPort++;
     auto childNode1 = TopologyNode::create(node2Id, node2Address, grpcPort, dataPort, resources);
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, childNode1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, childNode1);
     EXPECT_TRUE(success);
     EXPECT_TRUE(rootNode->containAsChild(childNode1));
 
@@ -399,7 +399,7 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     grpcPort++;
     dataPort++;
     auto childNode2 = TopologyNode::create(node3Id, node3Address, grpcPort, dataPort, resources);
-    success = topology->addNewPhysicalNodeAsChild(childNode1, childNode2);
+    success = topology->addNewTopologyNodeAsChild(childNode1, childNode2);
     EXPECT_TRUE(success);
     EXPECT_TRUE(childNode1->containAsChild(childNode2));
 
@@ -432,20 +432,20 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
     topology->setAsRoot(topologyNodes.at(0));
 
     // link each worker with its neighbor
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(9));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(7), topologyNodes.at(9));
 
     std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(8), topologyNodes.at(9)};
     std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
@@ -493,20 +493,20 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     topology->setAsRoot(topologyNodes.at(0));
 
     // link each worker with its neighbor
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(5));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(9));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(7), topologyNodes.at(8));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(7), topologyNodes.at(9));
 
     std::vector<TopologyNodePtr> sourceNodes{topologyNodes.at(8)};
     std::vector<TopologyNodePtr> destinationNodes{topologyNodes.at(0)};
@@ -581,38 +581,38 @@ TEST_F(TopologyTest, testPathFindingWithMaintenance) {
     topology->setAsRoot(topologyNodes.at(0));
     //sets up Topology
     // link each worker with its neighbor
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(3));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(4));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(4));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(8));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(8));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(6));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(6));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(7));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(3), topologyNodes.at(6));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(3), topologyNodes.at(7));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(8));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(9));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(5), topologyNodes.at(8));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(5), topologyNodes.at(9));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(6), topologyNodes.at(10));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(6), topologyNodes.at(10));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(10));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(7), topologyNodes.at(11));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(7), topologyNodes.at(10));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(7), topologyNodes.at(11));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(8), topologyNodes.at(12));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(8), topologyNodes.at(12));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(9), topologyNodes.at(12));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(9), topologyNodes.at(13));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(9), topologyNodes.at(12));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(9), topologyNodes.at(13));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(10), topologyNodes.at(13));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(10), topologyNodes.at(14));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(10), topologyNodes.at(13));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(10), topologyNodes.at(14));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(11), topologyNodes.at(14));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(11), topologyNodes.at(14));
 
     topology->print();
 
@@ -708,18 +708,18 @@ TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
 
     topology->setAsRoot(topologyNodes.at(0));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(3));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(4));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(4));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(4));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(3), topologyNodes.at(4));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(3), topologyNodes.at(5));
 
     topology->print();
 
@@ -760,16 +760,16 @@ TEST_F(TopologyTest, testFindCommonChildWithMaintenance) {
 
     topology->setAsRoot(topologyNodes.at(0));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(4));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(4));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(3));
 
     topology->print();
 
@@ -812,24 +812,24 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
     topology->setAsRoot(topologyNodes.at(0));
 
     // link each worker with its neighbor
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(3));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(3));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(4));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(6));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(3), topologyNodes.at(4));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(3), topologyNodes.at(6));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(8));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(5), topologyNodes.at(8));
 
-    topology->addNewPhysicalNodeAsChild(topologyNodes.at(6), topologyNodes.at(8));
+    topology->addNewTopologyNodeAsChild(topologyNodes.at(6), topologyNodes.at(8));
 
     //Idea: Subquery deployed on 5 with Child Operators on nodes 7 and 8. Parent Operators on nodes 1 and 2
     //try to find a new node onto which we could potentially migrate the subqueries on node 5.

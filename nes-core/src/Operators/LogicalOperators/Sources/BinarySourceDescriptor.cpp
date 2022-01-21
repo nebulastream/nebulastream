@@ -45,4 +45,10 @@ bool BinarySourceDescriptor::equal(SourceDescriptorPtr const& other) {
 }
 
 std::string BinarySourceDescriptor::toString() { return "BinarySourceDescriptor(" + filePath + ")"; }
+
+SourceDescriptorPtr BinarySourceDescriptor::copy() {
+    auto copy = BinarySourceDescriptor::create(schema->copy(), filePath);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
 }// namespace NES

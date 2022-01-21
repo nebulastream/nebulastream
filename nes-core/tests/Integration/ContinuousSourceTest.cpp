@@ -919,7 +919,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     sourceConfig->setSkipHeader(false);
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, carSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, carSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1ULL);
 

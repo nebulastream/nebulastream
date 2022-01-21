@@ -50,6 +50,8 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
 
+    SourceDescriptorPtr copy() override;
+
   private:
     explicit DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency);
     explicit DefaultSourceDescriptor(SchemaPtr schema,

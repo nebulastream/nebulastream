@@ -56,7 +56,7 @@ class Topology {
      * @param newNode : the new physical node.
      * @return true if successful
      */
-    bool addNewPhysicalNodeAsChild(const TopologyNodePtr& parent, const TopologyNodePtr& newNode);
+    bool addNewTopologyNodeAsChild(const TopologyNodePtr& parent, const TopologyNodePtr& newNode);
 
     /**
      * @brief This method will remove a given physical node

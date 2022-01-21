@@ -320,7 +320,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -374,7 +374,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -431,7 +431,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -590,8 +590,8 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -644,8 +644,8 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -704,7 +704,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -753,7 +753,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -802,8 +802,8 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -852,8 +852,8 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, testSchema);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -1240,11 +1240,11 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
 
-    testHarness.addNonSourceWorker();
-    testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));
-    testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));
-    testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));
-    testHarness.addCSVSource(conf, testSchema, testHarness.getWorkerId(0));
+    testHarness.attachWorkerToCoordinator();
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema, testHarness.getWorkerId(0));
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema, testHarness.getWorkerId(0));
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema, testHarness.getWorkerId(0));
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema, testHarness.getWorkerId(0));
 
     ASSERT_EQ(testHarness.getWorkerCount(), 5UL);
 
@@ -1431,7 +1431,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1476,7 +1476,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1523,7 +1523,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithBoolKey) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))).project(Attribute("value2")))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1566,7 +1566,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))).project(Attribute("value2")))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1607,7 +1607,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     NES::ExecutableTypes::Array<char, 4> keyOne = "aaa";
     NES::ExecutableTypes::Array<char, 4> keyTwo = "bbb";
@@ -1659,7 +1659,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Avg(Attribute("value1"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1707,7 +1707,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1755,7 +1755,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1813,7 +1813,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
     sourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, carSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, carSchema);
 
     struct Output {
         uint64_t start;
@@ -1856,7 +1856,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1904,7 +1904,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -1954,7 +1954,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Count()))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -2005,7 +2005,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMedianAggregation) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Median(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -2056,7 +2056,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Count()->as(Attribute("Frequency"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 

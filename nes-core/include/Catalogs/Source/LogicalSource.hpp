@@ -26,29 +26,32 @@ namespace NES {
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
+class LogicalSource;
+using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
+
 /**
  * @brief The LogicalSource wraps the stream name and the schema.
  */
 class LogicalSource {
   public:
-    LogicalSource(std::string name, const SchemaPtr& schema);
+
+    static LogicalSourcePtr create(const std::string& logicalSourceName, const SchemaPtr& schema);
 
     /**
-     * @brief Gets the stream name
+     * @brief Gets the logical source name
      */
-    std::string getName();
+    std::string getLogicalSourceName();
 
     /**
-     * @brief Gets the stream schema
+     * @brief Gets the schema
      */
     SchemaPtr getSchema();
 
   private:
-    std::string name;
+    LogicalSource(const std::string& logicalSourceName, const SchemaPtr& schema);
+
+    std::string logicalSourceName;
     SchemaPtr schema;
 };
-
-using LogicalStreamPtr = std::shared_ptr<LogicalSource>;
-
 }// namespace NES
 #endif// NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_

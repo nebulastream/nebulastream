@@ -40,6 +40,8 @@ class BinarySourceDescriptor : public SourceDescriptor {
 
     std::string toString() override;
 
+    SourceDescriptorPtr copy() override;
+
   private:
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
     explicit BinarySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath);

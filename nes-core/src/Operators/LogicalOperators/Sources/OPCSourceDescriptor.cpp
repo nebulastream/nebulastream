@@ -91,6 +91,12 @@ bool OPCSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 
 std::string OPCSourceDescriptor::toString() { return "OPCSourceDescriptor()"; }
 
+SourceDescriptorPtr OPCSourceDescriptor::copy() {
+    auto copy = OPCSourceDescriptor::create(schema->copy(), logicalSourceName, url, nodeId, user, password);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
+
 }// namespace NES
 
 #endif

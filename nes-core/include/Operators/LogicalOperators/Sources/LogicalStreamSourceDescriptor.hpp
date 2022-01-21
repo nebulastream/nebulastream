@@ -37,6 +37,7 @@ class LogicalStreamSourceDescriptor : public SourceDescriptor {
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
 
     std::string toString() override;
+    SourceDescriptorPtr copy() override;
 
   private:
     explicit LogicalStreamSourceDescriptor(std::string logicalSourceName);

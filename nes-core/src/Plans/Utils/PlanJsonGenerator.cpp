@@ -100,7 +100,7 @@ web::json::value PlanJsonGenerator::getExecutionPlanAsJson(const GlobalExecution
         web::json::value currentExecutionNodeJsonValue{};
 
         currentExecutionNodeJsonValue["executionNodeId"] = web::json::value::number(executionNode->getId());
-        currentExecutionNodeJsonValue["topologyNodeId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
+        currentExecutionNodeJsonValue["topologyId"] = web::json::value::number(executionNode->getTopologyNode()->getId());
         currentExecutionNodeJsonValue["topologyNodeIpAddress"] =
             web::json::value::string(executionNode->getTopologyNode()->getIpAddress());
 

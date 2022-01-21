@@ -179,12 +179,12 @@ class WorkerConfiguration {
     /**
      * @brief gets a ConfigurationOption object with parentId
      */
-    StringConfigOption getParentId();
+    IntConfigOption getParentId();
 
     /**
      * @brief set the value for parentId with the appropriate data format
      */
-    void setParentId(std::string parentId);
+    void setParentId(uint32_t parentId);
 
     /**
      * @brief gets a ConfigurationOption object with logLevel
@@ -287,7 +287,7 @@ class WorkerConfiguration {
     IntConfigOption numberOfBuffersPerWorker;
     IntConfigOption numberOfBuffersInSourceLocalBufferPool;
     IntConfigOption bufferSizeInBytes;
-    StringConfigOption parentId;
+    IntConfigOption parentId;
     StringConfigOption logLevel;
     // indicates the compilation strategy of the query compiler [FAST|DEBUG|OPTIMIZE].
     StringConfigOption queryCompilerCompilationStrategy;

@@ -61,7 +61,7 @@ WorkerConfiguration::WorkerConfiguration() : physicalSources() {
                                                                                    64,
                                                                                    "Number buffers in source local buffer pool.");
     bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
-    parentId = ConfigurationOption<std::string>::create("parentId", "-1", "Parent ID of this node.");
+    parentId = ConfigurationOption<uint32_t>::create("parentId", 0, "Parent ID of this node.");
     logLevel = ConfigurationOption<std::string>::create("logLevel",
                                                         "LOG_DEBUG",
                                                         "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
@@ -139,7 +139,7 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
                 setBufferSizeInBytes(std::stoi(root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).val().str));
             }
             if (root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).has_val()) {
-                setParentId(root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).val().str);
+                setParentId(std::stoi(root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).val().str));
             }
             if (root.find_child(ryml::to_csubstr(LOG_LEVEL_CONFIG)).has_val()) {
                 setLogLevel(root.find_child(ryml::to_csubstr(LOG_LEVEL_CONFIG)).val().str);
@@ -208,7 +208,7 @@ void WorkerConfiguration::overwriteConfigWithCommandLineInput(const std::map<std
             } else if (it->first == "--" + BUFFERS_SIZE_IN_BYTES_CONFIG && !it->second.empty()) {
                 setBufferSizeInBytes(stoi(it->second));
             } else if (it->first == "--" + PARENT_ID_CONFIG && !it->second.empty()) {
-                setParentId(it->second);
+                setParentId(stoi(it->second));
             } else if (it->first == "--" + QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG && !it->second.empty()) {
                 setQueryCompilerCompilationStrategy(it->second);
             } else if (it->first == "--" + QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG && !it->second.empty()) {
@@ -321,9 +321,9 @@ void WorkerConfiguration::setNumWorkerThreads(uint16_t numWorkerThreadsValue) {
     numWorkerThreads->setValue(numWorkerThreadsValue);
 }
 
-StringConfigOption WorkerConfiguration::getParentId() { return parentId; }
+IntConfigOption WorkerConfiguration::getParentId() { return parentId; }
 
-void WorkerConfiguration::setParentId(std::string parentIdValue) { parentId->setValue(std::move(parentIdValue)); }
+void WorkerConfiguration::setParentId(uint32_t parentIdValue) { parentId->setValue(parentIdValue); }
 
 StringConfigOption WorkerConfiguration::getLogLevel() { return logLevel; }
 

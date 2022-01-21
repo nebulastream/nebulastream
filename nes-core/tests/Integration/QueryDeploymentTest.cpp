@@ -388,7 +388,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
 
     for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
@@ -427,7 +427,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
 
     for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
@@ -463,8 +463,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
-    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -504,8 +504,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     string query = R"(Query::from("test"))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
-    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
 
     for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
@@ -545,7 +545,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     string query = R"(Query::from("test").filter(Attribute("id") < 5))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
 
     for (int i = 0; i < 5; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
@@ -819,7 +819,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     string query = R"(Query::from("test").project(Attribute("id")))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    testHarness.addMemorySource("test", defaultLogicalSchema, "test1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
 
     for (int i = 0; i < 10; ++i) {
         testHarness.pushElement<Test>({1, 1}, 0);
@@ -1144,12 +1144,12 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.addCSVSource(conf, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
 
     srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
 
     PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf);
-    testHarness.addCSVSource(conf2, testSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, testSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 

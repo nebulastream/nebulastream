@@ -35,7 +35,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                       uint64_t kafkaConnectTimeout);
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string brokers,
-                                      std::string streamName,
+                                      std::string logicalSourceName,
                                       std::string topic,
                                       std::string groupId,
                                       bool autoCommit,
@@ -70,6 +70,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
 
+    SourceDescriptorPtr copy() override;
+
   private:
     explicit KafkaSourceDescriptor(SchemaPtr schema,
                                    std::string brokers,
@@ -78,7 +80,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
                                    bool autoCommit,
                                    uint64_t kafkaConnectTimeout);
     explicit KafkaSourceDescriptor(SchemaPtr schema,
-                                   std::string streamName,
+                                   std::string logicalSourceName,
                                    std::string brokers,
                                    std::string topic,
                                    std::string groupId,

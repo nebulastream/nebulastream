@@ -98,6 +98,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
      */
     uint64_t getGatheringValue() const;
 
+    SourceDescriptorPtr copy() override;
+
   private:
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;

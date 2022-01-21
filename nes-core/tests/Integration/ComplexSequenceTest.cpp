@@ -77,8 +77,8 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestSingleNodeSingleWindowSingleJoin
         )";
     TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("window1", window1Schema, "window1");
-    testHarness.addMemorySource("window2", window2Schema, "window2");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("window1", window1Schema, "window1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("window2", window2Schema, "window2");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2u);
 
@@ -155,10 +155,10 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
             .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(1))).byKey(Attribute("window1window2$key")).apply(Sum(Attribute("window1$id1")))
         )";
     TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
-    testHarness.addNonSourceWorker();
-    testHarness.addNonSourceWorker();
-    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));
+    testHarness.attachWorkerToCoordinator();
+    testHarness.attachWorkerToCoordinator();
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window1", window1Schema, "window1", testHarness.getWorkerId(0));
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window2", window2Schema, "window2", testHarness.getWorkerId(1));
 
     ASSERT_EQ(testHarness.getWorkerCount(), 4UL);
 
@@ -206,7 +206,7 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
 /*
  * @brief Test a query with a multiple window operator and a multiple join operator running on a single node
  * Placement:
- * ExecutionNode(id:1, ip:127.0.0.1, topologyNodeId:1)
+ * ExecutionNode(id:1, ip:127.0.0.1, topologyId:1)
  *  | QuerySubPlan(queryId:1, querySubPlanId:1)
  *  |  SINK(13)
  *  |    CENTRALWINDOW(14)
@@ -221,15 +221,15 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
  *  |                  SOURCE(20,)
  *  |              WATERMARKASSIGNER(7)
  *  |                SOURCE(16,)
- *  |--ExecutionNode(id:4, ip:127.0.0.1, topologyNodeId:4)
+ *  |--ExecutionNode(id:4, ip:127.0.0.1, topologyId:4)
  *  |  | QuerySubPlan(queryId:1, querySubPlanId:4)
  *  |  |  SINK(17)
  *  |  |    SOURCE(6,window3)
- *  |--ExecutionNode(id:2, ip:127.0.0.1, topologyNodeId:2)
+ *  |--ExecutionNode(id:2, ip:127.0.0.1, topologyId:2)
  *  |  | QuerySubPlan(queryId:1, querySubPlanId:2)
  *  |  |  SINK(19)
  *  |  |    SOURCE(1,window1)
- *  |--ExecutionNode(id:3, ip:127.0.0.1, topologyNodeId:3)
+ *  |--ExecutionNode(id:3, ip:127.0.0.1, topologyId:3)
  *  |  | QuerySubPlan(queryId:1, querySubPlanId:3)
  *  |  |  SINK(21)
  *  |  |    SOURCE(2,window2)
@@ -278,9 +278,9 @@ TEST_F(ComplexSequenceTest, DISABLED_ComplexTestSingleNodeMultipleWindowsMultipl
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("window1", window1Schema, "window1");
-    testHarness.addMemorySource("window2", window2Schema, "window2");
-    testHarness.addMemorySource("window3", window3Schema, "window3");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("window1", window1Schema, "window1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("window2", window2Schema, "window2");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("window3", window3Schema, "window3");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 3UL);
 
@@ -395,12 +395,12 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
-    testHarness.addNonSourceWorker();
-    testHarness.addNonSourceWorker();
-    testHarness.addNonSourceWorker();
-    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));
-    testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(2));
+    testHarness.attachWorkerToCoordinator();
+    testHarness.attachWorkerToCoordinator();
+    testHarness.attachWorkerToCoordinator();
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window1", window1Schema, "window1", testHarness.getWorkerId(0));
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window2", window2Schema, "window2", testHarness.getWorkerId(1));
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window3", window3Schema, "window3", testHarness.getWorkerId(2));
 
     ASSERT_EQ(testHarness.getWorkerCount(), 6U);
 
@@ -474,7 +474,7 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
 //|  |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
 
 // Placement:
-//ExecutionNode(id:1, ip:127.0.0.1, topologyNodeId:1)
+//ExecutionNode(id:1, ip:127.0.0.1, topologyId:1)
 //| QuerySubPlan(queryId:1, querySubPlanId:5)
 //|  SINK(16)
 //|    MAP(15)
@@ -485,7 +485,7 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
 //|              Join(10)
 //|                SOURCE(19,)
 //|                SOURCE(25,)
-//|--ExecutionNode(id:2, ip:127.0.0.1, topologyNodeId:2)
+//|--ExecutionNode(id:2, ip:127.0.0.1, topologyId:2)
 //|  | QuerySubPlan(queryId:1, querySubPlanId:1)
 //|  |  SINK(20)
 //|  |    WATERMARKASSIGNER(9)
@@ -495,12 +495,12 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
 //|  |    Join(7)
 //|  |      SOURCE(21,)
 //|  |      SOURCE(23,)
-//|  |--ExecutionNode(id:4, ip:127.0.0.1, topologyNodeId:4)
+//|  |--ExecutionNode(id:4, ip:127.0.0.1, topologyId:4)
 //|  |  | QuerySubPlan(queryId:1, querySubPlanId:2)
 //|  |  |  SINK(22)
 //|  |  |    WATERMARKASSIGNER(6)
 //|  |  |      SOURCE(4,window2)
-//|  |--ExecutionNode(id:3, ip:127.0.0.1, topologyNodeId:3)
+//|  |--ExecutionNode(id:3, ip:127.0.0.1, topologyId:3)
 //|  |  | QuerySubPlan(queryId:1, querySubPlanId:3)
 //|  |  |  SINK(24)
 //|  |  |    WATERMARKASSIGNER(5)
@@ -554,11 +554,11 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
-    testHarness.addNonSourceWorker();                                                            //wrk0
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));                                  //wrk1
-    testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(0));//wrk2
-    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(1));//wrk3
-    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));//wrk4
+    testHarness.attachWorkerToCoordinator();                                                            //wrk0
+    testHarness.attachWorkerToWorkerWithId(testHarness.getWorkerId(0));                                  //wrk1
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window3", window3Schema, "window3", testHarness.getWorkerId(0));//wrk2
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window1", window1Schema, "window1", testHarness.getWorkerId(1));//wrk3
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window2", window2Schema, "window2", testHarness.getWorkerId(1));//wrk4
 
     ASSERT_EQ(testHarness.getWorkerCount(), 5ULL);
 

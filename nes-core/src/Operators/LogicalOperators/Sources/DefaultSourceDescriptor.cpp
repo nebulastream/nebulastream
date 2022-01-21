@@ -58,4 +58,12 @@ std::string DefaultSourceDescriptor::toString() {
     return "DefaultSourceDescriptor(" + std::to_string(numbersOfBufferToProduce) + ", " + std::to_string(frequency.count())
         + "ms)";
 }
+SourceDescriptorPtr DefaultSourceDescriptor::copy() {
+    auto copy = DefaultSourceDescriptor::create(schema->copy(),
+                                                std::move(logicalSourceName),
+                                                numbersOfBufferToProduce,
+                                                frequency.count());
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
 }// namespace NES

@@ -95,6 +95,8 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      */
     uint64_t getGatheringValue() const;
 
+    SourceDescriptorPtr copy() override;
+
   private:
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProcess;

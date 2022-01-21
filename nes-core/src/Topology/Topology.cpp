@@ -28,7 +28,7 @@ Topology::Topology() : rootNode(nullptr) {}
 
 TopologyPtr Topology::create() { return std::shared_ptr<Topology>(new Topology()); }
 
-bool Topology::addNewPhysicalNodeAsChild(const TopologyNodePtr& parent, const TopologyNodePtr& newNode) {
+bool Topology::addNewTopologyNodeAsChild(const TopologyNodePtr& parent, const TopologyNodePtr& newNode) {
     std::unique_lock lock(topologyLock);
     uint64_t newNodeId = newNode->getId();
     if (indexOnNodeIds.find(newNodeId) == indexOnNodeIds.end()) {

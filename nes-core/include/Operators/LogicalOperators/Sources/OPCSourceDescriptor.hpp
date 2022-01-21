@@ -61,6 +61,7 @@ class OPCSourceDescriptor : public SourceDescriptor {
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
 
     std::string toString() override;
+    SourceDescriptorPtr copy() override;
 
   private:
     explicit OPCSourceDescriptor(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user, std::string password);

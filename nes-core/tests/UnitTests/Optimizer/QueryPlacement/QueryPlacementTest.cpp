@@ -78,10 +78,10 @@ class QueryPlacementTest : public testing::Test {
         topology->setAsRoot(rootNode);
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
-        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode1);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
-        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode2);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
@@ -581,8 +581,8 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
 
-    topology->addNewPhysicalNodeAsChild(sinkNode, midNode);
-    topology->addNewPhysicalNodeAsChild(midNode, srcNode);
+    topology->addNewTopologyNodeAsChild(sinkNode, midNode);
+    topology->addNewTopologyNodeAsChild(midNode, srcNode);
 
     ASSERT_TRUE(sinkNode->containAsChild(midNode));
     ASSERT_TRUE(midNode->containAsChild(srcNode));
@@ -685,8 +685,8 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
 
-    topology->addNewPhysicalNodeAsChild(sinkNode, midNode);
-    topology->addNewPhysicalNodeAsChild(midNode, srcNode);
+    topology->addNewTopologyNodeAsChild(sinkNode, midNode);
+    topology->addNewTopologyNodeAsChild(midNode, srcNode);
 
     ASSERT_TRUE(sinkNode->containAsChild(midNode));
     ASSERT_TRUE(midNode->containAsChild(srcNode));
@@ -795,8 +795,8 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
 
-    topology->addNewPhysicalNodeAsChild(sinkNode, midNode);
-    topology->addNewPhysicalNodeAsChild(midNode, srcNode);
+    topology->addNewTopologyNodeAsChild(sinkNode, midNode);
+    topology->addNewTopologyNodeAsChild(midNode, srcNode);
 
     ASSERT_TRUE(sinkNode->containAsChild(midNode));
     ASSERT_TRUE(midNode->containAsChild(srcNode));
@@ -917,10 +917,10 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
 
-    topology->addNewPhysicalNodeAsChild(sinkNode, midNode1);
-    topology->addNewPhysicalNodeAsChild(sinkNode, midNode2);
-    topology->addNewPhysicalNodeAsChild(midNode1, srcNode1);
-    topology->addNewPhysicalNodeAsChild(midNode2, srcNode2);
+    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
+    topology->addNewTopologyNodeAsChild(sinkNode, midNode2);
+    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
+    topology->addNewTopologyNodeAsChild(midNode2, srcNode2);
 
     ASSERT_TRUE(sinkNode->containAsChild(midNode1));
     ASSERT_TRUE(sinkNode->containAsChild(midNode2));
@@ -1061,8 +1061,8 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
 
-    topology->addNewPhysicalNodeAsChild(sinkNode, midNode1);
-    topology->addNewPhysicalNodeAsChild(midNode1, srcNode1);
+    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
+    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
 
     ASSERT_TRUE(sinkNode->containAsChild(midNode1));
     ASSERT_TRUE(midNode1->containAsChild(srcNode1));
@@ -1181,8 +1181,8 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     TopologyPtr topology = Topology::create();
     topology->setAsRoot(sinkNode);
 
-    topology->addNewPhysicalNodeAsChild(sinkNode, midNode1);
-    topology->addNewPhysicalNodeAsChild(midNode1, srcNode1);
+    topology->addNewTopologyNodeAsChild(sinkNode, midNode1);
+    topology->addNewTopologyNodeAsChild(midNode1, srcNode1);
 
     ASSERT_TRUE(sinkNode->containAsChild(midNode1));
     ASSERT_TRUE(midNode1->containAsChild(srcNode1));
