@@ -18,16 +18,15 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -64,8 +63,6 @@ class MemoryLayoutSelectionPhaseTest : public testing::Test {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
-
-        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
     }
 
     /* Will be called before a test is executed. */
