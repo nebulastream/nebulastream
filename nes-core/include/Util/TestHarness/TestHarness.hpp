@@ -210,8 +210,7 @@ class TestHarness {
      */
     TestHarness& attachWorkerWithMemorySourceToCoordinator(const std::string& logicalStreamName) {
         //We are assuming coordinator will start with id 1
-        attachWorkerWithMemorySourceToWorkerWithId(std::move(logicalStreamName), 1);
-        return *this;
+        return attachWorkerWithMemorySourceToWorkerWithId(std::move(logicalStreamName), 1);
     }
 
     /**
@@ -220,7 +219,7 @@ class TestHarness {
      * @param physicalSource physical stream configuration for the csv source
      * @param parentId id of the parent to connect
      */
-    void attachWorkerWithCSVSourceToWorkerWithId(const PhysicalSourcePtr& physicalSource, uint64_t parentId) {
+    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const PhysicalSourcePtr& physicalSource, uint64_t parentId) {
         auto workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->addPhysicalSource(physicalSource);
         workerConfiguration->setParentId(parentId);
@@ -232,22 +231,22 @@ class TestHarness {
                                                                                      TestHarnessWorkerConfiguration::CSVSource,
                                                                                      workerId);
         testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
+        return *this;
     }
 
     /**
       * @brief add a csv source to be used in the test
       * @param physicalSource physical stream configuration for the csv source
       */
-    void attachWorkerWithCSVSourceToCoordinator(PhysicalSourcePtr physicalSource) {
+    TestHarness& attachWorkerWithCSVSourceToCoordinator(PhysicalSourcePtr physicalSource) {
         //We are assuming coordinator will start with id 1
-        attachWorkerWithCSVSourceToWorkerWithId(std::move(physicalSource), 1);
+        return attachWorkerWithCSVSourceToWorkerWithId(std::move(physicalSource), 1);
     }
 
     /**
      * @brief add worker and connect to parent with specific parent id
      * @param parentId id of the Test Harness worker to connect
      * Note: The parent id can not be greater than the current testharness worker id
-     *
      */
     TestHarness& attachWorkerToWorkerWithId(uint32_t parentId) {
 
@@ -262,9 +261,9 @@ class TestHarness {
     /**
      * @brief add non source worker
      */
-    void attachWorkerToCoordinator() {
+    TestHarness& attachWorkerToCoordinator() {
         //We are assuming coordinator will start with id 1
-        attachWorkerToWorkerWithId(1);
+        return attachWorkerToWorkerWithId(1);
     }
 
     uint64_t getWorkerCount() { return testHarnessWorkerConfigurations.size(); }
@@ -337,6 +336,10 @@ class TestHarness {
     };
 
     TestHarness& setupTopology() {
+
+        if(!validationDone){
+            NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
+        }
 
         //Start Coordinator
         auto coordinatorConfiguration = CoordinatorConfiguration::create();
