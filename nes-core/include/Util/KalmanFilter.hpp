@@ -42,6 +42,19 @@ namespace NES {
 class KalmanFilter {
 
   public:
+    /**
+     * Full c-tor of a filter.
+     * The parameters use the mathematical names
+     * of the matrices.
+     *
+     * @param timeStep
+     * @param F
+     * @param H
+     * @param Q
+     * @param R
+     * @param P
+     * @param errorWindowSize
+     */
     explicit KalmanFilter(double timeStep,
                           Eigen::MatrixXd F,
                           Eigen::MatrixXd H,
@@ -49,21 +62,50 @@ class KalmanFilter {
                           Eigen::MatrixXd R,
                           Eigen::MatrixXd P,
                           const uint64_t errorWindowSize = 10);
+
+    /**
+     * Simple c-tor of a filter.
+     * Only uses the history window size.
+     * Everything else is initialized to
+     * a default set of parameters.
+     *
+     * @param errorWindowSize
+     */
     explicit KalmanFilter(const uint64_t errorWindowSize = 10);
 
-    // initialization methods, empty, only 1 state, only 1 state + timestamp
+    /**
+     * Initialize the matrices in a filter.
+     * The init method can also be called
+     * with a prepared initialState vector
+     * as well as an initialTimestamp.
+     */
     void init();// all zeroes
     void init(const Eigen::VectorXd& initialState);
     void init(const Eigen::VectorXd& initialState, double initialTimestamp);
-    void setDefaultValues();// create artificial initial values
 
-    // update methods, 1 value vector, 1 value vector + diff. timestep
+    /**
+     * create artificial initial values
+     */
+    void setDefaultValues();
+
+    /**
+     * Update methods, with different signatures.
+     * 1st - use only a vector of measured values
+     * 2nd - vector of values + timestep for updates
+     * 3rd - values + timestem + dynamics matrix
+     * @param measuredValues
+     */
     void update(const Eigen::VectorXd& measuredValues); // same timestep
     void update(const Eigen::VectorXd& measuredValues, double newTimeStep);// update with timestep
     void update(const Eigen::VectorXd& measuredValues,
                 double newTimeStep,
                 const Eigen::MatrixXd& A);// update using new timestep and dynamics
-    void updateFromTupleBuffer(Runtime::TupleBuffer& buffer);// directly feed a buffer to the filter
+
+    /**
+     * Update method, using a full tuple buffer as input.
+     * @param buffer
+     */
+    void updateFromTupleBuffer(Runtime::TupleBuffer& buffer);
 
     // simple setters/getters for individual fields
     double getCurrentStep();
@@ -75,12 +117,19 @@ class KalmanFilter {
     float getLambda();
     void setLambda(float newLambda);
 
-    // frequency related setters
-    // needed to set freq/ranger after init
+    /**
+     * Frequency related setters.
+     * @param frequencyInMillis
+     */
     void setFrequency(std::chrono::milliseconds frequencyInMillis);
     void setFrequencyRange(std::chrono::milliseconds frequencyRange);
     void setFrequencyWithRange(std::chrono::milliseconds frequencyInMillis,
                                std::chrono::milliseconds frequencyRange);
+
+    /**
+     * Get current frequency.
+     * @return frequency in millis
+     */
     std::chrono::milliseconds getCurrentFrequency();
 
     /**
@@ -99,7 +148,12 @@ class KalmanFilter {
     double getTotalEstimationError();
 
   protected:
-    int m, n;// system model dimensions
+    /**
+     * System model dimensions.
+     * These are used to initialize
+     * the various system matrices.
+     */
+    int m, n;
 
     /**
     * Process-specific matrices for a general KF.
@@ -116,13 +170,21 @@ class KalmanFilter {
         estimateCovariance, kalmanGain, initialEstimateCovariance;
     Eigen::MatrixXd identityMatrix;// identity matrix identityMatrix, on size n
 
-    // estimated state, estimated state +1
+    /**
+     * Estimated state, estimated state in timestep+1
+     */
     Eigen::VectorXd xHat, xHatNew;
 
-    // error between predict/update
+    /**
+     * Error between predict/update
+     */
     Eigen::VectorXd innovationError;// eq. 3
 
-    // time-related members
+    /**
+     * Timestep used in updates.
+     * This is needed to create special
+     * versions of KFs.
+     */
     double timeStep;
     double initialTimestamp;
     double currentTime;
