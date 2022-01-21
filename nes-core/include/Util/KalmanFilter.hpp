@@ -104,18 +104,22 @@ class KalmanFilter {
     /**
     * Process-specific matrices for a general KF.
     * These are using the names from the original paper.
-	*   F - System transition matrix / dynamics
-	*   H - Observation model matrix
-	*   Q - Process noise covariance
-	*   R - Measurement noise covariance
-	*   P - Estimate error covariance
-    *   K - Kalman gain
+	*   stateTransitionModel - F
+	*   observationModel - H
+	*   processNoiseCovariance - Q
+	*   measurementNoiseCovariance - R
+	*   estimateCovariance - P
+    *   kalmanGain - K
+    *   iniitalEstimateCovariance - P0
 	*/
-    Eigen::MatrixXd F, H, Q, R, P, K, P0;
-    Eigen::MatrixXd I;// identity matrix, on size n
+    Eigen::MatrixXd stateTransitionModel, observationModel, processNoiseCovariance, measurementNoiseCovariance,
+        estimateCovariance, kalmanGain, initialEstimateCovariance;
+    Eigen::MatrixXd identityMatrix;// identity matrix identityMatrix, on size n
 
     // estimated state, estimated state +1
     Eigen::VectorXd xHat, xHatNew;
+
+    // error between predict/update
     Eigen::VectorXd innovationError;// eq. 3
 
     // time-related members
@@ -138,7 +142,7 @@ class KalmanFilter {
      * frequency. Theta (θ) is static according
      * to the paper in Jain et al.
      */
-    uint64_t theta = 2; // θ = 2 in all experiments
+    const uint64_t theta = 2; // θ = 2 in all experiments
     float lambda = 0.6; // λ = 0.6 in most experiments
 
     /**
@@ -154,13 +158,23 @@ class KalmanFilter {
     CircularBuffer<float> kfErrorWindow;
 
     /**
-     * Error calculation using the window of previous
-     * values.
-     * @return the current estimation error, weighted
-     * by recency and size.
+     * Calculates the current estimation error.
+     * Uses the last W errors stored in the
+     * history window in kfErrorWindow. Basically
+     * sum all errors in the window and divide
+     * them by the totalEstimationErrorDivider.
+     * @return the total error over the history window
+     */
+    float calculateTotalEstimationError(); // eq. 9
+
+    /**
+     * Calculate the divider of the total estimation
+     * error. It stays the same across history,
+     * so it can be calculated once, during
+     * initialization.
+     * @return the current estimation error divider
      */
     float totalEstimationErrorDivider;
-    float calculateTotalEstimationError(); // eq. 9
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calc. once)
 
 };// class KalmanFilter
