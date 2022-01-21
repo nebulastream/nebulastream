@@ -45,13 +45,13 @@ class WorkerContext {
     /// worker local buffer pool
     LocalBufferPoolPtr localBufferPool;
     /// numa location of current worker
-    uint32_t numaNode = 0;
+    uint32_t queueId = 0;
 
   public:
     explicit WorkerContext(uint32_t workerId,
                            const BufferManagerPtr& bufferManager,
                            uint64_t numberOfBuffersPerWorker,
-                           uint32_t numaNode = 0);
+                           uint32_t queueId = 0);
 
     ~WorkerContext();
 
@@ -89,10 +89,10 @@ class WorkerContext {
     uint32_t decreaseObjectRefCnt(void* object);
 
     /**
-     * @brief get the numa node of the current worker
-     * @return current numa Node
+     * @brief get the queue id of the the current worker
+     * @return current queue id
      */
-    uint32_t getNumaNode() const;
+    uint32_t getQueueId() const;
 
     /**
      * @brief This stores a network channel for an operator

@@ -822,7 +822,7 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
         //        while (!taskQueue.read(task)) { _mm_pause(); }
         taskQueue.blockingRead(task);
 #else
-        taskQueues[workerContext.getNumaNode()].blockingRead(task);
+        taskQueues[workerContext.getQueueId()].blockingRead(task);
 #endif
 #ifdef ENABLE_PAPI_PROFILER
         auto profiler = cpuProfilers[NesThread::getId() % cpuProfilers.size()];
@@ -889,7 +889,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     while (taskQueue.read(task)) {
 #else
-    while (taskQueues[workerContext.getNumaNode()].read(task)) {
+    while (taskQueues[workerContext.getQueueId()].read(task)) {
 #endif
         if (!hitReconfiguration) {// execute all pending tasks until first reconfiguration
             task(workerContext);
@@ -1043,13 +1043,15 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
         auto qSize = 0;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
         qSize = taskQueue.size();
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
+#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
         for (uint32_t i = 0; i < numberOfQueues; i++) {
             auto tempSize = taskQueues[i].size();
             if (tempSize > 0) {
                 qSize += tempSize;
             }
         }
+#elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
+        qSize = taskQueues[wtx.getQueueId()].size();
 #endif
         statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
 
