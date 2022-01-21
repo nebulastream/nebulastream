@@ -85,21 +85,6 @@ class NesWorker {
     bool disconnect();
 
     /**
-     * @brief method to register logical stream with the coordinator
-     * @param name of the logical stream
-     * @param path tot the file containing the schema
-     * @return bool indicating success
-     */
-    bool registerLogicalStream(std::string name, std::string path);
-
-    /**
-     * @brief method to deregister logical stream with the coordinator
-     * @param name of the stream
-     * @return bool indicating success
-     */
-    bool unregisterLogicalStream(std::string logicalName);
-
-    /**
     * @brief method to deregister physical stream with the coordinator
     * @param logical and physical of the stream
      * @return bool indicating success

@@ -137,6 +137,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
+    SourceDescriptorPtr actualSourceDescriptor;
     if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
         //Fetch logical and physical source name in the descriptor
         auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
@@ -146,11 +147,15 @@ void LowerToExecutableQueryPlanPhase::processSource(
             //Check if logical and physical source name matches with any of the physical source provided by the node
             if (physicalSource->getLogicalSourceName() == logicalSourceName
                 && physicalSource->getPhysicalSourceName() == physicalSourceName) {
-                sourceDescriptor = createActualLogicalSourceDescriptor(sourceDescriptor->getSchema(), physicalSource);
+                actualSourceDescriptor = createActualLogicalSourceDescriptor(sourceDescriptor->getSchema(), physicalSource);
             }
         }
-        throw QueryCompilationException("Unable to find the Physical source with logical source name " + logicalSourceName
-                                        + " and physical source name " + physicalSourceName);
+        if (!actualSourceDescriptor) {
+            throw QueryCompilationException("Unable to find the Physical source with logical source name " + logicalSourceName
+                                            + " and physical source name " + physicalSourceName);
+        }
+    } else {
+        actualSourceDescriptor = sourceDescriptor;
     }
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
@@ -165,7 +170,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
-    auto source = sourceProvider->lower(sourceOperator->getId(), sourceDescriptor, nodeEngine, executableSuccessorPipelines);
+    auto source =
+        sourceProvider->lower(sourceOperator->getId(), actualSourceDescriptor, nodeEngine, executableSuccessorPipelines);
     sources.emplace_back(source);
 }
 

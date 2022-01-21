@@ -1250,6 +1250,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
 }
+
 SerializableOperator_SinkDetails*
 OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sinkDescriptor,
                                                    SerializableOperator_SinkDetails* sinkDetails) {
