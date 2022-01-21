@@ -265,21 +265,6 @@ bool NesWorker::disconnect() {
     return false;
 }
 
-bool NesWorker::registerLogicalStream(std::string name, std::string path) {
-    bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
-    NES_ASSERT(con, "Connection failed");
-    bool success = coordinatorRpcClient->registerLogicalStream(std::move(name), std::move(path));
-    NES_DEBUG("NesWorker::registerLogicalStream success=" << success);
-    return success;
-}
-
-bool NesWorker::unregisterLogicalStream(std::string logicalName) {
-    bool success = coordinatorRpcClient->unregisterLogicalStream(std::move(logicalName));
-    NES_DEBUG("NesWorker::unregisterLogicalStream success=" << success);
-    return success;
-}
-
 bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string physicalName) {
     bool success = coordinatorRpcClient->unregisterPhysicalStream(std::move(logicalName), std::move(physicalName));
     NES_DEBUG("NesWorker::unregisterPhysicalStream success=" << success);
