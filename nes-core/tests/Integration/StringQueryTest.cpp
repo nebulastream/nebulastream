@@ -81,7 +81,7 @@ class StringQueryTest : public testing::Test {
         /// Constexpr loop which compares all the values making use of short-circuit evaluation.
         template<std::size_t i = s - 1,
                  typename =
-                     std::enable_if_t<i<s>>[[nodiscard]] constexpr auto compare(SchemaClass<s> const& rhs) const noexcept->bool {
+                     std::enable_if_t<i<s>> [[nodiscard]] constexpr auto compare(SchemaClass<s> const& rhs) const noexcept->bool {
             if constexpr (i > 0) {
                 return (value[i] == rhs.value[i]) && this->template compare<i - 1>(rhs);
             } else {
@@ -120,18 +120,19 @@ TEST_F(StringQueryTest, conditionOnAttribute) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") == Attribute("value")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // add a memory source
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
-
-    // push two elements to the memory source
-    testHarness.pushElement<Schema_t>({1, "112"}, 0);
-    testHarness.pushElement<Schema_t>({1, "222"}, 0);
-    testHarness.pushElement<Schema_t>({4, "333"}, 0);
-    testHarness.pushElement<Schema_t>({2, "112"}, 0);
-    testHarness.pushElement<Schema_t>({1, "555"}, 0);
-    testHarness.pushElement<Schema_t>({1, "666"}, 0);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", schema)
+                                  // add a memory source
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  // push two elements to the memory source
+                                  .pushElement<Schema_t>({1, "112"}, 2)
+                                  .pushElement<Schema_t>({1, "222"}, 2)
+                                  .pushElement<Schema_t>({4, "333"}, 2)
+                                  .pushElement<Schema_t>({2, "112"}, 2)
+                                  .pushElement<Schema_t>({1, "555"}, 2)
+                                  .pushElement<Schema_t>({1, "666"}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
@@ -150,18 +151,19 @@ TEST_F(StringQueryTest, DISABLED_neqOnChars) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") != "112"))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // add a memory source
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
-
-    // push two elements to the memory source
-    testHarness.pushElement<Schema_t>({1, "112"}, 0);
-    testHarness.pushElement<Schema_t>({1, "222"}, 0);
-    testHarness.pushElement<Schema_t>({4, "333"}, 0);
-    testHarness.pushElement<Schema_t>({2, "112"}, 0);
-    testHarness.pushElement<Schema_t>({1, "555"}, 0);
-    testHarness.pushElement<Schema_t>({1, "666"}, 0);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", schema)
+                                  // add a memory source
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  // push two elements to the memory source
+                                  .pushElement<Schema_t>({1, "112"}, 2)
+                                  .pushElement<Schema_t>({1, "222"}, 2)
+                                  .pushElement<Schema_t>({4, "333"}, 2)
+                                  .pushElement<Schema_t>({2, "112"}, 2)
+                                  .pushElement<Schema_t>({1, "555"}, 2)
+                                  .pushElement<Schema_t>({1, "666"}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
@@ -180,18 +182,19 @@ TEST_F(StringQueryTest, eqOnCharsMultipleReturn) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") == "112"))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // add a memory source
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
-
-    // push two elements to the memory source
-    testHarness.pushElement<Schema_t>({1, "112"}, 0);
-    testHarness.pushElement<Schema_t>({1, "222"}, 0);
-    testHarness.pushElement<Schema_t>({4, "333"}, 0);
-    testHarness.pushElement<Schema_t>({2, "112"}, 0);
-    testHarness.pushElement<Schema_t>({1, "555"}, 0);
-    testHarness.pushElement<Schema_t>({1, "666"}, 0);
+    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", schema)
+                                  // add a memory source
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  // push two elements to the memory source
+                                  .pushElement<Schema_t>({1, "112"}, 2)
+                                  .pushElement<Schema_t>({1, "222"}, 2)
+                                  .pushElement<Schema_t>({4, "333"}, 2)
+                                  .pushElement<Schema_t>({2, "112"}, 2)
+                                  .pushElement<Schema_t>({1, "555"}, 2)
+                                  .pushElement<Schema_t>({1, "666"}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
@@ -211,18 +214,19 @@ TEST_F(StringQueryTest, eqOnString) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") == std::string("113")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // add a memory source
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
-
-    // push two elements to the memory source
-    testHarness.pushElement<Schema_t>({1, "113"}, 0);
-    testHarness.pushElement<Schema_t>({1, "222"}, 0);
-    testHarness.pushElement<Schema_t>({4, "333"}, 0);
-    testHarness.pushElement<Schema_t>({1, "444"}, 0);
-    testHarness.pushElement<Schema_t>({1, "555"}, 0);
-    testHarness.pushElement<Schema_t>({1, "666"}, 0);
+    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", schema)
+                                  // add a memory source
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  // push two elements to the memory source
+                                  .pushElement<Schema_t>({1, "113"}, 2)
+                                  .pushElement<Schema_t>({1, "222"}, 2)
+                                  .pushElement<Schema_t>({4, "333"}, 2)
+                                  .pushElement<Schema_t>({1, "444"}, 2)
+                                  .pushElement<Schema_t>({1, "555"}, 2)
+                                  .pushElement<Schema_t>({1, "666"}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
@@ -242,18 +246,19 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntNotComparator) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // add a memory source
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
-
-    // push two elements to the memory source
-    testHarness.pushElement<Schema_t>({1, "111"}, 0);
-    testHarness.pushElement<Schema_t>({1, "222"}, 0);
-    testHarness.pushElement<Schema_t>({4, "333"}, 0);
-    testHarness.pushElement<Schema_t>({1, "444"}, 0);
-    testHarness.pushElement<Schema_t>({1, "555"}, 0);
-    testHarness.pushElement<Schema_t>({1, "666"}, 0);
+    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", schema)
+                                  // add a memory source
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  // push two elements to the memory source
+                                  .pushElement<Schema_t>({1, "111"}, 2)
+                                  .pushElement<Schema_t>({1, "222"}, 2)
+                                  .pushElement<Schema_t>({4, "333"}, 2)
+                                  .pushElement<Schema_t>({1, "444"}, 2)
+                                  .pushElement<Schema_t>({1, "555"}, 2)
+                                  .pushElement<Schema_t>({1, "666"}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
@@ -274,18 +279,19 @@ TEST_F(StringQueryTest, stringComparisonFilterOnInt) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // add a memory source
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
-
-    // push two elements to the memory source
-    testHarness.pushElement<Schema_t>({1, "111"}, 0);
-    testHarness.pushElement<Schema_t>({1, "222"}, 0);
-    testHarness.pushElement<Schema_t>({4, "333"}, 0);
-    testHarness.pushElement<Schema_t>({1, "444"}, 0);
-    testHarness.pushElement<Schema_t>({1, "555"}, 0);
-    testHarness.pushElement<Schema_t>({1, "666"}, 0);
+    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", schema)
+                                  // add a memory source
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  // push two elements to the memory source
+                                  .pushElement<Schema_t>({1, "111"}, 2)
+                                  .pushElement<Schema_t>({1, "222"}, 2)
+                                  .pushElement<Schema_t>({4, "333"}, 2)
+                                  .pushElement<Schema_t>({1, "444"}, 2)
+                                  .pushElement<Schema_t>({1, "555"}, 2)
+                                  .pushElement<Schema_t>({1, "666"}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
@@ -306,18 +312,19 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntSame) {
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // add a memory source
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
-
-    // push two elements to the memory source
-    testHarness.pushElement<Schema_t>({1, "234"}, 0);
-    testHarness.pushElement<Schema_t>({1, "234"}, 0);
-    testHarness.pushElement<Schema_t>({4, "234"}, 0);
-    testHarness.pushElement<Schema_t>({1, "234"}, 0);
-    testHarness.pushElement<Schema_t>({1, "234"}, 0);
-    testHarness.pushElement<Schema_t>({1, "234"}, 0);
+    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", schema)
+                                  // add a memory source
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  // push two elements to the memory source
+                                  .pushElement<Schema_t>({1, "234"}, 2)
+                                  .pushElement<Schema_t>({1, "234"}, 2)
+                                  .pushElement<Schema_t>({4, "234"}, 2)
+                                  .pushElement<Schema_t>({1, "234"}, 2)
+                                  .pushElement<Schema_t>({1, "234"}, 2)
+                                  .pushElement<Schema_t>({1, "234"}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 
@@ -336,18 +343,19 @@ TEST_F(StringQueryTest, testHarnessUtilizeOneStruct) {
     ASSERT_EQ(8U, carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // add a memory source
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "carMem");
-
-    // push two elements to the memory source
-    testHarness.pushElement<Car>({1, 2}, 0);
-    testHarness.pushElement<Car>({1, 4}, 0);
-    testHarness.pushElement<Car>({4, 3}, 0);
-    testHarness.pushElement<Car>({1, 9}, 0);
-    testHarness.pushElement<Car>({1, 8}, 0);
-    testHarness.pushElement<Car>({1, 9}, 0);
+    auto testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  // add a memory source
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  // push two elements to the memory source
+                                  .pushElement<Car>({1, 2}, 2)
+                                  .pushElement<Car>({1, 4}, 2)
+                                  .pushElement<Car>({4, 3}, 2)
+                                  .pushElement<Car>({1, 9}, 2)
+                                  .pushElement<Car>({1, 8}, 2)
+                                  .pushElement<Car>({1, 9}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1U);
 

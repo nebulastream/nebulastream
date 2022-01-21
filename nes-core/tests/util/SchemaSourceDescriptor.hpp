@@ -29,6 +29,7 @@ class SchemaSourceDescriptor : public SourceDescriptor {
     std::string toString() override { return "Schema Source Descriptor"; }
     bool equal(SourceDescriptorPtr const& other) override { return other->getSchema()->equals(this->getSchema()); }
     ~SchemaSourceDescriptor() override = default;
+    SourceDescriptorPtr copy() override { return create(schema->copy()); };
 };
 
 }// namespace NES
