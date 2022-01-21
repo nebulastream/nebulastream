@@ -230,15 +230,15 @@ SchemaPtr SourceCatalog::getSchemaForLogicalStream(const std::string& logicalStr
     return logicalSourceNameToSchemaMapping[logicalStreamName];
 }
 
-LogicalStreamPtr SourceCatalog::getStreamForLogicalStream(const std::string& logicalStreamName) {
+LogicalSourcePtr SourceCatalog::getStreamForLogicalStream(const std::string& logicalStreamName) {
     std::unique_lock lock(catalogMutex);
-    return std::make_shared<LogicalSource>(logicalStreamName, logicalSourceNameToSchemaMapping[logicalStreamName]);
+    return LogicalSource::create(logicalStreamName, logicalSourceNameToSchemaMapping[logicalStreamName]);
 }
 
-LogicalStreamPtr SourceCatalog::getStreamForLogicalStreamOrThrowException(const std::string& logicalStreamName) {
+LogicalSourcePtr SourceCatalog::getStreamForLogicalStreamOrThrowException(const std::string& logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     if (logicalSourceNameToSchemaMapping.find(logicalStreamName) != logicalSourceNameToSchemaMapping.end()) {
-        return std::make_shared<LogicalSource>(logicalStreamName, logicalSourceNameToSchemaMapping[logicalStreamName]);
+        return LogicalSource::create(logicalStreamName, logicalSourceNameToSchemaMapping[logicalStreamName]);
     }
     NES_ERROR("SourceCatalog::getStreamForLogicalStreamOrThrowException: stream does not exists " << logicalStreamName);
     throw Exception("Required stream does not exists " + logicalStreamName);

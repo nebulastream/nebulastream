@@ -57,4 +57,9 @@ std::chrono::milliseconds NetworkSourceDescriptor::getWaitTime() const { return 
 
 uint8_t NetworkSourceDescriptor::getRetryTimes() const { return retryTimes; }
 
+SourceDescriptorPtr NetworkSourceDescriptor::copy() {
+    auto copy = NetworkSourceDescriptor::create(schema->copy(), nesPartition, nodeLocation, waitTime, retryTimes);
+    return copy;
+}
+
 }// namespace NES::Network

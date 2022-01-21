@@ -16,6 +16,7 @@
 
 #ifdef ENABLE_MQTT_BUILD
 
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <mqtt/async_client.h>
@@ -46,6 +47,12 @@ bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     }
     auto otherMQTTSource = other->as<MQTTSourceDescriptor>();
     return mqttSourceType->equal(otherMQTTSource->mqttSourceType);
+}
+
+SourceDescriptorPtr MQTTSourceDescriptor::copy() {
+    auto copy = MQTTSourceDescriptor::create(schema->copy(), mqttSourceType, inputFormat);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
 }
 
 }// namespace NES

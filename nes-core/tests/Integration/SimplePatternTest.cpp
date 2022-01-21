@@ -14,10 +14,11 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
@@ -41,11 +42,6 @@ uint64_t rpcPort = 4000;
 class SimplePatternTest : public testing::Test {
   public:
     CoordinatorConfigurationPtr coConf;
-    WorkerConfigurationPtr wrkConf;
-    CSVSourceConfigPtr srcConf;
-    CSVSourceConfigPtr srcConf1;
-    CSVSourceConfigPtr srcConf2;
-
     static void SetUpTestCase() {
         NES::setupLogging("SimplePatternTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup SimplePatternTest test class.");
@@ -55,14 +51,9 @@ class SimplePatternTest : public testing::Test {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
         coConf = CoordinatorConfiguration::create();
-        wrkConf = WorkerConfiguration::create();
-        srcConf = CSVSourceConfig::create();
-        srcConf1 = CSVSourceConfig::create();
-        srcConf2 = CSVSourceConfig::create();
 
         coConf->setRpcPort(rpcPort);
         coConf->setRestPort(restPort);
-        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() override { std::cout << "Tear down SimplePatternTest class." << std::endl; }
@@ -82,45 +73,36 @@ class SimplePatternTest : public testing::Test {
  * TODO: Ariane
  */
 TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("coordinator started successfully");
-
-    NES_DEBUG("start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_DEBUG("worker1 started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
     //register logical stream qnv
     //TODO: update CHAR (sensor id is in result set )
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    std::string testSchemaFileName = "QnV.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << qnv;
-    out.close();
-    wrk1->registerLogicalStream("QnV", testSchemaFileName);
+    crd->getStreamCatalogService()->registerLogicalStream("QnV", qnv);
+    NES_DEBUG("coordinator started successfully");
 
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/QnV_short.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->setPhysicalStreamName("test_stream");
-    srcConf->setLogicalStreamName("QnV");
+    NES_INFO("SimplePatternTest: Start worker 1 with physical source");
+    auto worker1Configuration = WorkerConfiguration::create();
+    worker1Configuration->setCoordinatorPort(port);
+    worker1Configuration->setRpcPort(port + 10);
+    worker1Configuration->setDataPort(port + 11);
+    //Add Physical source
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("../tests/test_data/QnV_short.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(conf);
+    PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream", csvSourceType1);
+    worker1Configuration->addPhysicalSource(conf70);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(worker1Configuration);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("SimplePatternTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = "testPatternWithTestStream.out";
     remove(outputFilePath.c_str());
@@ -165,44 +147,35 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
   * Iteration Operator
  */
 TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
+    //register logical stream qnv
+    std::string qnv =
+        R"(Schema::create()->addField("sensor_id", UINT64)->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("QnV", qnv);
     NES_DEBUG("coordinator started successfully");
 
-    NES_INFO("SimplePatternTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_INFO("SimplePatternTest: Start worker 1 with physical source");
+    auto worker1Configuration = WorkerConfiguration::create();
+    worker1Configuration->setCoordinatorPort(port);
+    worker1Configuration->setRpcPort(port + 10);
+    worker1Configuration->setDataPort(port + 11);
+    //Add Physical source
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("../tests/test_data/QnV_short_intID.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    //register physical stream
+    PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream", csvSourceType1);
+    worker1Configuration->addPhysicalSource(conf70);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(worker1Configuration);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SimplePatternTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //register logical stream qnv
-    std::string qnv =
-        R"(Schema::create()->addField("sensor_id", UINT64)->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    std::string testSchemaFileName = "QnV.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << qnv;
-    out.close();
-    wrk1->registerLogicalStream("QnV", testSchemaFileName);
-
-    srcConf->setSourceType("CSVSource");
-    srcConf->setFilePath("../tests/test_data/QnV_short_intID.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
-    srcConf->setPhysicalStreamName("test_stream");
-    srcConf->setLogicalStreamName("QnV");
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());

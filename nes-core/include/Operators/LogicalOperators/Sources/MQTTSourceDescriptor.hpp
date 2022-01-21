@@ -63,6 +63,8 @@ class MQTTSourceDescriptor : public SourceDescriptor {
 
     std::string toString() override;
 
+    SourceDescriptorPtr copy() override;
+
   private:
     /**
      * @brief mqtt source descriptor constructor

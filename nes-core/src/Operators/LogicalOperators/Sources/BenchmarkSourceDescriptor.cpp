@@ -76,4 +76,17 @@ GatheringMode::Value BenchmarkSourceDescriptor::getGatheringMode() const { retur
 SourceMode::Value BenchmarkSourceDescriptor::getSourceMode() const { return sourceMode; }
 
 uint64_t BenchmarkSourceDescriptor::getGatheringValue() const { return gatheringValue; }
+
+SourceDescriptorPtr BenchmarkSourceDescriptor::copy() {
+    auto copy = BenchmarkSourceDescriptor::create(schema->copy(),
+                                                  std::move(memoryArea),
+                                                  memoryAreaSize,
+                                                  numBuffersToProcess,
+                                                  gatheringValue,
+                                                  gatheringMode,
+                                                  sourceMode,
+                                                  sourceAffinity);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
 }// namespace NES

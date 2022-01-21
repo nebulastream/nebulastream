@@ -125,6 +125,8 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
      */
     [[nodiscard]] virtual bool equal(SourceDescriptorPtr const& other) = 0;
 
+    virtual SourceDescriptorPtr copy() = 0;
+
     /**
      * @brief Destructor
      */

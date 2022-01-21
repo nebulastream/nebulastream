@@ -71,7 +71,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(node1RpcPort);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
@@ -80,7 +80,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(node2RpcPort);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");
@@ -149,7 +149,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(node1RpcPort);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("worker started successfully");
@@ -158,7 +158,7 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(node2RpcPort);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("worker started successfully");

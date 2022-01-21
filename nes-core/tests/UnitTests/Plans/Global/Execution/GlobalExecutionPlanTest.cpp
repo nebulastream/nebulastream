@@ -75,7 +75,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     NES_INFO("Actual query plan \n" << actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode->getTopologyNode()->getId()) + ")\n";
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId()) + ")\n";
 
     ASSERT_EQ(expectedPlan, actualPlan);
 }
@@ -111,7 +111,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     NES_INFO("GlobalExecutionPlanTest: queryPlan.toString(): \n" + plan->toString());
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
         + ")\n"
           "| QuerySubPlan(queryId:"
         + std::to_string(queryId) + ", querySubPlanId:" + std::to_string(querySubPlanId)
@@ -168,7 +168,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     NES_INFO("Actual query plan \n" << actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
         + ")\n"
           "| QuerySubPlan(queryId:"
         + std::to_string(query1.getQueryPlan()->getQueryId()) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
@@ -229,7 +229,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     NES_INFO("Actual query plan \n" << actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
         + ")\n"
           "| QuerySubPlan(queryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
@@ -310,7 +310,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     const std::string& actualPlan = globalExecutionPlan->getAsString();
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode->getTopologyNode()->getId())
         + ")\n"
           "| QuerySubPlan(queryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId11)
@@ -401,7 +401,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     NES_INFO("Actual query plan \n" << actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode2->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode2->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode2->getTopologyNode()->getId())
         + ")\n"
           "| QuerySubPlan(queryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
@@ -414,7 +414,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + "\n"
           "|--ExecutionNode(id:"
         + std::to_string(executionNode1->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode1->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode1->getTopologyNode()->getId())
         + ")\n"
           "|  | QuerySubPlan(queryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId1)
@@ -514,7 +514,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     NES_INFO("Actual query plan \n" << actualPlan);
 
     std::string expectedPlan = "ExecutionNode(id:" + std::to_string(executionNode4->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode4->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode4->getTopologyNode()->getId())
         + ")\n"
           "| QuerySubPlan(queryId:"
         + std::to_string(queryId4) + ", querySubPlanId:" + std::to_string(querySubPlanId4)
@@ -527,7 +527,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + "\n"
           "|--ExecutionNode(id:"
         + std::to_string(executionNode3->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode3->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode3->getTopologyNode()->getId())
         + ")\n"
           "|  | QuerySubPlan(queryId:"
         + std::to_string(queryId3) + ", querySubPlanId:" + std::to_string(querySubPlanId3)
@@ -540,7 +540,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + "\n"
           "|  |--ExecutionNode(id:"
         + std::to_string(executionNode2->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode2->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode2->getTopologyNode()->getId())
         + ")\n"
           "|  |  | QuerySubPlan(queryId:"
         + std::to_string(queryId2) + ", querySubPlanId:" + std::to_string(querySubPlanId2)
@@ -553,7 +553,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + "\n"
           "|--ExecutionNode(id:"
         + std::to_string(executionNode1->getId())
-        + ", ip:localhost, topologyNodeId:" + std::to_string(executionNode1->getTopologyNode()->getId())
+        + ", ip:localhost, topologyId:" + std::to_string(executionNode1->getTopologyNode()->getId())
         + ")\n"
           "|  | QuerySubPlan(queryId:"
         + std::to_string(queryId1) + ", querySubPlanId:" + std::to_string(querySubPlanId1)

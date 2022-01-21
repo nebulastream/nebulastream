@@ -36,6 +36,7 @@ class SenseSourceDescriptor : public SourceDescriptor {
     const std::string& getUdfs() const;
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
+    SourceDescriptorPtr copy() override;
 
   private:
     explicit SenseSourceDescriptor(SchemaPtr schema, std::string udfs);

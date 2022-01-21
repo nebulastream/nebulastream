@@ -113,6 +113,8 @@ class BenchmarkSourceDescriptor : public SourceDescriptor {
     */
     uint64_t getSourceAffinity() const;
 
+    SourceDescriptorPtr copy() override;
+
   private:
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;

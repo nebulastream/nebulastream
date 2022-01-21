@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -101,7 +101,9 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             duplicateSourceOperator->addProperty(PINNED_NODE_ID, sourceCatalogEntry->getNode()->getId());
             //Add Physical Source Name to the source descriptor
             auto sourceDescriptor = duplicateSourceOperator->getSourceDescriptor();
-            sourceDescriptor->setPhysicalSourceName(sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
+            auto duplicateSourceDescriptor = sourceDescriptor->copy();
+            duplicateSourceDescriptor->setPhysicalSourceName(sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
+            duplicateSourceOperator->setSourceDescriptor(duplicateSourceDescriptor);
 
             //Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
             const std::vector<NodePtr>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();

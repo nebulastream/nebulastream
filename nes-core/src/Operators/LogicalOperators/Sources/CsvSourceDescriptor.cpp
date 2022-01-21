@@ -38,4 +38,10 @@ bool CsvSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 
 std::string CsvSourceDescriptor::toString() { return "CsvSourceDescriptor(" + csvSourceType->toString() + ")"; }
 
+SourceDescriptorPtr CsvSourceDescriptor::copy() {
+    auto copy = CsvSourceDescriptor::create(schema->copy(), csvSourceType);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
+
 }// namespace NES

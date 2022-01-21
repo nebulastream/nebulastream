@@ -34,5 +34,15 @@ bool LogicalStreamSourceDescriptor::equal(SourceDescriptorPtr const& other) {
     return getLogicalSourceName() == otherLogicalStreamSource->getLogicalSourceName();
 }
 
-std::string LogicalStreamSourceDescriptor::toString() { return "LogicalStreamSourceDescriptor()"; }
+std::string LogicalStreamSourceDescriptor::toString() {
+    return "LogicalStreamSourceDescriptor(" + logicalSourceName + ", " + physicalSourceName + ")";
+}
+
+SourceDescriptorPtr LogicalStreamSourceDescriptor::copy() {
+    auto copy = LogicalStreamSourceDescriptor::create(logicalSourceName);
+    copy->setPhysicalSourceName(physicalSourceName);
+    copy->setSchema(schema->copy());
+    return copy;
+}
+
 }// namespace NES

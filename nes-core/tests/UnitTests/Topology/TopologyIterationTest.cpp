@@ -58,11 +58,11 @@ TEST_F(TopologyIteratorTest, testLinearTopology) {
 
     topology->setAsRoot(rootNode);
 
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, mid1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(rootNode->containAsChild(mid1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, src1);
+    success = topology->addNewTopologyNodeAsChild(mid1, src1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src1));
 
@@ -94,15 +94,15 @@ TEST_F(TopologyIteratorTest, testMultipleSources) {
 
     topology->setAsRoot(rootNode);
 
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, mid1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(rootNode->containAsChild(mid1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, src1);
+    success = topology->addNewTopologyNodeAsChild(mid1, src1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, src2);
+    success = topology->addNewTopologyNodeAsChild(mid1, src2);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src2));
 
@@ -138,19 +138,19 @@ TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
 
     topology->setAsRoot(rootNode);
 
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, mid1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(rootNode->containAsChild(mid1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, src1);
+    success = topology->addNewTopologyNodeAsChild(mid1, src1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, mid2);
+    success = topology->addNewTopologyNodeAsChild(mid1, mid2);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(mid2));
 
-    success = topology->addNewPhysicalNodeAsChild(mid2, src2);
+    success = topology->addNewTopologyNodeAsChild(mid2, src2);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid2->containAsChild(src2));
 
@@ -190,19 +190,19 @@ TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
 
     topology->setAsRoot(rootNode);
 
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, mid1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(rootNode->containAsChild(mid1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, mid2);
+    success = topology->addNewTopologyNodeAsChild(mid1, mid2);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(mid2));
 
-    success = topology->addNewPhysicalNodeAsChild(mid2, src1);
+    success = topology->addNewTopologyNodeAsChild(mid2, src1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid2->containAsChild(src1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, src2);
+    success = topology->addNewTopologyNodeAsChild(mid1, src2);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src2));
 
@@ -244,23 +244,23 @@ TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
 
     topology->setAsRoot(rootNode);
 
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, mid1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(rootNode->containAsChild(mid1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, mid2);
+    success = topology->addNewTopologyNodeAsChild(mid1, mid2);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(mid2));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, mid3);
+    success = topology->addNewTopologyNodeAsChild(mid1, mid3);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(mid3));
 
-    success = topology->addNewPhysicalNodeAsChild(mid2, src1);
+    success = topology->addNewTopologyNodeAsChild(mid2, src1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid2->containAsChild(src1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid3, src1);
+    success = topology->addNewTopologyNodeAsChild(mid3, src1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid3->containAsChild(src1));
 
@@ -309,27 +309,27 @@ TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
 
     topology->setAsRoot(rootNode);
 
-    bool success = topology->addNewPhysicalNodeAsChild(rootNode, mid1);
+    bool success = topology->addNewTopologyNodeAsChild(rootNode, mid1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(rootNode->containAsChild(mid1));
 
-    success = topology->addNewPhysicalNodeAsChild(rootNode, mid2);
+    success = topology->addNewTopologyNodeAsChild(rootNode, mid2);
     ASSERT_TRUE(success);
     ASSERT_TRUE(rootNode->containAsChild(mid2));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, src1);
+    success = topology->addNewTopologyNodeAsChild(mid1, src1);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src1));
 
-    success = topology->addNewPhysicalNodeAsChild(mid1, src2);
+    success = topology->addNewTopologyNodeAsChild(mid1, src2);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid1->containAsChild(src2));
 
-    success = topology->addNewPhysicalNodeAsChild(mid2, src3);
+    success = topology->addNewTopologyNodeAsChild(mid2, src3);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid2->containAsChild(src3));
 
-    success = topology->addNewPhysicalNodeAsChild(mid2, src4);
+    success = topology->addNewTopologyNodeAsChild(mid2, src4);
     ASSERT_TRUE(success);
     ASSERT_TRUE(mid2->containAsChild(src4));
 

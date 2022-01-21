@@ -18,7 +18,6 @@
 #include <Sources/DataSource.hpp>
 #include <utility>
 
-
 namespace NES {
 
 MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema,
@@ -66,4 +65,15 @@ uint64_t MemorySourceDescriptor::getNumBuffersToProcess() const { return numBuff
 GatheringMode::Value MemorySourceDescriptor::getGatheringMode() const { return gatheringMode; }
 
 uint64_t MemorySourceDescriptor::getGatheringValue() const { return gatheringValue; }
+
+SourceDescriptorPtr MemorySourceDescriptor::copy() {
+    auto copy = MemorySourceDescriptor::create(schema->copy(),
+                                               memoryArea,
+                                               memoryAreaSize,
+                                               numBuffersToProcess,
+                                               gatheringValue,
+                                               gatheringMode);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
 }// namespace NES

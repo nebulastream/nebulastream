@@ -93,11 +93,11 @@ class ILPPlacementTest : public testing::Test {
 
         TopologyNodePtr middleNode = TopologyNode::create(2, "localhost", 123, 124, 10);
         middleNode->addNodeProperty("slots", 10);
-        topologyForILP->addNewPhysicalNodeAsChild(rootNode, middleNode);
+        topologyForILP->addNewTopologyNodeAsChild(rootNode, middleNode);
 
         TopologyNodePtr sourceNode = TopologyNode::create(1, "localhost", 123, 124, 1);
         sourceNode->addNodeProperty("slots", 1);
-        topologyForILP->addNewPhysicalNodeAsChild(middleNode, sourceNode);
+        topologyForILP->addNewTopologyNodeAsChild(middleNode, sourceNode);
 
         LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
 

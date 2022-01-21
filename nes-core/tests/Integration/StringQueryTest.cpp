@@ -123,7 +123,7 @@ TEST_F(StringQueryTest, conditionOnAttribute) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // add a memory source
-    testHarness.addMemorySource("car", schema, "carMem");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
 
     // push two elements to the memory source
     testHarness.pushElement<Schema_t>({1, "112"}, 0);
@@ -153,7 +153,7 @@ TEST_F(StringQueryTest, DISABLED_neqOnChars) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // add a memory source
-    testHarness.addMemorySource("car", schema, "carMem");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
 
     // push two elements to the memory source
     testHarness.pushElement<Schema_t>({1, "112"}, 0);
@@ -183,7 +183,7 @@ TEST_F(StringQueryTest, eqOnCharsMultipleReturn) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // add a memory source
-    testHarness.addMemorySource("car", schema, "carMem");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
 
     // push two elements to the memory source
     testHarness.pushElement<Schema_t>({1, "112"}, 0);
@@ -214,7 +214,7 @@ TEST_F(StringQueryTest, eqOnString) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // add a memory source
-    testHarness.addMemorySource("car", schema, "carMem");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
 
     // push two elements to the memory source
     testHarness.pushElement<Schema_t>({1, "113"}, 0);
@@ -245,7 +245,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntNotComparator) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // add a memory source
-    testHarness.addMemorySource("car", schema, "carMem");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
 
     // push two elements to the memory source
     testHarness.pushElement<Schema_t>({1, "111"}, 0);
@@ -277,7 +277,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnInt) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // add a memory source
-    testHarness.addMemorySource("car", schema, "carMem");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
 
     // push two elements to the memory source
     testHarness.pushElement<Schema_t>({1, "111"}, 0);
@@ -309,7 +309,7 @@ TEST_F(StringQueryTest, stringComparisonFilterOnIntSame) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // add a memory source
-    testHarness.addMemorySource("car", schema, "carMem");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", schema, "carMem");
 
     // push two elements to the memory source
     testHarness.pushElement<Schema_t>({1, "234"}, 0);
@@ -339,7 +339,7 @@ TEST_F(StringQueryTest, testHarnessUtilizeOneStruct) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // add a memory source
-    testHarness.addMemorySource("car", carSchema, "carMem");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "carMem");
 
     // push two elements to the memory source
     testHarness.pushElement<Car>({1, 2}, 0);

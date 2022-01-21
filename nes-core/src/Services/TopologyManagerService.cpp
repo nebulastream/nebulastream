@@ -49,9 +49,9 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
     NES_DEBUG("TopologyManagerService::registerNode: register node");
     //get unique id for the new node
     uint64_t id = getNextTopologyNodeId();
-    TopologyNodePtr physicalNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
+    TopologyNodePtr newTopologyNode = TopologyNode::create(id, address, grpcPort, dataPort, numberOfSlots);
 
-    if (!physicalNode) {
+    if (!newTopologyNode) {
         NES_ERROR("TopologyManagerService::RegisterNode : node not created");
         return 0;
     }
@@ -60,10 +60,10 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
 
     if (!rootNode) {
         NES_DEBUG("TopologyManagerService::registerNode: tree is empty so this becomes new root");
-        topology->setAsRoot(physicalNode);
+        topology->setAsRoot(newTopologyNode);
     } else {
         NES_DEBUG("TopologyManagerService::registerNode: add link to the root node " << rootNode->toString());
-        topology->addNewPhysicalNodeAsChild(rootNode, physicalNode);
+        topology->addNewTopologyNodeAsChild(rootNode, newTopologyNode);
     }
 
     NES_DEBUG("TopologyManagerService::registerNode: topology after insert = ");
@@ -118,7 +118,7 @@ bool TopologyManagerService::addParent(uint64_t childId, uint64_t parentId) {
             return false;
         }
     }
-    bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
+    bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
     if (added) {
         NES_DEBUG("TopologyManagerService::AddParent: created link successfully new topology is=");
         topology->print();

@@ -39,6 +39,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) override;
     std::string toString() override;
+    SourceDescriptorPtr copy() override;
 
   private:
     explicit CsvSourceDescriptor(SchemaPtr schema, CSVSourceTypePtr sourceConfig);

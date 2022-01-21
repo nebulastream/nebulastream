@@ -62,4 +62,14 @@ GatheringMode::Value LambdaSourceDescriptor::getGatheringMode() const { return g
 
 uint64_t LambdaSourceDescriptor::getGatheringValue() const { return gatheringValue; }
 
+SourceDescriptorPtr LambdaSourceDescriptor::copy() {
+    auto copy = LambdaSourceDescriptor::create(schema->copy(),
+                                               std::move(generationFunction),
+                                               numBuffersToProcess,
+                                               gatheringValue,
+                                               gatheringMode);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
+
 }// namespace NES

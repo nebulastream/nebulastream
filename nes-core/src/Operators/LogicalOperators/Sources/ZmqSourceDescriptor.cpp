@@ -50,4 +50,10 @@ std::string ZmqSourceDescriptor::toString() { return "ZmqSourceDescriptor()"; }
 
 void ZmqSourceDescriptor::setPort(uint16_t newPort) { this->port = newPort; }
 
+SourceDescriptorPtr ZmqSourceDescriptor::copy() {
+    auto copy = ZmqSourceDescriptor::create(schema->copy(), logicalSourceName, host, port);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
+
 }// namespace NES

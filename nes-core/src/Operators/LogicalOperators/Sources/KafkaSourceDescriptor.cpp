@@ -30,24 +30,24 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
       autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout) {}
 
 KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
-                                             std::string streamName,
+                                             std::string logicalSourceName,
                                              std::string brokers,
                                              std::string topic,
                                              std::string groupId,
                                              bool autoCommit,
                                              uint64_t kafkaConnectTimeout)
-    : SourceDescriptor(std::move(schema), std::move(streamName)), brokers(std::move(brokers)), topic(std::move(topic)),
+    : SourceDescriptor(std::move(schema), std::move(logicalSourceName)), brokers(std::move(brokers)), topic(std::move(topic)),
       groupId(std::move(groupId)), autoCommit(autoCommit), kafkaConnectTimeout(kafkaConnectTimeout) {}
 
 SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
                                                   std::string brokers,
-                                                  std::string streamName,
+                                                  std::string logicalSourceName,
                                                   std::string topic,
                                                   std::string groupId,
                                                   bool autoCommit,
                                                   uint64_t kafkaConnectTimeout) {
     return std::make_shared<KafkaSourceDescriptor>(KafkaSourceDescriptor(std::move(schema),
-                                                                         std::move(streamName),
+                                                                         std::move(logicalSourceName),
                                                                          std::move(brokers),
                                                                          std::move(topic),
                                                                          std::move(groupId),
@@ -89,5 +89,17 @@ bool KafkaSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 }
 
 std::string KafkaSourceDescriptor::toString() { return "KafkaSourceDescriptor()"; }
+
+SourceDescriptorPtr KafkaSourceDescriptor::copy() {
+    auto copy = KafkaSourceDescriptor::create(schema->copy(),
+                                              std::move(logicalSourceName),
+                                              std::move(brokers),
+                                              std::move(topic),
+                                              std::move(groupId),
+                                              autoCommit,
+                                              kafkaConnectTimeout);
+    copy->setPhysicalSourceName(physicalSourceName);
+    return copy;
+}
 
 }// namespace NES

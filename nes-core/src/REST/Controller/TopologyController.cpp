@@ -74,7 +74,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                                         + std::to_string(parentId) + " not found.");
                     }
 
-                    bool added = topology->addNewPhysicalNodeAsChild(parentPhysicalNode, childPhysicalNode);
+                    bool added = topology->addNewTopologyNodeAsChild(parentPhysicalNode, childPhysicalNode);
                     if (added) {
                         NES_DEBUG("TopologyController::handlePost:addParent: created link successfully new topology is=");
                         topology->print();

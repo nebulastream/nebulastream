@@ -27,7 +27,7 @@
 namespace NES {
 
 class LogicalSource;
-using LogicalStreamPtr = std::shared_ptr<LogicalSource>;
+using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
@@ -114,7 +114,7 @@ class SourceCatalog {
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-    LogicalStreamPtr getStreamForLogicalStream(const std::string& logicalStreamName);
+    LogicalSourcePtr getStreamForLogicalStream(const std::string& logicalStreamName);
 
     /**
    * @brief method to return the stream for an existing logical stream or throw exception
@@ -122,7 +122,7 @@ class SourceCatalog {
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-    LogicalStreamPtr getStreamForLogicalStreamOrThrowException(const std::string& logicalStreamName);
+    LogicalSourcePtr getStreamForLogicalStreamOrThrowException(const std::string& logicalStreamName);
 
     /**
    * @brief test if logical stream with this name exists in the log to schema mapping

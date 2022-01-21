@@ -77,6 +77,8 @@ class NetworkSourceDescriptor : public SourceDescriptor {
      */
     uint8_t getRetryTimes() const;
 
+    SourceDescriptorPtr copy() override;
+
   private:
     explicit NetworkSourceDescriptor(SchemaPtr schema,
                                      NesPartition nesPartition,

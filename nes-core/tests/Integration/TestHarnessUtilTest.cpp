@@ -64,7 +64,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     testHarness.pushElement<Car>({40, 40, 40}, 0);
     testHarness.pushElement<Car>({30, 30, 30}, 0);
@@ -114,8 +114,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
-    testHarness.addMemorySource("car", carSchema, "car2");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car2");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -179,8 +179,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
     std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
-    testHarness.addMemorySource("truck", truckSchema, "truck1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("truck", truckSchema, "truck1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -233,8 +233,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
-    testHarness.addMemorySource("car", carSchema, "car2");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car2");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -322,8 +322,8 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("window1", window1Schema, "window1");
-    testHarness.addMemorySource("window2", window2Schema, "window2");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("window1", window1Schema, "window1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("window2", window2Schema, "window2");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -389,7 +389,7 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
 
     testHarness.pushElement<Car>({40, 40, 40}, 0);
     testHarness.pushElement<Car>({30, 30, 30}, 0);
@@ -448,10 +448,10 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
         |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
     */
 
-    testHarness.addNonSourceWorker();                                                 //idx=0
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));                       //idx=1
-    testHarness.addMemorySource("car", carSchema, "car1", testHarness.getWorkerId(1));//idx=2
-    testHarness.addMemorySource("car", carSchema, "car2", testHarness.getWorkerId(1));//idx=3
+    testHarness.attachWorkerToCoordinator();                                                 //idx=0
+    testHarness.attachWorkerToWorkerWithId(testHarness.getWorkerId(0));                       //idx=1
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("car", carSchema, "car1", testHarness.getWorkerId(1));//idx=2
+    testHarness.attachWorkerWithMemorySourceToWorkerWithId("car", carSchema, "car2", testHarness.getWorkerId(1));//idx=3
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
@@ -536,7 +536,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     sourceConfig->setSkipHeader(false);
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, carSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, carSchema);
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -590,10 +590,10 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     sourceConfig->setSkipHeader(false);
 
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.addCSVSource(conf, carSchema);
+    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, carSchema);
 
     // add a memory source
-    testHarness.addMemorySource("car", carSchema, "carMem");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "carMem");
 
     // push two elements to the memory source
     testHarness.pushElement<Car>({1, 8, 8}, 1);
@@ -689,8 +689,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
     std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
-    testHarness.addMemorySource("car", carSchema, "car1");
-    testHarness.addMemorySource("truck", truckSchema, "truck1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    testHarness.attachWorkerWithMemorySourceToCoordinator("truck", truckSchema, "truck1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
