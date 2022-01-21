@@ -149,6 +149,33 @@ class KalmanFilter {
 
   protected:
     /**
+     * Calculates the current estimation error.
+     * Uses the last W errors stored in the
+     * history window in kfErrorWindow. Basically
+     * sum all errors in the window and divide
+     * them by the totalEstimationErrorDivider.
+     * @return the total error over the history window
+     */
+    float calculateTotalEstimationError(); // eq. 9
+
+    /**
+     * Calculate the divider of the total estimation
+     * error. It stays the same across history,
+     * so it can be calculated once, during
+     * initialization.
+     * @return the current estimation error divider
+     */
+    void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calc. once)
+
+    /**
+     * The divider used whenever an update
+     * on the total estimation error happens.
+     * It's calculated once on init. Depends
+     * on the size of the history window.
+     */
+    float totalEstimationErrorDivider;
+
+    /**
      * System model dimensions.
      * These are used to initialize
      * the various system matrices.
@@ -218,26 +245,6 @@ class KalmanFilter {
      * @brief buffer of residual error from KF
      */
     CircularBuffer<float> kfErrorWindow;
-
-    /**
-     * Calculates the current estimation error.
-     * Uses the last W errors stored in the
-     * history window in kfErrorWindow. Basically
-     * sum all errors in the window and divide
-     * them by the totalEstimationErrorDivider.
-     * @return the total error over the history window
-     */
-    float calculateTotalEstimationError(); // eq. 9
-
-    /**
-     * Calculate the divider of the total estimation
-     * error. It stays the same across history,
-     * so it can be calculated once, during
-     * initialization.
-     * @return the current estimation error divider
-     */
-    float totalEstimationErrorDivider;
-    void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calc. once)
 
 };// class KalmanFilter
 
