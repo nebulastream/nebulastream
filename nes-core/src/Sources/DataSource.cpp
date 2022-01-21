@@ -489,8 +489,10 @@ void DataSource::runningRoutineAdaptive() {
                 auto& buf = optBuf.value();
 
                 if (this->gatheringInterval.count() != 0) {
+                    NES_DEBUG("DataSource old gatheringInterval=" << this->gatheringInterval);
                     this->kFilter.updateFromTupleBuffer(buf);
                     this->gatheringInterval = this->kFilter.getNewFrequency();
+                    NES_DEBUG("DataSource new gatheringInterval=" << this->gatheringInterval);
                 }
 
                 NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
