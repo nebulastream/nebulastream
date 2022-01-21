@@ -68,9 +68,7 @@ DataSource::DataSource(SchemaPtr pSchema,
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
-#ifdef ENABLE_ADAPTIVE_SAMPLING
     this->kFilter.setDefaultValues();
-#endif
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -436,12 +434,8 @@ void DataSource::runningRoutineAdaptive() {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
 
-#ifdef ENABLE_ADAPTIVE_SAMPLING
-    // TODO: add issue to remove the ifdef in the project
-    // TODO: add issue to properly parameterize frequency range and defaults
     this->kFilter.setFrequency(this->gatheringInterval);
     this->kFilter.setFrequencyRange(std::chrono::milliseconds{8000});
-#endif
 
     open();
     uint64_t cnt = 0;
@@ -450,9 +444,9 @@ void DataSource::runningRoutineAdaptive() {
         auto tsNow = std::chrono::steady_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
 
-        //this check checks if the gathering interval is zero or a ZMQ_Source, where we do not create a watermark-only buffer
+        //this checks if the gathering interval is zero or a ZMQ_Source, where we do not create a watermark-only buffer
         NES_DEBUG("DataSource::runningRoutine will now check src type with gatheringInterval=" << gatheringInterval.count());
-        if (gatheringInterval.count() == 0 || getType() == SourceType::ZMQ_SOURCE) {// 0 means never sleep
+        if (gatheringInterval.count() == 0) { // 0 means never sleep
             NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type="
                       << getType() << " and gatheringInterval=" << gatheringInterval.count()
                       << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
@@ -494,7 +488,6 @@ void DataSource::runningRoutineAdaptive() {
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
 #ifdef ENABLE_ADAPTIVE_SAMPLING
-                // TODO: handle "continuous" case (interval == 0)
                 if (this->gatheringInterval.count() != 0) {
                     this->kFilter.updateFromTupleBuffer(buf);
                     this->gatheringInterval = this->kFilter.getNewFrequency();

@@ -341,6 +341,10 @@ set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 find_package(cpprestsdk CONFIG REQUIRED)
 set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
 
+# Eigen3 linear alg library
+find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
+set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
+
 # Library containing Kafka client
 if (NES_USE_KAFKA)
     find_package(CppKafka CONFIG REQUIRED)
@@ -362,14 +366,6 @@ if (NES_USE_MQTT)
     set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3-static)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
-
-# Eigen 3.3 linear algebra library
-if (NES_USE_ADAPTIVE_SAMPLING)
-    find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
-    set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
-    message("Adaptive sampling dependencies OK")
-    add_compile_definitions(ENABLE_ADAPTIVE_SAMPLING)
-endif (NES_USE_ADAPTIVE_SAMPLING)
 
 if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)
