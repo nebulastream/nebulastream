@@ -487,12 +487,12 @@ void DataSource::runningRoutineAdaptive() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
-#ifdef ENABLE_ADAPTIVE_SAMPLING
+
                 if (this->gatheringInterval.count() != 0) {
                     this->kFilter.updateFromTupleBuffer(buf);
                     this->gatheringInterval = this->kFilter.getNewFrequency();
                 }
-#endif
+
                 NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
                                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
