@@ -87,6 +87,7 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+
 using namespace NES;
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
@@ -244,14 +245,13 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 
     {
-        CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
+        auto csvSourceType = CSVSourceType::create();
 
-        sourceConfigPtr->setFilePath("localhost");
-        sourceConfigPtr->setLogicalStreamName("testStream");
-        sourceConfigPtr->setNumberOfBuffersToProduce(0);
-        sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(10);
-        sourceConfigPtr->setSourceFrequency(10);
-        auto source = CsvSourceDescriptor::create(schema, sourceConfigPtr);
+        csvSourceType->setFilePath("localhost");
+        csvSourceType->setNumberOfBuffersToProduce(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
+        csvSourceType->setSourceFrequency(10);
+        auto source = CsvSourceDescriptor::create(schema, csvSourceType);
         auto* serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);

@@ -14,12 +14,11 @@
     limitations under the License.
 */
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>
@@ -94,55 +93,53 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
     StreamCatalogServicePtr streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
-    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
+    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 
     std::string physicalStreamName = "testStream";
 
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setFilePath("testCSV.csv");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath("testCSV.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType->setNumberOfBuffersToProduce(3);
+    auto physicalSource = PhysicalSource::create("testStream", "physical_test", csvSourceType);
 
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-
-    uint64_t nodeId = topologyManagerService->registerNode(address, 4000, 5000, 6, NodeType::Sensor);
+    uint64_t nodeId = topologyManagerService->registerNode(address, 4000, 5000, 6);
     EXPECT_NE(nodeId, 0u);
 
     //setup test
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    bool successRegisterLogicalStream = streamCatalogService->registerLogicalStream(conf->getLogicalStreamName(), testSchema);
+    bool successRegisterLogicalStream =
+        streamCatalogService->registerLogicalStream(physicalSource->getLogicalSourceName(), testSchema);
     EXPECT_TRUE(successRegisterLogicalStream);
 
     // common case
     TopologyNodePtr physicalNode = topology->findNodeWithId(nodeId);
     bool successRegisterPhysicalStream = streamCatalogService->registerPhysicalStream(physicalNode,
-                                                                                      conf->getSourceType(),
-                                                                                      conf->getPhysicalStreamName(),
-                                                                                      conf->getLogicalStreamName());
+                                                                                      physicalSource->getPhysicalSourceName(),
+                                                                                      physicalSource->getLogicalSourceName());
     EXPECT_TRUE(successRegisterPhysicalStream);
 
     //test register existing stream
-    bool successRegisterExistingPhysicalStream = streamCatalogService->registerPhysicalStream(physicalNode,
-                                                                                              conf->getSourceType(),
-                                                                                              conf->getPhysicalStreamName(),
-                                                                                              conf->getLogicalStreamName());
+    bool successRegisterExistingPhysicalStream =
+        streamCatalogService->registerPhysicalStream(physicalNode,
+                                                     physicalSource->getPhysicalSourceName(),
+                                                     physicalSource->getLogicalSourceName());
     EXPECT_TRUE(!successRegisterExistingPhysicalStream);
 
     //test unregister not existing physical stream
     bool successUnregisterNotExistingPhysicalStream =
-        streamCatalogService->unregisterPhysicalStream(physicalNode, "asd", conf->getLogicalStreamName());
+        streamCatalogService->unregisterPhysicalStream(physicalNode, "asd", physicalSource->getLogicalSourceName());
     EXPECT_TRUE(!successUnregisterNotExistingPhysicalStream);
 
     //test unregister not existing local stream
-    bool successUnregisterNotExistingLocicalStream =
-        streamCatalogService->unregisterPhysicalStream(physicalNode, conf->getPhysicalStreamName(), "asd");
-    EXPECT_TRUE(!successUnregisterNotExistingLocicalStream);
+    bool successUnregisterNotExistingLogicalStream =
+        streamCatalogService->unregisterPhysicalStream(physicalNode, physicalSource->getPhysicalSourceName(), "asd");
+    EXPECT_TRUE(!successUnregisterNotExistingLogicalStream);
 
     //test unregister existing node
     bool successUnregisterExistingPhysicalStream =
-        streamCatalogService->unregisterPhysicalStream(physicalNode, conf->getPhysicalStreamName(), conf->getLogicalStreamName());
+        streamCatalogService->unregisterPhysicalStream(physicalNode,
+                                                       physicalSource->getPhysicalSourceName(),
+                                                       physicalSource->getLogicalSourceName());
     EXPECT_TRUE(successUnregisterExistingPhysicalStream);
 }
