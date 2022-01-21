@@ -24,9 +24,9 @@
  *
  ********************************************************/
 
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
     NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
     NesWorkerPtr nesWorker = std::make_shared<NesWorker>(workerConfiguration);
 
-    if (workerConfiguration->getParentId()->getValue() != "-1") {
+    if (workerConfiguration->getParentId()->getValue() != 0) {
         NES_INFO("start with dedicated parent=" << workerConfiguration->getParentId()->getValue());
         nesWorker->setWithParent(workerConfiguration->getParentId()->getValue());
     }

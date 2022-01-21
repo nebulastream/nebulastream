@@ -64,7 +64,7 @@ class NesWorker {
      * @param parentId
      * @return bool indicating sucess
      */
-    bool setWithParent(std::string parentId);
+    bool setWithParent(uint32_t parentId);
 
     /**
      * @brief stop the worker
@@ -152,8 +152,6 @@ class NesWorker {
     uint64_t getWorkerId();
 
   private:
-
-
     /**
      * @brief method to register physical stream with the coordinator
      * @param physicalSources: physical sources containing relevant information
@@ -184,7 +182,7 @@ class NesWorker {
     const Configurations::WorkerConfigurationPtr workerConfig;
     bool connected{false};
     bool withParent{false};
-    std::string parentId;
+    uint32_t parentId;
     std::string rpcAddress;
     std::string coordinatorIp;
     std::string localWorkerIp;

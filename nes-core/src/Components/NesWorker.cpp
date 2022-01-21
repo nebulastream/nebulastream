@@ -67,7 +67,7 @@ NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig)
 
 NesWorker::~NesWorker() { stop(true); }
 
-bool NesWorker::setWithParent(std::string parentId) {
+bool NesWorker::setWithParent(uint32_t parentId) {
     withParent = true;
     this->parentId = std::move(parentId);
     return true;
@@ -174,7 +174,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
     if (withParent) {
         NES_DEBUG("NesWorker: add parent id=" << parentId);
-        bool success = addParent(atoi(parentId.c_str()));
+        bool success = addParent(parentId);
         NES_DEBUG("parent add= " << success);
         NES_ASSERT(success, "cannot addParent");
     }
