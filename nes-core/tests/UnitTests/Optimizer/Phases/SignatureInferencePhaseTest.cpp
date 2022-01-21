@@ -16,10 +16,11 @@
 
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Catalogs/SourceCatalogEntry.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -27,7 +28,6 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
@@ -63,9 +63,10 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test1");
+    auto logicalSource = LogicalSource::create("default_logical", Schema::create());
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);

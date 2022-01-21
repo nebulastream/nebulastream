@@ -75,28 +75,29 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestSingleNodeSingleWindowSingleJoin
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
             .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(2))).byKey(Attribute("window1window2$key")).apply(Sum(Attribute("window1$id1")))
         )";
-    TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("window1", window1Schema, "window1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("window2", window2Schema, "window2");
-
-    ASSERT_EQ(testHarness.getWorkerCount(), 2u);
-
-    testHarness.pushElement<Window1>({1u, 1000u}, 0u);
-    testHarness.pushElement<Window2>({12u, 1001u}, 0u);
-    testHarness.pushElement<Window2>({4u, 1002u}, 0u);
-    testHarness.pushElement<Window2>({1u, 2000u}, 0u);
-    testHarness.pushElement<Window2>({11u, 2001u}, 0u);
-    testHarness.pushElement<Window2>({16u, 2002u}, 0u);
-    testHarness.pushElement<Window2>({1u, 3000u}, 0u);
-
-    testHarness.pushElement<Window2>({21u, 1003u}, 1u);
-    testHarness.pushElement<Window2>({12u, 1011u}, 1u);
-    testHarness.pushElement<Window2>({4u, 1102u}, 1u);
-    testHarness.pushElement<Window2>({4u, 1112u}, 1u);
-    testHarness.pushElement<Window2>({1u, 2010u}, 1u);
-    testHarness.pushElement<Window2>({11u, 2301u}, 1u);
-    testHarness.pushElement<Window2>({33u, 3100u}, 1u);
+    auto testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort)
+                                  .addLogicalSource("window1", window1Schema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithMemorySourceToCoordinator("window1")//2
+                                  .attachWorkerWithMemorySourceToCoordinator("window2")//3
+                                  // Source1
+                                  .pushElement<Window1>({1u, 1000u}, 2)
+                                  .pushElement<Window2>({12u, 1001u}, 2)
+                                  .pushElement<Window2>({4u, 1002u}, 2)
+                                  .pushElement<Window2>({1u, 2000u}, 2)
+                                  .pushElement<Window2>({11u, 2001u}, 2)
+                                  .pushElement<Window2>({16u, 2002u}, 2)
+                                  .pushElement<Window2>({1u, 3000u}, 2)
+                                  //source2
+                                  .pushElement<Window2>({21u, 1003u}, 3)
+                                  .pushElement<Window2>({12u, 1011u}, 3)
+                                  .pushElement<Window2>({4u, 1102u}, 3)
+                                  .pushElement<Window2>({4u, 1112u}, 3)
+                                  .pushElement<Window2>({1u, 2010u}, 3)
+                                  .pushElement<Window2>({11u, 2301u}, 3)
+                                  .pushElement<Window2>({33u, 3100u}, 3)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         uint64_t window1window2$start;
@@ -154,34 +155,36 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
             .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(1))).byKey(Attribute("window1window2$key")).apply(Sum(Attribute("window1$id1")))
         )";
-    TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window1", window1Schema, "window1", testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window2", window2Schema, "window2", testHarness.getWorkerId(1));
-
-    ASSERT_EQ(testHarness.getWorkerCount(), 4UL);
+    auto testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort)
+                                  .addLogicalSource("window1", window1Schema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerToCoordinator()                             //2
+                                  .attachWorkerToCoordinator()                             //3
+                                  .attachWorkerWithMemorySourceToWorkerWithId("window1", 2)//4
+                                  .attachWorkerWithMemorySourceToWorkerWithId("window2", 3)//5
+                                  //Source1
+                                  .pushElement<Window1>({1UL, 1000UL}, 4)
+                                  .pushElement<Window2>({12UL, 1001UL}, 4)
+                                  .pushElement<Window2>({4UL, 1002UL}, 4)
+                                  .pushElement<Window2>({1UL, 2000UL}, 4)
+                                  .pushElement<Window2>({11UL, 2001UL}, 4)
+                                  .pushElement<Window2>({16UL, 2002UL}, 4)
+                                  .pushElement<Window2>({1UL, 3000UL}, 4)
+                                  //Source2
+                                  .pushElement<Window2>({21UL, 1003UL}, 5)
+                                  .pushElement<Window2>({12UL, 1011UL}, 5)
+                                  .pushElement<Window2>({4UL, 1102UL}, 5)
+                                  .pushElement<Window2>({4UL, 1112UL}, 5)
+                                  .pushElement<Window2>({1UL, 2010UL}, 5)
+                                  .pushElement<Window2>({11UL, 2301UL}, 5)
+                                  .pushElement<Window2>({33UL, 3100UL}, 5)
+                                  .validate()
+                                  .setupTopology();
 
     // Check if the topology matches the expected hierarchy
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 2ULL);
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1ULL);
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1ULL);
-
-    testHarness.pushElement<Window1>({1UL, 1000UL}, 2UL);
-    testHarness.pushElement<Window2>({12UL, 1001UL}, 2UL);
-    testHarness.pushElement<Window2>({4UL, 1002UL}, 2UL);
-    testHarness.pushElement<Window2>({1UL, 2000UL}, 2UL);
-    testHarness.pushElement<Window2>({11UL, 2001UL}, 2UL);
-    testHarness.pushElement<Window2>({16UL, 2002UL}, 2UL);
-    testHarness.pushElement<Window2>({1UL, 3000UL}, 2UL);
-
-    testHarness.pushElement<Window2>({21UL, 1003UL}, 3UL);
-    testHarness.pushElement<Window2>({12UL, 1011UL}, 3UL);
-    testHarness.pushElement<Window2>({4UL, 1102UL}, 3UL);
-    testHarness.pushElement<Window2>({4UL, 1112UL}, 3UL);
-    testHarness.pushElement<Window2>({1UL, 2010UL}, 3UL);
-    testHarness.pushElement<Window2>({11UL, 2301UL}, 3UL);
-    testHarness.pushElement<Window2>({33UL, 3100UL}, 3UL);
 
     struct Output {
         uint64_t window1window2$start;
@@ -276,47 +279,49 @@ TEST_F(ComplexSequenceTest, DISABLED_ComplexTestSingleNodeMultipleWindowsMultipl
             .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
-    TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("window1", window1Schema, "window1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("window2", window2Schema, "window2");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("window3", window3Schema, "window3");
-
-    ASSERT_EQ(testHarness.getWorkerCount(), 3UL);
-
-    testHarness.pushElement<Window1>({1UL, 1000UL}, 0UL);
-    testHarness.pushElement<Window2>({12UL, 1001UL}, 0UL);
-    testHarness.pushElement<Window2>({4UL, 1002UL}, 0UL);
-    testHarness.pushElement<Window2>({4UL, 1005UL}, 0UL);
-    testHarness.pushElement<Window2>({4UL, 1006UL}, 0UL);
-    testHarness.pushElement<Window2>({1UL, 2000UL}, 0UL);
-    testHarness.pushElement<Window2>({11UL, 2001UL}, 0UL);
-    testHarness.pushElement<Window2>({16UL, 2002UL}, 0UL);
-    testHarness.pushElement<Window2>({4UL, 2802UL}, 0UL);
-    testHarness.pushElement<Window2>({4UL, 3642UL}, 0UL);
-    testHarness.pushElement<Window2>({1UL, 3000UL}, 0UL);
-
-    testHarness.pushElement<Window2>({21UL, 1003UL}, 1UL);
-    testHarness.pushElement<Window2>({12UL, 1011UL}, 1UL);
-    testHarness.pushElement<Window2>({12UL, 1013UL}, 1UL);
-    testHarness.pushElement<Window2>({12UL, 1015UL}, 1UL);
-    testHarness.pushElement<Window2>({4UL, 1102UL}, 1UL);
-    testHarness.pushElement<Window2>({4UL, 1112UL}, 1UL);
-    testHarness.pushElement<Window2>({1UL, 2010UL}, 1UL);
-    testHarness.pushElement<Window2>({11UL, 2301UL}, 1UL);
-    testHarness.pushElement<Window2>({4UL, 2022UL}, 1UL);
-    testHarness.pushElement<Window2>({4UL, 3012UL}, 1UL);
-    testHarness.pushElement<Window2>({33UL, 3100UL}, 1UL);
-
-    testHarness.pushElement<Window3>({4UL, 1013UL}, 2UL);
-    testHarness.pushElement<Window3>({12UL, 1010UL}, 2UL);
-    testHarness.pushElement<Window3>({8UL, 1105UL}, 2UL);
-    testHarness.pushElement<Window3>({76UL, 1132UL}, 2UL);
-    testHarness.pushElement<Window3>({19UL, 2210UL}, 2UL);
-    testHarness.pushElement<Window3>({1UL, 2501UL}, 2UL);
-    testHarness.pushElement<Window2>({4UL, 2432UL}, 2UL);
-    testHarness.pushElement<Window2>({4UL, 3712UL}, 2UL);
-    testHarness.pushElement<Window3>({45UL, 3120UL}, 2UL);
+    auto testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("window1", window1Schema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .addLogicalSource("window3", window3Schema)
+                                  .attachWorkerWithMemorySourceToCoordinator("window1")//2
+                                  .attachWorkerWithMemorySourceToCoordinator("window2")//3
+                                  .attachWorkerWithMemorySourceToCoordinator("window3")//4
+                                  //Source1
+                                  .pushElement<Window1>({1UL, 1000UL}, 2)
+                                  .pushElement<Window2>({12UL, 1001UL}, 2)
+                                  .pushElement<Window2>({4UL, 1002UL}, 2)
+                                  .pushElement<Window2>({4UL, 1005UL}, 2)
+                                  .pushElement<Window2>({4UL, 1006UL}, 2)
+                                  .pushElement<Window2>({1UL, 2000UL}, 2)
+                                  .pushElement<Window2>({11UL, 2001UL}, 2)
+                                  .pushElement<Window2>({16UL, 2002UL}, 2)
+                                  .pushElement<Window2>({4UL, 2802UL}, 2)
+                                  .pushElement<Window2>({4UL, 3642UL}, 2)
+                                  .pushElement<Window2>({1UL, 3000UL}, 2)
+                                  //Source2
+                                  .pushElement<Window2>({21UL, 1003UL}, 3)
+                                  .pushElement<Window2>({12UL, 1011UL}, 3)
+                                  .pushElement<Window2>({12UL, 1013UL}, 3)
+                                  .pushElement<Window2>({12UL, 1015UL}, 3)
+                                  .pushElement<Window2>({4UL, 1102UL}, 3)
+                                  .pushElement<Window2>({4UL, 1112UL}, 3)
+                                  .pushElement<Window2>({1UL, 2010UL}, 3)
+                                  .pushElement<Window2>({11UL, 2301UL}, 3)
+                                  .pushElement<Window2>({4UL, 2022UL}, 3)
+                                  .pushElement<Window2>({4UL, 3012UL}, 3)
+                                  .pushElement<Window2>({33UL, 3100UL}, 3)
+                                  //Source3
+                                  .pushElement<Window3>({4UL, 1013UL}, 4)
+                                  .pushElement<Window3>({12UL, 1010UL}, 4)
+                                  .pushElement<Window3>({8UL, 1105UL}, 4)
+                                  .pushElement<Window3>({76UL, 1132UL}, 4)
+                                  .pushElement<Window3>({19UL, 2210UL}, 4)
+                                  .pushElement<Window3>({1UL, 2501UL}, 4)
+                                  .pushElement<Window2>({4UL, 2432UL}, 4)
+                                  .pushElement<Window2>({4UL, 3712UL}, 4)
+                                  .pushElement<Window3>({45UL, 3120UL}, 4)
+                                  .validate()
+                                  .setupTopology();
 
     // output 2 join 1 window
     struct Output {
@@ -394,13 +399,52 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
             .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
-    TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window1", window1Schema, "window1", testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window2", window2Schema, "window2", testHarness.getWorkerId(1));
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window3", window3Schema, "window3", testHarness.getWorkerId(2));
+    auto testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("window1", window1Schema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .addLogicalSource("window3", window3Schema)
+                                  .attachWorkerToCoordinator()                             //2
+                                  .attachWorkerToCoordinator()                             //3
+                                  .attachWorkerToCoordinator()                             //4
+                                  .attachWorkerWithMemorySourceToWorkerWithId("window1", 2)//5
+                                  .attachWorkerWithMemorySourceToWorkerWithId("window2", 3)//6
+                                  .attachWorkerWithMemorySourceToWorkerWithId("window3", 4)//7
+                                  //Source1
+                                  .pushElement<Window1>({1ULL, 1000ULL}, 5)
+                                  .pushElement<Window1>({12ULL, 1001ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 1002ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 1005ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 1006ULL}, 5)
+                                  .pushElement<Window1>({1ULL, 2000ULL}, 5)
+                                  .pushElement<Window1>({11ULL, 2001ULL}, 5)
+                                  .pushElement<Window1>({16ULL, 2002ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 2802ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 3642ULL}, 5)
+                                  .pushElement<Window1>({1ULL, 3000ULL}, 5)
+                                  //Source2
+                                  .pushElement<Window2>({21ULL, 1003ULL}, 6)
+                                  .pushElement<Window2>({12ULL, 1011ULL}, 6)
+                                  .pushElement<Window2>({12ULL, 1013ULL}, 6)
+                                  .pushElement<Window2>({12ULL, 1015ULL}, 6)
+                                  .pushElement<Window2>({4ULL, 1102ULL}, 6)
+                                  .pushElement<Window2>({4ULL, 1112ULL}, 6)
+                                  .pushElement<Window2>({1ULL, 2010ULL}, 6)
+                                  .pushElement<Window2>({11ULL, 2301ULL}, 6)
+                                  .pushElement<Window2>({4ULL, 2022ULL}, 6)
+                                  .pushElement<Window2>({4ULL, 3012ULL}, 6)
+                                  .pushElement<Window2>({33ULL, 3100ULL}, 6)
+                                  //Source3
+                                  .pushElement<Window3>({4ULL, 1013ULL}, 7)
+                                  .pushElement<Window3>({12ULL, 1010ULL}, 7)
+                                  .pushElement<Window3>({8ULL, 1105ULL}, 7)
+                                  .pushElement<Window3>({76ULL, 1132ULL}, 7)
+                                  .pushElement<Window3>({19ULL, 2210ULL}, 7)
+                                  .pushElement<Window3>({1ULL, 2501ULL}, 7)
+                                  .pushElement<Window3>({4ULL, 2432ULL}, 7)
+                                  .pushElement<Window3>({4ULL, 3712ULL}, 7)
+                                  .pushElement<Window3>({45ULL, 3120ULL}, 7)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 6U);
 
@@ -411,40 +455,6 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1U);
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1U);
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 1U);
-
-    testHarness.pushElement<Window1>({1ULL, 1000ULL}, 3ULL);
-    testHarness.pushElement<Window1>({12ULL, 1001ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 1002ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 1005ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 1006ULL}, 3ULL);
-    testHarness.pushElement<Window1>({1ULL, 2000ULL}, 3ULL);
-    testHarness.pushElement<Window1>({11ULL, 2001ULL}, 3ULL);
-    testHarness.pushElement<Window1>({16ULL, 2002ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 2802ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 3642ULL}, 3ULL);
-    testHarness.pushElement<Window1>({1ULL, 3000ULL}, 3ULL);
-
-    testHarness.pushElement<Window2>({21ULL, 1003ULL}, 4ULL);
-    testHarness.pushElement<Window2>({12ULL, 1011ULL}, 4ULL);
-    testHarness.pushElement<Window2>({12ULL, 1013ULL}, 4ULL);
-    testHarness.pushElement<Window2>({12ULL, 1015ULL}, 4ULL);
-    testHarness.pushElement<Window2>({4ULL, 1102ULL}, 4ULL);
-    testHarness.pushElement<Window2>({4ULL, 1112ULL}, 4ULL);
-    testHarness.pushElement<Window2>({1ULL, 2010ULL}, 4ULL);
-    testHarness.pushElement<Window2>({11ULL, 2301ULL}, 4ULL);
-    testHarness.pushElement<Window2>({4ULL, 2022ULL}, 4ULL);
-    testHarness.pushElement<Window2>({4ULL, 3012ULL}, 4ULL);
-    testHarness.pushElement<Window2>({33ULL, 3100ULL}, 4ULL);
-
-    testHarness.pushElement<Window3>({4ULL, 1013ULL}, 5ULL);
-    testHarness.pushElement<Window3>({12ULL, 1010ULL}, 5ULL);
-    testHarness.pushElement<Window3>({8ULL, 1105ULL}, 5ULL);
-    testHarness.pushElement<Window3>({76ULL, 1132ULL}, 5ULL);
-    testHarness.pushElement<Window3>({19ULL, 2210ULL}, 5ULL);
-    testHarness.pushElement<Window3>({1ULL, 2501ULL}, 5ULL);
-    testHarness.pushElement<Window3>({4ULL, 2432ULL}, 5ULL);
-    testHarness.pushElement<Window3>({4ULL, 3712ULL}, 5ULL);
-    testHarness.pushElement<Window3>({45ULL, 3120ULL}, 5ULL);
 
     struct Output {
         uint64_t window1window2$start;
@@ -553,12 +563,51 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
             .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
-    TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
-    testHarness.attachWorkerToCoordinator();                                                            //wrk0
-    testHarness.attachWorkerToWorkerWithId(testHarness.getWorkerId(0));                                  //wrk1
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window3", window3Schema, "window3", testHarness.getWorkerId(0));//wrk2
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window1", window1Schema, "window1", testHarness.getWorkerId(1));//wrk3
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("window2", window2Schema, "window2", testHarness.getWorkerId(1));//wrk4
+    auto testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("window1", window1Schema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .addLogicalSource("window3", window3Schema)
+                                  .attachWorkerToCoordinator()                             //2
+                                  .attachWorkerToWorkerWithId(2)                           //3
+                                  .attachWorkerWithMemorySourceToWorkerWithId("window3", 2)//4
+                                  .attachWorkerWithMemorySourceToWorkerWithId("window1", 3)//5
+                                  .attachWorkerWithMemorySourceToWorkerWithId("window2", 3)//6
+                                  //Source5
+                                  .pushElement<Window1>({1ULL, 1000ULL}, 5)
+                                  .pushElement<Window1>({12ULL, 1001ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 1002ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 1005ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 1006ULL}, 5)
+                                  .pushElement<Window1>({1ULL, 2000ULL}, 5)
+                                  .pushElement<Window1>({11ULL, 2001ULL}, 5)
+                                  .pushElement<Window1>({16ULL, 2002ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 2802ULL}, 5)
+                                  .pushElement<Window1>({4ULL, 3642ULL}, 5)
+                                  .pushElement<Window1>({1ULL, 3000ULL}, 5)
+                                  //Source6
+                                  .pushElement<Window2>({21ULL, 1003ULL}, 6)
+                                  .pushElement<Window2>({12ULL, 1011ULL}, 6)
+                                  .pushElement<Window2>({12ULL, 1013ULL}, 6)
+                                  .pushElement<Window2>({12ULL, 1015ULL}, 6)
+                                  .pushElement<Window2>({4ULL, 1102ULL}, 6)
+                                  .pushElement<Window2>({4ULL, 1112ULL}, 6)
+                                  .pushElement<Window2>({1ULL, 2010ULL}, 6)
+                                  .pushElement<Window2>({11ULL, 2301ULL}, 6)
+                                  .pushElement<Window2>({4ULL, 2022ULL}, 6)
+                                  .pushElement<Window2>({4ULL, 3012ULL}, 6)
+                                  .pushElement<Window2>({33ULL, 3100ULL}, 6)
+                                  //Source4
+                                  .pushElement<Window3>({4ULL, 1013ULL}, 4)
+                                  .pushElement<Window3>({12ULL, 1010ULL}, 4)
+                                  .pushElement<Window3>({8ULL, 1105ULL}, 4)
+                                  .pushElement<Window3>({76ULL, 1132ULL}, 4)
+                                  .pushElement<Window3>({19ULL, 2210ULL}, 4)
+                                  .pushElement<Window3>({1ULL, 2501ULL}, 4)
+                                  .pushElement<Window3>({4ULL, 2432ULL}, 4)
+                                  .pushElement<Window3>({4ULL, 3712ULL}, 4)
+                                  .pushElement<Window3>({45ULL, 3120ULL}, 4)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 5ULL);
 
@@ -569,40 +618,6 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2U);
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 0U);
-
-    testHarness.pushElement<Window1>({1ULL, 1000ULL}, 3ULL);
-    testHarness.pushElement<Window1>({12ULL, 1001ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 1002ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 1005ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 1006ULL}, 3ULL);
-    testHarness.pushElement<Window1>({1ULL, 2000ULL}, 3ULL);
-    testHarness.pushElement<Window1>({11ULL, 2001ULL}, 3ULL);
-    testHarness.pushElement<Window1>({16ULL, 2002ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 2802ULL}, 3ULL);
-    testHarness.pushElement<Window1>({4ULL, 3642ULL}, 3ULL);
-    testHarness.pushElement<Window1>({1ULL, 3000ULL}, 3ULL);
-
-    testHarness.pushElement<Window2>({21ULL, 1003ULL}, 4ULL);
-    testHarness.pushElement<Window2>({12ULL, 1011ULL}, 4ULL);
-    testHarness.pushElement<Window2>({12ULL, 1013ULL}, 4ULL);
-    testHarness.pushElement<Window2>({12ULL, 1015ULL}, 4ULL);
-    testHarness.pushElement<Window2>({4ULL, 1102ULL}, 4ULL);
-    testHarness.pushElement<Window2>({4ULL, 1112ULL}, 4ULL);
-    testHarness.pushElement<Window2>({1ULL, 2010ULL}, 4ULL);
-    testHarness.pushElement<Window2>({11ULL, 2301ULL}, 4ULL);
-    testHarness.pushElement<Window2>({4ULL, 2022ULL}, 4ULL);
-    testHarness.pushElement<Window2>({4ULL, 3012ULL}, 4ULL);
-    testHarness.pushElement<Window2>({33ULL, 3100ULL}, 4ULL);
-
-    testHarness.pushElement<Window3>({4ULL, 1013ULL}, 2ULL);
-    testHarness.pushElement<Window3>({12ULL, 1010ULL}, 2ULL);
-    testHarness.pushElement<Window3>({8ULL, 1105ULL}, 2ULL);
-    testHarness.pushElement<Window3>({76ULL, 1132ULL}, 2ULL);
-    testHarness.pushElement<Window3>({19ULL, 2210ULL}, 2ULL);
-    testHarness.pushElement<Window3>({1ULL, 2501ULL}, 2ULL);
-    testHarness.pushElement<Window3>({4ULL, 2432ULL}, 2ULL);
-    testHarness.pushElement<Window3>({4ULL, 3712ULL}, 2ULL);
-    testHarness.pushElement<Window3>({45ULL, 3120ULL}, 2ULL);
 
     struct Output {
         uint64_t window1window2$start;
