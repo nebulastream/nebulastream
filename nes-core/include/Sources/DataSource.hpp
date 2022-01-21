@@ -23,14 +23,12 @@
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/KalmanFilter.hpp>
 #include <atomic>
 #include <chrono>
 #include <mutex>
 #include <optional>
 #include <thread>
-#ifdef ENABLE_ADAPTIVE_SAMPLING
-#include <Util/KalmanFilter.hpp>
-#endif
 
 namespace NES {
 
@@ -284,15 +282,12 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     * @brief running routine with an adaptive rate (defaults to KF)
     */
     virtual void runningRoutineAdaptive();
-#ifdef ENABLE_ADAPTIVE_SAMPLING
-    // TODO: remove the ifdef in the project
-    // https://github.com/nebulastream/nebulastream/issues/2400
+
     /**
      * @brief the KF associated with a source.
      * We use default values for initialization.
      */
     KalmanFilter kFilter;
-#endif
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;
