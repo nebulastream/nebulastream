@@ -121,7 +121,7 @@ TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
         kalmanFilter.update(y);
     }
 
-    // error has changed and P != P0
+    // error has changed and estimateCovariance != initialEstimateCovariance
     EXPECT_NE(initialError, kalmanFilter.getError());
 }
 

@@ -33,10 +33,10 @@ KalmanFilter::KalmanFilter(double timeStep,
                            const Eigen::MatrixXd R,
                            const Eigen::MatrixXd P,
                            const uint64_t errorWindowSize)
-    : m(H.rows()), n(F.rows()), F(F), H(H), Q(Q), R(R), P0(P), I(n, n), xHat(n), xHatNew(n), innovationError(n),
+    : m(H.rows()), n(F.rows()), stateTransitionModel(F), observationModel(H), processNoiseCovariance(Q), measurementNoiseCovariance(R), initialEstimateCovariance(P), identityMatrix(n, n), xHat(n), xHatNew(n), innovationError(n),
       timeStep(timeStep), kfErrorWindow(errorWindowSize) {
     this->calculateTotalEstimationErrorDivider(errorWindowSize);
-    I.setIdentity();
+    identityMatrix.setIdentity();
 }
 
 void KalmanFilter::init() {
@@ -66,25 +66,25 @@ void KalmanFilter::setDefaultValues() {
     this->timeStep = 1.0 / 30;
 
     // initialize system dymanics and observation matrices
-    this->F = Eigen::MatrixXd(this->n, this->n);
-    this->H = Eigen::MatrixXd(this->m, this->n);
-    this->Q = Eigen::MatrixXd(this->n, this->n);
-    this->R = Eigen::MatrixXd(this->m, this->m);
-    this->P0 = Eigen::MatrixXd(this->n, this->n);
+    this->stateTransitionModel = Eigen::MatrixXd(this->n, this->n);
+    this->observationModel = Eigen::MatrixXd(this->m, this->n);
+    this->processNoiseCovariance = Eigen::MatrixXd(this->n, this->n);
+    this->measurementNoiseCovariance = Eigen::MatrixXd(this->m, this->m);
+    this->initialEstimateCovariance = Eigen::MatrixXd(this->n, this->n);
 
     // Discrete LTI projectile motion, measuring position only
-    this->F << 1, this->timeStep, 0, 0, 1, this->timeStep, 0, 0, 1;
-    this->H << 1, 0, 0;
+    this->stateTransitionModel << 1, this->timeStep, 0, 0, 1, this->timeStep, 0, 0, 1;
+    this->observationModel << 1, 0, 0;
 
     // Reasonable covariance matrices
-    this->Q << .05, .05, .0, .05, .05, .0, .0, .0, .0;
-    this->R << 5;
-    this->P0 << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
+    this->processNoiseCovariance << .05, .05, .0, .05, .05, .0, .0, .0, .0;
+    this->measurementNoiseCovariance << 5;
+    this->initialEstimateCovariance << .1, .1, .1, .1, 10000, 10, .1, 10, 100;
 
     // rest of initializations
-    this->P = this->P0;
-    this->I = Eigen::MatrixXd(this->n, this->n);
-    this->I.setIdentity();
+    this->estimateCovariance = this->initialEstimateCovariance;
+    this->identityMatrix = Eigen::MatrixXd(this->n, this->n);
+    this->identityMatrix.setIdentity();
     this->xHat = Eigen::VectorXd(this->n);
     this->xHatNew = Eigen::VectorXd(this->n);
     this->innovationError = Eigen::VectorXd(this->n);
@@ -94,14 +94,21 @@ void KalmanFilter::setDefaultValues() {
 
 void KalmanFilter::update(const Eigen::VectorXd& measuredValues) {
     // simplified prediction phase
-    xHatNew = F * xHat;           // no control unit (B*u), predicted a-priori state estimate
-    P = F * P * F.transpose() + Q;// predicted a-priori estimate covariance
+    xHatNew = stateTransitionModel * xHat;           // no control unit (B*u), predicted a-priori state estimate
+    estimateCovariance = stateTransitionModel * estimateCovariance * stateTransitionModel.transpose() + processNoiseCovariance;// predicted a-priori estimate covariance
 
-    // simplified update phase
-    innovationError = measuredValues - (H * xHatNew);             // update innovation error ψ_k, eq. 2 + 3
-    K = P * H.transpose() * (H * P * H.transpose() + R).inverse();// kalman gain
-    xHatNew += K * (measuredValues - (H * xHatNew));              // updated a-posteriori state estimate
-    P = (I - K * H) * P;                                          // updated a-posteriori estimate covariance
+    /**
+     * Simplified update phase, use the
+     * measured values to upate the innovation
+     * error, calculate Kalman gain kalmanGain (reward)
+     * and update the posteriori state
+     * estimate. The updated state estimate
+     * becomes the new xHat (current state).
+     */
+    innovationError = measuredValues - (observationModel * xHatNew);             // update innovation error ψ_k, eq. 2 + 3
+    kalmanGain = estimateCovariance * observationModel.transpose() * (observationModel * estimateCovariance * observationModel.transpose() + measurementNoiseCovariance).inverse();// kalman gain
+    xHatNew += kalmanGain * (measuredValues - (observationModel * xHatNew));              // updated a-posteriori state estimate
+    estimateCovariance = (identityMatrix - kalmanGain * observationModel) * estimateCovariance;                                          // updated a-posteriori estimate covariance
     xHat = xHatNew;                                               // updated xHat
 
     // update estimation error, eq.8
@@ -118,7 +125,7 @@ void KalmanFilter::update(const Eigen::VectorXd& measuredValues, double newTimeS
 }
 
 void KalmanFilter::update(const Eigen::VectorXd& measuredValues, double newTimeStep, const Eigen::MatrixXd& F) {
-    this->F = F;
+    this->stateTransitionModel = F;
     timeStep = newTimeStep;
     this->update(measuredValues);
 }
@@ -174,7 +181,7 @@ void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 double KalmanFilter::getCurrentStep() { return currentTime; }
 Eigen::VectorXd KalmanFilter::getState() { return xHat; }
-Eigen::MatrixXd KalmanFilter::getError() { return P; }
+Eigen::MatrixXd KalmanFilter::getError() { return estimateCovariance; }
 Eigen::MatrixXd KalmanFilter::getInnovationError() { return innovationError; }
 double KalmanFilter::getEstimationError() { return estimationError; }
 uint64_t KalmanFilter::getTheta() { return theta; }
