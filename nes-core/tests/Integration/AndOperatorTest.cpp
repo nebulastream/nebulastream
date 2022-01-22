@@ -14,22 +14,17 @@
     limitations under the License.
 */
 
-//#include "Configurations/Sources/SourceConfigFactory.hpp"
 #include <Util/TestHarness/TestHarness.hpp>
-
 #include <API/QueryAPI.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-//#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <chrono>//for timing execution
-#include <filesystem>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <regex>
