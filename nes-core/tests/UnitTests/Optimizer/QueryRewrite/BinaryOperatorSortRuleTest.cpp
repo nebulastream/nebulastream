@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
