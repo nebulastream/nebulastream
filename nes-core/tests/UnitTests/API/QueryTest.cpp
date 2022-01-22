@@ -17,9 +17,11 @@
 #include "gtest/gtest.h"
 
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -54,7 +56,8 @@ using namespace Configurations;
 
 class QueryTest : public testing::Test {
   public:
-    SourceConfigPtr sourceConfig;
+    PhysicalSourcePtr physicalSource;
+    LogicalSourcePtr logicalSource;
 
     static void SetUpTestCase() {
         NES::setupLogging("QueryTest.log", NES::LOG_DEBUG);
@@ -64,11 +67,9 @@ class QueryTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
 
-        sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->setNumberOfBuffersToProduce(3);
-        sourceConfig->setPhysicalStreamName("test2");
-        sourceConfig->setLogicalStreamName("test_stream");
+        auto defaultSourceType = DefaultSourceType::create();
+        physicalSource = PhysicalSource::create("test2", "test_source", defaultSourceType);
+        logicalSource = LogicalSource::create("test2", Schema::create());
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down QueryTest test class."); }
@@ -80,12 +81,10 @@ TEST_F(QueryTest, testQueryFilter) {
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -109,12 +108,10 @@ TEST_F(QueryTest, testQueryFilter) {
 TEST_F(QueryTest, testQueryProjection) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -138,12 +135,10 @@ TEST_F(QueryTest, testQueryProjection) {
 TEST_F(QueryTest, testQueryTumblingWindow) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -170,13 +165,10 @@ TEST_F(QueryTest, testQueryTumblingWindow) {
 
 TEST_F(QueryTest, testQuerySlidingWindow) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -206,10 +198,10 @@ TEST_F(QueryTest, testQuerySlidingWindow) {
  */
 TEST_F(QueryTest, testQueryMerge) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
+
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     auto lessExpression = Attribute("field_1") <= 10;
     auto printSinkDescriptor = PrintSinkDescriptor::create();
@@ -231,10 +223,9 @@ TEST_F(QueryTest, testQueryMerge) {
  */
 TEST_F(QueryTest, testQueryJoin) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -295,10 +286,9 @@ TEST_F(QueryTest, testQueryExpression) {
  */
 TEST_F(QueryTest, windowAggregationWithAs) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     // create a query with "as" in the aggregation

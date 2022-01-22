@@ -77,8 +77,8 @@ void setupSensorNodeAndStreamCatalogTwoNodes(const SourceCatalogPtr& streamCatal
 
     SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode1);
     SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode2);
-    streamCatalog->addPhysicalStream("default_logical", sce1);
-    streamCatalog->addPhysicalStream("default_logical", sce2);
+    streamCatalog->addPhysicalSource("default_logical", sce1);
+    streamCatalog->addPhysicalSource("default_logical", sce2);
 }
 
 void setupSensorNodeAndStreamCatalogFiveNodes(const SourceCatalogPtr& streamCatalog) {
@@ -107,11 +107,11 @@ void setupSensorNodeAndStreamCatalogFiveNodes(const SourceCatalogPtr& streamCata
     SourceCatalogEntryPtr sce4 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode4);
     SourceCatalogEntryPtr sce5 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode5);
 
-    streamCatalog->addPhysicalStream("default_logical", sce1);
-    streamCatalog->addPhysicalStream("default_logical", sce2);
-    streamCatalog->addPhysicalStream("default_logical", sce3);
-    streamCatalog->addPhysicalStream("default_logical", sce4);
-    streamCatalog->addPhysicalStream("default_logical", sce5);
+    streamCatalog->addPhysicalSource("default_logical", sce1);
+    streamCatalog->addPhysicalSource("default_logical", sce2);
+    streamCatalog->addPhysicalSource("default_logical", sce3);
+    streamCatalog->addPhysicalSource("default_logical", sce4);
+    streamCatalog->addPhysicalSource("default_logical", sce5);
 }
 
 void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
@@ -121,7 +121,7 @@ void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
     PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce);
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {

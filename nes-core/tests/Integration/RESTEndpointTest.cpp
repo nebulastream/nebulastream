@@ -225,7 +225,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce);
 
     Query query = Query::from("default_logical");
     QueryPlanPtr queryPlan = query.getQueryPlan();
