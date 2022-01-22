@@ -16,7 +16,8 @@
 
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -39,8 +40,10 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSinkTest test class." << std::endl; }
 
     void SetUp() override {
-        PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 12345, conf);
+
+        auto defaultSourceType = DefaultSourceType::create();
+        PhysicalSourcePtr physicalSource = PhysicalSource::create("default", "default1", defaultSourceType);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 12345, {physicalSource});
         testPlan = QueryCompilation::PipelineQueryPlan::create(0, 0);
     }
 
@@ -66,7 +69,6 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create("127.0.0.1", 2000);
-    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     DataSinkPtr zmqSink =
@@ -88,8 +90,6 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create();
-    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
-
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);
     DataSinkPtr printSink =
@@ -103,7 +103,6 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingNetworkLogicalToPhysicalS
     Network::NesPartition nesPartition{1, 22, 33, 44};
     SinkDescriptorPtr sinkDescriptor =
         Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(1), 1);
-    PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
 
     SinkLogicalOperatorNodePtr testSink = std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor, 0);
     testSink->setOutputSchema(schema);
