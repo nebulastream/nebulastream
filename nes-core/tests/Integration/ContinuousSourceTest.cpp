@@ -20,14 +20,15 @@
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
 
-#include <Catalogs/MemorySourceStreamConfig.hpp>
-#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
@@ -64,35 +65,28 @@ class ContinuousSourceTest : public testing::Test {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource1 = PhysicalSource::create("exdra", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("exdra");
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalSources(conf);
 
     std::string filePath = "contTestOut.csv";
     remove(filePath.c_str());
@@ -177,44 +171,29 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", testSchema);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    auto defaultSourceType1 = DefaultSourceType::create();
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    //register logical stream
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("testStream", testSchemaFileName);
-
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-
-    //register physical stream
-    wrk1->registerPhysicalSources(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -244,44 +223,30 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", testSchema);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    auto defaultSourceType1 = DefaultSourceType::create();
+    defaultSourceType1->setSourceFrequency(3);
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    //register logical stream
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("testStream", testSchemaFileName);
-
-    sourceConfig->setSourceFrequency(3);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalSources(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -311,44 +276,30 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", testSchema);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    auto defaultSourceType1 = DefaultSourceType::create();
+    defaultSourceType1->setSourceFrequency(1);
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    //register logical stream
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("testStream", testSchemaFileName);
-
-    sourceConfig->setSourceFrequency(1);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFile.txt";
     remove(outputFilePath.c_str());
@@ -437,44 +388,30 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", testSchema);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    auto defaultSourceType1 = DefaultSourceType::create();
+    defaultSourceType1->setSourceFrequency(1);
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    //register logical stream
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("testStream", testSchemaFileName);
-
-    sourceConfig->setSourceFrequency(3);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency.txt";
     remove(outputFilePath.c_str());
@@ -563,38 +500,23 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
-
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"val1\", UINT64))->"
                              "addField(createField(\"val2\", UINT64))->"
                              "addField(createField(\"val3\", UINT64));";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("testStream", testSchemaFileName);
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", testSchema);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
     std::string testCSV = "1,2,3\n"
                           "1,2,4\n"
                           "4,3,6";
@@ -602,16 +524,17 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     std::ofstream outCsv(testCSVFileName);
     outCsv << testCSV;
     outCsv.close();
-
-    sourceConfig->setFilePath("testCSV.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalSources(conf);
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("testCSV.csv");
+    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -639,38 +562,23 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
-
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"val1\", UINT64))->"
                              "addField(createField(\"val2\", UINT64))->"
                              "addField(createField(\"val3\", UINT64));";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("testStream", testSchemaFileName);
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", testSchema);
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
     std::string testCSV = "1,2,3\n"
                           "1,2,4\n"
                           "4,3,6";
@@ -678,16 +586,17 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     std::ofstream outCsv(testCSVFileName);
     outCsv << testCSV;
     outCsv.close();
-
-    sourceConfig->setFilePath("testCSV.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(1);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalSources(conf);
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("testCSV.csv");
+    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(1);
+    auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
 
     std::string outputFilePath = "testMultipleOutputBufferFromCSVSourceWriteTest.out";
     remove(outputFilePath.c_str());
@@ -742,36 +651,30 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
 
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
+    NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_DEBUG("ContinuousSourceTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
+    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(5);
+    auto physicalSource1 = PhysicalSource::create("exdra", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(5);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("exdra");
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testExdraUseCaseWithOutput.csv";
     remove(outputFilePath.c_str());
@@ -904,22 +807,19 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "long_running.csv");
+    csvSourceType->setSourceFrequency(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType->setNumberOfBuffersToProduce(numBufferToProduce);
+    csvSourceType->setSkipHeader(false);
+
     std::string queryWithFilterOperator = R"(Query::from("car"))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    //register physical stream
-
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setLogicalStreamName("car");
-    sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "long_running.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(numBufferToProduce);
-    sourceConfig->setSkipHeader(false);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, carSchema);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1ULL);
 

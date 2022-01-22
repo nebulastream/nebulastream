@@ -26,6 +26,7 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <utility>
+
 namespace NES {
 
 namespace TestUtils {
@@ -40,6 +41,7 @@ class TestSourceDescriptor : public SourceDescriptor {
                                     size_t,
                                     std::vector<Runtime::Execution::SuccessorExecutablePipeline>)> createSourceFunction)
         : SourceDescriptor(std::move(std::move(schema))), createSourceFunction(std::move(std::move(createSourceFunction))) {}
+
     DataSourcePtr create(OperatorId operatorId,
                          SourceDescriptorPtr sourceDescriptor,
                          Runtime::NodeEnginePtr nodeEngine,

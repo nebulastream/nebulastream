@@ -19,14 +19,14 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
-#include <Catalogs/LambdaSourceStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -80,26 +80,20 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
 
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType->setNumberOfBuffersToProduce(2);
+    csvSourceType->setSkipHeader(true);
+
     string query =
         R"(Query::from("window").as("w1").joinWith(Query::from("window").as("w2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    //Setup first physical stream
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream1");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    //Setup second physical stream for same logical stream
-    //    csvSourceType1->as<CSVSourceType>()->setPhysicalStreamName("test_stream2");
-    //    PhysicalSourcePtr conf2 = PhysicalSourceType::create(csvSourceType1);
-    //    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, windowSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window", windowSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window", csvSourceType)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -160,26 +154,22 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType->setNumberOfBuffersToProduce(2);
+    csvSourceType->setSkipHeader(true);
+
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -240,26 +230,22 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType->setNumberOfBuffersToProduce(2);
+    csvSourceType->setSkipHeader(true);
+
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -320,32 +306,28 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    SourceConfigPtr srcConf1 = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf1);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -404,32 +386,28 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window3.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    SourceConfigPtr srcConf1 = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window3.csv");
-    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf1);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -489,33 +467,30 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSourceFrequency(1);
+    csvSourceType2->setSkipHeader(true);
+
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    SourceConfigPtr srcConf1 = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-    srcConf1->as<CSVSourceConfig>()->setSourceFrequency(1);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf1);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -576,33 +551,29 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    SourceConfigPtr srcConf1 = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf1);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -668,34 +639,30 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    SourceConfigPtr srcConf1 = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf1);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -761,33 +728,28 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(
         SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    SourceConfigPtr srcConf1 = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
-    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf1);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -851,32 +813,28 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     ASSERT_EQ(sizeof(Window), windowSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(true);
+
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window3.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(true);
+
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(
         SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, windowSchema);
-
-    SourceConfigPtr srcConf1 = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf1->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf1->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window3.csv");
-    srcConf1->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf1->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf1->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf1->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf1);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, window2Schema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window1", windowSchema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window1", csvSourceType1)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType2)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         int64_t start;
@@ -942,28 +900,31 @@ TEST_F(JoinDeploymentTest, testJoinWithFixedCharKey) {
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
             .project(Attribute("window1window2$start"),Attribute("window1window2$end"), Attribute("window1window2$key"),  Attribute("window1$timestamp"))
         )";
-    TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("window1", window1Schema, "window1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("window2", window2Schema, "window2");
+    TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort)
+                                  .addLogicalSource("window1", window1Schema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithMemorySourceToCoordinator("window1")
+                                  .attachWorkerWithMemorySourceToCoordinator("window2")
+                                  .pushElement<Window1>({"aaaaaaa", 1000u}, 0u)
+                                  //Source1
+                                  .pushElement<Window2>({"bbbbbbb", 1001u}, 0u)
+                                  .pushElement<Window2>({"ccccccc", 1002u}, 0u)
+                                  .pushElement<Window2>({"aaaaaaa", 2000u}, 0u)
+                                  .pushElement<Window2>({"ddddddd", 2001u}, 0u)
+                                  .pushElement<Window2>({"eeeeeee", 2002u}, 0u)
+                                  .pushElement<Window2>({"aaaaaaa", 3000u}, 0u)
+                                  //Source2
+                                  .pushElement<Window2>({"fffffff", 1003u}, 1u)
+                                  .pushElement<Window2>({"bbbbbbb", 1011u}, 1u)
+                                  .pushElement<Window2>({"ccccccc", 1102u}, 1u)
+                                  .pushElement<Window2>({"ccccccc", 1112u}, 1u)
+                                  .pushElement<Window2>({"aaaaaaa", 2010u}, 1u)
+                                  .pushElement<Window2>({"ddddddd", 2301u}, 1u)
+                                  .pushElement<Window2>({"ggggggg", 3100u}, 1u)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2u);
-
-    testHarness.pushElement<Window1>({"aaaaaaa", 1000u}, 0u);
-    testHarness.pushElement<Window2>({"bbbbbbb", 1001u}, 0u);
-    testHarness.pushElement<Window2>({"ccccccc", 1002u}, 0u);
-    testHarness.pushElement<Window2>({"aaaaaaa", 2000u}, 0u);
-    testHarness.pushElement<Window2>({"ddddddd", 2001u}, 0u);
-    testHarness.pushElement<Window2>({"eeeeeee", 2002u}, 0u);
-    testHarness.pushElement<Window2>({"aaaaaaa", 3000u}, 0u);
-
-    testHarness.pushElement<Window2>({"fffffff", 1003u}, 1u);
-    testHarness.pushElement<Window2>({"bbbbbbb", 1011u}, 1u);
-    testHarness.pushElement<Window2>({"ccccccc", 1102u}, 1u);
-    testHarness.pushElement<Window2>({"ccccccc", 1112u}, 1u);
-    testHarness.pushElement<Window2>({"aaaaaaa", 2010u}, 1u);
-    testHarness.pushElement<Window2>({"ddddddd", 2301u}, 1u);
-    testHarness.pushElement<Window2>({"ggggggg", 3100u}, 1u);
 
     struct Output {
         uint64_t window1window2$start;
