@@ -59,6 +59,10 @@ class DefaultSourceType : public PhysicalSourceType {
 
     const Configurations::IntConfigOption& getSourceFrequency() const;
 
+    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
+
+    void setSourceFrequency(uint32_t numberOfBuffersToProduce);
+
     std::string toString() override;
 
     bool equal(const PhysicalSourceTypePtr& other) override;
