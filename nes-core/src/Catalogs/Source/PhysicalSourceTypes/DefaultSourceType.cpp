@@ -65,4 +65,10 @@ void DefaultSourceType::reset() {
     //nothing
 }
 
+void DefaultSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce) {
+    this->numberOfBuffersToProduce->setValue(numberOfBuffersToProduce);
+}
+
+void DefaultSourceType::setSourceFrequency(uint32_t sourceFrequency) { this->sourceFrequency->setValue(sourceFrequency); }
+
 }// namespace NES
