@@ -23,7 +23,9 @@
 #include "../../util/TestSink.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -72,8 +74,9 @@ class QueryExecutionTest : public testing::Test {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
-        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+        auto defaultSourceType = DefaultSourceType::create();
+        PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {streamConf});
     }
 
     /* Will be called before a test is executed. */
@@ -318,7 +321,8 @@ TEST_F(QueryExecutionTest, filterQuery) {
 }
 
 TEST_F(QueryExecutionTest, projectionQuery) {
-    auto streamConf = PhysicalSourceType::createEmpty();
+//    auto defaultSourceType = DefaultSourceType::create();
+//    PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
 
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
