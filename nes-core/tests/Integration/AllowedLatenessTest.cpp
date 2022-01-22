@@ -20,8 +20,7 @@
 #pragma clang diagnostic pop
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
@@ -34,8 +33,10 @@ using namespace Configurations;
 
 class AllowedLatenessTest : public testing::Test {
   public:
-    PhysicalSourcePtr outOfOrderConf;
-    PhysicalSourcePtr inOrderConf;
+//    PhysicalSourcePtr outOfOrderConf;
+//    PhysicalSourcePtr inOrderConf;
+    CSVSourceTypePtr inOrderConf;
+    CSVSourceTypePtr outOfOrderConf;
     SchemaPtr inputSchema;
 
     static void SetUpTestCase() {
@@ -45,28 +46,22 @@ class AllowedLatenessTest : public testing::Test {
 
     void SetUp() override {
         // window-out-of-order.csv contains 12 rows
-        SourceConfigPtr outOfOrderSourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-        outOfOrderSourceConfig->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window-out-of-order.csv");
-        outOfOrderSourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
-        outOfOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
-        outOfOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(6);
-        outOfOrderSourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("outOfOrderPhysicalSource");
-        outOfOrderSourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("OutOfOrderStream");
-        outOfOrderSourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
+        outOfOrderConf = CSVSourceType::create();
+        outOfOrderConf->setFilePath("../tests/test_data/window-out-of-order.csv");
+        outOfOrderConf->setSourceFrequency(1);
+        outOfOrderConf->setNumberOfTuplesToProducePerBuffer(2);
+        outOfOrderConf->setNumberOfBuffersToProduce(6);
+        outOfOrderConf->setSkipHeader(false);
+//        outOfOrderConf = PhysicalSource::create("OutOfOrderStream", "outOfOrderPhysicalSource", srcConf1);
 
-        outOfOrderConf = PhysicalSourceType::create(outOfOrderSourceConfig);
-
-        SourceConfigPtr inOrderSourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
+        inOrderConf = CSVSourceType::create();
         // window-out-of-order.csv contains 12 rows
-        inOrderSourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-in-order.csv");
-        inOrderSourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
-        inOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(2);
-        inOrderSourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(6);
-        inOrderSourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("inOrderPhysicalSource");
-        inOrderSourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("inOrderStream");
-        inOrderSourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
-
-        inOrderConf = PhysicalSourceType::create(inOrderSourceConfig);
+        inOrderConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-in-order.csv");
+        inOrderConf->setSourceFrequency(1);
+        inOrderConf->setNumberOfTuplesToProducePerBuffer(2);
+        inOrderConf->setNumberOfBuffersToProduce(6);
+        inOrderConf->setSkipHeader(false);
+//        inOrderConf = PhysicalSource::create("inOrderStream", "inOrderPhysicalSource", srcConf2);
 
         restPort = restPort + 2;
         rpcPort = rpcPort + 30;
@@ -115,8 +110,11 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                    .addLogicalSource("inOrderStream", inputSchema)
+                    .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                    .validate().setupTopology();
+
 
     std::vector<Output> expectedOutput = {{1000ULL, 2000ULL, 1ULL, 15ULL},
                                           {2000ULL, 3000ULL, 1ULL, 30ULL},
@@ -138,8 +136,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("inOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness=10, the 3000-4000 is closed
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 15}, {2000, 3000, 1, 30}, {3000, 4000, 1, 21}};
@@ -161,8 +161,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("inOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness=250, the 3000-4000 window is not yet closed and up to {5,1,1990} included to the 1000-2000 window
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 15}, {2000, 3000, 1, 30}};
@@ -184,8 +186,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("OutOfOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness = 0, {6,1,1990} is not included to window 1000-2000
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 6}, {2000, 3000, 1, 24}, {3000, 4000, 1, 22}};
@@ -206,8 +210,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("OutOfOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness = 10, {6,1,1990} is included to window 1000-2000
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 12}, {2000, 3000, 1, 24}, {3000, 4000, 1, 22}};
@@ -229,8 +235,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("OutOfOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness=250, {9,1,1900} included in 1000-2000 window, while the 3000-4000 window is not yet closed
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 21}, {2000, 3000, 1, 24}};
@@ -241,6 +249,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_250ms) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
+// TODO: find out why test is failing
 /*
  * @brief Test allowed lateness using multiple sources, flat topology, in-order stream with 0ms allowed lateness
  */
@@ -252,10 +261,13 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
+
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("inOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .validate().setupTopology();
 
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 45}, {2000, 3000, 1, 90}, {3000, 4000, 1, 63}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", "NONE", "IN_MEMORY");
@@ -275,10 +287,12 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("inOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness=10, the 3000-4000 is closed
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 45}, {2000, 3000, 1, 90}, {3000, 4000, 1, 63}};
@@ -300,10 +314,12 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("inOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("inOrderStream", inOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness=250, the 3000-4000 window is not yet closed and up to {5,1,1990} included to the 1000-2000 window
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 45}, {2000, 3000, 1, 90}};
@@ -325,10 +341,12 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("OutOfOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness = 0, {6,1,1990} is not included to window 1000-2000
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 18}, {2000, 3000, 1, 72}, {3000, 4000, 1, 66}};
@@ -348,10 +366,12 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_10ms) {
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("OutOfOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness = 10, {6,1,1990} is included to window 1000-2000
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 36}, {2000, 3000, 1, 72}, {3000, 4000, 1, 66}};
@@ -373,10 +393,12 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("OutOfOrderStream", inputSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .attachWorkerWithCSVSourceToCoordinator("OutOfOrderStream", outOfOrderConf)
+                                  .validate().setupTopology();
 
     // with allowed lateness=250, {9,1,1900} included in 1000-2000 window, while the 3000-4000 window is not yet closed
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 63}, {2000, 3000, 1, 72}};
@@ -407,13 +429,15 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(1));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(1));
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("inOrderStream", inputSchema)
+                                  .attachWorkerToCoordinator() //idx 2
+                                  .attachWorkerToCoordinator() //idx 3
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
+                                  .validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2ULL);
@@ -440,13 +464,15 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(1));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(1));
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("inOrderStream", inputSchema)
+                                  .attachWorkerToCoordinator() //idx 2
+                                  .attachWorkerToCoordinator() //idx 3
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
+                                  .validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2ULL);
@@ -473,13 +499,15 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(1));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(inOrderConf, inputSchema, testHarness.getWorkerId(1));
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("inOrderStream", inputSchema)
+                                  .attachWorkerToCoordinator() //idx 2
+                                  .attachWorkerToCoordinator() //idx 3
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("inOrderStream", inOrderConf, 3)
+                                  .validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2U);
@@ -506,13 +534,15 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_0ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(1));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(1));
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("OutOfOrderStream", inputSchema)
+                                  .attachWorkerToCoordinator() //idx 2
+                                  .attachWorkerToCoordinator() //idx 3
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
+                                  .validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2UL);
@@ -538,13 +568,15 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_10ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(1));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(1));
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("OutOfOrderStream", inputSchema)
+                                  .attachWorkerToCoordinator() //idx 2
+                                  .attachWorkerToCoordinator() //idx 3
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
+                                  .validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2UL);
@@ -571,13 +603,15 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_250ms) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";
 
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(1));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(outOfOrderConf, inputSchema, testHarness.getWorkerId(1));
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("OutOfOrderStream", inputSchema)
+                                  .attachWorkerToCoordinator() //idx 2
+                                  .attachWorkerToCoordinator() //idx 3
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 2)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
+                                  .attachWorkerWithCSVSourceToWorkerWithId("OutOfOrderStream", outOfOrderConf, 3)
+                                  .validate().setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
     ASSERT_EQ(topology->getRoot()->getChildren().size(), 2ULL);
