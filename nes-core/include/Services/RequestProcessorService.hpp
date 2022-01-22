@@ -81,8 +81,7 @@ class RequestProcessorService {
                                      RequestQueuePtr queryRequestQueue,
                                         Optimizer::QueryMergerRule queryMergerRule,
                                         Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
-                                        bool performOnlySourceOperatorExpansion);
-                                        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
+                                        bool performOnlySourceOperatorExpansion,
                                         bool queryReconfiguration);
 
     /**

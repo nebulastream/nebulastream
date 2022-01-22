@@ -158,7 +158,6 @@ void RequestProcessorService::start() {
                                                                       + std::to_string(sharedQueryId));
                                 }
                             }
-
                         }
                     }
                     //Mark the meta data as deployed
