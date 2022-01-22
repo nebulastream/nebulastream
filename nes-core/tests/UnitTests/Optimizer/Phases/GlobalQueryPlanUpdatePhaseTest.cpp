@@ -15,10 +15,12 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/QueryCatalogEntry.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Configurations/Sources/DefaultSourceConfig.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -52,12 +54,11 @@ class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
         //Setup stream catalog
         streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
         auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-        auto sourceConfig = Configurations::DefaultSourceConfig::create();
-        sourceConfig->setPhysicalStreamName("test1");
-        sourceConfig->setLogicalStreamName("default_logical");
-        PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, node);
-        streamCatalog->addPhysicalStream("default_logical", streamCatalogEntry1);
+        auto defaultSourceType = DefaultSourceType::create();
+        auto physicalSource = PhysicalSource::create("default_logical", "test1", defaultSourceType);
+        auto logicalSource = LogicalSource::create("default_logical", Schema::create());
+        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, node);
+        streamCatalog->addPhysicalSource("default_logical", streamCatalogEntry1);
     }
 
     /* Will be called before a test is executed. */
@@ -355,14 +356,12 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
                                 ->addField("X", NES::UINT64)
                                 ->addField("Y", NES::UINT64);
     streamCatalog->addLogicalStream("example", schema);
+    auto logicalStream = streamCatalog->getStreamForLogicalStream("example");
 
     auto node = TopologyNode::create(0, "localhost", 4000, 5000, 14);
-    auto sourceConfig = Configurations::DefaultSourceConfig::create();
-    sourceConfig->setPhysicalStreamName("test1");
-    sourceConfig->setLogicalStreamName("example");
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, node);
-    streamCatalog->addPhysicalStream("example", streamCatalogEntry1);
+    auto physicalSource = PhysicalSource::create("example", "test1");
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalStream, node);
+    streamCatalog->addPhysicalSource("example", streamCatalogEntry1);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase =

@@ -163,7 +163,7 @@ class TestHarness {
 
             // Check if logical stream already exists
             auto streamCatalog = nesCoordinator->getStreamCatalog();
-            if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(logicalSourceName)) {
+            if (!streamCatalog->testIfLogicalSourceExists(logicalSourceName)) {
                 NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
                           << logicalSourceName);
                 streamCatalog->addLogicalStream(logicalSourceName, schema);
@@ -215,18 +215,21 @@ class TestHarness {
 
     /**
      * @brief add a csv source to be used in the test and connect to parent with specific parent id
-     * @param schema schema of the source
-     * @param physicalSource physical stream configuration for the csv source
+     * @param logicalSourceName logical source name
+     * @param csvSourceType csv source type
      * @param parentId id of the parent to connect
      */
-    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const PhysicalSourcePtr& physicalSource, uint64_t parentId) {
+    TestHarness& attachWorkerWithCSVSourceToWorkerWithId(const std::string& logicalSourceName,
+                                                         const CSVSourceTypePtr& csvSourceType,
+                                                         uint64_t parentId) {
         auto workerConfiguration = WorkerConfiguration::create();
+        std::string physicalSourceName = getNextPhysicalSourceName();
+        auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, csvSourceType);
         workerConfiguration->addPhysicalSource(physicalSource);
         workerConfiguration->setParentId(parentId);
-        std::string physicalSourceName = getNextPhysicalSourceName();
         uint32_t workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
-                                                                                     physicalSource->getLogicalSourceName(),
+                                                                                     logicalSourceName,
                                                                                      physicalSourceName,
                                                                                      TestHarnessWorkerConfiguration::CSVSource,
                                                                                      workerId);
@@ -236,11 +239,13 @@ class TestHarness {
 
     /**
       * @brief add a csv source to be used in the test
-      * @param physicalSource physical stream configuration for the csv source
+      * @param logicalSourceName logical source name
+      * @param csvSourceType csv source type
       */
-    TestHarness& attachWorkerWithCSVSourceToCoordinator(PhysicalSourcePtr physicalSource) {
+    TestHarness& attachWorkerWithCSVSourceToCoordinator(const std::string& logicalSourceName,
+                                                        const CSVSourceTypePtr& csvSourceType) {
         //We are assuming coordinator will start with id 1
-        return attachWorkerWithCSVSourceToWorkerWithId(std::move(physicalSource), 1);
+        return attachWorkerWithCSVSourceToWorkerWithId(std::move(logicalSourceName), std::move(csvSourceType), 1);
     }
 
     /**
@@ -337,7 +342,7 @@ class TestHarness {
 
     TestHarness& setupTopology() {
 
-        if(!validationDone){
+        if (!validationDone) {
             NES_THROW_RUNTIME_ERROR("Please call validate before calling setup.");
         }
 

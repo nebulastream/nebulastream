@@ -78,7 +78,7 @@ bool SourceCatalog::addLogicalStream(const std::string& logicalStreamName, Schem
     //check if stream already exist
     NES_DEBUG("SourceCatalog: search for logical stream in addLogicalStream() " << logicalStreamName);
 
-    if (!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
+    if (!testIfLogicalSourceExists(logicalStreamName)) {
         NES_DEBUG("SourceCatalog: add logical stream " << logicalStreamName);
         logicalSourceNameToSchemaMapping[logicalStreamName] = std::move(schemaPtr);
         return true;
@@ -103,59 +103,57 @@ bool SourceCatalog::removeLogicalStream(const std::string& logicalStreamName) {
     }
     uint64_t cnt = logicalSourceNameToSchemaMapping.erase(logicalStreamName);
     NES_DEBUG("SourceCatalog: removed " << cnt << " copies of the stream");
-    NES_ASSERT(!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName), "log stream should not exist");
+    NES_ASSERT(!testIfLogicalSourceExists(logicalStreamName), "log stream should not exist");
     return true;
 }
 
-bool SourceCatalog::addPhysicalSource(const std::string& logicalStreamName, const SourceCatalogEntryPtr& entry) {
+bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, const SourceCatalogEntryPtr& newSourceCatalogEntry) {
     std::unique_lock lock(catalogMutex);
-    NES_DEBUG("SourceCatalog: search for logical stream in addPhysicalSource() " << logicalStreamName);
+    NES_DEBUG("SourceCatalog: search for logical stream in addPhysicalSource() " << logicalSourceName);
 
     // check if logical stream exists
-    if (!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
-        NES_ERROR("SourceCatalog: logical stream " << logicalStreamName << " does not exists when inserting physical stream "
-                                                   << entry->getPhysicalSource()->getPhysicalSourceName());
+    if (!testIfLogicalSourceExists(logicalSourceName)) {
+        NES_ERROR("SourceCatalog: logical stream " << logicalSourceName << " does not exists when inserting physical stream "
+                                                   << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
         return false;
     } else {
-        NES_DEBUG("SourceCatalog: logical stream " << logicalStreamName << " exists try to add physical stream "
-                                                   << entry->getPhysicalSource()->getPhysicalSourceName());
+        NES_DEBUG("SourceCatalog: logical stream " << logicalSourceName << " exists try to add physical stream "
+                                                   << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
 
         //get current physical stream for this logical stream
-        std::vector<SourceCatalogEntryPtr> physicalStreams = logicalToPhysicalSourceMapping[logicalStreamName];
+        std::vector<SourceCatalogEntryPtr> physicalStreams = logicalToPhysicalSourceMapping[logicalSourceName];
 
         //check if physical stream does not exist yet
-        for (const SourceCatalogEntryPtr& entry : physicalStreams) {
-            NES_DEBUG("test node id=" << entry->getNode()->getId()
-                                      << " phyStr=" << entry->getPhysicalSource()->getPhysicalSourceName());
-            NES_DEBUG("test to be inserted id=" << entry->getNode()->getId()
-                                                << " phyStr=" << entry->getPhysicalSource()->getPhysicalSourceName());
-            if (entry->getPhysicalSource()->getPhysicalSourceName() == entry->getPhysicalSource()->getPhysicalSourceName()) {
-                if (entry->getNode()->getId() == entry->getNode()->getId()) {
-                    NES_ERROR("SourceCatalog: node with id=" << entry->getNode()->getId()
-                                                             << " name=" << entry->getPhysicalSource()->getPhysicalSourceName()
-                                                             << " already exists");
-                    return false;
-                }
+        for (const SourceCatalogEntryPtr& sourceCatalogEntry : physicalStreams) {
+            auto physicalSourceToTest = sourceCatalogEntry->getPhysicalSource();
+            NES_DEBUG("test node id=" << sourceCatalogEntry->getNode()->getId()
+                                      << " phyStr=" << physicalSourceToTest->getPhysicalSourceName());
+            if (physicalSourceToTest->getPhysicalSourceName()
+                    == newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
+                && sourceCatalogEntry->getNode()->getId() == newSourceCatalogEntry->getNode()->getId()) {
+                NES_ERROR("SourceCatalog: node with id=" << sourceCatalogEntry->getNode()->getId() << " name="
+                                                         << physicalSourceToTest->getPhysicalSourceName() << " already exists");
+                return false;
             }
         }
     }
 
-    NES_DEBUG("SourceCatalog: physical stream " << entry->getPhysicalSource()->getPhysicalSourceName()
+    NES_DEBUG("SourceCatalog: physical stream " << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
                                                 << " does not exist, try to add");
 
     //if first one
-    if (testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)) {
+    if (testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalSourceName)) {
         NES_DEBUG("stream already exist, just add new entry");
-        logicalToPhysicalSourceMapping[logicalStreamName].push_back(entry);
+        logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);
     } else {
         NES_DEBUG("stream does not exist, create new item");
         logicalToPhysicalSourceMapping.insert(
-            std::pair<std::string, std::vector<SourceCatalogEntryPtr>>(logicalStreamName, std::vector<SourceCatalogEntryPtr>()));
-        logicalToPhysicalSourceMapping[logicalStreamName].push_back(entry);
+            std::pair<std::string, std::vector<SourceCatalogEntryPtr>>(logicalSourceName, std::vector<SourceCatalogEntryPtr>()));
+        logicalToPhysicalSourceMapping[logicalSourceName].push_back(newSourceCatalogEntry);
     }
 
-    NES_DEBUG("SourceCatalog: physical stream " << entry->getPhysicalSource() << " id=" << entry->getNode()->getId()
-                                                << " successful added");
+    NES_DEBUG("SourceCatalog: physical stream " << newSourceCatalogEntry->getPhysicalSource()
+                                                << " id=" << newSourceCatalogEntry->getNode()->getId() << " successful added");
     return true;
 }
 
@@ -244,7 +242,7 @@ LogicalSourcePtr SourceCatalog::getStreamForLogicalStreamOrThrowException(const 
     throw Exception("Required stream does not exists " + logicalStreamName);
 }
 
-bool SourceCatalog::testIfLogicalStreamExistsInSchemaMapping(const std::string& logicalStreamName) {
+bool SourceCatalog::testIfLogicalSourceExists(const std::string& logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     return logicalSourceNameToSchemaMapping.find(logicalStreamName)//if log stream does not exists
         != logicalSourceNameToSchemaMapping.end();
@@ -319,7 +317,7 @@ bool SourceCatalog::updatedLogicalStream(std::string& streamName, std::string& s
     std::unique_lock lock(catalogMutex);
 
     NES_TRACE("SourceCatalog: Check if logical stream exists in the catalog.");
-    if (!testIfLogicalStreamExistsInSchemaMapping(streamName)) {
+    if (!testIfLogicalSourceExists(streamName)) {
         NES_ERROR("SourceCatalog: Unable to find logical stream " << streamName << " to update.");
         return false;
     }

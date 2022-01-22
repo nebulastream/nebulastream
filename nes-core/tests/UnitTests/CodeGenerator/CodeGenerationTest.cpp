@@ -16,7 +16,8 @@
 
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
@@ -77,10 +78,11 @@ class CodeGenerationTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
-        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+        auto defaultSourceType = DefaultSourceType::create();
+        PhysicalSourcePtr streamConf = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                   6262,
-                                                                  streamConf,
+                                                                  {streamConf},
                                                                   1,
                                                                   4096,
                                                                   1024,
