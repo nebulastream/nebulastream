@@ -20,11 +20,6 @@
 
 namespace NES {
 
-namespace Configurations {
-class PhysicalSource;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
-}// namespace Configurations
-
 namespace Runtime {
 enum class NumaAwarenessFlag { ENABLED, DISABLED };
 /**

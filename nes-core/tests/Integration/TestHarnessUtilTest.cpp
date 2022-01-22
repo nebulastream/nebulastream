@@ -534,7 +534,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("car", "car1", csvSourceType);
+
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
                                   .addLogicalSource("car", carSchema)
@@ -543,7 +543,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
                                   // 1,2,4
                                   // 4,3,6
                                   //register physical stream
-                                  .attachWorkerWithCSVSourceToCoordinator(physicalSource)
+                                  .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
                                   .validate()
                                   .setupTopology();
 
@@ -586,7 +586,6 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("car", "car1", csvSourceType);
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
@@ -596,7 +595,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
                                   // 1,2,4
                                   // 4,3,6
                                   //register physical stream
-                                  .attachWorkerWithCSVSourceToCoordinator(physicalSource)//2
+                                  .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)//2
                                   // add a memory source
                                   .attachWorkerWithMemorySourceToCoordinator("car")//3
                                   // push two elements to the memory source

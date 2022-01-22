@@ -1994,14 +1994,13 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationW
     csvSourceType->setNumberOfTuplesToProducePerBuffer(28);
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
-    PhysicalSourcePtr conf = PhysicalSource::create("car", "car", csvSourceType);
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("id")).apply(Max(Attribute("value"))))";
 
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
                                   .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithCSVSourceToCoordinator(conf)
+                                  .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
                                   .validate()
                                   .setupTopology();
 

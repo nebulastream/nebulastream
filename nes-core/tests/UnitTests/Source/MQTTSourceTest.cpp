@@ -16,7 +16,8 @@
 
 #ifdef ENABLE_MQTT_BUILD
 #include <API/Schema.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -29,7 +30,6 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Sources/MQTTSourceConfig.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -68,12 +68,9 @@ class MQTTSourceTest : public testing::Test {
 
     void SetUp() override {
         NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
-
         test_schema = Schema::create()->addField("var", UINT32);
-
-        PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, conf);
-
+        mqttSourceType = MQTTSourceType::create();
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {});
         bufferManager = nodeEngine->getBufferManager();
         queryManager = nodeEngine->getQueryManager();
     }
@@ -92,7 +89,7 @@ class MQTTSourceTest : public testing::Test {
     Runtime::QueryManagerPtr queryManager;
     SchemaPtr test_schema;
     uint64_t buffer_size{};
-    MQTTSourceConfigPtr srcConf = MQTTSourceConfig::create();
+    MQTTSourceTypePtr mqttSourceType;
 };
 
 /**
@@ -103,7 +100,7 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
-                                       srcConf,
+                                       mqttSourceType,
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
@@ -117,18 +114,17 @@ TEST_F(MQTTSourceTest, MQTTSourceInit) {
  */
 TEST_F(MQTTSourceTest, MQTTSourcePrint) {
 
-    MQTTSourceConfigPtr mqttConfig = srcConf->as<MQTTSourceConfig>();
-    mqttConfig->setUrl("tcp://127.0.0.1:1883");
-    mqttConfig->setCleanSession(false);
-    mqttConfig->setClientId("nes-mqtt-test-client");
-    mqttConfig->setUserName("rfRqLGZRChg8eS30PEeR");
-    mqttConfig->setTopic("v1/devices/me/telemetry");
-    mqttConfig->setQos(1);
+    mqttSourceType->setUrl("tcp://127.0.0.1:1883");
+    mqttSourceType->setCleanSession(false);
+    mqttSourceType->setClientId("nes-mqtt-test-client");
+    mqttSourceType->setUserName("rfRqLGZRChg8eS30PEeR");
+    mqttSourceType->setTopic("v1/devices/me/telemetry");
+    mqttSourceType->setQos(1);
 
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
-                                       mqttConfig,
+                                       mqttSourceType,
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
@@ -155,7 +151,7 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
     auto mqttSource = createMQTTSource(test_schema,
                                        bufferManager,
                                        queryManager,
-                                       srcConf,
+                                       mqttSourceType,
                                        OPERATORID,
                                        NUMSOURCELOCALBUFFERS,
                                        SUCCESSORS,
@@ -186,19 +182,6 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     //register logical stream qnv
     std::string stream =
         R"(Schema::create()->addField("type", DataTypeFactory::createArray(10, DataTypeFactory::createChar()))
@@ -210,26 +193,30 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
                             ->addField(createField("healthStatusDuration", UINT32))
                             ->addField(createField("recovered", BOOLEAN))
                             ->addField(createField("dead", BOOLEAN));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << stream;
-    out.close();
-    wrk1->registerLogicalStream("stream", testSchemaFileName);
+    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
-    srcConf->setSourceType("MQTTSource");
-    srcConf->setUrl("ws://127.0.0.1:9002");
-    srcConf->setClientId("testClients");
-    srcConf->setUserName("testUser");
-    srcConf->setTopic("demoCityHospital_1");
-    srcConf->setQos(2);
-    srcConf->setCleanSession(true);
-    srcConf->setFlushIntervalMS(2000);
-    srcConf->setNumberOfBuffersToProduce(10000);
-    srcConf->setPhysicalStreamName("test_stream");
-    srcConf->setLogicalStreamName("stream");
-    //register physical stream
-    PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(streamConf);
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    mqttSourceType->setUrl("ws://127.0.0.1:9002");
+    mqttSourceType->setClientId("testClients");
+    mqttSourceType->setUserName("testUser");
+    mqttSourceType->setTopic("demoCityHospital_1");
+    mqttSourceType->setQos(2);
+    mqttSourceType->setCleanSession(true);
+    mqttSourceType->setFlushIntervalMS(2000);
+    auto physicalSource = PhysicalSource::create("stream","test_stream", mqttSourceType);
+    wrkConf->addPhysicalSource(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
