@@ -572,44 +572,44 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    NES_INFO("WindowDeploymentTest: Start coordinator");
+    NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical stream
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     crd->getStreamCatalogService()->registerLogicalStream("car", testSchema);
     crd->getStreamCatalogService()->registerLogicalStream("truck", testSchema);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("UnionDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
     workerConfig1->setRpcPort(port + 10);
     workerConfig1->setDataPort(port + 11);
-    DefaultSourceTypePtr csvSourceType1 = DefaultSourceType::create();
-    csvSourceType1->setNumberOfBuffersToProduce(3);
-    auto physicalSource1 = PhysicalSource::create("car", "physical_car", csvSourceType1);
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("car", "physical_car", defaultSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker1 started successfully");
 
-    NES_INFO("WindowDeploymentTest: Start worker 2");
+    NES_INFO("UnionDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
     workerConfig2->setRpcPort(port + 20);
     workerConfig2->setDataPort(port + 21);
-    DefaultSourceTypePtr csvSourceType2 = DefaultSourceType::create();
-    csvSourceType2->setNumberOfBuffersToProduce(3);
-    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
+    defaultSourceType2->setNumberOfBuffersToProduce(3);
+    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", defaultSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
+    NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -624,7 +624,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
         queryService->validateAndQueueAddRequest(query, "TopDown", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     cout << "queryid=" << queryId << endl;
-    EXPECT_TRUE(!TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     NES_INFO("UnionDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -671,6 +671,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -713,7 +714,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
@@ -826,6 +827,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -950,6 +952,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
