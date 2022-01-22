@@ -24,8 +24,8 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>//
 
-#include <Catalogs/LogicalSource.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -52,8 +52,8 @@ class LogicalOperatorNodeTest : public testing::Test {
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-        sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException("default_logical");
-        SchemaPtr schema = sPtr->getSchema();
+        logicalSource = streamCatalog->getStreamForLogicalStreamOrThrowException("default_logical");
+        SchemaPtr schema = logicalSource->getSchema();
         auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/ 0, /*frequency*/ 0);
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
@@ -79,7 +79,6 @@ class LogicalOperatorNodeTest : public testing::Test {
         filterOp4Copy = LogicalOperatorFactory::createFilterOperator(pred4);
         filterOp5Copy = LogicalOperatorFactory::createFilterOperator(pred5);
         filterOp6Copy = LogicalOperatorFactory::createFilterOperator(pred6);
-        filterOp7Copy = LogicalOperatorFactory::createFilterOperator(pred7);
 
         removed = false;
         replaced = false;
@@ -92,15 +91,14 @@ class LogicalOperatorNodeTest : public testing::Test {
   protected:
     bool removed{};
     bool replaced{};
-    LogicalStreamPtr sPtr;
+    LogicalSourcePtr logicalSource;
     DumpContextPtr dumpContext;
 
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
     LogicalOperatorNodePtr sourceOp;
 
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
-    LogicalOperatorNodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy,
-        filterOp7Copy;
+    LogicalOperatorNodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy;
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};

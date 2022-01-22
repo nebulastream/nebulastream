@@ -17,7 +17,7 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
@@ -62,14 +62,15 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
-
-    testHarness.pushElement<Car>({40, 40, 40}, 0);
-    testHarness.pushElement<Car>({30, 30, 30}, 0);
-    testHarness.pushElement<Car>({71, 71, 71}, 0);
-    testHarness.pushElement<Car>({21, 21, 21}, 0);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  .pushElement<Car>({40, 40, 40}, 2)
+                                  .pushElement<Car>({30, 30, 30}, 2)
+                                  .pushElement<Car>({71, 71, 71}, 2)
+                                  .pushElement<Car>({21, 21, 21}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         uint32_t key;
@@ -112,17 +113,18 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car2");
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car")//2
+                                  .attachWorkerWithMemorySourceToCoordinator("car")//3
+                                  .pushElement<Car>({40, 40, 40}, 2)
+                                  .pushElement<Car>({30, 30, 30}, 2)
+                                  .pushElement<Car>({71, 71, 71}, 3)
+                                  .pushElement<Car>({21, 21, 21}, 3)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
-
-    testHarness.pushElement<Car>({40, 40, 40}, 0);
-    testHarness.pushElement<Car>({30, 30, 30}, 0);
-    testHarness.pushElement<Car>({71, 71, 71}, 1);
-    testHarness.pushElement<Car>({21, 21, 21}, 1);
 
     struct Output {
         uint32_t key;
@@ -177,17 +179,19 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("truck", truckSchema, "truck1");
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .addLogicalSource("truck", truckSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  .attachWorkerWithMemorySourceToCoordinator("truck")
+                                  .pushElement<Car>({40, 40, 40}, 2)
+                                  .pushElement<Car>({30, 30, 30}, 2)
+                                  .pushElement<Truck>({71, 71, 71}, 3)
+                                  .pushElement<Truck>({21, 21, 21}, 3)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
-
-    testHarness.pushElement<Car>({40, 40, 40}, 0);
-    testHarness.pushElement<Car>({30, 30, 30}, 0);
-    testHarness.pushElement<Truck>({71, 71, 71}, 1);
-    testHarness.pushElement<Truck>({21, 21, 21}, 1);
 
     struct Output {
         uint32_t key;
@@ -231,38 +235,40 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car2");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car")//2
+                                  .attachWorkerWithMemorySourceToCoordinator("car")//3
+                                  //Source1
+                                  .pushElement<Car>({1, 1, 1000}, 2)
+                                  .pushElement<Car>({12, 1, 1001}, 2)
+                                  .pushElement<Car>({4, 1, 1002}, 2)
+                                  .pushElement<Car>({1, 2, 2000}, 2)
+                                  .pushElement<Car>({11, 2, 2001}, 2)
+                                  .pushElement<Car>({16, 2, 2002}, 2)
+                                  .pushElement<Car>({1, 3, 3000}, 2)
+                                  .pushElement<Car>({11, 3, 3001}, 2)
+                                  .pushElement<Car>({1, 3, 3003}, 2)
+                                  .pushElement<Car>({1, 3, 3200}, 2)
+                                  .pushElement<Car>({1, 4, 4000}, 2)
+                                  .pushElement<Car>({1, 5, 5000}, 2)
+                                  //Source2
+                                  .pushElement<Car>({1, 1, 1000}, 3)
+                                  .pushElement<Car>({12, 1, 1001}, 3)
+                                  .pushElement<Car>({4, 1, 1002}, 3)
+                                  .pushElement<Car>({1, 2, 2000}, 3)
+                                  .pushElement<Car>({11, 2, 2001}, 3)
+                                  .pushElement<Car>({16, 2, 2002}, 3)
+                                  .pushElement<Car>({1, 3, 3000}, 3)
+                                  .pushElement<Car>({11, 3, 3001}, 3)
+                                  .pushElement<Car>({1, 3, 3003}, 3)
+                                  .pushElement<Car>({1, 3, 3200}, 3)
+                                  .pushElement<Car>({1, 4, 4000}, 3)
+                                  .pushElement<Car>({1, 5, 5000}, 3)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
-
-    testHarness.pushElement<Car>({1, 1, 1000}, 0);
-    testHarness.pushElement<Car>({12, 1, 1001}, 0);
-    testHarness.pushElement<Car>({4, 1, 1002}, 0);
-    testHarness.pushElement<Car>({1, 2, 2000}, 0);
-    testHarness.pushElement<Car>({11, 2, 2001}, 0);
-    testHarness.pushElement<Car>({16, 2, 2002}, 0);
-    testHarness.pushElement<Car>({1, 3, 3000}, 0);
-    testHarness.pushElement<Car>({11, 3, 3001}, 0);
-    testHarness.pushElement<Car>({1, 3, 3003}, 0);
-    testHarness.pushElement<Car>({1, 3, 3200}, 0);
-    testHarness.pushElement<Car>({1, 4, 4000}, 0);
-    testHarness.pushElement<Car>({1, 5, 5000}, 0);
-
-    testHarness.pushElement<Car>({1, 1, 1000}, 1);
-    testHarness.pushElement<Car>({12, 1, 1001}, 1);
-    testHarness.pushElement<Car>({4, 1, 1002}, 1);
-    testHarness.pushElement<Car>({1, 2, 2000}, 1);
-    testHarness.pushElement<Car>({11, 2, 2001}, 1);
-    testHarness.pushElement<Car>({16, 2, 2002}, 1);
-    testHarness.pushElement<Car>({1, 3, 3000}, 1);
-    testHarness.pushElement<Car>({11, 3, 3001}, 1);
-    testHarness.pushElement<Car>({1, 3, 3003}, 1);
-    testHarness.pushElement<Car>({1, 3, 3200}, 1);
-    testHarness.pushElement<Car>({1, 4, 4000}, 1);
-    testHarness.pushElement<Car>({1, 5, 5000}, 1);
 
     struct Output {
         uint64_t start;
@@ -320,28 +326,31 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
 
     std::string queryWithJoinOperator =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("window1", window1Schema, "window1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("window2", window2Schema, "window2");
+    TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort)
+                                  .addLogicalSource("window1", window1Schema)
+                                  .addLogicalSource("window2", window2Schema)
+                                  .attachWorkerWithMemorySourceToCoordinator("window1")
+                                  .attachWorkerWithMemorySourceToCoordinator("window2")
+                                  //Source1
+                                  .pushElement<Window1>({1, 1000}, 2)
+                                  .pushElement<Window2>({12, 1001}, 2)
+                                  .pushElement<Window2>({4, 1002}, 2)
+                                  .pushElement<Window2>({1, 2000}, 2)
+                                  .pushElement<Window2>({11, 2001}, 2)
+                                  .pushElement<Window2>({16, 2002}, 2)
+                                  .pushElement<Window2>({1, 3000}, 2)
+                                  //Source2
+                                  .pushElement<Window2>({21, 1003}, 3)
+                                  .pushElement<Window2>({12, 1011}, 3)
+                                  .pushElement<Window2>({4, 1102}, 3)
+                                  .pushElement<Window2>({4, 1112}, 3)
+                                  .pushElement<Window2>({1, 2010}, 3)
+                                  .pushElement<Window2>({11, 2301}, 3)
+                                  .pushElement<Window2>({33, 3100}, 3)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
-
-    testHarness.pushElement<Window1>({1, 1000}, 0);
-    testHarness.pushElement<Window2>({12, 1001}, 0);
-    testHarness.pushElement<Window2>({4, 1002}, 0);
-    testHarness.pushElement<Window2>({1, 2000}, 0);
-    testHarness.pushElement<Window2>({11, 2001}, 0);
-    testHarness.pushElement<Window2>({16, 2002}, 0);
-    testHarness.pushElement<Window2>({1, 3000}, 0);
-
-    testHarness.pushElement<Window2>({21, 1003}, 1);
-    testHarness.pushElement<Window2>({12, 1011}, 1);
-    testHarness.pushElement<Window2>({4, 1102}, 1);
-    testHarness.pushElement<Window2>({4, 1112}, 1);
-    testHarness.pushElement<Window2>({1, 2010}, 1);
-    testHarness.pushElement<Window2>({11, 2301}, 1);
-    testHarness.pushElement<Window2>({33, 3100}, 1);
 
     struct Output {
         uint64_t _$start;
@@ -387,14 +396,15 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
-
-    testHarness.pushElement<Car>({40, 40, 40}, 0);
-    testHarness.pushElement<Car>({30, 30, 30}, 0);
-    testHarness.pushElement<Car>({71, 71, 71}, 0);
-    testHarness.pushElement<Car>({21, 21, 21}, 0);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car")
+                                  .pushElement<Car>({40, 40, 40}, 2)
+                                  .pushElement<Car>({30, 30, 30}, 2)
+                                  .pushElement<Car>({71, 71, 71}, 2)
+                                  .pushElement<Car>({21, 21, 21}, 2)
+                                  .validate()
+                                  .setupTopology();
 
     struct Output {
         uint32_t key;
@@ -437,37 +447,38 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator);
-
-    /**
-    * Expected topology:
-        PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0]
-        |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-        |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-        |  |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-        |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-    */
-
-    testHarness.attachWorkerToCoordinator();                                                 //idx=0
-    testHarness.attachWorkerToWorkerWithId(testHarness.getWorkerId(0));                       //idx=1
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("car", carSchema, "car1", testHarness.getWorkerId(1));//idx=2
-    testHarness.attachWorkerWithMemorySourceToWorkerWithId("car", carSchema, "car2", testHarness.getWorkerId(1));//idx=3
+    TestHarness testHarness = TestHarness(queryWithFilterOperator)
+                                  .addLogicalSource("car", carSchema)
+                                  /**
+                                    * Expected topology:
+                                        PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0]
+                                        |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+                                        |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+                                        |  |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+                                        |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+                                    */
+                                  .attachWorkerToCoordinator()                         //idx=2
+                                  .attachWorkerToWorkerWithId(2)                       //idx=3
+                                  .attachWorkerWithMemorySourceToWorkerWithId("car", 3)//idx=4
+                                  .attachWorkerWithMemorySourceToWorkerWithId("car", 3)//idx=5
+                                                                                       //Source1
+                                  .pushElement<Car>({40, 40, 40}, 4)
+                                  .pushElement<Car>({30, 30, 30}, 4)
+                                  .pushElement<Car>({71, 71, 71}, 4)
+                                  .pushElement<Car>({21, 21, 21}, 4)
+                                  //Source2
+                                  .pushElement<Car>({40, 40, 40}, 5)
+                                  .pushElement<Car>({30, 30, 30}, 5)
+                                  .pushElement<Car>({71, 71, 71}, 5)
+                                  .pushElement<Car>({21, 21, 21}, 5)
+                                  .validate()
+                                  .setupTopology();
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
     EXPECT_EQ(topology->getRoot()->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1U);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2U);
-
-    testHarness.pushElement<Car>({40, 40, 40}, 2);
-    testHarness.pushElement<Car>({30, 30, 30}, 2);
-    testHarness.pushElement<Car>({71, 71, 71}, 2);
-    testHarness.pushElement<Car>({21, 21, 21}, 2);
-
-    testHarness.pushElement<Car>({40, 40, 40}, 3);
-    testHarness.pushElement<Car>({30, 30, 30}, 3);
-    testHarness.pushElement<Car>({71, 71, 71}, 3);
-    testHarness.pushElement<Car>({21, 21, 21}, 3);
 
     struct Output {
         uint32_t key;
@@ -517,26 +528,24 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
+    csvSourceType->setSourceFrequency(1);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType->setNumberOfBuffersToProduce(1);
+    csvSourceType->setSkipHeader(false);
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("car", "car1", csvSourceType);
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // Content ov testCSV.csv:
-    // 1,2,3
-    // 1,2,4
-    // 4,3,6
-    //register physical stream
-
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setLogicalStreamName("car");
-    sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
-    sourceConfig->setSourceFrequency(1);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(1);
-    sourceConfig->setSkipHeader(false);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, carSchema);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  // Content ov testCSV.csv:
+                                  // 1,2,3
+                                  // 1,2,4
+                                  // 4,3,6
+                                  //register physical stream
+                                  .attachWorkerWithCSVSourceToCoordinator(physicalSource)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -571,33 +580,30 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
+    csvSourceType->setSourceFrequency(1);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType->setNumberOfBuffersToProduce(1);
+    csvSourceType->setSkipHeader(false);
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("car", "car1", csvSourceType);
+
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    // Content ov testCSV.csv:
-    // 1,2,3
-    // 1,2,4
-    // 4,3,6
-    //register physical stream
-
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setLogicalStreamName("car");
-    sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
-    sourceConfig->setSourceFrequency(1);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->setNumberOfBuffersToProduce(1);
-    sourceConfig->setSkipHeader(false);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, carSchema);
-
-    // add a memory source
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "carMem");
-
-    // push two elements to the memory source
-    testHarness.pushElement<Car>({1, 8, 8}, 1);
-    testHarness.pushElement<Car>({1, 9, 9}, 1);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  // Content ov testCSV.csv:
+                                  // 1,2,3
+                                  // 1,2,4
+                                  // 4,3,6
+                                  //register physical stream
+                                  .attachWorkerWithCSVSourceToCoordinator(physicalSource)//2
+                                  // add a memory source
+                                  .attachWorkerWithMemorySourceToCoordinator("car")//3
+                                  // push two elements to the memory source
+                                  .pushElement<Car>({1, 8, 8}, 3)
+                                  .pushElement<Car>({1, 9, 9}, 3)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -626,19 +632,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
     };
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
-
-    struct Output {
-        uint32_t key;
-        uint32_t value;
-        uint64_t timestamp;
-
-        // overload the == operator to check if two instances are the same
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
-    };
-    EXPECT_THROW(testHarness.getOutput<Output>(1, "BottomUp", "NONE", "IN_MEMORY"), NesRuntimeException);
+    EXPECT_THROW(TestHarness(queryWithFilterOperator, restPort, rpcPort).validate().setupTopology(), Exception);
 }
 
 /*
@@ -687,14 +682,16 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
                            ->addField("timestamp", DataTypeFactory::createUInt64());
 
     std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .addLogicalSource("truck", truckSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car")  //2
+                                  .attachWorkerWithMemorySourceToCoordinator("truck");//3
 
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("truck", truckSchema, "truck1");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
-    EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 0), NesRuntimeException);
+    EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 2), NesRuntimeException);
 }
 
 }// namespace NES
