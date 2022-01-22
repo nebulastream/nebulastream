@@ -14,12 +14,13 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -27,8 +28,7 @@
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <gmock/gmock.h>
+#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -62,68 +62,53 @@ class QueryDeploymentTest : public testing::Test {
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig();
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    //register logical stream
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    crd->getStreamCatalogService()->registerLogicalStream("car", testSchema);
+    crd->getStreamCatalogService()->registerLogicalStream("truck", testSchema);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("car", "physical_car", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->setRpcPort(port + 20);
+    workerConfig2->setDataPort(port + 21);
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
+    defaultSourceType2->setNumberOfBuffersToProduce(3);
+    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", defaultSourceType2);
+    workerConfig2->addPhysicalSource(physicalSource2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
-
-    std::string outputFilePath = "testDeployTwoWorkerMergeUsingBottomUp.out";
-    remove(outputFilePath.c_str());
-
-    //register logical stream
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("car", testSchemaFileName);
-
-    srcConf->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->setNumberOfBuffersToProduce(3);
-    srcConf->setPhysicalStreamName("physical_car");
-    srcConf->setLogicalStreamName("car");
-    //register physical stream
-    PhysicalSourcePtr confCar = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(confCar);
-
-    wrk2->registerLogicalStream("truck", testSchemaFileName);
-
-    srcConf->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->setNumberOfBuffersToProduce(3);
-    srcConf->setPhysicalStreamName("physical_truck");
-    srcConf->setLogicalStreamName("truck");
-    //register physical stream
-    PhysicalSourcePtr confTruck = PhysicalSourceType::create(srcConf);
-    wrk2->registerPhysicalSources(confTruck);
+    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    std::string outputFilePath = "testDeployTwoWorkerMergeUsingBottomUp.out";
+    remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath
@@ -220,65 +205,50 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig();
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    //register logical stream
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
+    crd->getStreamCatalogService()->registerLogicalStream("car", testSchema);
+    crd->getStreamCatalogService()->registerLogicalStream("truck", testSchema);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("car", "physical_car", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->setRpcPort(port + 20);
+    workerConfig2->setDataPort(port + 21);
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
+    defaultSourceType2->setNumberOfBuffersToProduce(3);
+    auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", defaultSourceType2);
+    workerConfig2->addPhysicalSource(physicalSource2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
-    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
+    NES_INFO("QueryDeploymentTest: Worker 2 started successfully");
 
     std::string outputFilePath = "testDeployTwoWorkerMergeUsingTopDown.out";
     remove(outputFilePath.c_str());
-
-    //register logical stream
-    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("car", testSchemaFileName);
-
-    srcConf->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->setNumberOfBuffersToProduce(3);
-    srcConf->setPhysicalStreamName("physical_car");
-    srcConf->setLogicalStreamName("car");
-    //register physical stream
-    PhysicalSourcePtr confCar = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(confCar);
-
-    wrk2->registerLogicalStream("truck", testSchemaFileName);
-
-    srcConf->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->setNumberOfBuffersToProduce(3);
-    srcConf->setPhysicalStreamName("physical_truck");
-    srcConf->setLogicalStreamName("truck");
-    //register physical stream
-    PhysicalSourcePtr confTruck = PhysicalSourceType::create(srcConf);
-    wrk2->registerPhysicalSources(confTruck);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -386,13 +356,15 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("test", defaultLogicalSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("test");//2
 
     for (int i = 0; i < 10; ++i) {
-        testHarness.pushElement<Test>({1, 1}, 0);
+        testHarness = testHarness.pushElement<Test>({1, 1}, 2);
     }
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint32_t id;
@@ -425,13 +397,13 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
-
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("test", defaultLogicalSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("test");//2
     for (int i = 0; i < 10; ++i) {
-        testHarness.pushElement<Test>({1, 1}, 0);
+        testHarness = testHarness.pushElement<Test>({1, 1}, 2);
     }
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint32_t id;
@@ -461,17 +433,17 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
-
-    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("test", defaultLogicalSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("test") //2
+                                  .attachWorkerWithMemorySourceToCoordinator("test");//3
 
     for (int i = 0; i < 10; ++i) {
-        testHarness.pushElement<Test>({1, 1}, 0);
-        testHarness.pushElement<Test>({1, 1}, 1);
+        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
+    testHarness.validate().setupTopology();
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     struct Output {
         uint32_t id;
@@ -502,15 +474,16 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
-    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
+    auto testHarness = TestHarness(query, restPort, rpcPort)
+                           .addLogicalSource("test", defaultLogicalSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("test") //2
+                           .attachWorkerWithMemorySourceToCoordinator("test");//3
 
     for (int i = 0; i < 10; ++i) {
-        testHarness.pushElement<Test>({1, 1}, 0);
-        testHarness.pushElement<Test>({1, 1}, 1);
+        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
+
+    testHarness.validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -543,14 +516,15 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test").filter(Attribute("id") < 5))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
+    auto testHarness = TestHarness(query, restPort, rpcPort)
+                           .addLogicalSource("test", defaultLogicalSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("test");
 
     for (int i = 0; i < 5; ++i) {
-        testHarness.pushElement<Test>({1, 1}, 0);
-        testHarness.pushElement<Test>({5, 1}, 0);
+        testHarness = testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({5, 1}, 2);
     }
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint32_t id;
@@ -569,56 +543,41 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenTwoSourcesRunning) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    remove("test.out");
-
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    //register logical stream
+    std::string testSchema =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("stream", testSchema);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setNumberOfBuffersToProduce(1000);
+    csvSourceType1->setSkipHeader(true);
+    auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    //register logical stream qnv
-    std::string stream =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << stream;
-    out.close();
-    wrk1->registerLogicalStream("stream", testSchemaFileName);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(10000);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);//TODO: change this to 0 if we have the the end of stream
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-    //register physical stream
-    PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(streamConf);
-
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
-    PhysicalSourcePtr streamConf2 = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(streamConf2);
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -646,59 +605,41 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenOneSourceRunning) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    remove("test.out");
-
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    //register logical stream
+    std::string testSchema =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("stream", testSchema);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setNumberOfBuffersToProduce(1000);
+    csvSourceType1->setSkipHeader(true);
+    auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    //register logical stream qnv
-    std::string stream =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << stream;
-    out.close();
-    wrk1->registerLogicalStream("stream", testSchemaFileName);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(10000);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-    //register physical stream
-    PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(streamConf);
-
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
-    PhysicalSourcePtr streamConf2 = PhysicalSourceType::create(srcConf);
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    wrk1->registerPhysicalSources(streamConf2);
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -726,59 +667,41 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenNoSourceRunning) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    remove("test.out");
-
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+    //register logical stream
+    std::string testSchema =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("stream", testSchema);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setNumberOfBuffersToProduce(1000);
+    csvSourceType1->setSkipHeader(true);
+    auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    //register logical stream qnv
-    std::string stream =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << stream;
-    out.close();
-    wrk1->registerLogicalStream("stream", testSchemaFileName);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-    //register physical stream
-    PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(streamConf);
-
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream2");
-    PhysicalSourcePtr streamConf2 = PhysicalSourceType::create(srcConf);
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    wrk1->registerPhysicalSources(streamConf2);
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
@@ -817,13 +740,15 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     ASSERT_EQ(sizeof(Test), defaultLogicalSchema->getSchemaSizeInBytes());
 
     string query = R"(Query::from("test").project(Attribute("id")))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("test", defaultLogicalSchema, "test1");
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("test", defaultLogicalSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("test");
 
     for (int i = 0; i < 10; ++i) {
-        testHarness.pushElement<Test>({1, 1}, 0);
+        testHarness.pushElement<Test>({1, 1}, 2);
     }
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint32_t id;
@@ -841,26 +766,25 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    remove("test.out");
-
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
+    defaultSourceType1->setNumberOfBuffersToProduce(3);
+    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
@@ -897,42 +821,46 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    remove("test1.out");
-    remove("test2.out");
-
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
+    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 2");
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->setRpcPort(port + 20);
+    workerConfig2->setDataPort(port + 21);
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
+    auto physicalSource2 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType2);
+    workerConfig2->addPhysicalSource(physicalSource2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    remove("test1.out");
+    remove("test2.out");
 
     std::string outputFilePath1 = "test1.out";
     std::string outputFilePath2 = "test2.out";
@@ -1005,44 +933,46 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 }
 
 TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    remove("test1.out");
-    remove("test2.out");
-
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-
-    crdConf->setQueryMergerRule("Z3SignatureBasedCompleteQueryMergerRule");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
+    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker 2");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 2");
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->setRpcPort(port + 20);
+    workerConfig2->setDataPort(port + 21);
+    DefaultSourceTypePtr defaultSourceType2 = DefaultSourceType::create();
+    auto physicalSource2 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType2);
+    workerConfig2->addPhysicalSource(physicalSource2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("QueryDeploymentTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    remove("test1.out");
+    remove("test2.out");
 
     std::string outputFilePath1 = "test1.out";
     std::string outputFilePath2 = "test2.out";
@@ -1130,26 +1060,22 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType->setNumberOfBuffersToProduce(2);
+    csvSourceType->setSkipHeader(true);
+
     string query =
         R"(Query::from("window").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
     Milliseconds(1000))))";
-    TestHarness testHarness = TestHarness(query, restPort, rpcPort);
-
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
-
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-
-    PhysicalSourcePtr conf2 = PhysicalSourceType::create(srcConf);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf2, testSchema);
+    TestHarness testHarness = TestHarness(query, restPort, rpcPort)
+                                  .addLogicalSource("window", testSchema)
+                                  .addLogicalSource("window2", testSchema)
+                                  .attachWorkerWithCSVSourceToCoordinator("window", csvSourceType)
+                                  .attachWorkerWithCSVSourceToCoordinator("window2", csvSourceType)
+                                  .validate()
+                                  .setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -1189,27 +1115,27 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
  * ToDo: Should be moved to Unit Test ? Open a grpc folder there?
  */
 TEST_F(QueryDeploymentTest, testGrpcNotifyQueryFailure) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig();
-
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    NES_INFO("QueryDeploymentTest: Start worker");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    NES_INFO("QueryDeploymentTest: Worker started successfully");
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    DefaultSourceTypePtr defaultSourceType1 = DefaultSourceType::create();
+    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_car", defaultSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -1224,16 +1150,16 @@ TEST_F(QueryDeploymentTest, testGrpcNotifyQueryFailure) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     QueryId subQueryId = 1;
-    uint64_t workerId = wrk->getWorkerId();
+    uint64_t workerId = wrk1->getWorkerId();
     uint64_t operatorId = 1;
     std::string errormsg = "Query failed.";
-    bool successOfNotifyingQueryFailure = wrk->notifyQueryFailure(queryId, subQueryId, workerId, operatorId, errormsg);
+    bool successOfNotifyingQueryFailure = wrk1->notifyQueryFailure(queryId, subQueryId, workerId, operatorId, errormsg);
 
     EXPECT_TRUE(successOfNotifyingQueryFailure);
 
     // stop coordinator and worker
     NES_INFO("QueryDeploymentTest: Stop worker");
-    bool retStopWrk = wrk->stop(true);
+    bool retStopWrk = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk);
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
