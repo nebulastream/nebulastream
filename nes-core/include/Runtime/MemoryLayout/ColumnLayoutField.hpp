@@ -18,6 +18,7 @@
 #define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_FIELD_HPP_
 
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 

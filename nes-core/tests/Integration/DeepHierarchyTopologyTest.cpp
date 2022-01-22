@@ -423,10 +423,9 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    CSVSourceTypePtr srcConf = CSVSourceType::create();
-    srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(3);
-    PhysicalSourcePtr conf = PhysicalSource::create("testStream", "test_stream", srcConf);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
 
     std::string query = R"(Query::from("testStream").filter(Attribute("val1") < 3).project(Attribute("val3")))";
 
@@ -440,10 +439,10 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
                                   .attachWorkerToWorkerWithId(5)// id=6
                                   .attachWorkerToWorkerWithId(5)// id=7
                                   // Sensors
-                                  .attachWorkerWithCSVSourceToWorkerWithId(conf, 3)// id=8
-                                  .attachWorkerWithCSVSourceToWorkerWithId(conf, 4)// id=9
-                                  .attachWorkerWithCSVSourceToWorkerWithId(conf, 6)// id=10
-                                  .attachWorkerWithCSVSourceToWorkerWithId(conf, 7)// id=11
+                                  .attachWorkerWithCSVSourceToWorkerWithId("testStream", csvSourceType, 3)// id=8
+                                  .attachWorkerWithCSVSourceToWorkerWithId("testStream", csvSourceType, 4)// id=9
+                                  .attachWorkerWithCSVSourceToWorkerWithId("testStream", csvSourceType, 6)// id=10
+                                  .attachWorkerWithCSVSourceToWorkerWithId("testStream", csvSourceType, 7)// id=11
                                   .validate()
                                   .setupTopology();
 
@@ -501,11 +500,10 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    CSVSourceTypePtr srcConf = CSVSourceType::create();
-    srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->setNumberOfBuffersToProduce(3);
-    PhysicalSourcePtr conf = PhysicalSource::create("window", "test_stream", srcConf);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType->setNumberOfBuffersToProduce(3);
 
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
@@ -520,10 +518,10 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
                                   .attachWorkerToWorkerWithId(5)// id=6
                                   .attachWorkerToWorkerWithId(5)// id=7
                                   // Sensors
-                                  .attachWorkerWithCSVSourceToWorkerWithId(conf, 3)// id=8
-                                  .attachWorkerWithCSVSourceToWorkerWithId(conf, 4)// id=9
-                                  .attachWorkerWithCSVSourceToWorkerWithId(conf, 6)// id=10
-                                  .attachWorkerWithCSVSourceToWorkerWithId(conf, 7)// id=11
+                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 3)// id=8
+                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 4)// id=9
+                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 6)// id=10
+                                  .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 7)// id=11
                                   .validate()
                                   .setupTopology();
 
@@ -664,11 +662,10 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
-    CSVSourceTypePtr srcConf = CSVSourceType::create();
-    srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf->setNumberOfBuffersToProduce(3);
-    PhysicalSourcePtr conf = PhysicalSource::create("window", "test_stream", srcConf);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(5);
+    csvSourceType->setNumberOfBuffersToProduce(3);
 
     std::string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
@@ -679,11 +676,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     auto testHarness = TestHarness(query)
                            .addLogicalSource("window", testSchema)
                            .attachWorkerToCoordinator()                     //2
-                           .attachWorkerWithCSVSourceToWorkerWithId(conf, 2)//3
-                           .attachWorkerWithCSVSourceToWorkerWithId(conf, 2)//4
+                           .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 2)//3
+                           .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 2)//4
                            .attachWorkerToCoordinator()                     //5
-                           .attachWorkerWithCSVSourceToWorkerWithId(conf, 5)//6
-                           .attachWorkerWithCSVSourceToWorkerWithId(conf, 5)//7
+                           .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 5)//6
+                           .attachWorkerWithCSVSourceToWorkerWithId("window", csvSourceType, 5)//7
                            .validate()
                            .setupTopology();
 

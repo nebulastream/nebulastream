@@ -129,7 +129,7 @@ class SourceCatalog {
    * @param name of the logical stream to test
    * @return bool indicating if stream exists
    */
-    bool testIfLogicalStreamExistsInSchemaMapping(const std::string& logicalStreamName);
+    bool testIfLogicalSourceExists(const std::string& logicalStreamName);
 
     /**
    * @brief test if logical stream with this name exists in the log to phy mapping

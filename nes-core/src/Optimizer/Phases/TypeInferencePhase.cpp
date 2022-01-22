@@ -50,7 +50,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>() && sourceDescriptor->getSchema()->empty()) {
                 auto streamName = sourceDescriptor->getLogicalSourceName();
                 SchemaPtr schema = Schema::create();
-                if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName)) {
+                if (!streamCatalog->testIfLogicalSourceExists(streamName)) {
                     NES_ERROR("Stream name: " + streamName + " not registered.");
                 }
                 auto originalSchema = streamCatalog->getSchemaForLogicalStream(streamName);
