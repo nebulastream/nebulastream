@@ -63,7 +63,7 @@ void StreamCatalogController::handleGet(const std::vector<utility::string_t>& pa
             //Prepare Input query from user string
             std::string logicalStreamName = param->second;
 
-            const std::vector<SourceCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalStreams(logicalStreamName);
+            const std::vector<SourceCatalogEntryPtr>& allPhysicalStream = streamCatalog->getPhysicalSources(logicalStreamName);
 
             //Prepare the response
             web::json::value result{};

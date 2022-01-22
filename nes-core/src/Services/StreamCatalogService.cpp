@@ -47,7 +47,7 @@ bool StreamCatalogService::registerPhysicalStream(TopologyNodePtr topologyNode,
     auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName);
     auto logicalSource = streamCatalog->getStreamForLogicalStream(logicalSourceName);
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, topologyNode);
-    bool success = streamCatalog->addPhysicalStream(logicalSourceName, sce);
+    bool success = streamCatalog->addPhysicalSource(logicalSourceName, sce);
     if (!success) {
         NES_ERROR("StreamCatalogService::RegisterPhysicalSource: adding physical stream was not successful.");
         return false;

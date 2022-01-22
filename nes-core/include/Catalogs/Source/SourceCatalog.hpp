@@ -71,7 +71,7 @@ class SourceCatalog {
    * @caution combination of node and name has to be unique
    * @return bool indicating success of insert stream
    */
-    bool addPhysicalStream(const std::string& logicalStreamName, const SourceCatalogEntryPtr& entry);
+    bool addPhysicalSource(const std::string& logicalStreamName, const SourceCatalogEntryPtr& entry);
 
     /**
    * @brief method to remove a physical stream
@@ -170,7 +170,7 @@ class SourceCatalog {
      * @param logicalStreamName
      * @return
      */
-    std::vector<SourceCatalogEntryPtr> getPhysicalStreams(const std::string& logicalStreamName);
+    std::vector<SourceCatalogEntryPtr> getPhysicalSources(const std::string& logicalStreamName);
 
     /**
      * @brief update an existing stream
