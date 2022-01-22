@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Network/ExchangeProtocol.hpp>
@@ -120,7 +123,10 @@ template<typename MockedNodeEngine>
 std::shared_ptr<MockedNodeEngine>
 createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize = 8192, uint64_t numBuffers = 1024) {
     try {
-        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+        DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+        PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+        std::vector<PhysicalSourcePtr> physicalSources{physicalSource};
+
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         std::vector<BufferManagerPtr> bufferManager = {std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
         auto queryManager = std::make_shared<Runtime::QueryManager>(bufferManager, 0, 1, nullptr);
@@ -138,7 +144,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto queryCompiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-        auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(streamConf),
+        auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(physicalSources),
                                                              std::make_shared<HardwareManager>(),
                                                              std::move(bufferManager),
                                                              std::move(queryManager),
@@ -309,14 +315,16 @@ auto setupQEP(const NodeEnginePtr& engine, QueryId queryId) {
  *     cout << "Stats=" << ptr->getStatistics() << endl;
  */
 TEST_F(NodeEngineTest, testStartStopEngineEmpty) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
     EXPECT_TRUE(engine->stop());
 }
 
 TEST_F(NodeEngineTest, teststartDeployStop) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
@@ -328,41 +336,44 @@ TEST_F(NodeEngineTest, teststartDeployStop) {
 }
 
 TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-    auto ptr = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
 
-    auto [qep, pipeline] = setupQEP(ptr, testQueryId);
-    EXPECT_TRUE(ptr->deployQueryInNodeEngine(qep));
-    EXPECT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    auto [qep, pipeline] = setupQEP(engine, testQueryId);
+    EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
-    EXPECT_TRUE(ptr->undeployQuery(testQueryId));
-    EXPECT_TRUE(ptr->stop());
+    EXPECT_TRUE(engine->undeployQuery(testQueryId));
+    EXPECT_TRUE(engine->stop());
 
     testOutput();
 }
 
 TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-    auto ptr = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
 
-    auto [qep, pipeline] = setupQEP(ptr, testQueryId);
-    EXPECT_TRUE(ptr->registerQueryInNodeEngine(qep));
-    EXPECT_TRUE(ptr->startQuery(testQueryId));
-    EXPECT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    auto [qep, pipeline] = setupQEP(engine, testQueryId);
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->startQuery(testQueryId));
+    EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
-    EXPECT_TRUE(ptr->stopQuery(testQueryId));
+    EXPECT_TRUE(engine->stopQuery(testQueryId));
 
-    EXPECT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Stopped);
+    EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Stopped);
 
-    EXPECT_TRUE(ptr->unregisterQuery(testQueryId));
-    EXPECT_TRUE(ptr->stop());
+    EXPECT_TRUE(engine->unregisterQuery(testQueryId));
+    EXPECT_TRUE(engine->stop());
 
     testOutput();
 }
 //
 TEST_F(NodeEngineTest, testParallelDifferentSource) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
 
     //  GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -414,8 +425,9 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
 }
 //
 TEST_F(NodeEngineTest, testParallelSameSource) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
 
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
 
@@ -457,8 +469,9 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
 }
 //
 TEST_F(NodeEngineTest, testParallelSameSink) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
 
     // create two executable query plans, which emit to the same sink
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -510,8 +523,10 @@ TEST_F(NodeEngineTest, testParallelSameSink) {
 }
 //
 TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
+
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     auto sink1 = createTextFileSink(sch1, 0, engine, "qep3.txt", true);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
@@ -588,8 +603,9 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
 }
 //
 TEST_F(NodeEngineTest, testStartStopStartStop) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
@@ -606,14 +622,16 @@ TEST_F(NodeEngineTest, testStartStopStartStop) {
 }
 
 TEST_F(NodeEngineTest, testBufferData) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
     EXPECT_FALSE(engine->bufferData(0, 0));
 }
 
 TEST_F(NodeEngineTest, testReconfigureSink) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
     EXPECT_FALSE(engine->updateNetworkSink(0, "test", 0, 0, 0));
 }
 
@@ -625,7 +643,7 @@ void assertKiller() {
       public:
         using Runtime::NodeEngine::NodeEngine;
 
-        explicit MockedNodeEngine(PhysicalSourcePtr config,
+        explicit MockedNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
@@ -637,7 +655,7 @@ void assertKiller() {
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerWorker)
-            : NodeEngine(std::move(config),
+            : NodeEngine(std::move(physicalSources),
                          std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryMgr),
@@ -671,7 +689,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     class MockedNodeEngine : public Runtime::NodeEngine {
       public:
         std::promise<bool> completedPromise;
-        explicit MockedNodeEngine(PhysicalSourcePtr&& config,
+        explicit MockedNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
@@ -683,7 +701,7 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerWorker)
-            : NodeEngine(std::move(config),
+            : NodeEngine(std::move(physicalSources),
                          std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryMgr),
@@ -746,7 +764,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
       public:
         std::promise<bool> completedPromise;
 
-        explicit MockedNodeEngine(PhysicalSourcePtr&& config,
+        explicit MockedNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   QueryManagerPtr&& queryMgr,
@@ -758,7 +776,7 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool,
                                   uint64_t numberOfBuffersPerWorker)
-            : NodeEngine(std::move(config),
+            : NodeEngine(std::move(physicalSources),
                          std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryMgr),
@@ -814,7 +832,9 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
 }
 
 TEST_F(NodeEngineTest, DISABLED_testFatalCrash) {
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31400, PhysicalSourceType::createEmpty());
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {physicalSource});
     EXPECT_EXIT(detail::segkiller(), testing::ExitedWithCode(1), "Runtime failed fatally");
 }
 

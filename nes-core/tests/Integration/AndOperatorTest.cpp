@@ -15,7 +15,6 @@
 */
 
 #include <Util/TestHarness/TestHarness.hpp>
-#include <API/QueryAPI.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -29,8 +28,6 @@
 #include <iostream>
 #include <regex>
 
-//used tests: QueryCatalogTest, QueryTest
-namespace fs = std::filesystem;
 namespace NES {
 
 using namespace Configurations;

@@ -15,8 +15,9 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <Catalogs/BenchmarkSourceStreamConfig.hpp>
-#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -51,12 +52,8 @@ class BenchmarkSourceIntegrationTest : public testing::Test {
 /// This test checks that a deployed BenchmarkSource can write M records spanning exactly N records
 TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -81,13 +78,10 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
     streamCatalog->addLogicalStream("memory_stream", schema);
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start worker 1");
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
     constexpr auto memAreaSize = 4096;           // 1 MB
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
@@ -102,16 +96,13 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
         records[i].timestamp = i;
     }
 
-    AbstractPhysicalStreamConfigPtr conf = BenchmarkSourceStreamConfig::create("MemorySource",
-                                                                               "memory_stream_0",
-                                                                               "memory_stream",
-                                                                               memArea,
-                                                                               memAreaSize,
-                                                                               buffersToExpect,
-                                                                               0,
-                                                                               "frequency",
-                                                                               "copyBuffer");
-    wrk1->registerPhysicalSources(conf);
+    auto benchmarkSourceType = BenchmarkSourceType::create(memArea, memAreaSize, buffersToExpect, 0, "frequency", "copyBuffer");
+    auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
+    wrkConf->addPhysicalSource(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = "benchmSourceTestOut.csv";
@@ -162,12 +153,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -192,13 +179,10 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
     streamCatalog->addLogicalStream("memory_stream", schema);
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start worker 1");
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
     constexpr auto memAreaSize = sizeof(Record) * 5;
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
@@ -213,16 +197,13 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
         records[i].timestamp = i;
     }
 
-    AbstractPhysicalStreamConfigPtr conf = BenchmarkSourceStreamConfig::create("MemorySource",
-                                                                               "memory_stream_0",
-                                                                               "memory_stream",
-                                                                               memArea,
-                                                                               memAreaSize,
-                                                                               1,
-                                                                               0,
-                                                                               "frequency",
-                                                                               "copyBuffer");
-    wrk1->registerPhysicalSources(conf);
+    auto benchmarkSourceType = BenchmarkSourceType::create(memArea, memAreaSize, 1, 0, "frequency", "copyBuffer");
+    auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
+    wrkConf->addPhysicalSource(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = "benchmSourceTestOut.csv";
@@ -275,11 +256,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
 
 TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -305,13 +283,10 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     streamCatalog->addLogicalStream("memory_stream", schema);
 
     NES_INFO("BenchmarkSourceIntegrationTest: Start worker 1");
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Worker);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
     constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
     constexpr auto memAreaSize = bufferSizeInNodeEngine * 64 + (bufferSizeInNodeEngine / 2);
@@ -326,16 +301,14 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
         records[i].timestamp = i;
     }
 
-    AbstractPhysicalStreamConfigPtr conf = BenchmarkSourceStreamConfig::create("MemorySource",
-                                                                               "memory_stream_0",
-                                                                               "memory_stream",
-                                                                               memArea,
-                                                                               memAreaSize,
-                                                                               buffersToExpect + 1,
-                                                                               0,
-                                                                               "frequency",
-                                                                               "copyBuffer");
-    wrk1->registerPhysicalSources(conf);
+    auto benchmarkSourceType =
+        BenchmarkSourceType::create(memArea, memAreaSize, buffersToExpect + 1, 0, "frequency", "copyBuffer");
+    auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
+    wrkConf->addPhysicalSource(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("BenchmarkSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
     std::string filePath = "benchmSourceTestOut";

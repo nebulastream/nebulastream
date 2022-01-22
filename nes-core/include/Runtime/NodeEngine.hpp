@@ -65,7 +65,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(std::vector<PhysicalSourcePtr> physicalStreams,
+    explicit NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                         HardwareManagerPtr&&,
                         std::vector<BufferManagerPtr>&&,
                         QueryManagerPtr&&,
