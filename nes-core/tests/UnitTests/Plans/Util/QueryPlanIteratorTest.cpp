@@ -15,8 +15,8 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <Catalogs/LogicalSource.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -72,8 +72,6 @@ class QueryPlanIteratorTest : public testing::Test {
 
         children.clear();
         parents.clear();
-
-        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
     }
 
     void TearDown() override { NES_DEBUG("Tear down QueryPlanIteratorTest Test."); }

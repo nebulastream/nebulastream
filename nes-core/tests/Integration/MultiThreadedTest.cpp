@@ -522,20 +522,20 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     ////    out2.close();
     ////    wrk1->registerLogicalStream("window2", testSchemaFileName2);
     ////
-    ////    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    ////    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    ////    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    ////    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    ////    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    ////    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
+    ////    csvSourceType->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    ////    csvSourceType->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    ////    csvSourceType->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    ////    csvSourceType->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    ////    csvSourceType->as<CSVSourceConfig>()->setLogicalStreamName("window1");
+    ////    csvSourceType->as<CSVSourceConfig>()->setSkipHeader(true);
     ////
     ////    //register physical stream R2000070
-    ////    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
+    ////    PhysicalSourcePtr windowStream = PhysicalSourceType::create(csvSourceType);
     ////
-    ////    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    ////    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    ////    csvSourceType->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    ////    csvSourceType->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     ////
-    ////    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
+    ////    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(csvSourceType);
     //
     //    wrk1->registerPhysicalSources(windowStream);
     //    wrk1->registerPhysicalSources(windowStream2);

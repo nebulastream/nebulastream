@@ -19,12 +19,11 @@
 
 #include <gtest/gtest.h>
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
@@ -83,7 +82,7 @@ class MillisecondIntervalTest : public testing::Test {
   public:
     CoordinatorConfigurationPtr crdConf;
     WorkerConfigurationPtr wrkConf;
-    CSVSourceConfigPtr srcConf;
+    CSVSourceTypePtr csvSourceType;
 
     static void SetUpTestCase() {
         NES::setupLogging("MillisecondIntervalTest.log", NES::LOG_DEBUG);
@@ -97,8 +96,13 @@ class MillisecondIntervalTest : public testing::Test {
         restPort = restPort + 3;
         rpcPort = rpcPort + 40;
 
-        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
-        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+        csvSourceType = CSVSourceType::create();
+        csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
+        csvSourceType->setSourceFrequency(550);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
+        csvSourceType->setNumberOfBuffersToProduce(3);
+        PhysicalSourcePtr streamConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
+        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {streamConf});
 
         crdConf = CoordinatorConfiguration::create();
         crdConf->setRpcPort(rpcPort);
@@ -106,15 +110,6 @@ class MillisecondIntervalTest : public testing::Test {
 
         wrkConf = WorkerConfiguration::create();
         wrkConf->setCoordinatorPort(rpcPort);
-
-        srcConf = CSVSourceConfig::create();
-        srcConf->setSourceType("DefaultSource");
-        srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
-        srcConf->setSourceFrequency(550);
-        srcConf->setNumberOfTuplesToProducePerBuffer(1);
-        srcConf->setNumberOfBuffersToProduce(3);
-        srcConf->setPhysicalStreamName("physical_test");
-        srcConf->setLogicalStreamName("testStream");
 
         path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
 
@@ -187,20 +182,20 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, queryId, context, executableStage, 1, {sink});
 
-    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
-
-    sourceConfigPtr->setFilePath(this->path_to_file);
-    sourceConfigPtr->setNumberOfBuffersToProduce(numberOfBuffers);
-    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
-    sourceConfigPtr->setSourceFrequency(frequency);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(this->path_to_file);
+    csvSourceType->setNumberOfBuffersToProduce(numberOfBuffers);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
+    csvSourceType->setSourceFrequency(frequency);
 
     auto source = createCSVFileSource(schema,
                                       this->nodeEngine->getBufferManager(),
                                       this->nodeEngine->getQueryManager(),
-                                      sourceConfigPtr,
+                                      csvSourceType,
                                       1,
                                       12,
                                       {pipeline});
+
     auto executionPlan = ExecutableQueryPlan::create(queryId,
                                                      queryId,
                                                      {source},
@@ -215,7 +210,6 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
 }
 
 TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSecond) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
     auto nodeEngine = this->nodeEngine;
 
     double frequency = 550;
@@ -233,15 +227,14 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     uint64_t numberOfBuffers = 1;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
-
-    sourceConfigPtr->setFilePath(this->path_to_file);
-    sourceConfigPtr->setNumberOfBuffersToProduce(numberOfBuffers);
-    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
-    sourceConfigPtr->setSourceFrequency(frequency);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(this->path_to_file);
+    csvSourceType->setNumberOfBuffersToProduce(numberOfBuffers);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
+    csvSourceType->setSourceFrequency(frequency);
 
     const DataSourcePtr source =
-        createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), sourceConfigPtr, 1, 12, {});
+        createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), csvSourceType, 1, 12, {});
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -273,29 +266,23 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0u);
+    //register logical stream
+    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", testSchema);
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 
     NES_INFO("MillisecondIntervalTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    auto defaultSourceType = DefaultSourceType::create();
+    defaultSourceType->setNumberOfBuffersToProduce(3);
+    auto physicalSource = PhysicalSource::create("testStream", "x1", defaultSourceType);
+    wrkConf->addPhysicalSource(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MillisecondIntervalTest: Worker1 started successfully");
-
-    //register logical stream
-    std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("testStream", testSchemaFileName);
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-
-    //register physical stream
-    wrk1->registerPhysicalSources(conf);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
