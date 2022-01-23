@@ -144,6 +144,13 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     if (request->enableOptimizations()) {
         NES_DEBUG("Compile with optimizations.");
         compilationFlags.enableOptimizationFlags();
+#ifdef NES_USE_PCH
+        compilationFlags.addFlag(compilationFlags.USE_PCH_O3);
+#endif
+    } else {
+#ifdef NES_USE_PCH
+        compilationFlags.addFlag(compilationFlags.USE_PCH_O0);
+#endif
     }
     if (request->enableDebugging()) {
         NES_DEBUG("Compile with debugging.");
