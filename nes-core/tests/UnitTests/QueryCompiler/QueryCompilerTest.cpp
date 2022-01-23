@@ -16,8 +16,10 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/QueryAPI.hpp>
-#include <Catalogs/LogicalSource.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -26,6 +28,7 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -89,11 +92,14 @@ TEST_F(QueryCompilerTest, filterQuery) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("logicalSourceName", schema);
-    auto streamConf = PhysicalSourceType::createEmpty();
+    std::string logicalSourceName = "logicalSourceName";
+    std::string physicalSourceName = "x1";
+    streamCatalog->addLogicalStream(logicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
-                                                                   streamConf,
+                                                                   {streamConf},
                                                                    1,
                                                                    4096,
                                                                    1024,
@@ -104,8 +110,14 @@ TEST_F(QueryCompilerTest, filterQuery) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
 
-    auto query = Query::from("logicalSourceName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from(logicalSourceName).filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 1u);
+    auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
@@ -127,11 +139,14 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("logicalSourceName", schema);
-    auto streamConf = PhysicalSourceType::createEmpty();
+    std::string logicalSourceName = "logicalSourceName";
+    std::string physicalSourceName = "x1";
+    streamCatalog->addLogicalStream(logicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
-                                                                   streamConf,
+                                                                   {streamConf},
                                                                    1,
                                                                    4096,
                                                                    1024,
@@ -147,6 +162,11 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
 
     auto query = Query::from("logicalSourceName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 1u);
+    auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
@@ -168,11 +188,14 @@ TEST_F(QueryCompilerTest, windowQuery) {
     schema->addField("key", INT32);
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("logicalSourceName", schema);
-    auto streamConf = PhysicalSourceType::createEmpty();
+    std::string logicalSourceName = "logicalSourceName";
+    std::string physicalSourceName = "x1";
+    streamCatalog->addLogicalStream(logicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
-                                                                   streamConf,
+                                                                   {streamConf},
                                                                    1,
                                                                    4096,
                                                                    1024,
@@ -189,6 +212,11 @@ TEST_F(QueryCompilerTest, windowQuery) {
                      .apply(Sum(Attribute("value")))
                      .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 1u);
+    auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
@@ -211,11 +239,14 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
     schema->addField("ts", INT64);
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("logicalSourceName", schema);
-    auto streamConf = PhysicalSourceType::createEmpty();
+    std::string logicalSourceName = "logicalSourceName";
+    std::string physicalSourceName = "x1";
+    streamCatalog->addLogicalStream(logicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
-                                                                   streamConf,
+                                                                   {streamConf},
                                                                    1,
                                                                    4096,
                                                                    1024,
@@ -232,6 +263,11 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
                      .apply(Sum(Attribute("value")))
                      .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 1u);
+    auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
@@ -255,11 +291,14 @@ TEST_F(QueryCompilerTest, unionQuery) {
     schema->addField("key", INT32);
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("logicalSourceName", schema);
-    auto streamConf = PhysicalSourceType::createEmpty();
+    std::string logicalSourceName = "logicalSourceName";
+    std::string physicalSourceName = "x1";
+    streamCatalog->addLogicalStream(logicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
-                                                                   streamConf,
+                                                                   {streamConf},
                                                                    1,
                                                                    4096,
                                                                    1024,
@@ -270,12 +309,21 @@ TEST_F(QueryCompilerTest, unionQuery) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
     auto query1 = Query::from("logicalSourceName");
-    auto query2 =
-        Query::from("logicalSourceName").filter(Attribute("key") == 32).unionWith(query1).sink(NullOutputSinkDescriptor::create());
+    auto query2 = Query::from("logicalSourceName")
+                      .filter(Attribute("key") == 32)
+                      .unionWith(query1)
+                      .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query2.getQueryPlan();
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 2u);
+    auto sourceDescriptor1 = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor1->setPhysicalSourceName(physicalSourceName);
+    auto sourceDescriptor2 = sourceOperators[1]->getSourceDescriptor();
+    sourceDescriptor2->setPhysicalSourceName(physicalSourceName);
 
     auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
     request->enableDump();
@@ -296,12 +344,16 @@ TEST_F(QueryCompilerTest, joinQuery) {
     schema->addField("key", INT32);
     schema->addField("value", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("leftStream", schema);
-    streamCatalog->addLogicalStream("rightStream", schema);
-    auto streamConf = PhysicalSourceType::createEmpty();
+    const std::string leftSourceLogicalSourceName = "leftSource";
+    const std::string rightSourceLogicalSourceName = "rightSource";
+    streamCatalog->addLogicalStream(leftSourceLogicalSourceName, schema);
+    streamCatalog->addLogicalStream(rightSourceLogicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto streamConf1 = PhysicalSource::create(leftSourceLogicalSourceName, "x1", defaultSourceType);
+    auto streamConf2 = PhysicalSource::create(rightSourceLogicalSourceName, "x1", defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
-                                                                   streamConf,
+                                                                   {streamConf1, streamConf2},
                                                                    1,
                                                                    4096,
                                                                    1024,
@@ -311,14 +363,21 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
-    auto query1 = Query::from("leftStream");
-    auto query2 = Query::from("rightStream")
+    auto query1 = Query::from(leftSourceLogicalSourceName);
+    auto query2 = Query::from(rightSourceLogicalSourceName)
                       .joinWith(query1)
-                      .where(Attribute("leftStream$key"))
-                      .equalsTo(Attribute("rightStream$key"))
+                      .where(Attribute("leftSource$key"))
+                      .equalsTo(Attribute("rightSource$key"))
                       .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
                       .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query2.getQueryPlan();
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 2u);
+    auto sourceDescriptor1 = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor1->setPhysicalSourceName("x1");
+    auto sourceDescriptor2 = sourceOperators[1]->getSourceDescriptor();
+    sourceDescriptor2->setPhysicalSourceName("x1");
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
@@ -347,11 +406,14 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
     SchemaPtr schema = Schema::create();
     schema->addField("F1", INT32);
     auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("logicalSourceName", schema);
-    auto streamConf = PhysicalSourceType::createEmpty();
+    std::string logicalSourceName = "logicalSourceName";
+    std::string physicalSourceName = "x1";
+    streamCatalog->addLogicalStream(logicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
-                                                                   streamConf,
+                                                                   {streamConf},
                                                                    1,
                                                                    4096,
                                                                    1024,
@@ -367,6 +429,11 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
+    vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+    EXPECT_TRUE(!sourceOperators.empty());
+    EXPECT_EQ(sourceOperators.size(), 1u);
+    auto sourceDescriptor = sourceOperators[0]->getSourceDescriptor();
+    sourceDescriptor->setPhysicalSourceName(physicalSourceName);
 
     // add physical operator behind the filter
     auto filterOperator = queryPlan->getOperatorByType<FilterLogicalOperatorNode>()[0];
