@@ -1,0 +1,5 @@
+# requirements for python benchmark/scripts
+numpy
+matplotlib
+pandas
+seaborn
