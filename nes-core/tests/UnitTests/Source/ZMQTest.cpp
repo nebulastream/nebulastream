@@ -22,7 +22,7 @@
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -50,8 +50,8 @@ class ZMQTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES_DEBUG("Setup ZMQTest test case.");
-        PhysicalSourcePtr conf = PhysicalSourceType::createEmpty();
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3001, conf);
+        PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 3001, {conf});
 
         address = std::string("tcp://") + std::string(LOCAL_ADDRESS) + std::string(":") + std::to_string(LOCAL_PORT);
 

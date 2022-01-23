@@ -15,7 +15,9 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -214,10 +216,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("x","x1");
+    LogicalSourcePtr logicalSource = LogicalSource::create("x",inputSchema);
 
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    streamCatalog->addPhysicalSource("default_logical", sce);
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
@@ -241,10 +244,11 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("x","x1");
+    LogicalSourcePtr logicalSource = LogicalSource::create("x",inputSchema);
 
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    streamCatalog->addPhysicalSource("default_logical", sce);
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }

@@ -18,8 +18,10 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -54,11 +56,11 @@ class FilterPushDownRuleTest : public testing::Test {
 void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
     NES_INFO("Setup FilterPushDownTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
-
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("default_logical", sce);
+    auto csvSourceType = CSVSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
+    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
+    streamCatalog->addPhysicalSource("default_logical", sce1);
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
@@ -629,10 +631,12 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     NES_INFO("Setup FilterPushDownTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto csvSourceType = CSVSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("example", "test_stream", csvSourceType);
+    LogicalSourcePtr logicalSource = LogicalSource::create("example", Schema::create());
+    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalStream("example", sce);
+    streamCatalog->addPhysicalSource("example", sce1);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();

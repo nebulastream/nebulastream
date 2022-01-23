@@ -16,8 +16,8 @@
 
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -46,10 +46,10 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 
     void SetUp() override {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
-        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+        PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
         engine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                               9090,
-                                                              streamConf,
+                                                              {physicalSource},
                                                               1,
                                                               4096,
                                                               1024,
@@ -67,15 +67,12 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    CSVSourceConfigPtr sourceConfigPtr = CSVSourceConfig::create();
-
-    sourceConfigPtr->setFilePath("csv.log");
-    sourceConfigPtr->setLogicalStreamName("testStream");
-    sourceConfigPtr->setNumberOfBuffersToProduce(10);
-    sourceConfigPtr->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfigPtr->setSourceFrequency(1);
-
-    SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, sourceConfigPtr);
+    auto csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath("csv.log");
+    csvSourceType->setNumberOfBuffersToProduce(10);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType->setSourceFrequency(1);
+    SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, csvSourceType);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, sourceDescriptor, engine, 12);
     EXPECT_EQ(csvFileSource->getType(), CSV_SOURCE);
 }

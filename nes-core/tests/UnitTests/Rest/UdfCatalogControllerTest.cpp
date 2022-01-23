@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 
 #include "../../util/ProtobufMessageFactory.hpp"
-#include <Catalogs/UdfCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <REST/Controller/UdfCatalogController.hpp>
 #include <UdfCatalogService.pb.h>
 #include <Util/Logger.hpp>

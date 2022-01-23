@@ -18,14 +18,14 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -57,10 +57,11 @@ class RenameStreamToProjectOperatorRuleTest : public testing::Test {
     void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) const {
         NES_INFO("Setup FilterPushDownTest test case.");
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
-        SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
-        streamCatalog->addPhysicalStream("src", sce);
+        PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
+        LogicalSourcePtr logicalSource = LogicalSource::create("x", schema);
+        SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
         streamCatalog->addLogicalStream("src", schema);
+        streamCatalog->addPhysicalSource("src", sce);
     }
 };
 
