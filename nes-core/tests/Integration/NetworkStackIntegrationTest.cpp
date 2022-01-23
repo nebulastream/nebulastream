@@ -39,7 +39,8 @@
 
 #include "../util/TestQuery.hpp"
 #include "../util/TestQueryCompiler.hpp"
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -135,9 +136,10 @@ void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& me
 }
 
 TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+    auto defaultSourceType = DefaultSourceType::create();
+    auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -163,9 +165,10 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
 }
 
 TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+    auto defaultSourceType = DefaultSourceType::create();
+    auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -209,7 +212,9 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
                                                      uint64_t numBuffers,
                                                      ExtraParameters&&... extraParams) {
     try {
-        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+        auto defaultSourceType = DefaultSourceType::create();
+        auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
+        std::vector<PhysicalSourcePtr> physicalSources{physicalSource};
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         std::vector<Runtime::BufferManagerPtr> bufferManagers = {
             std::make_shared<Runtime::BufferManager>(bufferSize, numBuffers)};
@@ -230,7 +235,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
 
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory, jitCompiler);
 
-        return std::make_shared<MockedNodeEngine>(std::move(streamConf),
+        return std::make_shared<MockedNodeEngine>(std::move(physicalSources),
                                                   std::make_shared<Runtime::HardwareManager>(),
                                                   std::move(bufferManagers),
                                                   std::move(queryManager),
@@ -266,7 +271,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         atomic<int> eosCnt = 0;
         atomic<int>& bufferCnt;
 
-        explicit MockedNodeEngine(PhysicalSourcePtr streamConf,
+        explicit MockedNodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                                   Runtime::HardwareManagerPtr hardwareManager,
                                   std::vector<NES::Runtime::BufferManagerPtr>&& bufferManagers,
                                   NES::Runtime::QueryManagerPtr&& queryManager,
@@ -277,7 +282,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                   std::promise<bool>& completed,
                                   NesPartition nesPartition,
                                   std::atomic<int>& bufferCnt)
-            : NodeEngine(std::move(streamConf),
+            : NodeEngine(std::move(physicalSources),
                          std::move(hardwareManager),
                          std::move(bufferManagers),
                          std::move(queryManager),
@@ -342,9 +347,10 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                       PartitionRegistrationStatus::Deleted);
         });
 
-        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+        auto defaultSourceType = DefaultSourceType::create();
+        auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
         auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31338, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31338, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
@@ -402,11 +408,12 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                            ->addField("test$one", DataTypeFactory::createInt64())
                            ->addField("test$value", DataTypeFactory::createInt64());
 
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+    auto defaultSourceType = DefaultSourceType::create();
+    auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     NesPartition nesPartition{1, 22, 33, 44};
     auto nodeEngineSender = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                          31337,
-                                                                         streamConf,
+                                                                         {physicalSource},
                                                                          1,
                                                                          bufferSize,
                                                                          buffersManaged,
@@ -417,7 +424,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
     auto nodeEngineReceiver = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                            31338,
-                                                                           streamConf,
+                                                                           {physicalSource},
                                                                            1,
                                                                            bufferSize,
                                                                            buffersManaged,
@@ -613,10 +620,11 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                            ->addField("test$one", DataTypeFactory::createInt64())
                            ->addField("test$value", DataTypeFactory::createInt64());
 
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+    auto defaultSourceType = DefaultSourceType::create();
+    auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngineSender = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                          31337,
-                                                                         streamConf,
+                                                                         {physicalSource},
                                                                          1,
                                                                          bufferSize,
                                                                          buffersManaged,
@@ -625,7 +633,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                                          NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto nodeEngineReceiver = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                            31338,
-                                                                           streamConf,
+                                                                           {physicalSource},
                                                                            1,
                                                                            bufferSize,
                                                                            buffersManaged,

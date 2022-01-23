@@ -16,10 +16,10 @@
 
 #include <gtest/gtest.h>
 
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -54,54 +54,48 @@ class MultiThreadedTest : public testing::Test {
 };
 
 TEST_F(MultiThreadedTest, testFilterQuery) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    NES_INFO("MultiThreadedTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    wrkConf->setCoordinatorPort(rpcPort);
-    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ULL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(12);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setNumberOfBuffersToProduce(210);
+    csvSourceType1->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog(); /*register logical stream qnv*/
-    std::string stream =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << stream;
-    out.close();
-    wrk1->registerLogicalStream("stream", testSchemaFileName);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(210);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false); /*register physical stream*/
-    PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(streamConf);
 
     std::string outputFilePath = "MultiThreadedTest_testFilterQuery.out";
 
-    NES_INFO("QueryDeploymentTest: Submit query");
+    NES_INFO("MultiThreadedTest: Submit query");
     string query = R"(Query::from("stream")
         .filter(Attribute("value") < 2)
         .sink(FileSinkDescriptor::create(")"
@@ -122,67 +116,61 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
-    NES_DEBUG("MultipleJoinsTest: Remove query");
+    NES_DEBUG("MultiThreadedTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    NES_INFO("MultiThreadedTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    NES_INFO("MultiThreadedTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    NES_INFO("MultiThreadedTest: Test finished");
     int response = remove(outputFilePath.c_str());
     EXPECT_TRUE(response == 0);
 }
 
 TEST_F(MultiThreadedTest, testProjectQuery) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    NES_INFO("MultiThreadedTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ULL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(12);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setNumberOfBuffersToProduce(210);
+    csvSourceType1->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog(); /*register logical stream qnv*/
-    std::string stream =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << stream;
-    out.close();
-    wrk1->registerLogicalStream("stream", testSchemaFileName);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(210);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false); /*register physical stream*/
-    PhysicalSourcePtr streamConf = PhysicalSourceType::create(srcConf);
-    wrk1->registerPhysicalSources(streamConf);
 
     std::string outputFilePath = "MultiThreadedTest_testProjectQuery.out";
 
@@ -226,53 +214,43 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
 
 TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
-    workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
-
-    NES_INFO("WindowDeploymentTest: Start coordinator");
+    NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    EXPECT_NE(port, 0ULL);
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window", stream);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(12);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(3);
+    csvSourceType1->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
-
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -319,55 +297,43 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
  */
 TEST_F(MultiThreadedTest, testMultipleWindows) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
     coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     coordinatorConfig->setNumberOfSlots(12);
-
+    coordinatorConfig->setRestPort(restPort);
     coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
-    workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
-
-    NES_INFO("MultipleWindowsTest: Start coordinator");
+    NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ULL);
-    NES_INFO("MultipleWindowsTest: Coordinator started successfully");
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window", stream);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    NES_INFO("MultipleWindowsTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(12);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(3);
+    csvSourceType1->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleWindowsTest: Worker1 started successfully");
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
-    //register physical stream R2000070
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-
-    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -411,56 +377,43 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 
 TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
     coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     coordinatorConfig->setNumberOfSlots(12);
-
+    coordinatorConfig->setRestPort(restPort);
     coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
-    workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
-
-    NES_INFO("MultipleWindowsTest: Start coordinator");
+    NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ULL);
-    NES_INFO("MultipleWindowsTest: Coordinator started successfully");
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window", stream);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    NES_INFO("MultipleWindowsTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(12);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MultipleWindowsTest: Worker1 started successfully");
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    //    csvSourceType1->as<CSVSourceType>()->setNumberOfBuffersToProduce(1000);
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window");
-    //register physical stream R2000070
-    PhysicalSourcePtr conf = PhysicalSourceType::create(srcConf);
-
-    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -502,72 +455,90 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
  * Test deploying join with different three sources
  */
 TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setNumberOfSlots(16);
+    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    NES_INFO("MultiThreadedTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window1", stream);
+    std::string window2 =
+        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-
-    NES_INFO("JoinDeploymentTest: Start coordinator");
-    crdConf->setNumberOfSlots(16);
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ULL);
-    NES_INFO("JoinDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("JoinDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    wrkConf->setNumberOfSlots(8);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(8);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(false);
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
+    auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->addPhysicalSource(physicalSource2);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("JoinDeploymentTest: Worker1 started successfully");
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
 
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window1", testSchemaFileName);
-
-    //register logical stream qnv
-    std::string window2 =
-        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName2 = "window.hpp";
-    std::ofstream out2(testSchemaFileName2);
-    out2 << window2;
-    out2.close();
-    wrk1->registerLogicalStream("window2", testSchemaFileName2);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
-
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-
-    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
-
-    wrk1->registerPhysicalSources(windowStream);
-    wrk1->registerPhysicalSources(windowStream2);
+    ////    //register logical stream qnv
+    ////    std::string window =
+    ////        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    ////    std::string testSchemaFileName = "window.hpp";
+    ////    std::ofstream out(testSchemaFileName);
+    ////    out << window;
+    ////    out.close();
+    ////    wrk1->registerLogicalStream("window1", testSchemaFileName);
+    ////
+    ////    //register logical stream qnv
+    ////    std::string window2 =
+    ////        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+    ////    std::string testSchemaFileName2 = "window.hpp";
+    ////    std::ofstream out2(testSchemaFileName2);
+    ////    out2 << window2;
+    ////    out2.close();
+    ////    wrk1->registerLogicalStream("window2", testSchemaFileName2);
+    ////
+    ////    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    ////    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
+    ////    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
+    ////    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
+    ////    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
+    ////    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
+    ////
+    ////    //register physical stream R2000070
+    ////    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
+    ////
+    ////    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
+    ////    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    ////
+    ////    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
+    //
+    //    wrk1->registerPhysicalSources(windowStream);
+    //    wrk1->registerPhysicalSources(windowStream2);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -610,82 +581,67 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 }
 
 TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setNumberOfSlots(16);
+    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    NES_INFO("MultiThreadedTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window1", stream);
+    std::string window2 =
+        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    std::string window3 =
+        R"(Schema::create()->addField(createField("win3", INT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-
-    NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ULL);
-    NES_INFO("JoinDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("JoinDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(8);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(false);
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setSourceFrequency(1);
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(false);
+    CSVSourceTypePtr csvSourceType3 = CSVSourceType::create();
+    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
+    csvSourceType3->setSourceFrequency(1);
+    csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType3->setNumberOfBuffersToProduce(2);
+    csvSourceType3->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
+    auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
+    auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->addPhysicalSource(physicalSource2);
+    workerConfig1->addPhysicalSource(physicalSource3);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("JoinDeploymentTest: Worker1 started successfully");
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     std::string outputFilePath = "testTwoJoinsWithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
-
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window1", testSchemaFileName);
-
-    //register logical stream qnv
-    std::string window2 =
-        R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName2 = "window.hpp";
-    std::ofstream out2(testSchemaFileName2);
-    out2 << window2;
-    out2.close();
-    wrk1->registerLogicalStream("window2", testSchemaFileName2);
-
-    std::string window3 =
-        R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName3 = "window3.hpp";
-    std::ofstream out3(testSchemaFileName3);
-    out3 << window3;
-    out3.close();
-    wrk1->registerLogicalStream("window3", testSchemaFileName3);
-
-    //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
-    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalSourcePtr windowStream3 = PhysicalSourceType::create(srcConf);
-
-    wrk1->registerPhysicalSources(windowStream);
-    wrk1->registerPhysicalSources(windowStream2);
-    wrk1->registerPhysicalSources(windowStream3);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -734,94 +690,78 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
 }
 
 TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setNumberOfSlots(16);
+    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    NES_INFO("MultiThreadedTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window1", stream);
+    std::string window2 =
+        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    std::string window3 =
+        R"(Schema::create()->addField(createField("win3", INT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    std::string window4 =
+        R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window4", window4);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-
-    NES_INFO("JoinDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ULL);
-    NES_INFO("JoinDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("JoinDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(8);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    csvSourceType1->setSkipHeader(false);
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setSourceFrequency(1);
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
+    csvSourceType2->setSkipHeader(false);
+    CSVSourceTypePtr csvSourceType3 = CSVSourceType::create();
+    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
+    csvSourceType3->setSourceFrequency(1);
+    csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType3->setNumberOfBuffersToProduce(2);
+    csvSourceType3->setSkipHeader(false);
+    CSVSourceTypePtr csvSourceType4 = CSVSourceType::create();
+    csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
+    csvSourceType4->setSourceFrequency(1);
+    csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType4->setNumberOfBuffersToProduce(2);
+    csvSourceType4->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
+    auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
+    auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
+    auto physicalSource4 = PhysicalSource::create("window4", "test_stream", csvSourceType4);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->addPhysicalSource(physicalSource2);
+    workerConfig1->addPhysicalSource(physicalSource3);
+    workerConfig1->addPhysicalSource(physicalSource4);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("JoinDeploymentTest: Worker1 started successfully");
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     std::string outputFilePath = "testJoin4WithDifferentStreamSlidingWindowOnCoodinator.out";
     remove(outputFilePath.c_str());
-
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window1", testSchemaFileName);
-
-    //register logical stream qnv
-    std::string window2 =
-        R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName2 = "window.hpp";
-    std::ofstream out2(testSchemaFileName2);
-    out2 << window2;
-    out2.close();
-    wrk1->registerLogicalStream("window2", testSchemaFileName2);
-
-    std::string window3 =
-        R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName3 = "window3.hpp";
-    std::ofstream out3(testSchemaFileName3);
-    out3 << window3;
-    out3.close();
-    wrk1->registerLogicalStream("window3", testSchemaFileName3);
-
-    std::string window4 =
-        R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName4 = "window4.hpp";
-    std::ofstream out4(testSchemaFileName4);
-    out4 << window4;
-    out4.close();
-    wrk1->registerLogicalStream("window4", testSchemaFileName4);
-
-    //register physical stream
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(false);
-    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window4.csv");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window3");
-    PhysicalSourcePtr windowStream3 = PhysicalSourceType::create(srcConf);
-
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window4");
-    PhysicalSourcePtr windowStream4 = PhysicalSourceType::create(srcConf);
-
-    wrk1->registerPhysicalSources(windowStream);
-    wrk1->registerPhysicalSources(windowStream2);
-    wrk1->registerPhysicalSources(windowStream3);
-    wrk1->registerPhysicalSources(windowStream4);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -908,73 +848,54 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
  * Test deploying join with different three sources
  */
 TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setNumberOfSlots(16);
+    coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    NES_INFO("MultiThreadedTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window1", stream);
+    std::string window2 =
+        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    NES_DEBUG("MultiThreadedTest: Coordinator started successfully");
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
-
-    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-
-    NES_INFO("JoinDeploymentTest: Start coordinator");
-    crdConf->setNumberOfSlots(16);
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ULL);
-    NES_INFO("JoinDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("JoinDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    wrkConf->setNumberOfSlots(8);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("MultiThreadedTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(8);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setSkipHeader(false);
+    CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
+    csvSourceType2->setSourceFrequency(0);
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType2->setSkipHeader(false);
+    auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
+    auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->addPhysicalSource(physicalSource2);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("JoinDeploymentTest: Worker1 started successfully");
+    NES_INFO("MultiThreadedTest: Worker1 started successfully");
 
     std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
-
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window1", testSchemaFileName);
-
-    //register logical stream qnv
-    std::string window2 =
-        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName2 = "window.hpp";
-    std::ofstream out2(testSchemaFileName2);
-    out2 << window2;
-    out2.close();
-    wrk1->registerLogicalStream("window2", testSchemaFileName2);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    //    csvSourceType1->as<CSVSourceType>()->setNumberOfBuffersToProduce(1000);
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(0);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalSourceType::create(srcConf);
-
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-
-    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(srcConf);
-
-    wrk1->registerPhysicalSources(windowStream);
-    wrk1->registerPhysicalSources(windowStream2);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
