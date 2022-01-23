@@ -53,6 +53,36 @@ target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/../")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
 
+if (NES_USE_PCH)
+    if (NES_ONLY_REQUIRED_HEADERS)
+        message( FATAL_ERROR "You can't run NES_USE_PCH with NES_ONLY_REQUIRED_HEADERS. CMake will exit...")
+    endif()
+
+    message("Using precompiled headers for query compilation")
+    #set(NES_PCH_FLAGS "-ftime-trace -fpic -Wparentheses-equality -fno-trigraphs -DNES_LOGGING_DEBUG_LEVEL=1 -std=c++${CMAKE_CXX_STANDARD}")
+    add_compile_definitions(NES_USE_PCH)
+    add_custom_target(
+            build_pch_o0 ALL
+            COMMAND ${CMAKE_CXX_COMPILER}
+            -I${PATH_TO_NES_SOURCE_CODE}/nes-core/include/
+            -I${PATH_TO_DEB_SOURCE_CODE}/include/ -ftime-trace -fpic -Wparentheses-equality -fno-trigraphs -DNES_LOGGING_DEBUG_LEVEL=1 -std=c++20
+            -march=native -mtune=native
+            -O0 -x c++-header
+            ${PATH_TO_NES_SOURCE_CODE}/nes-core/include/QueryCompiler/Compiler/RuntimeHeaders.hpp -o RuntimeHeaders_O0.h.pch
+    )
+    add_custom_target(
+            build_pch_o3 ALL
+            COMMAND ${CMAKE_CXX_COMPILER}
+            -I${PATH_TO_NES_SOURCE_CODE}/nes-core/include/
+            -I${PATH_TO_DEB_SOURCE_CODE}/include/ -ftime-trace -fpic -Wparentheses-equality -fno-trigraphs -DNES_LOGGING_DEBUG_LEVEL=1 -std=c++20
+            -march=native -mtune=native
+             -O3 -x c++-header
+            ${PATH_TO_NES_SOURCE_CODE}/nes-core/include/QueryCompiler/Compiler/RuntimeHeaders.hpp -o RuntimeHeaders_O3.h.pch
+    )
+    add_dependencies(nes build_pch_o0)
+    add_dependencies(nes build_pch_o3)
+endif()
+
 if (GRPC_LIBRARIES)
     target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})
 endif ()
