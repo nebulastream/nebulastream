@@ -17,7 +17,7 @@
 #ifndef NES_TESTS_UTIL_PROTOBUF_MESSAGE_FACTORY_HPP_
 #define NES_TESTS_UTIL_PROTOBUF_MESSAGE_FACTORY_HPP_
 
-#include <Catalogs/UdfCatalog.hpp>
+#include <Catalogs/UDF/UdfCatalog.hpp>
 #include <UdfCatalogService.pb.h>
 
 namespace NES {

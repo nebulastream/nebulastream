@@ -16,11 +16,12 @@
 
 #include <gtest/gtest.h>
 
+#include <Util/TestHarness/TestHarness.hpp>
 #include "../util/ProtobufMessageFactory.hpp"
 #include "SerializableQueryPlan.pb.h"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -67,15 +68,28 @@ class RESTEndpointTest : public testing::Test {
         EXPECT_TRUE(coordinator.stopCoordinator(true));
     }
 
-    // The id parameter is just used to recreate the log output before refactoring.
-    // The test code also works if the id parameter is omitted.
-    NesWorkerPtr createAndStartWorker(NesNodeType nodeType, uint8_t id = 1) {
+    NesWorkerPtr createAndStartWorkerWithSourceConfig(uint8_t id, PhysicalSourcePtr sourceConfig) {
         NES_INFO("RESTEndpointTest: Start worker " << id);
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
         workerConfig->setCoordinatorPort(coordinatorRpcPort);
         workerConfig->setRpcPort(getNextFreePort());
         workerConfig->setDataPort(getNextFreePort());
-        NesWorkerPtr worker = std::make_shared<NesWorker>(workerConfig, nodeType);
+        workerConfig->addPhysicalSource(sourceConfig);
+        NesWorkerPtr worker = std::make_shared<NesWorker>(workerConfig);
+        EXPECT_TRUE(worker->start(/**blocking**/ false, /**withConnect**/ true));
+        NES_INFO("RESTEndpointTest: Worker " << id << " started successfully");
+        return worker;
+    }
+
+    // The id parameter is just used to recreate the log output before refactoring.
+    // The test code also works if the id parameter is omitted.
+    NesWorkerPtr createAndStartWorker(uint8_t id = 1) {
+        NES_INFO("RESTEndpointTest: Start worker " << id);
+        WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+        workerConfig->setCoordinatorPort(coordinatorRpcPort);
+        workerConfig->setRpcPort(getNextFreePort());
+        workerConfig->setDataPort(getNextFreePort());
+        NesWorkerPtr worker = std::make_shared<NesWorker>(workerConfig);
         EXPECT_TRUE(worker->start(/**blocking**/ false, /**withConnect**/ true));
         NES_INFO("RESTEndpointTest: Worker " << id << " started successfully");
         return worker;
@@ -109,7 +123,7 @@ uint64_t RESTEndpointTest::nextFreePort = 1024;
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
+    auto wrk1 = createAndStartWorker();
     auto getExecutionPlanClient = createRestClient("query/execution-plan");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -168,7 +182,7 @@ TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
     auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
+    auto wrk1 = createAndStartWorker();
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
 
@@ -206,26 +220,26 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithEmptyQuery) {
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
 
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     /* REGISTER QUERY */
-    CSVSourceConfigPtr sourceConfig;
-    sourceConfig = CSVSourceConfig::create();
+    CSVSourceTypePtr sourceConfig;
+    sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    auto windowStream = PhysicalSource::create("test_stream", "test2", sourceConfig);
+    auto wrk1 = createAndStartWorkerWithSourceConfig(1, windowStream);
+    // Removed this and replaced it by the above. Test is disabled, cannot check correctness. Leaving this for future fixing.
+    //    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
+    //    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
+    //    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    //    streamCatalog->addPhysicalSource("default_logical", sce);
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
-    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    streamCatalog->addPhysicalSource("default_logical", sce);
 
     Query query = Query::from("default_logical");
     QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -281,7 +295,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWrongPayload) {
     auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
+    auto wrk1 = createAndStartWorker();
     //make httpclient with new endpoint -ex:
     auto httpClient = createRestClient("query/execute-query-ex");
 
@@ -313,7 +327,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWrongPayload) {
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
     auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
+    auto wrk1 = createAndStartWorker();
     auto getExecutionPlanClient = createRestClient("queryCatalog/allRegisteredQueries");
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -363,8 +377,8 @@ TEST_F(RESTEndpointTest, DISABLED_testGetAllRegisteredQueries) {
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testAddParentTopology) {
     auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
-    auto wrk2 = createAndStartWorker(NesNodeType::Worker, 2);
+    auto wrk1 = createAndStartWorker();
+    auto wrk2 = createAndStartWorker(2);
     auto addParent = createRestClient("topology/addParent");
 
     uint64_t parentId = wrk2->getWorkerId();
@@ -407,7 +421,7 @@ TEST_F(RESTEndpointTest, DISABLED_testAddParentTopology) {
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testRemoveParentTopology) {
     auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
+    auto wrk1 = createAndStartWorker();
     auto removeParent = createRestClient("topology/removeParent");
 
     uint64_t parentId = crd->getNesWorker()->getWorkerId();
@@ -449,7 +463,7 @@ TEST_F(RESTEndpointTest, DISABLED_testRemoveParentTopology) {
 // Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
 TEST_F(RESTEndpointTest, DISABLED_testConnectivityCheck) {
     auto crd = createAndStartCoordinator();
-    auto wrk1 = createAndStartWorker(NesNodeType::Sensor);
+    auto wrk1 = createAndStartWorker();
     auto getConnectivityCheck = createRestClient("connectivity/check");
 
     web::json::value response;
