@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Util/KalmanFilter.hpp>
@@ -33,7 +33,7 @@ namespace NES {
 class AdaptiveKFTest : public testing::Test {
   public:
     SchemaPtr schema;
-    PhysicalStreamConfigPtr streamConf;
+    PhysicalSourcePtr streamConf;
     Runtime::NodeEnginePtr nodeEngine;
     std::vector<double> measurements;
     float defaultEstimationErrorDivider = 2.9289684;
@@ -48,9 +48,9 @@ class AdaptiveKFTest : public testing::Test {
 
     void SetUp() override {
         NES_INFO("Setup AdaptiveKFTest class.");
-        streamConf = PhysicalStreamConfig::createEmpty();
+        streamConf = PhysicalSource::create("x","x1");
         schema = Schema::create()->addField("temperature", UINT32);
-        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, {streamConf}, 1, 4096, 1024, 12, 12);
         now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
         // Fake measurements for y with noise
         measurements = {

@@ -14,12 +14,13 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -64,7 +65,9 @@ class grpcTests : public testing::Test {
 TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
-    SourceConfigPtr srcConf = PhysicalStreamConfigFactory::createSourceConfig();
+    auto defaultSource = DefaultSourceType::create();
+    PhysicalSourcePtr srcConf = PhysicalSource::create("default_logical", "x1", defaultSource);
+    wrkConf->addPhysicalSource(srcConf);
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -79,7 +82,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf);
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
     NES_INFO("QueryDeploymentTest: Worker started successfully");

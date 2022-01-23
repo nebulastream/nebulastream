@@ -14,11 +14,12 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigurationOption.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Sources/KafkaSourceConfig.hpp>
-#include <Configurations/Sources/MQTTSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <filesystem>
@@ -125,7 +126,7 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
 
-    WorkerConfigPtr workerConfigPtr = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfigPtr = WorkerConfiguration::create();
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml");
 
     EXPECT_NE(workerConfigPtr->getLocalWorkerIp()->getValue(), workerConfigPtr->getLocalWorkerIp()->getDefaultValue());
@@ -201,19 +202,19 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
 
     std::map<string, string> commandLineParams;
 
-    commandLineParams.insert(std::pair<string, string>("--sourceConfigPath",  std::string(TEST_DATA_DIRECTORY) +"emptySource.yaml"));
+    commandLineParams.insert(
+        std::pair<string, string>("--sourceConfigPath", std::string(TEST_DATA_DIRECTORY) + "emptySource.yaml"));
 
-    SourceConfigPtr sourceConfigPtr =
-        PhysicalStreamConfigFactory::createSourceConfig(commandLineParams, commandLineParams.size());
+    PhysicalSourcePtr sourceConfigPtr = PhysicalSourceFactory::createSourceConfig(commandLineParams);
 
-    EXPECT_EQ(sourceConfigPtr->getSourceType()->getValue(), sourceConfigPtr->getSourceType()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getSourceFrequency()->getValue(), sourceConfigPtr->getSourceFrequency()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getNumberOfBuffersToProduce()->getValue(),
-              sourceConfigPtr->getNumberOfBuffersToProduce()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getValue(),
-              sourceConfigPtr->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
-    EXPECT_EQ(sourceConfigPtr->getPhysicalStreamName()->getValue(), sourceConfigPtr->getPhysicalStreamName()->getDefaultValue());
-    EXPECT_NE(sourceConfigPtr->getLogicalStreamName()->getValue(), sourceConfigPtr->getLogicalStreamName()->getDefaultValue());
+    DefaultSourceTypePtr physicalSourceType = sourceConfigPtr->getPhysicalSourceType()->as<DefaultSourceType>();
+    EXPECT_EQ(physicalSourceType->getSourceFrequency()->getValue(), physicalSourceType->getSourceFrequency()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType->getNumberOfBuffersToProduce()->getValue(),
+              physicalSourceType->getNumberOfBuffersToProduce()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType->getNumberOfTuplesToProducePerBuffer()->getValue(),
+              physicalSourceType->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
+    EXPECT_EQ(sourceConfigPtr->getPhysicalSourceName()->getValue(), sourceConfigPtr->getPhysicalSourceName()->getDefaultValue());
+    EXPECT_NE(physicalSourceType->getLogicalStreamName()->getValue(), physicalSourceType->getLogicalStreamName()->getDefaultValue());
 
     commandLineParams.insert_or_assign("--sourceConfigPath", std::string(TEST_DATA_DIRECTORY) + "emptyMQTTSource.yaml");
 

@@ -18,7 +18,7 @@
 
 using namespace std::string_literals;
 
-#include <Catalogs/JavaUdfDescriptor.hpp>
+#include <Catalogs/UDF/JavaUdfDescriptor.hpp>
 #include <Exceptions/UdfException.hpp>
 #include <Util/Logger.hpp>
 
