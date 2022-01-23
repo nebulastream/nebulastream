@@ -19,7 +19,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #pragma clang diagnostic pop
-#include <Catalogs/LambdaSourceStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -33,8 +33,7 @@
 #include <Util/TestUtils.hpp>
 
 #include <Common/ExecutableType/Array.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <iostream>
 
 using namespace std;
@@ -69,7 +68,7 @@ class WindowDeploymentTest : public testing::Test {
 TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
@@ -85,23 +84,17 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    auto windowStream = PhysicalSource::create("exdra", "test_stream", sourceConfig);
+    workerConfig->addPhysicalSource(windowStream);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("exdra");
-
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-
-    wrk1->registerPhysicalSources(conf);
 
     std::string outputFilePath = "testDeployOneWorkerCentralTumblingWindowQueryEventTimeForExdra.out";
     remove(outputFilePath.c_str());
@@ -151,30 +144,22 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
  */
 TEST_F(WindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
+    std::string input =
+        R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
+    NES_ASSERT(crd->getStreamCatalogService()->registerLogicalStream("ysb", input), "failed to create logical stream ysb");
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     auto ysbSchema = Schema::create()
                          ->addField("ysb$user_id", UINT64)
@@ -188,14 +173,6 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
                          ->addField("ysb$d2", UINT64)
                          ->addField("ysb$d3", UINT32)
                          ->addField("ysb$d4", UINT16);
-
-    std::string input =
-        R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
-    std::string testSchemaFileName = "ysbSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << input;
-    out.close();
-    NES_ASSERT(crd->getNesWorker()->registerLogicalStream("ysb", testSchemaFileName), "failed to create logical stream ysb");
 
     auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct __attribute__((packed)) YsbRecord {
@@ -258,11 +235,18 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
         NES_WARNING("Lambda last entry is=" << records[numberOfTuplesToProduce - 1].toString());
     };
 
-    std::string outputFilePath = "ysb.out";
-    NES::AbstractPhysicalStreamConfigPtr conf =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "YSB_phy", "ysb", func, 10, 100, "frequency");
+    auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, "frequency");
+    auto physicalSource = PhysicalSource::create("ysb", "YSB_phy", lambdaSourceType);
+    workerConfig->addPhysicalSource(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
-    wrk1->registerPhysicalSources(conf);
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    std::string outputFilePath = "ysb.out";
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"ysb\").window(TumblingWindow::of(EventTime(Attribute(\"current_ms\")), "
@@ -311,16 +295,16 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
 
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -365,16 +349,15 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp"), Seconds()), Minutes(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -422,16 +405,17 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(1);
 
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
+
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -464,15 +448,27 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->setCoordinatorPort(rpcPort);
+    auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
+    workerConfig->addPhysicalSource(windowStream);
+
+    //register logical stream
+    std::string testSchema =
+        R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getStreamCatalogService()->registerLogicalStream("window", testSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -481,7 +477,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -490,7 +486,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -500,28 +496,6 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    NES_INFO("WindowDeploymentTest: Submit query");
-
-    //register logical stream
-    std::string testSchema =
-        R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
-
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    wrk1->registerPhysicalSources(conf);
-    wrk2->registerPhysicalSources(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
@@ -581,17 +555,16 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts"), Seconds()), Minutes(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = SourceConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -635,17 +608,16 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -695,16 +667,15 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -744,16 +715,15 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
@@ -793,17 +763,16 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")),Seconds(1))).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -843,17 +812,16 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
         R"(Query::from("window").window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(10),Seconds(5))).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema);
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
@@ -874,15 +842,26 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
 
 TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(5);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+    auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
+    workerConfig->addPhysicalSource(windowStream);
     workerConfig->setCoordinatorPort(rpcPort);
 
+    //creating schema
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getStreamCatalogService()->registerLogicalStream("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -891,7 +870,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -899,26 +878,6 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
-
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(5);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    //register physical stream R2000070
-    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
-
-    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -952,15 +911,26 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
 
 TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(5);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+    auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
+    workerConfig->addPhysicalSource(windowStream);
     workerConfig->setCoordinatorPort(rpcPort);
 
+    //register logical stream qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getStreamCatalogService()->registerLogicalStream("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -969,7 +939,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -978,7 +948,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -986,26 +956,6 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
-
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(5);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    //register physical stream
-    PhysicalSourcePtr conf70 = PhysicalSourceType::create(sourceConfig);
-
-    wrk1->registerPhysicalSources(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
     remove(outputFilePath.c_str());
@@ -1041,51 +991,40 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
  */
 TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(6);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+    auto windowStream = PhysicalSource::create("windowStream", "test_stream", sourceConfig);
+    workerConfig->addPhysicalSource(windowStream);
     workerConfig->setCoordinatorPort(rpcPort);
 
+    //register logical stream qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getStreamCatalogService()->registerLogicalStream("windowStream", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("windowStream", testSchemaFileName);
-
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(6);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("windowStream");
-
-    //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
-
-    wrk1->registerPhysicalSources(windowStream);
 
     std::string outputFilePath = "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1121,15 +1060,26 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
  */
 TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+    auto windowStream = PhysicalSource::create("windowStream", "test_stream", sourceConfig);
+    workerConfig->addPhysicalSource(windowStream);
     workerConfig->setCoordinatorPort(rpcPort);
 
+    //register logical stream qnv
+    std::string window =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getStreamCatalogService()->registerLogicalStream("windowStream", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -1138,7 +1088,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -1147,35 +1097,13 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker2 started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //register logical stream qnv
-    std::string window =
-        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << window;
-    out.close();
-    wrk1->registerLogicalStream("windowStream", testSchemaFileName);
-
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(1);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("windowStream");
-
-    //register physical stream R2000070
-    PhysicalSourcePtr windowStream = PhysicalSourceType::create(sourceConfig);
-
-    wrk1->registerPhysicalSources(windowStream);
-    wrk2->registerPhysicalSources(windowStream);
 
     std::string outputFilePath = "testGlobalTumblingWindow.out";
     remove(outputFilePath.c_str());
@@ -1231,20 +1159,19 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-
-    testHarness.attachWorkerToCoordinator();
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema, testHarness.getWorkerId(0));
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, testSchema, testHarness.getWorkerId(0));
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    testHarness
+        .addLogicalSource("window", testSchema)
+        .attachWorkerToCoordinator()
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .attachWorkerWithCSVSourceToCoordinator("window", sourceConfig)
+        .validate().setupTopology();
 
     ASSERT_EQ(testHarness.getWorkerCount(), 5UL);
 
@@ -1271,14 +1198,17 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
+
+    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+
+    //register logical stream qnv
+    std::string window =
+        R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getStreamCatalogService()->registerLogicalStream("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
@@ -1287,16 +1217,25 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
+
+    // create source
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
+    workerConfig->addPhysicalSource(windowStream);
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);//id=3
     wrk2->replaceParent(1, 2);
     EXPECT_TRUE(retStart2);
@@ -1306,7 +1245,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 30);
     workerConfig->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     wrk3->replaceParent(1, 2);
 
@@ -1317,7 +1256,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 40);
     workerConfig->setDataPort(port + 41);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     wrk4->replaceParent(1, 2);
     EXPECT_TRUE(retStart4);
@@ -1327,7 +1266,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 60);
     workerConfig->setDataPort(port + 61);
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(workerConfig);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     wrk5->replaceParent(1, 2);
     EXPECT_TRUE(retStart5);
@@ -1338,32 +1277,6 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    NES_INFO("WindowDeploymentTest: Submit query");
-
-    //register logical stream
-    std::string testSchema =
-        R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-    wrk1->registerLogicalStream("window", testSchemaFileName);
-
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(3);
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("window");
-
-    //register physical stream
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    //    wrk1->registerPhysicalSources(physicalStream);
-    wrk2->registerPhysicalSources(conf);
-    wrk3->registerPhysicalSources(conf);
-    wrk4->registerPhysicalSources(conf);
-    wrk5->registerPhysicalSources(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
@@ -1429,15 +1342,17 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+        .addLogicalSource("car", carSchema)
+        .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1.2, 2, 2, 1000}, 0);
-    testHarness.pushElement<Car>({1.5, 4, 4, 1500}, 0);
-    testHarness.pushElement<Car>({1.7, 5, 5, 2000}, 0);
+    testHarness.pushElement<Car>({1.2, 2, 2, 1000}, 2);
+    testHarness.pushElement<Car>({1.5, 4, 4, 1500}, 2);
+    testHarness.pushElement<Car>({1.7, 5, 5, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -1474,15 +1389,18 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1.2, 2, 1000}, 0);
-    testHarness.pushElement<Car>({1.5, 4, 1500}, 0);
-    testHarness.pushElement<Car>({1.7, 5, 2000}, 0);
+    testHarness.pushElement<Car>({1.2, 2, 1000}, 2);
+    testHarness.pushElement<Car>({1.5, 4, 1500}, 2);
+    testHarness.pushElement<Car>({1.7, 5, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -1521,16 +1439,19 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithBoolKey) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))).project(Attribute("value2")))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
     std::array<char, 3> charArrayValue = {'A', 'B', 'C'};
-    testHarness.pushElement<Car>({true, charArrayValue, 2, 1000}, 0);
-    testHarness.pushElement<Car>({false, charArrayValue, 4, 1500}, 0);
-    testHarness.pushElement<Car>({true, charArrayValue, 5, 2000}, 0);
+    testHarness.pushElement<Car>({true, charArrayValue, 2, 1000}, 2);
+    testHarness.pushElement<Car>({false, charArrayValue, 4, 1500}, 2);
+    testHarness.pushElement<Car>({true, charArrayValue, 5, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint32_t value;
@@ -1564,16 +1485,19 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))).project(Attribute("value2")))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
     std::array<char, 3> charArrayValue = {'A', 'B', 'C'};
-    testHarness.pushElement<Car>({'A', charArrayValue, 2, 1000}, 0);
-    testHarness.pushElement<Car>({'B', charArrayValue, 4, 1500}, 0);
-    testHarness.pushElement<Car>({'C', charArrayValue, 5, 2000}, 0);
+    testHarness.pushElement<Car>({'A', charArrayValue, 2, 1000}, 2);
+    testHarness.pushElement<Car>({'B', charArrayValue, 4, 1500}, 2);
+    testHarness.pushElement<Car>({'C', charArrayValue, 5, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint32_t value;
@@ -1605,17 +1529,20 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFixedChar) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     NES::ExecutableTypes::Array<char, 4> keyOne = "aaa";
     NES::ExecutableTypes::Array<char, 4> keyTwo = "bbb";
     NES::ExecutableTypes::Array<char, 4> keyThree = "ccc";
 
-    testHarness.pushElement<Car>({keyOne, 2, 1000}, 0);
-    testHarness.pushElement<Car>({keyTwo, 4, 1500}, 0);
-    testHarness.pushElement<Car>({keyThree, 5, 2000}, 0);
+    testHarness.pushElement<Car>({keyOne, 2, 1000}, 2);
+    testHarness.pushElement<Car>({keyTwo, 4, 1500}, 2);
+    testHarness.pushElement<Car>({keyThree, 5, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -1657,15 +1584,17 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Avg(Attribute("value1"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1, 2, 2, 1000}, 0);
-    testHarness.pushElement<Car>({1, 4, 4, 1500}, 0);
-    testHarness.pushElement<Car>({1, 5, 5, 2000}, 0);
+    testHarness.pushElement<Car>({1, 2, 2, 1000}, 2);
+    testHarness.pushElement<Car>({1, 4, 4, 1500}, 2);
+    testHarness.pushElement<Car>({1, 5, 5, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -1705,15 +1634,18 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1, 15, 1000}, 0);
-    testHarness.pushElement<Car>({1, 99, 1500}, 0);
-    testHarness.pushElement<Car>({1, 20, 2000}, 0);
+    testHarness.pushElement<Car>({1, 15, 1000}, 2);
+    testHarness.pushElement<Car>({1, 99, 1500}, 2);
+    testHarness.pushElement<Car>({1, 20, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -1753,15 +1685,17 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1, -15, 1000}, 0);
-    testHarness.pushElement<Car>({1, -99, 1500}, 0);
-    testHarness.pushElement<Car>({1, -20, 2000}, 0);
+    testHarness.pushElement<Car>({1, -15, 1000}, 2);
+    testHarness.pushElement<Car>({1, -99, 1500}, 2);
+    testHarness.pushElement<Car>({1, -20, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         int64_t start;
@@ -1803,17 +1737,17 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("id")).apply(Max(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig("CSVSource");
-    sourceConfig->as<CSVSourceConfig>()->setLogicalStreamName("car");
-    sourceConfig->as<CSVSourceConfig>()->setPhysicalStreamName("car");
-    sourceConfig->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->as<CSVSourceConfig>()->setSourceFrequency(0);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(28);
-    sourceConfig->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(1);
-    sourceConfig->as<CSVSourceConfig>()->setSkipHeader(false);
+    CSVSourceTypePtr sourceConfig = CSVSourceType::create();
+    sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    sourceConfig->setSkipHeader(false);
 
-    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
-    testHarness.attachWorkerWithCSVSourceToCoordinator(conf, carSchema);
+    testHarness
+        .addLogicalSource("car", carSchema)
+        .attachWorkerWithCSVSourceToCoordinator("car", sourceConfig)
+        .validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -1854,15 +1788,17 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1, 15, 1000}, 0);
-    testHarness.pushElement<Car>({1, 99, 1500}, 0);
-    testHarness.pushElement<Car>({1, 20, 2000}, 0);
+    testHarness.pushElement<Car>({1, 15, 1000}, 2);
+    testHarness.pushElement<Car>({1, 99, 1500}, 2);
+    testHarness.pushElement<Car>({1, 20, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -1902,15 +1838,17 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1, 15.0, 1000}, 0);
-    testHarness.pushElement<Car>({1, 99.0, 1500}, 0);
-    testHarness.pushElement<Car>({1, 20.0, 2000}, 0);
+    testHarness.pushElement<Car>({1, 15.0, 1000}, 2);
+    testHarness.pushElement<Car>({1, 99.0, 1500}, 2);
+    testHarness.pushElement<Car>({1, 20.0, 2000}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -1952,15 +1890,17 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Count()))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, 0);
-    testHarness.pushElement<Car>({1ULL, 99ULL, 88ULL, 1500ULL}, 0);
-    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 2000ULL}, 0);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 99ULL, 88ULL, 1500ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 2000ULL}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -2003,16 +1943,18 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMedianAggregation) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Median(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1ULL, 30ULL, 15ULL, 1000ULL}, 0);
-    testHarness.pushElement<Car>({1ULL, 90ULL, 88ULL, 1500ULL}, 0);
-    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 1800ULL}, 0);
-    testHarness.pushElement<Car>({1ULL, 60ULL, 20ULL, 2000ULL}, 0);
+    testHarness.pushElement<Car>({1ULL, 30ULL, 15ULL, 1000ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 90ULL, 88ULL, 1500ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 1800ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 60ULL, 20ULL, 2000ULL}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;
@@ -2054,15 +1996,17 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Count()->as(Attribute("Frequency"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
-
-    testHarness.attachWorkerWithMemorySourceToCoordinator("car", carSchema, "car1");
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort)
+                                  .addLogicalSource("car", carSchema)
+                                  .attachWorkerWithMemorySourceToCoordinator("car");
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1UL);
 
-    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, 0);
-    testHarness.pushElement<Car>({1ULL, 99ULL, 88ULL, 1500ULL}, 0);
-    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 2000ULL}, 0);
+    testHarness.pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 99ULL, 88ULL, 1500ULL}, 2);
+    testHarness.pushElement<Car>({1ULL, 20ULL, 20ULL, 2000ULL}, 2);
+
+    testHarness.validate().setupTopology();
 
     struct Output {
         uint64_t start;

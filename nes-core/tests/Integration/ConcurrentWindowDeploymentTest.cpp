@@ -146,16 +146,16 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    NES_INFO("WindowDeploymentTest: Start coordinator");
+    NES_INFO("ConcurrentWindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string input =
         R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
     NES_ASSERT(crd->getStreamCatalogService()->registerLogicalStream("ysb", input), "failed to create logical stream ysb");
-    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+    NES_DEBUG("ConcurrentWindowDeploymentTest: Coordinator started successfully");
 
-    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    NES_DEBUG("ConcurrentWindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->setNumWorkerThreads(workerThreads);
     workerConfig->setCoordinatorPort(port);
