@@ -18,14 +18,12 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -57,10 +55,14 @@ class ProjectBeforeUnionOperatorRuleTest : public testing::Test {
     void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) const {
         NES_INFO("Setup FilterPushDownTest test case.");
         TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
-        PhysicalSourcePtr streamConf = PhysicalStreamConfig::createEmpty();
-        SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
-        streamCatalog->addPhysicalStream("x", sce);
-        streamCatalog->addPhysicalStream("y", sce);
+        LogicalSourcePtr logicalSource1 = LogicalSource::create("x", schema);
+        LogicalSourcePtr logicalSource2 = LogicalSource::create("y", schema);
+        PhysicalSourcePtr physicalSource1 = PhysicalSource::create("x", "x1");
+        PhysicalSourcePtr physicalSource2 = PhysicalSource::create("y", "y1");
+        SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource1, logicalSource1, physicalNode);
+        SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource1, logicalSource2, physicalNode);
+        streamCatalog->addPhysicalSource("x", sce1);
+        streamCatalog->addPhysicalSource("y", sce2);
         streamCatalog->addLogicalStream("x", schema);
         streamCatalog->addLogicalStream("y", schema);
     }
