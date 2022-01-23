@@ -18,8 +18,10 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -71,47 +73,35 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
         streamCatalog->addLogicalStream("bike", schema);
         streamCatalog->addLogicalStream("truck", schema);
 
-        SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-        sourceConfig->setSourceFrequency(0);
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->setPhysicalStreamName("test2");
-        sourceConfig->setLogicalStreamName("car");
-        PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
 
-        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(phyConfCar, sourceNode1);
-        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(phyConfCar, sourceNode2);
+        auto logicalSourceCar = streamCatalog->getStreamForLogicalStream("car");
+        auto physicalSourceCar = PhysicalSource::create("car", "testCar", DefaultSourceType::create());
+        SourceCatalogEntryPtr streamCatalogEntry1 =
+            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry2 =
+            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
+        streamCatalog->addPhysicalSource("car", streamCatalogEntry1);
+        streamCatalog->addPhysicalSource("car", streamCatalogEntry2);
 
-        streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
-        streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
+        auto logicalSourceBike = streamCatalog->getStreamForLogicalStream("bike");
+        auto physicalSourceBike = PhysicalSource::create("bike", "testBike", DefaultSourceType::create());
+        SourceCatalogEntryPtr streamCatalogEntry3 =
+            std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry4 =
+            std::make_shared<SourceCatalogEntry>(physicalSourceBike, logicalSourceBike, sourceNode2);
+        streamCatalog->addPhysicalSource("bike", streamCatalogEntry3);
+        streamCatalog->addPhysicalSource("bike", streamCatalogEntry4);
 
-        SourceConfigPtr sourceConfigBike = SourceConfigFactory::createSourceConfig();
-        sourceConfigBike->setSourceFrequency(0);
-        sourceConfigBike->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfigBike->setPhysicalStreamName("testBike");
-        sourceConfigBike->setLogicalStreamName("bike");
-        PhysicalSourcePtr phyConfBike = PhysicalStreamConfig::create(sourceConfigBike);
-
-        SourceCatalogEntryPtr streamCatalogEntry3 = std::make_shared<SourceCatalogEntry>(phyConfBike, sourceNode1);
-        SourceCatalogEntryPtr streamCatalogEntry4 = std::make_shared<SourceCatalogEntry>(phyConfBike, sourceNode2);
-
-        streamCatalog->addPhysicalStream("bike", streamCatalogEntry3);
-        streamCatalog->addPhysicalStream("bike", streamCatalogEntry4);
-
-        SourceConfigPtr sourceConfigTruck = SourceConfigFactory::createSourceConfig();
-        sourceConfigCar->setSourceFrequency(0);
-        sourceConfigCar->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfigCar->setPhysicalStreamName("testTruck");
-        sourceConfigCar->setLogicalStreamName("truck");
-        PhysicalSourcePtr phyConfTruck = PhysicalStreamConfig::create(sourceConfigTruck);
-
-        SourceCatalogEntryPtr streamCatalogEntry5 = std::make_shared<SourceCatalogEntry>(phyConfTruck, sourceNode1);
-        SourceCatalogEntryPtr streamCatalogEntry6 = std::make_shared<SourceCatalogEntry>(phyConfTruck, sourceNode2);
-
-        streamCatalog->addPhysicalStream("truck", streamCatalogEntry5);
-        streamCatalog->addPhysicalStream("truck", streamCatalogEntry6);
+        auto logicalSourceTruck = streamCatalog->getStreamForLogicalStream("truck");
+        auto physicalSourceTruck = PhysicalSource::create("truck", "testTruck", DefaultSourceType::create());
+        SourceCatalogEntryPtr streamCatalogEntry5 =
+            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry6 =
+            std::make_shared<SourceCatalogEntry>(physicalSourceCar, logicalSourceCar, sourceNode2);
+        streamCatalog->addPhysicalSource("truck", streamCatalogEntry5);
+        streamCatalog->addPhysicalSource("truck", streamCatalogEntry6);
     }
 
     /* Will be called before a test is executed. */
