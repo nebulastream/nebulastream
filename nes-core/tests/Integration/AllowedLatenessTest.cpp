@@ -52,7 +52,6 @@ class AllowedLatenessTest : public testing::Test {
         outOfOrderConf->setNumberOfTuplesToProducePerBuffer(2);
         outOfOrderConf->setNumberOfBuffersToProduce(6);
         outOfOrderConf->setSkipHeader(false);
-//        outOfOrderConf = PhysicalSource::create("OutOfOrderStream", "outOfOrderPhysicalSource", srcConf1);
 
         inOrderConf = CSVSourceType::create();
         // window-out-of-order.csv contains 12 rows
@@ -61,7 +60,6 @@ class AllowedLatenessTest : public testing::Test {
         inOrderConf->setNumberOfTuplesToProducePerBuffer(2);
         inOrderConf->setNumberOfBuffersToProduce(6);
         inOrderConf->setSkipHeader(false);
-//        inOrderConf = PhysicalSource::create("inOrderStream", "inOrderPhysicalSource", srcConf2);
 
         restPort = restPort + 2;
         rpcPort = rpcPort + 30;
