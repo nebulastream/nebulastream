@@ -14,14 +14,15 @@
     limitations under the License.
 */
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/DefaultSourceConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger.hpp>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -47,241 +48,41 @@ class StreamCatalogRemoteTest : public testing::Test {
 
     void TearDown() override { std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl; }
 };
-TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
-
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    cout << "coordinator started successfully" << endl;
-
-    cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
-
-    //create test schema
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                             "\"value\", BasicType::UINT64);";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-
-    bool registered = wrk->registerLogicalStream("testStream1", testSchemaFileName);
-    EXPECT_TRUE(registered);
-
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("testStream1");
-    EXPECT_NE(sPtr, nullptr);
-
-    cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop(false);
-    EXPECT_TRUE(retStopWrk);
-
-    cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
-TEST_F(StreamCatalogRemoteTest, testAddExistingLogStreamRemote) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
-
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    cout << "coordinator started successfully" << endl;
-
-    cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
-
-    //create test schema
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                             "\"value\", BasicType::UINT64);";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-
-    bool success = wrk->registerLogicalStream("default_logical", testSchemaFileName);
-    EXPECT_TRUE(!success);
-
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
-    EXPECT_NE(sPtr, nullptr);
-
-    //check if schma was not overwritten
-    SchemaPtr sch = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
-    EXPECT_NE(sch, nullptr);
-
-    map<std::string, SchemaPtr> allLogicalStream = crd->getStreamCatalog()->getAllLogicalStream();
-    string exp = "id:INTEGER value:INTEGER ";
-    EXPECT_EQ(allLogicalStream.size(), 2U);
-
-    SchemaPtr defaultSchema = allLogicalStream["default_logical"];
-    EXPECT_EQ(exp, defaultSchema->toString());
-
-    cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop(false);
-    EXPECT_TRUE(retStopWrk);
-
-    cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
-TEST_F(StreamCatalogRemoteTest, testAddRemoveEmptyLogStreamRemote) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
-
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    cout << "coordinator started successfully" << endl;
-
-    cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
-
-    //create test schema
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                             "\"value\", BasicType::UINT64);";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-
-    bool success = wrk->registerLogicalStream("testStream", testSchemaFileName);
-    EXPECT_TRUE(success);
-
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("testStream");
-    EXPECT_NE(sPtr, nullptr);
-
-    bool success2 = wrk->unregisterLogicalStream("testStream");
-    EXPECT_TRUE(success2);
-
-    SchemaPtr sPtr2 = crd->getStreamCatalog()->getSchemaForLogicalStream("testStream");
-    EXPECT_EQ(sPtr2, nullptr);
-
-    cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop(false);
-    EXPECT_TRUE(retStopWrk);
-
-    cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
-TEST_F(StreamCatalogRemoteTest, testAddRemoveNotEmptyLogStreamRemote) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    DefaultSourceConfigPtr srcConf = DefaultSourceConfig::create();
-
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    cout << "coordinator started successfully" << endl;
-
-    cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
-
-    bool success = wrk->unregisterLogicalStream("default_logical");
-    EXPECT_TRUE(!success);
-
-    SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
-    EXPECT_NE(sPtr, nullptr);
-
-    cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop(false);
-    EXPECT_TRUE(retStopWrk);
-
-    cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
+    NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    cout << "coordinator started successfully" << endl;
+    NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
 
-    cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
-
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(2);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("default_logical");
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-
-    bool success = wrk->registerPhysicalSources(conf);
-    EXPECT_TRUE(success);
+    NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_test", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("StreamCatalogRemoteTest: Worker1 started successfully");
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
+    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalSources("default_logical");
 
-    EXPECT_EQ(phys.size(), 2U);
-    EXPECT_EQ(phys[0]->getPhysicalName(), "default_physical");
-    EXPECT_EQ(phys[1]->getPhysicalName(), "physical_test");
+    EXPECT_EQ(phys.size(), 1U);
+    EXPECT_EQ(phys[0]->getPhysicalSource()->getPhysicalSourceName(), "physical_test");
 
     cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop(false);
+    bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
 
     cout << "stopping coordinator" << endl;
@@ -291,56 +92,42 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
+    NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    cout << "coordinator started successfully" << endl;
+    //register logical stream qnv
+    std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                         "\"value\", BasicType::UINT64);";
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", window);
+    NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
 
-    cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
-
-    //create test schema
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
-                             "\"value\", BasicType::UINT64);";
-    std::string testSchemaFileName = "testSchema.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << testSchema;
-    out.close();
-
-    bool success = wrk->registerLogicalStream("testStream", testSchemaFileName);
-    EXPECT_TRUE(success);
-
-    sourceConfig->setFilePath("");
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(2);
-    sourceConfig->setPhysicalStreamName("physical_test");
-    sourceConfig->setLogicalStreamName("testStream");
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-
-    bool success2 = wrk->registerPhysicalSources(conf);
-    EXPECT_TRUE(success2);
+    NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    auto physicalSource1 = PhysicalSource::create("testStream", "physical_test", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("StreamCatalogRemoteTest: Worker1 started successfully");
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("testStream");
+    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalSources("testStream");
 
     EXPECT_EQ(phys.size(), 1U);
-    EXPECT_EQ(phys[0]->getPhysicalName(), "physical_test");
+    EXPECT_EQ(phys[0]->getPhysicalSource()->getPhysicalSourceName(), "physical_test");
 
     cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop(false);
+    bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
 
     cout << "stopping coordinator" << endl;
@@ -350,37 +137,44 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
 
 TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    DefaultSourceConfigPtr sourceConfig = DefaultSourceConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
+    NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    cout << "coordinator started successfully" << endl;
+    //register logical stream qnv
+    std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                         "\"value\", BasicType::UINT64);";
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", window);
+    NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
 
-    cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
+    NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_test", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("StreamCatalogRemoteTest: Worker1 started successfully");
 
-    bool success = wrk->unregisterPhysicalStream("default_logical", "default_physical");
+    bool success = wrk1->unregisterPhysicalStream("default_logical", "physical_test");
     EXPECT_TRUE(success);
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
+    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalSources("default_logical");
 
     EXPECT_EQ(phys.size(), 0U);
 
     cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop(false);
+    bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
 
     cout << "stopping coordinator" << endl;
@@ -390,40 +184,47 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
 
 TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    DefaultSourceConfigPtr sourceConfig = DefaultSourceConfig::create();
-
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-
+    NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
-    cout << "coordinator started successfully" << endl;
+    //register logical stream qnv
+    std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
+                         "\"value\", BasicType::UINT64);";
+    crd->getStreamCatalogService()->registerLogicalStream("testStream", window);
+    NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
 
-    cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
+    NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath("");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
+    auto physicalSource1 = PhysicalSource::create("default_logical", "physical_test", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("StreamCatalogRemoteTest: Worker1 started successfully");
 
-    bool success = wrk->unregisterPhysicalStream("default_logical2", "default_physical");
+    bool success = wrk1->unregisterPhysicalStream("default_logical2", "default_physical");
     EXPECT_TRUE(!success);
 
     SchemaPtr sPtr = crd->getStreamCatalog()->getSchemaForLogicalStream("default_logical");
     EXPECT_NE(sPtr, nullptr);
 
     cout << crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString() << endl;
-    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
+    std::vector<SourceCatalogEntryPtr> phys = crd->getStreamCatalog()->getPhysicalSources("default_logical");
 
     EXPECT_EQ(phys.size(), 1U);
 
     cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop(false);
+    bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
 
     cout << "stopping coordinator" << endl;
