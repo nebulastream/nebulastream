@@ -1,4 +1,17 @@
 #!/usr/bin/env sh
+# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 
 # This script takes cmake build folders as arguments and will run query-compiler-tests in each of them
@@ -15,10 +28,11 @@
 # - RUNS     : number of repetitions of all test runs (default: 10).
 #
 # Usage example:
-# /usr/bin/env sh /nebulastream/benchmark/scripts/query_compiler_benchmark.sh "/nebulastream/cmake-build-impro/" \
-#   | sed -e "s/\/nebulastream\/cmake-build-impro\//header selection/" \
-#         -e "s/\/nebulastream\/cmake-build-no-impro\//all headers/" \
-#         -e "s/build-folder/variant/" \
+# /usr/bin/env sh /nebulastream/benchmark/scripts/query_compiler_benchmark.sh \
+#    "/nebulastream/cmake-build-impro/" "/nebulastream/cmake-build-no-impro/" \
+#    | sed -e "s/\/nebulastream\/cmake-build-impro\//header selection/" \
+#          -e "s/\/nebulastream\/cmake-build-no-impro\//all headers/" \
+#          -e "s/build-folder/variant/" -e "s/Query\t/\t/" \
 #   > impro-query-compiler-benchmark-$(date --iso-8601=minutes).tsv
 
 libnes="nes-core/libnes.so"
