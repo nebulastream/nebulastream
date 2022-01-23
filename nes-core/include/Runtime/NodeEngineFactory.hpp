@@ -17,8 +17,12 @@
 #ifndef NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_
 #define NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <vector>
 
 namespace NES {
+
+class PhysicalSource;
+using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 namespace Runtime {
 enum class NumaAwarenessFlag { ENABLED, DISABLED };
