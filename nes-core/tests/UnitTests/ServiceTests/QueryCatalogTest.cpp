@@ -16,11 +16,10 @@
 
 #include "gtest/gtest.h"
 #include <API/Query.hpp>
-#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger.hpp>

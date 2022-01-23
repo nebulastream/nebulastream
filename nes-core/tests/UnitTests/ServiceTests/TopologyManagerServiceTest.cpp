@@ -16,8 +16,8 @@
 
 #include <gtest/gtest.h>
 
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <CoordinatorRPCService.pb.h>
@@ -67,16 +67,16 @@ class TopologyManagerServiceTest : public testing::Test {
 TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     TopologyPtr topology = Topology::create();
-    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology, streamCatalog);
+    TopologyManagerServicePtr topologyManagerService = std::make_shared<TopologyManagerService>(topology);
 
-    uint64_t nodeId = topologyManagerService->registerNode(ip, publish_port, 5000, 6, NodeType::Sensor);
+    uint64_t nodeId = topologyManagerService->registerNode(ip, publish_port, 5000, 6);
     EXPECT_NE(nodeId, 0u);
 
-    uint64_t nodeId1 = topologyManagerService->registerNode(ip, publish_port + 2, 5000, 6, NodeType::Sensor);
+    uint64_t nodeId1 = topologyManagerService->registerNode(ip, publish_port + 2, 5000, 6);
     EXPECT_NE(nodeId1, 0u);
 
     //test register existing node
-    uint64_t nodeId2 = topologyManagerService->registerNode(ip, publish_port, 5000, 6, NodeType::Sensor);
+    uint64_t nodeId2 = topologyManagerService->registerNode(ip, publish_port, 5000, 6);
     EXPECT_EQ(nodeId2, 0u);
     //test unregister not existing node
     bool successUnregisterNotExistingNode = topologyManagerService->unregisterNode(552);

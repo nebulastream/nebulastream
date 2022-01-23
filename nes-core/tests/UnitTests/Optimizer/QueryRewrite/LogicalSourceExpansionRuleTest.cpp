@@ -18,9 +18,10 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -62,18 +63,14 @@ void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    auto csvSourceType = CSVSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
+    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+    SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
 
-    PhysicalSourcePtr streamConf = PhysicalStreamConfig::create(sourceConfig);
-
-    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode1);
-    SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode2);
-    streamCatalog->addPhysicalStream("default_logical", sce1);
-    streamCatalog->addPhysicalStream("default_logical", sce2);
+    streamCatalog->addPhysicalSource("default_logical", sce1);
+    streamCatalog->addPhysicalSource("default_logical", sce2);
 }
 
 TEST_F(LogicalSourceExpansionRuleTest, testLogicalSourceExpansionRuleForQueryWithJustSource) {

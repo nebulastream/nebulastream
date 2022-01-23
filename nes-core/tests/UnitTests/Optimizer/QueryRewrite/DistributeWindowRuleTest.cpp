@@ -18,9 +18,10 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -67,16 +68,12 @@ void setupSensorNodeAndStreamCatalogTwoNodes(const SourceCatalogPtr& streamCatal
     TopologyNodePtr physicalNode1 = TopologyNode::create(1, "localhost", 4000, 4002, 4);
     TopologyNodePtr physicalNode2 = TopologyNode::create(2, "localhost", 4000, 4002, 4);
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
+    auto csvSourceType = CSVSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
+    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+    SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
 
-    PhysicalSourcePtr streamConf = PhysicalSourceType::create(sourceConfig);
-
-    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode1);
-    SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode2);
     streamCatalog->addPhysicalSource("default_logical", sce1);
     streamCatalog->addPhysicalSource("default_logical", sce2);
 }
@@ -93,19 +90,14 @@ void setupSensorNodeAndStreamCatalogFiveNodes(const SourceCatalogPtr& streamCata
 
     std::cout << "topo=" << topology->toString() << std::endl;
 
-    SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setNumberOfBuffersToProduce(3);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("test_stream");
-
-    PhysicalSourcePtr streamConf = PhysicalSourceType::create(sourceConfig);
-
-    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode1);
-    SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode2);
-    SourceCatalogEntryPtr sce3 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode3);
-    SourceCatalogEntryPtr sce4 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode4);
-    SourceCatalogEntryPtr sce5 = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode5);
+    auto csvSourceType = CSVSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
+    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode1);
+    SourceCatalogEntryPtr sce2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode2);
+    SourceCatalogEntryPtr sce3 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode3);
+    SourceCatalogEntryPtr sce4 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode4);
+    SourceCatalogEntryPtr sce5 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode5);
 
     streamCatalog->addPhysicalSource("default_logical", sce1);
     streamCatalog->addPhysicalSource("default_logical", sce2);
@@ -118,10 +110,12 @@ void setupSensorNodeAndStreamCatalog(const SourceCatalogPtr& streamCatalog) {
     NES_INFO("Setup DistributeWindowRuleTest test case.");
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+    auto csvSourceType = CSVSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("default_logical", "test_stream", csvSourceType);
+    LogicalSourcePtr logicalSource = LogicalSource::create("default_logical", Schema::create());
+    SourceCatalogEntryPtr sce1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
 
-    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(streamConf, physicalNode);
-    streamCatalog->addPhysicalSource("default_logical", sce);
+    streamCatalog->addPhysicalSource("default_logical", sce1);
 }
 
 TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
