@@ -572,9 +572,9 @@ target_link_libraries(union-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME union-deployment-test COMMAND union-deployment-test)
 
 ### ContiniousSourceTest ###
-add_executable(continious-source-test "Integration/ContinuousSourceTest.cpp")
-target_link_libraries(continious-source-test nes ${GTEST_LIBRARIES})
-add_test(NAME continious-source-test COMMAND continious-source-test)
+add_executable(continuous-source-test "Integration/ContinuousSourceTest.cpp")
+target_link_libraries(continuous-source-test nes ${GTEST_LIBRARIES})
+add_test(NAME continuous-source-test COMMAND continuous-source-test)
 
 ### DeepHierarchyTopologyTestDeepHierarchyTopologyTest ###
 add_executable(deep-hierarchy-test "Integration/DeepHierarchyTopologyTest.cpp")
