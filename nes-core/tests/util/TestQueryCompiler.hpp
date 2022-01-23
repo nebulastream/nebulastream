@@ -56,6 +56,7 @@ class TestSourceDescriptor : public SourceDescriptor {
 
     [[nodiscard]] std::string toString() override { return std::string(); }
     [[nodiscard]] bool equal(SourceDescriptorPtr const&) override { return false; }
+    SourceDescriptorPtr copy() override { return NES::SourceDescriptorPtr(); }
 
   private:
     std::function<DataSourcePtr(OperatorId,
