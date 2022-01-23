@@ -166,6 +166,7 @@ if (NES_BUILD_BENCHMARKS)
 endif ()
 
 if (NES_ONLY_REQUIRED_HEADERS)
+    message("Using only required headers for query compilation")
     add_compile_definitions(NES_ONLY_REQUIRED_HEADERS)
 endif()
 
