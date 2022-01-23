@@ -16,11 +16,13 @@
 
 #include "z3++.h"
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Catalogs/SourceCatalogEntry.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -89,20 +91,18 @@ class QueryPlacementTest : public testing::Test {
 
         streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         streamCatalog->addLogicalStream(streamName, schema);
+        auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
 
-        CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-        sourceConfig->setSourceFrequency(0);
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->setPhysicalStreamName("test2");
-        sourceConfig->setLogicalStreamName("car");
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setSourceFrequency(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
 
-        PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
+        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
 
-        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, sourceNode1);
-        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(conf, sourceNode2);
-
-        streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
-        streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
@@ -594,17 +594,13 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
 
     streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
-
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("car");
-
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode);
-
-    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setSourceFrequency(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
+    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
 
     // Prepare the query
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
@@ -698,17 +694,13 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
 
     streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
-
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("car");
-
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode);
-
-    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setSourceFrequency(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
+    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
 
     // Prepare the query
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
@@ -808,17 +800,13 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
 
     streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
-
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("car");
-
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode);
-
-    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setSourceFrequency(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode);
+    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
 
     // Prepare the query
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
@@ -936,19 +924,15 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
 
     streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
-
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("car");
-
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode1);
-    SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(conf, srcNode2);
-
-    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
-    streamCatalog->addPhysicalStream("car", streamCatalogEntry2);
+    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setSourceFrequency(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode2);
+    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
+    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
 
     // Prepare the query
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
@@ -1077,17 +1061,13 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
 
     streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
-
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("car");
-
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode1);
-
-    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setSourceFrequency(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
 
     Query query = Query::from("car")
                       .as("c1")
@@ -1197,17 +1177,13 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
 
     streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
     streamCatalog->addLogicalStream(streamName, schema);
-
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setPhysicalStreamName("test2");
-    sourceConfig->setLogicalStreamName("car");
-
-    PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, srcNode1);
-
-    streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+    auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setSourceFrequency(0);
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+    auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+    SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, srcNode1);
+    streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
 
     Query query = Query::from("car")
                       .as("c1")

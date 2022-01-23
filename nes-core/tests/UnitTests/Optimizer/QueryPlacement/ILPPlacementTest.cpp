@@ -16,37 +16,31 @@
 
 #include "z3++.h"
 #include <API/QueryAPI.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Catalogs/SourceCatalogEntry.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/Sources/PhysicalStreamConfigFactory.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Optimizer/QueryPlacement/ILPStrategy.hpp>
-#include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <utility>
 
 using namespace NES;
 using namespace z3;
@@ -112,18 +106,14 @@ class ILPPlacementTest : public testing::Test {
 
         streamCatalogForILP = std::make_shared<SourceCatalog>(queryParsingService);
         streamCatalogForILP->addLogicalStream(streamName, schema);
-
-        SourceConfigPtr sourceConfig = PhysicalStreamConfigFactory::createSourceConfig();
-        sourceConfig->setSourceFrequency(0);
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->setPhysicalStreamName("test3");
-        sourceConfig->setLogicalStreamName("car");
-
-        PhysicalSourcePtr conf = PhysicalStreamConfig::create(sourceConfig);
-
-        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(conf, sourceNode);
-
-        streamCatalogForILP->addPhysicalStream("car", streamCatalogEntry1);
+        auto logicalSource = streamCatalogForILP->getStreamForLogicalStream(streamName);
+        CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+        csvSourceType->setSourceFrequency(0);
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
+        auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
+        SourceCatalogEntryPtr streamCatalogEntry1 =
+            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode);
+        streamCatalogForILP->addPhysicalSource(streamName, streamCatalogEntry1);
     }
 
     void assignOperatorPropertiesRecursive(LogicalOperatorNodePtr operatorNode) {
