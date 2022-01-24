@@ -18,7 +18,7 @@
 #define NES_KAFKASOURCETYPECONFIG_HPP
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/yaml/rapidyaml.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
 
@@ -46,7 +46,7 @@ class KafkaSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return KafkaSourceConfigPtr
      */
-    static KafkaSourceTypePtr create(ryml::NodeRef yamlConfig);
+    static KafkaSourceTypePtr create(Yaml::Node yamlConfig);
 
     /**
      * @brief create a KafkaSourceConfigPtr object
@@ -119,7 +119,7 @@ class KafkaSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
      */
-    explicit KafkaSourceType(ryml::NodeRef yamlConfig);
+    explicit KafkaSourceType(Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Kafka source config object initialized with default values

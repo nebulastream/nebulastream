@@ -17,7 +17,6 @@
 #ifndef NES_PHYSICALSOURCEFACTORY_HPP
 #define NES_PHYSICALSOURCEFACTORY_HPP
 
-#include <Util/yaml/rapidyaml.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -45,7 +44,7 @@ class PhysicalSourceFactory {
      * @param physicalStreamConfig yaml elements from yaml file
      * @return physical stream config object
      */
-    static std::vector<PhysicalSourcePtr> createPhysicalSources(const c4::yml::NodeRef& yamlConfig);
+    static std::vector<PhysicalSourcePtr> createPhysicalSources(Yaml::Node& yamlConfig);
 
   private:
     /**
@@ -63,7 +62,7 @@ class PhysicalSourceFactory {
      * @param yamlConfig : the yaml configuration
      * @return PhysicalSourceType shared pointer
      */
-    static PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType, ryml::NodeRef yamlConfig);
+    static PhysicalSourceTypePtr createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig);
 };
 }// namespace Configurations
 }// namespace NES

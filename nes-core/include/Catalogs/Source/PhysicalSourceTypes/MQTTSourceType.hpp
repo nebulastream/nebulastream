@@ -18,7 +18,7 @@
 #define NES_MQTTSOURCETYPECONFIG_HPP
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/yaml/rapidyaml.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
 
@@ -46,7 +46,7 @@ class MQTTSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return MQTTSourceConfigPtr
      */
-    static MQTTSourceTypePtr create(ryml::NodeRef ymlConfig);
+    static MQTTSourceTypePtr create(Yaml::Node yamlConfig);
 
     /**
      * @brief create a MQTTSourceConfigPtr object with default values
@@ -149,7 +149,7 @@ class MQTTSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new MQTT source config object initialized with values from sourceConfigMap
      */
-    explicit MQTTSourceType(ryml::NodeRef yamlConfig);
+    explicit MQTTSourceType(Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new MQTT source config object initialized with default values as set below

@@ -33,59 +33,70 @@ namespace NES {
 namespace Configurations {
 
 PhysicalSourcePtr PhysicalSourceFactory::createPhysicalSource(const std::map<std::string, std::string>& commandLineParams) {
-    if (commandLineParams.contains("--" + SOURCE_TYPE_CONFIG)) {
-        if (commandLineParams.contains("--" + PHYSICAL_SOURCE_NAME_CONFIG)) {
-            if (commandLineParams.contains("--" + LOGICAL_SOURCE_NAME_CONFIG)) {
-                std::string logicalStreamName = commandLineParams.at(LOGICAL_SOURCE_NAME_CONFIG);
-                std::string physicalStreamName = commandLineParams.at(PHYSICAL_SOURCE_NAME_CONFIG);
-                std::string sourceType = commandLineParams.at(SOURCE_TYPE_CONFIG);
-                auto physicalSourceType = createPhysicalSourceType(sourceType, commandLineParams);
-                return PhysicalSource::create(logicalStreamName, physicalStreamName, physicalSourceType);
-            } else {
-                NES_THROW_RUNTIME_ERROR(
-                    "No logical source name supplied for creating the physical source. Please supply logical source name using --"
-                    << LOGICAL_SOURCE_NAME_CONFIG);
-            }
-        } else {
-            NES_THROW_RUNTIME_ERROR(
-                "No physical source name supplied for creating the physical source. Please supply physical source name using --"
-                << PHYSICAL_SOURCE_NAME_CONFIG);
+
+    std::string sourceType, logicalSourceName, physicalSourceName;
+    for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
+        if (it->first == "--" + SOURCE_TYPE_CONFIG && !it->second.empty()) {
+            sourceType = it->second;
+        } else if (it->first == "--" + PHYSICAL_SOURCE_NAME_CONFIG && !it->second.empty()) {
+            physicalSourceName = it->second;
+        } else if (it->first == "--" + LOGICAL_SOURCE_NAME_CONFIG && !it->second.empty()) {
+            logicalSourceName = it->second;
         }
     }
-    return nullptr;
+
+    if (logicalSourceName.empty()) {
+        NES_THROW_RUNTIME_ERROR("One of the logical source name is not supplied for creating the physical source. Please supply "
+                                "logical source name using --"
+                                << LOGICAL_SOURCE_NAME_CONFIG);
+    } else if (physicalSourceName.empty()) {
+        NES_THROW_RUNTIME_ERROR(
+            "No physical source name supplied for creating the physical source. Please supply physical source name using --"
+            << PHYSICAL_SOURCE_NAME_CONFIG);
+    } else if (sourceType.empty()) {
+        NES_THROW_RUNTIME_ERROR("No source type supplied for creating the physical source. Please supply source type using --"
+                                << SOURCE_TYPE_CONFIG);
+    }
+
+    auto physicalSourceType = createPhysicalSourceType(sourceType, commandLineParams);
+    return PhysicalSource::create(logicalSourceName, physicalSourceName, physicalSourceType);
 }
 
-std::vector<PhysicalSourcePtr> PhysicalSourceFactory::createPhysicalSources(const c4::yml::NodeRef& yamlConfig) {
-
+std::vector<PhysicalSourcePtr> PhysicalSourceFactory::createPhysicalSources(Yaml::Node& yamlConfig) {
     std::vector<PhysicalSourcePtr> physicalSources;
-    for (ryml::NodeRef const& child : yamlConfig.siblings()) {
-
-        NES_INFO(child.val().str);
+    //Iterate over all physical sources defined in the yaml file
+    for (uint16_t i = 0; i < yamlConfig.Size(); i++) {
 
         std::string logicalSourceName, physicalSourceName, sourceType;
-        if (child.has_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG))
-            && child.find_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)).val() != nullptr) {
-            logicalSourceName = child.find_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)).val().str;
+        if (!yamlConfig[i][LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
+            && yamlConfig[i][LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n") {
+            logicalSourceName = yamlConfig[i][LOGICAL_SOURCE_NAME_CONFIG].As<std::string>();
         } else {
             NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
         }
 
-        if (child.has_child(ryml::to_csubstr(PHYSICAL_SOURCE_NAME_CONFIG))
-            && child.find_child(ryml::to_csubstr(PHYSICAL_SOURCE_NAME_CONFIG)).val() != nullptr) {
-            physicalSourceName = child.find_child(ryml::to_csubstr(PHYSICAL_SOURCE_NAME_CONFIG)).val().str;
+        if (!yamlConfig[i][PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
+            && yamlConfig[i][PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n") {
+            physicalSourceName = yamlConfig[i][PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>();
         } else {
             NES_THROW_RUNTIME_ERROR("Found Invalid Physical Source Configuration. Please define Physical Source Name.");
         }
 
-        if (child.has_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG))
-            && child.find_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG)).val() != nullptr) {
-            sourceType = child.find_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG)).val().str;
+        if (!yamlConfig[i][SOURCE_TYPE_CONFIG].As<std::string>().empty()
+            && yamlConfig[i][SOURCE_TYPE_CONFIG].As<std::string>() != "\n") {
+            sourceType = yamlConfig[i][SOURCE_TYPE_CONFIG].As<std::string>();
         } else {
             NES_THROW_RUNTIME_ERROR("Found Invalid Physical Source Configuration. Please define Source type.");
         }
 
-        auto physicalSourceType = createPhysicalSourceType(sourceType, child);
-        physicalSources.emplace_back(PhysicalSource::create(logicalSourceName, physicalSourceName, physicalSourceType));
+        if (yamlConfig[i][PHYSICAL_SOURCE_TYPE_CONFIGURATION].IsMap()) {
+            auto physicalSourceTypeConfiguration = yamlConfig[i][PHYSICAL_SOURCE_TYPE_CONFIGURATION];
+            auto physicalSourceType = createPhysicalSourceType(sourceType, physicalSourceTypeConfiguration);
+            physicalSources.emplace_back(PhysicalSource::create(logicalSourceName, physicalSourceName, physicalSourceType));
+        } else {
+            NES_THROW_RUNTIME_ERROR(
+                "Found Invalid Physical Source Configuration. Please define Source Type Configuration properties.");
+        }
     }
     return physicalSources;
 }
@@ -105,7 +116,7 @@ PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType,
     }
 }
 
-PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType, ryml::NodeRef yamlConfig) {
+PhysicalSourceTypePtr PhysicalSourceFactory::createPhysicalSourceType(std::string sourceType, Yaml::Node& yamlConfig) {
 
     if (stringToSourceType.find(sourceType) == stringToSourceType.end()) {
         NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");

@@ -22,14 +22,15 @@
 
 namespace NES {
 
-BinarySourceTypePtr BinarySourceType::create(ryml::NodeRef yamlConfig) {
+BinarySourceTypePtr BinarySourceType::create(Yaml::Node yamlConfig) {
     return std::make_shared<BinarySourceType>(BinarySourceType(yamlConfig));
 }
 
-BinarySourceType::BinarySourceType(ryml::NodeRef yamlConfig) : BinarySourceType() {
+BinarySourceType::BinarySourceType(Yaml::Node yamlConfig) : BinarySourceType() {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML.");
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)).val() != nullptr) {
-        filePath->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>() != "\n") {
+        filePath->setValue(yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("BinarySourceType:: no filePath defined! Please define a filePath using "
                                 << Configurations::FILE_PATH_CONFIG << " configuration.");
@@ -42,8 +43,8 @@ BinarySourceTypePtr BinarySourceType::create(std::map<std::string, std::string> 
 
 BinarySourceType::BinarySourceType(std::map<std::string, std::string> sourceConfigMap) : BinarySourceType() {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from command line.");
-    if (sourceConfigMap.find(Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find(Configurations::FILE_PATH_CONFIG)->second);
+    if (sourceConfigMap.find("--"+Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find("--"+Configurations::FILE_PATH_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("BinarySourceType:: no filePath defined! Please define a filePath using "
                                 << Configurations::FILE_PATH_CONFIG << " configuration.");
@@ -80,8 +81,6 @@ Configurations::StringConfigOption BinarySourceType::getFilePath() const { retur
 
 void BinarySourceType::setFilePath(std::string filePathValue) { filePath->setValue(std::move(filePathValue)); }
 
-void BinarySourceType::reset() {
-    setFilePath(filePath->getDefaultValue());
-}
+void BinarySourceType::reset() { setFilePath(filePath->getDefaultValue()); }
 
 }// namespace NES

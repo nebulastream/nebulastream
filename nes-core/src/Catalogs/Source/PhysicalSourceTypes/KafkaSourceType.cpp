@@ -22,7 +22,7 @@
 
 namespace NES {
 
-KafkaSourceTypePtr KafkaSourceType::create(ryml::NodeRef yamlConfig) {
+KafkaSourceTypePtr KafkaSourceType::create(Yaml::Node yamlConfig) {
     return std::make_shared<KafkaSourceType>(KafkaSourceType(std::move(yamlConfig)));
 }
 
@@ -35,58 +35,57 @@ KafkaSourceTypePtr KafkaSourceType::create() { return std::make_shared<KafkaSour
 KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfigMap) : KafkaSourceType() {
     NES_INFO("KafkaSourceType: Init default Kafka source config object with values from command line args.");
 
-    if (sourceConfigMap.find(Configurations::BROKERS_CONFIG) != sourceConfigMap.end()) {
-        brokers->setValue(sourceConfigMap.find(Configurations::BROKERS_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::BROKERS_CONFIG) != sourceConfigMap.end()) {
+        brokers->setValue(sourceConfigMap.find("--" + Configurations::BROKERS_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no brokers defined! Please define brokers.");
     }
-    if (sourceConfigMap.find(Configurations::AUTO_COMMIT_CONFIG) != sourceConfigMap.end()) {
-        autoCommit->setValue(std::stoi(sourceConfigMap.find(Configurations::AUTO_COMMIT_CONFIG)->second));
+    if (sourceConfigMap.find("--" + Configurations::AUTO_COMMIT_CONFIG) != sourceConfigMap.end()) {
+        autoCommit->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::AUTO_COMMIT_CONFIG)->second));
     }
-    if (sourceConfigMap.find(Configurations::GROUP_ID_CONFIG) != sourceConfigMap.end()) {
-        groupId->setValue(sourceConfigMap.find(Configurations::GROUP_ID_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::GROUP_ID_CONFIG) != sourceConfigMap.end()) {
+        groupId->setValue(sourceConfigMap.find("--" + Configurations::GROUP_ID_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no groupId defined! Please define groupId.");
     }
-    if (sourceConfigMap.find(Configurations::TOPIC_CONFIG) != sourceConfigMap.end()) {
-        topic->setValue(sourceConfigMap.find(Configurations::TOPIC_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::TOPIC_CONFIG) != sourceConfigMap.end()) {
+        topic->setValue(sourceConfigMap.find("--" + Configurations::TOPIC_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no topic defined! Please define topic.");
     }
-    if (sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
-        connectionTimeout->setValue(std::stoi(sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG)->second));
+    if (sourceConfigMap.find("--" + Configurations::CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
+        connectionTimeout->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::CONNECTION_TIMEOUT_CONFIG)->second));
     }
 }
 
-KafkaSourceType::KafkaSourceType(ryml::NodeRef yamlConfig) : KafkaSourceType() {
+KafkaSourceType::KafkaSourceType(Yaml::Node yamlConfig) : KafkaSourceType() {
     NES_INFO("KafkaSourceType: Init default KAFKA source config object with values from YAML file.");
 
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::BROKERS_CONFIG))
-        && yamlConfig.find_child(ryml::to_csubstr(Configurations::BROKERS_CONFIG)).val() != nullptr) {
-        brokers->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::BROKERS_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::BROKERS_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::BROKERS_CONFIG].As<std::string>() != "\n") {
+        brokers->setValue(yamlConfig[Configurations::BROKERS_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no brokers defined! Please define brokers.");
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::AUTO_COMMIT_CONFIG))
-        && yamlConfig.find_child(ryml::to_csubstr(Configurations::AUTO_COMMIT_CONFIG)).val() != nullptr) {
-        autoCommit->setValue(std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::AUTO_COMMIT_CONFIG)).val().str));
+    if (!yamlConfig[Configurations::AUTO_COMMIT_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::AUTO_COMMIT_CONFIG].As<std::string>() != "\n") {
+        autoCommit->setValue(yamlConfig[Configurations::AUTO_COMMIT_CONFIG].As<uint32_t>());
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::GROUP_ID_CONFIG))
-        && yamlConfig.find_child(ryml::to_csubstr(Configurations::GROUP_ID_CONFIG)).val() != nullptr) {
-        groupId->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::GROUP_ID_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::GROUP_ID_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::GROUP_ID_CONFIG].As<std::string>() != "\n") {
+        groupId->setValue(yamlConfig[Configurations::GROUP_ID_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no groupId defined! Please define groupId.");
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG))
-        && yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).val() != nullptr) {
-        topic->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>() != "\n") {
+        topic->setValue(yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no topic defined! Please define topic.");
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::CONNECTION_TIMEOUT_CONFIG))
-        && yamlConfig.find_child(ryml::to_csubstr(Configurations::CONNECTION_TIMEOUT_CONFIG)).val() != nullptr) {
-        connectionTimeout->setValue(
-            std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::CONNECTION_TIMEOUT_CONFIG)).val().str));
+    if (!yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<std::string>() != "\n") {
+        connectionTimeout->setValue(yamlConfig[Configurations::CONNECTION_TIMEOUT_CONFIG].As<uint32_t>());
     }
 }
 

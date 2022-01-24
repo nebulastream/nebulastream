@@ -18,7 +18,7 @@
 #define NES_SENSESOURCETYPECONFIG_HPP
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/yaml/rapidyaml.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
 
@@ -42,10 +42,10 @@ class SenseSourceType : public PhysicalSourceType {
 
     /**
      * @brief create a SenseSourceConfigPtr object
-     * @param sourceConfigMap inputted config options
+     * @param yamlConfig inputted config options
      * @return SenseSourceConfigPtr
      */
-    static SenseSourceTypePtr create(ryml::NodeRef sourcTypeConfig);
+    static SenseSourceTypePtr create(Yaml::Node yamlConfig);
 
     /**
      * @brief create a SenseSourceConfigPtr object
@@ -80,7 +80,7 @@ class SenseSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceType(ryml::NodeRef yamlConfig);
+    SenseSourceType(Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with default values
