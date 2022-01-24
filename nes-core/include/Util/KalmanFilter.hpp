@@ -180,7 +180,7 @@ class KalmanFilter {
      * log10 to do that.
      * @return the difference in magnitude, as log10
      */
-    double getMagnitudeFromLastValues();
+    double getMagnitudeFromLastValues(double current, double old);
 
     /**
      * The divider used whenever an update
@@ -260,6 +260,12 @@ class KalmanFilter {
      * @brief buffer of residual error from KF
      */
     CircularBuffer<float> kfErrorWindow;
+
+    /**
+     * @brief buffer of last 2 gathered
+     * values from the sensor
+     */
+    CircularBuffer<double> lastValuesWindow;
 
 };// class KalmanFilter
 

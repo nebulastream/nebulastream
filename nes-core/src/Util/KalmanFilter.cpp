@@ -93,6 +93,9 @@ void KalmanFilter::setDefaultValues() {
 }
 
 void KalmanFilter::update(const Eigen::VectorXd& measuredValues) {
+    // insert current value to the comparison window
+    this->lastValuesWindow.emplace(measuredValues.value());
+
     // simplified prediction phase
     xHatNew = stateTransitionModel * xHat;// no control unit (B*u), predicted a-priori state estimate
     estimateCovariance = stateTransitionModel * estimateCovariance * stateTransitionModel.transpose()
