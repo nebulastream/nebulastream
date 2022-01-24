@@ -70,10 +70,16 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithFi
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker(
-        {TestUtils::rpcPort(rpcPort + 3), TestUtils::dataPort(dataPort), TestUtils::coordinatorPort(rpcPort)});
+        {TestUtils::rpcPort(rpcPort + 3), TestUtils::dataPort(dataPort), TestUtils::coordinatorPort(rpcPort),
+            TestUtils::sourceType("DefaultSource"),
+            TestUtils::logicalStreamName("default_logical"),
+            TestUtils::physicalStreamName("test2")});
 
     auto worker2 = TestUtils::startWorker(
-        {TestUtils::rpcPort(rpcPort + 6), TestUtils::dataPort(dataPort + 2), TestUtils::coordinatorPort(rpcPort)});
+        {TestUtils::rpcPort(rpcPort + 6), TestUtils::dataPort(dataPort + 2), TestUtils::coordinatorPort(rpcPort),
+            TestUtils::sourceType("DefaultSource"),
+            TestUtils::logicalStreamName("default_logical"),
+            TestUtils::physicalStreamName("test1")});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
 
     std::stringstream ss;

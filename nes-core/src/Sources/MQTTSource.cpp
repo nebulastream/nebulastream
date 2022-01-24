@@ -61,8 +61,9 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  std::move(executableSuccessors)),
-      connected(false), serverAddress(sourceConfig->getUrl()->getValue()), clientId(sourceConfig->getClientId()->getValue()),
-      user(sourceConfig->getUserName()->getValue()), topic(sourceConfig->getTopic()->getValue()), inputFormat(inputFormat),
+      sourceConfig(sourceConfig), connected(false), serverAddress(sourceConfig->getUrl()->getValue()),
+      clientId(sourceConfig->getClientId()->getValue()), user(sourceConfig->getUserName()->getValue()), topic(sourceConfig->getTopic()->getValue()),
+      inputFormat(inputFormat),
       tupleSize(schema->getSchemaSizeInBytes()),
       qualityOfService(MQTTSourceDescriptor::ServiceQualities(sourceConfig->getQos()->getValue())),
       cleanSession(sourceConfig->getCleanSession()->getValue()),
@@ -134,8 +135,15 @@ std::optional<Runtime::TupleBuffer> MQTTSource::receiveData() {
 std::string MQTTSource::toString() const {
     std::stringstream ss;
     ss << "MQTTSOURCE(";
-    ss << "SCHEMA(" << schema->toString() << ")";
-    ss << sourceConfig->toString() << ")";
+    ss << "SCHEMA(" << schema->toString() << "), ";
+    ss << "SERVERADDRESS=" << serverAddress << ", ";
+    ss << "CLIENTID=" << clientId << ", ";
+    ss << "USER=" << user << ", ";
+    ss << "TOPIC=" << topic << ", ";
+    ss << "DATATYPE=" << inputFormat << ", ";
+    ss << "QOS=" << qualityOfService << ", ";
+    ss << "CLEANSESSION=" << cleanSession << ". ";
+    ss << "BUFFERFLUSHINTERVALMS=" << bufferFlushIntervalMs << ". ";
     return ss.str();
 }
 

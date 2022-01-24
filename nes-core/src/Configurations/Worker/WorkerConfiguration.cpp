@@ -23,7 +23,6 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Util/yaml/rapidyaml.hpp>
 #include <filesystem>
 #include <string>
 #include <thread>

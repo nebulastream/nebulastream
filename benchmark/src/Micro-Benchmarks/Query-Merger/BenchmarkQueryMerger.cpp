@@ -31,7 +31,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/yaml/rapidyaml.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <fstream>
 #include <util/BenchmarkUtils.hpp>
 #include "Util/UtilityFunctions.hpp"
@@ -161,21 +161,21 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         try {
             NES_INFO("NesE2EBenchmarkConfig: Using config file with path: " << filePath << " .");
-            auto contents = Util::detail::file_get_contents<std::string>(filePath.c_str());
-            ryml::Tree tree = ryml::parse(ryml::to_csubstr(contents));
+            Yaml::Node config = *(new Yaml::Node());
+            Yaml::Parse(config, filePath.c_str());
 
             //Number of Measurements to collect
-            noOfMeasurementsToCollect = std::stoi(tree["numberOfMeasurementsToCollect"].val().str);
+            noOfMeasurementsToCollect = config["numberOfMeasurementsToCollect"].As<uint64_t>();
             //Query set location
-            querySetLocation = tree["querySetLocation"].val().str;
+            querySetLocation = config["querySetLocation"].As<std::string>();
             //Startup sleep interval
-            startupSleepIntervalInSeconds = std::stoi(tree["startupSleepIntervalInSeconds"].val().str);
+            startupSleepIntervalInSeconds = config["startupSleepIntervalInSeconds"].As<uint64_t>();
             //Number of distinct sources
-            numberOfDistinctSources = std::stoi(tree["numberOfDistinctSources"].val().str);
+            numberOfDistinctSources = config["numberOfDistinctSources"].As<uint64_t>();
             //Query merger rules
-            queryMergerRules = split(tree["queryMergerRule"].val().str, ',');
+            queryMergerRules = split(config["queryMergerRule"].As<std::string>(), ',');
             //Enable Query Merging
-            auto enableQueryMergingOpts = split(tree["enableQueryMerging"].val().str, ',');
+            auto enableQueryMergingOpts = split(config["enableQueryMerging"].As<std::string>(), ',');
             for (const auto& item : enableQueryMergingOpts) {
                 bool booleanParm;
                 std::istringstream(item) >> std::boolalpha >> booleanParm;
@@ -183,19 +183,19 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
             }
 
             //Load Number of Physical sources
-            auto configuredNoOfPhysicalSources = split(tree["noOfPhysicalSources"].val().str, ',');
+            auto configuredNoOfPhysicalSources = split(config["noOfPhysicalSources"].As<std::string>(), ',');
             for (const auto& item : configuredNoOfPhysicalSources) {
                 noOfPhysicalSources.emplace_back(std::stoi(item));
             }
 
             //Load batch size
-            auto configuredBatchSizes = split(tree["batchSize"].val().str, ',');
+            auto configuredBatchSizes = split(config["batchSize"].As<std::string>(), ',');
             for (const auto& item : configuredBatchSizes) {
                 batchSizes.emplace_back(std::stoi(item));
             }
 
             //Log level
-            loglevel = NES::getDebugLevelFromString(tree["logLevel"].val().str);
+            loglevel = NES::getDebugLevelFromString(config["logLevel"].As<std::string>());
         } catch (std::exception& e) {
             NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file." << e.what());
         }
