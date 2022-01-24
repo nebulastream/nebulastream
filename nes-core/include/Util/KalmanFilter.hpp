@@ -139,6 +139,15 @@ class KalmanFilter {
     std::chrono::milliseconds getNewGatheringInterval();// eq. 7 and 10
 
     /**
+     * Use magnitude in difference between sensed values
+     * to re-calculate a new frequency. The difference
+     * dictates how faster/slower the new frequency
+     * should be.
+     * @return a new gathering interval that we can sleep on
+     */
+    std::chrono::milliseconds getNewMagnitudeBasedFrequency();
+
+    /**
      * @return the total estimation error, calculated
      * from the window. This just exposes it in a
      * public API.
@@ -164,6 +173,14 @@ class KalmanFilter {
      * @return the current estimation error divider
      */
     void calculateTotalEstimationErrorDivider(int size);// eq. 9 (divider, calc. once)
+
+    /**
+     * Calculate magnitude difference between
+     * the last 2 sensed values. Uses
+     * log10 to do that.
+     * @return the difference in magnitude, as log10
+     */
+    double getMagnitudeFromLastValues();
 
     /**
      * The divider used whenever an update

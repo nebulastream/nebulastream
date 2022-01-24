@@ -167,6 +167,32 @@ std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
     return this->gatheringInterval;
 }
 
+std::chrono::milliseconds KalmanFilter::getNewMagnitudeBasedFrequency() {
+    auto totalEstimationError = this->calculateTotalEstimationError();
+    auto powerOfEuler = (totalEstimationError + lambda) / lambda;
+    auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
+    auto newFreqCandidate = this->frequency.count() + thetaPart;
+    auto magnitude = this->getMagnitudeFromLastValues(this->lastValuesWindow[1], this->lastValuesWindow[0]);
+    // TODO: use fraction of magnitude after checking that error is high enough
+    // keep the old heuristic of (allowed from server - range/2) for now
+    // idea: change this to range / 2 and only go from there, so you
+    // don't need the server before you change
+    auto canonicalizedFreqCandidate = newFreqCandidate / magnitude;
+    if (newFreqCandidate >= freqLastReceived.count() - (freqRange.count() / 2) &&
+        newFreqCandidate <= freqLastReceived.count() + (freqRange.count() / 2)) { // eq. 7
+        // remove fractional part from double
+        this->frequency = std::chrono::milliseconds((int) trunc(newFreqCandidate));
+    }
+    return this->frequency;
+}
+
+double KalmanFilter::getMagnitudeFromLastValues(double oldValue, double newValue) {
+    auto oldValueMod = std::log10(std::abs(oldValue));
+    auto newValueMod = std::log10(std::abs(newValue));
+    auto suggestedMagnitudeMultiplier = std::abs(oldValueMod - newValueMod);
+    return std::trunc(suggestedMagnitudeMultiplier);
+}
+
 void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
     NES_DEBUG("KalmanFilter::updateFromTupleBuffer: updating from a whole tuple buffer");
     if (!!tupleBuffer) {
