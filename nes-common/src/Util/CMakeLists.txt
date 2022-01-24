@@ -1,3 +1,4 @@
+# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,25 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_nes(
-        UtilityFunctions.cpp
-        TimeMeasurement.cpp
+add_source(nes_common
+        SharedLibrary.cpp
         Logger.cpp
-        FileMutex.cpp
         StacktraceLoader.cpp
         ThreadNaming.cpp
-        BufferSequenceNumber.cpp
-        TestUtils.cpp
-        FaultToleranceType.cpp
-        LineageType.cpp
-        PlacementStrategy.cpp
-        GatheringMode.cpp
-        SourceMode.cpp
-        KalmanFilter.cpp
 )
-if (NES_USE_MQTT)
-    add_source_nes(
-        MQTTClientWrapper.cpp
-    )
-endif ()
+add_subdirectory(yaml)
+add_subdirectory(Subprocess)
 
