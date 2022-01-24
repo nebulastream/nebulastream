@@ -26,7 +26,6 @@
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Util/Logger.hpp>
-#include <Util/yaml/rapidyaml.hpp>
 
 namespace NES {
 

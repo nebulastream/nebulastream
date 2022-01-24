@@ -56,22 +56,22 @@ class TestUtils {
     static constexpr uint64_t sleepDuration = 250;
 
     [[nodiscard]] static std::string coordinatorPort(uint64_t coordinatorPort) {
-        return "--coordinatorPort=" + std::to_string(coordinatorPort);
+        return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
     }
 
     [[nodiscard]] static std::string numberOfSlots(uint64_t coordinatorPort) {
-        return "--numberOfSlots=" + std::to_string(coordinatorPort);
+        return "--" + NUMBER_OF_SLOTS_CONFIG + "=" + std::to_string(coordinatorPort);
     }
 
-    [[nodiscard]] static std::string rpcPort(uint64_t rpcPort) { return "--rpcPort=" + std::to_string(rpcPort); }
+    [[nodiscard]] static std::string rpcPort(uint64_t rpcPort) { return "--" + RPC_PORT_CONFIG + "=" + std::to_string(rpcPort); }
 
     [[nodiscard]] static std::string sourceType(std::string sourceType) { return "--" + SOURCE_TYPE_CONFIG + "=" + sourceType; }
 
-    [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) {
-        return "--" + FILE_PATH_CONFIG + "=" + filePath;
-    }
+    [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) { return "--" + FILE_PATH_CONFIG + "=" + filePath; }
 
-    [[nodiscard]] static std::string dataPort(uint64_t dataPort) { return "--dataPort=" + std::to_string(dataPort); }
+    [[nodiscard]] static std::string dataPort(uint64_t dataPort) {
+        return "--" + DATA_PORT_CONFIG + "=" + std::to_string(dataPort);
+    }
 
     [[nodiscard]] static std::string numberOfTuplesToProducePerBuffer(uint64_t numberOfTuplesToProducePerBuffer) {
         return "--" + NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + "=" + std::to_string(numberOfTuplesToProducePerBuffer);

@@ -79,7 +79,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
                                           TestUtils::dataPort(dataPort),
                                           TestUtils::coordinatorPort(rpcPort),
-                                          TestUtils::numberOfSlots(8)});
+                                          TestUtils::numberOfSlots(8),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalStreamName("default_logical"),
+                                          TestUtils::physicalStreamName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssQuery1;
@@ -159,7 +162,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(rpcPort + 3), TestUtils::dataPort(dataPort), TestUtils::coordinatorPort(rpcPort)});
+        {TestUtils::rpcPort(rpcPort + 3), TestUtils::dataPort(dataPort), TestUtils::coordinatorPort(rpcPort),
+            TestUtils::sourceType("DefaultSource"),
+            TestUtils::logicalStreamName("default_logical"),
+            TestUtils::physicalStreamName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssQuery1;
