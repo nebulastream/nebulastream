@@ -186,7 +186,7 @@ const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 
 //Configuration names for stream types
-const std::string SOURCE_TYPE_CONFIG = "sourceType";
+const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
 const std::string SOURCE_FREQUENCY_CONFIG = "sourceFrequency";

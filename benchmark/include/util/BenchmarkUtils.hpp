@@ -17,7 +17,6 @@
 #ifndef NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_UTILS_HPP_
 #define NES_BENCHMARK_INCLUDE_UTIL_BENCHMARK_UTILS_HPP_
 
-//#include "SimpleBenchmarkSink.hpp"
 #include <API/Query.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>

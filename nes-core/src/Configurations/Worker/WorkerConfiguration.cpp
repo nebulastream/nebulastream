@@ -189,7 +189,8 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
             }
             if (root.has_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG))
                 && root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG)) != nullptr) {
-                const c4::yml::NodeRef& physicalSourceConfigs = root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG));
+                auto physicalSourceConfigs = root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG));
+                NES_INFO(physicalSourceConfigs.val().str);
                 setPhysicalSources(PhysicalSourceFactory::createPhysicalSources(physicalSourceConfigs));
             }
         } catch (std::exception& e) {

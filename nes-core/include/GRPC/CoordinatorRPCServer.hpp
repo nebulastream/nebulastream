@@ -23,7 +23,6 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include "../../../cmake-build-debug/nes-core/CoordinatorRPCService.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;

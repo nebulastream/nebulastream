@@ -144,7 +144,33 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
               workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
     EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
     EXPECT_NE(workerConfigPtr->getNumWorkerThreads()->getValue(), workerConfigPtr->getNumWorkerThreads()->getDefaultValue());
+    EXPECT_TRUE(workerConfigPtr->getPhysicalSources().empty());
 }
+
+TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
+
+    WorkerConfigurationPtr workerConfigPtr = WorkerConfiguration::create();
+    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerWithPhysicalSources.yaml");
+
+    EXPECT_NE(workerConfigPtr->getLocalWorkerIp()->getValue(), workerConfigPtr->getLocalWorkerIp()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->getRpcPort()->getValue(), workerConfigPtr->getRpcPort()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->getDataPort()->getValue(), workerConfigPtr->getDataPort()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getCoordinatorPort()->getValue(), workerConfigPtr->getCoordinatorPort()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->getCoordinatorIp()->getValue(), workerConfigPtr->getCoordinatorIp()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->getNumberOfSlots()->getValue(), workerConfigPtr->getNumberOfSlots()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->getLogLevel()->getValue(), workerConfigPtr->getLogLevel()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
+              workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
+              workerConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
+              workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->getNumWorkerThreads()->getValue(), workerConfigPtr->getNumWorkerThreads()->getDefaultValue());
+    EXPECT_TRUE(!workerConfigPtr->getPhysicalSources().empty());
+}
+
+
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
@@ -204,6 +230,16 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
     auto contents = Util::detail::file_get_contents<std::string>(filePath.c_str());
     ryml::Tree tree = ryml::parse(ryml::to_csubstr(contents));
     ryml::NodeRef root = tree.rootref();
+
+    NES_INFO(tree.num_children(0));
+    auto physicalStreams = tree[ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG)];
+    NES_INFO(physicalStreams.num_children());
+
+
+
+    NES_INFO(physicalStreams.has_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)));
+    NES_INFO(physicalStreams.find_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)).val().str);
+
 
     NES_INFO(root.is_map());
     NES_INFO(root.val().str);
