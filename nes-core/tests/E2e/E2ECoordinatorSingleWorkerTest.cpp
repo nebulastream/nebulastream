@@ -216,6 +216,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
                                           TestUtils::dataPort(dataPort),
                                           TestUtils::coordinatorPort(rpcPort),
+                                          TestUtils::sourceType("DefaultSource"),
                                           TestUtils::physicalStreamName("test_stream"),
                                           TestUtils::logicalStreamName("default_logical"),
                                           TestUtils::numberOfBuffersToProduce(2),
