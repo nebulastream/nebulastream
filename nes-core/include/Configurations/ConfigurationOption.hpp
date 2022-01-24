@@ -170,7 +170,8 @@ const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "queryCompi
 const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
 const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
-const std::string PHYSICAL_STREAMS_CONFIG = "physicalSources";
+const std::string PHYSICAL_SOURCES = "physicalSources";
+const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 
 //Different Stream Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";

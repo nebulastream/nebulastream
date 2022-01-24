@@ -27,7 +27,7 @@ DefaultSourceTypePtr DefaultSourceType::create(std::map<std::string, std::string
 
 DefaultSourceTypePtr DefaultSourceType::create() { return std::make_shared<DefaultSourceType>(DefaultSourceType()); }
 
-DefaultSourceTypePtr DefaultSourceType::create(ryml::NodeRef yamlConfig) {
+DefaultSourceTypePtr DefaultSourceType::create(Yaml::Node yamlConfig) {
     return std::make_shared<DefaultSourceType>(DefaultSourceType(std::move(yamlConfig)));
 }
 
@@ -44,7 +44,7 @@ DefaultSourceType::DefaultSourceType()
 
 DefaultSourceType::DefaultSourceType(std::map<std::string, std::string>) : DefaultSourceType() {}
 
-DefaultSourceType::DefaultSourceType(ryml::NodeRef) : DefaultSourceType() {}
+DefaultSourceType::DefaultSourceType(Yaml::Node) : DefaultSourceType() {}
 
 std::string DefaultSourceType::toString() {
     std::stringstream ss;

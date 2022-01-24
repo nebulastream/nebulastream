@@ -22,7 +22,6 @@
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <filesystem>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -168,9 +167,12 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
     EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
     EXPECT_NE(workerConfigPtr->getNumWorkerThreads()->getValue(), workerConfigPtr->getNumWorkerThreads()->getDefaultValue());
     EXPECT_TRUE(!workerConfigPtr->getPhysicalSources().empty());
+    EXPECT_TRUE(workerConfigPtr->getPhysicalSources().size() == 2);
+    for (const auto& physicalSource : workerConfigPtr->getPhysicalSources()) {
+        EXPECT_TRUE(physicalSource->getPhysicalSourceType()->instanceOf<DefaultSourceType>()
+                    || physicalSource->getPhysicalSourceType()->instanceOf<MQTTSourceType>());
+    }
 }
-
-
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
@@ -224,79 +226,9 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
               workerConfigPtr->getQueryCompilerOutputBufferAllocationStrategy()->getDefaultValue());
 }
 
-TEST_F(ConfigTest, testEmptyParamsAndMissingParamsSourceYAMLFile) {
-
-    auto filePath = std::string(TEST_DATA_DIRECTORY) + "emptySource.yaml";
-    auto contents = Util::detail::file_get_contents<std::string>(filePath.c_str());
-    ryml::Tree tree = ryml::parse(ryml::to_csubstr(contents));
-    ryml::NodeRef root = tree.rootref();
-
-    NES_INFO(tree.num_children(0));
-    auto physicalStreams = tree[ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG)];
-    NES_INFO(physicalStreams.num_children());
-
-
-
-    NES_INFO(physicalStreams.has_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)));
-    NES_INFO(physicalStreams.find_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)).val().str);
-
-
-    NES_INFO(root.is_map());
-    NES_INFO(root.val().str);
-//    NES_INFO(root[PHYSICAL_STREAMS_CONFIG]);
-
-
-    auto physicalSourceConfigs = root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG));
-    NES_INFO(physicalSourceConfigs.is_map());
-    NES_INFO(physicalSourceConfigs.is_doc());
-    ASSERT_TRUE(physicalSourceConfigs.is_seq());
-
-    NES_INFO(physicalSourceConfigs.val().str);
-
-    std::vector<PhysicalSourcePtr> physicalSources = PhysicalSourceFactory::createPhysicalSources(physicalSourceConfigs);
-    EXPECT_TRUE(physicalSources.size() == 1);
-    EXPECT_TRUE(physicalSources[0]->getPhysicalSourceType()->instanceOf<DefaultSourceType>());
-    DefaultSourceTypePtr physicalSourceType = physicalSources[0]->getPhysicalSourceType()->as<DefaultSourceType>();
-    EXPECT_EQ(physicalSourceType->getSourceFrequency()->getValue(), physicalSourceType->getSourceFrequency()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType->getNumberOfBuffersToProduce()->getValue(),
-              physicalSourceType->getNumberOfBuffersToProduce()->getDefaultValue());
-
-    filePath = std::string(TEST_DATA_DIRECTORY) + "emptyMQTTSource.yaml";
-    contents = Util::detail::file_get_contents<std::string>(filePath.c_str());
-    tree = ryml::parse(ryml::to_csubstr(contents));
-    root = tree.rootref();
-    const c4::yml::NodeRef& physicalSourceConfigsMQTT = root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG));
-
-    physicalSources = PhysicalSourceFactory::createPhysicalSources(physicalSourceConfigsMQTT);
-    EXPECT_TRUE(physicalSources[0]->getPhysicalSourceType()->instanceOf<DefaultSourceType>());
-    DefaultSourceTypePtr physicalSourceType2 = physicalSources[0]->getPhysicalSourceType()->as<DefaultSourceType>();
-    EXPECT_EQ(physicalSourceType2->getSourceFrequency()->getValue(),
-              physicalSourceType2->getSourceFrequency()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType2->getNumberOfBuffersToProduce()->getValue(),
-              physicalSourceType2->getNumberOfBuffersToProduce()->getDefaultValue());
-    //    EXPECT_EQ(sourceConfigPtr1->getNumberOfTuplesToProducePerBuffer()->getValue(),
-    //              sourceConfigPtr1->getNumberOfTuplesToProducePerBuffer()->getDefaultValue());
-    //    EXPECT_EQ(sourceConfigPtr1->getPhysicalStreamName()->getValue(),
-    //              sourceConfigPtr1->getPhysicalStreamName()->getDefaultValue());
-    //    EXPECT_NE(sourceConfigPtr1->getLogicalStreamName()->getValue(), sourceConfigPtr1->getLogicalStreamName()->getDefaultValue());
-    //
-    //    EXPECT_NE(sourceConfigPtr1->as<MQTTSourceConfig>()->getUrl()->getValue(),
-    //              sourceConfigPtr1->as<MQTTSourceConfig>()->getUrl()->getDefaultValue());
-    //    EXPECT_NE(sourceConfigPtr1->as<MQTTSourceConfig>()->getClientId()->getValue(),
-    //              sourceConfigPtr1->as<MQTTSourceConfig>()->getClientId()->getDefaultValue());
-    //    EXPECT_NE(sourceConfigPtr1->as<MQTTSourceConfig>()->getTopic()->getValue(),
-    //              sourceConfigPtr1->as<MQTTSourceConfig>()->getTopic()->getDefaultValue());
-    //    EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getQos()->getValue(),
-    //              sourceConfigPtr1->as<MQTTSourceConfig>()->getQos()->getDefaultValue());
-    //    EXPECT_EQ(sourceConfigPtr1->as<MQTTSourceConfig>()->getCleanSession()->getValue(),
-    //              sourceConfigPtr1->as<MQTTSourceConfig>()->getCleanSession()->getDefaultValue());
-    //    EXPECT_NE(sourceConfigPtr1->as<MQTTSourceConfig>()->getUserName()->getValue(),
-    //              sourceConfigPtr1->as<MQTTSourceConfig>()->getUserName()->getDefaultValue());
-}
-
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
-    std::string argv[] = {"--sourceType=DefaultSource",
+    std::string argv[] = {"--type=DefaultSource",
                           "--numberOfBuffersToProduce=5",
                           "--rowLayout=false",
                           "--physicalSourceName=x",
@@ -321,13 +253,13 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
               physicalSourceType1->getSourceFrequency()->getDefaultValue());
     EXPECT_NE(physicalSourceType1->getNumberOfBuffersToProduce()->getValue(), 5u);
 
-    std::string argv1[] = {"--sourceType=KafkaSource",
+    std::string argv1[] = {"--type=KafkaSource",
                            "--physicalSourceName=x",
                            "--logicalSourceName=default",
-                           "--KafkaSourceTopic=newTopic",
-                           "--KafkaSourceConnectionTimeout=100",
-                           "--KafkaSourceBrokers=testBroker",
-                           "--KafkaSourceGroupId=testId"};
+                           "--topic=newTopic",
+                           "--connectionTimeout=100",
+                           "--brokers=testBroker",
+                           "--groupId=testId"};
 
     argc = 7;
 
@@ -339,12 +271,12 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                       string(argv1[i]).substr(string(argv1[i]).find('=') + 1, string(argv1[i]).length() - 1)));
     }
 
-    PhysicalSourcePtr physicalSource2 = PhysicalSourceFactory::createPhysicalSource(commandLineParams);
+    PhysicalSourcePtr physicalSource2 = PhysicalSourceFactory::createPhysicalSource(commandLineParams1);
     EXPECT_EQ(physicalSource2->getLogicalSourceName(), "default");
     EXPECT_EQ(physicalSource2->getPhysicalSourceName(), "x");
     EXPECT_TRUE(physicalSource2->getPhysicalSourceType()->instanceOf<KafkaSourceType>());
 
-    KafkaSourceTypePtr physicalSourceType2 = physicalSource1->getPhysicalSourceType()->as<KafkaSourceType>();
+    KafkaSourceTypePtr physicalSourceType2 = physicalSource2->getPhysicalSourceType()->as<KafkaSourceType>();
     EXPECT_NE(physicalSourceType2->getBrokers()->getValue(), physicalSourceType2->getBrokers()->getDefaultValue());
     EXPECT_EQ(physicalSourceType2->getAutoCommit()->getValue(), physicalSourceType2->getAutoCommit()->getDefaultValue());
     EXPECT_NE(physicalSourceType2->getGroupId()->getValue(), physicalSourceType2->getGroupId()->getDefaultValue());

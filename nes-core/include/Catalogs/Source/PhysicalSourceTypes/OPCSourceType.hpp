@@ -18,7 +18,7 @@
 #define NES_OPCSOURCETYPECONFIG_HPP
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/yaml/rapidyaml.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
 
@@ -46,7 +46,7 @@ class OPCSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return OPCSourceConfigPtr
      */
-    static OPCSourceTypePtr create(ryml::NodeRef sourcTypeConfig);
+    static OPCSourceTypePtr create(Yaml::Node yamlConfig);
 
     /**
      * @brief create a OPCSourceConfigPtr object
@@ -108,7 +108,7 @@ class OPCSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new OPC source config object initialized with values form sourceConfigMap
      */
-    explicit OPCSourceType(ryml::NodeRef yamlConfig);
+    explicit OPCSourceType(Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new OPC source config object initialized with default values

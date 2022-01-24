@@ -34,4 +34,5 @@ if (NES_USE_MQTT)
     )
 endif ()
 add_subdirectory(Subprocess)
+add_subdirectory(yaml)
 

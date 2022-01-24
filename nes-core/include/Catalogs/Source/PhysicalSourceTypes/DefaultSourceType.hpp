@@ -18,7 +18,7 @@
 #define NES_DEFAULTSOURCETYPECONFIG_HPP
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/yaml/rapidyaml.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -47,7 +47,7 @@ class DefaultSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return DefaultSourceConfigPtr
      */
-    static DefaultSourceTypePtr create(ryml::NodeRef yamlConfig);
+    static DefaultSourceTypePtr create(Yaml::Node yamlConfig);
 
     /**
      * @brief create defaultSourceConfig with default values
@@ -78,7 +78,7 @@ class DefaultSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
      */
-    explicit DefaultSourceType(ryml::NodeRef sourceTypeConfig);
+    explicit DefaultSourceType(Yaml::Node sourceTypeConfig);
 
     /**
      * @brief constructor to create a new Default source config object initialized with default values

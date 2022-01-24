@@ -18,7 +18,7 @@
 #define NES_BINARYSOURCETYPE_HPP
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/yaml/rapidyaml.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>
 
@@ -46,7 +46,7 @@ class BinarySourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return BinarySourceTypePtr
      */
-    static BinarySourceTypePtr create(ryml::NodeRef yamlConfig);
+    static BinarySourceTypePtr create(Yaml::Node yamlConfig);
 
     /**
      * @brief create a BinarySourceTypePtr object with default values
@@ -81,7 +81,7 @@ class BinarySourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Binary source config object initialized with values from sourceConfigMap
      */
-    explicit BinarySourceType(ryml::NodeRef yamlConfig);
+    explicit BinarySourceType(Yaml::Node yamlConfig);
 
     /**
      * @brief constructor to create a new Binary source config object initialized with default values as set below

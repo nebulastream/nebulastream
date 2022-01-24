@@ -17,9 +17,8 @@
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Util/Logger.hpp>
-#define RYML_SINGLE_HDR_DEFINE_NOW
 #include <Util/UtilityFunctions.hpp>
-#include <Util/yaml/rapidyaml.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <filesystem>
 #include <string>
 #include <utility>
@@ -75,82 +74,74 @@ void CoordinatorConfiguration::overwriteConfigWithYAMLFileInput(const std::strin
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         NES_INFO("CoordinatorConfiguration: Using config file with path: " << filePath << " .");
-        auto contents = Util::detail::file_get_contents<std::string>(filePath.c_str());
-        ryml::Tree tree = ryml::parse(ryml::to_csubstr(contents));
-        ryml::NodeRef root = tree.rootref();
+        Yaml::Node config;
+        Yaml::Parse(config, filePath.c_str());
 
         try {
-            if (root.has_child(ryml::to_csubstr(REST_PORT_CONFIG))
-                && root.find_child(ryml::to_csubstr(REST_PORT_CONFIG)).val() != nullptr) {
-                setRestPort(std::stoi(root.find_child(ryml::to_csubstr(REST_PORT_CONFIG)).val().str));
+            if (!config[REST_PORT_CONFIG].As<std::string>().empty() && config[REST_PORT_CONFIG].As<std::string>() != "\n") {
+                setRestPort(config[REST_PORT_CONFIG].As<uint64_t>());
             }
-            if (root.has_child(ryml::to_csubstr(RPC_PORT_CONFIG))
-                && root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).val() != nullptr) {
-                setRpcPort(std::stoi(root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).val().str));
+            if (!config[RPC_PORT_CONFIG].As<std::string>().empty() && config[RPC_PORT_CONFIG].As<std::string>() != "\n") {
+                setRpcPort(config[RPC_PORT_CONFIG].As<uint64_t>());
             }
-            if (root.has_child(ryml::to_csubstr(DATA_PORT_CONFIG))
-                && root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).val() != nullptr) {
-                setDataPort(std::stoi(root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).val().str));
+            if (!config[DATA_PORT_CONFIG].As<std::string>().empty() && config[DATA_PORT_CONFIG].As<std::string>() != "\n") {
+                setDataPort(config[DATA_PORT_CONFIG].As<uint64_t>());
             }
-            if (root.has_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG))
-                && root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).val() != nullptr) {
-                setCoordinatorIp(root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).val().str);
+            if (!config[COORDINATOR_IP_CONFIG].As<std::string>().empty()
+                && config[COORDINATOR_IP_CONFIG].As<std::string>() != "\n") {
+                setCoordinatorIp(config[COORDINATOR_IP_CONFIG].As<std::string>());
             }
-            if (root.has_child(ryml::to_csubstr(REST_IP_CONFIG)) && root.find_child(ryml::to_csubstr(REST_IP_CONFIG)).val() != nullptr) {
-                setRestIp(root.find_child(ryml::to_csubstr(REST_IP_CONFIG)).val().str);
+            if (!config[REST_IP_CONFIG].As<std::string>().empty() && config[REST_IP_CONFIG].As<std::string>() != "\n") {
+                setRestIp(config[REST_IP_CONFIG].As<std::string>());
             }
-            if (root.has_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG))
-                && root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).val() != nullptr) {
-                setNumberOfSlots(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).val().str));
+            if (!config[NUMBER_OF_SLOTS_CONFIG].As<std::string>().empty()
+                && config[NUMBER_OF_SLOTS_CONFIG].As<std::string>() != "\n") {
+                setNumberOfSlots(config[NUMBER_OF_SLOTS_CONFIG].As<uint64_t>());
             }
-            if (root.has_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG))
-                && root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).val() != nullptr) {
-                setNumberOfBuffersInGlobalBufferManager(
-                    std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).val().str));
+            if (!config[NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG].As<std::string>().empty()
+                && config[NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG].As<std::string>() != "\n") {
+                setNumberOfBuffersInGlobalBufferManager(config[NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG].As<uint64_t>());
             }
-            if (root.has_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_PER_WORKER_CONFIG))
-                && root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_PER_WORKER_CONFIG)).val() != nullptr) {
-                setNumberOfBuffersPerWorker(
-                    std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_PER_WORKER_CONFIG)).val().str));
+            if (!config[NUMBER_OF_BUFFERS_PER_WORKER_CONFIG].As<std::string>().empty()
+                && config[NUMBER_OF_BUFFERS_PER_WORKER_CONFIG].As<std::string>() != "\n") {
+                setNumberOfBuffersPerWorker(config[NUMBER_OF_BUFFERS_PER_WORKER_CONFIG].As<uint64_t>());
             }
-            if (root.has_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG))
-                && root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).val() != nullptr) {
+            if (!config[NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG].As<std::string>().empty()
+                && config[NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG].As<std::string>() != "\n") {
                 setNumberOfBuffersInSourceLocalBufferPool(
-                    std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).val().str));
+                    config[NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG].As<uint64_t>());
             }
-            if (root.has_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG))
-                && root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).val() != nullptr) {
-                setBufferSizeInBytes(std::stoi(root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).val().str));
+            if (!config[BUFFERS_SIZE_IN_BYTES_CONFIG].As<std::string>().empty()
+                && config[BUFFERS_SIZE_IN_BYTES_CONFIG].As<std::string>() != "\n") {
+                setBufferSizeInBytes(config[BUFFERS_SIZE_IN_BYTES_CONFIG].As<uint64_t>());
             }
-            if (root.has_child(ryml::to_csubstr(QUERY_BATCH_SIZE_CONFIG))
-                && root.find_child(ryml::to_csubstr(QUERY_BATCH_SIZE_CONFIG)).val() != nullptr) {
-                setQueryBatchSize(std::stoi(root.find_child(ryml::to_csubstr(QUERY_BATCH_SIZE_CONFIG)).val().str));
+            if (!config[QUERY_BATCH_SIZE_CONFIG].As<std::string>().empty()
+                && config[QUERY_BATCH_SIZE_CONFIG].As<std::string>() != "\n") {
+                setQueryBatchSize(config[QUERY_BATCH_SIZE_CONFIG].As<uint32_t>());
             }
-            if (root.has_child(ryml::to_csubstr(QUERY_MERGER_RULE_CONFIG))
-                && root.find_child(ryml::to_csubstr(QUERY_MERGER_RULE_CONFIG)).val() != nullptr) {
-                setQueryMergerRule(root.find_child(ryml::to_csubstr(QUERY_MERGER_RULE_CONFIG)).val().str);
+            if (!config[QUERY_MERGER_RULE_CONFIG].As<std::string>().empty()
+                && config[QUERY_MERGER_RULE_CONFIG].As<std::string>() != "\n") {
+                setQueryMergerRule(config[QUERY_MERGER_RULE_CONFIG].As<std::string>());
             }
-            if (root.has_child(ryml::to_csubstr(ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG))
-                && root.find_child(ryml::to_csubstr(ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG)).val() != nullptr) {
-                setEnableSemanticQueryValidation(
-                    std::stoi(root.find_child(ryml::to_csubstr(ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG)).val().str));
+            if (!config[ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG].As<std::string>().empty()
+                && config[ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG].As<std::string>() != "\n") {
+                setEnableSemanticQueryValidation(config[ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG].As<bool>());
             }
-            if (root.has_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG))
-                && root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).val() != nullptr) {
-                setEnableMonitoring(root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).val().str);
+            if (!config[ENABLE_MONITORING_CONFIG].As<std::string>().empty()
+                && config[ENABLE_MONITORING_CONFIG].As<std::string>() != "\n") {
+                setEnableMonitoring(config[ENABLE_MONITORING_CONFIG].As<bool>());
             }
-            if (root.has_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG))
-                && root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).val() != nullptr) {
-                setNumWorkerThreads(std::stoi(root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).val().str));
+            if (!config[NUM_WORKER_THREADS_CONFIG].As<std::string>().empty()
+                && config[NUM_WORKER_THREADS_CONFIG].As<std::string>() != "\n") {
+                setNumWorkerThreads(config[NUM_WORKER_THREADS_CONFIG].As<uint64_t>());
             }
-            if (root.has_child(ryml::to_csubstr(MEMORY_LAYOUT_POLICY_CONFIG))
-                && root.find_child(ryml::to_csubstr(MEMORY_LAYOUT_POLICY_CONFIG)).val() != nullptr) {
-                setMemoryLayoutPolicy(root.find_child(ryml::to_csubstr(MEMORY_LAYOUT_POLICY_CONFIG)).val().str);
+            if (!config[MEMORY_LAYOUT_POLICY_CONFIG].As<std::string>().empty()
+                && config[MEMORY_LAYOUT_POLICY_CONFIG].As<std::string>() != "\n") {
+                setMemoryLayoutPolicy(config[MEMORY_LAYOUT_POLICY_CONFIG].As<std::string>());
             }
-            if (root.has_child(ryml::to_csubstr(PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION))
-                && root.find_child(ryml::to_csubstr(PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION)).val() != nullptr) {
-                setPerformOnlySourceOperatorExpansion(
-                    std::stoi(root.find_child(ryml::to_csubstr(PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION)).val().str));
+            if (!config[PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION].As<std::string>().empty()
+                && config[PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION].As<std::string>() != "\n") {
+                setPerformOnlySourceOperatorExpansion(config[PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION].As<bool>());
             }
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfiguration: Error while initializing configuration parameters from YAML file. " << e.what());

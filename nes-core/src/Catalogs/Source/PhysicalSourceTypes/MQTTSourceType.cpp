@@ -21,8 +21,8 @@
 
 namespace NES {
 
-MQTTSourceTypePtr MQTTSourceType::create(ryml::NodeRef ymlConfig) {
-    return std::make_shared<MQTTSourceType>(MQTTSourceType(std::move(ymlConfig)));
+MQTTSourceTypePtr MQTTSourceType::create(Yaml::Node yamlConfig) {
+    return std::make_shared<MQTTSourceType>(MQTTSourceType(std::move(yamlConfig)));
 }
 
 MQTTSourceTypePtr MQTTSourceType::create(std::map<std::string, std::string> sourceConfigMap) {
@@ -34,73 +34,79 @@ MQTTSourceTypePtr MQTTSourceType::create() { return std::make_shared<MQTTSourceT
 MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMap) : MQTTSourceType() {
     NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from command line args.");
 
-    if (sourceConfigMap.find(Configurations::URL_CONFIG) != sourceConfigMap.end()) {
-        url->setValue(sourceConfigMap.find(Configurations::URL_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::URL_CONFIG) != sourceConfigMap.end()) {
+        url->setValue(sourceConfigMap.find("--" + Configurations::URL_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no Url defined! Please define a Url.");
     }
-    if (sourceConfigMap.find(Configurations::CLIENT_ID_CONFIG) != sourceConfigMap.end()) {
-        clientId->setValue(sourceConfigMap.find(Configurations::CLIENT_ID_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::CLIENT_ID_CONFIG) != sourceConfigMap.end()) {
+        clientId->setValue(sourceConfigMap.find("--" + Configurations::CLIENT_ID_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no ClientId defined! Please define a ClientId.");
     }
-    if (sourceConfigMap.find(Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
-        userName->setValue(sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
+        userName->setValue(sourceConfigMap.find("--" + Configurations::USER_NAME_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no UserName defined! Please define a UserName.");
     }
-    if (sourceConfigMap.find(Configurations::TOPIC_CONFIG) != sourceConfigMap.end()) {
-        topic->setValue(sourceConfigMap.find(Configurations::TOPIC_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::TOPIC_CONFIG) != sourceConfigMap.end()) {
+        topic->setValue(sourceConfigMap.find("--" + Configurations::TOPIC_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no topic defined! Please define a topic.");
     }
-    if (sourceConfigMap.find(Configurations::QOS_CONFIG) != sourceConfigMap.end()) {
-        qos->setValue(std::stoi(sourceConfigMap.find(Configurations::QOS_CONFIG)->second));
+    if (sourceConfigMap.find("--" + Configurations::QOS_CONFIG) != sourceConfigMap.end()) {
+        qos->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::QOS_CONFIG)->second));
     }
-    if (sourceConfigMap.find(Configurations::CLEAN_SESSION_CONFIG) != sourceConfigMap.end()) {
-        cleanSession->setValue((sourceConfigMap.find(Configurations::CLEAN_SESSION_CONFIG)->second == "true"));
+    if (sourceConfigMap.find("--" + Configurations::CLEAN_SESSION_CONFIG) != sourceConfigMap.end()) {
+        cleanSession->setValue((sourceConfigMap.find("--" + Configurations::CLEAN_SESSION_CONFIG)->second == "true"));
     }
-    if (sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG) != sourceConfigMap.end()) {
-        flushIntervalMS->setValue(std::stof(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second));
+    if (sourceConfigMap.find("--" + Configurations::FLUSH_INTERVAL_MS_CONFIG) != sourceConfigMap.end()) {
+        flushIntervalMS->setValue(std::stof(sourceConfigMap.find("--" + Configurations::FLUSH_INTERVAL_MS_CONFIG)->second));
     }
 }
 
-MQTTSourceType::MQTTSourceType(ryml::NodeRef yamlConfig) : MQTTSourceType() {
+MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
     NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from YAML file.");
 
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::URL_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::URL_CONFIG)).val() != nullptr) {
-        url->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::URL_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::URL_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::URL_CONFIG].As<std::string>() != "\n") {
+        url->setValue(yamlConfig[Configurations::URL_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no Url defined! Please define a Url.");
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::CLIENT_ID_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::CLIENT_ID_CONFIG)).val() != nullptr) {
-        clientId->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::CLIENT_ID_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::CLIENT_ID_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::CLIENT_ID_CONFIG].As<std::string>() != "\n") {
+        clientId->setValue(yamlConfig[Configurations::CLIENT_ID_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no ClientId defined! Please define a ClientId.");
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).val() != nullptr) {
-        userName->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>() != "\n") {
+        userName->setValue(yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no UserName defined! Please define a UserName.");
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).val() != nullptr) {
-        topic->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>() != "\n") {
+        topic->setValue(yamlConfig[Configurations::TOPIC_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no topic defined! Please define a topic.");
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::QOS_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::QOS_CONFIG)).val() != nullptr) {
-        qos->setValue(std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::QOS_CONFIG)).val().str));
+    if (!yamlConfig[Configurations::QOS_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::QOS_CONFIG].As<std::string>() != "\n") {
+        qos->setValue(yamlConfig[Configurations::QOS_CONFIG].As<uint8_t>());
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::CLEAN_SESSION_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::CLEAN_SESSION_CONFIG)).val() != nullptr) {
-        cleanSession->setValue(
-            strcasecmp(yamlConfig.find_child(ryml::to_csubstr(Configurations::CLEAN_SESSION_CONFIG)).val().str, "true"));
+    if (!yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<std::string>() != "\n") {
+        cleanSession->setValue(yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<bool>());
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::FLUSH_INTERVAL_MS_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::FLUSH_INTERVAL_MS_CONFIG)).val() != nullptr) {
-        flushIntervalMS->setValue(
-            std::stof(yamlConfig.find_child(ryml::to_csubstr(Configurations::FLUSH_INTERVAL_MS_CONFIG)).val().str));
+    if (!yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>() != "\n") {
+        flushIntervalMS->setValue(std::stof(yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>()));
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)) &&  yamlConfig.find_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)).val() != nullptr) {
-        inputFormat->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
+        inputFormat->setValue(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
     }
 }
 

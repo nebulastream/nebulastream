@@ -1,66 +1,68 @@
-# ~~~ Configurations for the NES Worker ~~~
+{
+  # ~~~ Configurations for the NES Worker ~~~
 
-# ~~ IPs and Ports ~~
-# Set worker IP
-localWorkerIp: localhost
+  # ~~ IPs and Ports ~~
+  # Set worker IP
+  localWorkerIp: localhost
 
-# Set IP address of NES Coordinator to which the NES Worker should connect
-coordinatorIp:
+  # Set IP address of NES Coordinator to which the NES Worker should connect
+  coordinatorIp:
 
-# Set RPC Server port of NES Coordinator to which the NES Worker should connect
-# Needs to be the same as rpcPort in Coordinator
-coordinatorPort: 5000
+  # Set RPC Server port of NES Coordinator to which the NES Worker should connect
+  # Needs to be the same as rpcPort in Coordinator
+  coordinatorPort: 5000
 
-# Set number of computing slots in NES Worker
-# 0 is a place holder, default is number of processors installed in host machine
-numberOfSlots:
+  # Set number of computing slots in NES Worker
+  # 0 is a place holder, default is number of processors installed in host machine
+  numberOfSlots:
 
-# Set the number of worker threads
-numWorkerThreads: 5
+  # Set the number of worker threads
+  numWorkerThreads: 5
 
-# Number buffers in global buffer pool
-numberOfBuffersInGlobalBufferManager: 2048
+  # Number buffers in global buffer pool
+  numberOfBuffersInGlobalBufferManager: 2048
 
-# Number buffers in task local buffer pool
-numberOfBuffersPerWorker:
+  # Number buffers in task local buffer pool
+  numberOfBuffersPerWorker:
 
-# Number buffers in source local buffer pool
-numberOfBuffersInSourceLocalBufferPool: 128
+  # Number buffers in source local buffer pool
+  numberOfBuffersInSourceLocalBufferPool: 128
 
-physicalSources:
-  # Set logical stream name where this stream is added to
-  - logicalSourceName: default
-    # Set physical stream name
-    physicalSourceName: default_source_phy
-    # Define source type, also need to specify source configurations for source type below
-    type: DefaultSource
-    # DefaultSource and its needed configuration params
-    configuration:
-      ###### Define only the following configurations for DefaultSource stream
-      # Set number of buffers to produce, i.e. how often the default data is repeated for this source
-      numberOfBuffersToProduce: 1
-  - logicalSourceName: hello
-    # Set physical stream name
-    physicalSourceName: default_physical
-    # Define source type, also need to specify source configurations for source type below
-    type: MQTTSource
-    # DefaultSource and its needed configuration params
-    configuration:
-      # Set file path
-      filePath: ../tests/test_data/QnV_short.csv
-      # Set url to connect to
-      url: tcp://127.0.0.1:2000
-      # Set clientId
-      clientId: testClient
-      # Set userName
-      userName: testUser
-      # Set topic to listen to
-      topic: testTopic
-      # set quality of service
-      qos: 2
-      # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-      cleanSession: true
-      # set tupleBuffer flush interval in milliseconds
-      flushIntervalMS: -1
-      # Set input data format
-      inputFormat: JSON
+  physicalSources:
+    # Set logical stream name where this stream is added to
+    - logicalSourceName: default
+      # Set physical stream name
+      physicalSourceName: default_source_phy
+      # Define source type, also need to specify source configurations for source type below
+      type: DefaultSource
+      # DefaultSource and its needed configuration params
+      configuration:
+        ###### Define only the following configurations for DefaultSource stream
+        # Set number of buffers to produce, i.e. how often the default data is repeated for this source
+        numberOfBuffersToProduce: 1
+    - logicalSourceName: hello
+      # Set physical stream name
+      physicalSourceName: default_physical
+      # Define source type, also need to specify source configurations for source type below
+      type: MQTTSource
+      # DefaultSource and its needed configuration params
+      configuration:
+        # Set file path
+        filePath: ../tests/test_data/QnV_short.csv
+        # Set url to connect to
+        url: tcp://127.0.0.1:2000
+        # Set clientId
+        clientId: testClient
+        # Set userName
+        userName: testUser
+        # Set topic to listen to
+        topic: testTopic
+        # set quality of service
+        qos: 2
+        # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
+        cleanSession: true
+        # set tupleBuffer flush interval in milliseconds
+        flushIntervalMS: -1
+        # Set input data format
+        inputFormat: JSON
+}

@@ -21,8 +21,8 @@
 
 namespace NES {
 
-OPCSourceTypePtr OPCSourceType::create(ryml::NodeRef sourcTypeConfig) {
-    return std::make_shared<OPCSourceType>(OPCSourceType(std::move(sourcTypeConfig)));
+OPCSourceTypePtr OPCSourceType::create(Yaml::Node yamlConfig) {
+    return std::make_shared<OPCSourceType>(OPCSourceType(std::move(yamlConfig)));
 }
 
 OPCSourceTypePtr OPCSourceType::create(std::map<std::string, std::string> sourceConfigMap) {
@@ -33,42 +33,45 @@ OPCSourceTypePtr OPCSourceType::create() { return std::make_shared<OPCSourceType
 
 OPCSourceType::OPCSourceType(std::map<std::string, std::string> sourceConfigMap) : OPCSourceType() {
     NES_INFO("OPCSourceType: Init default OPC source config object with values from command line args.");
-    if (sourceConfigMap.find(Configurations::OPC_SOURCE_CONFIG) != sourceConfigMap.end()) {
-        namespaceIndex->setValue(std::stoi(sourceConfigMap.find(Configurations::OPC_SOURCE_CONFIG)->second));
+    if (sourceConfigMap.find("--" + Configurations::OPC_SOURCE_CONFIG) != sourceConfigMap.end()) {
+        namespaceIndex->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::OPC_SOURCE_CONFIG)->second));
     }
-    if (sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
-        nodeIdentifier->setValue(sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
+        nodeIdentifier->setValue(sourceConfigMap.find("--" + Configurations::NAME_SPACE_INDEX_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no nodeIdentifier defined! Please define a nodeIdentifier.");
     }
-    if (sourceConfigMap.find(Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
-        userName->setValue(sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
+        userName->setValue(sourceConfigMap.find("--" + Configurations::USER_NAME_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no userName defined! Please define a userName.");
     }
-    if (sourceConfigMap.find(Configurations::PASSWORD_CONFIG) != sourceConfigMap.end()) {
-        password->setValue(sourceConfigMap.find(Configurations::PASSWORD_CONFIG)->second);
+    if (sourceConfigMap.find("--" + Configurations::PASSWORD_CONFIG) != sourceConfigMap.end()) {
+        password->setValue(sourceConfigMap.find("--" + Configurations::PASSWORD_CONFIG)->second);
     }
 }
 
-OPCSourceType::OPCSourceType(ryml::NodeRef yamlConfig) : OPCSourceType() {
+OPCSourceType::OPCSourceType(Yaml::Node yamlConfig) : OPCSourceType() {
     NES_INFO("OPCSourceType: Init default OPC source config object with values from YAML file.");
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::NAME_SPACE_INDEX_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::NAME_SPACE_INDEX_CONFIG)).val() != nullptr) {
-        namespaceIndex->setValue(
-            std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::NAME_SPACE_INDEX_CONFIG)).val().str));
+    if (!yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::string>() != "\n") {
+        namespaceIndex->setValue(yamlConfig[Configurations::NAME_SPACE_INDEX_CONFIG].As<std::uint32_t>());
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::NODE_IDENTIFIER_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::NODE_IDENTIFIER_CONFIG)).val() != nullptr) {
-        nodeIdentifier->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::NODE_IDENTIFIER_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::NODE_IDENTIFIER_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::NODE_IDENTIFIER_CONFIG].As<std::string>() != "\n") {
+        nodeIdentifier->setValue(yamlConfig[Configurations::NODE_IDENTIFIER_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceType:: no nodeIdentifier defined! Please define a nodeIdentifier.");
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).val() != nullptr) {
-        userName->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>() != "\n") {
+        userName->setValue(yamlConfig[Configurations::USER_NAME_CONFIG].As<std::string>());
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceType:: no userName defined! Please define a userName.");
     }
-    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::PASSWORD_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::PASSWORD_CONFIG)).val() != nullptr) {
-        password->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::PASSWORD_CONFIG)).val().str);
+    if (!yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>().empty()
+        && yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>() != "\n") {
+        password->setValue(yamlConfig[Configurations::PASSWORD_CONFIG].As<std::string>());
     }
 }
 
