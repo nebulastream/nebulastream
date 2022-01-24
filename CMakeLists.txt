@@ -526,6 +526,8 @@ else ()
 endif ()
 
 # Add target for core, which contains the nes lib
+add_subdirectory(nes-common)
+# Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
 # Add target for client
 add_subdirectory(nes-client)
