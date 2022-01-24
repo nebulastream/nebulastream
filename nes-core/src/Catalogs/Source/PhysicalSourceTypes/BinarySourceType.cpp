@@ -28,7 +28,7 @@ BinarySourceTypePtr BinarySourceType::create(ryml::NodeRef yamlConfig) {
 
 BinarySourceType::BinarySourceType(ryml::NodeRef yamlConfig) : BinarySourceType() {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML.");
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)).val() != nullptr) {
         filePath->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("BinarySourceType:: no filePath defined! Please define a filePath using "

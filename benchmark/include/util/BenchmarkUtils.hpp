@@ -19,7 +19,7 @@
 
 //#include "SimpleBenchmarkSink.hpp"
 #include <API/Query.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Version/version.hpp>

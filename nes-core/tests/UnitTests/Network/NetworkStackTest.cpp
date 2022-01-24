@@ -39,7 +39,7 @@
 
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
-#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -683,9 +683,9 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES);
-        PhysicalSourcePtr streamConf = PhysicalSourceType::createEmpty();
+        PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
         auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
 
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {

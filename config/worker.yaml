@@ -136,7 +136,7 @@ physicalSources:
       #namespaceIndex:
       # Set node identifier, needed for: OPCSource
       #nodeIdentifier:
-      # Set userName, needed for: MQTTSource (can be chosen arbitrary), OPCSource
+      # Set userName, needed for: OPCSource (can be chosen arbitrary), OPCSource
       #userName:
       # Set password, needed for: OPCSource
       #password:

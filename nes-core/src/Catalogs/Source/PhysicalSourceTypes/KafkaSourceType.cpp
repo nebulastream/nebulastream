@@ -61,25 +61,30 @@ KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfig
 KafkaSourceType::KafkaSourceType(ryml::NodeRef yamlConfig) : KafkaSourceType() {
     NES_INFO("KafkaSourceType: Init default KAFKA source config object with values from YAML file.");
 
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::BROKERS_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::BROKERS_CONFIG))
+        && yamlConfig.find_child(ryml::to_csubstr(Configurations::BROKERS_CONFIG)).val() != nullptr) {
         brokers->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::BROKERS_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no brokers defined! Please define brokers.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::AUTO_COMMIT_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::AUTO_COMMIT_CONFIG))
+        && yamlConfig.find_child(ryml::to_csubstr(Configurations::AUTO_COMMIT_CONFIG)).val() != nullptr) {
         autoCommit->setValue(std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::AUTO_COMMIT_CONFIG)).val().str));
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::GROUP_ID_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::GROUP_ID_CONFIG))
+        && yamlConfig.find_child(ryml::to_csubstr(Configurations::GROUP_ID_CONFIG)).val() != nullptr) {
         groupId->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::GROUP_ID_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no groupId defined! Please define groupId.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG))
+        && yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).val() != nullptr) {
         topic->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceType:: no topic defined! Please define topic.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::CONNECTION_TIMEOUT_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::CONNECTION_TIMEOUT_CONFIG))
+        && yamlConfig.find_child(ryml::to_csubstr(Configurations::CONNECTION_TIMEOUT_CONFIG)).val() != nullptr) {
         connectionTimeout->setValue(
             std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::CONNECTION_TIMEOUT_CONFIG)).val().str));
     }

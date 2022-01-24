@@ -32,7 +32,7 @@ namespace NES {
 
 namespace Configurations {
 
-PhysicalSourcePtr PhysicalSourceFactory::createSourceConfig(const std::map<std::string, std::string>& commandLineParams) {
+PhysicalSourcePtr PhysicalSourceFactory::createPhysicalSource(const std::map<std::string, std::string>& commandLineParams) {
     if (commandLineParams.contains("--" + SOURCE_TYPE_CONFIG)) {
         if (commandLineParams.contains("--" + PHYSICAL_SOURCE_NAME_CONFIG)) {
             if (commandLineParams.contains("--" + LOGICAL_SOURCE_NAME_CONFIG)) {
@@ -55,37 +55,31 @@ PhysicalSourcePtr PhysicalSourceFactory::createSourceConfig(const std::map<std::
     return nullptr;
 }
 
-std::vector<PhysicalSourcePtr> PhysicalSourceFactory::createPhysicalSources(ryml::NodeRef yamlConfig) {
-
+std::vector<PhysicalSourcePtr> PhysicalSourceFactory::createPhysicalSources(const c4::yml::NodeRef& yamlConfig) {
     std::vector<PhysicalSourcePtr> physicalSources;
-
     for (ryml::NodeRef const& child : yamlConfig) {
-
         std::string logicalSourceName, physicalSourceName, sourceType;
-
-        if (child.find_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)).has_val()) {
+        if (child.has_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)) && child.find_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)).val() != nullptr) {
             logicalSourceName = child.find_child(ryml::to_csubstr(LOGICAL_SOURCE_NAME_CONFIG)).val().str;
         } else {
             NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
         }
 
-        if (child.find_child(ryml::to_csubstr(PHYSICAL_SOURCE_NAME_CONFIG)).has_val()) {
+        if (child.has_child(ryml::to_csubstr(PHYSICAL_SOURCE_NAME_CONFIG)) && child.find_child(ryml::to_csubstr(PHYSICAL_SOURCE_NAME_CONFIG)).val() != nullptr) {
             physicalSourceName = child.find_child(ryml::to_csubstr(PHYSICAL_SOURCE_NAME_CONFIG)).val().str;
         } else {
             NES_THROW_RUNTIME_ERROR("Found Invalid Physical Source Configuration. Please define Physical Source Name.");
         }
 
-        if (child.find_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG)).has_val()) {
+        if (child.has_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG)) && child.find_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG)).val() != nullptr) {
             sourceType = child.find_child(ryml::to_csubstr(SOURCE_TYPE_CONFIG)).val().str;
         } else {
             NES_THROW_RUNTIME_ERROR("Found Invalid Physical Source Configuration. Please define Source type.");
         }
 
         auto physicalSourceType = createPhysicalSourceType(sourceType, child);
-
         physicalSources.emplace_back(PhysicalSource::create(logicalSourceName, physicalSourceName, physicalSourceType));
     }
-
     return physicalSources;
 }
 

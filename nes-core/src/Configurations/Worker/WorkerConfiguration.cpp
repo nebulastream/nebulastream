@@ -106,70 +106,90 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
         ryml::NodeRef root = tree.rootref();
 
         try {
-            if (root.find_child(ryml::to_csubstr(LOCAL_WORKER_IP_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(LOCAL_WORKER_IP_CONFIG))
+                && root.find_child(ryml::to_csubstr(LOCAL_WORKER_IP_CONFIG)).val() != nullptr) {
                 setLocalWorkerIp(root.find_child(ryml::to_csubstr(LOCAL_WORKER_IP_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG))
+                && root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).val() != nullptr) {
                 setCoordinatorIp(root.find_child(ryml::to_csubstr(COORDINATOR_IP_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(COORDINATOR_PORT_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(COORDINATOR_PORT_CONFIG))
+                && root.find_child(ryml::to_csubstr(COORDINATOR_PORT_CONFIG)).val() != nullptr) {
                 setCoordinatorPort(std::stoi(root.find_child(ryml::to_csubstr(COORDINATOR_PORT_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(RPC_PORT_CONFIG))
+                && root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).val() != nullptr) {
                 setRpcPort(std::stoi(root.find_child(ryml::to_csubstr(RPC_PORT_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(DATA_PORT_CONFIG))
+                && root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).val() != nullptr) {
                 setDataPort(std::stoi(root.find_child(ryml::to_csubstr(DATA_PORT_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG))
+                && root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).val() != nullptr) {
                 setNumberOfSlots(std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_SLOTS_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG))
+                && root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).val() != nullptr) {
                 setNumWorkerThreads(std::stoi(root.find_child(ryml::to_csubstr(NUM_WORKER_THREADS_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG))
+                && root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).val() != nullptr) {
                 setNumberOfBuffersInGlobalBufferManager(
                     std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG))
+                && root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).val() != nullptr) {
                 setNumberOfBuffersInSourceLocalBufferPool(
                     std::stoi(root.find_child(ryml::to_csubstr(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG))
+                && root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).val() != nullptr) {
                 setBufferSizeInBytes(std::stoi(root.find_child(ryml::to_csubstr(BUFFERS_SIZE_IN_BYTES_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(PARENT_ID_CONFIG))
+                && root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).val() != nullptr) {
                 setParentId(std::stoi(root.find_child(ryml::to_csubstr(PARENT_ID_CONFIG)).val().str));
             }
-            if (root.find_child(ryml::to_csubstr(LOG_LEVEL_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(LOG_LEVEL_CONFIG))
+                && root.find_child(ryml::to_csubstr(LOG_LEVEL_CONFIG)).val() != nullptr) {
                 setLogLevel(root.find_child(ryml::to_csubstr(LOG_LEVEL_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG))
+                && root.find_child(ryml::to_csubstr(QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG)).val() != nullptr) {
                 setQueryCompilerCompilationStrategy(
                     root.find_child(ryml::to_csubstr(QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG))
+                && root.find_child(ryml::to_csubstr(QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG)).val() != nullptr) {
                 setQueryCompilerPipeliningStrategy(
                     root.find_child(ryml::to_csubstr(QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG))
+                && root.find_child(ryml::to_csubstr(QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG)).val() != nullptr) {
                 setQueryCompilerOutputBufferAllocationStrategy(
                     root.find_child(ryml::to_csubstr(QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(SOURCE_PIN_LIST_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(SOURCE_PIN_LIST_CONFIG))
+                && root.find_child(ryml::to_csubstr(SOURCE_PIN_LIST_CONFIG)).val() != nullptr) {
                 setSourcePinList(root.find_child(ryml::to_csubstr(SOURCE_PIN_LIST_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(WORKER_PIN_LIST_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(WORKER_PIN_LIST_CONFIG))
+                && root.find_child(ryml::to_csubstr(WORKER_PIN_LIST_CONFIG)).val() != nullptr) {
                 setWorkerPinList(root.find_child(ryml::to_csubstr(WORKER_PIN_LIST_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(NUMA_AWARENESS_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(NUMA_AWARENESS_CONFIG))
+                && root.find_child(ryml::to_csubstr(NUMA_AWARENESS_CONFIG)).val() != nullptr) {
                 setNumaAware(root.find_child(ryml::to_csubstr(NUMA_AWARENESS_CONFIG)).val().str);
             }
-            if (root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).has_val()) {
+            if (root.has_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG))
+                && root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).val() != nullptr) {
                 setEnableMonitoring(root.find_child(ryml::to_csubstr(ENABLE_MONITORING_CONFIG)).val().str);
             }
-            const c4::yml::NodeRef& physicalSourceConfigs = root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG));
-            if (physicalSourceConfigs.has_val()) {
+            if (root.has_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG))
+                && root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG)) != nullptr) {
+                const c4::yml::NodeRef& physicalSourceConfigs = root.find_child(ryml::to_csubstr(PHYSICAL_STREAMS_CONFIG));
                 setPhysicalSources(PhysicalSourceFactory::createPhysicalSources(physicalSourceConfigs));
             }
         } catch (std::exception& e) {
@@ -229,7 +249,7 @@ void WorkerConfiguration::overwriteConfigWithCommandLineInput(const std::map<std
         }
 
         //NOTE: Despite being a vector, there is only one physical source definition possible using command line params
-        auto physicalSource = PhysicalSourceFactory::createSourceConfig(commandLineArguments);
+        auto physicalSource = PhysicalSourceFactory::createPhysicalSource(commandLineArguments);
         if (physicalSource) {
             addPhysicalSource(physicalSource);
         }
