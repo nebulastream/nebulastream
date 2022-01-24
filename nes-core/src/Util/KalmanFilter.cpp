@@ -21,8 +21,9 @@
 #include <ctime>
 
 namespace NES {
-KalmanFilter::KalmanFilter(const uint64_t errorWindowSize) : kfErrorWindow(errorWindowSize) {
-    this->calculateTotalEstimationErrorDivider(errorWindowSize);
+KalmanFilter::KalmanFilter(const uint64_t errorWindowSize)
+    : kfErrorWindow(errorWindowSize), lastValuesWindow(2) {
+        this->calculateTotalEstimationErrorDivider(errorWindowSize);
 };
 
 KalmanFilter::KalmanFilter(double timeStep,
@@ -32,9 +33,8 @@ KalmanFilter::KalmanFilter(double timeStep,
                            const Eigen::MatrixXd R,
                            const Eigen::MatrixXd P,
                            const uint64_t errorWindowSize)
-    : m(H.rows()), n(F.rows()), stateTransitionModel(F), observationModel(H), processNoiseCovariance(Q),
-      measurementNoiseCovariance(R), initialEstimateCovariance(P), identityMatrix(n, n), xHat(n), xHatNew(n), innovationError(n),
-      timeStep(timeStep), kfErrorWindow(errorWindowSize) {
+    : m(H.rows()), n(F.rows()), stateTransitionModel(F), observationModel(H), processNoiseCovariance(Q), measurementNoiseCovariance(R), initialEstimateCovariance(P), identityMatrix(n, n), xHat(n), xHatNew(n), innovationError(n),
+      timeStep(timeStep), kfErrorWindow(errorWindowSize), lastValuesWindow(2) {
     this->calculateTotalEstimationErrorDivider(errorWindowSize);
     identityMatrix.setIdentity();
 }
