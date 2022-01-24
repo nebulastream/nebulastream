@@ -68,38 +68,38 @@ MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMa
 MQTTSourceType::MQTTSourceType(ryml::NodeRef yamlConfig) : MQTTSourceType() {
     NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from YAML file.");
 
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::URL_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::URL_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::URL_CONFIG)).val() != nullptr) {
         url->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::URL_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no Url defined! Please define a Url.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::CLIENT_ID_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::CLIENT_ID_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::CLIENT_ID_CONFIG)).val() != nullptr) {
         clientId->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::CLIENT_ID_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no ClientId defined! Please define a ClientId.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).val() != nullptr) {
         userName->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no UserName defined! Please define a UserName.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).val() != nullptr) {
         topic->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::TOPIC_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no topic defined! Please define a topic.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::QOS_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::QOS_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::QOS_CONFIG)).val() != nullptr) {
         qos->setValue(std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::QOS_CONFIG)).val().str));
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::CLEAN_SESSION_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::CLEAN_SESSION_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::CLEAN_SESSION_CONFIG)).val() != nullptr) {
         cleanSession->setValue(
             strcasecmp(yamlConfig.find_child(ryml::to_csubstr(Configurations::CLEAN_SESSION_CONFIG)).val().str, "true"));
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::FLUSH_INTERVAL_MS_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::FLUSH_INTERVAL_MS_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::FLUSH_INTERVAL_MS_CONFIG)).val() != nullptr) {
         flushIntervalMS->setValue(
             std::stof(yamlConfig.find_child(ryml::to_csubstr(Configurations::FLUSH_INTERVAL_MS_CONFIG)).val().str));
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)) &&  yamlConfig.find_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)).val() != nullptr) {
         inputFormat->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)).val().str);
     }
 }

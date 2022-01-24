@@ -16,12 +16,12 @@
 
 #include "gtest/gtest.h"
 
-#include "Client/RemoteClient.hpp"
-#include "API/Query.hpp"
-#include "Catalogs/QueryCatalog.hpp"
-#include "Components/NesCoordinator.hpp"
-#include "Configurations/Coordinator/CoordinatorConfig.hpp"
-#include "Configurations/Sources/CSVSourceConfig.hpp"
+#include <Client/RemoteClient.hpp>
+#include <API/Query.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include "Util/Logger.hpp"
 
 #include <unistd.h>
@@ -53,7 +53,7 @@ class RemoteClientTest : public testing::Test {
  * @result deployed query ID is valid
  */
 TEST_F(RemoteClientTest, DeployQueryTest) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfig::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
 

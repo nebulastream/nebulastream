@@ -1,14 +1,13 @@
 # ~~~ Configurations for the Data Source ~~~
-
-# ~~ Source Handling ~~
-# Set the source type (available options: NoSource, DefaultSource, CSVSource, OPCSource, ZMQSource, KafkaSource, BinarySource, SenseSource)
-sourceType: DefaultSource
-
-# Skip first line of the file
-skipHeader: true
-
-# Set physical stream name
-physicalStreamName:
-
-# Set logical stream name where this stream is added to
-logicalStreamName: default
+physicalSources:
+  # Set logical stream name where this stream is added to
+  - logicalSourceName: default
+    # Set physical stream name
+    physicalSourceName: default_source_phy
+    # Define source type, also need to specify source configurations for source type below
+    type: DefaultSource
+    # DefaultSource and its needed configuration params
+    configuration:
+      ###### Define only the following configurations for DefaultSource stream
+      # Set number of buffers to produce, i.e. how often the default data is repeated for this source
+      numberOfBuffersToProduce: 1

@@ -14,10 +14,12 @@
     limitations under the License.
 */
 
-#include <Catalogs/QueryCatalog.hpp>
-#include <Catalogs/QueryCatalogEntry.hpp>
-#include <Catalogs/SourceCatalog.hpp>
-#include <Catalogs/SourceCatalogEntry.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -29,9 +31,10 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/yaml/Yaml.hpp>
+#include <Util/yaml/rapidyaml.hpp>
 #include <fstream>
 #include <util/BenchmarkUtils.hpp>
+#include "Util/UtilityFunctions.hpp"
 
 using namespace NES;
 using namespace NES::Benchmarking;
@@ -95,6 +98,7 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
         //When the counter is 1 we add the logical stream with schema type 1
         //When the counter is 2 we add the logical stream with schema type 2
         //When the counter is 3 we add the logical stream with schema type 3
+
         if (counter == 1) {
             streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema1);
         } else if (counter == 2) {
@@ -103,16 +107,15 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
             streamCatalog->addLogicalStream("example" + std::to_string(j + 1), schema3);
             counter = 0;
         }
+        LogicalSourcePtr logicalSource = streamCatalog->getStreamForLogicalStream("example" + std::to_string(j + 1));
         counter++;
 
         // Add Physical topology node and stream catalog entry
         for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
             auto topoNode = TopologyNode::create(i, "", i, i, 2);
-            auto streamCat = SourceCatalogEntry::create("CSV",
-                                                        "example" + std::to_string(j + 1) + std::to_string(i),
-                                                        "example" + std::to_string(j + 1),
-                                                        topoNode);
-            streamCatalog->addPhysicalStream("example" + std::to_string(j + 1), streamCat);
+            auto physicalSource = PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
+            SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, topoNode);
+            streamCatalog->addPhysicalSource("example" + std::to_string(j + 1), sce);
         }
     }
 }
@@ -158,21 +161,21 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
         try {
             NES_INFO("NesE2EBenchmarkConfig: Using config file with path: " << filePath << " .");
-            Yaml::Node config = *(new Yaml::Node());
-            Yaml::Parse(config, filePath.c_str());
+            auto contents = Util::detail::file_get_contents<std::string>(filePath.c_str());
+            ryml::Tree tree = ryml::parse(ryml::to_csubstr(contents));
 
             //Number of Measurements to collect
-            noOfMeasurementsToCollect = config["numberOfMeasurementsToCollect"].As<uint64_t>();
+            noOfMeasurementsToCollect = std::stoi(tree["numberOfMeasurementsToCollect"].val().str);
             //Query set location
-            querySetLocation = config["querySetLocation"].As<std::string>();
+            querySetLocation = tree["querySetLocation"].val().str;
             //Startup sleep interval
-            startupSleepIntervalInSeconds = config["startupSleepIntervalInSeconds"].As<uint64_t>();
+            startupSleepIntervalInSeconds = std::stoi(tree["startupSleepIntervalInSeconds"].val().str);
             //Number of distinct sources
-            numberOfDistinctSources = config["numberOfDistinctSources"].As<uint64_t>();
+            numberOfDistinctSources = std::stoi(tree["numberOfDistinctSources"].val().str);
             //Query merger rules
-            queryMergerRules = split(config["queryMergerRule"].As<std::string>(), ',');
+            queryMergerRules = split(tree["queryMergerRule"].val().str, ',');
             //Enable Query Merging
-            auto enableQueryMergingOpts = split(config["enableQueryMerging"].As<std::string>(), ',');
+            auto enableQueryMergingOpts = split(tree["enableQueryMerging"].val().str, ',');
             for (const auto& item : enableQueryMergingOpts) {
                 bool booleanParm;
                 std::istringstream(item) >> std::boolalpha >> booleanParm;
@@ -180,19 +183,19 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
             }
 
             //Load Number of Physical sources
-            auto configuredNoOfPhysicalSources = split(config["noOfPhysicalSources"].As<std::string>(), ',');
+            auto configuredNoOfPhysicalSources = split(tree["noOfPhysicalSources"].val().str, ',');
             for (const auto& item : configuredNoOfPhysicalSources) {
                 noOfPhysicalSources.emplace_back(std::stoi(item));
             }
 
             //Load batch size
-            auto configuredBatchSizes = split(config["batchSize"].As<std::string>(), ',');
+            auto configuredBatchSizes = split(tree["batchSize"].val().str, ',');
             for (const auto& item : configuredBatchSizes) {
                 batchSizes.emplace_back(std::stoi(item));
             }
 
             //Log level
-            loglevel = NES::getDebugLevelFromString(config["logLevel"].As<std::string>());
+            loglevel = NES::getDebugLevelFromString(tree["logLevel"].val().str);
         } catch (std::exception& e) {
             NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file." << e.what());
         }

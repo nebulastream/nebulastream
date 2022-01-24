@@ -38,14 +38,14 @@ class PhysicalSourceFactory {
      * @param argc number of command line params
      * @return source config object
      */
-    static PhysicalSourcePtr createSourceConfig(const std::map<std::string, std::string>& commandLineParams);
+    static PhysicalSourcePtr createPhysicalSource(const std::map<std::string, std::string>& commandLineParams);
 
     /**
      * @brief create physical stream config with yaml file
      * @param physicalStreamConfig yaml elements from yaml file
      * @return physical stream config object
      */
-    static std::vector<PhysicalSourcePtr> createPhysicalSources(ryml::NodeRef yamlConfig);
+    static std::vector<PhysicalSourcePtr> createPhysicalSources(const c4::yml::NodeRef& yamlConfig);
 
   private:
     /**

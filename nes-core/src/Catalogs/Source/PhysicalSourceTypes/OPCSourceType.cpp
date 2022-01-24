@@ -53,21 +53,21 @@ OPCSourceType::OPCSourceType(std::map<std::string, std::string> sourceConfigMap)
 
 OPCSourceType::OPCSourceType(ryml::NodeRef yamlConfig) : OPCSourceType() {
     NES_INFO("OPCSourceType: Init default OPC source config object with values from YAML file.");
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::NAME_SPACE_INDEX_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::NAME_SPACE_INDEX_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::NAME_SPACE_INDEX_CONFIG)).val() != nullptr) {
         namespaceIndex->setValue(
             std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::NAME_SPACE_INDEX_CONFIG)).val().str));
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::NODE_IDENTIFIER_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::NODE_IDENTIFIER_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::NODE_IDENTIFIER_CONFIG)).val() != nullptr) {
         nodeIdentifier->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::NODE_IDENTIFIER_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceType:: no nodeIdentifier defined! Please define a nodeIdentifier.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).val() != nullptr) {
         userName->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::USER_NAME_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceType:: no userName defined! Please define a userName.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::PASSWORD_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::PASSWORD_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::PASSWORD_CONFIG)).val() != nullptr) {
         password->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::PASSWORD_CONFIG)).val().str);
     }
 }

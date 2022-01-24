@@ -80,7 +80,7 @@ class SenseSourceType : public PhysicalSourceType {
     /**
      * @brief constructor to create a new Sense source config object initialized with values form sourceConfigMap
      */
-    SenseSourceType(ryml::NodeRef sourcTypeConfig);
+    SenseSourceType(ryml::NodeRef yamlConfig);
 
     /**
      * @brief constructor to create a new Sense source config object initialized with default values

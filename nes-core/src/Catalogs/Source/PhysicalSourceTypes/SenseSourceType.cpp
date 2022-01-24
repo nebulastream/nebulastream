@@ -40,10 +40,10 @@ SenseSourceType::SenseSourceType(std::map<std::string, std::string> sourceConfig
     }
 }
 
-SenseSourceType::SenseSourceType(ryml::NodeRef sourcTypeConfig) : SenseSourceType() {
+SenseSourceType::SenseSourceType(ryml::NodeRef yamlConfig) : SenseSourceType() {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
-    if (sourcTypeConfig.find_child(ryml::to_csubstr(Configurations::UDFS_CONFIG)).has_val()) {
-        udfs->setValue(sourcTypeConfig.find_child(ryml::to_csubstr(Configurations::UDFS_CONFIG)).val().str);
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::UDFS_CONFIG)) && yamlConfig.find_child(ryml::to_csubstr(Configurations::UDFS_CONFIG)).val() != nullptr) {
+        udfs->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::UDFS_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("SenseSourceType:: no udfs defined! Please define a udfs.");
     }

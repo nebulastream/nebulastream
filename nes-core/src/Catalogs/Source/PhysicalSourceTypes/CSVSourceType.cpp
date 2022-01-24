@@ -92,34 +92,34 @@ CSVSourceType::CSVSourceType(std::map<std::string, std::string> sourceConfigMap)
 
 CSVSourceType::CSVSourceType(ryml::NodeRef yamlConfig) : CSVSourceType() {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML file.");
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)) &&  yamlConfig.find_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)).val() != nullptr) {
         filePath->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::FILE_PATH_CONFIG)).val().str);
     } else {
         NES_THROW_RUNTIME_ERROR("CSVSourceType:: no filePath defined! Please define a filePath using "
                                 << Configurations::FILE_PATH_CONFIG << " configuration.");
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::DELIMITER_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::DELIMITER_CONFIG)) &&  yamlConfig.find_child(ryml::to_csubstr(Configurations::DELIMITER_CONFIG)).val() != nullptr) {
         delimiter->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::DELIMITER_CONFIG)).val().str);
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::SKIP_HEADER_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::SKIP_HEADER_CONFIG)) &&  yamlConfig.find_child(ryml::to_csubstr(Configurations::SKIP_HEADER_CONFIG)).val() != nullptr) {
         skipHeader->setValue(
             (strcasecmp(yamlConfig.find_child(ryml::to_csubstr(Configurations::SKIP_HEADER_CONFIG)).val().str, "true")));
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)) &&  yamlConfig.find_child(ryml::to_csubstr(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)).val() != nullptr) {
         numberOfBuffersToProduce->setValue(std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)).val().str));
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)) &&  yamlConfig.find_child(ryml::to_csubstr(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)).val() != nullptr) {
         numberOfTuplesToProducePerBuffer->setValue(
             std::stoi(
             yamlConfig.find_child(ryml::to_csubstr(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG))
                           .val()
                           .str));
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::SOURCE_FREQUENCY_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::SOURCE_FREQUENCY_CONFIG)) &&  yamlConfig.find_child(ryml::to_csubstr(Configurations::SOURCE_FREQUENCY_CONFIG)).val() != nullptr) {
         sourceFrequency->setValue(
             std::stoi(yamlConfig.find_child(ryml::to_csubstr(Configurations::SOURCE_FREQUENCY_CONFIG)).val().str));
     }
-    if (yamlConfig.find_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)).has_val()) {
+    if (yamlConfig.has_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)) &&  yamlConfig.find_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)).val() != nullptr) {
         inputFormat->setValue(yamlConfig.find_child(ryml::to_csubstr(Configurations::INPUT_FORMAT_CONFIG)).val().str);
     }
 }
