@@ -21,10 +21,10 @@
 #include <cuda_runtime.h>
 /**
  * @brief This class is a wrapper for executing CUDA kernel as part of ExecutablePipelineStage
- * @tparam T data type to be processed by the kernel
- * @tparam N number of tuple to process by the kernel
+ * @tparam InputRecord data type to be processed by the kernel
+ * @tparam Size number of tuple to process by the kernel
  */
-template<class T, int N>
+template<class InputRecord, int Size>
 class CUDAKernelWrapper {
   public:
     CUDAKernelWrapper() = default;
@@ -35,20 +35,20 @@ class CUDAKernelWrapper {
      * @param kernelCode source code of the kernel
      */
     void setup(const char* const kernelCode) {
-        cudaMalloc(&d_input, N * sizeof(T));
-        cudaMalloc(&d_output, N * sizeof(T));
+        cudaMalloc(&deviceInputBuffer, Size * sizeof(InputRecord));
+        cudaMalloc(&deviceOutputBuffer, Size * sizeof(InputRecord));
 
-        static jitify::JitCache kernel_cache;
-        kernelProgramPtr = std::make_shared<jitify::Program>(kernel_cache.program(kernelCode, 0));
+        static jitify::JitCache kernelCache;
+        kernelProgramPtr = std::make_shared<jitify::Program>(kernelCache.program(kernelCode, 0));
     }
 
     /**
      * @brief execute the kernel program
-     * @param h_input input buffer in the host memory. The kernel reads from this buffer and copy back the output to this buffer.
+     * @param hostInputBuffer input buffer in the host memory. The kernel reads from this buffer and copy back the output to this buffer.
      */
-    void execute(T* h_input) {
-        // copy the h_input (input) to d_input
-        cudaMemcpy(d_input, h_input, N * sizeof(T), cudaMemcpyHostToDevice);
+    void execute(InputRecord* hostInputBuffer) {
+        // copy the hostInputBuffer (input) to deviceInputBuffer
+        cudaMemcpy(deviceInputBuffer, hostInputBuffer, Size * sizeof(InputRecord), cudaMemcpyHostToDevice);
 
         // prepare a kernel launch configuration
         dim3 grid(1);
@@ -59,23 +59,23 @@ class CUDAKernelWrapper {
         kernelProgramPtr->kernel("simpleAdditionKernel")
             .instantiate()
             .configure(grid, block) // the configuration
-            .launch(d_input, N, d_output); // the parameter of the kernel program
+            .launch(deviceInputBuffer, Size, deviceOutputBuffer); // the parameter of the kernel program
 
         // copy the result of kernel execution back to the gpu
-        cudaMemcpy(h_input, d_output, N * sizeof(T), cudaMemcpyDeviceToHost);
+        cudaMemcpy(hostInputBuffer, deviceOutputBuffer, Size * sizeof(InputRecord), cudaMemcpyDeviceToHost);
     }
 
     /**
      * @brief free the GPU memory
      */
     void clean() {
-        cudaFree(d_input);
-        cudaFree(d_output);
+        cudaFree(deviceInputBuffer);
+        cudaFree(deviceOutputBuffer);
     }
 
   private:
-    T* d_input; // device memory for kernel input
-    T* d_output; // device memory for kernel output
+    InputRecord* deviceInputBuffer; // device memory for kernel input
+    InputRecord* deviceOutputBuffer; // device memory for kernel output
     std::shared_ptr<jitify::Program> kernelProgramPtr;
 };
 
