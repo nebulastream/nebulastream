@@ -18,6 +18,7 @@
 #define NES_INCLUDE_MATERIALIZEDVIEW_MATERIALIZEDVIEW_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
+#include <optional>
 
 namespace NES::Experimental::MaterializedView {
 
