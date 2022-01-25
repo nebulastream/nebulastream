@@ -26,7 +26,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateVariable.hpp>
-#include <Windowing/Experimental/HashMap.hpp>
+#include <Util/Experimental/HashMap.hpp>
 #include <Windowing/Experimental/LockFreeWatermarkProcessor.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedGlobalSliceStore.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedThreadLocalSliceStore.hpp>

@@ -16,7 +16,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDSLICE_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDSLICE_HPP_
-#include <Windowing/Experimental/HashMap.hpp>
+#include <Util/Experimental/HashMap.hpp>
 #include <cinttypes>
 namespace NES::Windowing::Experimental {
 

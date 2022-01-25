@@ -15,7 +15,7 @@
 */
 
 
-#include <Windowing/Experimental/HashMap.hpp>
+#include <Util/Experimental/HashMap.hpp>
 #include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
 namespace NES::Windowing::Experimental {
 

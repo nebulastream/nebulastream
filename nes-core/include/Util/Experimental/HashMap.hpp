@@ -17,8 +17,9 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Windowing/Experimental/Hash.hpp>
+#include <Util/Experimental/Hash.hpp>
 #include <assert.h>
+#include <Util/Experimental/CRC32Hash.hpp>
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
 
@@ -118,8 +119,6 @@ class Hashmap {
     const ptr_t maskTag = (~(ptr_t) 0) << (sizeof(ptr_t) * 8 - 16);
 
     inline static Entry* end();
-
-    Hashmap() = default;
 
     Hashmap(const Hashmap&) = delete;
 
