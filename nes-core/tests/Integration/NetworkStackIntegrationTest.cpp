@@ -25,6 +25,7 @@
 #include <Network/ZmqServer.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Runtime/HardwareManager.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -285,6 +286,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          std::move(partitionManager),
                          std::move(queryCompiler),
                          std::make_shared<NES::Runtime::StateManager>(0),
+                         std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
                          0,
                          64,
                          64,
