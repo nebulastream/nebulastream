@@ -420,9 +420,9 @@ message SerializableOperator{
 
 
     google.protobuf.Any windowType = 1;
-    repeated Aggregation windowAggregation = 2;
+    repeated Aggregation windowAggregations = 2;
     DistributionCharacteristic distrChar = 3;
-    repeated SerializableExpression onKey = 4;
+    repeated SerializableExpression keys = 4;
     uint64 numberOfInputEdges = 5;
     TriggerPolicy triggerPolicy = 6;
     TriggerAction action = 7;
