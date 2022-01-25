@@ -81,7 +81,7 @@ bool WindowLogicalOperatorNode::inferSchema() {
     if (windowDefinition->isKeyed()) {
 
         // infer the data type of the key field.
-        auto keyList = windowDefinition->getOnKey();
+        auto keyList = windowDefinition->getKeys();
         for (auto& key : keyList) {
             key->inferStamp(inputSchema);
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
@@ -109,7 +109,7 @@ void WindowLogicalOperatorNode::inferStringSignature() {
     auto windowAggregation = windowDefinition->getWindowAggregation();
     if (windowDefinition->isKeyed()) {
         signatureStream << "WINDOW-BY-KEY(";
-        for (auto& key : windowDefinition->getOnKey()) {
+        for (auto& key : windowDefinition->getKeys()) {
             signatureStream << key->toString() << ",";
         }
     } else {

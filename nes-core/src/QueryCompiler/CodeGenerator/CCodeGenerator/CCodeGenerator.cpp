@@ -834,7 +834,7 @@ std::vector<ExpressionStatementPtr> getKeyAssignmentExpressions(Windowing::Logic
                                                                 std::shared_ptr<GeneratableTypesFactory>,
                                                                 RecordHandlerPtr recordHandler) {
     std::vector<ExpressionStatementPtr> keyDeclarations;
-    for (auto& key : window->getOnKey()) {
+    for (auto& key : window->getKeys()) {
         keyDeclarations.push_back(recordHandler->getAttribute(key->getFieldName()));
 
         //keyDeclarations.push_back(VariableDeclaration::create(tf->createDataType(key->getStamp()),key->getFieldName());
@@ -845,7 +845,7 @@ std::vector<ExpressionStatementPtr> getKeyAssignmentExpressions(Windowing::Logic
 std::vector<VariableDeclaration> getKeyDeclarations(Windowing::LogicalWindowDefinitionPtr window,
                                                     std::shared_ptr<GeneratableTypesFactory> tf) {
     std::vector<VariableDeclaration> keyDeclarations;
-    for (auto& key : window->getOnKey()) {
+    for (auto& key : window->getKeys()) {
         keyDeclarations.push_back(VariableDeclaration::create(tf->createDataType(key->getStamp()), key->getFieldName()));
     }
     return keyDeclarations;
@@ -1090,7 +1090,7 @@ uint64_t getAggregationValueSize(Windowing::LogicalWindowDefinitionPtr window) {
 uint64_t getKeySpaceSize(Windowing::LogicalWindowDefinitionPtr window) {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     uint64_t keysSize = 0;
-    for (auto key : window->getOnKey()) {
+    for (auto key : window->getKeys()) {
         keysSize = keysSize + physicalDataTypeFactory.getPhysicalType(key->getStamp())->size();
     }
     return keysSize;
@@ -1496,7 +1496,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
     auto windowOperatorHandlerDeclaration =
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
-    auto keyStamp = window->isKeyed() ? window->getOnKey()[0]->getStamp() : window->getWindowAggregation()[0]->on()->getStamp();
+    auto keyStamp = window->isKeyed() ? window->getKeys()[0]->getStamp() : window->getWindowAggregation()[0]->on()->getStamp();
     auto getWindowHandlerStatement =
         getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation()[0]);
     context->code->variableInitStmts.emplace_back(
@@ -1546,7 +1546,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
                                     context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
     auto recordHandler = context->getRecordHandler();
     if (window->isKeyed()) {
-        auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getOnKey()[0]->getFieldName());
+        auto keyVariableAttributeDeclaration = recordHandler->getAttribute(window->getKeys()[0]->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
         context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     } else {
@@ -2506,7 +2506,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
 
-    auto keyStamp = window->isKeyed() ? window->getOnKey()[0]->getStamp() : window->getWindowAggregation()[0]->on()->getStamp();
+    auto keyStamp = window->isKeyed() ? window->getKeys()[0]->getStamp() : window->getWindowAggregation()[0]->on()->getStamp();
 
     auto getWindowHandlerStatement =
         getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation()[0]);
@@ -2552,7 +2552,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
         VariableDeclaration::create(tf->createAnonymusDataType("auto"),
                                     context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
     if (window->isKeyed()) {
-        auto keyVariableAttributeDeclaration = context->getRecordHandler()->getAttribute(window->getOnKey()[0]->getFieldName());
+        auto keyVariableAttributeDeclaration = context->getRecordHandler()->getAttribute(window->getKeys()[0]->getFieldName());
         auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(keyVariableAttributeDeclaration);
         context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
     } else {
@@ -2878,7 +2878,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         VarDeclStatement(resultSchemaDeclaration).assign(VarRef(windowOperatorHandlerDeclaration).accessPtr(getResultSchemaCall));
     setupScope->addStatement(resultSchemaStatement.copy());
 
-    auto keyStamp = window->isKeyed() ? window->getOnKey()[0]->getStamp() : window->getWindowAggregation()[0]->on()->getStamp();
+    auto keyStamp = window->isKeyed() ? window->getKeys()[0]->getStamp() : window->getWindowAggregation()[0]->on()->getStamp();
     auto keyType = tf->createDataType(keyStamp);
 
     auto aggregation = window->getWindowAggregation();

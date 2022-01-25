@@ -25,20 +25,7 @@
 
 namespace NES::Windowing {
 
-LogicalWindowDefinition::LogicalWindowDefinition(std::vector<WindowAggregationPtr> windowAggregation,
-                                                 WindowTypePtr windowType,
-                                                 DistributionCharacteristicPtr distChar,
-                                                 uint64_t numberOfInputEdges,
-                                                 WindowTriggerPolicyPtr triggerPolicy,
-                                                 WindowActionDescriptorPtr triggerAction,
-                                                 uint64_t allowedLateness)
-    : windowAggregation(std::move(windowAggregation)), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(),
-      distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), allowedLateness(allowedLateness) {
-    NES_TRACE("LogicalWindowDefinition: create new window definition");
-}
-
-LogicalWindowDefinition::LogicalWindowDefinition(const std::vector<FieldAccessExpressionNodePtr> onKey,
+LogicalWindowDefinition::LogicalWindowDefinition(const std::vector<FieldAccessExpressionNodePtr> keys,
                                                  std::vector<WindowAggregationPtr> windowAggregation,
                                                  WindowTypePtr windowType,
                                                  DistributionCharacteristicPtr distChar,
@@ -47,32 +34,31 @@ LogicalWindowDefinition::LogicalWindowDefinition(const std::vector<FieldAccessEx
                                                  WindowActionDescriptorPtr triggerAction,
                                                  uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(std::move(onKey)),
+      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(std::move(keys)),
       distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 
 bool LogicalWindowDefinition::isKeyed() { return !onKey.empty(); }
 
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(std::vector<WindowAggregationPtr> windowAggregation,
+LogicalWindowDefinitionPtr LogicalWindowDefinition::create(std::vector<WindowAggregationPtr> windowAggregations,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
                                                            uint64_t numberOfInputEdges,
                                                            const WindowTriggerPolicyPtr& triggerPolicy,
                                                            const WindowActionDescriptorPtr& triggerAction,
                                                            uint64_t allowedLateness) {
-    return std::make_shared<LogicalWindowDefinition>(windowAggregation,
-                                                     windowType,
-                                                     distChar,
-                                                     numberOfInputEdges,
-                                                     triggerPolicy,
-                                                     triggerAction,
-                                                     allowedLateness);
+    return create({},
+                  windowAggregations,
+                  windowType,
+                  distChar,
+                  numberOfInputEdges,
+                  triggerPolicy,
+                  triggerAction,
+                  allowedLateness);
 }
 
-
-
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey,
+LogicalWindowDefinitionPtr LogicalWindowDefinition::create(std::vector<FieldAccessExpressionNodePtr> keys,
                                                            std::vector<WindowAggregationPtr> windowAggregation,
                                                            const WindowTypePtr& windowType,
                                                            const DistributionCharacteristicPtr& distChar,
@@ -80,44 +66,6 @@ LogicalWindowDefinitionPtr LogicalWindowDefinition::create(ExpressionItem onKey,
                                                            const WindowTriggerPolicyPtr& triggerPolicy,
                                                            const WindowActionDescriptorPtr& triggerAction,
                                                            uint64_t allowedLateness) {
-    std::vector<FieldAccessExpressionNodePtr> keys = {onKey.getExpressionNode()->as<FieldAccessExpressionNode>()};
-    return std::make_shared<LogicalWindowDefinition>(keys,
-                                                     windowAggregation,
-                                                     windowType,
-                                                     distChar,
-                                                     numberOfInputEdges,
-                                                     triggerPolicy,
-                                                     triggerAction,
-                                                     allowedLateness);
-}
-
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const std::vector<FieldAccessExpressionNodePtr>& onKey,
-                                                           std::vector<WindowAggregationPtr> windowAggregation,
-                                                           const WindowTypePtr& windowType,
-                                                           const DistributionCharacteristicPtr& distChar,
-                                                           uint64_t numberOfInputEdges,
-                                                           const WindowTriggerPolicyPtr& triggerPolicy,
-                                                           const WindowActionDescriptorPtr& triggerAction,
-                                                           uint64_t allowedLateness) {
-    return std::make_shared<LogicalWindowDefinition>(onKey,
-                                                     windowAggregation,
-                                                     windowType,
-                                                     distChar,
-                                                     numberOfInputEdges,
-                                                     triggerPolicy,
-                                                     triggerAction,
-                                                     allowedLateness);
-}
-
-LogicalWindowDefinitionPtr LogicalWindowDefinition::create(const FieldAccessExpressionNodePtr& onKey,
-                                                           std::vector<WindowAggregationPtr> windowAggregation,
-                                                           const WindowTypePtr& windowType,
-                                                           const DistributionCharacteristicPtr& distChar,
-                                                           uint64_t numberOfInputEdges,
-                                                           const WindowTriggerPolicyPtr& triggerPolicy,
-                                                           const WindowActionDescriptorPtr& triggerAction,
-                                                           uint64_t allowedLateness) {
-    std::vector<FieldAccessExpressionNodePtr> keys = {onKey};
     return std::make_shared<LogicalWindowDefinition>(keys,
                                                      windowAggregation,
                                                      windowType,
@@ -139,7 +87,7 @@ void LogicalWindowDefinition::setNumberOfInputEdges(uint64_t numberOfInputEdges)
 }
 std::vector<WindowAggregationPtr> LogicalWindowDefinition::getWindowAggregation() { return windowAggregation; }
 WindowTypePtr LogicalWindowDefinition::getWindowType() { return windowType; }
-std::vector<FieldAccessExpressionNodePtr> LogicalWindowDefinition::getOnKey() { return onKey; }
+std::vector<FieldAccessExpressionNodePtr> LogicalWindowDefinition::getKeys() { return onKey; }
 void LogicalWindowDefinition::setWindowAggregation(std::vector<WindowAggregationPtr> windowAggregation) {
     this->windowAggregation = std::move(windowAggregation);
 }
@@ -189,13 +137,13 @@ bool LogicalWindowDefinition::equal(LogicalWindowDefinitionPtr otherWindowDefini
     }
 
     if (this->isKeyed()) {
-       // todo add equals for multy keys
-       //this->getOnKey()->equal(otherWindowDefinition->getOnKey())
-       // return false;
+        // todo add equals for multy keys
+        //this->getOnKey()->equal(otherWindowDefinition->getOnKey())
+        // return false;
     }
 
     return this->windowType->equal(otherWindowDefinition->getWindowType());
-      //  && this->windowAggregation->equal(otherWindowDefinition->getWindowAggregation());
+    //  && this->windowAggregation->equal(otherWindowDefinition->getWindowAggregation());
 }
 
 }// namespace NES::Windowing

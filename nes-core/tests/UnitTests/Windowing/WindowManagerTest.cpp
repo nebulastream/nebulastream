@@ -27,7 +27,6 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
-#include <Windowing/Experimental/SliceStore.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
@@ -49,7 +48,6 @@
 #include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>
 #include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <Windowing/Experimental/PartitionedSliceStore.hpp>
 
 #include <Common/ExecutableType/Array.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -103,7 +101,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 
     std::vector<TupleBuffer> buffers;
 };
-
+/*
 TEST_F(WindowManagerTest, sliceStoreTest) {
     auto sliceStore = Experimental::SliceStore<robin_hood::unordered_map<uint64_t, uint64_t>>(1);
     for (uint64_t i = 0; i < 99; ++i) {
@@ -120,7 +118,7 @@ TEST_F(WindowManagerTest, sliceStoreTest) {
         ASSERT_EQ(slice->start, 99 + i);
     }
 }
-/*
+
 TEST_F(WindowManagerTest, sliceStoreTest3) {
     Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
     auto sliceStore = Experimental::MapedSliceStore<uint64_t, uint64_t, 100>(bufferManager, 1);

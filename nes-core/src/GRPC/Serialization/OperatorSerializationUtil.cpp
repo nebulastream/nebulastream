@@ -347,7 +347,7 @@ OperatorSerializationUtil::serializeWindowOperator(const WindowOperatorNodePtr& 
     auto windowDefinition = windowOperator->getWindowDefinition();
 
     if (windowDefinition->isKeyed()) {
-        for (auto& key : windowDefinition->getOnKey()) {
+        for (auto& key : windowDefinition->getKeys()) {
             auto expression = windowDetails.mutable_onkey()->Add();
             ExpressionSerializationUtil::serializeExpression(key, expression);
         }
