@@ -189,7 +189,6 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
         "--queryCompilerCompilationStrategy=FAST",
         "--queryCompilerPipeliningStrategy=OPERATPR_AT_A_TIME",
         "--queryCompilerOutputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-
     };
     int argc = 11;
 
