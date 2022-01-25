@@ -54,7 +54,7 @@ WindowedQuery::WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr wind
     : originalQuery(originalQuery), windowType(std::move(windowType)) {}
 
 //KeyedWindowedQuery keyBy(ExpressionItem onKey);
-KeyedWindowedQuery WindowedQuery::byKey(ExpressionItem onKey) const {
+/*KeyedWindowedQuery WindowedQuery::byKey(ExpressionItem onKey) const {
     return KeyedWindowedQuery(originalQuery, windowType, {onKey.getExpressionNode()});
 }
 
@@ -65,24 +65,12 @@ KeyedWindowedQuery WindowedQuery::byKey(std::initializer_list<ExpressionItem> on
         keys.emplace_back(keyItem.getExpressionNode());
     }
     return KeyedWindowedQuery(originalQuery, windowType, keys);
-}
-
-Query& WindowedQuery::apply(const Windowing::WindowAggregationPtr& aggregation) {
-    return originalQuery.window(windowType, {aggregation});
-}
+}*/
 
 KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery,
                                        Windowing::WindowTypePtr windowType,
                                        std::vector<ExpressionNodePtr> onKey)
     : originalQuery(originalQuery), windowType(std::move(windowType)), onKey(onKey) {}
-
-Query& KeyedWindowedQuery::apply(Windowing::WindowAggregationPtr aggregation) {
-    return originalQuery.windowByKey(onKey, windowType, {aggregation});
-}
-
-Query& KeyedWindowedQuery::apply(std::initializer_list<Windowing::WindowAggregationPtr> aggregation) {
-    return originalQuery.windowByKey(onKey, windowType, aggregation);
-}
 
 }//namespace WindowOperatorBuilder
 
