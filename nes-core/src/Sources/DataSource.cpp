@@ -116,7 +116,7 @@ bool DataSource::start() {
     // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
     // only CPU i as set.
 #ifdef __linux__
-        if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
+        if (sourceAffinity  != std::numeric_limits<uint64_t>::max()) {
             NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(), "pinning position is out of cpu range");
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
@@ -132,8 +132,6 @@ bool DataSource::start() {
                 if (ret != 0) {
                     NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
                 }
-//                int cpu = sched_getcpu();
-//                auto numaNode = numa_node_of_cpu(cpu);
                 std::cout << "source " << operatorId << " pins to core=" << sourceAffinity;// << " on numaNode=" << numaNode << " ";
                 printf("setted affinity after assignment: %08lx\n", cur_mask);
             }
