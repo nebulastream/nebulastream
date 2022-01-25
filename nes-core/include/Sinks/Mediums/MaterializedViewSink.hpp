@@ -34,7 +34,7 @@ class MaterializedViewSink : public SinkMedium {
 
   public:
     /// @brief constructor
-    MaterializedViewSink(MaterializedViewPtr view, SinkFormatPtr format, QuerySubPlanId parentPlanId);
+    MaterializedViewSink(MaterializedViewPtr view, SinkFormatPtr format, Runtime::QueryManagerPtr queryManager, QuerySubPlanId parentPlanId);
 
     /**
      * @brief setup method for materialized view sink

@@ -19,8 +19,8 @@
 
 namespace NES::Experimental::MaterializedView {
 
-MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view, SinkFormatPtr format, QuerySubPlanId parentPlanId)
-                                           : SinkMedium(std::move(format), parentPlanId), view(std::move(view)) {};
+MaterializedViewSink::MaterializedViewSink(MaterializedViewPtr view, SinkFormatPtr format, Runtime::QueryManagerPtr queryManager, QuerySubPlanId parentPlanId)
+                                           : SinkMedium(std::move(format), queryManager, parentPlanId), view(std::move(view)) {};
 
 // It is somehow requiered to clear the view at the sink shoutdown due to NES's memory management
 void MaterializedViewSink::shutdown() {

@@ -160,6 +160,7 @@ DataSinkPtr createMaterializedViewSink(SchemaPtr schema,
     return std::make_shared<Experimental::MaterializedView::MaterializedViewSink>(
             std::move(view),
             format,
+            nodeEngine->getQueryManager(),
             parentPlanId);
 }
 
