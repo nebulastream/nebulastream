@@ -92,7 +92,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
     auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    auto keyField = windowDefinition->getOnKey();
+    auto keyField = windowDefinition->getKeys();
     auto allowedLateness = windowDefinition->getAllowedLateness();
     // For the final window computation we have to change copy aggregation function and manipulate the fields we want to aggregate.
     auto windowComputationAggregation = windowAggregation;

@@ -32,7 +32,7 @@ SliceCreationOperator::SliceCreationOperator(const Windowing::LogicalWindowDefin
     this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
     this->windowDefinition->setWindowAggregation(windowDefinition->getWindowAggregation());
     this->windowDefinition->setWindowType(windowDefinition->getWindowType());
-    this->windowDefinition->setOnKey(windowDefinition->getOnKey());
+    this->windowDefinition->setOnKey(windowDefinition->getKeys());
     // this->windowDefinition->setOriginId(id);
 }
 
@@ -81,7 +81,7 @@ bool SliceCreationOperator::inferSchema() {
 
     if (windowDefinition->isKeyed()) {
         // infer the data type of the key field.
-        auto keyList = windowDefinition->getOnKey();
+        auto keyList = windowDefinition->getKeys();
         for (auto& key : keyList) {
             key->inferStamp(inputSchema);
             outputSchema->addField(AttributeField::create(key->getFieldName(), key->getStamp()));
