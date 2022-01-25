@@ -45,16 +45,19 @@ PhysicalSourcePtr PhysicalSourceFactory::createPhysicalSource(const std::map<std
     }
 
     if (logicalSourceName.empty()) {
-        NES_THROW_RUNTIME_ERROR("One of the logical source name is not supplied for creating the physical source. Please supply "
+        NES_WARNING("No logical source name is not supplied for creating the physical source. Please supply "
                                 "logical source name using --"
                                 << LOGICAL_SOURCE_NAME_CONFIG);
+        return nullptr;
     } else if (physicalSourceName.empty()) {
-        NES_THROW_RUNTIME_ERROR(
+        NES_WARNING(
             "No physical source name supplied for creating the physical source. Please supply physical source name using --"
             << PHYSICAL_SOURCE_NAME_CONFIG);
+        return nullptr;
     } else if (sourceType.empty()) {
-        NES_THROW_RUNTIME_ERROR("No source type supplied for creating the physical source. Please supply source type using --"
+        NES_WARNING("No source type supplied for creating the physical source. Please supply source type using --"
                                 << SOURCE_TYPE_CONFIG);
+        return nullptr;
     }
 
     auto physicalSourceType = createPhysicalSourceType(sourceType, commandLineParams);
