@@ -497,5 +497,9 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 std::map<std::string, std::map<std::string, std::string>> NodeEngine::getDumpContextInfo() {
     return queryCompiler->getDumpContextInfo();
 }
+std::map<std::string, std::string> NodeEngine::getDumpContextInfoForQuery(uint64_t queryId) {
+    NES_DEBUG("NodeEngine::getDumpContextInfoForQuery got request for query id " << queryId);
+    return queryCompiler->getDumpContextInfoForQueryId(queryId);
+}
 
 }// namespace NES::Runtime

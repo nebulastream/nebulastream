@@ -105,7 +105,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         timer.pause();
         NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);
 
-        dumpContextInfo = dumpContext->getDumpContextInfo(); //change context info
+        dumpContextInfo = dumpContext->getDumpContextInfo(std::to_string(queryId)); //change context info
         auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
         return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
     } catch (const QueryCompilationException& exception) {
@@ -116,6 +116,14 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
 
 std::map<std::string, std::map<std::string, std::string>> DefaultQueryCompiler::getDumpContextInfo() {
     return dumpContextInfo;
+}
+std::map<std::string, std::string> DefaultQueryCompiler::getDumpContextInfoForQueryId(uint64_t queryId) {
+    NES_DEBUG("DefaultQueryCompiler::getDumpContextInfoForQueryId got request for query id " << queryId);
+    if (!dumpContextInfo.empty()) {
+        return dumpContextInfo.find(std::to_string(queryId))->second;
+    } else {
+        return std::map<std::string, std::string>();
+    }
 }
 
 }// namespace NES::QueryCompilation

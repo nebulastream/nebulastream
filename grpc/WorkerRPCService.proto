@@ -32,6 +32,7 @@ service WorkerRPCService {
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
   rpc GetDumpContextInfo (DumpContextRequest) returns (DumpContextReply) {}
+  rpc GetDumpContextForQueryId (DumpContextQueryIdRequest) returns (DumpContextPlanInformation) {}
 }
 
 message DeployQueryRequest {
@@ -106,4 +107,8 @@ message DumpContextReply {
 
 message DumpContextPlanInformation {
   map<string, string> planInformation = 1;
+}
+
+message DumpContextQueryIdRequest {
+  uint64 queryId = 1;
 }

@@ -76,7 +76,7 @@ class DumpContext {
     */
     void dump(std::string const& scope, QueryCompilation::PipelineQueryPlanPtr const& queryPlan);
 
-    std::map<std::string, std::map<std::string, std::string>> getDumpContextInfo();
+    std::map<std::string, std::map<std::string, std::string>> getDumpContextInfo(std::string queryId);
 
   private:
     std::string context;

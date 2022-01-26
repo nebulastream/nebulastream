@@ -145,5 +145,20 @@ Status WorkerRPCServer::GetDumpContextInfo(ServerContext*, const DumpContextRequ
     }
     return Status::CANCELLED;
 }
+Status WorkerRPCServer::GetDumpContextForQueryId(ServerContext*, const DumpContextQueryIdRequest* request, DumpContextPlanInformation* reply) {
+    try {
+        NES_DEBUG("WorkerRPCServer::GetDumpContextForQueryId: Got request for " << request->queryid());
+        std::map<std::string, std::string> dumpContext = nodeEngine->getDumpContextInfoForQuery(request->queryid());
+
+        auto& replyMap = *reply->mutable_planinformation();
+        for (auto const& [key, val] : dumpContext) {
+            replyMap[key] = val;
+        }
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: Requesting dump information failed" << ex.what());
+    }
+    return Status::CANCELLED;
+}
 
 }// namespace NES

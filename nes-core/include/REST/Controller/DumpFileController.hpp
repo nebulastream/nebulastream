@@ -13,7 +13,7 @@ namespace NES {
 
 class DumpFileController : public BaseController {
   public:
-    explicit DumpFileController(TopologyPtr topology, WorkerRPCClientPtr workerClient);
+    explicit DumpFileController(TopologyPtr topology, WorkerRPCClientPtr workerClient, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~DumpFileController() = default;
     /**
@@ -26,6 +26,7 @@ class DumpFileController : public BaseController {
   private:
     TopologyPtr topology;
     WorkerRPCClientPtr workerClient;
+    GlobalExecutionPlanPtr globalExecutionPlan;
 };
 
 using DumpFileControllerPtr = std::shared_ptr<DumpFileController>;

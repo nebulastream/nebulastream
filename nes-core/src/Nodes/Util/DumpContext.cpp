@@ -60,10 +60,10 @@ void DumpContext::dump(const std::string& scope, const QueryCompilation::Pipelin
     }
 }
 
-std::map<std::string, std::map<std::string, std::string>> DumpContext::getDumpContextInfo() {
+std::map<std::string, std::map<std::string, std::string>> DumpContext::getDumpContextInfo(std::string queryId) {
     std::map<std::string, std::map<std::string, std::string>> allContextInfo;
     for (auto& handler : dumpHandlers) {
-        allContextInfo.insert(std::pair<std::string, std::map<std::string, std::string>>(context, handler->getDumpAsMap()));
+        allContextInfo.insert(std::pair<std::string, std::map<std::string, std::string>>(queryId, handler->getDumpAsMap()));
     }
     return allContextInfo;
 }

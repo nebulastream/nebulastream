@@ -44,7 +44,9 @@ class DefaultQueryCompiler : public QueryCompiler {
 
     std::map<std::string, std::map<std::string, std::string>> getDumpContextInfo() override;
 
-  protected:
+    std::map<std::string, std::string> getDumpContextInfoForQueryId(uint64_t queryId) override;
+
+        protected:
     DefaultQueryCompiler(QueryCompilerOptionsPtr const& options,
                          Phases::PhaseFactoryPtr const& phaseFactory,
                          Compiler::JITCompilerPtr jitCompiler);

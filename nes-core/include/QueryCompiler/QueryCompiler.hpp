@@ -34,6 +34,7 @@ class QueryCompiler {
     virtual QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) = 0;
     virtual ~QueryCompiler() = default;
     virtual std::map<std::string, std::map<std::string, std::string>> getDumpContextInfo() = 0;
+    virtual std::map<std::string, std::string> getDumpContextInfoForQueryId(uint64_t queryId) = 0;
 
         protected:
     explicit QueryCompiler(QueryCompilerOptionsPtr const& options) noexcept : queryCompilerOptions(options) {}

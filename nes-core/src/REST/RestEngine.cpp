@@ -50,7 +50,7 @@ RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
     monitoringController = std::make_shared<MonitoringController>(monitoringService, bufferManager);
     topologyController = std::make_shared<TopologyController>(topology);
     udfCatalogController = std::make_shared<UdfCatalogController>(udfCatalog);
-    dumpFileController = std::make_shared<DumpFileController>(topology, workerClient);
+    dumpFileController = std::make_shared<DumpFileController>(topology, workerClient, globalExecutionPlan);
 }
 
 void RestEngine::initRestOpHandlers() {

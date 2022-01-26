@@ -22,18 +22,19 @@ limitations under the License.
 #include <cpprest/http_msg.h>
 #include <utility>
 #include <vector>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 
 namespace NES {
 
-DumpFileController::DumpFileController(TopologyPtr topology, WorkerRPCClientPtr workerClient)
-    : topology(std::move(topology)), workerClient(std::move(workerClient)) {
+DumpFileController::DumpFileController(TopologyPtr topology, WorkerRPCClientPtr workerClient, GlobalExecutionPlanPtr globalExecutionPlan)
+    : topology(std::move(topology)), workerClient(std::move(workerClient)), globalExecutionPlan(std::move(globalExecutionPlan)) {
     NES_DEBUG("Created DumpFileController");
 }
 
 void DumpFileController::handleGet(const std::vector<utility::string_t>& paths, web::http::http_request& message) {
-    NES_DEBUG("TopologyController: GET DumpFiles");
-
     if (paths[1] == "node") {
+        NES_DEBUG("DumpFileController: GET DumpFiles for a single node");
         auto strNodeId = paths[2];
         if (!strNodeId.empty() && std::all_of(strNodeId.begin(), strNodeId.end(), ::isdigit)) {
             // call node
@@ -53,8 +54,37 @@ void DumpFileController::handleGet(const std::vector<utility::string_t>& paths, 
                 return;
             }
         }
-        // else bad request
+    } else if (paths[1] == "queryId"){
+        NES_DEBUG("DumpFileController: GET DumpFiles for a query id");
+        auto queryIdString = paths[2];
+        if (!queryIdString.empty() && std::all_of(queryIdString.begin(), queryIdString.end(), ::isdigit)) {
+            NES_DEBUG("DumpFileController: GET DumpFiles for " << queryIdString);
+            QueryId queryId = std::stoi(queryIdString);
+            std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+            //Prepare the response
+            web::json::value restResponse{};
+
+            for(const auto& execNode: executionNodes) {
+                TopologyNodePtr topologyNode = execNode->getTopologyNode();
+                auto nodeIp = topologyNode->getIpAddress();
+                auto nodeGrpcPort = topologyNode->getGrpcPort();
+                std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
+                std::string jsonAsString;
+                auto success = workerClient->getDumpInfoForQueryId(destAddress, &jsonAsString, queryId);
+
+                if (success) {
+                    uint64_t topologyNodeId = topologyNode->getId();
+                    NES_DEBUG("DumpFileController: successfully retrieved dump files for " << topologyNodeId);
+                    restResponse[topologyNodeId] = web::json::value::string(jsonAsString);
+                }
+            }
+            NES_DEBUG("DumpFileController: sending the dump files to the client");
+            successMessageImpl(message, restResponse);
+            return;
+        }
+    } else {
+
+        resourceNotFoundImpl(message);
     }
-    resourceNotFoundImpl(message);
 }
 }

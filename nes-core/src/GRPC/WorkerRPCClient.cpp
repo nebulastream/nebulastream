@@ -379,4 +379,27 @@ bool WorkerRPCClient::getDumpInfoFromNode(const std::string& address, std::strin
     return false;
 }
 
+bool WorkerRPCClient::getDumpInfoForQueryId(const std::string& address, std::string* mapAsJson, QueryId queryId) {
+    DumpContextPlanInformation reply;
+    ClientContext context;
+
+    DumpContextQueryIdRequest request;
+    request.set_queryid(queryId);
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->GetDumpContextForQueryId(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::getDumpInfoForQueryId: return Dump Context Info");
+        google::protobuf::util::MessageToJsonString(reply, mapAsJson);
+        return true;
+    }
+    NES_DEBUG(" WorkerRPCClient::getDumpInfoForQueryId "
+              "error="
+              << status.error_code() << ": " << status.error_message());
+    throw Exception("Error while WorkerRPCClient::getDumpInfoForQueryId");
+    return false;
+}
+
 }// namespace NES

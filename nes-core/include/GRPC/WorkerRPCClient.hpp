@@ -157,7 +157,7 @@ class WorkerRPCClient {
 
     static bool getDumpInfoFromNode(const std::string& address, std::string* mapAsJson);
 
-  private:
+    static bool getDumpInfoForQueryId(const std::string& address, std::string* mapAsJson, QueryId queryId);
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 

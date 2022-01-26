@@ -273,6 +273,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     HardwareManagerPtr getHardwareManager() const;
 
     std::map<std::string, std::map<std::string, std::string>> getDumpContextInfo();
+    std::map<std::string, std::string> getDumpContextInfoForQuery(uint64_t queryId);
 
   private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;

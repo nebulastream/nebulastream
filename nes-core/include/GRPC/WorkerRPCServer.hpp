@@ -54,6 +54,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetDumpContextInfo(ServerContext* context, const DumpContextRequest* request, DumpContextReply* reply) override;
 
+    Status GetDumpContextForQueryId(ServerContext* context, const DumpContextQueryIdRequest* request, DumpContextPlanInformation* reply) override;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
