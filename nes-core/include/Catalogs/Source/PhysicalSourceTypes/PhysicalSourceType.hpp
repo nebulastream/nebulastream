@@ -40,7 +40,8 @@ enum SourceType {
     MEMORY_SOURCE,
     MQTT_SOURCE,
     LAMBDA_SOURCE,
-    BENCHMARK_SOURCE
+    BENCHMARK_SOURCE,
+    MATERIALIZEDVIEW_SOURCE
 };
 
 /**
@@ -52,6 +53,7 @@ static std::map<std::string, SourceType> stringToSourceType{{Configurations::SEN
                                                             {Configurations::MQTT_SOURCE_CONFIG, MQTT_SOURCE},
                                                             {Configurations::KAFKA_SOURCE_CONFIG, KAFKA_SOURCE},
                                                             {Configurations::OPC_SOURCE_CONFIG, OPC_SOURCE},
+                                                            {Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG, MATERIALIZEDVIEW_SOURCE},
                                                             {Configurations::DEFAULT_SOURCE_CONFIG, DEFAULT_SOURCE}};
 
 /**
@@ -63,6 +65,7 @@ static std::map<SourceType, std::string> sourceTypeToString{{SENSE_SOURCE, Confi
                                                             {MQTT_SOURCE, Configurations::MQTT_SOURCE_CONFIG},
                                                             {KAFKA_SOURCE, Configurations::KAFKA_SOURCE_CONFIG},
                                                             {OPC_SOURCE, Configurations::OPC_SOURCE_CONFIG},
+                                                            {MATERIALIZEDVIEW_SOURCE, Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG},
                                                             {DEFAULT_SOURCE, Configurations::DEFAULT_SOURCE_CONFIG}};
 
 class PhysicalSourceType;

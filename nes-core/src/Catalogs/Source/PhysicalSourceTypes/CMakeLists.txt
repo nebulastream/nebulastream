@@ -24,4 +24,5 @@ add_source_nes(
         MQTTSourceType.cpp
         OPCSourceType.cpp
         SenseSourceType.cpp
+        MaterializedViewSourceType.cpp
 )
