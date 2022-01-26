@@ -132,7 +132,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
 
     std::cout << " plan before=" << queryPlan->toString() << std::endl;
     // Execute
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    auto distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     const QueryPlanPtr updatedPlan = distributeWindowRule->apply(queryPlan);
 
     std::cout << " plan after=" << queryPlan->toString() << std::endl;
@@ -161,7 +161,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 
     std::cout << " plan before window distr=" << queryPlan->toString() << std::endl;
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    auto distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     updatedPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
 
@@ -194,7 +194,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 
     std::cout << " plan before window distr=" << queryPlan->toString() << std::endl;
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    auto distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     updatedPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
 

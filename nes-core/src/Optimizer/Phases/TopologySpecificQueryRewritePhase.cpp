@@ -24,7 +24,7 @@ namespace NES::Optimizer {
 TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(SourceCatalogPtr streamCatalog,
                                                                                bool performOnlySourceOperatorExpansion) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(
-        TopologySpecificQueryRewritePhase(std::move(streamCatalog), performOnlySourceOperatorExpansion));
+        TopologySpecificQueryRewritePhase(std::move(streamCatalog), performOnlySourceOperatorExpansion, windowDistributionChildrenThreshold, windowDistributionCombinerThreshold));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(SourceCatalogPtr streamCatalog,
