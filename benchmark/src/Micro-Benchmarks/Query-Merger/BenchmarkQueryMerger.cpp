@@ -34,7 +34,7 @@
 #include <Util/yaml/Yaml.hpp>
 #include <fstream>
 #include <util/BenchmarkUtils.hpp>
-#include "Util/UtilityFunctions.hpp"
+#include <Util/UtilityFunctions.hpp>
 
 using namespace NES;
 using namespace NES::Benchmarking;

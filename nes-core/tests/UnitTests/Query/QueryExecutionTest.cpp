@@ -321,9 +321,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
 }
 
 TEST_F(QueryExecutionTest, projectionQuery) {
-//    auto defaultSourceType = DefaultSourceType::create();
-//    PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
-
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
