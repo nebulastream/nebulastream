@@ -18,6 +18,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_FILTER_LOGICAL_OPERATOR_NODE_HPP_
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
 
 namespace NES {
 

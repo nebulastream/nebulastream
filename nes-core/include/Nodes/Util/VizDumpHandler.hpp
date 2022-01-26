@@ -20,6 +20,7 @@
 #include <Nodes/Util/DumpHandler.hpp>
 #include <memory>
 #include <vector>
+#include <Nodes/Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 namespace NES {
 
 class Node;
@@ -150,11 +151,14 @@ class VizDumpHandler : public DumpHandler {
     std::map<std::string, std::string> getDumpAsMap() override;
 
   private:
-    static void extractNodeProperties(detail::VizNode& node, const OperatorNodePtr& operatorNode);
+    void extractNodeProperties(detail::VizNode& node, const OperatorNodePtr& operatorNode);
     void dump(QueryPlanPtr queryPlan, const std::string& parent, detail::VizGraph& graph);
     void writeToFile(const std::string& scope, const std::string& name, const std::string& content);
     std::string rootDir;
     std::map<std::string , std::string> dumpAsMap;
+    std::string getLogicalBinaryExpression(ExpressionNodePtr expressionNode);
+    void getFilterPredicatePreOrder(ExpressionNodePtr node, std::map<uint64_t, std::string>& mapOfNodes,  std::vector<detail::VizEdge>& edges, uint64_t parentId);
+    void createPredicateEdge(std::string  currentId, std::string  parentId, std::vector<detail::VizEdge>& edges);
 };
 
 }// namespace NES

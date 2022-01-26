@@ -28,6 +28,15 @@
 #include <iostream>
 #include <utility>
 #include <boost/stacktrace.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include "Nodes/Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp"
+#include "Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp"
+#include "Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp"
+#include "Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp"
+#include "Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp"
+#include "Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp"
+#include "Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp"
+#include "Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp"
 
 namespace NES {
 
@@ -76,8 +85,13 @@ std::string detail::VizNode::serialize() {
     }
     ss << "\"properties\":[";
     for (auto& tuple : properties) {
-        auto quotedValue = Util::escapeJson(std::get<1>(tuple));
-        ss << "{\"" << std::get<0>(tuple) << "\":\"" << quotedValue << "\", \"type\" :\"" << std::get<2>(tuple) << "\"}";
+        // do this because otherwise the quotation marks are in bytes
+        if (std::get<0>(tuple) == "FilterPredicate") {
+            ss << "{\"" << std::get<0>(tuple) << "\":" << std::get<1>(tuple) << ", \"type\" :\"" << std::get<2>(tuple) << "\"}";
+        } else {
+            auto quotedValue = Util::escapeJson(std::get<1>(tuple));
+            ss << "{\"" << std::get<0>(tuple) << "\":\"" << quotedValue << "\", \"type\" :\"" << std::get<2>(tuple) << "\"}";
+        }
         if (&properties.back() != &tuple) {
             ss << ",";
         }
@@ -185,6 +199,92 @@ void VizDumpHandler::extractNodeProperties(detail::VizNode& node, const Operator
         auto unaryOperator = operatorNode->as<UnaryOperatorNode>();
         node.addProperty({"InputSchema", unaryOperator->getInputSchema()->toString(), ""});
         node.addProperty({"OutputSchema", unaryOperator->getOutputSchema()->toString(), ""});
+
+        if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+            auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
+            auto expressionNode = filterOperator->getPredicate();
+            std::map<uint64_t, std::string> mapOfPredicateNodes;
+            std::vector<detail::VizEdge> edges;
+            getFilterPredicatePreOrder(expressionNode, mapOfPredicateNodes, edges, 0);
+
+            // showing contents:
+            NES_DEBUG("VizDumpHandler::extractNodeProperties getPredicate Check");
+            std::stringstream ss;
+            ss << "{";
+            ss << "\"nodes\": [";
+            std::map<uint64_t, std::string>::iterator it = mapOfPredicateNodes.begin();
+            for (it=mapOfPredicateNodes.begin(); it!=mapOfPredicateNodes.end(); ++ it){
+                ss << R"({ "id": ")" << it->first << R"(", "label": ")" << it->second << "\"}, ";
+            }
+            ss.seekp(-1,ss.cur); ss << "], ";
+
+            ss << "\"edges\": [";
+            for (auto& edge : edges) {
+                ss << edge.serialize();
+                if (&edges.back() != &edge) {
+                    ss << ",";
+                }
+            }
+            ss << "]}";
+
+            NES_DEBUG("VizDumpHandler::extractNodeProperties check FilterPredicate" << ss.str());
+            node.addProperty({"FilterPredicate", ss.str(), ""});
+        }
+    }
+}
+
+void VizDumpHandler::getFilterPredicatePreOrder(ExpressionNodePtr node, std::map<uint64_t, std::string>& mapOfNodes, std::vector<detail::VizEdge>& edges, uint64_t parentId) {
+    std::string nodeAsString = getLogicalBinaryExpression(node);
+    NES_DEBUG("VizDumpHandler::getFilterPredicatePreOrder add node to map " << nodeAsString);
+
+    uint64_t nodeId = mapOfNodes.size() + 1;
+
+    if (node->instanceOf<BinaryExpressionNode>()){
+        auto binaryExpression = node->as<BinaryExpressionNode>();
+        mapOfNodes.insert(std::pair<uint64_t, std::string>((nodeId), nodeAsString));
+        if (parentId > 0) {
+            createPredicateEdge(std::to_string(nodeId), std::to_string(parentId), edges);
+        }
+
+        if (binaryExpression->getLeft()->instanceOf<ExpressionNode>()) {
+            NES_DEBUG("VizDumpHandler::getFilterPredicatePreOrder retrieving left leaf ");
+            getFilterPredicatePreOrder(binaryExpression->getLeft(), mapOfNodes, edges, nodeId);
+        }
+
+        if (binaryExpression->getRight()->instanceOf<ExpressionNode>()) {
+            NES_DEBUG("VizDumpHandler::getFilterPredicatePreOrder retrieving right leaf");
+            getFilterPredicatePreOrder(binaryExpression->getRight(), mapOfNodes, edges, nodeId);
+        }
+    } else {
+        mapOfNodes.insert(std::pair<uint64_t, std::string>((nodeId), nodeAsString));
+        createPredicateEdge(std::to_string(nodeId), std::to_string(parentId), edges);
+    }
+}
+
+void VizDumpHandler::createPredicateEdge(std::string currentId, std::string parentId, std::vector<detail::VizEdge>& edges) {
+    // target_source
+    std::string edgeId = parentId + "_" + currentId;
+    auto vizEdge = detail::VizEdge(edgeId, currentId,  parentId);
+    edges.emplace_back(vizEdge);
+}
+
+std::string VizDumpHandler::getLogicalBinaryExpression(ExpressionNodePtr expressionNode) {
+    if (expressionNode->instanceOf<AndExpressionNode>()) {
+        return "&&";
+    } else if (expressionNode->instanceOf<EqualsExpressionNode>()) {
+        return "==";
+    } else if (expressionNode->instanceOf<GreaterEqualsExpressionNode>()) {
+        return ">=";
+    } else if (expressionNode->instanceOf<GreaterExpressionNode>()) {
+        return ">";
+    } else if (expressionNode->instanceOf<LessEqualsExpressionNode>()) {
+        return "<=";
+    } else if (expressionNode->instanceOf<LessExpressionNode>()) {
+        return "<";
+    } else if (expressionNode->instanceOf<OrExpressionNode>()) {
+        return "||";
+    } else {
+        return expressionNode->toString();
     }
 }
 

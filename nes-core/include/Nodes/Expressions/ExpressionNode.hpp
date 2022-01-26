@@ -18,6 +18,7 @@
 #define NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSION_NODE_HPP_
 #include <Nodes/Node.hpp>
 #include <memory>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES {
 
 class Schema;

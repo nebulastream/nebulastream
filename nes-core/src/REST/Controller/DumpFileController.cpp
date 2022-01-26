@@ -75,7 +75,8 @@ void DumpFileController::handleGet(const std::vector<utility::string_t>& paths, 
                 if (success) {
                     uint64_t topologyNodeId = topologyNode->getId();
                     NES_DEBUG("DumpFileController: successfully retrieved dump files for " << topologyNodeId);
-                    restResponse[topologyNodeId] = web::json::value::string(jsonAsString);
+                    web::json::value dumpInfoForNode = web::json::value::parse("{ \"" + std::to_string(topologyNodeId) + "\" : " + jsonAsString + " }");
+                    restResponse[restResponse.size()] = dumpInfoForNode;
                 }
             }
             NES_DEBUG("DumpFileController: sending the dump files to the client");
