@@ -598,4 +598,89 @@ TEST_F(RESTEndpointTest, DISABLED_DelegateGetRequestToRetrieveUdfDescriptor) {
     // Skip verifying the remaining contents of the response, that is already done in UdfCatalogControllerTest.
     stopCoordinator(*coordinator);
 }
+
+// Tests in RESTEndpointTest.cpp have been observed to fail randomly. Related issue: #2239
+TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
+    auto coordinator = createAndStartCoordinator();
+    auto restClient = createRestClient("maintenance/mark");
+    web::json::value missingIDRequest;
+    missingIDRequest["migrationType"] = web::json::value::number(1);
+    web::json::value missingIDResponse;
+    int missingIDStatusCode = 0;
+    restClient.request(web::http::methods::POST, "maintenance/mark",missingIDRequest)
+        .then([&missingIDStatusCode](const web::http::http_response& response) {
+            missingIDStatusCode = response.status_code();
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&missingIDResponse](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("post addLogicalStream-ex: set return");
+                missingIDResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
+            }
+        })
+        .wait();
+    EXPECT_EQ(missingIDStatusCode, 400);
+    EXPECT_TRUE(missingIDResponse.has_field("detail"));
+    EXPECT_EQ(missingIDResponse["detail"].as_string(), "Field id must be provided");
+
+
+
+    web::json::value missingMigrationTypeRequest;
+    missingMigrationTypeRequest["id"] = web::json::value::number(1);
+    web::json::value missingMigrationTypeResponse;
+    int missingMigrationTypeStatusCode = 0;
+    restClient.request(web::http::methods::POST, "maintenance/mark",missingMigrationTypeRequest)
+        .then([&missingMigrationTypeStatusCode](const web::http::http_response& response) {
+            missingMigrationTypeStatusCode = response.status_code();
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&missingMigrationTypeResponse](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("post addLogicalStream-ex: set return");
+                missingMigrationTypeResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
+            }
+        })
+        .wait();
+    EXPECT_EQ(missingMigrationTypeStatusCode, 400);
+    EXPECT_TRUE(missingMigrationTypeResponse.has_field("detail"));
+    EXPECT_EQ(missingMigrationTypeResponse["detail"].as_string(), "Field migrationType must be provided");
+
+
+
+    web::json::value validRequest;
+    validRequest["id"] = web::json::value::number(1);
+    validRequest["migrationType"] = web::json::value::number(1);
+    web::json::value validRequestResponse;
+    int validRequestStatusCode = 0;
+    restClient.request(web::http::methods::POST, "maintenance/mark", validRequest)
+        .then([&validRequestStatusCode](const web::http::http_response& response) {
+            validRequestStatusCode = response.status_code();
+            NES_INFO("get first then");
+            return response.extract_json();
+        })
+        .then([&validRequestResponse](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("post addLogicalStream-ex: set return");
+                validRequestResponse = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("post addLogicalStream-ex: error while setting return" << e.what());
+            }
+        })
+        .wait();
+    EXPECT_EQ(validRequestStatusCode, 200);
+    EXPECT_TRUE(validRequestResponse.has_field("Info"));
+    EXPECT_TRUE(validRequestResponse.has_field("Node Id"));
+    EXPECT_TRUE(validRequestResponse.has_field("Migration Type"));
+    EXPECT_EQ(validRequestResponse["Info"].as_string(), "Successfully submitted Maintenance Request");
+    EXPECT_EQ(validRequestResponse["Node Id"].as_integer(), 1);
+    EXPECT_EQ(validRequestResponse["Migration Type"].as_integer(), 1);
+
+    stopCoordinator(*coordinator);
+}
 }// namespace NES
