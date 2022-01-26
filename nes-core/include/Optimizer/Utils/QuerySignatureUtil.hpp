@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPTIMIZER_UTILS_QUERY_SIGNATURE_UTIL_HPP_
-#define NES_INCLUDE_OPTIMIZER_UTILS_QUERY_SIGNATURE_UTIL_HPP_
+#ifndef NES_INCLUDE_OPTIMIZER_UTILS_QUERYSIGNATUREUTIL_HPP_
+#define NES_INCLUDE_OPTIMIZER_UTILS_QUERYSIGNATUREUTIL_HPP_
 
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <memory>
@@ -129,4 +129,4 @@ class QuerySignatureUtil {
 };
 }// namespace NES::Optimizer
 
-#endif// NES_INCLUDE_OPTIMIZER_UTILS_QUERY_SIGNATURE_UTIL_HPP_
+#endif  // NES_INCLUDE_OPTIMIZER_UTILS_QUERYSIGNATUREUTIL_HPP_

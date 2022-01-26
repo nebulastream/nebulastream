@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_BLOCKING_QUEUE_HPP_
-#define NES_INCLUDE_UTIL_BLOCKING_QUEUE_HPP_
+#ifndef NES_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_
+#define NES_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_
 
 #include <Util/Logger.hpp>
 #include <algorithm>
@@ -126,4 +126,4 @@ class BlockingQueue {
     }
 };
 }// namespace NES
-#endif// NES_INCLUDE_UTIL_BLOCKING_QUEUE_HPP_
+#endif  // NES_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_
-#define NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_
+#ifndef NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
+#define NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
@@ -142,4 +142,4 @@ class CoordinatorRPCClient {
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
 }// namespace NES
-#endif// NES_INCLUDE_GRPC_COORDINATOR_RPC_CLIENT_HPP_
+#endif  // NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_

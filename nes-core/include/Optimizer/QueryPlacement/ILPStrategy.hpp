@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_ILP_STRATEGY_HPP_
-#define NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_ILP_STRATEGY_HPP_
+#ifndef NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_
 
 #include <Nodes/Node.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
@@ -143,4 +143,4 @@ class ILPStrategy : public BasePlacementStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif// NES_INCLUDE_OPTIMIZER_QUERY_PLACEMENT_ILP_STRATEGY_HPP_
+#endif  // NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_ILPSTRATEGY_HPP_

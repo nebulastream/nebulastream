@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERY_COMPILER_PHASES_BUFFER_OPTIMIZATION_PHASE_HPP_
-#define NES_INCLUDE_QUERY_COMPILER_PHASES_BUFFER_OPTIMIZATION_PHASE_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_
 
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -68,4 +68,4 @@ class BufferOptimizationPhase {
 };
 }// namespace QueryCompilation
 }// namespace NES
-#endif// NES_INCLUDE_QUERY_COMPILER_PHASES_BUFFER_OPTIMIZATION_PHASE_HPP_
+#endif  // NES_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_

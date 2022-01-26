@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_ZMQ_UTILS_HPP_
-#define NES_INCLUDE_NETWORK_ZMQ_UTILS_HPP_
+#ifndef NES_INCLUDE_NETWORK_ZMQUTILS_HPP_
+#define NES_INCLUDE_NETWORK_ZMQUTILS_HPP_
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkMessage.hpp>
@@ -85,4 +85,4 @@ void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdenti
 }// namespace Network
 }// namespace NES
 
-#endif// NES_INCLUDE_NETWORK_ZMQ_UTILS_HPP_
+#endif  // NES_INCLUDE_NETWORK_ZMQUTILS_HPP_

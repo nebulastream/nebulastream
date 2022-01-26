@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_CSVSOURCETYPE_HPP
-#define NES_CSVSOURCETYPE_HPP
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -156,4 +156,4 @@ class CSVSourceType : public PhysicalSourceType {
 };
 
 }// namespace NES
-#endif
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_

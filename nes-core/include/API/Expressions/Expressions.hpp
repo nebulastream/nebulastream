@@ -98,4 +98,4 @@ ExpressionItem Attribute(std::string name);
 ExpressionItem Attribute(std::string name, BasicType type);
 
 }//end of namespace NES
-#endif// NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
+#endif  // NES_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_

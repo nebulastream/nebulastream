@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_KAFKASOURCETYPECONFIG_HPP
-#define NES_KAFKASOURCETYPECONFIG_HPP
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -133,4 +133,4 @@ class KafkaSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption connectionTimeout;
 };
 }// namespace NES
-#endif
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_

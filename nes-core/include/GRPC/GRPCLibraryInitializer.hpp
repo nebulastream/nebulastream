@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_GRPC_GRPC_LIBRARY_INITIALIZER_HPP_
-#define NES_INCLUDE_GRPC_GRPC_LIBRARY_INITIALIZER_HPP_
+#ifndef NES_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_
+#define NES_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_
 
 namespace NES {
 class GrpcLibraryInizializer {
@@ -25,4 +25,4 @@ class GrpcLibraryInizializer {
 };
 }// namespace NES
 
-#endif// NES_INCLUDE_GRPC_GRPC_LIBRARY_INITIALIZER_HPP_
+#endif  // NES_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_

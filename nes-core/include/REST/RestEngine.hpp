@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_REST_REST_ENGINE_HPP_
-#define NES_INCLUDE_REST_REST_ENGINE_HPP_
+#ifndef NES_INCLUDE_REST_RESTENGINE_HPP_
+#define NES_INCLUDE_REST_RESTENGINE_HPP_
 
 #if defined(__APPLE__) || defined(__MACH__)
 #include <xlocale.h>
@@ -146,4 +146,4 @@ class RestEngine {
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;
 }// namespace NES
-#endif// NES_INCLUDE_REST_REST_ENGINE_HPP_
+#endif  // NES_INCLUDE_REST_RESTENGINE_HPP_

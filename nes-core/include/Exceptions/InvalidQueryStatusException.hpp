@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_STATUS_EXCEPTION_HPP_
-#define NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_STATUS_EXCEPTION_HPP_
+#ifndef NES_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATUSEXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATUSEXCEPTION_HPP_
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <stdexcept>
@@ -34,4 +34,4 @@ class InvalidQueryStatusException : public std::exception {
     std::string message;
 };
 }// namespace NES
-#endif// NES_INCLUDE_EXCEPTIONS_INVALID_QUERY_STATUS_EXCEPTION_HPP_
+#endif  // NES_INCLUDE_EXCEPTIONS_INVALIDQUERYSTATUSEXCEPTION_HPP_

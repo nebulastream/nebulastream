@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_
-#define NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_
+#ifndef NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
+#define NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <vector>
 
@@ -78,4 +78,4 @@ class NodeEngineFactory {
 
 }// namespace Runtime
 }// namespace NES
-#endif// NES_INCLUDE_RUNTIME_NODE_ENGINE_FACTORY_HPP_
+#endif  // NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_

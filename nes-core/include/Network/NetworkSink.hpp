@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_
-#define NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_
+#ifndef NES_INCLUDE_NETWORK_NETWORKSINK_HPP_
+#define NES_INCLUDE_NETWORK_NETWORKSINK_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/Events.hpp>
@@ -122,4 +122,4 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 }// namespace Network
 }// namespace NES
 
-#endif// NES_INCLUDE_NETWORK_NETWORK_SINK_HPP_
+#endif  // NES_INCLUDE_NETWORK_NETWORKSINK_HPP_

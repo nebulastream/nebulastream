@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMMON_VALUE_TYPES_VALUE_TYPE_HPP_
-#define NES_INCLUDE_COMMON_VALUE_TYPES_VALUE_TYPE_HPP_
+#ifndef NES_INCLUDE_COMMON_VALUETYPES_VALUETYPE_HPP_
+#define NES_INCLUDE_COMMON_VALUETYPES_VALUETYPE_HPP_
 
 #include <bitset>
 #include <memory>
@@ -52,4 +52,4 @@ class [[nodiscard]] ValueType {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_COMMON_VALUE_TYPES_VALUE_TYPE_HPP_
+#endif  // NES_INCLUDE_COMMON_VALUETYPES_VALUETYPE_HPP_

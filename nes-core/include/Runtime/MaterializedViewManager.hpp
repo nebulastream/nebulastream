@@ -71,4 +71,4 @@ public:
 
 }; // class MaterializedViewManager
 } // namespace NES::Experimental::MaterializedView
-#endif//NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_
+#endif  // NES_INCLUDE_RUNTIME_MATERIALIZEDVIEWMANAGER_HPP_

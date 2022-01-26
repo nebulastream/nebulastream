@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICS_INT_COUNTER_HPP_
-#define NES_INCLUDE_MONITORING_METRICS_INT_COUNTER_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICS_INTCOUNTER_HPP_
+#define NES_INCLUDE_MONITORING_METRICS_INTCOUNTER_HPP_
 
 #include <Monitoring/Metrics/Counter.hpp>
 #include <cstdint>
@@ -67,4 +67,4 @@ class IntCounter : public Counter {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_METRICS_INT_COUNTER_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICS_INTCOUNTER_HPP_

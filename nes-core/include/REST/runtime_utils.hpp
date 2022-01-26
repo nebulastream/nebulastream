@@ -37,4 +37,4 @@ class RuntimeUtils {
     }
 };
 }// namespace NES
-#endif// NES_INCLUDE_REST_RUNTIME_UTILS_HPP_
+#endif  // NES_INCLUDE_REST_RUNTIME_UTILS_HPP_

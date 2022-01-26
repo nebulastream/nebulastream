@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_BUFFER_HPP_
-#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_BUFFER_HPP_
+#ifndef NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTTUPLEBUFFER_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTTUPLEBUFFER_HPP_
 
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -217,4 +217,4 @@ std::tuple<Types...> RowLayoutTupleBuffer::readRecord(uint64_t recordIndex) {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_ROW_LAYOUT_BUFFER_HPP_
+#endif  // NES_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTTUPLEBUFFER_HPP_

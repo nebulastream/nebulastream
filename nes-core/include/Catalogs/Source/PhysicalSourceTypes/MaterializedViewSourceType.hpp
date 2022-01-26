@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MATERIALIZEDVIEWSOURCETYPE_HPP
-#define NES_MATERIALIZEDVIEWSOURCETYPE_HPP
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MATERIALIZEDVIEWSOURCETYPE_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MATERIALIZEDVIEWSOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/ConfigurationOption.hpp>
@@ -87,4 +87,4 @@ class MaterializedViewSourceType : public PhysicalSourceType {
 }// namespace Experimental::MaterializedView
 }// namespace Configurations
 }// namespace NES
-#endif//NES_MATERIALIZEDVIEWSOURCETYPE_HPP
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MATERIALIZEDVIEWSOURCETYPE_HPP_

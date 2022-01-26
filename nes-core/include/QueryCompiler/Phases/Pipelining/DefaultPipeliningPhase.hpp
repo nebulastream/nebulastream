@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_DEFAULT_PIPELINING_PHASE_HPP_
-#define NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_DEFAULT_PIPELINING_PHASE_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <map>
 namespace NES {
@@ -72,4 +72,4 @@ class DefaultPipeliningPhase : public PipeliningPhase {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_INCLUDE_QUERY_COMPILER_PHASES_PIPELINING_DEFAULT_PIPELINING_PHASE_HPP_
+#endif  // NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_

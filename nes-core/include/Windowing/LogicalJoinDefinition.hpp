@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_LOGICAL_JOIN_DEFINITION_HPP_
-#define NES_INCLUDE_WINDOWING_LOGICAL_JOIN_DEFINITION_HPP_
+#ifndef NES_INCLUDE_WINDOWING_LOGICALJOINDEFINITION_HPP_
+#define NES_INCLUDE_WINDOWING_LOGICALJOINDEFINITION_HPP_
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <cstdint>
@@ -163,4 +163,4 @@ class LogicalJoinDefinition {
 
 using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 }// namespace NES::Join
-#endif// NES_INCLUDE_WINDOWING_LOGICAL_JOIN_DEFINITION_HPP_
+#endif  // NES_INCLUDE_WINDOWING_LOGICALJOINDEFINITION_HPP_

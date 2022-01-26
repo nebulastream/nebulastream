@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_REST_CONTROLLER_QUERY_CONTROLLER_HPP_
-#define NES_INCLUDE_REST_CONTROLLER_QUERY_CONTROLLER_HPP_
+#ifndef NES_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
+#define NES_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_
 
 #include <REST/Controller/BaseController.hpp>
 #include <REST/CpprestForwardedRefs.hpp>
@@ -76,4 +76,4 @@ class QueryController : public BaseController {
 using QueryControllerPtr = std::shared_ptr<QueryController>;
 
 }// namespace NES
-#endif// NES_INCLUDE_REST_CONTROLLER_QUERY_CONTROLLER_HPP_
+#endif  // NES_INCLUDE_REST_CONTROLLER_QUERYCONTROLLER_HPP_

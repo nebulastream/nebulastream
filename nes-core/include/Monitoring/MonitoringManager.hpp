@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
-#define NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
+#ifndef NES_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
+#define NES_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
@@ -106,4 +106,4 @@ using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
+#endif  // NES_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_

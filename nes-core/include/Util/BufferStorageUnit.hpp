@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_BUFFER_STORAGE_UNIT_HPP_
-#define NES_INCLUDE_UTIL_BUFFER_STORAGE_UNIT_HPP_
+#ifndef NES_INCLUDE_UTIL_BUFFERSTORAGEUNIT_HPP_
+#define NES_INCLUDE_UTIL_BUFFERSTORAGEUNIT_HPP_
 
 namespace NES::Runtime {
 /**
@@ -57,4 +57,4 @@ class BufferStorageUnit {
 
 using BufferStorageUnitPtr = std::shared_ptr<BufferStorageUnit>;
 }// namespace NES::Runtime
-#endif// NES_INCLUDE_UTIL_BUFFER_STORAGE_UNIT_HPP_
+#endif  // NES_INCLUDE_UTIL_BUFFERSTORAGEUNIT_HPP_

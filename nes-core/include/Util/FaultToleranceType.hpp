@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_FAULTTOLERANCETYPE_H
-#define NES_FAULTTOLERANCETYPE_H
+#ifndef NES_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
+#define NES_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
@@ -33,4 +33,4 @@ std::string toString(const FaultToleranceType faultToleranceMode);
 FaultToleranceType stringToFaultToleranceTypeMap(const std::string faultToleranceMode);
 }// namespace NES
 
-#endif//NES_FAULTTOLERANCETYPE_H
+#endif  // NES_INCLUDE_UTIL_FAULTTOLERANCETYPE_HPP_

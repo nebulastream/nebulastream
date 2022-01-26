@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_NESTYPE_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_NESTYPE_HPP_
+#ifndef NES_INCLUDE_COMMON_EXECUTABLETYPE_NESTYPE_HPP_
+#define NES_INCLUDE_COMMON_EXECUTABLETYPE_NESTYPE_HPP_
 
 #include <cstdint>
 #include <type_traits>
@@ -58,4 +58,4 @@ template<class Type>
 concept IsArray = std::is_fundamental_v<std::remove_pointer_t<Type>> || std::is_base_of_v<NESType, Type>;
 
 }// namespace NES
-#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_NESTYPE_HPP_
+#endif  // NES_INCLUDE_COMMON_EXECUTABLETYPE_NESTYPE_HPP_

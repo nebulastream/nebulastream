@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
-#define NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICSTORE_HPP_
+#define NES_INCLUDE_MONITORING_METRICSTORE_HPP_
 
 #include <Util/Logger.hpp>
 #include <cstdint>
@@ -79,4 +79,4 @@ using MetricStorePtr = std::shared_ptr<MetricStore>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_METRIC_STORE_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICSTORE_HPP_

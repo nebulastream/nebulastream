@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_MAX_AGGREGATION_DESCRIPTOR_HPP_
-#define NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_MAX_AGGREGATION_DESCRIPTOR_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_MAXAGGREGATIONDESCRIPTOR_HPP_
+#define NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_MAXAGGREGATIONDESCRIPTOR_HPP_
 
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 namespace NES::Windowing {
@@ -52,4 +52,4 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
     explicit MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
 };
 }// namespace NES::Windowing
-#endif// NES_INCLUDE_WINDOWING_WINDOW_AGGREGATIONS_MAX_AGGREGATION_DESCRIPTOR_HPP_
+#endif  // NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_MAXAGGREGATIONDESCRIPTOR_HPP_

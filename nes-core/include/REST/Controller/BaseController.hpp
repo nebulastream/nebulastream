@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_REST_CONTROLLER_BASE_CONTROLLER_HPP_
-#define NES_INCLUDE_REST_CONTROLLER_BASE_CONTROLLER_HPP_
+#ifndef NES_INCLUDE_REST_CONTROLLER_BASECONTROLLER_HPP_
+#define NES_INCLUDE_REST_CONTROLLER_BASECONTROLLER_HPP_
 
 #include <REST/CpprestForwardedRefs.hpp>
 #include <cpprest/http_msg.h>
@@ -138,4 +138,4 @@ class BaseController {
     static std::map<utility::string_t, utility::string_t> getParameters(web::http::http_request& request);
 };
 }// namespace NES
-#endif// NES_INCLUDE_REST_CONTROLLER_BASE_CONTROLLER_HPP_
+#endif  // NES_INCLUDE_REST_CONTROLLER_BASECONTROLLER_HPP_

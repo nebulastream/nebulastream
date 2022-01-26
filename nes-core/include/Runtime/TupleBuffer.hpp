@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_TUPLE_BUFFER_HPP_
-#define NES_INCLUDE_RUNTIME_TUPLE_BUFFER_HPP_
+#ifndef NES_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
+#define NES_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
 
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <atomic>
@@ -251,4 +251,4 @@ class TupleBuffer {
 };
 
 }// namespace NES::Runtime
-#endif// NES_INCLUDE_RUNTIME_TUPLE_BUFFER_HPP_
+#endif  // NES_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_

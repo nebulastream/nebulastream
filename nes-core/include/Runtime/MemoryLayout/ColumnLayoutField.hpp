@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_FIELD_HPP_
-#define NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_FIELD_HPP_
+#ifndef NES_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_
+#define NES_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_
 
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
@@ -113,4 +113,4 @@ inline T& ColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
 
 }// namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_INCLUDE_RUNTIME_MEMORY_LAYOUT_DYNAMIC_COLUMN_LAYOUT_FIELD_HPP_
+#endif  // NES_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_

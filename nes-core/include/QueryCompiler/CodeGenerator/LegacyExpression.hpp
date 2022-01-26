@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_LEGACY_EXPRESSION_HPP_
-#define NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_LEGACY_EXPRESSION_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_LEGACYEXPRESSION_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_LEGACYEXPRESSION_HPP_
 
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CodeGenerator/OperatorTypes.hpp>
@@ -213,4 +213,4 @@ Predicate operator<<(const PredicateItem& lhs, const PredicateItem& rhs);
 Predicate operator>>(const PredicateItem& lhs, const PredicateItem& rhs);
 }// namespace QueryCompilation
 }//end of namespace NES
-#endif// NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_LEGACY_EXPRESSION_HPP_
+#endif  // NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_LEGACYEXPRESSION_HPP_

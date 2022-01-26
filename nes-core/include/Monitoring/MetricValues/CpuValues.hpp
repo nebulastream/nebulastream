@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_VALUES_HPP_
-#define NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_VALUES_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
+#define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -87,4 +87,4 @@ void writeToBuffer(const CpuValues& metrics, Runtime::TupleBuffer& buf, uint64_t
 
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_VALUES_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_

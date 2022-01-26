@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZED_VIEW_SINK_HPP_
-#define NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZED_VIEW_SINK_HPP_
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZEDVIEWSINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZEDVIEWSINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 
@@ -80,4 +80,4 @@ class MaterializedViewSink : public SinkMedium {
 }; // class MaterializedViewSink
 } // namespace NES::Experimental::MaterializedView
 
-#endif//NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZED_VIEW_SINK_HPP_
+#endif  // NES_INCLUDE_SINKS_MEDIUMS_MATERIALIZEDVIEWSINK_HPP_

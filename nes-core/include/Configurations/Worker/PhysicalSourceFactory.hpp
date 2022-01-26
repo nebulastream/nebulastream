@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PHYSICALSOURCEFACTORY_HPP
-#define NES_PHYSICALSOURCEFACTORY_HPP
+#ifndef NES_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORY_HPP_
+#define NES_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORY_HPP_
 
 #include <map>
 #include <memory>
@@ -67,4 +67,4 @@ class PhysicalSourceFactory {
 }// namespace Configurations
 }// namespace NES
 
-#endif//NES_PHYSICALSOURCEFACTORY_HPP
+#endif  // NES_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORY_HPP_

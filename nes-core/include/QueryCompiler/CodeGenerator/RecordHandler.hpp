@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_RECORD_HANDLER_HPP_
-#define NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_RECORD_HANDLER_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_RECORDHANDLER_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_RECORDHANDLER_HPP_
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <map>
 #include <string>
@@ -57,4 +57,4 @@ class RecordHandler {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_RECORD_HANDLER_HPP_
+#endif  // NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_RECORDHANDLER_HPP_

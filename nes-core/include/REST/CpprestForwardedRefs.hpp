@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_H_
-#define NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_H_
+#ifndef NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_HPP_
+#define NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_HPP_
 
 #include <string>
 namespace web {
@@ -45,4 +45,4 @@ namespace utility {
 using string_t = std::string;
 }// namespace utility
 
-#endif//NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_H_
+#endif  // NES_INCLUDE_REST_CPPRESTFORWARDEDREFS_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_UTILITY_FUNCTIONS_HPP_
-#define NES_INCLUDE_UTIL_UTILITY_FUNCTIONS_HPP_
+#ifndef NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
+#define NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Operators/OperatorId.hpp>
@@ -93,7 +93,7 @@ struct SplitFunctionHelper<double> {
 };
 
 template<class CharContainer>
-size_t file_get_contents(const char *filename, CharContainer *container)
+size_t fileGetContents(const char *filename, CharContainer *container)
 {
     ::FILE *filestream= ::fopen(filename, "rb");
     ::fseek(filestream, 0, SEEK_END);
@@ -110,10 +110,10 @@ size_t file_get_contents(const char *filename, CharContainer *container)
 
 /** load a file from disk into an existing CharContainer */
 template<class CharContainer>
-CharContainer file_get_contents(const char *filename)
+CharContainer fileGetContents(const char *filename)
 {
     CharContainer container;
-    file_get_contents(filename, &container);
+    fileGetContents(filename, &container);
     return container;
 }
 
@@ -271,4 +271,4 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
 };// namespace Util
 }// namespace NES
 
-#endif// NES_INCLUDE_UTIL_UTILITY_FUNCTIONS_HPP_
+#endif  // NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_

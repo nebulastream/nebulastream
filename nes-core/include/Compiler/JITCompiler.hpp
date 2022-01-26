@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_JIT_COMPILER_HPP_
-#define NES_INCLUDE_COMPILER_JIT_COMPILER_HPP_
+#ifndef NES_INCLUDE_COMPILER_JITCOMPILER_HPP_
+#define NES_INCLUDE_COMPILER_JITCOMPILER_HPP_
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <future>
 #include <map>
@@ -51,4 +51,4 @@ class JITCompiler {
 
 }// namespace NES::Compiler
 
-#endif// NES_INCLUDE_COMPILER_JIT_COMPILER_HPP_
+#endif  // NES_INCLUDE_COMPILER_JITCOMPILER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_MQTTSOURCETYPECONFIG_HPP
-#define NES_MQTTSOURCETYPECONFIG_HPP
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -166,4 +166,4 @@ class MQTTSourceType : public PhysicalSourceType {
     Configurations::StringConfigOption inputFormat;
 };
 }// namespace NES
-#endif
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_

@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_SOURCE_CODE_HPP_
-#define NES_INCLUDE_COMPILER_SOURCE_CODE_HPP_
+#ifndef NES_INCLUDE_COMPILER_SOURCECODE_HPP_
+#define NES_INCLUDE_COMPILER_SOURCECODE_HPP_
 #include <string>
 namespace NES::Compiler {
 
@@ -50,4 +50,4 @@ class SourceCode {
 
 }// namespace NES::Compiler
 
-#endif// NES_INCLUDE_COMPILER_SOURCE_CODE_HPP_
+#endif  // NES_INCLUDE_COMPILER_SOURCECODE_HPP_

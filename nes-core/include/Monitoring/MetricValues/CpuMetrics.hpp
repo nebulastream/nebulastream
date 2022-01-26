@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_METRICS_HPP_
-#define NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_METRICS_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
+#define NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
 
 #include <Monitoring/MetricValues/CpuValues.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
@@ -95,4 +95,4 @@ SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix);
 
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_CPU_METRICS_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_

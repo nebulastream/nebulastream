@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMMON_DATA_TYPES_BOOLEAN_HPP_
-#define NES_INCLUDE_COMMON_DATA_TYPES_BOOLEAN_HPP_
+#ifndef NES_INCLUDE_COMMON_DATATYPES_BOOLEAN_HPP_
+#define NES_INCLUDE_COMMON_DATATYPES_BOOLEAN_HPP_
 
 #include <Common/DataTypes/DataType.hpp>
 namespace NES {
@@ -55,4 +55,4 @@ class Boolean final : public DataType {
 };
 
 }// namespace NES
-#endif// NES_INCLUDE_COMMON_DATA_TYPES_BOOLEAN_HPP_
+#endif  // NES_INCLUDE_COMMON_DATATYPES_BOOLEAN_HPP_

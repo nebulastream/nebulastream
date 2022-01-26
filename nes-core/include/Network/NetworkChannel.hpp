@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_
-#define NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_
+#ifndef NES_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_
+#define NES_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_
 
 #include <Network/NetworkForwardRefs.hpp>
 #include <Network/detail/BaseNetworkChannel.hpp>
@@ -143,4 +143,4 @@ class EventOnlyNetworkChannel : public detail::NetworkEventSender<detail::BaseNe
 }// namespace Network
 }// namespace NES
 
-#endif// NES_INCLUDE_NETWORK_OUTPUT_CHANNEL_HPP_
+#endif  // NES_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_EXCHANGE_PROTOCOL_HPP_
-#define NES_INCLUDE_NETWORK_EXCHANGE_PROTOCOL_HPP_
+#ifndef NES_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
+#define NES_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_
 
 #include <Network/NetworkMessage.hpp>
 #include <Runtime/Events.hpp>
@@ -92,4 +92,4 @@ class ExchangeProtocol {
 }// namespace Network
 }// namespace NES
 
-#endif// NES_INCLUDE_NETWORK_EXCHANGE_PROTOCOL_HPP_
+#endif  // NES_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_

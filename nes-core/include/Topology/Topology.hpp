@@ -213,4 +213,4 @@ class Topology {
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
 };
 }// namespace NES
-#endif// NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_
+#endif  // NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_

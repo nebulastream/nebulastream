@@ -61,4 +61,4 @@ class Subprocess {
 
 }// namespace NES::Util
 
-#endif// NES_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
+#endif  // NES_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_

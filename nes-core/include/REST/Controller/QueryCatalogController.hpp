@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_REST_CONTROLLER_QUERY_CATALOG_CONTROLLER_HPP_
-#define NES_INCLUDE_REST_CONTROLLER_QUERY_CATALOG_CONTROLLER_HPP_
+#ifndef NES_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
+#define NES_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 
 #include <REST/Controller/BaseController.hpp>
 
@@ -44,4 +44,4 @@ class QueryCatalogController : public BaseController {
 
 using QueryCatalogControllerPtr = std::shared_ptr<QueryCatalogController>;
 }// namespace NES
-#endif// NES_INCLUDE_REST_CONTROLLER_QUERY_CATALOG_CONTROLLER_HPP_
+#endif  // NES_INCLUDE_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_

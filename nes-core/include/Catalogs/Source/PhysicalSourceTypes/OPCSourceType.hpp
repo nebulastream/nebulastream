@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPCSOURCETYPECONFIG_HPP
-#define NES_OPCSOURCETYPECONFIG_HPP
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -121,4 +121,4 @@ class OPCSourceType : public PhysicalSourceType {
     Configurations::StringConfigOption password;
 };
 }// namespace NES
-#endif
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_

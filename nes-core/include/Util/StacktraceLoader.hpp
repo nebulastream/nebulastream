@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_STACKTRACE_LOADER_HPP_
-#define NES_INCLUDE_UTIL_STACKTRACE_LOADER_HPP_
+#ifndef NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_
+#define NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_
 
 #include <string>
 
@@ -24,4 +24,4 @@ namespace Runtime {
 std::string collectAndPrintStacktrace();
 }
 }// namespace NES
-#endif// NES_INCLUDE_UTIL_STACKTRACE_LOADER_HPP_
+#endif  // NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_CODE_EXPRESSION_HPP_
-#define NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_CODE_EXPRESSION_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CODEEXPRESSION_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CODEEXPRESSION_HPP_
 
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <memory>
@@ -35,4 +35,4 @@ class CodeExpression {
 CodeExpressionPtr combine(CodeExpressionPtr const& lhs, CodeExpressionPtr const& rhs);
 
 }// namespace NES::QueryCompilation
-#endif// NES_INCLUDE_QUERY_COMPILER_CODE_GENERATOR_CODE_EXPRESSION_HPP_
+#endif  // NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CODEEXPRESSION_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CATALOGS_MEMORY_SOURCE_STREAM_CONFIG_HPP_
-#define NES_INCLUDE_CATALOGS_MEMORY_SOURCE_STREAM_CONFIG_HPP_
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MEMORYSOURCETYPE_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MEMORYSOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/GatheringMode.hpp>
@@ -68,11 +68,11 @@ class MemorySourceType : public PhysicalSourceType {
   private:
     /**
      * @brief Create a MemorySourceType using a set of parameters
-     * @param sourceType the type of the source
-     * @param physicalStreamName the name of the physical stream
-     * @param logicalStreamName the name of the logical stream
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
+     * @param numBuffersToProduce: number of buffers to produce
+     * @param gatheringValue: gather value
+     * @param gatheringMode: gathering mode
      */
     explicit MemorySourceType(uint8_t* memoryArea,
                               size_t memoryAreaSize,
@@ -87,4 +87,4 @@ class MemorySourceType : public PhysicalSourceType {
     GatheringMode::Value gatheringMode;
 };
 }// namespace NES
-#endif// NES_INCLUDE_CATALOGS_MEMORY_SOURCE_STREAM_CONFIG_HPP_
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MEMORYSOURCETYPE_HPP_

@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_JIT_COMPILER_BUILDER_HPP_
-#define NES_INCLUDE_COMPILER_JIT_COMPILER_BUILDER_HPP_
+#ifndef NES_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_
+#define NES_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <map>
 #include <memory>
@@ -47,4 +47,4 @@ class JITCompilerBuilder {
 
 }// namespace NES::Compiler
 
-#endif// NES_INCLUDE_COMPILER_JIT_COMPILER_BUILDER_HPP_
+#endif  // NES_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_

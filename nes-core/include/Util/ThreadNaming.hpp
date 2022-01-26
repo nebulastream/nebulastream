@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_THREAD_NAMING_HPP_
-#define NES_INCLUDE_UTIL_THREAD_NAMING_HPP_
+#ifndef NES_INCLUDE_UTIL_THREADNAMING_HPP_
+#define NES_INCLUDE_UTIL_THREADNAMING_HPP_
 
 namespace NES {
 /**
@@ -31,4 +31,4 @@ namespace NES {
 void setThreadName(const char* threadNameFmt, ...);
 }// namespace NES
 
-#endif// NES_INCLUDE_UTIL_THREAD_NAMING_HPP_
+#endif  // NES_INCLUDE_UTIL_THREADNAMING_HPP_

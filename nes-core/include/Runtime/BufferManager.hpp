@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_BUFFER_MANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_BUFFER_MANAGER_HPP_
+#ifndef NES_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_
+#define NES_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
@@ -229,4 +229,4 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
 
 }// namespace NES::Runtime
 
-#endif// NES_INCLUDE_RUNTIME_BUFFER_MANAGER_HPP_
+#endif  // NES_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_
