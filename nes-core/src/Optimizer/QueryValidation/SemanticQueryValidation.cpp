@@ -135,7 +135,7 @@ void SemanticQueryValidation::sourceValidityCheck(const NES::QueryPlanPtr& query
             auto streamName = sourceDescriptor->getLogicalSourceName();
 
             // Making sure that all logical stream sources are present in the stream catalog
-            if (!streamCatalog->testIfLogicalSourceExists(streamName)) {
+            if (!streamCatalog->containsLogicalSource(streamName)) {
                 throw InvalidQueryException("SemanticQueryValidation: The logical stream " + streamName
                                             + " could not be found in the SourceCatalog\n");
             }

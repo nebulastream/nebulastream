@@ -56,7 +56,7 @@ std::string MaterializedViewSourceType::toString() {
     return ss.str();
 }
 
-IntConfigOption MaterializedViewSourceType::getId() const { return id; }
+uint32_t MaterializedViewSourceType::getId() const { return id->getValue(); }
 
 void MaterializedViewSourceType::setId(uint32_t idValue) { id->setValue(idValue); }
 

@@ -236,8 +236,8 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     // Removed this and replaced it by the above. Test is disabled, cannot check correctness. Leaving this for future fixing.
     //    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     //    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
-    //    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    //    streamCatalog->addPhysicalSource("default_logical", sce);
+    //    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    //    sourceCatalog->addPhysicalSource("default_logical", sce);
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
@@ -497,7 +497,7 @@ TEST_F(RESTEndpointTest, DISABLED_testConnectivityCheck) {
 TEST_F(RESTEndpointTest, DISABLED_testAddLogicalStreamEx) {
     auto crd = createAndStartCoordinator();
     //make httpclient with new endpoint -ex:
-    auto httpClient = createRestClient("streamCatalog/addLogicalStream-ex");
+    auto httpClient = createRestClient("sourceCatalog/addLogicalStream-ex");
 
     SourceCatalogPtr streamCatalog = crd->getStreamCatalog();
 

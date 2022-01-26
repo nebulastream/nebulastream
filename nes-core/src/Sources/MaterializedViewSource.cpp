@@ -14,33 +14,34 @@
     limitations under the License.
 */
 
-#include <Views/MaterializedView.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/MaterializedViewSource.hpp>
+#include <Views/MaterializedView.hpp>
 
 namespace NES::Experimental::MaterializedView {
 
 MaterializedViewSource::MaterializedViewSource(SchemaPtr schema,
-                       Runtime::BufferManagerPtr bufferManager,
-                       Runtime::QueryManagerPtr queryManager,
-                       OperatorId operatorId,
-                       size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                       MaterializedViewPtr view) : DataSource(std::move(schema),
-                                                              std::move(bufferManager),
-                                                              std::move(queryManager),
-                                                              operatorId,
-                                                              numSourceLocalBuffers,
-                                                              gatheringMode,
-                                                              std::move(successors)),
-                                                              view(std::move(view)) {};
+                                               Runtime::BufferManagerPtr bufferManager,
+                                               Runtime::QueryManagerPtr queryManager,
+                                               OperatorId operatorId,
+                                               size_t numSourceLocalBuffers,
+                                               GatheringMode::Value gatheringMode,
+                                               std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+                                               MaterializedViewPtr view)
+    : DataSource(std::move(schema),
+                 std::move(bufferManager),
+                 std::move(queryManager),
+                 operatorId,
+                 numSourceLocalBuffers,
+                 gatheringMode,
+                 std::move(successors)),
+      view(std::move(view)){};
 
 std::optional<Runtime::TupleBuffer> MaterializedViewSource::receiveData() { return view->receiveData(); };
 
-std::string MaterializedViewSource::toString() const { return "MaterializedViewSource"; };
+std::string MaterializedViewSource::toString() const { return Configurations::MATERIALIZEDVIEW_SOURCE_CONFIG; };
 
-SourceType MaterializedViewSource::getType() const { return MATERIALIZED_VIEW_SOURCE; };
+SourceType MaterializedViewSource::getType() const { return MATERIALIZEDVIEW_SOURCE; };
 
 uint64_t MaterializedViewSource::getViewId() const { return view->getId(); }
 

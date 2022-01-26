@@ -54,6 +54,8 @@ class MaterializedViewSourceDescriptor : public SourceDescriptor {
     */
     uint64_t getViewId() const;
 
+    SourceDescriptorPtr copy() override;
+
   private:
     explicit MaterializedViewSourceDescriptor(SchemaPtr schema, uint64_t viewId);
     SchemaPtr schema;

@@ -63,40 +63,39 @@ message NodeLocation {
 /**
 The serializable wrapper for the source config object
  */
-message SerializableSourceConfig{
+message SerializablePhysicalSourceType{
   string sourceType = 1;
 
   /**
   The serializable wrapper for the sense source config object
   */
-  message SerializableSenseSourceConfig{
+  message SerializableSenseSourceType{
     string udsf = 1;
   }
 
   /**
   The serializable wrapper for the binary source config object
   */
-  message SerializableBinarySourceConfig{
+  message SerializableBinarySourceType{
     string filePath = 1;
   }
 
   /**
   The serializable wrapper for the csv source config object
   */
-  message SerializableCSVSourceConfig{
+  message SerializableCSVSourceType{
     string filePath = 1;
     bool skipHeader = 2;
     string delimiter = 3;
     uint32 numberOfBuffersToProduce = 4;
     uint32 numberOfTuplesToProducePerBuffer = 5;
     uint32 sourceFrequency = 6;
-    string inputFormat = 7;
   }
 
   /**
   The serializable wrapper for the mqtt source config object
   */
-  message SerializableMQTTSourceConfig{
+  message SerializableMQTTSourceType{
     string url = 1;
     string clientId = 2;
     string userName = 3;
@@ -110,7 +109,7 @@ message SerializableSourceConfig{
   /**
   The serializable wrapper for the kafka source config object
   */
-  message SerializableKafkaSourceConfig{
+  message SerializableKafkaSourceType{
     string brokers = 1;
     uint32 autoCommit = 2;
     string groupId = 3;
@@ -121,7 +120,7 @@ message SerializableSourceConfig{
   /**
   The serializable wrapper for the opc source config object
   */
-  message SerializableOPCSourceConfig{
+  message SerializableOPCSourceType{
     uint32 namespaceIndex = 1;
     string nodeIdentifier = 2;
     string userName = 3;
@@ -131,11 +130,11 @@ message SerializableSourceConfig{
   /**
   The serializable wrapper for the materialized view source config object
   */
-  message SerializableMaterializedViewSourceConfig{
+  message SerializableMaterializedViewSourceType{
     uint32 id = 1;
   }
 
-  google.protobuf.Any specificSourceConfig = 2;
+  google.protobuf.Any specificPhysicalSourceType = 2;
 }
 
 /*
@@ -153,7 +152,7 @@ message SerializableOperator{
     }
 
     message SerializableCsvSourceDescriptor {
-      SerializableSourceConfig sourceConfig = 1;
+      SerializablePhysicalSourceType physicalSourceType = 1;
       SerializableSchema sourceSchema = 2;
     }
 
@@ -204,7 +203,7 @@ message SerializableOperator{
         JSON = 0;
         CSV = 1;
       };
-      SerializableSourceConfig sourceConfig = 1;
+      SerializablePhysicalSourceType physicalSourceType = 1;
       InputFormat inputFormat = 2;
       SerializableSchema sourceSchema = 3;
     }
@@ -504,7 +503,6 @@ message SerializableOperator{
     uint64 numberOfInputEdgesLeft = 10;
     uint64 numberOfInputEdgesRight = 11;
     JoinTypeCharacteristic jointype = 12;
-
   }
 
   google.protobuf.Any details = 1;

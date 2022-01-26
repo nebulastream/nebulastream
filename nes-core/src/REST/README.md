@@ -193,7 +193,7 @@ ___
 
 To get all queries registered at NebulaStream.
 
-**API**: /streamCatalog/allLogicalStream\
+**API**: /sourceCatalog/allLogicalStream\
 **Verb**: GET\
 **Response Code**: 200 OK
 
@@ -211,7 +211,7 @@ To get all queries registered at NebulaStream.
 
 To get all physical streams for a given logical stream.
 
-**API**: /streamCatalog/allPhysicalStream\
+**API**: /sourceCatalog/allPhysicalStream\
 **Verb**: GET\
 **Response Code**: 200 OK
 
@@ -226,7 +226,7 @@ To get all physical streams for a given logical stream.
 ### Add Logical Stream
 To add a logical stream.
 
-**API**: /streamCatalog/addLogicalStream\
+**API**: /sourceCatalog/addLogicalStream\
 **Verb**: POST\
 **Response Code**: 200 OK
 
@@ -241,7 +241,7 @@ To add a logical stream.
 
 To add a logical stream as a protobuf Object:
 
-**API**: /streamCatalog/addLogicalStream-ex \
+**API**: /sourceCatalog/addLogicalStream-ex \
 **Verb**: POST\
 **Response Code**: 200 OK
 
@@ -256,7 +256,7 @@ A Protobuf encoded stream name and schema.
 ### Update Logical Stream
 To Update a logical stream.
 
-**API**: /streamCatalog/updateLogicalStream\
+**API**: /sourceCatalog/updateLogicalStream\
 **Verb**: POST\
 **Response Code**: 200 OK
 
@@ -273,7 +273,7 @@ To Update a logical stream.
 
 To delete a logical stream.
 
-**API**: /streamCatalog/deleteLogicalStream\
+**API**: /sourceCatalog/deleteLogicalStream\
 **Verb**: DELETE\
 **Response Code**: 200 OK
 

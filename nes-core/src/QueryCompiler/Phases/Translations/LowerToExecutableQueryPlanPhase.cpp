@@ -13,12 +13,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -137,25 +139,25 @@ void LowerToExecutableQueryPlanPhase::processSource(
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
-    SourceDescriptorPtr actualSourceDescriptor;
     if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
         //Fetch logical and physical source name in the descriptor
         auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
         auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
         //Iterate over all available physical sources
+        bool foundPhysicalSource = false;
         for (const auto& physicalSource : nodeEngine->getPhysicalSources()) {
             //Check if logical and physical source name matches with any of the physical source provided by the node
             if (physicalSource->getLogicalSourceName() == logicalSourceName
                 && physicalSource->getPhysicalSourceName() == physicalSourceName) {
-                actualSourceDescriptor = createActualLogicalSourceDescriptor(sourceDescriptor->getSchema(), physicalSource);
+                sourceDescriptor = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSource);
+                foundPhysicalSource = true;
+                break;
             }
         }
-        if (!actualSourceDescriptor) {
+        if (!foundPhysicalSource) {
             throw QueryCompilationException("Unable to find the Physical source with logical source name " + logicalSourceName
                                             + " and physical source name " + physicalSourceName);
         }
-    } else {
-        actualSourceDescriptor = sourceDescriptor;
     }
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
@@ -170,8 +172,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
-    auto source =
-        sourceProvider->lower(sourceOperator->getId(), actualSourceDescriptor, nodeEngine, executableSuccessorPipelines);
+    auto source = sourceProvider->lower(sourceOperator->getId(), sourceDescriptor, nodeEngine, executableSuccessorPipelines);
     sources.emplace_back(source);
 }
 
@@ -258,9 +259,8 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     return executablePipeline;
 }
 
-SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createActualLogicalSourceDescriptor(SchemaPtr schema,
+SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema,
                                                                                          PhysicalSourcePtr physicalSource) {
-    // todo add handling for support of multiple physical streams.
     NES_DEBUG("PhysicalStreamConfig: create Actual source descriptor with physical source: " << physicalSource->toString());
     auto logicalSourceName = physicalSource->getLogicalSourceName();
     auto physicalSourceName = physicalSource->getPhysicalSourceName();
@@ -323,6 +323,12 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createActualLogicalSourceDe
                                                   lambdaSourceType->getNumBuffersToProduce(),
                                                   lambdaSourceType->getGatheringValue(),
                                                   lambdaSourceType->getGatheringMode());
+        }
+        case MATERIALIZEDVIEW_SOURCE: {
+            auto materializeView =
+                physicalSourceType->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceType>();
+            return NES::Experimental::MaterializedView::MaterializedViewSourceDescriptor::create(schema,
+                                                                                                 materializeView->getId());
         }
         default:
             throw QueryCompilationException("PhysicalStreamConfig:: source type " + physicalSourceType->getSourceTypeAsString()

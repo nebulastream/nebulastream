@@ -132,16 +132,6 @@ class CSVSourceType : public PhysicalSourceType {
      */
     void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
 
-    /**
-     * @brief Get input data format
-     */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getInputFormat() const;
-
-    /**
-     * @brief Set input data format
-     */
-    void setInputFormat(std::string inputFormat);
-
   private:
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
@@ -163,7 +153,6 @@ class CSVSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
     Configurations::IntConfigOption sourceFrequency;
-    Configurations::StringConfigOption inputFormat;
 };
 
 }// namespace NES

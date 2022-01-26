@@ -176,7 +176,6 @@ const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 //Different Stream Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
 const std::string CSV_SOURCE_CONFIG = "CSVSource";
-const std::string FILE_PATH_CONFIG = "filePath";
 const std::string BINARY_SOURCE_CONFIG = "BinarySource";
 const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
 const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
@@ -194,6 +193,7 @@ const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuple
 const std::string SOURCE_FREQUENCY_CONFIG = "sourceFrequency";
 const std::string INPUT_FORMAT_CONFIG = "inputFormat";
 const std::string UDFS_CONFIG = "udfs";
+const std::string FILE_PATH_CONFIG = "filePath";
 
 const std::string SKIP_HEADER_CONFIG = "skipHeader";
 const std::string DELIMITER_CONFIG = "delimiter";

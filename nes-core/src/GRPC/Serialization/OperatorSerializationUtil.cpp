@@ -939,10 +939,10 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
                   "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
         auto mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
         //init serializable source config
-        auto serializedSourceConfig = new SerializableSourceConfig();
-        serializedSourceConfig->set_sourcetype(mqttSourceDescriptor->getSourceConfigPtr()->getSourceTypeAsString());
+        auto serializedPhysicalSourceType = new SerializablePhysicalSourceType();
+        serializedPhysicalSourceType->set_sourcetype(mqttSourceDescriptor->getSourceConfigPtr()->getSourceTypeAsString());
         //init serializable mqtt source config
-        auto mqttSerializedSourceConfig = SerializableSourceConfig_SerializableMQTTSourceConfig();
+        auto mqttSerializedSourceConfig = SerializablePhysicalSourceType_SerializableMQTTSourceType();
         mqttSerializedSourceConfig.set_clientid(mqttSourceDescriptor->getSourceConfigPtr()->getClientId()->getValue());
         mqttSerializedSourceConfig.set_url(mqttSourceDescriptor->getSourceConfigPtr()->getUrl()->getValue());
         mqttSerializedSourceConfig.set_username(mqttSourceDescriptor->getSourceConfigPtr()->getUserName()->getValue());
@@ -952,10 +952,10 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
         mqttSerializedSourceConfig.set_flushintervalms(
             mqttSourceDescriptor->getSourceConfigPtr()->getFlushIntervalMS()->getValue());
         mqttSerializedSourceConfig.set_inputformat(mqttSourceDescriptor->getSourceConfigPtr()->getInputFormat()->getValue());
-        serializedSourceConfig->mutable_specificsourceconfig()->PackFrom(mqttSerializedSourceConfig);
+        serializedPhysicalSourceType->mutable_specificphysicalsourcetype()->PackFrom(mqttSerializedSourceConfig);
         //init serializable mqtt source descriptor
         auto mqttSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
-        mqttSerializedSourceDescriptor.set_allocated_sourceconfig(serializedSourceConfig);
+        mqttSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedPhysicalSourceType);
         mqttSerializedSourceDescriptor.set_inputformat(
             (SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor_InputFormat)
                 mqttSourceDescriptor->getInputFormat());
@@ -1040,23 +1040,22 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
                   "SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor");
         auto csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         // init serializable source config
-        auto serializedSourceConfig = new SerializableSourceConfig();
+        auto serializedSourceConfig = new SerializablePhysicalSourceType();
         serializedSourceConfig->set_sourcetype(csvSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
         // init serializable csv source config
-        auto csvSerializedSourceConfig = SerializableSourceConfig_SerializableCSVSourceConfig();
+        auto csvSerializedSourceConfig = SerializablePhysicalSourceType_SerializableCSVSourceType();
         csvSerializedSourceConfig.set_numberofbufferstoproduce(
             csvSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
         csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
             csvSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
         csvSerializedSourceConfig.set_sourcefrequency(csvSourceDescriptor->getSourceConfig()->getSourceFrequency()->getValue());
-        csvSerializedSourceConfig.set_inputformat(csvSourceDescriptor->getSourceConfig()->getInputFormat()->getValue());
         csvSerializedSourceConfig.set_filepath(csvSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
         csvSerializedSourceConfig.set_skipheader(csvSourceDescriptor->getSourceConfig()->getSkipHeader()->getValue());
         csvSerializedSourceConfig.set_delimiter(csvSourceDescriptor->getSourceConfig()->getDelimiter()->getValue());
-        serializedSourceConfig->mutable_specificsourceconfig()->PackFrom(csvSerializedSourceConfig);
+        serializedSourceConfig->mutable_specificphysicalsourcetype()->PackFrom(csvSerializedSourceConfig);
         // init serializable csv source descriptor
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
-        csvSerializedSourceDescriptor.set_allocated_sourceconfig(serializedSourceConfig);
+        csvSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedSourceConfig);
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(csvSourceDescriptor->getSchema(),
                                                  csvSerializedSourceDescriptor.mutable_sourceschema());
@@ -1121,8 +1120,8 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor->release_sourceschema());
         auto sourceConfig = MQTTSourceType::create();
-        auto mqttSourceConfig = new SerializableSourceConfig_SerializableMQTTSourceConfig();
-        mqttSerializedSourceDescriptor->sourceconfig().specificsourceconfig().UnpackTo(mqttSourceConfig);
+        auto mqttSourceConfig = new SerializablePhysicalSourceType_SerializableMQTTSourceType();
+        mqttSerializedSourceDescriptor->physicalsourcetype().specificphysicalsourcetype().UnpackTo(mqttSourceConfig);
         sourceConfig->setUrl(mqttSourceConfig->url());
         sourceConfig->setClientId(mqttSourceConfig->clientid());
         sourceConfig->setUserName(mqttSourceConfig->username());
@@ -1206,12 +1205,11 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         // de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.release_sourceschema());
         auto sourceConfig = CSVSourceType::create();
-        auto csvSourceConfig = new SerializableSourceConfig_SerializableCSVSourceConfig();
-        csvSerializedSourceDescriptor.sourceconfig().specificsourceconfig().UnpackTo(csvSourceConfig);
+        auto csvSourceConfig = new SerializablePhysicalSourceType_SerializableCSVSourceType();
+        csvSerializedSourceDescriptor.physicalsourcetype().specificphysicalsourcetype().UnpackTo(csvSourceConfig);
         sourceConfig->setFilePath(csvSourceConfig->filepath());
         sourceConfig->setSkipHeader(csvSourceConfig->skipheader());
         sourceConfig->setDelimiter(csvSourceConfig->delimiter());
-        sourceConfig->setInputFormat(csvSourceConfig->inputformat());
         sourceConfig->setSourceFrequency(csvSourceConfig->sourcefrequency());
         sourceConfig->setNumberOfBuffersToProduce(csvSourceConfig->numberofbufferstoproduce());
         sourceConfig->setNumberOfTuplesToProducePerBuffer(

@@ -126,7 +126,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     /**
      * @brief catalog method for debug use only
-     * @return streamCatalog
+     * @return sourceCatalog
      */
     SourceCatalogPtr getStreamCatalog() const { return streamCatalog; }
 

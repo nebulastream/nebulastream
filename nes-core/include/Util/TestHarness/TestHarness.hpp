@@ -164,7 +164,7 @@ class TestHarness {
 
             // Check if logical stream already exists
             auto streamCatalog = nesCoordinator->getStreamCatalog();
-            if (!streamCatalog->testIfLogicalSourceExists(logicalSourceName)) {
+            if (!streamCatalog->containsLogicalSource(logicalSourceName)) {
                 NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
                           << logicalSourceName);
                 streamCatalog->addLogicalStream(logicalSourceName, schema);

@@ -272,7 +272,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                                                                     queryManager,
                                                                                     operatorId,
                                                                                     numSourceLocalBuffers,
-                                                                                    DataSource::FREQUENCY_MODE,
+                                                                                    GatheringMode::FREQUENCY_MODE,
                                                                                     successors,
                                                                                     view);
 }

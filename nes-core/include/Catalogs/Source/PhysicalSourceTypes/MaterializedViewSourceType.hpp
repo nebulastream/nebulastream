@@ -62,7 +62,7 @@ class MaterializedViewSourceType : public PhysicalSourceType {
     /**
      * @brief get id of materialized view to use
      */
-    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::uint32_t>> getId() const;
+    [[nodiscard]] uint32_t getId() const;
 
     /**
      * @brief set id of materialized view to use

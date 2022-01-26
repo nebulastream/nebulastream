@@ -68,7 +68,7 @@ class TypeInferencePhase {
      */
     SourceDescriptorPtr createSourceDescriptor(std::string streamName);
     explicit TypeInferencePhase(SourceCatalogPtr streamCatalog);
-    SourceCatalogPtr streamCatalog;
+    SourceCatalogPtr sourceCatalog;
 };
 }// namespace NES::Optimizer
 
