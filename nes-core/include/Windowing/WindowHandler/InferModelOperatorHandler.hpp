@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_INFERMODELOPERATORHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_INFERMODELOPERATORHANDLER_HPP_
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/NodeEngineForwaredRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
 #include <Windowing/JoinForwardRefs.hpp>

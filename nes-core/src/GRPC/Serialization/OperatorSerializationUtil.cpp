@@ -94,6 +94,7 @@
 #endif
 #ifdef ENABLE_MQTT_BUILD
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#include <fstream>
 #endif
 
 namespace NES {

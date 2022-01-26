@@ -71,7 +71,7 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         }
 
         NES_DEBUG("MlHeuristicStrategy: map pinned operators to the physical location");
-        mapPinnedOperatorToTopologyNodes(queryId, sourceOperators);
+        mapPinnedOperatorToTopologyNodes(queryPlan);
 
         NES_DEBUG("MlHeuristicStrategy: Get all sink operators");
         const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
@@ -92,7 +92,7 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 
         NES_DEBUG("MlHeuristicStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
 
-        runTypeInferencePhase(queryId);
+        runTypeInferencePhase(queryId, queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
 
         bool enable_redundancy_elimination = true;
 
@@ -111,7 +111,7 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
                     auto a = querysubplans[0];
                     auto b = querysubplans[1];
 
-                    runTypeInferencePhase(queryId);
+                    runTypeInferencePhase(queryId, queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
 
                     signatureInferencePhase->execute(a);
                     signatureInferencePhase->execute(b);
@@ -144,7 +144,7 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
             NES_DEBUG("MlHeuristicStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
         }
 
-        return runTypeInferencePhase(queryId);
+        return runTypeInferencePhase(queryId, queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
     } catch (Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
