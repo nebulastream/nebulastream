@@ -53,61 +53,60 @@ using DistributeWindowRulePtr = std::shared_ptr<DistributeWindowRule>;
  *                                                   |
  *                                        Source(Car)    Source(Car)
  *
-  * Example: a query for distributed window:
-  *
-  *
-  *
-  *                                                 Sink
-*                                                     |
+ * Example: a query for distributed window:
+ *
+ *
+ *
+ *                                                 Sink
+ *                                                     |
  *                                              WindowCombiner
  *                                                /     \
  *                                              /        \
  *                                    WindowSlicer        WindowSlicer
  *                                           |             |
  *                                      Source(Car1)    Source(Car2)
-* ---------------------------------------------
+ * ---------------------------------------------
  * Example: a query :                       Sink
-*                                           |
-*                                           Window
-*                                           |
-*                                        Source(Car)
-*
-* will be expanded to:                        Sink
-*                                               |
-*                                          Window-Combiner
-*                                                |
-*                                          Watermark-Assigner
-*                                             /    \
-*                                           /       \
-*                            Window-SliceCreator Window-SliceCreator
-*                                      |               |
-*                             Watermark-Assigner   Watermark-Assigner
-*                                      |               |
-*                                   Source(Car1)    Source(Car2)
- */
+ *                                           |
+ *                                           Window
+ *                                           |
+ *                                        Source(Car)
+ *
+ * will be expanded to:                        Sink
+ *                                               |
+ *                                          Window-Combiner
+ *                                                |
+ *                                          Watermark-Assigner
+ *                                             /    \
+ *                                           /       \
+ *                            Window-SliceCreator Window-SliceCreator
+ *                                      |               |
+ *                             Watermark-Assigner   Watermark-Assigner
+ *                                      |               |
+ *                                   Source(Car1)    Source(Car2)
+*/
 class DistributeWindowRule : public BaseRewriteRule {
   public:
-    // The number of child nodes from which on we will replace a central window operator with a distributed window operator.
-    static const uint64_t CHILD_NODE_THRESHOLD = 2;
-
-    // The number of child nodes from which on we will introduce combinerr
-    static const uint64_t CHILD_NODE_THRESHOLD_COMBINER = 4;
-
-    static DistributeWindowRulePtr create();
-    virtual ~DistributeWindowRule() = default;
-
     /**
-     * @brief Apply Logical source expansion rule on input query plan
-     * @param queryPlan: the original non-expanded query plan
-     * @return expanded logical query plan
+     * @brief Creates a new DistributeWindowRule with specific thresholds that influence when the rule is applied.
+     * @param windowDistributionChildrenThreshold The number of child nodes from which on we will replace a central window operator with a distributed window operator.
+     * @param windowDistributionCombinerThreshold The number of child nodes from which on we will introduce combiner
+     * @return DistributeWindowRulePtr
      */
+    static DistributeWindowRulePtr create(uint64_t windowDistributionChildrenThreshold,
+                                          uint64_t windowDistributionCombinerThreshold);
+    virtual ~DistributeWindowRule() = default;
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
-    explicit DistributeWindowRule();
-    static void createCentralWindowOperator(const WindowOperatorNodePtr& windowOp);
-    static void createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator,
-                                                const QueryPlanPtr& queryPlan);
+    explicit DistributeWindowRule(uint64_t windowDistributionChildrenThreshold, uint64_t windowDistributionCombinerThreshold);
+    void createCentralWindowOperator(const WindowOperatorNodePtr& windowOp);
+    void createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator, const QueryPlanPtr& queryPlan);
+
+    // The number of child nodes from which on we will replace a central window operator with a distributed window operator.
+    uint64_t windowDistributionChildrenThreshold;
+    // The number of child nodes from which on we will introduce combiner
+    uint64_t windowDistributionCombinerThreshold;
 };
 }// namespace NES::Optimizer
 #endif  // NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_

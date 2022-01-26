@@ -243,12 +243,6 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const QueryPlanPtr&, con
 
 void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const QueryPlanPtr&,
                                                                        const LogicalOperatorNodePtr& operatorNode) {
-    /* if (true) {
-        operatorNode->removeAndJoinParentAndChildren();
-        return;
-    }
-    */
-
     auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
     auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
         logicalWatermarkAssignment->getInputSchema(),
@@ -263,55 +257,16 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
-    /*
-    if (true) {
-        auto windowBufferManager = std::make_shared<Runtime::BufferManager>(1024 * 1024, 20000);
-        uint64_t sliceSize = 0;
-        if (windowDefinition->getWindowType()->isTumblingWindow()) {
-            auto tumblingWindow = dynamic_pointer_cast<Windowing::TumblingWindow>(windowDefinition->getWindowType());
-            // auto numberOfSlices = windowDefinition->getAllowedLateness() / tumblingWindow->getSize().getTime();
-            sliceSize = tumblingWindow->getSize().getTime();
-        } else {
-            auto slidingWindow = dynamic_pointer_cast<Windowing::SlidingWindow>(windowDefinition->getWindowType());
-            // auto numberOfSlices = windowDefinition->getAllowedLateness() / tumblingWindow->getSize().getTime();
-            sliceSize = slidingWindow->getSlide().getTime();
-        }
-        auto windowHandler = std::make_shared<Experimental::PreAggregationWindowHandler<uint64_t, uint64_t>>(windowDefinition,
-                                                                                                             windowBufferManager,
-                                                                                                             sliceSize);
-        auto windowAggregateOperator = std::make_shared<Experimental::WindowAggregateOperator>(windowHandler);
-        auto externalWindowAggregateOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
-                                                                                                   operatorNode->getOutputSchema(),
-                                                                                                   operatorNode->getOutputSchema(),
-                                                                                                   windowAggregateOperator);
-        operatorNode->insertBetweenThisAndChildNodes(externalWindowAggregateOperator);
-
-        auto mergeSliceOperator = std::make_shared<Experimental::MergeSliceWindowOperator>(windowHandler);
-        auto externalMergeSliceOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
-                                                                                              operatorNode->getOutputSchema(),
-                                                                                              operatorNode->getOutputSchema(),
-                                                                                              mergeSliceOperator);
-        externalWindowAggregateOperator->insertBetweenThisAndChildNodes(externalMergeSliceOperator);
-
-        auto preAggregateOperator = std::make_shared<Experimental::PreAggregateWindowOperator>(windowHandler);
-        auto externalPreAggregateOperator = PhysicalOperators::PhysicalExternalOperator::create(Util::getNextOperatorId(),
-                                                                                                operatorNode->getOutputSchema(),
-                                                                                                operatorNode->getOutputSchema(),
-                                                                                                preAggregateOperator);
-        externalMergeSliceOperator->insertBetweenThisAndChildNodes(externalPreAggregateOperator);
-
-
-        operatorNode->replace(
-            PhysicalOperators::PhysicalScanOperator::create(Util::getNextOperatorId(), operatorNode->getOutputSchema()));
-        return;
-    }
-*/
 
     // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         if (options->getWindowingStrategy() == QueryCompilerOptions::THREAD_LOCAL) {
             NES_DEBUG("Create Thread local window aggregation");
+
+            if(!windowDefinition->isKeyed()){
+                NES_ERROR("Currently the THEAD_LOCAL window implementations only supports keyed streams");
+            }
 
             auto windowHandler = std::make_shared<Windowing::Experimental::KeyedEventTimeWindowHandler>(windowDefinition);
 
@@ -334,6 +289,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const QueryPlanPtr&, c
                 operatorNode->replace(windowSink);
                 return;
             } else {
+
                 auto globalSliceStoreAppend = PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator::create(windowInputSchema,
                                                                                             windowOutputSchema,
                                                                                             windowHandler);

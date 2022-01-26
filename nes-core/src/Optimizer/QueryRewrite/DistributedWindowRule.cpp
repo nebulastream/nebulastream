@@ -26,9 +26,16 @@
 
 namespace NES::Optimizer {
 
-DistributeWindowRule::DistributeWindowRule() = default;
+DistributeWindowRule::DistributeWindowRule(uint64_t windowDistributionChildrenThreshold,
+                                           uint64_t windowDistributionCombinerThreshold)
+    : windowDistributionChildrenThreshold(windowDistributionChildrenThreshold),
+      windowDistributionCombinerThreshold(windowDistributionCombinerThreshold){};
 
-DistributeWindowRulePtr DistributeWindowRule::create() { return std::make_shared<DistributeWindowRule>(DistributeWindowRule()); }
+DistributeWindowRulePtr DistributeWindowRule::create(uint64_t windowDistributionChildrenThreshold,
+                                                     uint64_t windowDistributionCombinerThreshold) {
+    return std::make_shared<DistributeWindowRule>(
+        DistributeWindowRule(windowDistributionChildrenThreshold, windowDistributionCombinerThreshold));
+}
 
 QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("DistributeWindowRule: Apply DistributeWindowRule.");
@@ -42,7 +49,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
         for (auto& windowOp : windowOps) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp->toString());
 
-            if (windowOp->getChildren().size() < CHILD_NODE_THRESHOLD) {
+            if (windowOp->getChildren().size() < windowDistributionChildrenThreshold) {
                 createCentralWindowOperator(windowOp);
                 NES_DEBUG("DistributeWindowRule::apply: central op " << queryPlan->toString());
             } else {
@@ -100,7 +107,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
 
     //TODO: @Ankit we have to change this depending on how you do the placement
     uint64_t numberOfEdgesForFinalComputation = logicalWindowOperator->getChildren().size();
-    if (logicalWindowOperator->getChildren().size() >= CHILD_NODE_THRESHOLD_COMBINER) {
+    if (logicalWindowOperator->getChildren().size() >= windowDistributionCombinerThreshold) {
         numberOfEdgesForFinalComputation = 1;
     }
     uint64_t numberOfEdgesForMerger = logicalWindowOperator->getChildren().size();
@@ -145,7 +152,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
 
     //add merger
     UnaryOperatorNodePtr mergerAssigner;
-    if (finalComputationAssigner->getChildren().size() >= CHILD_NODE_THRESHOLD_COMBINER) {
+    if (finalComputationAssigner->getChildren().size() >= windowDistributionChildrenThreshold) {
         auto sliceCombinerWindowAggregation = windowAggregation;
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
