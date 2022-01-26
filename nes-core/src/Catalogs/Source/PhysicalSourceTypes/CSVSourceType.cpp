@@ -53,10 +53,7 @@ CSVSourceType::CSVSourceType()
                                                                 "Number of tuples to produce per buffer.")),
       sourceFrequency(Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_FREQUENCY_CONFIG,
                                                                             1,
-                                                                            "Sampling frequency of the source.")),
-      inputFormat(Configurations::ConfigurationOption<std::string>::create(Configurations::INPUT_FORMAT_CONFIG,
-                                                                           "JSON",
-                                                                           "input data format")) {
+                                                                            "Sampling frequency of the source.")) {
     NES_INFO("CSVSourceTypeConfig: Init source config object with default values.");
 }
 
@@ -84,9 +81,6 @@ CSVSourceType::CSVSourceType(std::map<std::string, std::string> sourceConfigMap)
     }
     if (sourceConfigMap.find("--" + Configurations::SOURCE_FREQUENCY_CONFIG) != sourceConfigMap.end()) {
         sourceFrequency->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::SOURCE_FREQUENCY_CONFIG)->second));
-    }
-    if (sourceConfigMap.find("--" + Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
-        inputFormat->setValue(sourceConfigMap.find("--" + Configurations::INPUT_FORMAT_CONFIG)->second);
     }
 }
 
@@ -120,10 +114,6 @@ CSVSourceType::CSVSourceType(Yaml::Node yamlConfig) : CSVSourceType() {
         && yamlConfig[Configurations::SOURCE_FREQUENCY_CONFIG].As<std::string>() != "\n") {
         sourceFrequency->setValue(yamlConfig[Configurations::SOURCE_FREQUENCY_CONFIG].As<uint32_t>());
     }
-    if (!yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() != "\n") {
-        inputFormat->setValue(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
-    }
 }
 
 std::string CSVSourceType::toString() {
@@ -132,7 +122,6 @@ std::string CSVSourceType::toString() {
     ss << Configurations::FILE_PATH_CONFIG + ":" + filePath->toStringNameCurrentValue();
     ss << Configurations::SKIP_HEADER_CONFIG + ":" + skipHeader->toStringNameCurrentValue();
     ss << Configurations::DELIMITER_CONFIG + ":" + delimiter->toStringNameCurrentValue();
-    ss << Configurations::INPUT_FORMAT_CONFIG + ":" + inputFormat->toStringNameCurrentValue();
     ss << Configurations::SOURCE_FREQUENCY_CONFIG + ":" + sourceFrequency->toStringNameCurrentValue();
     ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
     ss << Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + ":"
@@ -149,7 +138,6 @@ bool CSVSourceType::equal(const PhysicalSourceTypePtr& other) {
     return filePath->getValue() == otherSourceConfig->filePath->getValue()
         && skipHeader->getValue() == otherSourceConfig->skipHeader->getValue()
         && delimiter->getValue() == otherSourceConfig->delimiter->getValue()
-        && inputFormat->getValue() == otherSourceConfig->inputFormat->getValue()
         && sourceFrequency->getValue() == otherSourceConfig->sourceFrequency->getValue()
         && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue()
         && numberOfTuplesToProducePerBuffer->getValue() == otherSourceConfig->numberOfTuplesToProducePerBuffer->getValue();
@@ -160,8 +148,6 @@ Configurations::StringConfigOption CSVSourceType::getFilePath() const { return f
 Configurations::BoolConfigOption CSVSourceType::getSkipHeader() const { return skipHeader; }
 
 Configurations::StringConfigOption CSVSourceType::getDelimiter() const { return delimiter; }
-
-Configurations::StringConfigOption CSVSourceType::getInputFormat() const { return inputFormat; }
 
 Configurations::IntConfigOption CSVSourceType::getSourceFrequency() const { return sourceFrequency; }
 
@@ -187,8 +173,6 @@ void CSVSourceType::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesT
     numberOfTuplesToProducePerBuffer->setValue(numberOfTuplesToProducePerBufferValue);
 }
 
-void CSVSourceType::setInputFormat(std::string inputFormatValue) { inputFormat->setValue(std::move(inputFormatValue)); }
-
 void CSVSourceType::reset() {
     setFilePath(filePath->getDefaultValue());
     setSkipHeader(skipHeader->getDefaultValue());
@@ -196,7 +180,6 @@ void CSVSourceType::reset() {
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
     setSourceFrequency(sourceFrequency->getDefaultValue());
-    setInputFormat(inputFormat->getDefaultValue());
 }
 
 }// namespace NES

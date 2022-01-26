@@ -25,7 +25,7 @@
 
 namespace NES::Optimizer {
 
-TypeInferencePhase::TypeInferencePhase(SourceCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
+TypeInferencePhase::TypeInferencePhase(SourceCatalogPtr streamCatalog) : sourceCatalog(std::move(streamCatalog)) {
     NES_DEBUG("TypeInferencePhase()");
 }
 
@@ -38,7 +38,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         // first we have to check if all source operators have a correct source descriptors
         auto sources = queryPlan->getSourceOperators();
 
-        if (!sources.empty() && !streamCatalog) {
+        if (!sources.empty() && !sourceCatalog) {
             NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
         }
 
@@ -48,21 +48,21 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             // if the source descriptor has no schema set and is only a logical stream source we replace it with the correct
             // source descriptor form the catalog.
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>() && sourceDescriptor->getSchema()->empty()) {
-                auto streamName = sourceDescriptor->getLogicalSourceName();
+                auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
                 SchemaPtr schema = Schema::create();
-                if (!streamCatalog->testIfLogicalSourceExists(streamName)) {
-                    NES_ERROR("Stream name: " + streamName + " not registered.");
+                if (!sourceCatalog->containsLogicalSource(logicalSourceName)) {
+                    NES_ERROR("Stream name: " + logicalSourceName + " not registered.");
                 }
-                auto originalSchema = streamCatalog->getSchemaForLogicalStream(streamName);
+                auto originalSchema = sourceCatalog->getSchemaForLogicalStream(logicalSourceName);
                 schema = schema->copyFields(originalSchema);
                 schema->setLayoutType(originalSchema->getLayoutType());
-                std::string qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+                std::string qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
                 //perform attribute name resolution
                 for (auto& field : schema->fields) {
                     field->setName(qualifierName + field->getName());
                 }
                 sourceDescriptor->setSchema(schema);
-                NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << streamName
+                NES_DEBUG("TypeInferencePhase: update source descriptor for stream " << logicalSourceName
                                                                                      << " with schema: " << schema->toString());
             }
         }

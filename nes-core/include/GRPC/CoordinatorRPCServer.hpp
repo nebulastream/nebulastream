@@ -38,33 +38,42 @@ using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
 class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
+/**
+ * @brief Coordinator RPC server responsible for receiving requests over GRPC interface
+ */
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
-    explicit CoordinatorRPCServer(TopologyPtr topology, SourceCatalogPtr streamCatalog, MonitoringManagerPtr monitoringService);
+    /**
+     * @brief Create coordinator RPC server
+     * @param topologyManagerService : the instance of the topologyManagerService
+     * @param streamCatalogService : the instance of the steam catalog service
+     * @param monitoringService: the instance of monitoring service
+     */
+    explicit CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService, StreamCatalogServicePtr streamCatalogService, MonitoringManagerPtr monitoringService);
 
     /**
      * @brief RPC Call to register a node
-     * @param context
-     * @param request
-     * @param reply
+     * @param context: the server context
+     * @param request: node registration request
+     * @param reply: the node registration reply
      * @return success
      */
     Status RegisterNode(ServerContext* context, const RegisterNodeRequest* request, RegisterNodeReply* reply) override;
 
     /**
      * @brief RPC Call to unregister a node
-     * @param context
-     * @param request
-     * @param reply
+     * @param context: the server context
+     * @param request: node unregistration request
+     * @param reply: the node unregistration reply
      * @return success
      */
     Status UnregisterNode(ServerContext* context, const UnregisterNodeRequest* request, UnregisterNodeReply* reply) override;
 
     /**
      * @brief RPC Call to register physical stream
-     * @param context
-     * @param request
-     * @param reply
+     * @param context: the server context
+     * @param request: register physical source request
+     * @param reply: register physical source response
      * @return success
      */
     Status RegisterPhysicalSource(ServerContext* context,
@@ -73,9 +82,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
     /**
      * @brief RPC Call to unregister physical stream
-     * @param context
-     * @param request
-     * @param reply
+     * @param context: the server context
+     * @param request: unregister physical source request
+     * @param reply: unregister physical source reply
      * @return success
      */
     Status UnregisterPhysicalSource(ServerContext* context,
@@ -84,9 +93,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
     /**
      * @brief RPC Call to register logical stream
-     * @param context
-     * @param request
-     * @param reply
+     * @param context: the server context
+     * @param request: register logical source request
+     * @param reply: register logical source response
      * @return success
      */
     Status RegisterLogicalSource(ServerContext* context,
@@ -95,9 +104,9 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
     /**
      * @brief RPC Call to unregister logical stream
-     * @param context
-     * @param request
-     * @param reply
+     * @param context: the server context
+     * @param request: unregister logical source request
+     * @param reply: unregister logical source response
      * @return success
      */
     Status UnregisterLogicalSource(ServerContext* context,
@@ -106,34 +115,34 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
 
     /**
      * @brief RPC Call to add parent
-     * @param context
-     * @param request
-     * @param reply
+     * @param context: the server context
+     * @param request: add parent request
+     * @param reply: add parent reply
      * @return success
      */
     Status AddParent(ServerContext* context, const AddParentRequest* request, AddParentReply* reply) override;
 
     /**
      * @brief RPC Call to replace parent
-     * @param context
-     * @param request
-     * @param reply
+     * @param context: the server context
+     * @param request: replace parent request
+     * @param reply: replace parent reply
      * @return success
      */
     Status ReplaceParent(ServerContext* context, const ReplaceParentRequest* request, ReplaceParentReply* reply) override;
 
     /**
      * @brief RPC Call to remove parent
-     * @param context
-     * @param request
-     * @param reply
+     * @param context: the server context
+     * @param request: remove parent request
+     * @param reply: remove parent response
      * @return success
      */
     Status RemoveParent(ServerContext* context, const RemoveParentRequest* request, RemoveParentReply* reply) override;
 
     /**
      * @brief RPC Call to notify the failure of a query
-     * @param context
+     * @param context: the server context
      * @param request that is sent from worker to the coordinator and filled with information of the failed query (Ids of query, worker, etc. and error message)
      * @param reply that is sent back from the coordinator to the worker to confirm that notification was successful
      * @return success

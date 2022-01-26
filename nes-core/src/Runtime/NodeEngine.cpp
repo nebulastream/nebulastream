@@ -60,8 +60,8 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
     : physicalSources(std::move(physicalSources)), queryManager(std::move(queryManager)),
       hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
       queryCompiler(std::move(queryCompiler)), partitionManager(std::move(partitionManager)),
-      stateManager(std::move(stateManager)), bufferStorage(std::move(bufferStorage)), nodeEngineId(nodeEngineId),
-      materializedViewManager(std::move(materializedViewManager)),
+      stateManager(std::move(stateManager)), materializedViewManager(std::move(materializedViewManager)),
+      bufferStorage(std::move(bufferStorage)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker) {
@@ -340,7 +340,9 @@ Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManag
 
 HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManager; }
 
-Experimental::MaterializedView::MaterializedViewManagerPtr NodeEngine::getMaterializedViewManager() const { return materializedViewManager; }
+Experimental::MaterializedView::MaterializedViewManagerPtr NodeEngine::getMaterializedViewManager() const {
+    return materializedViewManager;
+}
 
 Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);

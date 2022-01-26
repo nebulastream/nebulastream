@@ -19,25 +19,34 @@ import "SerializableDataType.proto";
 
 // The greeting service definition.
 service CoordinatorRPCService {
-  // Sends a greeting
+  // Sends a registration request for new worker to the coordinator
   rpc RegisterNode (RegisterNodeRequest) returns (RegisterNodeReply) {}
 
+  // Sends a unregistration request for a worker to the coordinator
   rpc UnregisterNode (UnregisterNodeRequest) returns (UnregisterNodeReply) {}
 
+  // Sends a registration request for a collection of physical sources to the coordinator
   rpc RegisterPhysicalSource (RegisterPhysicalSourcesRequest) returns (RegisterPhysicalSourcesReply) {}
 
+  // Sends a unregistration request for a physical source to the coordinator
   rpc UnregisterPhysicalSource (UnregisterPhysicalSourceRequest) returns (UnregisterPhysicalSourceReply) {}
 
+  // Sends a registration request for a logical source
   rpc RegisterLogicalSource (RegisterLogicalSourceRequest) returns (RegisterLogicalSourceReply) {}
 
+  // Sends a unregistration request for a logical source
   rpc UnregisterLogicalSource (UnregisterLogicalSourceRequest) returns (UnregisterLogicalSourceReply) {}
 
+  // Sends an add new parent request for to the coordinator
   rpc AddParent (AddParentRequest) returns (AddParentReply) {}
 
+  // Sends a remove parent request to the coordinator
   rpc RemoveParent (RemoveParentRequest) returns (RemoveParentReply) {}
 
+  // sends a replace parent request to the coordinator
   rpc ReplaceParent (ReplaceParentRequest) returns (ReplaceParentReply) {}
 
+  // send a notification when a query fails to the coordinator
   rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
 }
 

@@ -14,17 +14,16 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/Coordinator/CoordinatorConfig.hpp>
-#include <Configurations/Worker/WorkerConfig.hpp>
-#include <Configurations/Sources/CSVSourceConfig.hpp>
-#include <Configurations/Sources/SourceConfigFactory.hpp>
-#include <Configurations/Sources/MaterializedViewSourceConfig.hpp>
-#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
+#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceFactory.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
-#include <Views/MaterializedView.hpp>
+#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -32,6 +31,7 @@
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Views/MaterializedView.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -40,7 +40,7 @@ uint64_t rpcPort = 4000;
 uint64_t restPort = 8081;
 
 class MaterializedViewTest : public testing::Test {
-public:
+  public:
     static void SetUpTestCase() {
         NES::setupLogging("MaterializedViewTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MaterializedViewTest test class.");
@@ -49,41 +49,42 @@ public:
 
 /// @brief tests if a query with materialized view sink starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
-
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
-
     NES_INFO("MaterializedViewTupleViewSinkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
+    // register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
+
     NES_INFO("MaterializedViewTupleViewSinkTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    // register logical stream
-    std::string stream =
-            R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << stream;
-    out.close();
-    crd->getNesWorker()->registerLogicalStream("stream", testSchemaFileName);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(10000);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-
-    // register physical stream
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
-    crd->getNesWorker()->registerPhysicalStream(streamConf);
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(12);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setNumberOfBuffersToProduce(1000);
+    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setSkipHeader(true);
+    auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     Query query = Query::from("stream").sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(1));
     auto queryPlan = query.getQueryPlan();
@@ -106,40 +107,40 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
 
 /// @brief tests if a query with materialized view source starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("MaterializedViewSource");
-
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
-
     NES_INFO("MaterializedViewTupleBufferSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
+    //register logical stream
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
     NES_INFO("MaterializedViewTupleBufferSourceTest: Coordinator started successfully");
+
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(12);
+    // materialized view physical stream
+    size_t viewId = 1;
+    auto materializeViewSourceType = Configurations::Experimental::MaterializedView::MaterializedViewSourceType::create();
+    materializeViewSourceType->setId(viewId);
+    auto physicalSource1 = PhysicalSource::create("stream", "MV", materializeViewSourceType);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
+
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //register logical stream
-    std::string stream =
-            R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << stream;
-    out.close();
-    crd->getNesWorker()->registerLogicalStream("stream", testSchemaFileName);
-
-    // materialized view physical stream
-    size_t viewId = 1;
-    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setPhysicalStreamName("MV");
-    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setLogicalStreamName("stream");
-    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setNumberOfBuffersToProduce(10000);
-    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setSourceFrequency(1);
-    srcConf->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setId(viewId);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
-    crd->getNesWorker()->registerPhysicalStream(streamConf);
 
     Query adhoc_query = Query::from("stream").sink(PrintSinkDescriptor::create());
     auto adhoc_queryPlan = adhoc_query.getQueryPlan();
@@ -162,45 +163,51 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
 
 // @brief tests with two concurrent queries if writing and reading of MVs works properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig("CSVSource");
-    SourceConfigPtr srcConf2 = SourceConfigFactory::createSourceConfig("MaterializedViewSource");
-
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
-
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
+    crd->getStreamCatalogService()->registerLogicalStream("stream2", stream);
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string stream =
-            R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "window.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << stream;
-    out.close();
-
-    // Init Maintenance Query
-    crd->getNesWorker()->registerLogicalStream("stream", testSchemaFileName);
-
-    srcConf->as<CSVSourceConfig>()->setFilePath("../tests/test_data/window.csv");
-    srcConf->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(10000);
-    srcConf->as<CSVSourceConfig>()->setSourceFrequency(1);
-    srcConf->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    srcConf->as<CSVSourceConfig>()->setLogicalStreamName("stream");
-    srcConf->as<CSVSourceConfig>()->setSkipHeader(true);
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
-    crd->getNesWorker()->registerPhysicalStream(streamConf);
-
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setNumberOfSlots(12);
+    // materialized view physical stream
     size_t viewId = 1;
-    Query maintenance_query = Query::from("stream")
-            .sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(viewId));
+    auto materializeViewSourceType = Configurations::Experimental::MaterializedView::MaterializedViewSourceType::create();
+    auto physicalSource1 = PhysicalSource::create("stream2", "MV", materializeViewSourceType);
+    materializeViewSourceType->setId(viewId);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setNumberOfBuffersToProduce(1000);
+    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setSkipHeader(true);
+    auto physicalSource2 = PhysicalSource::create("stream", "test_stream", materializeViewSourceType);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->addPhysicalSource(physicalSource2);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
+
+
+    Query maintenance_query =
+        Query::from("stream").sink(NES::Experimental::MaterializedView::MaterializedViewSinkDescriptor::create(viewId));
     auto maintenance_queryPlan = maintenance_query.getQueryPlan();
     maintenance_queryPlan->setQueryId(1);
     auto maintenanceQueryId = queryService->addQueryRequest(maintenance_queryPlan, "BottomUp");
@@ -209,17 +216,6 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(maintenanceQueryId, queryCatalog));
 
-    // Init Ad Hoc Query
-    crd->getNesWorker()->registerLogicalStream("stream2", testSchemaFileName);
-
-    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setPhysicalStreamName("MV");
-    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setLogicalStreamName("stream2");
-    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setNumberOfTuplesToProducePerBuffer(1);
-    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setNumberOfBuffersToProduce(10000);
-    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setSourceFrequency(1);
-    srcConf2->as<Configurations::Experimental::MaterializedView::MaterializedViewSourceConfig>()->setId(viewId);
-    PhysicalStreamConfigPtr streamConf2 = PhysicalStreamConfig::create(srcConf2);
-    crd->getNesWorker()->registerPhysicalStream(streamConf2);
 
     Query adhoc_query = Query::from("stream2").sink(PrintSinkDescriptor::create());
     auto adhoc_queryPlan = adhoc_query.getQueryPlan();
@@ -227,7 +223,6 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     auto adhocQueryId = queryService->addQueryRequest(adhoc_queryPlan, "BottomUp");
 
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: queryId" << adhocQueryId);
-    globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(adhocQueryId, queryCatalog));
 
     // Stop Queries

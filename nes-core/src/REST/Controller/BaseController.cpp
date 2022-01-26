@@ -95,7 +95,7 @@ void BaseController::handleException(const web::http::http_request& message, con
         errorResponse["message"] = web::json::value::string("Wrong input format");
 
         // define required input fields based on path
-        if (paths[0] == "streamCatalog") {
+        if (paths[0] == "sourceCatalog") {
             if (paths[1] == "allPhysicalStream" || paths[1] == "deleteLogicalStream") {
                 errorResponse["detail"] = web::json::value::string("Parameter logicalSourceName must be provided");
             } else if (paths[1] == "addLogicalStream" || paths[1] == "updateLogicalStream") {
@@ -143,7 +143,7 @@ void BaseController::handleException(const web::http::http_request& message, con
         errorResponse["message"] = web::json::value::string("Compilation failed");
 
         // define what was failed to be compiled based on path
-        if (paths[0] == "streamCatalog") {
+        if (paths[0] == "sourceCatalog") {
             if (paths[1] == "addLogicalStream" || paths[1] == "updateLogicalStream") {
                 errorResponse["detail"] = web::json::value::string("Unable to compile the submitted schema");
             }

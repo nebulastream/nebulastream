@@ -34,6 +34,9 @@ using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
+/**
+ * @brief This class provides utility to interact with NES coordinator over RPC interface.
+ */
 class CoordinatorRPCClient {
   public:
     explicit CoordinatorRPCClient(const std::string& address);
@@ -46,24 +49,26 @@ class CoordinatorRPCClient {
     bool registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources);
 
     /**
-     * @brief this method registers logical streams via the coordinator
-     * @param name of new logical stream
-     * @param path to the file containing the schema
-     * @return bool indicating the success of the log stream
-     * @note the logical stream is not saved in the worker as it is maintained on the coordinator and all logical streams can be retrieved from the physical stream map locally, if we later need the data we can add a map
+     * @brief this method registers logical source via the coordinator
+     * @param logicalSourceName of new logical source name
+     * @param filePath to the file containing the schema
+     * @return bool indicating the success of the log source
+     * @note the logical source is not saved in the worker as it is maintained on the coordinator and all logical source can be
+     * retrieved from the physical source map locally, if we later need the data we can add a map
      */
     bool registerLogicalStream(const std::string& logicalSourceName, const std::string& filePath);
 
     /**
-     * @brief this method removes the logical stream in the coordinator
-     * @param logical stream to be deleted
+     * @brief this method removes the logical source in the coordinator
+     * @param logicalSourceName name of the logical source to be deleted
      * @return bool indicating success of the removal
      */
     bool unregisterLogicalStream(const std::string& logicalSourceName);
 
     /**
-     * @brief this method removes a physical stream from a logical stream in the coordinator
-     * @param logical stream to be deleted
+     * @brief this method removes a physical source from a logical source in the coordinator
+     * @param logicalSourceName name of the logical source
+     * @param physicalSourceName name of the physical source to be deleted
      * @return bool indicating success of the removal
      */
     bool unregisterPhysicalStream(const std::string& logicalSourceName, const std::string& physicalSourceName);
@@ -75,17 +80,17 @@ class CoordinatorRPCClient {
      */
     bool addParent(uint64_t parentId);
 
-    /*
-    * @brief method to replace old with new parent
-    * @param oldParentId
-    * @param newParentId
-    * @return bool indicating success
-    */
+    /**
+     * @brief method to replace old with new parent
+     * @param oldParentId id of the old parent
+     * @param newParentId id of the new parent
+     * @return bool indicating success
+     */
     bool replaceParent(uint64_t oldParentId, uint64_t newParentId);
 
     /**
      * @brief method to remove a parent from a node
-     * @param newParentId
+     * @param parentId: id of the parent to be removed
      * @return bool indicating success
      */
     bool removeParent(uint64_t parentId);
@@ -96,8 +101,7 @@ class CoordinatorRPCClient {
      * @param grpcPort: the grpc port of the node
      * @param dataPort: the data port of the node
      * @param numberOfSlots: processing slots capacity
-     * @param type: of this node, e.g., sensor or worker
-     * @param nodeProperties
+     * @param staticNesMetrics: metrics to report
      * @return bool indicating success
      */
     bool registerNode(const std::string& ipAddress,

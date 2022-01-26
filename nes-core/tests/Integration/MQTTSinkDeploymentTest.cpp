@@ -67,7 +67,7 @@ class MQTTSinkDeploymentTest : public testing::Test {
 TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     NES_INFO("MQTTSinkDeploymentTest: Start coordinator");
     // Here the default schema (default_logical) is already initialized (NesCoordinator calls 'SourceCatalog'
-    // it is later used in TypeInferencePhase.cpp via 'streamCatalog->getSchemaForLogicalStream(logicalSourceName);' to set
+    // it is later used in TypeInferencePhase.cpp via 'sourceCatalog->getSchemaForLogicalStream(logicalSourceName);' to set
     // the new sources schema to the default_logical schema
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

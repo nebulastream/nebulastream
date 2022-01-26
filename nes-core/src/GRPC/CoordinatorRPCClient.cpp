@@ -236,15 +236,6 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         std::optional<StaticNesMetricsPtr> staticNesMetrics) {
-    //    if (type == NodeType::Sensor) {
-    //        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a sensor workerID=" << workerId);
-    //    } else if (type == NodeType::Worker) {
-    //        NES_DEBUG("CoordinatorRPCClient::registerNode: try to register a worker");
-    //    } else {
-    //        NES_ERROR("CoordinatorRPCClient::registerNode node type not supported " << type);
-    //        throw Exception("CoordinatorRPCClient::registerNode wrong node type");
-    //    }
-
     RegisterNodeRequest request;
     request.set_address(ipAddress);
     request.set_grpcport(grpcPort);

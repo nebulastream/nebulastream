@@ -23,11 +23,11 @@
 
 using namespace NES;
 
-CoordinatorRPCServer::CoordinatorRPCServer(TopologyPtr topology,
-                                           SourceCatalogPtr streamCatalog,
+CoordinatorRPCServer::CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService,
+                                           StreamCatalogServicePtr streamCatalogService,
                                            MonitoringManagerPtr monitoringManager)
-    : topologyManagerService(std::make_shared<TopologyManagerService>(topology)),
-      streamCatalogService(std::make_shared<StreamCatalogService>(streamCatalog)), monitoringManager(monitoringManager){};
+    : topologyManagerService(topologyManagerService), streamCatalogService(streamCatalogService),
+      monitoringManager(monitoringManager){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);

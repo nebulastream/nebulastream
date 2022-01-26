@@ -26,12 +26,13 @@ ENV restPort=8081
 ENV coordinatorIp="127.0.0.1"
 ENV coordinatorPort="12346"
 ENV enableSemanticQueryValidation=false
-ENV sourceType="CSVSource"
-ENV mqttSourceType="/opt/local/nebula-stream/exdra.csv"
+ENV type="CSVSource"
+ENV filePath="/opt/local/nebula-stream/exdra.csv"
 ENV numberOfBuffersToProduce=100
 ENV sourceFrequency=1
 ENV physicalSourceName="exdra_worker_1"
 ENV logicalSourceName="exdra"
 ENV skipHeader=false
+ENV delimiter=","
 
 ENTRYPOINT ["/entrypoint.sh"]

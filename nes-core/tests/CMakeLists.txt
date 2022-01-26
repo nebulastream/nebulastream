@@ -477,7 +477,7 @@ target_link_libraries(millisecond-interval-tests nes ${GTEST_LIBRARIES})
 add_test(NAME millisecond-interval-tests COMMAND millisecond-interval-tests)
 
 ### Materialized View Tests ###
-add_executable(materialized-view-tests "UnitTests/Views/MaterializedViewTest.cpp")
+add_executable(materialized-view-tests "Integration/MaterializedViewTest.cpp")
 target_link_libraries(materialized-view-tests nes ${GTEST_LIBRARIES})
 add_test(NAME materialized-view-tests COMMAND materialized-view-tests)
 

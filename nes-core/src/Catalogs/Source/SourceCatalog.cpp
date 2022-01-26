@@ -78,7 +78,7 @@ bool SourceCatalog::addLogicalStream(const std::string& logicalStreamName, Schem
     //check if stream already exist
     NES_DEBUG("SourceCatalog: search for logical stream in addLogicalStream() " << logicalStreamName);
 
-    if (!testIfLogicalSourceExists(logicalStreamName)) {
+    if (!containsLogicalSource(logicalStreamName)) {
         NES_DEBUG("SourceCatalog: add logical stream " << logicalStreamName);
         logicalSourceNameToSchemaMapping[logicalStreamName] = std::move(schemaPtr);
         return true;
@@ -103,7 +103,7 @@ bool SourceCatalog::removeLogicalStream(const std::string& logicalStreamName) {
     }
     uint64_t cnt = logicalSourceNameToSchemaMapping.erase(logicalStreamName);
     NES_DEBUG("SourceCatalog: removed " << cnt << " copies of the stream");
-    NES_ASSERT(!testIfLogicalSourceExists(logicalStreamName), "log stream should not exist");
+    NES_ASSERT(!containsLogicalSource(logicalStreamName), "log stream should not exist");
     return true;
 }
 
@@ -112,7 +112,7 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
     NES_DEBUG("SourceCatalog: search for logical stream in addPhysicalSource() " << logicalSourceName);
 
     // check if logical stream exists
-    if (!testIfLogicalSourceExists(logicalSourceName)) {
+    if (!containsLogicalSource(logicalSourceName)) {
         NES_ERROR("SourceCatalog: logical stream " << logicalSourceName << " does not exists when inserting physical stream "
                                                    << newSourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
         return false;
@@ -242,7 +242,7 @@ LogicalSourcePtr SourceCatalog::getStreamForLogicalStreamOrThrowException(const 
     throw Exception("Required stream does not exists " + logicalStreamName);
 }
 
-bool SourceCatalog::testIfLogicalSourceExists(const std::string& logicalStreamName) {
+bool SourceCatalog::containsLogicalSource(const std::string& logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     return logicalSourceNameToSchemaMapping.find(logicalStreamName)//if log stream does not exists
         != logicalSourceNameToSchemaMapping.end();
@@ -317,7 +317,7 @@ bool SourceCatalog::updatedLogicalStream(std::string& streamName, std::string& s
     std::unique_lock lock(catalogMutex);
 
     NES_TRACE("SourceCatalog: Check if logical stream exists in the catalog.");
-    if (!testIfLogicalSourceExists(streamName)) {
+    if (!containsLogicalSource(streamName)) {
         NES_ERROR("SourceCatalog: Unable to find logical stream " << streamName << " to update.");
         return false;
     }

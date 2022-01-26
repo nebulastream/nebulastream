@@ -142,7 +142,7 @@ web::json::value TestUtils::startQueryViaRest(const string& queryString, const s
 bool TestUtils::addLogicalStream(const string& schemaString, const std::string& restPort) {
     web::json::value json_returnSchema;
 
-    web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort + "/v1/nes/streamCatalog/addLogicalStream");
+    web::http::client::http_client clientSchema("http://127.0.0.1:" + restPort + "/v1/nes/sourceCatalog/addLogicalStream");
     clientSchema.request(web::http::methods::POST, _XPLATSTR("/"), schemaString)
         .then([](const web::http::http_response& response) {
             NES_INFO("get first then");

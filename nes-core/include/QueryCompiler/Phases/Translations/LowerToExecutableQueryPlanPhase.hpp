@@ -80,7 +80,7 @@ class LowerToExecutableQueryPlanPhase {
      * @param physicalSource : the physical source
      * @return Shared pointer for actual source descriptor
      */
-    SourceDescriptorPtr createActualLogicalSourceDescriptor(SchemaPtr schema, PhysicalSourcePtr physicalSource);
+    SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourcePtr physicalSource);
 };
 }// namespace QueryCompilation
 }// namespace NES

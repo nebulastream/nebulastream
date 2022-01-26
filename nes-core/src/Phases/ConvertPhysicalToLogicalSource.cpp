@@ -118,7 +118,7 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(const
                 SenseSourceDescriptor::create(senseSourcePtr->getSchema(), senseSourcePtr->getUdfs());
             return senseSourceDescriptor;
         }
-        case MATERIALIZED_VIEW_SOURCE: {
+        case MATERIALIZEDVIEW_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating materialized view source");
             const Experimental::MaterializedView::MaterializedViewSourcePtr materializedViewSourcePtr =
                     std::dynamic_pointer_cast<Experimental::MaterializedView::MaterializedViewSource>(dataSource);

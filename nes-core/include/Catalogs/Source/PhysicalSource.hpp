@@ -29,7 +29,7 @@ class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
 /**
- * @brief Container for storing all configurations for physical stream
+ * @brief Container for storing all configurations for physical source
  */
 class PhysicalSource {
 
@@ -52,10 +52,22 @@ class PhysicalSource {
      */
     static PhysicalSourcePtr create(std::string logicalSourceName, std::string physicalSourceName);
 
+    /**
+     * @brief Get logical source name
+     * @return logical source name
+     */
     const std::string& getLogicalSourceName() const;
 
+    /**
+     * @brief Get physical source name
+     * @return physical source name
+     */
     const std::string& getPhysicalSourceName() const;
 
+    /**
+     * @brief Get physical source type
+     * @return physical source type
+     */
     const PhysicalSourceTypePtr& getPhysicalSourceType() const;
 
     std::string toString();
