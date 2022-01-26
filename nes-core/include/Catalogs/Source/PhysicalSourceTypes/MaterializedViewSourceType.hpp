@@ -14,10 +14,11 @@
     limitations under the License.
 */
 
-#ifndef NES_MATERIALIZEDVIEWSOURCECONFIG_HPP
-#define NES_MATERIALIZEDVIEWSOURCECONFIG_HPP
+#ifndef NES_MATERIALIZEDVIEWSOURCETYPE_HPP
+#define NES_MATERIALIZEDVIEWSOURCETYPE_HPP
 
-#include <Configurations/Sources/SourceConfig.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 
 namespace NES {
 
@@ -25,32 +26,32 @@ namespace Configurations {
 
 namespace Experimental::MaterializedView {
 
-class MaterializedViewSourceConfig;
-using MaterializedViewSourceConfigPtr = std::shared_ptr<MaterializedViewSourceConfig>;
+class MaterializedViewSourceType;
+using MaterializedViewSourceTypePtr = std::shared_ptr<MaterializedViewSourceType>;
 
 /**
  * @brief Configuration object for materialized view source config
  */
-class MaterializedViewSourceConfig : public SourceConfig {
+class MaterializedViewSourceType : public PhysicalSourceType {
 
-public:
+  public:
     /**
-     * @brief create a MaterializedViewSourceConfigPtr object
+     * @brief create a MaterializedViewSourceTypePtr object
      * @param sourceConfigMap inputted config options
-     * @return MaterializedViewSourceConfigPtr
+     * @return MaterializedViewSourceTypePtr
      */
-    static MaterializedViewSourceConfigPtr create(std::map<std::string, std::string> sourceConfigMap);
+    static MaterializedViewSourceTypePtr create(std::map<std::string, std::string> sourceConfigMap);
 
     /**
-     * @brief create a MaterializedViewSourceConfigPtr object with default values
-     * @return MaterializedViewSourceConfigPtr
+     * @brief create a MaterializedViewSourceTypePtr object with default values
+     * @return MaterializedViewSourceTypePtr
      */
-    static MaterializedViewSourceConfigPtr create();
+    static MaterializedViewSourceTypePtr create();
 
     /**
      * @brief resets all source configuration to default values
      */
-    void resetSourceOptions() override;
+    void reset() override;
 
     /**
      * @brief creates a string representation of the source
@@ -61,27 +62,29 @@ public:
     /**
      * @brief get id of materialized view to use
      */
-    [[nodiscard]] std::shared_ptr<ConfigOption<std::uint32_t>> getId() const;
+    [[nodiscard]] std::shared_ptr<ConfigurationOption<std::uint32_t>> getId() const;
 
     /**
      * @brief set id of materialized view to use
      */
     void setId(uint32_t id);
 
-private:
+    bool equal(const PhysicalSourceTypePtr& other) override;
+
+  private:
     /**
      * @brief constructor to create a new materialized view source config object initialized with values from sourceConfigMap
      */
-    explicit MaterializedViewSourceConfig(std::map<std::string, std::string> sourceConfigMap);
+    explicit MaterializedViewSourceType(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new materialized view source config object initialized with default values as set below
      */
-    MaterializedViewSourceConfig();
+    MaterializedViewSourceType();
 
     IntConfigOption id;
 };
 }// namespace Experimental::MaterializedView
 }// namespace Configurations
 }// namespace NES
-#endif //NES_MATERIALIZEDVIEWSOURCECONFIG_HPP
+#endif//NES_MATERIALIZEDVIEWSOURCETYPE_HPP

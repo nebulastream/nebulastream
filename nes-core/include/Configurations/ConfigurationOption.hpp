@@ -182,6 +182,7 @@ const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
 const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
 const std::string OPC_SOURCE_CONFIG = "OPCSource";
 const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
+const std::string MATERIALIZEDVIEW_SOURCE_CONFIG = "MaterializedViewSource";
 
 const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
@@ -215,6 +216,8 @@ const std::string NODE_IDENTIFIER_CONFIG = "nodeIdentifier";
 const std::string PASSWORD_CONFIG = "password";
 
 const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
+
+const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 
 }// namespace Configurations
 }// namespace NES
