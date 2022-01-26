@@ -114,7 +114,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false, 2, 4);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -192,7 +192,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
  */
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueries) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false, 2, 4);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -277,7 +277,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
 
     // Prepare
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false, 2, 4);
 
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -336,7 +336,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesMoreThanTwoQueries) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false, 2, 4);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -425,7 +425,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStopChangeLog) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false, 2, 4);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -505,7 +505,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
 
 TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueriesWithQueryStop) {
 
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false, 2, 4);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
