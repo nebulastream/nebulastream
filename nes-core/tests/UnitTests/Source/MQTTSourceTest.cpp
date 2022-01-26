@@ -244,7 +244,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
 TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigIrisDataset) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+//    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -286,7 +286,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigIrisDatas
 
     srcConf->setSourceType("MQTTSource");
     //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat; 5 = qos; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
-    srcConf->setSourceConfig("127.0.0.1:1883;cpp-mqtt-iris;emqx;iris;CSV;2;true;3000");
+//    srcConf->setSourceConfig("127.0.0.1:1883;cpp-mqtt-iris;emqx;iris;CSV;2;true;3000");
 //    srcConf->setNumberOfTuplesToProducePerBuffer(1);
 //    srcConf->setNumberOfBuffersToProduce(1);
 //    srcConf->setNumberOfTuplesToProducePerBuffer(10);
@@ -295,7 +295,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigIrisDatas
     srcConf->setSourceFrequency(1);
     srcConf->setPhysicalStreamName("iris_physical");
     srcConf->setLogicalStreamName("iris");
-    srcConf->setSkipHeader(false);
+//    srcConf->setSkipHeader(false);
     //register physical stream
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
     wrk1->registerPhysicalStream(streamConf);

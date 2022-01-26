@@ -177,7 +177,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
         streamCatalog->addLogicalStream(streamName, schema);
 
-        SourceConfigPtr sourceConfig = SourceConfig::create();
+        SourceConfigPtr sourceConfig = MQTTSourceConfig::create();
         sourceConfig->setSourceFrequency(0);
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setPhysicalStreamName("test2");
@@ -242,7 +242,7 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
         streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
         streamCatalog->addLogicalStream(streamName, schema);
 
-        SourceConfigPtr sourceConfig = SourceConfig::create();
+        SourceConfigPtr sourceConfig = MQTTSourceConfig::create();
         sourceConfig->setSourceFrequency(0);
         sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
         sourceConfig->setPhysicalStreamName("test2");
@@ -363,7 +363,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 

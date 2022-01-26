@@ -970,7 +970,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     codeGenerator->generateCodeForInferModel(context, imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
 
     /* generate code for writing result tuples to output buffer */
-    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, context);
+    codeGenerator->generateCodeForEmit(outputSchema, QueryCompilation::NO_OPTIMIZATION, QueryCompilation::FIELD_COPY, context);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(jitCompiler, context, QueryCompilation::QueryCompilerOptions::DEBUG);
@@ -992,23 +992,23 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
 
     /* printing results */
 
-    auto resultBuffer = queryContext->buffers[0];
-    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
-    auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
-
-    auto iris0FieldsOutput =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(4, bindedOutputRowLayout);
-    auto iris1FieldsOutput =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(5, bindedOutputRowLayout);
-    auto iris2FieldsOutput =
-        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(6, bindedOutputRowLayout);
-
-    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
-        std::cout << "-------------------------\n";
-        std::cout << iris0FieldsOutput[recordIndex] << std::endl;
-        std::cout << iris1FieldsOutput[recordIndex] << std::endl;
-        std::cout << iris2FieldsOutput[recordIndex] << std::endl;
-    }
+//    auto resultBuffer = queryContext->buffers[0];
+//    auto outputLayout = Runtime::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+//    auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
+//
+//    auto iris0FieldsOutput =
+//        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(4, bindedOutputRowLayout);
+//    auto iris1FieldsOutput =
+//        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(5, bindedOutputRowLayout);
+//    auto iris2FieldsOutput =
+//        Runtime::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(6, bindedOutputRowLayout);
+//
+//    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+//        std::cout << "-------------------------\n";
+//        std::cout << iris0FieldsOutput[recordIndex] << std::endl;
+//        std::cout << iris1FieldsOutput[recordIndex] << std::endl;
+//        std::cout << iris2FieldsOutput[recordIndex] << std::endl;
+//    }
 
     EXPECT_TRUE(true);
 }

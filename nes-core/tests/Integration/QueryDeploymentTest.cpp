@@ -850,7 +850,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -928,7 +928,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModelFromCsvDa
 
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfig::create();
+    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
@@ -978,12 +978,12 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModelFromCsvDa
     wrk1->registerLogicalStream("iris", testSchemaFileName);
 
     srcConf->setSourceType("CSVSource");
-    srcConf->setSourceConfig("../tests/test_data/iris.csv");
+    srcConf->as<CSVSourceConfig>()->setFilePath(std::string("../tests/test_data/iris.csv"));
     srcConf->setNumberOfTuplesToProducePerBuffer(10);
     srcConf->setNumberOfBuffersToProduce(15);
     srcConf->setPhysicalStreamName("iris_physical");
     srcConf->setLogicalStreamName("iris");
-    srcConf->setSkipHeader(false);
+//    srcConf->setSkipHeader(false);
 
     //register physical stream
     PhysicalStreamConfigPtr irisStream = PhysicalStreamConfig::create(srcConf);
