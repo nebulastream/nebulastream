@@ -66,6 +66,7 @@ target_include_directories(nes PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 target_link_libraries(nes PUBLIC nes-grpc nes-common nes-compiler)
+target_link_libraries(nes PUBLIC libtensorflowlite_c.so)
 
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
 foreach (dir ${LIBA_INCLUDES})
