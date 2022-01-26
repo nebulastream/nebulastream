@@ -528,6 +528,10 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
+    // Content ov testCSV.csv:
+    // 1,2,3
+    // 1,2,4
+    // 4,3,6
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
     csvSourceType->setSourceFrequency(1);
@@ -538,10 +542,6 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
                                   .addLogicalSource("car", carSchema)
-                                  // Content ov testCSV.csv:
-                                  // 1,2,3
-                                  // 1,2,4
-                                  // 4,3,6
                                   //register physical stream
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
                                   .validate()
@@ -581,6 +581,10 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    // Content ov testCSV.csv:
+    // 1,2,3
+    // 1,2,4
+    // 4,3,6
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
     csvSourceType->setSourceFrequency(1);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
@@ -590,10 +594,6 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 4))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort)
                                   .addLogicalSource("car", carSchema)
-                                  // Content ov testCSV.csv:
-                                  // 1,2,3
-                                  // 1,2,4
-                                  // 4,3,6
                                   //register physical stream
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)//2
                                   // add a memory source

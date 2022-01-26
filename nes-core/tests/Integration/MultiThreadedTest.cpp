@@ -504,42 +504,6 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     std::string outputFilePath = "testDeployTwoWorkerJoinUsingTopDownOnSameSchema.out";
     remove(outputFilePath.c_str());
 
-    ////    //register logical stream qnv
-    ////    std::string window =
-    ////        R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    ////    std::string testSchemaFileName = "window.hpp";
-    ////    std::ofstream out(testSchemaFileName);
-    ////    out << window;
-    ////    out.close();
-    ////    wrk1->registerLogicalStream("window1", testSchemaFileName);
-    ////
-    ////    //register logical stream qnv
-    ////    std::string window2 =
-    ////        R"(Schema::create()->addField(createField("win2", INT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    ////    std::string testSchemaFileName2 = "window.hpp";
-    ////    std::ofstream out2(testSchemaFileName2);
-    ////    out2 << window2;
-    ////    out2.close();
-    ////    wrk1->registerLogicalStream("window2", testSchemaFileName2);
-    ////
-    ////    csvSourceType->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    ////    csvSourceType->as<CSVSourceConfig>()->setNumberOfTuplesToProducePerBuffer(3);
-    ////    csvSourceType->as<CSVSourceConfig>()->setNumberOfBuffersToProduce(2);
-    ////    csvSourceType->as<CSVSourceConfig>()->setPhysicalStreamName("test_stream");
-    ////    csvSourceType->as<CSVSourceConfig>()->setLogicalStreamName("window1");
-    ////    csvSourceType->as<CSVSourceConfig>()->setSkipHeader(true);
-    ////
-    ////    //register physical stream R2000070
-    ////    PhysicalSourcePtr windowStream = PhysicalSourceType::create(csvSourceType);
-    ////
-    ////    csvSourceType->as<CSVSourceConfig>()->setLogicalStreamName("window2");
-    ////    csvSourceType->as<CSVSourceConfig>()->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
-    ////
-    ////    PhysicalSourcePtr windowStream2 = PhysicalSourceType::create(csvSourceType);
-    //
-    //    wrk1->registerPhysicalSources(windowStream);
-    //    wrk1->registerPhysicalSources(windowStream2);
-
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 

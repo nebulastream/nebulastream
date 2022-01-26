@@ -33,8 +33,6 @@ using namespace Configurations;
 
 class AllowedLatenessTest : public testing::Test {
   public:
-//    PhysicalSourcePtr outOfOrderConf;
-//    PhysicalSourcePtr inOrderConf;
     CSVSourceTypePtr inOrderConf;
     CSVSourceTypePtr outOfOrderConf;
     SchemaPtr inputSchema;
@@ -247,7 +245,6 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_250ms) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-// TODO: find out why test is failing
 /*
  * @brief Test allowed lateness using multiple sources, flat topology, in-order stream with 0ms allowed lateness
  */
