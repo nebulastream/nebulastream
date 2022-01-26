@@ -13,9 +13,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-//
-// Created by balint on 20.04.21.
-//
 
 #ifndef NES_MIGRATEQUERYREQUEST_HPP
 #define NES_MIGRATEQUERYREQUEST_HPP
@@ -24,7 +21,6 @@
 #include <Phases/MigrationTypes.hpp>
 #include <memory>
 #include <string>
-
 
 namespace NES {
 
@@ -40,13 +36,13 @@ namespace NES {
          std::string toString() override;
 
         /**
-         *  gets the Migration Type for this Query Migration Request
+         * @brief gets the Migration Type for this Query Migration Request
          * @return MigrationType
          */
         MigrationType getMigrationType();
 
         /**
-         *  gets the topology node on which the query can be found
+         * @brief gets the topology node on which the query can be found
          * @return topology node id
          */
         TopologyNodeId getTopologyNode();

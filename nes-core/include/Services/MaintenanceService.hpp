@@ -14,10 +14,6 @@
     limitations under the License.
 */
 
-//
-// Created by balint on 25.12.21.
-//
-
 #ifndef NES_MAINTENANCESERVICE_HPP
 #define NES_MAINTENANCESERVICE_HPP
 #include <Plans/Query/QueryId.hpp>

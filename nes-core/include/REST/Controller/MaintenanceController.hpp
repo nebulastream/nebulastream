@@ -13,9 +13,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-//
-// Created by balint on 25.12.21.
-//
 
 #ifndef NES_MAINTENANCECONTROLLER_HPP
 #define NES_MAINTENANCECONTROLLER_HPP
@@ -25,7 +22,6 @@
 #include <cpprest/http_msg.h>
 
 namespace NES{
-
 
 class MaintenanceController: public BaseController{
 

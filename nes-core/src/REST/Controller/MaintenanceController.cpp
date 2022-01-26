@@ -13,9 +13,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-//
-// Created by balint on 25.12.21.
-//
 #include <REST/Controller/MaintenanceController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Topology/Topology.hpp>
@@ -59,7 +56,7 @@ void MaintenanceController::handlePost(const std::vector<utility::string_t>& pat
                   web::json::value result{};
                       result["Info"] = web::json::value::string("Successfully submitted Maintenance Request");
                       result["Node Id"] = web::json::value::number(id);
-                      result["Strategy"] = web::json::value::number(migrationType);
+                      result["Migration Type"] = web::json::value::number(migrationType);
                       successMessageImpl(request, result);
                   return;
 

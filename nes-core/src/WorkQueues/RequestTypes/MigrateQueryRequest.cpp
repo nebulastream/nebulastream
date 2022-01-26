@@ -13,9 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-//
-// Created by balint on 20.04.21.
-//
+
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
 #include <string>
 

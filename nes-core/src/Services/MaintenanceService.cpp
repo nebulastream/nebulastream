@@ -13,9 +13,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-//
-// Created by balint on 25.12.21.
-//
 
 #include <Services/MaintenanceService.hpp>
 #include <Catalogs/QueryCatalog.hpp>
@@ -77,7 +74,7 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     for(auto queryId : queryIds){
         //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
         if(type == RESTART){
-            queryCatalog->markQueryAs(queryId,QueryStatus::Restart);
+            queryCatalog->markQueryAs(queryId,QueryStatus::Restarting);
             queryRequestQueue->add(RestartQueryRequest::create(queryId));
         }
         else {
