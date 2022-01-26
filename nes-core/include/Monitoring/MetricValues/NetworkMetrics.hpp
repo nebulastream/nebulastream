@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_METRICS_HPP_
-#define NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_METRICS_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
+#define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
 
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
@@ -83,4 +83,4 @@ SchemaPtr getSchema(const NetworkMetrics& metric, const std::string& prefix);
 
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_METRIC_VALUES_NETWORK_METRICS_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_

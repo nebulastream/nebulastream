@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PHYSICALSOURCE_HPP
-#define NES_PHYSICALSOURCE_HPP
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
 
 #include <memory>
 #include <string>
@@ -84,4 +84,4 @@ class PhysicalSource {
 
 }// namespace NES
 
-#endif//NES_PHYSICALSOURCE_HPP
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_

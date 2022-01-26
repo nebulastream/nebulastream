@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_HPP_
-#define NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_HPP_
+#ifndef NES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_
+#define NES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_
 
 #include <Common/ExecutableType/NESType.hpp>
 #include <algorithm>
@@ -399,4 +399,4 @@ struct std::hash<NES::ExecutableTypes::Array<T, N>> {
     }
 };
 
-#endif// NES_INCLUDE_QUERY_COMPILER_GENERATABLE_TYPES_ARRAY_HPP_
+#endif  // NES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_

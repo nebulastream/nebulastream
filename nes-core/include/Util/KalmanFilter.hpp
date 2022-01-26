@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_KALMAN_FILTER_HPP_
-#define NES_INCLUDE_UTIL_KALMAN_FILTER_HPP_
+#ifndef NES_INCLUDE_UTIL_KALMANFILTER_HPP_
+#define NES_INCLUDE_UTIL_KALMANFILTER_HPP_
 
 #include <Eigen/Dense>
 #include <Util/CircularBuffer.hpp>
@@ -250,4 +250,4 @@ class KalmanFilter {
 
 }// namespace NES
 
-#endif // NES_INCLUDE_UTIL_KALMAN_FILTER_HPP_
+#endif  // NES_INCLUDE_UTIL_KALMANFILTER_HPP_

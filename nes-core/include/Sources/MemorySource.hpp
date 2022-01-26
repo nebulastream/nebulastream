@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_MEMORY_SOURCE_HPP_
-#define NES_INCLUDE_SOURCES_MEMORY_SOURCE_HPP_
+#ifndef NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
+#define NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -94,4 +94,4 @@ using MemorySourcePtr = std::shared_ptr<MemorySource>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_SOURCES_MEMORY_SOURCE_HPP_
+#endif  // NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_

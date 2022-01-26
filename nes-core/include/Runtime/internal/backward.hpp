@@ -4345,4 +4345,4 @@ class SignalHandling {
 
 }// namespace backward
 
-#endif// NES_INCLUDE_RUNTIME_INTERNAL_BACKWARD_HPP_
+#endif  // NES_INCLUDE_RUNTIME_INTERNAL_BACKWARD_HPP_

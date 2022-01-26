@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_SERVICES_QUERY_PARSING_SERVICE_HPP_
-#define NES_INCLUDE_SERVICES_QUERY_PARSING_SERVICE_HPP_
+#ifndef NES_INCLUDE_SERVICES_QUERYPARSINGSERVICE_HPP_
+#define NES_INCLUDE_SERVICES_QUERYPARSINGSERVICE_HPP_
 #include <memory>
 
 namespace NES {
@@ -57,4 +57,4 @@ class QueryParsingService {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_SERVICES_QUERY_PARSING_SERVICE_HPP_
+#endif  // NES_INCLUDE_SERVICES_QUERYPARSINGSERVICE_HPP_

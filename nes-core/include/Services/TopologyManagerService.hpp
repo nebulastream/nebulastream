@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_
-#define NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_
+#ifndef NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
+#define NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_
 
 #include <atomic>
 #include <memory>
@@ -39,7 +39,6 @@ class TopologyManagerService {
      * @param address of node ip:port
      * @param cpu the cpu capacity of the worker
      * @param nodeProperties of the to be added sensor
-     * @param node type
      * @return id of node
      */
     uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots);
@@ -90,4 +89,4 @@ using TopologyManagerServicePtr = std::shared_ptr<TopologyManagerService>;
 
 }//namespace NES
 
-#endif// NES_INCLUDE_SERVICES_TOPOLOGY_MANAGER_SERVICE_HPP_
+#endif  // NES_INCLUDE_SERVICES_TOPOLOGYMANAGERSERVICE_HPP_

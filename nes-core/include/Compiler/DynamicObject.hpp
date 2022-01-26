@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_COMPILER_DYNAMIC_OBJECT_HPP_
-#define NES_INCLUDE_COMPILER_DYNAMIC_OBJECT_HPP_
+#ifndef NES_INCLUDE_COMPILER_DYNAMICOBJECT_HPP_
+#define NES_INCLUDE_COMPILER_DYNAMICOBJECT_HPP_
 #include <string>
 #include <utility>
 namespace NES::Compiler {
@@ -51,4 +51,4 @@ class DynamicObject {
 
 }// namespace NES::Compiler
 
-#endif// NES_INCLUDE_COMPILER_DYNAMIC_OBJECT_HPP_
+#endif  // NES_INCLUDE_COMPILER_DYNAMICOBJECT_HPP_

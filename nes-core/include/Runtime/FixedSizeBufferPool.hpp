@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_FIXED_SIZE_BUFFER_POOL_HPP_
-#define NES_INCLUDE_RUNTIME_FIXED_SIZE_BUFFER_POOL_HPP_
+#ifndef NES_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_
+#define NES_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
@@ -121,4 +121,4 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
 
 }// namespace NES
 
-#endif// NES_INCLUDE_RUNTIME_FIXED_SIZE_BUFFER_POOL_HPP_
+#endif  // NES_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMMON_DATA_TYPES_DATA_TYPE_HPP_
-#define NES_INCLUDE_COMMON_DATA_TYPES_DATA_TYPE_HPP_
+#ifndef NES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_
+#define NES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_
 
 #include <memory>
 #include <string>
@@ -100,4 +100,4 @@ class DataType {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_COMMON_DATA_TYPES_DATA_TYPE_HPP_
+#endif  // NES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_

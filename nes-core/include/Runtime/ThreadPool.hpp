@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_THREAD_POOL_HPP_
-#define NES_INCLUDE_RUNTIME_THREAD_POOL_HPP_
+#ifndef NES_INCLUDE_RUNTIME_THREADPOOL_HPP_
+#define NES_INCLUDE_RUNTIME_THREADPOOL_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <iostream>
@@ -115,4 +115,4 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>;
 
 }// namespace NES::Runtime
 
-#endif// NES_INCLUDE_RUNTIME_THREAD_POOL_HPP_
+#endif  // NES_INCLUDE_RUNTIME_THREADPOOL_HPP_

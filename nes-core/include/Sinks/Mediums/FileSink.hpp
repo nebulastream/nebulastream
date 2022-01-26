@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SINKS_MEDIUMS_FILE_SINK_HPP_
-#define NES_INCLUDE_SINKS_MEDIUMS_FILE_SINK_HPP_
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <cstdint>
@@ -90,4 +90,4 @@ class FileSink : public SinkMedium {
 using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
 
-#endif// NES_INCLUDE_SINKS_MEDIUMS_FILE_SINK_HPP_
+#endif  // NES_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_

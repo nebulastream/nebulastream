@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMMON_DATA_TYPES_INTEGER_HPP_
-#define NES_INCLUDE_COMMON_DATA_TYPES_INTEGER_HPP_
+#ifndef NES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_
+#define NES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_
 
 #include <Common/DataTypes/Numeric.hpp>
 
@@ -75,4 +75,4 @@ class Integer final : public Numeric {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_COMMON_DATA_TYPES_INTEGER_HPP_
+#endif  // NES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_
-#define NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_
+#ifndef NES_INCLUDE_SOURCES_SOURCECREATOR_HPP_
+#define NES_INCLUDE_SOURCES_SOURCECREATOR_HPP_
 
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
@@ -342,4 +342,4 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
 #endif
 
 }// namespace NES
-#endif// NES_INCLUDE_SOURCES_SOURCE_CREATOR_HPP_
+#endif  // NES_INCLUDE_SOURCES_SOURCECREATOR_HPP_

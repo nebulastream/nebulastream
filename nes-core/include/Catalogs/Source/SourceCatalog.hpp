@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CATALOGS_STREAM_CATALOG_HPP_
-#define NES_INCLUDE_CATALOGS_STREAM_CATALOG_HPP_
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
 
 #include <API/Schema.hpp>
 #include <Sources/DataSource.hpp>
@@ -197,4 +197,4 @@ class SourceCatalog {
 };
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace NES
-#endif// NES_INCLUDE_CATALOGS_STREAM_CATALOG_HPP_
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_DETAIL_TUPLE_BUFFER_IMPL_HPP_
-#define NES_INCLUDE_RUNTIME_DETAIL_TUPLE_BUFFER_IMPL_HPP_
+#ifndef NES_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
+#define NES_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
@@ -304,4 +304,4 @@ void zmqBufferRecyclingCallback(void* ptr, void* hint);
 }// namespace Runtime
 }// namespace NES
 
-#endif// NES_INCLUDE_RUNTIME_DETAIL_TUPLE_BUFFER_IMPL_HPP_
+#endif  // NES_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_

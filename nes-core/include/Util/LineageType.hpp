@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_LINEAGETYPE_H
-#define NES_LINEAGETYPE_H
+#ifndef NES_INCLUDE_UTIL_LINEAGETYPE_HPP_
+#define NES_INCLUDE_UTIL_LINEAGETYPE_HPP_
 #include <cinttypes>
 #include <stdint.h>
 #include <string>
@@ -33,4 +33,4 @@ enum class LineageType : std::int8_t {
 std::string toString(const LineageType lineageMode);
 LineageType stringToLineageTypeMap(const std::string lineageMode);
 }// namespace NES
-#endif//NES_LINEAGETYPE_H
+#endif  // NES_INCLUDE_UTIL_LINEAGETYPE_HPP_

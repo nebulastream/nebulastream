@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_UNARY_OPERATOR_NODE_HPP_
-#define NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_UNARY_OPERATOR_NODE_HPP_
+#ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATORNODE_HPP_
+#define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATORNODE_HPP_
 
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -38,4 +38,4 @@ class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperato
 };
 }// namespace NES
 
-#endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_LOGICAL_UNARY_OPERATOR_NODE_HPP_
+#endif  // NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATORNODE_HPP_

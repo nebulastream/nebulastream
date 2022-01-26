@@ -59,4 +59,4 @@ SchemaPtr getSchema(Gauge<T>& metric, const std::string& prefix) {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICS_GAUGE_HPP_

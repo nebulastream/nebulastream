@@ -32,4 +32,4 @@ enum class PartitionRegistrationStatus : uint8_t {
     NotFound,
 };
 }// namespace NES::Network
-#endif//NES_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_
+#endif  // NES_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_

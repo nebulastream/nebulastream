@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_PLACEMENTYPE_H
-#define NES_PLACEMENTYPE_H
+#ifndef NES_INCLUDE_UTIL_PLACEMENTTYPE_HPP_
+#define NES_INCLUDE_UTIL_PLACEMENTTYPE_HPP_
 #include <cinttypes>
 #include <stdint.h>
 #include <string>
@@ -38,4 +38,4 @@ enum class PlacementType : std::int8_t {
 std::string toString(const PlacementType placementType);
 
 }// namespace NES
-#endif//NES_PLACEMENTYPE_H
+#endif  // NES_INCLUDE_UTIL_PLACEMENTTYPE_HPP_

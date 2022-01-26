@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_TEST_UTILS_HPP_
-#define NES_INCLUDE_UTIL_TEST_UTILS_HPP_
+#ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
+#define NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -512,4 +512,4 @@ class TestUtils {
     static bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers);
 };
 }// namespace NES
-#endif// NES_INCLUDE_UTIL_TEST_UTILS_HPP_
+#endif  // NES_INCLUDE_UTIL_TESTUTILS_HPP_

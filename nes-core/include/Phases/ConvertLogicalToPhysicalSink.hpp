@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_PHASES_CONVERT_LOGICAL_TO_PHYSICAL_SINK_HPP_
-#define NES_INCLUDE_PHASES_CONVERT_LOGICAL_TO_PHYSICAL_SINK_HPP_
+#ifndef NES_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_
+#define NES_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_
 
 #include <Network/NetworkMessage.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
@@ -53,4 +53,4 @@ class ConvertLogicalToPhysicalSink {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_PHASES_CONVERT_LOGICAL_TO_PHYSICAL_SINK_HPP_
+#endif  // NES_INCLUDE_PHASES_CONVERTLOGICALTOPHYSICALSINK_HPP_

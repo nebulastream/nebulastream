@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_DETAIL_NETWORKSENDER_HPP_
-#define NES_INCLUDE_NETWORK_DETAIL_NETWORKSENDER_HPP_
+#ifndef NES_INCLUDE_NETWORK_DETAIL_NETWORKDATASENDER_HPP_
+#define NES_INCLUDE_NETWORK_DETAIL_NETWORKDATASENDER_HPP_
 
 #include <Network/ZmqUtils.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -82,4 +82,4 @@ class NetworkDataSender : public BaseChannelType {
 };
 
 }// namespace NES::Network::detail
-#endif//NES_INCLUDE_NETWORK_DETAIL_NETWORKSENDER_HPP_
+#endif  // NES_INCLUDE_NETWORK_DETAIL_NETWORKDATASENDER_HPP_

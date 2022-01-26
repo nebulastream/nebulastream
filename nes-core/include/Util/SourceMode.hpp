@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SOURCEMODE_HPP
-#define NES_SOURCEMODE_HPP
+#ifndef NES_INCLUDE_UTIL_SOURCEMODE_HPP_
+#define NES_INCLUDE_UTIL_SOURCEMODE_HPP_
 
 #include <cinttypes>
 #include <stdint.h>
@@ -50,4 +50,4 @@ class SourceMode {
 };
 }// namespace NES
 
-#endif//NES_SOURCEMODE_HPP
+#endif  // NES_INCLUDE_UTIL_SOURCEMODE_HPP_

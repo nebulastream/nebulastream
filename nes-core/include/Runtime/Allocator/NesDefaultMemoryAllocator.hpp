@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_ALLOCATOR_NES_DEFAULT_MEMORY_ALLOCATOR_HPP_
-#define NES_INCLUDE_RUNTIME_ALLOCATOR_NES_DEFAULT_MEMORY_ALLOCATOR_HPP_
+#ifndef NES_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_
+#define NES_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_
 
 #include <Util/Logger.hpp>
 #include <memory>
@@ -49,4 +49,4 @@ class NesDefaultMemoryAllocator : public std::pmr::memory_resource {
 };
 using NesDefaultMemoryAllocatorPtr = std::shared_ptr<NesDefaultMemoryAllocator>;
 }// namespace NES::Runtime
-#endif// NES_INCLUDE_RUNTIME_ALLOCATOR_NES_DEFAULT_MEMORY_ALLOCATOR_HPP_
+#endif  // NES_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_

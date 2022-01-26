@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_ATOMIC_COUNTER_HPP_
-#define NES_INCLUDE_UTIL_ATOMIC_COUNTER_HPP_
+#ifndef NES_INCLUDE_UTIL_ATOMICCOUNTER_HPP_
+#define NES_INCLUDE_UTIL_ATOMICCOUNTER_HPP_
 
 namespace NES {
 
@@ -44,4 +44,4 @@ struct alignas(hardware_constructive_interference_size) AtomicCounter {
 static_assert(sizeof(AtomicCounter<uint64_t>) == 64);
 
 }// namespace NES
-#endif// NES_INCLUDE_UTIL_ATOMIC_COUNTER_HPP_
+#endif  // NES_INCLUDE_UTIL_ATOMICCOUNTER_HPP_

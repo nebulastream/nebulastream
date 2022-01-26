@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_RUNTIME_WINDOW_SLICE_STORE_HPP_
-#define NES_INCLUDE_WINDOWING_RUNTIME_WINDOW_SLICE_STORE_HPP_
+#ifndef NES_INCLUDE_WINDOWING_RUNTIME_WINDOWSLICESTORE_HPP_
+#define NES_INCLUDE_WINDOWING_RUNTIME_WINDOWSLICESTORE_HPP_
 #include <Util/Logger.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
 namespace NES::Windowing {
@@ -142,4 +142,4 @@ class WindowSliceStore {
 
 }// namespace NES::Windowing
 
-#endif// NES_INCLUDE_WINDOWING_RUNTIME_WINDOW_SLICE_STORE_HPP_
+#endif  // NES_INCLUDE_WINDOWING_RUNTIME_WINDOWSLICESTORE_HPP_

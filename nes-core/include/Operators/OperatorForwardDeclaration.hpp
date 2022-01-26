@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_OPERATORS_OPERATOR_FORWARD_DECLARATION_HPP_
-#define NES_INCLUDE_OPERATORS_OPERATOR_FORWARD_DECLARATION_HPP_
+#ifndef NES_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
+#define NES_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
 #include <memory>
 namespace NES {
 
@@ -58,4 +58,4 @@ class SourceLogicalOperatorNode;
 using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 }// namespace NES
-#endif// NES_INCLUDE_OPERATORS_OPERATOR_FORWARD_DECLARATION_HPP_
+#endif  // NES_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

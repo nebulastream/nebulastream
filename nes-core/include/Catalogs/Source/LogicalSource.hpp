@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_
-#define NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_
 
 #include <iostream>
 #include <memory>
@@ -54,4 +54,4 @@ class LogicalSource {
     SchemaPtr schema;
 };
 }// namespace NES
-#endif// NES_INCLUDE_CATALOGS_LOGICAL_STREAM_HPP_
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_LOGICALSOURCE_HPP_

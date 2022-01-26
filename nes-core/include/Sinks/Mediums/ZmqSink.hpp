@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SINKS_MEDIUMS_ZMQ_SINK_HPP_
-#define NES_INCLUDE_SINKS_MEDIUMS_ZMQ_SINK_HPP_
+#ifndef NES_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_
+#define NES_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_
 
 #include <cstdint>
 #include <memory>
@@ -74,4 +74,4 @@ class ZmqSink : public SinkMedium {
 using ZmqSinkPtr = std::shared_ptr<ZmqSink>;
 }// namespace NES
 
-#endif// NES_INCLUDE_SINKS_MEDIUMS_ZMQ_SINK_HPP_
+#endif  // NES_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_

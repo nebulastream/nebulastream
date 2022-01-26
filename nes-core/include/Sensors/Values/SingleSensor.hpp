@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SENSORS_VALUES_SINGLE_VALUE_HPP_
-#define NES_INCLUDE_SENSORS_VALUES_SINGLE_VALUE_HPP_
+#ifndef NES_INCLUDE_SENSORS_VALUES_SINGLESENSOR_HPP_
+#define NES_INCLUDE_SENSORS_VALUES_SINGLESENSOR_HPP_
 
 #include <cstring>
 
@@ -56,4 +56,4 @@ struct __attribute__((packed)) SingleSensor {
 }// namespace Sensors
 }// namespace NES
 
-#endif//NES_INCLUDE_SENSORS_VALUES_SINGLE_VALUE_HPP_
+#endif  // NES_INCLUDE_SENSORS_VALUES_SINGLESENSOR_HPP_

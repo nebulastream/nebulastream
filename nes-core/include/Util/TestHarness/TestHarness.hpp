@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_TEST_HARNESS_TEST_HARNESS_HPP_
-#define NES_INCLUDE_UTIL_TEST_HARNESS_TEST_HARNESS_HPP_
+#ifndef NES_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
+#define NES_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
@@ -376,8 +376,7 @@ class TestHarness {
                     workerConfiguration->addPhysicalSource(physicalSource);
                     break;
                 }
-                case TestHarnessWorkerConfiguration::CSVSource:
-                case TestHarnessWorkerConfiguration::NonSource: break;
+                default: break;
             }
 
             NesWorkerPtr nesWorker = std::make_shared<NesWorker>(workerConfiguration);
@@ -419,36 +418,6 @@ class TestHarness {
 
         QueryServicePtr queryService = nesCoordinator->getQueryService();
         QueryCatalogPtr queryCatalog = nesCoordinator->getQueryCatalog();
-
-        //        for (const TestHarnessWorkerConfiguration& worker : testHarnessWorkerConfigurations) {
-        //            if (worker.type == TestHarnessWorkerConfiguration::CSVSource) {
-        //                worker.wrk->registerPhysicalSources(worker.csvSourceConfig);
-        //            } else if (worker.type == TestHarnessWorkerConfiguration::MemorySource) {
-        //                // create and populate memory source
-        //                auto currentSourceNumOfRecords = worker.record.size();
-        //                auto tupleSize = worker.schema->getSchemaSizeInBytes();
-        //                NES_DEBUG("Tuple Size: " << tupleSize);
-        //                NES_DEBUG("currentSourceNumOfRecords: " << currentSourceNumOfRecords);
-        //                auto memAreaSize = currentSourceNumOfRecords * tupleSize;
-        //                auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
-        //
-        //                auto currentRecords = worker.record;
-        //                for (std::size_t j = 0; j < currentSourceNumOfRecords; ++j) {
-        //                    memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
-        //                }
-        //
-        //                AbstractPhysicalStreamConfigPtr conf =
-        //                    MemorySourceStreamConfig::create("MemorySource",
-        //                                                     worker.physicalStreamName,
-        //                                                     worker.logicalStreamName,
-        //                                                     memArea,
-        //                                                     memAreaSize,
-        //                                                     /** numberOfBuffers*/ memSrcNumBuffToProcess,
-        //                                                     /** frequency*/ memSrcFrequency,
-        //                                                     "frequency");
-        //                worker.wrk->registerPhysicalSources(conf);
-        //            }
-        //        }
 
         // local fs
         std::string filePath = "testHarness.out";
@@ -567,4 +536,4 @@ class TestHarness {
 };
 }// namespace NES
 
-#endif// NES_INCLUDE_UTIL_TEST_HARNESS_TEST_HARNESS_HPP_
+#endif  // NES_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_

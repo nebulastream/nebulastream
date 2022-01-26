@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_TOPOLOGY_TOPOLOGY_NODE_ID_HPP_
-#define NES_INCLUDE_TOPOLOGY_TOPOLOGY_NODE_ID_HPP_
+#ifndef NES_INCLUDE_TOPOLOGY_TOPOLOGYNODEID_HPP_
+#define NES_INCLUDE_TOPOLOGY_TOPOLOGYNODEID_HPP_
 
 #include <cstdint>
 
@@ -25,4 +25,4 @@
 using TopologyNodeId = uint64_t;
 static constexpr uint64_t INVALID_TOPOLOGY_NODE_ID = 0;
 
-#endif// NES_INCLUDE_TOPOLOGY_TOPOLOGY_NODE_ID_HPP_
+#endif  // NES_INCLUDE_TOPOLOGY_TOPOLOGYNODEID_HPP_

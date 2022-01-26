@@ -229,4 +229,4 @@ class Timer {
     bool running{false};
 };
 }// namespace NES
-#endif// NES_INCLUDE_UTIL_TIMER_HPP_
+#endif  // NES_INCLUDE_UTIL_TIMER_HPP_

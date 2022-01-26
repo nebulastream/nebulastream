@@ -44,4 +44,4 @@ class BaseProfiler {
 }// namespace Runtime
 }// namespace NES
 
-#endif//NES_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_
+#endif  // NES_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_

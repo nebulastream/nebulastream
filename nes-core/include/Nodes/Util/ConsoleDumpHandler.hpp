@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODES_UTIL_CONSOLE_DUMP_HANDLER_HPP_
-#define NES_INCLUDE_NODES_UTIL_CONSOLE_DUMP_HANDLER_HPP_
+#ifndef NES_INCLUDE_NODES_UTIL_CONSOLEDUMPHANDLER_HPP_
+#define NES_INCLUDE_NODES_UTIL_CONSOLEDUMPHANDLER_HPP_
 
 #include <Nodes/Util/DumpHandler.hpp>
 #include <memory>
@@ -66,4 +66,4 @@ class ConsoleDumpHandler : public DumpHandler {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_NODES_UTIL_CONSOLE_DUMP_HANDLER_HPP_
+#endif  // NES_INCLUDE_NODES_UTIL_CONSOLEDUMPHANDLER_HPP_

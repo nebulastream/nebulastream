@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_UTIL_METRIC_UTILS_HPP_
-#define NES_INCLUDE_MONITORING_UTIL_METRIC_UTILS_HPP_
+#ifndef NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
+#define NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
 
 #include <Monitoring/Metrics/Gauge.hpp>
 #include <unordered_map>
@@ -94,4 +94,4 @@ class MetricUtils {
 
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_UTIL_METRIC_UTILS_HPP_
+#endif  // NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_

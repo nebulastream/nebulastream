@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SOURCES_BENCHMARK_SOURCE_HPP_
-#define NES_INCLUDE_SOURCES_BENCHMARK_SOURCE_HPP_
+#ifndef NES_INCLUDE_SOURCES_BENCHMARKSOURCE_HPP_
+#define NES_INCLUDE_SOURCES_BENCHMARKSOURCE_HPP_
 
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -115,4 +115,4 @@ using BenchmarkSourcePtr = std::shared_ptr<BenchmarkSource>;
 
 }// namespace NES
 
-#endif// NES_INCLUDE_SOURCES_BENCHMARK_SOURCE_HPP_
+#endif  // NES_INCLUDE_SOURCES_BENCHMARKSOURCE_HPP_

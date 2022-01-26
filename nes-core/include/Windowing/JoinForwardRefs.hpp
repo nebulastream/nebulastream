@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_WINDOWING_JOIN_FORWARD_REFS_HPP_
-#define NES_INCLUDE_WINDOWING_JOIN_FORWARD_REFS_HPP_
+#ifndef NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_
+#define NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_
 #include <memory>
 
 namespace NES::Join {
@@ -46,4 +46,4 @@ class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
 }// namespace NES::Join
-#endif// NES_INCLUDE_WINDOWING_JOIN_FORWARD_REFS_HPP_
+#endif  // NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_

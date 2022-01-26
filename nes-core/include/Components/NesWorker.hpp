@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
-#define NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
+#ifndef NES_INCLUDE_COMPONENTS_NESWORKER_HPP_
+#define NES_INCLUDE_COMPONENTS_NESWORKER_HPP_
 
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -210,4 +210,4 @@ class NesWorker {
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 }// namespace NES
-#endif// NES_INCLUDE_COMPONENTS_NES_WORKER_HPP_
+#endif  // NES_INCLUDE_COMPONENTS_NESWORKER_HPP_

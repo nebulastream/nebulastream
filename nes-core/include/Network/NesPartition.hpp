@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_NES_PARTITION_HPP_
-#define NES_INCLUDE_NETWORK_NES_PARTITION_HPP_
+#ifndef NES_INCLUDE_NETWORK_NESPARTITION_HPP_
+#define NES_INCLUDE_NETWORK_NESPARTITION_HPP_
 #include <cstdint>
 #include <string>
 
@@ -100,4 +100,4 @@ struct hash<NES::Network::NesPartition> {
 };
 
 }// namespace std
-#endif// NES_INCLUDE_NETWORK_NES_PARTITION_HPP_
+#endif  // NES_INCLUDE_NETWORK_NESPARTITION_HPP_

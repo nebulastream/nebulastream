@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SINKS_FORMATS_SINK_FORMAT_HPP_
-#define NES_INCLUDE_SINKS_FORMATS_SINK_FORMAT_HPP_
+#ifndef NES_INCLUDE_SINKS_FORMATS_SINKFORMAT_HPP_
+#define NES_INCLUDE_SINKS_FORMATS_SINKFORMAT_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
@@ -78,4 +78,4 @@ class SinkFormat {
 using SinkFormatPtr = std::shared_ptr<SinkFormat>;
 
 }// namespace NES
-#endif// NES_INCLUDE_SINKS_FORMATS_SINK_FORMAT_HPP_
+#endif  // NES_INCLUDE_SINKS_FORMATS_SINKFORMAT_HPP_

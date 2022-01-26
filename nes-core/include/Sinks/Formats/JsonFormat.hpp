@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_SINKS_FORMATS_JSON_FORMAT_HPP_
-#define NES_INCLUDE_SINKS_FORMATS_JSON_FORMAT_HPP_
+#ifndef NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_
+#define NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_
 
 #include <Sinks/Formats/SinkFormat.hpp>
 namespace NES {
@@ -58,4 +58,4 @@ class JsonFormat : public SinkFormat {
     FormatTypes getSinkFormat() override;
 };
 }// namespace NES
-#endif// NES_INCLUDE_SINKS_FORMATS_JSON_FORMAT_HPP_
+#endif  // NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_

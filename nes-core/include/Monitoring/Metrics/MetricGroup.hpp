@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_GROUP_HPP_
-#define NES_INCLUDE_MONITORING_METRICS_METRIC_GROUP_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_
+#define NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_
 
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
@@ -80,4 +80,4 @@ class MetricGroup {
 using MetricGroupPtr = std::shared_ptr<MetricGroup>;
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_METRICS_METRIC_GROUP_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_

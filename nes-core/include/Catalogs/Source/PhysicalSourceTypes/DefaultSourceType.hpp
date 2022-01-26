@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_DEFAULTSOURCETYPECONFIG_HPP
-#define NES_DEFAULTSOURCETYPECONFIG_HPP
+#ifndef NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
+#define NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
 
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
@@ -72,11 +72,13 @@ class DefaultSourceType : public PhysicalSourceType {
   private:
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
+     * @param sourceConfigMap: the source configuration map
      */
     explicit DefaultSourceType(std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
+     * @param sourceTypeConfig: the configuration for yaml
      */
     explicit DefaultSourceType(Yaml::Node sourceTypeConfig);
 
@@ -89,4 +91,4 @@ class DefaultSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption sourceFrequency;
 };
 }// namespace NES
-#endif
+#endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_

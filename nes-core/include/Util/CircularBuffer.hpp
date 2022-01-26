@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_UTIL_CIRCULAR_BUFFER_HPP_
-#define NES_INCLUDE_UTIL_CIRCULAR_BUFFER_HPP_
+#ifndef NES_INCLUDE_UTIL_CIRCULARBUFFER_HPP_
+#define NES_INCLUDE_UTIL_CIRCULARBUFFER_HPP_
 
 #include <memory>
 #include <type_traits>
@@ -231,4 +231,4 @@ class CircularBuffer {
 
 };// class CircularBuffer
 }// namespace NES
-#endif// NES_INCLUDE_UTIL_CIRCULAR_BUFFER_HPP_
+#endif  // NES_INCLUDE_UTIL_CIRCULARBUFFER_HPP_

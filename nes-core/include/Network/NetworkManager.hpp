@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_
-#define NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_
+#ifndef NES_INCLUDE_NETWORK_NETWORKMANAGER_HPP_
+#define NES_INCLUDE_NETWORK_NETWORKMANAGER_HPP_
 
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/NetworkForwardRefs.hpp>
@@ -172,4 +172,4 @@ class NetworkManager {
 
 }// namespace NES::Network
 
-#endif// NES_INCLUDE_NETWORK_NETWORK_MANAGER_HPP_
+#endif  // NES_INCLUDE_NETWORK_NETWORKMANAGER_HPP_

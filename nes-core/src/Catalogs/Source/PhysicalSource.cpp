@@ -39,7 +39,7 @@ PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::str
 std::string PhysicalSource::toString() {
     std::stringstream ss;
     ss << "PhysicalSource Name: " << physicalSourceName;
-    ss << "LogicalSteam Name" << logicalSourceName;
+    ss << "LogicalSource Name" << logicalSourceName;
     ss << "Stream Type" << physicalSourceType->toString();
     return ss.str();
 }

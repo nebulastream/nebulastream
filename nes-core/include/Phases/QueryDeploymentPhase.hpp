@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_PHASES_QUERY_DEPLOYMENT_PHASE_HPP_
-#define NES_INCLUDE_PHASES_QUERY_DEPLOYMENT_PHASE_HPP_
+#ifndef NES_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_
+#define NES_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_
 
 #include <Plans/Query/QueryId.hpp>
 #include <iostream>
@@ -76,4 +76,4 @@ class QueryDeploymentPhase {
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 }// namespace NES
-#endif// NES_INCLUDE_PHASES_QUERY_DEPLOYMENT_PHASE_HPP_
+#endif  // NES_INCLUDE_PHASES_QUERYDEPLOYMENTPHASE_HPP_

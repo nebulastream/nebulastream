@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_PLAN_HPP_
-#define NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_PLAN_HPP_
+#ifndef NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
+#define NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_
 
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/SharedQueryId.hpp>
@@ -141,4 +141,4 @@ class GlobalQueryPlan {
     std::map<SharedQueryId, SharedQueryPlanPtr> sharedQueryIdToPlanMap;
 };
 }// namespace NES
-#endif// NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBAL_QUERY_PLAN_HPP_
+#endif  // NES_INCLUDE_PLANS_GLOBAL_QUERY_GLOBALQUERYPLAN_HPP_

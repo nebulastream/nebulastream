@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_REST_CONTROLLER_CONNECTIVITY_CONTROLLER_HPP_
-#define NES_INCLUDE_REST_CONTROLLER_CONNECTIVITY_CONTROLLER_HPP_
+#ifndef NES_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
+#define NES_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
 
 #include <REST/Controller/BaseController.hpp>
 #include <REST/CpprestForwardedRefs.hpp>
@@ -38,4 +38,4 @@ class ConnectivityController : public BaseController {
 
 using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
 }// namespace NES
-#endif// NES_INCLUDE_REST_CONTROLLER_CONNECTIVITY_CONTROLLER_HPP_
+#endif  // NES_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_

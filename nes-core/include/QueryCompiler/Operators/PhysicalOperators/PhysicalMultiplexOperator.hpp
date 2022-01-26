@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_PHYSICAL_MULTIPLEX_OPERATOR_HPP_
-#define NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_PHYSICAL_MULTIPLEX_OPERATOR_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_
 #include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES {
@@ -46,4 +46,4 @@ class PhysicalMultiplexOperator : public PhysicalOperator, public ExchangeOperat
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif// NES_INCLUDE_QUERY_COMPILER_OPERATORS_PHYSICAL_OPERATORS_PHYSICAL_MULTIPLEX_OPERATOR_HPP_
+#endif  // NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_

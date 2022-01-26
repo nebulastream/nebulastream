@@ -70,4 +70,4 @@ class BaseNetworkChannel {
 };
 
 }// namespace NES::Network::detail
-#endif//NES_INCLUDE_NETWORK_DETAIL_BASENETWORKCHANNEL_HPP_
+#endif  // NES_INCLUDE_NETWORK_DETAIL_BASENETWORKCHANNEL_HPP_
