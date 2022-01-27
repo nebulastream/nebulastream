@@ -259,8 +259,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     return executablePipeline;
 }
 
-SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema,
-                                                                                         PhysicalSourcePtr physicalSource) {
+SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourcePtr physicalSource) {
     NES_DEBUG("PhysicalStreamConfig: create Actual source descriptor with physical source: " << physicalSource->toString());
     auto logicalSourceName = physicalSource->getLogicalSourceName();
     auto physicalSourceName = physicalSource->getPhysicalSourceName();
@@ -303,7 +302,9 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                   memorySourceType->getMemoryAreaSize(),
                                                   memorySourceType->getNumberOfBufferToProduce(),
                                                   memorySourceType->getGatheringValue(),
-                                                  memorySourceType->getGatheringMode());
+                                                  memorySourceType->getGatheringMode(),
+                                                  memorySourceType->getSourceAffinity(),
+                                                  memorySourceType->getTaskQueueId());
         }
         case BENCHMARK_SOURCE: {
             auto benchmarkSourceType = physicalSourceType->as<BenchmarkSourceType>();
@@ -314,7 +315,8 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                      benchmarkSourceType->getGatheringValue(),
                                                      benchmarkSourceType->getGatheringMode(),
                                                      benchmarkSourceType->getSourceMode(),
-                                                     benchmarkSourceType->getSourceAffinity());
+                                                     benchmarkSourceType->getSourceAffinity(),
+                                                     benchmarkSourceType->getTaskQueueId());
         }
         case LAMBDA_SOURCE: {
             auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
@@ -322,7 +324,9 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                   lambdaSourceType->getGenerationFunction(),
                                                   lambdaSourceType->getNumBuffersToProduce(),
                                                   lambdaSourceType->getGatheringValue(),
-                                                  lambdaSourceType->getGatheringMode());
+                                                  lambdaSourceType->getGatheringMode(),
+                                                  lambdaSourceType->getSourceAffinity(),
+                                                  lambdaSourceType->getTaskQueueId());
         }
         case MATERIALIZEDVIEW_SOURCE: {
             auto materializeView =

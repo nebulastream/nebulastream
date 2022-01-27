@@ -37,13 +37,17 @@ class MemorySourceType : public PhysicalSourceType {
      * @param numBuffersToProduce : number of buffers to produce
      * @param gatheringValue : gathering value
      * @param gatheringMode : gathering mode
+     * @param sourceAffinity: sourceAffinity
+     * @param taskQueueId: taskQueueId
      * @return a constructed MemorySourceType
      */
     static MemorySourceTypePtr create(uint8_t* memoryArea,
                                       size_t memoryAreaSize,
                                       uint64_t numBuffersToProduce,
                                       uint64_t gatheringValue,
-                                      const std::string& gatheringMode);
+                                      const std::string& gatheringMode,
+                                      uint64_t sourceAffinity = 0,
+                                      uint64_t taskQueueId = 0);
 
     const std::shared_ptr<uint8_t>& getMemoryArea() const;
 
@@ -54,6 +58,10 @@ class MemorySourceType : public PhysicalSourceType {
     uint64_t getGatheringValue() const;
 
     GatheringMode::Value getGatheringMode() const;
+
+    uint64_t getTaskQueueId() const;
+
+    uint64_t getSourceAffinity() const;
 
     /**
      * @brief The string representation of the object
@@ -73,18 +81,24 @@ class MemorySourceType : public PhysicalSourceType {
      * @param numBuffersToProduce: number of buffers to produce
      * @param gatheringValue: gather value
      * @param gatheringMode: gathering mode
+     * @param sourceAffinity: sourceAffinity
+     * @param taskQueueId: taskQueueId
      */
     explicit MemorySourceType(uint8_t* memoryArea,
                               size_t memoryAreaSize,
                               uint64_t numBuffersToProduce,
                               uint64_t gatheringValue,
-                              GatheringMode::Value gatheringMode);
+                              GatheringMode::Value gatheringMode,
+                              uint64_t sourceAffinity,
+                              uint64_t taskQueueId);
 
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
     uint64_t numberOfBufferToProduce;
     uint64_t gatheringValue;
     GatheringMode::Value gatheringMode;
+    uint64_t sourceAffinity;
+    uint64_t taskQueueId;
 };
 }// namespace NES
 #endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_MEMORYSOURCETYPE_HPP_

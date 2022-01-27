@@ -90,6 +90,8 @@ WorkerConfiguration::WorkerConfiguration() : physicalSources() {
     workerPinList =
         ConfigurationOption<std::string>::create("workerPinList", "", "comma separated list of where to map the worker");
 
+    queuePinList = ConfigurationOption<std::string>::create("queuePinList", "", "comma separated list of where to map the worker on the queue");
+
     numaAwareness = ConfigurationOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
 
     enableMonitoring = ConfigurationOption<bool>::create("enableMonitoring", false, "Enable monitoring");
@@ -148,9 +150,8 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
             if (!config[LOG_LEVEL_CONFIG].As<std::string>().empty() && config[LOG_LEVEL_CONFIG].As<std::string>() != "\n") {
                 setLogLevel(config[LOG_LEVEL_CONFIG].As<std::string>());
             }
-            if (!config[QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG].As<std::string>().empty()
-                && config[QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG].As<std::string>() != "\n") {
-                setQueryCompilerCompilationStrategy(config[QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG].As<std::string>());
+            if (!config["queuePinList"].As<std::string>().empty() && config["queuePinList"].As<std::string>() != "\n") {
+                setQueuePinList(config["queuePinList"].As<std::string>());
             }
             if (!config[QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG].As<std::string>().empty()
                 && config[QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG].As<std::string>() != "\n") {
@@ -165,9 +166,10 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
                 && config[SOURCE_PIN_LIST_CONFIG].As<std::string>() != "\n") {
                 setSourcePinList(config[SOURCE_PIN_LIST_CONFIG].As<std::string>());
             }
-            if (!config[WORKER_PIN_LIST_CONFIG].As<std::string>().empty()
-                && config[WORKER_PIN_LIST_CONFIG].As<std::string>() != "\n") {
-                setWorkerPinList(config[WORKER_PIN_LIST_CONFIG].As<std::string>());
+            if (!config["numaAwareness"].As<bool>()) {
+                numaAwareness->setValue(false);
+            } else {
+                numaAwareness->setValue(true);
             }
             if (!config[NUMA_AWARENESS_CONFIG].As<std::string>().empty()
                 && config[NUMA_AWARENESS_CONFIG].As<std::string>() != "\n") {
@@ -226,9 +228,11 @@ void WorkerConfiguration::overwriteConfigWithCommandLineInput(const std::map<std
                 setQueryCompilerOutputBufferAllocationStrategy(it->second);
             } else if (it->first == "--" + SOURCE_PIN_LIST_CONFIG) {
                 setSourcePinList(it->second);
-            } else if (it->first == "--" + WORKER_PIN_LIST_CONFIG) {
+            } else if (it->first == "--queuePinList") {
+                setQueuePinList(it->second);
+            } else if (it->first == "--workerPinList") {
                 setWorkerPinList(it->second);
-            } else if (it->first == "--" + NUMA_AWARENESS_CONFIG) {
+            } else if (it->first == "--numaAwareness") {
                 setNumaAware(true);
             } else if (it->first == "--" + ENABLE_MONITORING_CONFIG && !it->second.empty()) {
                 setEnableMonitoring((it->second == "true"));
@@ -265,6 +269,7 @@ void WorkerConfiguration::resetWorkerOptions() {
     setQueryCompilerPipeliningStrategy(queryCompilerPipeliningStrategy->getDefaultValue());
     setQueryCompilerOutputBufferAllocationStrategy(queryCompilerOutputBufferOptimizationLevel->getDefaultValue());
     setWorkerPinList(workerPinList->getDefaultValue());
+    setQueuePinList(queuePinList->getDefaultValue());
     setSourcePinList(sourcePinList->getDefaultValue());
     setEnableMonitoring(enableMonitoring->getDefaultValue());
     for (auto& physicalSource : physicalSources) {
@@ -288,6 +293,7 @@ std::string WorkerConfiguration::toString() {
     ss << numberOfBuffersInSourceLocalBufferPool->toStringNameCurrentValue();
     ss << queryCompilerOutputBufferOptimizationLevel->toStringNameCurrentValue();
     ss << workerPinList->toStringNameCurrentValue();
+    ss << queuePinList->toStringNameCurrentValue();
     ss << sourcePinList->toStringNameCurrentValue();
     ss << enableMonitoring->toStringNameCurrentValue();
     for (PhysicalSourcePtr physicalSource : physicalSources) {
@@ -381,12 +387,18 @@ void WorkerConfiguration::setQueryCompilerPipeliningStrategy(std::string queryCo
 }
 
 const StringConfigOption& WorkerConfiguration::getWorkerPinList() const { return workerPinList; }
-
+const StringConfigOption& WorkerConfiguration::getQueuePinList() const { return queuePinList; }
 const StringConfigOption& WorkerConfiguration::getSourcePinList() const { return sourcePinList; }
 
 void WorkerConfiguration::setWorkerPinList(const std::string list) {
     if (!list.empty()) {
         WorkerConfiguration::workerPinList->setValue(list);
+    }
+}
+
+void WorkerConfiguration::setQueuePinList(const std::string list) {
+    if (!list.empty()) {
+        WorkerConfiguration::queuePinList->setValue(list);
     }
 }
 

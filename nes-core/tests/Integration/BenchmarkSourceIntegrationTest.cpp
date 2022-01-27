@@ -96,7 +96,8 @@ TEST_F(BenchmarkSourceIntegrationTest, testBenchmarkSource) {
         records[i].timestamp = i;
     }
 
-    auto benchmarkSourceType = BenchmarkSourceType::create(memArea, memAreaSize, buffersToExpect, 0, "frequency", "copyBuffer");
+    auto benchmarkSourceType =
+        BenchmarkSourceType::create(memArea, memAreaSize, buffersToExpect, 0, "frequency", "copyBuffer", 0, 0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
     wrkConf->addPhysicalSource(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
@@ -197,7 +198,7 @@ TEST_F(BenchmarkSourceIntegrationTest, testMemorySourceFewTuples) {
         records[i].timestamp = i;
     }
 
-    auto benchmarkSourceType = BenchmarkSourceType::create(memArea, memAreaSize, 1, 0, "frequency", "copyBuffer");
+    auto benchmarkSourceType = BenchmarkSourceType::create(memArea, memAreaSize, 1, 0, "frequency", "copyBuffer", 0, 0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
     wrkConf->addPhysicalSource(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
@@ -302,7 +303,7 @@ TEST_F(BenchmarkSourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) 
     }
 
     auto benchmarkSourceType =
-        BenchmarkSourceType::create(memArea, memAreaSize, buffersToExpect + 1, 0, "frequency", "copyBuffer");
+        BenchmarkSourceType::create(memArea, memAreaSize, buffersToExpect + 1, 0, "frequency", "copyBuffer", 0, 0);
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", benchmarkSourceType);
     wrkConf->addPhysicalSource(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
