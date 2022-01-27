@@ -39,6 +39,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
      * @param gatheringMode the gathering mode
      * @param sourceMode the source mode
      * @param sourceAffinity the source affinity
+     * @param taskQueueId the id to which queue we put buffers of this urce
      * @return a constructed BenchmarkSourceType
      */
     static BenchmarkSourceTypePtr create(uint8_t* memoryArea,
@@ -47,7 +48,8 @@ class BenchmarkSourceType : public PhysicalSourceType {
                                          uint64_t gatheringValue,
                                          const std::string& gatheringMode,
                                          const std::string& sourceMode,
-                                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max());
+                                         uint64_t sourceAffinity,
+                                         uint64_t taskQueueId);
 
     const std::shared_ptr<uint8_t>& getMemoryArea() const;
 
@@ -55,9 +57,12 @@ class BenchmarkSourceType : public PhysicalSourceType {
 
     uint64_t getGatheringValue() const;
 
+
     GatheringMode::Value getGatheringMode() const;
 
     SourceMode::Value getSourceMode() const;
+
+    uint64_t getTaskQueueId() const;
 
     uint64_t getSourceAffinity() const;
 
@@ -79,6 +84,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
      * @param gatheringMode the gathering mode
      * @param sourceMode the source mode
      * @param sourceAffinity the source affinity
+     * @param taskQueueId: taskQueueId
      */
     explicit BenchmarkSourceType(uint8_t* memoryArea,
                                  size_t memoryAreaSize,
@@ -86,7 +92,8 @@ class BenchmarkSourceType : public PhysicalSourceType {
                                  uint64_t gatheringValue,
                                  GatheringMode::Value gatheringMode,
                                  SourceMode::Value sourceMode,
-                                 uint64_t sourceAffinity);
+                                 uint64_t sourceAffinity,
+                                 uint64_t taskQueueId);
 
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
@@ -95,6 +102,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
     GatheringMode::Value gatheringMode;
     SourceMode::Value sourceMode;
     uint64_t sourceAffinity;
+    uint64_t taskQueueId;
 };
 }// namespace NES
 #endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_BENCHMARKSOURCETYPE_HPP_

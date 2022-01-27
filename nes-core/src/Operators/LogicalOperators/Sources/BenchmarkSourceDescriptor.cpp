@@ -74,8 +74,6 @@ uint64_t BenchmarkSourceDescriptor::getNumBuffersToProcess() const { return numB
 
 uint64_t BenchmarkSourceDescriptor::getSourceAffinity() const { return sourceAffinity; }
 uint64_t BenchmarkSourceDescriptor::getTaskQueueId() const { return taskQueueId; }
-DataSource::GatheringMode BenchmarkSourceDescriptor::getGatheringMode() const { return gatheringMode; }
-BenchmarkSource::SourceMode BenchmarkSourceDescriptor::getSourceMode() const { return sourceMode; }
 
 GatheringMode::Value BenchmarkSourceDescriptor::getGatheringMode() const { return gatheringMode; }
 

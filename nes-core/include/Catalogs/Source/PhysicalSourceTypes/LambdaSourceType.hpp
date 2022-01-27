@@ -40,13 +40,17 @@ class LambdaSourceType : public PhysicalSourceType {
      * @param physicalStreamName the name of the physical stream
      * @param logicalStreamName the name of the logical stream
      * @param lambda function that produces the buffer
+     * @param sourceAffinity: sourceAffinity
+     * @param taskQueueId: taskQueueId
      * @return a constructed LambdaSourceType
      */
     static LambdaSourceTypePtr
     create(std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
            uint64_t numBuffersToProduce,
            uint64_t gatheringValue,
-           const std::string& gatheringMode);
+           const std::string& gatheringMode,
+           uint64_t sourceAffinity = 0,
+           uint64_t taskQueueId = 0);
 
     std::function<void(NES::Runtime::TupleBuffer&, uint64_t)> getGenerationFunction() const;
 
@@ -55,6 +59,10 @@ class LambdaSourceType : public PhysicalSourceType {
     uint64_t getGatheringValue() const;
 
     GatheringMode::Value getGatheringMode() const;
+
+    uint64_t getTaskQueueId() const;
+
+    uint64_t getSourceAffinity() const;
 
     /**
      * @brief The string representation of the object
@@ -71,12 +79,16 @@ class LambdaSourceType : public PhysicalSourceType {
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         uint64_t numBuffersToProduce,
         uint64_t gatheringValue,
-        GatheringMode::Value gatheringMode);
+        GatheringMode::Value gatheringMode,
+        uint64_t sourceAffinity,
+        uint64_t taskQueueId);
 
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProduce;
     uint64_t gatheringValue;
     GatheringMode::Value gatheringMode;
+    uint64_t sourceAffinity;
+    uint64_t taskQueueId;
 };
 
 }// namespace NES

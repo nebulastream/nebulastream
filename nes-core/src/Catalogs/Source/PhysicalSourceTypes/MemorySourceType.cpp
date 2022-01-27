@@ -32,19 +32,29 @@ MemorySourceType::MemorySourceType(uint8_t* memoryArea,
                                    size_t memoryAreaSize,
                                    uint64_t numBuffersToProduce,
                                    uint64_t gatheringValue,
-                                   GatheringMode::Value gatheringMode)
+                                   GatheringMode::Value gatheringMode,
+                                   uint64_t sourceAffinity,
+                                   uint64_t taskQueueId)
     : PhysicalSourceType(MEMORY_SOURCE), memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize),
-      numberOfBufferToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode) {}
+      numberOfBufferToProduce(numBuffersToProduce), gatheringValue(gatheringValue), gatheringMode(gatheringMode),
+      sourceAffinity(sourceAffinity), taskQueueId(taskQueueId) {}
 
 MemorySourceTypePtr MemorySourceType::create(uint8_t* memoryArea,
                                              size_t memoryAreaSize,
                                              uint64_t numBuffersToProcess,
                                              uint64_t gatheringValue,
-                                             const std::string& gatheringMode) {
+                                             const std::string& gatheringMode,
+                                             uint64_t sourceAffinity,
+                                             uint64_t taskQueueId) {
     NES_ASSERT(memoryArea, "invalid memory area");
     auto gatheringModeEnum = GatheringMode::getFromString(gatheringMode);
-    return std::make_shared<MemorySourceType>(
-        MemorySourceType(memoryArea, memoryAreaSize, numBuffersToProcess, gatheringValue, gatheringModeEnum));
+    return std::make_shared<MemorySourceType>(MemorySourceType(memoryArea,
+                                                               memoryAreaSize,
+                                                               numBuffersToProcess,
+                                                               gatheringValue,
+                                                               gatheringModeEnum,
+                                                               sourceAffinity,
+                                                               taskQueueId));
 }
 
 const std::shared_ptr<uint8_t>& MemorySourceType::getMemoryArea() const { return memoryArea; }
@@ -65,9 +75,14 @@ std::string MemorySourceType::toString() {
     ss << "NumberOfBuffersToProduce :" << numberOfBufferToProduce;
     ss << "GatheringValue :" << gatheringValue;
     ss << "GatheringMode :" << GatheringMode::toString(gatheringMode);
+    ss << "taskQueueId :" << taskQueueId;
+    ss << "sourceAffinity :" << sourceAffinity;
     ss << "\n}";
     return ss.str();
 }
+
+uint64_t MemorySourceType::getSourceAffinity() const { return sourceAffinity; }
+uint64_t MemorySourceType::getTaskQueueId() const { return taskQueueId; }
 
 bool MemorySourceType::equal(const PhysicalSourceTypePtr& other) {
     if (!other->instanceOf<MemorySourceType>()) {
