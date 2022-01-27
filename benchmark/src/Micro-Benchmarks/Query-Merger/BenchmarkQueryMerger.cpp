@@ -16,10 +16,10 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/LogicalSource.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -31,10 +31,10 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/QueryService.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <fstream>
 #include <util/BenchmarkUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 
 using namespace NES;
 using namespace NES::Benchmarking;
@@ -113,7 +113,8 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource)
         // Add Physical topology node and stream catalog entry
         for (uint64_t i = 1; i <= noOfPhysicalSource; i++) {
             auto topoNode = TopologyNode::create(i, "", i, i, 2);
-            auto physicalSource = PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
+            auto physicalSource =
+                PhysicalSource::create("example" + std::to_string(j + 1), "example" + std::to_string(j + 1) + std::to_string(i));
             SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, topoNode);
             streamCatalog->addPhysicalSource("example" + std::to_string(j + 1), sce);
         }
