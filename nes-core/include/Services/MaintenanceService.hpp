@@ -23,24 +23,16 @@
 #include <vector>
 #include <string>
 #include <Phases/MigrationTypes.hpp>
+#include <Topology/Topology.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+#include <WorkQueues/NESRequestQueue.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 
-namespace NES {
+namespace NES::Experimental {
 
-class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
-class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
-class NESRequestQueue;
-typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
-class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
-class QueryPlan;
-typedef std::shared_ptr<QueryPlan> queryPlanPtr;
-class ExecutionNode;
-typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
-class TopologyNode;
-typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
-
+//fwd. decl.
+class MaintenanceService;
+using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 
 /**
  * @brief this class is responsible for handling maintenance requests.
@@ -50,7 +42,9 @@ class MaintenanceService {
 
     MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue,
                        GlobalExecutionPlanPtr globalExecutionPlan);
+
     ~MaintenanceService();
+
     /**
      * submit a request to take a node offline for maintenance
      * @returns a pair indicating if a maintenance request has been successfully submitted and info
@@ -60,14 +54,11 @@ class MaintenanceService {
   std::pair<bool, std::string> submitMaintenanceRequest(TopologyNodeId nodeId,  MigrationType type);
 
   private:
-
     TopologyPtr topology;
     QueryCatalogPtr queryCatalog;
     NESRequestQueuePtr queryRequestQueue;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 
-
-typedef std::shared_ptr<MaintenanceService> MaintenanceServicePtr;
-} //namepsace NES
+} //namepsace NES::Experimental
 #endif//NES_MAINTENANCESERVICE_HPP

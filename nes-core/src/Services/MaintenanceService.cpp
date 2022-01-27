@@ -18,18 +18,15 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Services/NESRequestProcessorService.hpp>
-#include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <WorkQueues//NESRequestQueue.hpp>
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 #include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
 
-namespace NES {
+namespace NES::Experimental {
+
 MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue,
                                        GlobalExecutionPlanPtr globalExecutionPlan):
                                        topology{topology}, queryCatalog{queryCatalog},
@@ -37,9 +34,11 @@ MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr que
 {
     NES_DEBUG("MaintenanceService: Initializing");
 };
+
 MaintenanceService::~MaintenanceService() {
     NES_DEBUG("Destroying MaintenanceService");
 }
+
 std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType type){
     std::pair<bool, std::string> result;
     //check if topology node exists
@@ -86,4 +85,5 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     result.second = "Successfully submitted Query Migration Requests for all queries on Topology Node with ID: " + std::to_string(nodeId);
     return result;
 }
-}//namespace NES
+
+}//namespace NES::Experimental

@@ -49,7 +49,7 @@ RestEngine::RestEngine(const SourceCatalogPtr& streamCatalog,
     monitoringController = std::make_shared<MonitoringController>(monitoringService, bufferManager);
     topologyController = std::make_shared<TopologyController>(topology);
     udfCatalogController = std::make_shared<UdfCatalogController>(udfCatalog);
-    maintenanceController = std::make_shared<MaintenanceController>(maintenanceService);
+    maintenanceController = std::make_shared<Experimental::MaintenanceController>(maintenanceService);
 }
 
 void RestEngine::initRestOpHandlers() {
@@ -148,8 +148,7 @@ void RestEngine::handlePost(web::http::http_request request) {
         } else if (paths[0] == UdfCatalogController::path_prefix) {
             udfCatalogController->handlePost(paths, request);
             return;
-        }
-        else if(paths[0] == "maintenance") {
+        } else if (paths[0] == "maintenance") {
             maintenanceController->handlePost(paths, request);
             return;
         }
