@@ -18,7 +18,8 @@
 #define NES_MIGRATIONTYPES_HPP
 #include <vector>
 #include <cstdint>
-namespace NES {
+
+namespace NES::Experimental {
 
 /**
  * @brief these alias represent Migration Types

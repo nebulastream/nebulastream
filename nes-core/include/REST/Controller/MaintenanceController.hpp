@@ -17,13 +17,16 @@
 #ifndef NES_MAINTENANCECONTROLLER_HPP
 #define NES_MAINTENANCECONTROLLER_HPP
 
-#include "Services/MaintenanceService.hpp"
 #include <REST/Controller/BaseController.hpp>
+#include <Services/MaintenanceService.hpp>
 #include <cpprest/http_msg.h>
 
-namespace NES{
+namespace NES::Experimental {
 
-class MaintenanceController: public BaseController{
+/**
+ * @brief this class represents the web service handler for maintenance requests
+ */
+class MaintenanceController : public BaseController {
 
   public:
     explicit MaintenanceController(MaintenanceServicePtr maintenanceService);
@@ -37,9 +40,7 @@ class MaintenanceController: public BaseController{
 
   private:
     MaintenanceServicePtr maintenanceService;
-
-
 };
-typedef std::shared_ptr<MaintenanceController> MaintenanceControllerPtr;
-}//namespace NES
+
+}//namespace NES::Experimental
 #endif//NES_MAINTENANCECONTROLLER_HPP

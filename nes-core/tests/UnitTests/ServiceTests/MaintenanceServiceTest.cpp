@@ -66,7 +66,7 @@ class MaintenanceServiceTest : public testing::Test {
 
 };
 
-TEST_F(MaintenanceServiceTest, testAddNewQuery) {
+TEST_F(MaintenanceServiceTest, testMaintenanceService) {
 
     //Prepare
     TopologyNodePtr node = TopologyNode::create(id, ip, grpcPort, dataPort, resources);

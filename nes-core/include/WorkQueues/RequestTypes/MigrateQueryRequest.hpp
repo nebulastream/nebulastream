@@ -27,6 +27,9 @@ namespace NES {
     class MigrateQueryRequest;
     typedef std::shared_ptr<MigrateQueryRequest> MigrateQueryRequestPtr;
 
+    /**
+     * @breif this request is used to migrate a query sub plan
+     */
     class MigrateQueryRequest : public NESRequest{
 
     public:
