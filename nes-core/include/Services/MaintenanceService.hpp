@@ -22,10 +22,10 @@
 #include <optional>
 #include <vector>
 #include <string>
-#include <Phases/MigrationTypes.hpp>
+#include <Phases/MigrationType.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
+#include <WorkQueues/RequestQueue.hpp>
 #include <Topology/Topology.hpp>
-#include <Catalogs/QueryCatalog.hpp>
-#include <WorkQueues/NESRequestQueue.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 
 namespace NES::Experimental {
@@ -40,7 +40,7 @@ using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 class MaintenanceService {
   public:
 
-    MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue,
+    MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, RequestQueuePtr queryRequestQueue,
                        GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~MaintenanceService();
@@ -51,12 +51,12 @@ class MaintenanceService {
      * @param nodeId
      * @param MigrationType
      */
-  std::pair<bool, std::string> submitMaintenanceRequest(TopologyNodeId nodeId,  MigrationType type);
+  std::pair<bool, std::string> submitMaintenanceRequest(TopologyNodeId nodeId,  MigrationType::Value type);
 
   private:
     TopologyPtr topology;
     QueryCatalogPtr queryCatalog;
-    NESRequestQueuePtr queryRequestQueue;
+    RequestQueuePtr queryRequestQueue;
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 

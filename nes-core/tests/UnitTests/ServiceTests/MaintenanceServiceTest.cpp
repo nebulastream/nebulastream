@@ -23,17 +23,17 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Services/MaintenanceService.hpp>
-#include <WorkQueues/NESRequestQueue.hpp>
-#include <Phases/MigrationTypes.hpp>
+#include <WorkQueues/RequestQueue.hpp>
+#include <Phases/MigrationType.hpp>
 #include <iostream>
 
 using namespace NES;
 class MaintenanceServiceTest : public testing::Test {
   public:
-    MaintenanceServicePtr maintenanceService;
+    Experimental::MaintenanceServicePtr maintenanceService;
     TopologyPtr topology;
     GlobalExecutionPlanPtr executionPlan;
-    NESRequestQueuePtr nesRequestQueue;
+    RequestQueuePtr nesRequestQueue;
     QueryCatalogPtr queryCatalog;
 
 
@@ -47,8 +47,8 @@ class MaintenanceServiceTest : public testing::Test {
         topology = Topology::create();
         queryCatalog = std::make_shared<QueryCatalog>();
         executionPlan = GlobalExecutionPlan::create();
-        nesRequestQueue = std::make_shared<NESRequestQueue>(1);
-        maintenanceService = std::make_shared<MaintenanceService>(topology, queryCatalog, nesRequestQueue, executionPlan);
+        nesRequestQueue = std::make_shared<RequestQueue>(1);
+        maintenanceService = std::make_shared<Experimental::MaintenanceService>(topology, queryCatalog, nesRequestQueue, executionPlan);
     }
 
 
@@ -71,7 +71,7 @@ TEST_F(MaintenanceServiceTest, testMaintenanceService) {
     //Prepare
     TopologyNodePtr node = TopologyNode::create(id, ip, grpcPort, dataPort, resources);
     topology->setAsRoot(node);
-    MigrationType nonExistentType = 4;
+    auto nonExistentType = Experimental::MigrationType::Value(4);
     //test no such Topology Node ID
     uint64_t nonExistentId = 0;
     auto [result1, info1] = maintenanceService->submitMaintenanceRequest(nonExistentId,nonExistentType);
@@ -88,7 +88,7 @@ TEST_F(MaintenanceServiceTest, testMaintenanceService) {
     EXPECT_FALSE(result3);
     EXPECT_EQ(info3, "MigrationType: " + std::to_string(nonExistentType) + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)");
     //pass valid TopologyNodeID with corresponding ExecutionNode and valid MigrationType
-    auto [result4, info4] = maintenanceService->submitMaintenanceRequest(id, RESTART);
+    auto [result4, info4] = maintenanceService->submitMaintenanceRequest(id, Experimental::MigrationType::Value::RESTART);
     EXPECT_TRUE(result4);
     EXPECT_EQ(info4, "Successfully submitted Query Migration Requests for all queries on Topology Node with ID: " + std::to_string(id));
 

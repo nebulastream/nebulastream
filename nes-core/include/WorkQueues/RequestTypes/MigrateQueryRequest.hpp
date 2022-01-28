@@ -16,13 +16,13 @@
 
 #ifndef NES_MIGRATEQUERYREQUEST_HPP
 #define NES_MIGRATEQUERYREQUEST_HPP
-#include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestTypes/Request.hpp>
 #include <Topology/TopologyNodeId.hpp>
-#include <Phases/MigrationTypes.hpp>
+#include <Phases/MigrationType.hpp>
 #include <memory>
 #include <string>
 
-namespace NES {
+namespace NES::Experimental {
 
     class MigrateQueryRequest;
     typedef std::shared_ptr<MigrateQueryRequest> MigrateQueryRequestPtr;
@@ -30,11 +30,11 @@ namespace NES {
     /**
      * @breif this request is used to migrate a query sub plan
      */
-    class MigrateQueryRequest : public NESRequest{
+    class MigrateQueryRequest : public Request{
 
     public:
 
-        static MigrateQueryRequestPtr create(QueryId queryId,TopologyNodeId nodeId, MigrationType migrationType);
+        static MigrateQueryRequestPtr create(QueryId queryId,TopologyNodeId nodeId, MigrationType::Value migrationType);
 
          std::string toString() override;
 
@@ -42,7 +42,7 @@ namespace NES {
          * @brief gets the Migration Type for this Query Migration Request
          * @return MigrationType
          */
-        MigrationType getMigrationType();
+        MigrationType::Value getMigrationType();
 
         /**
          * @brief gets the topology node on which the query can be found
@@ -51,10 +51,10 @@ namespace NES {
         TopologyNodeId getTopologyNode();
 
     private:
-        explicit MigrateQueryRequest(QueryId queryId,TopologyNodeId nodeId, MigrationType migrationType);
+        explicit MigrateQueryRequest(QueryId queryId,TopologyNodeId nodeId, MigrationType::Value migrationType);
 
         TopologyNodeId nodeId;
-        MigrationType migrationType;
+        MigrationType::Value migrationType;
 
     };
 } // namespace NES

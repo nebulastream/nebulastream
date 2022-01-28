@@ -38,7 +38,7 @@ RestServer::RestServer(std::string host,
                        const GlobalExecutionPlanPtr& globalExecutionPlan,
                        const QueryServicePtr& queryService,
                        const MonitoringServicePtr& monitoringService,
-                       const MaintenanceServicePtr& maintenanceService,
+                       const Experimental::MaintenanceServicePtr& maintenanceService,
                        const GlobalQueryPlanPtr& globalQueryPlan,
                        const Catalogs::UdfCatalogPtr& udfCatalog,
                        const Runtime::BufferManagerPtr& bufferManager)

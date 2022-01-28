@@ -17,7 +17,8 @@
 #include <REST/runtime_utils.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
-#include <Phases/MigrationTypes.hpp>
+#include <Phases/MigrationType.hpp>
+
 namespace NES::Experimental{
 
 MaintenanceController::MaintenanceController(MaintenanceServicePtr maintenanceService) :maintenanceService{maintenanceService}{}
@@ -50,7 +51,7 @@ void MaintenanceController::handlePost(const std::vector<utility::string_t>& pat
                       return;
                   }
                   uint64_t id = req.at("id").as_integer();
-                  MigrationType migrationType = req.at("migrationType").as_integer();
+                  MigrationType::Value migrationType = MigrationType::Value(req.at("migrationType").as_integer());
                   maintenanceService->submitMaintenanceRequest(id,migrationType);
                   web::json::value result{};
                       result["Info"] = web::json::value::string("Successfully submitted Maintenance Request");
