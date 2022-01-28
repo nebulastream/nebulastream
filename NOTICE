@@ -1,0 +1,15 @@
+NebulaStream
+Copyright 2019-2022 by the NebulaStream project (https://nebula.stream)
+
+
+This project bundles the following dependencies under the Apache 2.0 license.
+See bundled license files for details.
+
+- libcuckoo v0.3 (https://github.com/efficient/libcuckoo) Copyright (c) 2021 Manu Goyal
+    -> in "utils/libcuckoo"
+
+This project bundles the following dependencies under the MIT license.
+See bundled license files for details.
+
+- Yaml v1.0 (https://github.com/bryanbraun/anchorjs) Copyright (c) 2018 Jimmie Bergmann
+    -> in  "utils/yaml"
