@@ -15,6 +15,8 @@
 */
 
 #include <Phases/MigrationType.hpp>
+#include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Experimental {
 
@@ -24,6 +26,26 @@ bool MigrationType::isValidMigrationType(Value migrationType) {
         case MigrationType::MIGRATION_WITH_BUFFERING: return true;
         case MigrationType::MIGRATION_WITHOUT_BUFFERING: return true;
         default:  return false;
+    }
+}
+std::string MigrationType::toString(MigrationType::Value migrationType) {
+    switch (migrationType) {
+        case MigrationType::RESTART: return "restart";
+        case MigrationType::MIGRATION_WITH_BUFFERING: return "migration with buffering";
+        case MigrationType::MIGRATION_WITHOUT_BUFFERING: return "migration without buffering";
+        default: return "Invalid";
+    }
+}
+
+MigrationType::Value MigrationType::getFromString(const std::string migrationType) {
+    if (migrationType == "restart") {
+        return MigrationType::RESTART;
+    } else if (migrationType == "migration with buffering") {
+        return MigrationType::MIGRATION_WITH_BUFFERING;
+    }   else if (migrationType == "migration without buffering") {
+        return MigrationType::MIGRATION_WITHOUT_BUFFERING;
+    } else {
+        return MigrationType::INVALID;
     }
 }
 }//namespace NES::Experimental

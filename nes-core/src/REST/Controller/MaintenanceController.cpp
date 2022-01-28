@@ -51,12 +51,12 @@ void MaintenanceController::handlePost(const std::vector<utility::string_t>& pat
                       return;
                   }
                   uint64_t id = req.at("id").as_integer();
-                  MigrationType::Value migrationType = MigrationType::Value(req.at("migrationType").as_integer());
+                  MigrationType::Value migrationType = MigrationType::getFromString(req.at("migrationType").as_string());
                   maintenanceService->submitMaintenanceRequest(id,migrationType);
                   web::json::value result{};
                       result["Info"] = web::json::value::string("Successfully submitted Maintenance Request");
                       result["Node Id"] = web::json::value::number(id);
-                      result["Migration Type"] = web::json::value::number(migrationType);
+                      result["Migration Type"] = web::json::value::string(MigrationType::toString(migrationType));
                       successMessageImpl(request, result);
                   return;
 

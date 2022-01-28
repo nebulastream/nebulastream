@@ -604,7 +604,7 @@ TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
     auto coordinator = createAndStartCoordinator();
     auto restClient = createRestClient("maintenance/mark");
     web::json::value missingIDRequest;
-    missingIDRequest["migrationType"] = web::json::value::number(1);
+    missingIDRequest["migrationType"] = web::json::value::string("random");
     web::json::value missingIDResponse;
     int missingIDStatusCode = 0;
     restClient.request(web::http::methods::POST, "maintenance/mark",missingIDRequest)
@@ -655,7 +655,7 @@ TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
 
     web::json::value validRequest;
     validRequest["id"] = web::json::value::number(1);
-    validRequest["migrationType"] = web::json::value::number(1);
+    validRequest["migrationType"] = web::json::value::string("restart");
     web::json::value validRequestResponse;
     int validRequestStatusCode = 0;
     restClient.request(web::http::methods::POST, "maintenance/mark", validRequest)
@@ -679,7 +679,7 @@ TEST_F(RESTEndpointTest, DISABLED_MaintenanceServiceTest) {
     EXPECT_TRUE(validRequestResponse.has_field("Migration Type"));
     EXPECT_EQ(validRequestResponse["Info"].as_string(), "Successfully submitted Maintenance Request");
     EXPECT_EQ(validRequestResponse["Node Id"].as_integer(), 1);
-    EXPECT_EQ(validRequestResponse["Migration Type"].as_integer(), 1);
+    EXPECT_EQ(validRequestResponse["Migration Type"].as_string(), "restart");
 
     stopCoordinator(*coordinator);
 }
