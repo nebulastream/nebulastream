@@ -30,9 +30,9 @@
 namespace NES::Optimizer {
 
 std::unique_ptr<BasePlacementStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                           TopologyPtr topology,
-                                                           TypeInferencePhasePtr typeInferencePhase,
-                                                           SourceCatalogPtr streamCatalog) {
+                                                                TopologyPtr topology,
+                                                                TypeInferencePhasePtr typeInferencePhase,
+                                                                SourceCatalogPtr streamCatalog) {
     return std::make_unique<BottomUpStrategy>(BottomUpStrategy(std::move(globalExecutionPlan),
                                                                std::move(topology),
                                                                std::move(typeInferencePhase),
@@ -119,7 +119,7 @@ bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& qu
         std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
         std::vector<TopologyNodePtr> mergedGraphSourceNodes;
 
-//        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
+        //        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
 
         for (const auto& sourceOperator : queryPlan->getSourceOperators()) {
             pinnedOperatorLocationMap[sourceOperator->getId()] =
@@ -160,7 +160,8 @@ void BottomUpStrategy::placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan) {
     std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
     for (auto& sourceOperator : sourceOperators) {
         NES_DEBUG("BottomUpStrategy: Get the topology node for source operator " << sourceOperator->toString() << " placement.");
-        TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sourceOperator->getId());
+        auto nodeId = std::any_cast<uint64_t>(sourceOperator->getProperty(PINNED_NODE_ID));
+        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
         if (candidateTopologyNode->getAvailableResources() == 0
             && !operatorToExecutionNodeMap.contains(sourceOperator->getId())) {
             NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
@@ -207,8 +208,8 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
 
             if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
                 NES_TRACE("BottomUpStrategy: Received Sink operator for placement.");
-                auto pinnedSinkOperatorLocation = getTopologyNodeForPinnedOperator(operatorNode->getId());
-
+                auto nodeId = std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID));
+                auto pinnedSinkOperatorLocation = getTopologyNode(nodeId);
                 if (pinnedSinkOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSinkOperatorLocation->containAsChild(candidateTopologyNode)) {
                     candidateTopologyNode = pinnedSinkOperatorLocation;

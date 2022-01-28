@@ -123,11 +123,11 @@ class BasePlacementStrategy {
     ExecutionNodePtr getExecutionNode(const TopologyNodePtr& candidateTopologyNode);
 
     /**
-     * @brief Get the physical node for the logical source
-     * @param operatorId: the id of the operator
+     * @brief Get the Topology node with the input id
+     * @param nodeId: the id of the topology node
      * @return Topology node ptr or nullptr
      */
-    TopologyNodePtr getTopologyNodeForPinnedOperator(uint64_t operatorId);
+    TopologyNodePtr getTopologyNode(uint64_t nodeId);
 
     /**
      * @brief Add network source and sinks between query sub plans allocated on different execution nodes

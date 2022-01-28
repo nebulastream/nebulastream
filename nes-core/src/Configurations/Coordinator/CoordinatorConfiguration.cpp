@@ -73,7 +73,6 @@ CoordinatorConfiguration::CoordinatorConfiguration() {
         PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
         false,
         "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)");
-
     enableQueryReconfiguration =
         ConfigurationOption<bool>::create(ENABLE_QUERY_RECONFIGURATION,
                                           false,
@@ -243,7 +242,7 @@ void CoordinatorConfiguration::resetCoordinatorOptions() {
     setEnableMonitoring(enableMonitoring->getDefaultValue());
     setMemoryLayoutPolicy(memoryLayoutPolicy->getDefaultValue());
     setPerformOnlySourceOperatorExpansion(performOnlySourceOperatorExpansion->getDefaultValue());
-    setQueryReconfiguration(queryReconfiguration->getDefaultValue());
+    setQueryReconfiguration(enableQueryReconfiguration->getDefaultValue());
     this->logicalSources.clear();
 }
 
@@ -267,7 +266,7 @@ std::string CoordinatorConfiguration::toString() {
     ss << enableMonitoring->toStringNameCurrentValue();
     ss << memoryLayoutPolicy->toStringNameCurrentValue();
     ss << performOnlySourceOperatorExpansion->toStringNameCurrentValue();
-    ss << queryReconfiguration->toStringNameCurrentValue();
+    ss << enableQueryReconfiguration->toStringNameCurrentValue();
     return ss.str();
 }
 
@@ -366,10 +365,10 @@ void CoordinatorConfiguration::setPerformOnlySourceOperatorExpansion(bool perfor
 }
 
 void CoordinatorConfiguration::setQueryReconfiguration(bool queryReconfigurationState) {
-    this->queryReconfiguration->setValue(queryReconfigurationState);
+    this->enableQueryReconfiguration->setValue(queryReconfigurationState);
 }
 
-BoolConfigOption CoordinatorConfiguration::getQueryReconfiguration() { return queryReconfiguration; }
+BoolConfigOption CoordinatorConfiguration::getQueryReconfiguration() { return enableQueryReconfiguration; }
 
 std::vector<LogicalSourcePtr> CoordinatorConfiguration::getLogicalSources() { return logicalSources; }
 
