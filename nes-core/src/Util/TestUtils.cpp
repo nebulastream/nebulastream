@@ -21,7 +21,7 @@
 namespace NES {
 
 bool TestUtils::checkCompleteOrTimeout(QueryId queryId, uint64_t expectedResult, const std::string& restPort) {
-    auto timeoutInSec = std::chrono::seconds(timeout);
+    auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
     uint64_t currentResult = 0;
     web::json::value json_return;
