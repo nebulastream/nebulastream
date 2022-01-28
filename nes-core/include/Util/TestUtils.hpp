@@ -51,7 +51,7 @@ namespace NES {
  */
 class TestUtils {
   public:
-    static constexpr uint64_t timeout = 60;
+    static constexpr uint64_t defaultTimeout = 60;
     // in milliseconds
     static constexpr uint64_t sleepDuration = 250;
 
@@ -127,7 +127,7 @@ class TestUtils {
             NES_ERROR("checkCompleteOrTimeout query does not exists");
             return false;
         }
-        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto timeoutInSec = std::chrono::seconds(defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
@@ -183,7 +183,7 @@ class TestUtils {
      */
     static bool waitForQueryToStart(QueryId queryId,
                                     const QueryCatalogPtr& queryCatalog,
-                                    std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout)) {
+                                    std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultTimeout)) {
         NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
         auto start_timestamp = std::chrono::system_clock::now();
 
@@ -234,7 +234,7 @@ class TestUtils {
         }
 
         NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
-        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto timeoutInSec = std::chrono::seconds(defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
@@ -284,7 +284,7 @@ class TestUtils {
         }
 
         NES_INFO("Found global query id " << sharedQueryId << " for user query " << queryId);
-        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto timeoutInSec = std::chrono::seconds(defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr");
@@ -322,8 +322,8 @@ class TestUtils {
      * @param queryCatalog: the catalog containig the queries in the system
      * @return true if successful
      */
-    static bool checkStoppedOrTimeout(QueryId queryId, const QueryCatalogPtr& queryCatalog, uint64_t tout = timeout) {
-        auto timeoutInSec = std::chrono::seconds(tout);
+    static bool checkStoppedOrTimeout(QueryId queryId, const QueryCatalogPtr& queryCatalog, uint64_t timeout = defaultTimeout) {
+        auto timeoutInSec = std::chrono::seconds(timeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             NES_DEBUG("checkStoppedOrTimeout: check query status");
@@ -348,7 +348,7 @@ class TestUtils {
     static bool checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeout = 0) {
         std::chrono::seconds timeoutInSec;
         if (customTimeout == 0) {
-            timeoutInSec = std::chrono::seconds(timeout);
+            timeoutInSec = std::chrono::seconds(defaultTimeout);
         } else {
             timeoutInSec = std::chrono::seconds(customTimeout);
         }
@@ -405,7 +405,7 @@ class TestUtils {
     static bool checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0) {
         std::chrono::seconds timeoutInSec;
         if (customTimeout == 0) {
-            timeoutInSec = std::chrono::seconds(timeout);
+            timeoutInSec = std::chrono::seconds(defaultTimeout);
         } else {
             timeoutInSec = std::chrono::seconds(customTimeout);
         }
@@ -444,7 +444,7 @@ class TestUtils {
     template<typename T>
     static bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent,
                                                         const string& outputFilePath,
-                                                        uint64_t testTimeout = timeout) {
+                                                        uint64_t testTimeout = defaultTimeout) {
         auto timeoutInSec = std::chrono::seconds(testTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
@@ -495,7 +495,7 @@ class TestUtils {
    * @return true if successful
    */
     static bool checkFileCreationOrTimeout(const string& outputFilePath) {
-        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto timeoutInSec = std::chrono::seconds(defaultTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
