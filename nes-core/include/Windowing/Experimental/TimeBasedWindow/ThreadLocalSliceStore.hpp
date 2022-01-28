@@ -1,0 +1,97 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDTHREADLOCALSLICESTORE_HPP_
+#define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDTHREADLOCALSLICESTORE_HPP_
+#include <Exceptions/WindowProcessingException.hpp>
+#include <Windowing/Experimental/TimeBasedWindow/KeyedSlice.hpp>
+#include <list>
+#include <map>
+#include <memory>
+
+namespace NES::Experimental {
+class HashMapFactory;
+using HashMapFactoryPtr = std::shared_ptr<HashMapFactory>;
+}// namespace NES::Experimental
+
+namespace NES::Windowing::Experimental {
+
+class GlobalSlice;
+using GlobalSlicePtr = std::unique_ptr<GlobalSlice>;
+
+/**
+ * @brief A un-keyed slice store, which stores slices for a specific thread.
+ */
+class ThreadLocalSliceStore {
+  public:
+    explicit ThreadLocalSliceStore(uint64_t sliceSize, uint64_t numberOfPreallocatedSlices);
+
+    inline GlobalSlicePtr& findSliceByTs(uint64_t ts) {
+        auto logicalSliceIndex = ts / sliceSize;
+        return getSlice(logicalSliceIndex);
+    }
+
+    inline const GlobalSlicePtr& operator[](uint64_t sliceIndex) { return getSlice(sliceIndex); }
+
+    inline uint64_t getFirstIndex() { return firstIndex; }
+
+    inline uint64_t getLastIndex() { return lastIndex; }
+
+    void dropFirstSlice();
+    uint64_t getLastWatermark();
+    void setLastWatermark(uint64_t watermarkTs);
+    void setFirstSliceIndex(uint64_t i);
+
+  private:
+    /**
+     * @brief Appends a new slice to the end of the slice store.
+     * @throws WindowProcessingException if the slice store is full
+     */
+    GlobalSlicePtr& insertSlice(uint64_t sliceIndex);
+
+    /**
+     * @brief Get a specific slice at a specific slice index.
+     * @param sliceIndex
+     * @return KeyedSlicePtr
+     */
+    inline GlobalSlicePtr& getSlice(uint64_t sliceIndex) {
+        if (sliceIndex < firstIndex) {
+            throw WindowProcessingException("Requested slice index " + std::to_string(sliceIndex) + " is before "
+                                            + std::to_string(firstIndex));
+        }
+        if (currentSlice != nullptr && sliceIndex == lastIndex) {
+            return currentSlice;
+        } else if (!slices.contains(sliceIndex)) {
+            return insertSlice(sliceIndex);
+        } else {
+            return slices[sliceIndex];
+        }
+    }
+
+    GlobalSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs, uint64_t sliceIndex);
+
+  private:
+    NES::Experimental::HashMapFactoryPtr hashMapFactory;
+    uint64_t sliceSize;
+    GlobalSlicePtr currentSlice;
+    std::map<uint64_t, GlobalSlicePtr> slices;
+    std::list<GlobalSlicePtr> preallocatedSlices;
+    uint64_t firstIndex = 0;
+    uint64_t lastIndex = 0;
+    uint64_t lastWatermarkTs = 0;
+};
+}// namespace NES::Windowing::Experimental
+#endif//NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_KEYEDTHREADLOCALSLICESTORE_HPP_
