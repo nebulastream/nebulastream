@@ -30,7 +30,7 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
+BasePlacementStrategyPtr TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                          TopologyPtr topology,
                                                          TypeInferencePhasePtr typeInferencePhase,
                                                          SourceCatalogPtr streamCatalog) {

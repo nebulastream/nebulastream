@@ -45,7 +45,7 @@ class ILPStrategy : public BasePlacementStrategy {
 
     bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
 
-    static std::unique_ptr<ILPStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
+    static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                TopologyPtr topology,
                                                TypeInferencePhasePtr typeInferencePhase,
                                                SourceCatalogPtr streamCatalog,

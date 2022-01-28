@@ -17,7 +17,7 @@
 
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
-#include <Util/PlacementType.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <ostream>
 
 namespace NES::Client {
@@ -29,7 +29,7 @@ class QueryConfig {
   public:
     QueryConfig(FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                 LineageType lineageType = LineageType::NONE,
-                PlacementType placementType = PlacementType::BottomUp);
+                PlacementStrategy::Value placementType = PlacementStrategy::BottomUp);
 
     /**
      * @brief Returns the level of fault tolerance.
@@ -57,20 +57,20 @@ class QueryConfig {
 
     /**
      * @brief Returns the placement type.
-     * @return PlacementType
+     * @return PlacementStrategy
      */
-    PlacementType getPlacementType() const;
+    PlacementStrategy::Value getPlacementType() const;
 
     /**
      * @brief Sets the placement type
      * @param placementType
      */
-    void setPlacementType(PlacementType placementType);
+    void setPlacementType(PlacementStrategy placementType);
 
   private:
     FaultToleranceType faultToleranceType;
     LineageType lineageType;
-    PlacementType placementType;
+    PlacementStrategy::Value placementType;
 };
 }// namespace NES
 

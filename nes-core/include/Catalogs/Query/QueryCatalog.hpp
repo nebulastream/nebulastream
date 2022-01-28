@@ -17,6 +17,7 @@
 
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <condition_variable>
 #include <map>
 #include <memory>
@@ -41,12 +42,20 @@ class QueryCatalog {
      * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.
      * @param queryString: a user query in string form
      * @param queryPlan: a user query plan to be executed
-     * @param optimizationStrategyName: the optimization strategy (bottomUp or topDown)
+     * @param placementStrategyName: the placement strategy (bottomUp or topDown)
      * @return query catalog entry or nullptr
      */
     QueryCatalogEntryPtr
-    addNewQuery(const std::string& queryString, QueryPlanPtr const& queryPlan, const std::string& optimizationStrategyName);
+    addNewQuery(const std::string& queryString, QueryPlanPtr const& queryPlan, std::string const& placementStrategyName);
 
+    /**
+     * @brief Register invalid request received fro starting a query
+     * @param queryString : the query string
+     * @param queryId : the query id
+     * @param queryPlan : the query plan
+     * @param placementStrategyName : the placement strategy name
+     * @return pointer to query catalog entry
+     */
     QueryCatalogEntryPtr recordInvalidQuery(std::string const& queryString,
                                             QueryId queryId,
                                             QueryPlanPtr const& queryPlan,
@@ -144,4 +153,4 @@ class QueryCatalog {
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_
+#endif// NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOG_HPP_

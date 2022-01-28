@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_WORKQUEUES_REQUESTTYPES_RUNQUERYREQUEST_HPP_
 #define NES_INCLUDE_WORKQUEUES_REQUESTTYPES_RUNQUERYREQUEST_HPP_
 
+#include <Util/PlacementStrategy.hpp>
 #include <WorkQueues/RequestTypes/Request.hpp>
 
 namespace NES {
@@ -37,7 +38,7 @@ class RunQueryRequest : public Request {
      * @param queryPlacementStrategy: the placement strategy name
      * @return shared pointer to the instance of Run query request
      */
-    static RunQueryRequestPtr create(QueryPlanPtr queryPlan, std::string queryPlacementStrategy);
+    static RunQueryRequestPtr create(QueryPlanPtr queryPlan, PlacementStrategy::Value queryPlacementStrategy);
 
     /// Virtual destructor for inheritance
     /**
@@ -50,15 +51,15 @@ class RunQueryRequest : public Request {
      * @brief Get query placement strategy
      * @return query placement strategy
      */
-    std::string getQueryPlacementStrategy();
+    PlacementStrategy::Value  getQueryPlacementStrategy();
 
     std::string toString() override;
 
   private:
-    explicit RunQueryRequest(const QueryPlanPtr& queryPlan, std::string queryPlacementStrategy);
+    explicit RunQueryRequest(const QueryPlanPtr& queryPlan, PlacementStrategy::Value  queryPlacementStrategy);
     QueryPlanPtr queryPlan;
-    std::string queryPlacementStrategy;
+    PlacementStrategy::Value  queryPlacementStrategy;
 };
 }// namespace NES
 
-#endif  // NES_INCLUDE_WORKQUEUES_REQUESTTYPES_RUNQUERYREQUEST_HPP_
+#endif// NES_INCLUDE_WORKQUEUES_REQUESTTYPES_RUNQUERYREQUEST_HPP_

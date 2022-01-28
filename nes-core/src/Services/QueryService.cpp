@@ -25,6 +25,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/RequestQueue.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
@@ -67,8 +68,11 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
         throw InvalidQueryException(exc.what());
     }
 
-    NES_INFO("QueryService: Validating placement strategy");
-    if (Optimizer::stringToPlacementStrategyType.find(placementStrategyName) == Optimizer::stringToPlacementStrategyType.end()) {
+    PlacementStrategy::Value placementStrategy;
+    NES_INFO("QueryService: Validating placement strategy name.");
+    try {
+        placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+    } catch (...) {
         NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
         throw InvalidArgumentException("placementStrategyName", placementStrategyName);
     }
@@ -96,7 +100,7 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
     NES_INFO("QueryService: Queuing the query for the execution");
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
-        auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
+        auto request = RunQueryRequest::create(queryPlan, placementStrategy);
         queryRequestQueue->add(request);
         return queryId;
     }
@@ -127,7 +131,8 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
     queryPlan->setLineageType(lineage);
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
-        auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
+        PlacementStrategy::Value placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+        auto request = RunQueryRequest::create(queryPlan, placementStrategy);
         queryRequestQueue->add(request);
         return queryPlan->getQueryId();
     }
@@ -138,13 +143,18 @@ uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan,
                                        const std::string& placementStrategyName,
                                        const FaultToleranceType faultTolerance,
                                        const LineageType lineage) {
-    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery("", queryPlan, placementStrategyName);
-    queryPlan->setFaultToleranceType(faultTolerance);
-    queryPlan->setLineageType(lineage);
-    if (entry) {
-        auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
-        queryRequestQueue->add(request);
-        return queryPlan->getQueryId();
+    try {
+        QueryCatalogEntryPtr entry = queryCatalog->addNewQuery("", queryPlan, placementStrategyName);
+        queryPlan->setFaultToleranceType(faultTolerance);
+        queryPlan->setLineageType(lineage);
+        if (entry) {
+            PlacementStrategy::Value placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
+            queryRequestQueue->add(request);
+            return queryPlan->getQueryId();
+        }
+    } catch (...) {
+        throw Exception("QueryService: unable to create query catalog entry");
     }
     throw Exception("QueryService: unable to create query catalog entry");
 }
@@ -154,17 +164,20 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
                                        const std::string& placementStrategyName,
                                        const FaultToleranceType faultTolerance,
                                        const LineageType lineage) {
-
-    // assign the id for the query and individual operators
-    assignQueryAndOperatorIds(queryPlan);
-
-    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
-    queryPlan->setFaultToleranceType(faultTolerance);
-    queryPlan->setLineageType(lineage);
-    if (entry) {
-        auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
-        queryRequestQueue->add(request);
-        return queryPlan->getQueryId();
+    try {
+        // assign the id for the query and individual operators
+        assignQueryAndOperatorIds(queryPlan);
+        QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
+        queryPlan->setFaultToleranceType(faultTolerance);
+        queryPlan->setLineageType(lineage);
+        if (entry) {
+            PlacementStrategy::Value placementStrategy = PlacementStrategy::getFromString(placementStrategyName);
+            auto request = RunQueryRequest::create(queryPlan, placementStrategy);
+            queryRequestQueue->add(request);
+            return queryPlan->getQueryId();
+        }
+    } catch (...) {
+        throw Exception("QueryService: unable to create query catalog entry");
     }
     throw Exception("QueryService: unable to create query catalog entry");
 }

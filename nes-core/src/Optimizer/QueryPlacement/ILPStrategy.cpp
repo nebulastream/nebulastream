@@ -33,7 +33,7 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<ILPStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
+std::unique_ptr<BasePlacementStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                  TopologyPtr topology,
                                                  TypeInferencePhasePtr typeInferencePhase,
                                                  SourceCatalogPtr streamCatalog,
