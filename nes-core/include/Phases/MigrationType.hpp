@@ -18,6 +18,7 @@
 #define NES_MIGRATIONTYPE_HPP
 #include <vector>
 #include <cstdint>
+#include <string>
 
 namespace NES::Experimental {
 
@@ -42,7 +43,7 @@ class MigrationType {
     *         Suitable: reachable by all upstream nodes and can reach all downstream nodes of a query sub plan
     * Step 2: upstream node(s) are reconfigured to send data to the suitable alternative node(s)
     */
-    enum Value : uint8_t { RESTART = 1, MIGRATION_WITH_BUFFERING = 2, MIGRATION_WITHOUT_BUFFERING = 3 };
+    enum Value : uint8_t { INVALID = 0, RESTART = 1, MIGRATION_WITH_BUFFERING = 2, MIGRATION_WITHOUT_BUFFERING = 3 };
 
     /**
      *
@@ -50,6 +51,10 @@ class MigrationType {
      * @return true if migrationType is valid, else false
      */
     static bool isValidMigrationType(Value migrationType);
+
+    static Value getFromString(const std::string migrationType);
+
+    static std::string toString(MigrationType::Value migrationType);
 };
 
 } //namespace NES::Experimental
