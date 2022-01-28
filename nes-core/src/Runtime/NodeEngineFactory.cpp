@@ -85,8 +85,12 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         }
 #elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
         NES_WARNING("Numa flags " << int(enableNumaAwareness));
+
+        //get the list of queue where to pin from the config
         std::vector<uint64_t> queuePinListMapping = Util::splitWithStringDelimiter<uint64_t>(queuePinList, ",");
         auto numberOfQueues = Util::numberOfUniqueValues(queuePinListMapping);
+
+        //create one buffer manager per queue
         if(numberOfQueues == 0) {
             bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
                                                                      numberOfBuffersInGlobalBufferManager,
