@@ -18,7 +18,7 @@ set -e
 
 if [ $# -eq 0 ]
 then
-    /opt/local/nebula-stream/nesCoordinator --coordinatorIp=$coordinatorIp --coordinatorPort=$coordinatorPort --restIp=$restIp --restPort=$restPort \
+    /opt/local/nebula-stream/nesCoordinator --coordinatorIp=$coordinatorIp --rpcPort=$coordinatorPort --restIp=$restIp --restPort=$restPort \
                                             --enableSemanticQueryValidation=$enableSemanticQueryValidation &
     sleep 5s
     /opt/local/nebula-stream/nesWorker --coordinatorPort=$coordinatorPort --type=$type --filePath=$filePath \
