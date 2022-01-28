@@ -57,7 +57,7 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
         return result;
     }
     //check if valid Migration Type
-    if(MigrationType::isValidMigrationType(type)){
+    if(!MigrationType::isValidMigrationType(type)){
         NES_DEBUG("MaintenanceService: MigrationType: " << type << " is not a valid type. Type must be 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)");
         result.first = false;
         result.second = "MigrationType: " + std::to_string(type) + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)";
