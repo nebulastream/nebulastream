@@ -129,7 +129,7 @@ bool TopDownStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& que
         std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
         std::vector<TopologyNodePtr> mergedGraphSourceNodes;
 
-        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
+//        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
 
         for (const auto& sourceOperator : queryPlan->getSourceOperators()) {
             pinnedOperatorLocationMap[sourceOperator->getId()] =
@@ -165,7 +165,7 @@ void TopDownStrategy::placeQueryPlan(const QueryPlanPtr& queryPlan) {
     for (const auto& sinkOperator : sinkOperators) {
         NES_TRACE("TopDownStrategy: Get the topology node for the sink operator.");
         //TODO: Handle when we assume more than one sink nodes
-        TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sinkOperator->getId());
+        TopologyNodePtr candidateTopologyNode = getTopologyNode(sinkOperator->getId());
         if (candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("TopDownStrategy: Unable to find resources on the physical node for placement of sink operator");
             throw Exception("TopDownStrategy: Unable to find resources on the physical node for placement of sink operator");
@@ -205,7 +205,7 @@ void TopDownStrategy::placeOperator(QueryId queryId, const OperatorNodePtr& oper
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
                 NES_DEBUG("TopDownStrategy: Received Source operator for placement.");
 
-                auto pinnedSourceOperatorLocation = getTopologyNodeForPinnedOperator(operatorNode->getId());
+                auto pinnedSourceOperatorLocation = getTopologyNode(operatorNode->getId());
                 if (pinnedSourceOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSourceOperatorLocation->containAsParent(candidateTopologyNode)) {
                     candidateTopologyNode = pinnedSourceOperatorLocation;
@@ -381,7 +381,7 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators
         auto childOp = sources.back()->as<OperatorNode>();
         sources.pop_back();
         if (childOp->instanceOf<SourceLogicalOperatorNode>()) {
-            childNodes.push_back(getTopologyNodeForPinnedOperator(childOp->getId()));
+            childNodes.push_back(getTopologyNode(childOp->getId()));
             continue;
         }
         if (operatorToExecutionNodeMap.contains(childOp->getId())) {

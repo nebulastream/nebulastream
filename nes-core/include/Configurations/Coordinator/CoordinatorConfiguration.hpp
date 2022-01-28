@@ -323,7 +323,6 @@ class CoordinatorConfiguration {
     BoolConfigOption enableMonitoring;
     StringConfigOption memoryLayoutPolicy;
     BoolConfigOption performOnlySourceOperatorExpansion;
-    BoolConfigOption queryReconfiguration;
     //NOTE: This is added to support single node benchmarks. Please avoid using it while implementing
     // new functionality.
     std::vector<LogicalSourcePtr> logicalSources;
