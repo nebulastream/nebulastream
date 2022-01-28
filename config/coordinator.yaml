@@ -56,3 +56,6 @@ memoryLayoutPolicy: FORCE_ROW_LAYOUT
 
 # Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule
 performOnlySourceOperatorExpansion: false
+
+# Enable reconfiguration of running query plans
+enableQueryReconfiguration: false

@@ -116,18 +116,6 @@ class BasePlacementStrategy {
     void mapPinnedOperatorToTopologyNodes(const QueryPlanPtr& queryPlan);
 
     /**
-     * @brief Assign sink operator to a node accessible to all sources
-     * @param queryId : the id of the query.
-     * @param sourceOperators: the source operators in the query
-     * @param mapOfSourceToTopologyNodes: map of source stream name to topology nodes
-     * @param mergedGraphSourceNodes: start nodes of graph containing merged source graphs
-     */
-    void pinSinkOperator(QueryId queryId,
-                         const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators,
-                         std::map<std::string, std::vector<TopologyNodePtr>>& mapOfSourceToTopologyNodes,
-                         std::vector<TopologyNodePtr>& mergedGraphSourceNodes);
-
-    /**
      * @brief Get Execution node for the input topology node
      * @param candidateTopologyNode: topology node
      * @return Execution Node pointer

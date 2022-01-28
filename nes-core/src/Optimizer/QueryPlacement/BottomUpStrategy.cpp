@@ -119,7 +119,7 @@ bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& qu
         std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
         std::vector<TopologyNodePtr> mergedGraphSourceNodes;
 
-        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
+//        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
 
         for (const auto& sourceOperator : queryPlan->getSourceOperators()) {
             pinnedOperatorLocationMap[sourceOperator->getId()] =
