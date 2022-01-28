@@ -39,12 +39,6 @@ class StopQueryRequest : public Request {
 
     std::string toString() override;
 
-    ~StopQueryRequest() override = default;
-    StopQueryRequest(const StopQueryRequest&) = default;
-    StopQueryRequest(StopQueryRequest&&) = default;
-    StopQueryRequest& operator=(const StopQueryRequest&) = default;
-    StopQueryRequest& operator=(StopQueryRequest&&) = default;
-
   private:
     explicit StopQueryRequest(QueryId queryId);
 };

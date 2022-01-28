@@ -95,6 +95,7 @@ endif ()
 #    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
 #endif
 
+#if the flag is set we create one queue per query
 if (NES_USE_ONE_QUEUE_PER_QUERY)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_QUERY=1")
     if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
@@ -256,7 +257,6 @@ endif ()
 find_package(NUMA)
 if (NUMA_FOUND)
     set(LIBRARIES ${LIBRARIES} -lnuma)
-#    add_compile_definitions(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     message(STATUS "Using Numa")
 endif ()
 
