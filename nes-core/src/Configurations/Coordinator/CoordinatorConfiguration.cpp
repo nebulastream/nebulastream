@@ -73,6 +73,11 @@ CoordinatorConfiguration::CoordinatorConfiguration() {
         PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
         false,
         "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)");
+
+    enableQueryReconfiguration =
+        ConfigurationOption<bool>::create(ENABLE_QUERY_RECONFIGURATION,
+                                          false,
+                                          "Enable reconfiguration of running query plans. (Default: false)");
 }
 
 void CoordinatorConfiguration::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -148,6 +153,14 @@ void CoordinatorConfiguration::overwriteConfigWithYAMLFileInput(const std::strin
                 && config[PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION].As<std::string>() != "\n") {
                 setPerformOnlySourceOperatorExpansion(config[PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION].As<bool>());
             }
+            if (!config[PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION].As<std::string>().empty()
+                && config[PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION].As<std::string>() != "\n") {
+                setPerformOnlySourceOperatorExpansion(config[PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION].As<bool>());
+            }
+            if (!config[ENABLE_QUERY_RECONFIGURATION].As<std::string>().empty()
+                && config[ENABLE_QUERY_RECONFIGURATION].As<std::string>() != "\n") {
+                setQueryReconfiguration(config[ENABLE_QUERY_RECONFIGURATION].As<bool>());
+            }
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfiguration: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfiguration: Keeping default values.");
@@ -196,8 +209,10 @@ void CoordinatorConfiguration::overwriteConfigWithCommandLineInput(const std::ma
                 setEnableMonitoring((it->second == "true"));
             } else if (it->first == "--" + MEMORY_LAYOUT_POLICY_CONFIG && !it->second.empty()) {
                 setMemoryLayoutPolicy(it->second);
-            } else if (it->first == "--performOnlySourceOperatorExpansion" && !it->second.empty()) {
+            } else if (it->first == "--" + PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION && !it->second.empty()) {
                 setPerformOnlySourceOperatorExpansion((it->second == "true"));
+            } else if (it->first == "--" + ENABLE_QUERY_RECONFIGURATION && !it->second.empty()) {
+                setQueryReconfiguration((it->second == "true"));
             } else {
                 NES_WARNING("Unknown configuration value :" << it->first);
             }
@@ -228,6 +243,7 @@ void CoordinatorConfiguration::resetCoordinatorOptions() {
     setEnableMonitoring(enableMonitoring->getDefaultValue());
     setMemoryLayoutPolicy(memoryLayoutPolicy->getDefaultValue());
     setPerformOnlySourceOperatorExpansion(performOnlySourceOperatorExpansion->getDefaultValue());
+    setQueryReconfiguration(queryReconfiguration->getDefaultValue());
     this->logicalSources.clear();
 }
 
@@ -251,6 +267,7 @@ std::string CoordinatorConfiguration::toString() {
     ss << enableMonitoring->toStringNameCurrentValue();
     ss << memoryLayoutPolicy->toStringNameCurrentValue();
     ss << performOnlySourceOperatorExpansion->toStringNameCurrentValue();
+    ss << queryReconfiguration->toStringNameCurrentValue();
     return ss.str();
 }
 
@@ -293,7 +310,9 @@ void CoordinatorConfiguration::setLogLevel(std::string logLevelValue) { logLevel
 IntConfigOption CoordinatorConfiguration::getNumberOfBuffersInGlobalBufferManager() {
     return numberOfBuffersInGlobalBufferManager;
 }
+
 IntConfigOption CoordinatorConfiguration::getNumberOfBuffersPerWorker() { return numberOfBuffersPerWorker; }
+
 IntConfigOption CoordinatorConfiguration::getNumberOfBuffersInSourceLocalBufferPool() {
     return numberOfBuffersInSourceLocalBufferPool;
 }
@@ -301,7 +320,9 @@ IntConfigOption CoordinatorConfiguration::getNumberOfBuffersInSourceLocalBufferP
 void CoordinatorConfiguration::setNumberOfBuffersInGlobalBufferManager(uint64_t count) {
     numberOfBuffersInGlobalBufferManager->setValue(count);
 }
+
 void CoordinatorConfiguration::setNumberOfBuffersPerWorker(uint64_t count) { numberOfBuffersPerWorker->setValue(count); }
+
 void CoordinatorConfiguration::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) {
     numberOfBuffersInSourceLocalBufferPool->setValue(count);
 }
@@ -343,6 +364,12 @@ BoolConfigOption CoordinatorConfiguration::getPerformOnlySourceOperatorExpansion
 void CoordinatorConfiguration::setPerformOnlySourceOperatorExpansion(bool performOnlySourceOperatorExpansion) {
     this->performOnlySourceOperatorExpansion->setValue(performOnlySourceOperatorExpansion);
 }
+
+void CoordinatorConfiguration::setQueryReconfiguration(bool queryReconfigurationState) {
+    this->queryReconfiguration->setValue(queryReconfigurationState);
+}
+
+BoolConfigOption CoordinatorConfiguration::getQueryReconfiguration() { return queryReconfiguration; }
 
 std::vector<LogicalSourcePtr> CoordinatorConfiguration::getLogicalSources() { return logicalSources; }
 

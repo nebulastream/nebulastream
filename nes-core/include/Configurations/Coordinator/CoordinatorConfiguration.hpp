@@ -330,6 +330,7 @@ class CoordinatorConfiguration {
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;
+    BoolConfigOption enableQueryReconfiguration;
 };
 
 }// namespace Configurations

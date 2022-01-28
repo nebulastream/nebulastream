@@ -157,6 +157,7 @@ const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
+const std::string ENABLE_QUERY_RECONFIGURATION = "enableQueryReconfiguration";
 
 //Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
