@@ -45,12 +45,16 @@ void QueryCatalogEntry::setFailureReason(std::string failureReason) { this->fail
 
 std::string QueryCatalogEntry::getFailureReason() { return failureReason; }
 
-const std::string& QueryCatalogEntry::getQueryPlacementStrategy() const { return queryPlacementStrategy; }
+const std::string& QueryCatalogEntry::getQueryPlacementStrategyAsString() const { return queryPlacementStrategy; }
 
 QueryCatalogEntry QueryCatalogEntry::copy() {
     auto queryCatalogEntry = QueryCatalogEntry(queryId, queryString, queryPlacementStrategy, inputQueryPlan, queryStatus);
     queryCatalogEntry.setExecutedQueryPlan(executedQueryPlan);
     return queryCatalogEntry;
+}
+
+PlacementStrategy::Value QueryCatalogEntry::getQueryPlacementStrategy() {
+    return PlacementStrategy::getFromString(queryPlacementStrategy);
 }
 
 }// namespace NES

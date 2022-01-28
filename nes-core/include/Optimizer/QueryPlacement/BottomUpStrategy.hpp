@@ -39,7 +39,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
 
-    static std::unique_ptr<BottomUpStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
+    static std::unique_ptr<BasePlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                     TopologyPtr topology,
                                                     TypeInferencePhasePtr typeInferencePhase,
                                                     SourceCatalogPtr streamCatalog);

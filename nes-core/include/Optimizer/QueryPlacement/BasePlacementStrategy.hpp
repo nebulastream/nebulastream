@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
 
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Operators/OperatorId.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
@@ -43,12 +44,6 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-class NESTopologyEntry;
-using NESTopologyEntryPtr = std::shared_ptr<NESTopologyEntry>;
-
-class NESTopologyGraph;
-using NESTopologyGraphPtr = std::shared_ptr<NESTopologyGraph>;
-
 class LogicalOperatorNode;
 using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
@@ -72,6 +67,9 @@ namespace NES::Optimizer {
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+
+class BasePlacementStrategy;
+using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
 
 using PlacementMatrix = std::vector<std::vector<bool>>;
 
@@ -172,6 +170,7 @@ class BasePlacementStrategy {
     TypeInferencePhasePtr typeInferencePhase;
     SourceCatalogPtr streamCatalog;
     std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
+    std::map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
 
@@ -221,4 +220,4 @@ class BasePlacementStrategy {
     bool isSourceAndDestinationConnected(const OperatorNodePtr& source, const OperatorNodePtr& destination);
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

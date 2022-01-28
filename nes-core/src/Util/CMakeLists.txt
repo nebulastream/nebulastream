@@ -22,7 +22,7 @@ add_source_nes(
         TestUtils.cpp
         FaultToleranceType.cpp
         LineageType.cpp
-        PlacementType.cpp
+        PlacementStrategy.cpp
         GatheringMode.cpp
         SourceMode.cpp
         KalmanFilter.cpp

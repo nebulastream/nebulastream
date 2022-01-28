@@ -54,9 +54,10 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  RequestQueuePtr queryRequestQueue,
                                                  Optimizer::QueryMergerRule queryMergerRule,
                                                  Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
-                                                 bool performOnlySourceOperatorExpansion)
-    : queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(std::move(queryRequestQueue)),
-      globalQueryPlan(globalQueryPlan) {
+                                                 bool performOnlySourceOperatorExpansion,
+                                                 bool queryReconfiguration)
+    : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalog(queryCatalog),
+      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -89,7 +90,7 @@ void RequestProcessorService::start() {
             }
 
             //FIXME: What to do if a different requests contain different placement strategies within a batch?
-            std::string placementStrategy = "BottomUp";
+            PlacementStrategy::Value placementStrategy;
             if (nesRequests[0]->instanceOf<RunQueryRequest>()) {
                 placementStrategy = nesRequests[0]->as<RunQueryRequest>()->getQueryPlacementStrategy();
             }

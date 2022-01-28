@@ -13,7 +13,6 @@
 */
 
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
@@ -44,9 +43,8 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
                                                                      std::move(z3Context)));
 }
 
-bool QueryPlacementPhase::execute(const std::string& placementStrategy, QueryPlanPtr queryPlan) {
+bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, QueryPlanPtr queryPlan) {
     NES_INFO("NESOptimizer: Placing input Query Plan on Global Execution Plan");
-    NES_INFO("NESOptimizer: Get the placement strategy");
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
     auto placementStrategyPtr = PlacementStrategyFactory::getStrategy(placementStrategy,
@@ -55,10 +53,6 @@ bool QueryPlacementPhase::execute(const std::string& placementStrategy, QueryPla
                                                                       typeInferencePhase,
                                                                       streamCatalog,
                                                                       z3Context);
-    if (!placementStrategyPtr) {
-        NES_ERROR("NESOptimizer: unable to find placement strategy for " + placementStrategy);
-        return false;
-    }
     return placementStrategyPtr->updateGlobalExecutionPlan(std::move(queryPlan));
 }
 

@@ -27,7 +27,7 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<IFCOPStrategy> IFCOPStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
+BasePlacementStrategyPtr IFCOPStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                      NES::TopologyPtr topology,
                                                      NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
                                                      NES::SourceCatalogPtr streamCatalog) {

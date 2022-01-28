@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
 
 #include <memory>
+#include <Util/PlacementStrategy.hpp>
 
 namespace z3 {
 class context;
@@ -72,7 +73,7 @@ class QueryPlacementPhase {
      * @return true is placement successful.
      * @throws QueryPlacementException
      */
-    bool execute(const std::string& placementStrategy, QueryPlanPtr queryPlan);
+    bool execute(PlacementStrategy::Value placementStrategy, QueryPlanPtr queryPlan);
 
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,

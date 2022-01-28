@@ -17,30 +17,36 @@
 #include <Optimizer/QueryPlacement/ILPStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+#include <Util/PlacementStrategy.hpp>
 
 namespace NES::Optimizer {
 
-std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(const std::string& strategyName,
-                                                                             const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                             const TopologyPtr& topology,
-                                                                             const TypeInferencePhasePtr& typeInferencePhase,
-                                                                             const SourceCatalogPtr& streamCatalog,
-                                                                             const z3::ContextPtr& z3Context) {
-    switch (stringToPlacementStrategyType[strategyName]) {
-        case PlacementType::ILP: return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
-        default: return getStrategy(strategyName, globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy::Value placementStrategy,
+                                                               const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                               const TopologyPtr& topology,
+                                                               const TypeInferencePhasePtr& typeInferencePhase,
+                                                               const SourceCatalogPtr& streamCatalog,
+                                                               const z3::ContextPtr& z3Context) {
+    switch (placementStrategy) {
+        case PlacementStrategy::ILP:
+            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
+        default: return getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     }
 }
 
-std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(const std::string& strategyName,
-                                                                             const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                                             const TopologyPtr& topology,
-                                                                             const TypeInferencePhasePtr& typeInferencePhase,
-                                                                             const SourceCatalogPtr& streamCatalog) {
-    switch (stringToPlacementStrategyType[strategyName]) {
-        case PlacementType::BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-        case PlacementType::TopDown: return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-        case PlacementType::IFCOP: return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy::Value placementStrategy,
+                                                               const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                               const TopologyPtr& topology,
+                                                               const TypeInferencePhasePtr& typeInferencePhase,
+                                                               const SourceCatalogPtr& streamCatalog) {
+
+    switch (placementStrategy) {
+        case PlacementStrategy::BottomUp:
+            return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+        case PlacementStrategy::TopDown:
+            return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+        case PlacementStrategy::IFCOP:
+            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
         // FIXME: enable them with issue #755
         //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
         //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);

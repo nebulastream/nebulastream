@@ -15,9 +15,10 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
 
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <map>
 #include <memory>
-#include <Util/PlacementType.hpp>
 
 namespace z3 {
 class expr;
@@ -43,24 +44,8 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 namespace NES::Optimizer {
 
-static std::map<std::string, PlacementType> stringToPlacementStrategyType{
-    {"BottomUp", PlacementType::BottomUp},
-    {"TopDown", PlacementType::TopDown},
-    {"IFCOP", PlacementType::IFCOP},
-    {"ILP", PlacementType::ILP},
-    // FIXME: enable them with issue #755
-    //    {"Latency", LowLatency},
-    //    {"HighThroughput", HighThroughput},
-    //    {"MinimumResourceConsumption", MinimumResourceConsumption},
-    //    {"MinimumEnergyConsumption", MinimumEnergyConsumption},
-    //    {"HighAvailability", HighAvailability},
-};
-
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
-
-class BasePlacementStrategy;
-using BasePlacementStrategyPtr = std::shared_ptr<BasePlacementStrategy>;
 
 class PlacementStrategyFactory {
 
@@ -75,12 +60,12 @@ class PlacementStrategyFactory {
      * @param z3Context : context from the z3 library used for optimization
      * @return instance of type BaseOptimizer
      */
-    static std::unique_ptr<BasePlacementStrategy> getStrategy(const std::string& strategyName,
-                                                              const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                              const TopologyPtr& topology,
-                                                              const TypeInferencePhasePtr& typeInferencePhase,
-                                                              const SourceCatalogPtr& streamCatalog,
-                                                              const z3::ContextPtr& z3Context);
+    static BasePlacementStrategyPtr getStrategy(PlacementStrategy::Value placementStrategy,
+                                                const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                const TopologyPtr& topology,
+                                                const TypeInferencePhasePtr& typeInferencePhase,
+                                                const SourceCatalogPtr& streamCatalog,
+                                                const z3::ContextPtr& z3Context);
 
     /**
      * @brief Factory method returning different kind of optimizer (without the z3 optimizer).
@@ -91,11 +76,11 @@ class PlacementStrategyFactory {
      * @param streamCatalog : stream catalog
      * @return instance of type BaseOptimizer
      */
-    static std::unique_ptr<BasePlacementStrategy> getStrategy(const std::string& strategyName,
-                                                              const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                              const TopologyPtr& topology,
-                                                              const TypeInferencePhasePtr& typeInferencePhase,
-                                                              const SourceCatalogPtr& streamCatalog);
+    static BasePlacementStrategyPtr getStrategy(PlacementStrategy::Value placementStrategy,
+                                                const GlobalExecutionPlanPtr& globalExecutionPlan,
+                                                const TopologyPtr& topology,
+                                                const TypeInferencePhasePtr& typeInferencePhase,
+                                                const SourceCatalogPtr& streamCatalog);
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_

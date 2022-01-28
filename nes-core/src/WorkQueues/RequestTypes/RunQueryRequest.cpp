@@ -18,19 +18,19 @@
 
 namespace NES {
 
-RunQueryRequest::RunQueryRequest(const QueryPlanPtr& queryPlan, std::string queryPlacementStrategy)
-    : Request(queryPlan->getQueryId()), queryPlan(queryPlan), queryPlacementStrategy(std::move(queryPlacementStrategy)) {}
+RunQueryRequest::RunQueryRequest(const QueryPlanPtr& queryPlan, PlacementStrategy::Value queryPlacementStrategy)
+    : Request(queryPlan->getQueryId()), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy) {}
 
-RunQueryRequestPtr RunQueryRequest::create(QueryPlanPtr queryPlan, std::string queryPlacementStrategy) {
-    return std::make_shared<RunQueryRequest>(RunQueryRequest(std::move(queryPlan), std::move(queryPlacementStrategy)));
+RunQueryRequestPtr RunQueryRequest::create(QueryPlanPtr queryPlan, PlacementStrategy::Value queryPlacementStrategy) {
+    return std::make_shared<RunQueryRequest>(RunQueryRequest(std::move(queryPlan), queryPlacementStrategy));
 }
 
 QueryPlanPtr RunQueryRequest::getQueryPlan() { return queryPlan; }
 
-std::string RunQueryRequest::getQueryPlacementStrategy() { return queryPlacementStrategy; }
+PlacementStrategy::Value RunQueryRequest::getQueryPlacementStrategy() { return queryPlacementStrategy; }
 
 std::string RunQueryRequest::toString() {
     return "RunQueryRequest { QueryId: " + std::to_string(getQueryId()) + ", QueryPlan: " + queryPlan->toString()
-        + ", QueryPlacementStrategy: " + queryPlacementStrategy + "}";
+        + ", QueryPlacementStrategy: " + PlacementStrategy::toString(queryPlacementStrategy) + "}";
 }
 }// namespace NES

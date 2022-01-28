@@ -16,6 +16,7 @@
 #define NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 
 #include <Plans/Query/QueryId.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -128,10 +129,16 @@ class QueryCatalogEntry {
     void setQueryStatus(QueryStatus queryStatus);
 
     /**
-      * @brief Get name of the query placement strategy
-      * @return query placement strategy
-      */
-    [[nodiscard]] std::string const& getQueryPlacementStrategy() const;
+     * @brief Get name of the query placement strategy
+     * @return query placement strategy
+     */
+    [[nodiscard]] const std::string& getQueryPlacementStrategyAsString() const;
+
+    /**
+     * @brief Return placement strategy used for the query
+     * @return queryPlacement strategy
+     */
+    PlacementStrategy::Value getQueryPlacementStrategy();
 
     /**
      * @brief create a copy of query catalog entry.
@@ -155,4 +162,4 @@ class QueryCatalogEntry {
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
+#endif// NES_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_

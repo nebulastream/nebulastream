@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
 #define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
 
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Operators/OperatorId.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <stack>
 
 namespace NES::Optimizer {
@@ -32,10 +32,10 @@ class IFCOPStrategy : public BasePlacementStrategy {
 
     bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
 
-    static std::unique_ptr<IFCOPStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                 TopologyPtr topology,
-                                                 TypeInferencePhasePtr typeInferencePhase,
-                                                 SourceCatalogPtr streamCatalog);
+    static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                           TopologyPtr topology,
+                                           TypeInferencePhasePtr typeInferencePhase,
+                                           SourceCatalogPtr streamCatalog);
 
   private:
     IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -115,4 +115,4 @@ class IFCOPStrategy : public BasePlacementStrategy {
     std::map<uint64_t, uint64_t> topologyNodeIdToIndexMap;
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_IFCOPSTRATEGY_HPP_
