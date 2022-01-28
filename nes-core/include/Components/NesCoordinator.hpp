@@ -69,9 +69,6 @@ using QueryServicePtr = std::shared_ptr<QueryService>;
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
-class MaintenanceService;
-typedef std::shared_ptr<MaintenanceService> MaintenanceServicePtr;
-
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
@@ -90,6 +87,13 @@ class UdfCatalog;
 using UdfCatalogPtr = std::shared_ptr<UdfCatalog>;
 
 }// namespace Catalogs
+
+namespace Experimental {
+
+class MaintenanceService;
+using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
+
+} // namespace NES::Experimental
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
@@ -163,7 +167,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief Get instance of maintenance service
      * @return maintenance service pointer
      */
-    MaintenanceServicePtr getMaintenanceService();
+    NES::Experimental::MaintenanceServicePtr getMaintenanceService();
 
     /**
      * @brief Get the instance of Global Query Plan
@@ -228,7 +232,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     QueryRequestProcessorServicePtr queryRequestProcessorService;
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;
-    MaintenanceServicePtr maintenanceService;
+    NES::Experimental::MaintenanceServicePtr maintenanceService;
     WorkerRPCClientPtr workerRpcClient;
     RequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;

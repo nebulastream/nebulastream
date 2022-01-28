@@ -15,19 +15,19 @@
 */
 
 #include <Services/MaintenanceService.hpp>
-#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
-#include <Services/NESRequestProcessorService.hpp>
+#include <Services/RequestProcessorService.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
-#include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestTypes/Request.hpp>
 #include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
 
 namespace NES::Experimental {
 
-MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue,
+MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, RequestQueuePtr queryRequestQueue,
                                        GlobalExecutionPlanPtr globalExecutionPlan):
                                        topology{topology}, queryCatalog{queryCatalog},
                                        queryRequestQueue{queryRequestQueue}, globalExecutionPlan{globalExecutionPlan}
@@ -39,7 +39,7 @@ MaintenanceService::~MaintenanceService() {
     NES_DEBUG("Destroying MaintenanceService");
 }
 
-std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType type){
+std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, MigrationType::Value type){
     std::pair<bool, std::string> result;
     //check if topology node exists
     if(!topology->findNodeWithId(nodeId)){
@@ -57,7 +57,7 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
         return result;
     }
     //check if valid Migration Type
-    if(std::find(migrationTypes.begin(), migrationTypes.end(), type ) == migrationTypes.end()){
+    if(MigrationType::isValidMigrationType(type)){
         NES_DEBUG("MaintenanceService: MigrationType: " << type << " is not a valid type. Type must be 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)");
         result.first = false;
         result.second = "MigrationType: " + std::to_string(type) + " not a valid type. Type must be either 1 (Restart), 2 (Migration with Buffering) or 3 (Migration without Buffering)";
@@ -72,7 +72,7 @@ std::pair<bool, std::string> MaintenanceService::submitMaintenanceRequest(Topolo
     //for each query on node, create migration request
     for(auto queryId : queryIds){
         //Migrations of Type RESTART are handled separately from other Migration Types and thus get their own Query Request Type
-        if(type == RESTART){
+        if(type == MigrationType::Value::RESTART){
             queryCatalog->markQueryAs(queryId,QueryStatus::Restarting);
             queryRequestQueue->add(RestartQueryRequest::create(queryId));
         }

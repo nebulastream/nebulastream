@@ -17,19 +17,19 @@
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
 #include <string>
 
-namespace NES {
+namespace NES::Experimental {
 
 
-MigrateQueryRequestPtr MigrateQueryRequest::create(QueryId queryId, TopologyNodeId nodeId, MigrationType migrationType) {
+MigrateQueryRequestPtr MigrateQueryRequest::create(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType) {
     return std::make_shared<MigrateQueryRequest>(MigrateQueryRequest(queryId, nodeId, migrationType));
 
 }
 
-MigrateQueryRequest::MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, MigrationType migrationType) :
-                              NESRequest(queryId), nodeId(nodeId), migrationType(migrationType) {};
+MigrateQueryRequest::MigrateQueryRequest(QueryId queryId, TopologyNodeId nodeId, MigrationType::Value migrationType) :
+                              Request(queryId), nodeId(nodeId), migrationType(migrationType) {};
 
 
-MigrationType MigrateQueryRequest::getMigrationType() { return migrationType; }
+MigrationType::Value MigrateQueryRequest::getMigrationType() { return migrationType; }
 
 std::string MigrateQueryRequest::toString() {
     return "MigrateQueryRequest { QueryId: " + std::to_string(getQueryId()) + ", Topology Node: " + std::to_string(nodeId)

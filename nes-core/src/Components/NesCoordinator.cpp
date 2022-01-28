@@ -130,7 +130,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 
     udfCatalog = Catalogs::UdfCatalog::create();
-    maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
+    maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -359,7 +359,7 @@ MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringS
 
 GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }
 
-MaintenanceServicePtr NesCoordinator::getMaintenanceService() { return maintenanceService; }
+NES::Experimental::MaintenanceServicePtr NesCoordinator::getMaintenanceService() { return maintenanceService; }
 
 void NesCoordinator::onFatalError(int, std::string) {}
 
