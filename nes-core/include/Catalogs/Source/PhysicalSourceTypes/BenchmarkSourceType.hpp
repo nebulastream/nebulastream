@@ -39,7 +39,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
      * @param gatheringMode the gathering mode
      * @param sourceMode the source mode
      * @param sourceAffinity the source affinity
-     * @param taskQueueId the id to which queue we put buffers of this urce
+     * @param taskQueueId the id to which queue we put buffers of this source
      * @return a constructed BenchmarkSourceType
      */
     static BenchmarkSourceTypePtr create(uint8_t* memoryArea,

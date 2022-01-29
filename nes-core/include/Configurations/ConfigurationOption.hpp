@@ -168,6 +168,7 @@ const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "queryCompilerCom
 const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "queryCompilerPipeliningStrategy";
 const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "queryCompilerOutputBufferOptimizationLevel";
 const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
+const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";

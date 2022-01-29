@@ -150,8 +150,8 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
             if (!config[LOG_LEVEL_CONFIG].As<std::string>().empty() && config[LOG_LEVEL_CONFIG].As<std::string>() != "\n") {
                 setLogLevel(config[LOG_LEVEL_CONFIG].As<std::string>());
             }
-            if (!config["queuePinList"].As<std::string>().empty() && config["queuePinList"].As<std::string>() != "\n") {
-                setQueuePinList(config["queuePinList"].As<std::string>());
+            if (!config[QUEUE_PIN_LIST_CONFIG].As<std::string>().empty() && config[QUEUE_PIN_LIST_CONFIG].As<std::string>() != "\n") {
+                setQueuePinList(config[QUEUE_PIN_LIST_CONFIG].As<std::string>());
             }
             if (!config[QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG].As<std::string>().empty()
                 && config[QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG].As<std::string>() != "\n") {
