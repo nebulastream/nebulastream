@@ -65,7 +65,7 @@ class QueryConfig {
      * @brief Sets the placement type
      * @param placementType
      */
-    void setPlacementType(PlacementStrategy placementType);
+    void setPlacementType(PlacementStrategy::Value placementType);
 
   private:
     FaultToleranceType faultToleranceType;
