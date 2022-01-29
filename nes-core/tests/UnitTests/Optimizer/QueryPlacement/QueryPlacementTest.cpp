@@ -84,10 +84,10 @@ class QueryPlacementTest : public testing::Test {
         topology->setAsRoot(rootNode);
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, resources[1]);
-        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode1);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, resources[2]);
-        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode2);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
                              "->addField(\"value\", BasicType::UINT64);";
@@ -137,7 +137,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::BottomUp,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -198,7 +198,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::TopDown,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -260,7 +260,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::BottomUp,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -342,7 +342,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::BottomUp,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -421,7 +421,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::TopDown,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -502,14 +502,14 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithB
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::BottomUp,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
                                                                               streamCatalog);
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
     z3::ContextPtr context = std::make_shared<z3::context>();
     auto z3InferencePhase =
         Optimizer::SignatureInferencePhase::create(context,
@@ -619,14 +619,14 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::TopDown,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
                                                                               streamCatalog);
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
+    auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
     z3::ContextPtr context = std::make_shared<z3::context>();
     auto z3InferencePhase =
         Optimizer::SignatureInferencePhase::create(context,
@@ -694,7 +694,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
 
     ASSERT_EQ(planToDeploy->getQueryId(), queryPlan1->getQueryId());
 
-    auto mergedPlacementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+    auto mergedPlacementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::TopDown,
                                                                                     globalExecutionPlan,
                                                                                     topology,
                                                                                     typeInferencePhase,
@@ -734,7 +734,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::TopDown,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -1059,7 +1059,7 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("IFCOP",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::IFCOP,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -1185,7 +1185,7 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("IFCOP",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::IFCOP,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -1318,7 +1318,7 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::TopDown,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
@@ -1434,7 +1434,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::BottomUp,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,

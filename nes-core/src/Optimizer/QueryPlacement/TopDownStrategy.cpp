@@ -165,7 +165,8 @@ void TopDownStrategy::placeQueryPlan(const QueryPlanPtr& queryPlan) {
     for (const auto& sinkOperator : sinkOperators) {
         NES_TRACE("TopDownStrategy: Get the topology node for the sink operator.");
         //TODO: Handle when we assume more than one sink nodes
-        TopologyNodePtr candidateTopologyNode = getTopologyNode(sinkOperator->getId());
+        auto nodeId = std::any_cast<uint64_t>(sinkOperator->getProperty(PINNED_NODE_ID));
+        TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
         if (candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("TopDownStrategy: Unable to find resources on the physical node for placement of sink operator");
             throw Exception("TopDownStrategy: Unable to find resources on the physical node for placement of sink operator");
@@ -190,7 +191,7 @@ void TopDownStrategy::placeOperator(QueryId queryId, const OperatorNodePtr& oper
             }
 
             NES_TRACE("TopDownStrategy: Get the topology nodes where children source operators are to be placed.");
-            std::vector<TopologyNodePtr> childNodes = getTopologyNodesForSourceOperators(operatorNode);
+            std::vector<TopologyNodePtr> childNodes = getTopologyNodesForChildOperators(operatorNode);
 
             NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
             candidateTopologyNode = topology->findCommonNodeBetween(childNodes, parentTopologyNodes);
@@ -204,8 +205,8 @@ void TopDownStrategy::placeOperator(QueryId queryId, const OperatorNodePtr& oper
 
             if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
                 NES_DEBUG("TopDownStrategy: Received Source operator for placement.");
-
-                auto pinnedSourceOperatorLocation = getTopologyNode(operatorNode->getId());
+                auto nodeId = std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID));
+                auto pinnedSourceOperatorLocation = getTopologyNode(nodeId);
                 if (pinnedSourceOperatorLocation->getId() == candidateTopologyNode->getId()
                     || pinnedSourceOperatorLocation->containAsParent(candidateTopologyNode)) {
                     candidateTopologyNode = pinnedSourceOperatorLocation;
@@ -225,7 +226,7 @@ void TopDownStrategy::placeOperator(QueryId queryId, const OperatorNodePtr& oper
 
         if (candidateTopologyNode->getAvailableResources() == 0) {
             NES_DEBUG("TopDownStrategy: Find the next Topology node where operator can be placed");
-            std::vector<TopologyNodePtr> childNodes = getTopologyNodesForSourceOperators(operatorNode);
+            std::vector<TopologyNodePtr> childNodes = getTopologyNodesForChildOperators(operatorNode);
             NES_TRACE("TopDownStrategy: Find a node reachable from all child and parent topology nodes.");
             //FIXME: we are considering only one root node currently
             auto candidateTopologyNodes = topology->findNodesBetween(childNodes, {candidateTopologyNode});
@@ -369,10 +370,10 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForParentOperators
     return parentTopologyNodes;
 }
 
-std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators(const OperatorNodePtr& candidateOperator) {
+std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForChildOperators(const OperatorNodePtr& candidateOperator) {
     std::vector<TopologyNodePtr> childNodes;
 
-    NES_TRACE("TopDownStrategy::getTopologyNodesForSourceOperators: Get the pinned or closest placed sources nodes for the the "
+    NES_TRACE("TopDownStrategy::getTopologyNodesForChildOperators: Get the pinned or closest placed sources nodes for the the "
               "input operator.");
 
     std::vector<NodePtr> sources = {candidateOperator->as<Node>()};
@@ -381,7 +382,9 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators
         auto childOp = sources.back()->as<OperatorNode>();
         sources.pop_back();
         if (childOp->instanceOf<SourceLogicalOperatorNode>()) {
-            childNodes.push_back(getTopologyNode(childOp->getId()));
+            auto nodeId = std::any_cast<uint64_t>(childOp->getProperty(PINNED_NODE_ID));
+            auto pinnedTopologyNode = getTopologyNode(nodeId);
+            childNodes.push_back(pinnedTopologyNode);
             continue;
         }
         if (operatorToExecutionNodeMap.contains(childOp->getId())) {
@@ -391,9 +394,9 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators
         sources.insert(sources.end(), childOp->getChildren().begin(), childOp->getChildren().end());
     }
     if (childNodes.empty()) {
-        NES_ERROR("TopDownStrategy::getTopologyNodesForSourceOperators: Unable to find the sources operators to the candidate "
+        NES_ERROR("TopDownStrategy::getTopologyNodesForChildOperators: Unable to find the sources operators to the candidate "
                   "operator");
-        throw Exception("TopDownStrategy::getTopologyNodesForSourceOperators: Unable to find the sources operators to the "
+        throw Exception("TopDownStrategy::getTopologyNodesForChildOperators: Unable to find the sources operators to the "
                         "candidate operator");
     }
     return childNodes;
