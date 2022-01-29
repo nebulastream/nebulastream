@@ -35,9 +35,89 @@ def plot_overall_boxplot(meta, name):
     save(meta, g, name)
 
 
+def plot_stages(meta, name="stages"):
+    dataAll = meta["data_all"]
+    dataStages = dataAll[dataAll["timed_unit"] != "overall runtime"]
+    # plot all stages together (stacked bar plot ?)
+    for query in dataStages["query"].unique():
+        stagesOfQuery = dataStages[dataStages["query"] == query]
+        g = sns.barplot(x="timed_unit", y="time", hue="variant", data=stagesOfQuery, dodge=True)
+        save(meta, g, f'{query}')
+        #for stage in stagesOfQuery["timed_unit"].unique():
+        #    dataStage = stagesOfQuery[stagesOfQuery["timed_unit"] == stage]
+        #    g = sns.barplot(x="variant", y="time", data=dataStage, dodge=True)
+        #    save(meta, g, f'{query}_{stage}')
+        #g = sns.boxplot(x="query", hue="variant", y="time", data=overall, dodge=True)
+        #g = stagesOfQuery.plot(title=query, x="variant", y="time", kind='bar', stacked=True)
+        #save(meta, g, query)
+
+
+def plot_pch(meta):
+    dataAll = meta["data_overall"]
+    for query in dataAll["query"].unique():
+        dataQuery = dataAll[dataAll["query"] == query]
+        g = sns.barplot(x="variant", y="time", data=dataQuery, dodge=True)
+        save(meta, g, f'{query}')
+
+
+def plot_filter(meta):
+    data = meta["no_headers_representative"]
+    g = sns.barplot(x="variant", y="time", data=data, dodge=True)
+    save(meta, g, "representative_no-headers")
+
+
+def plot_window(meta):
+    data = meta["window_representative"]
+    g = sns.barplot(x="variant", y="time", data=data, dodge=True)
+    save(meta, g, "representative_window")
+
+
+def calc(meta):
+    dataWindow = meta["window_representative"]
+    dataFilter = meta["no_headers_representative"]
+
+    str_no_optimization = "No optimization"  # "all headers"
+    str_header_selection = "Header selection"  # "header selection"
+    str_pch = "Precompiled header"
+
+    avgWindowAll = dataWindow[dataWindow["variant"] == str_no_optimization]["time"].agg('average')
+    avgWindowSelection = dataWindow[dataWindow["variant"] == str_header_selection]["time"].agg('average')
+    avgWindowPch = dataWindow[dataWindow["variant"] == str_pch]["time"].agg('average')
+
+    absImprovementWindowSelection = avgWindowAll - avgWindowSelection
+    relImprovementWindowSelection = 100 / avgWindowAll * absImprovementWindowSelection
+
+    absImprovementWindowPch = avgWindowAll - avgWindowPch
+    relImprovementWindowPch = 100 / avgWindowAll * absImprovementWindowPch
+
+    print("Window - header selection absolute improvement", absImprovementWindowSelection, "ms")
+    print("Window - header selection relative improvement", relImprovementWindowSelection, "%")
+    print("---")
+    print("Window - precompiled header absolute improvement", absImprovementWindowPch, "ms")
+    print("Window - precompiled header relative improvement", relImprovementWindowPch, "%")
+    print("--- ---")
+
+    avgFilterAll = dataFilter[dataFilter["variant"] == str_no_optimization]["time"].agg('average')
+    avgFilterSelection = dataFilter[dataFilter["variant"] == str_header_selection]["time"].agg('average')
+    avgFilterPch = dataFilter[dataFilter["variant"] == str_pch]["time"].agg('average')
+
+    absImprovementFilterSelection = avgFilterAll - avgFilterSelection
+    relImprovementFilterSelection = 100 / avgFilterAll * absImprovementFilterSelection
+
+    absImprovementFilterPch = avgFilterAll - avgFilterPch
+    relImprovementFilterPch = 100 / avgFilterAll * absImprovementFilterPch
+
+    print("Filter - header selection absolute improvement", absImprovementFilterSelection, "ms")
+    print("Filter - header selection relative improvement", relImprovementFilterSelection, "%")
+    print("---")
+    print("Filter - precompiled header absolute improvement", absImprovementFilterPch, "ms")
+    print("Filter - precompiled header relative improvement", relImprovementFilterPch, "%")
+    print("--- ---")
+
+
 def prep(args):
     # Load data into data frame
-    fileDataFrame = pd.read_csv(args.dataFile, delimiter=args.delimiter)
+    fileDataFrame = pd.read_csv(args.dataFile, delimiter=args.delimiter).sort_values('time', ascending=False)
 
     # Configure seaborn
     # - Apply the default theme
@@ -49,11 +129,20 @@ def prep(args):
 
     overall = success[success["timed_unit"] == "overall runtime"]
 
-    #headers_overall = overall[overall["variant"] == "header selection"]
-    #headers_filter = headers_overall[headers_overall["query"] == "filterQuery"]
+    overallAll = fileDataFrame[fileDataFrame["timed_unit"] == "overall runtime"]
+
+    no_headers_representative = overall[overall["query"] == "filter"]
+    window_representative = overall[overall["query"] == "window"]
+
+    # headers_overall = overall[overall["variant"] == "header selection"]
+    # headers_filter = headers_overall[headers_overall["query"] == "filterQuery"]
 
     meta = {
+        "data_all": fileDataFrame,
+        "data_overall_all": overallAll,
         "data_overall": overall,
+        "no_headers_representative": no_headers_representative,
+        "window_representative": window_representative,
         "output_dir": args.outputDirectory
     }
     return meta
