@@ -14,8 +14,40 @@ limitations under the License.
 #ifndef NES_INCLUDE_QUERYCOMPILER_COMPILER_RUNTIMEHEADERS_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_COMPILER_RUNTIMEHEADERS_HPP_
 
-#include <Common/ExecutableType/Array.hpp>
+#if NES_BENCHMARK_MINIMAL
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/ExecutionResult.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
+#else
+#if NES_BENCHMARK_WINDOW
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
+#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowPolicies/ExecutableOnWatermarkChangeTriggerPolicy.hpp>
+#include <State/StateVariable.hpp>
+#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
+#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>
+#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
+#include <Windowing/Runtime/WindowManager.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowPolicies/ExecutableOnWatermarkChangeTriggerPolicy.hpp>
+#include <State/StateVariable.hpp>
+#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/ExecutionResult.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#else
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>
+#include <Common/ExecutableType/Array.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/ExecutionResult.hpp>
@@ -56,5 +88,8 @@ limitations under the License.
 #include <Sources/DataSource.hpp>
 #include <cstdint>
 #include <string.h>
+#endif
+#endif
+
 
 #endif//NES_INCLUDE_QUERYCOMPILER_COMPILER_RUNTIMEHEADERS_HPP_

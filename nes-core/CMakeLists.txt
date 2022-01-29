@@ -57,7 +57,17 @@ if (NES_USE_PCH)
     if (NES_ONLY_REQUIRED_HEADERS)
         message( FATAL_ERROR "You can't run NES_USE_PCH with NES_ONLY_REQUIRED_HEADERS. CMake will exit...")
     endif()
-
+    set (BENCHMARK_MINIMAL 0)
+    set (BENCHMARK_WINDOW 0)
+    if (NES_BENCHMARK_MINIMAL)
+        add_compile_definitions(NES_BENCHMARK_MINIMAL)
+        set (BENCHMARK_MINIMAL 1)
+    endif()
+    if (NES_BENCHMARK_WINDOW)
+        add_compile_definitions(NES_BENCHMARK_WINDOW)
+        set (BENCHMARK_WINDOW 1)
+    endif()
+        message("NES_BENCHMARK_MINIMAL: ${BENCHMARK_MINIMAL}")
     message("Using precompiled headers for query compilation")
     #set(NES_PCH_FLAGS "-ftime-trace -fpic -Wparentheses-equality -fno-trigraphs -DNES_LOGGING_DEBUG_LEVEL=1 -std=c++${CMAKE_CXX_STANDARD}")
     add_compile_definitions(NES_USE_PCH)
@@ -66,7 +76,7 @@ if (NES_USE_PCH)
             COMMAND ${CMAKE_CXX_COMPILER}
             -I${PATH_TO_NES_SOURCE_CODE}/nes-core/include/
             -I${PATH_TO_DEB_SOURCE_CODE}/include/ -ftime-trace -fpic -Wparentheses-equality -fno-trigraphs -DNES_LOGGING_DEBUG_LEVEL=1 -std=c++20
-            -march=native -mtune=native
+            -march=native -mtune=native -DNES_BENCHMARK_MINIMAL=${BENCHMARK_MINIMAL} -DNES_BENCHMARK_WINDOW=${BENCHMARK_WINDOW}
             -O0 -x c++-header
             ${PATH_TO_NES_SOURCE_CODE}/nes-core/include/QueryCompiler/Compiler/RuntimeHeaders.hpp -o RuntimeHeaders_O0.h.pch
     )
@@ -75,7 +85,7 @@ if (NES_USE_PCH)
             COMMAND ${CMAKE_CXX_COMPILER}
             -I${PATH_TO_NES_SOURCE_CODE}/nes-core/include/
             -I${PATH_TO_DEB_SOURCE_CODE}/include/ -ftime-trace -fpic -Wparentheses-equality -fno-trigraphs -DNES_LOGGING_DEBUG_LEVEL=1 -std=c++20
-            -march=native -mtune=native
+            -march=native -mtune=native -DNES_BENCHMARK_MINIMAL=${BENCHMARK_MINIMAL} -DNES_BENCHMARK_WINDOW=${BENCHMARK_WINDOW}
              -O3 -x c++-header
             ${PATH_TO_NES_SOURCE_CODE}/nes-core/include/QueryCompiler/Compiler/RuntimeHeaders.hpp -o RuntimeHeaders_O3.h.pch
     )
