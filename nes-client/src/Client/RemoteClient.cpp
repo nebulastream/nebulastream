@@ -41,7 +41,7 @@ int64_t RemoteClient::submitQuery(const Query& query, const QueryConfig config) 
     auto& context = *request.mutable_context();
 
     auto placement = google::protobuf::Any();
-    placement.set_value(toString(config.getPlacementType()));
+    placement.set_value(PlacementStrategy::toString(config.getPlacementType()));
     context["placement"] = placement;
 
     auto linageType = google::protobuf::Any();
