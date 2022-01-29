@@ -32,6 +32,7 @@ license_text_cpp = """/*
 
 if __name__ == "__main__":
     exclude = set(['cmake-build-debug', 'cmake-build-release', 'build', 'yaml', 'jitify'])
+    result = True
     for subdir, dirs, files in os.walk(sys.argv[1]):
         dirs[:] = [d for d in dirs if d not in exclude]
         for file in files:
@@ -41,6 +42,9 @@ if __name__ == "__main__":
                     content = fp.read()
                     if not content.startswith(license_text_cpp):
                         print("File", filename, " lacks the license preamble")
-                        sys.exit(1)
+                        result = False
+
+    if not result:
+        sys.exit(1)
 
 sys.exit(0)
