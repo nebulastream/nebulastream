@@ -242,7 +242,7 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("ILP",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
                                                                               typeInferencePhase,
@@ -300,7 +300,7 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("ILP",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
                                                                               typeInferencePhase,
@@ -362,7 +362,7 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("ILP",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::ILP,
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
                                                                               typeInferencePhase,
