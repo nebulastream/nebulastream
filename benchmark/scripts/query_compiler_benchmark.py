@@ -12,20 +12,19 @@ PDF = False
 SVG = False
 
 
-def plotter(args):
-    meta = prep(args)
+def plotter(meta):
     plot_overall_boxplot(meta, "all_overall_boxplot")
     plot_overall_barchart(meta, "all_overall_barchart")
 
 
-def plot_overall_barchart(meta, name):
+def plot_overall_barchart(meta, name="all_overall_barchart"):
     overall = meta["data_overall"]
     g = sns.barplot(x="query", hue="variant", y="time", data=overall, dodge=True)
 
     save(meta, g, name)
 
 
-def plot_overall_boxplot(meta, name):
+def plot_overall_boxplot(meta, name="all_overall_boxplot"):
     overall = meta["data_overall"]
 
     # plotting
@@ -175,7 +174,13 @@ if __name__ == "__main__":
     parser.add_argument("dataFile",
                         help="CSV file that will be used as data for plotting")
     parser.add_argument("-o", "--output", dest="outputDirectory",
-                        default="",
+                        default="benchmark/plots/",
                         help="Directory to save the resulting plot images to.")
+    parser.add_argument("funs", default=[plotter], nargs='*')
+
     args = parser.parse_args()
-    plotter(args)
+    meta = prep(args)
+    for funName in args.funs:
+        fun = locals().get(funName)
+        if fun is not None:
+            fun(meta)
