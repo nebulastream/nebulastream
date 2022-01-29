@@ -216,7 +216,7 @@ void VizDumpHandler::extractNodeProperties(detail::VizNode& node, const Operator
             for (it=mapOfPredicateNodes.begin(); it!=mapOfPredicateNodes.end(); ++ it){
                 ss << R"({ "id": ")" << it->first << R"(", "label": ")" << it->second << "\"}, ";
             }
-            ss.seekp(-1,ss.cur); ss << "], ";
+            ss.seekp(-2,ss.cur); ss << "], ";
 
             ss << "\"edges\": [";
             for (auto& edge : edges) {
