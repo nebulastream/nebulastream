@@ -11,7 +11,8 @@ PNG = True
 PDF = False
 SVG = False
 
-str_approach = "Approach"
+STR_APPROACH = "Approach"
+AXES_FONTSIZE = 13
 
 
 def plotter(meta):
@@ -20,8 +21,8 @@ def plotter(meta):
 
 
 def plot_overall_barchart(meta, name="all_overall_barchart"):
-    overall = meta["data_overall"]
-    g = sns.barplot(x="query", hue=str_approach, y="time", data=overall, dodge=True)
+    overall = meta["data_all"]
+    g = sns.barplot(x="query", hue=STR_APPROACH, y="time", data=overall, dodge=True)
 
     save(meta, g, name)
 
@@ -30,7 +31,7 @@ def plot_overall_boxplot(meta, name="all_overall_boxplot"):
     overall = meta["data_overall"]
 
     # plotting
-    g = sns.boxplot(x="query", hue=str_approach, y="time", data=overall, dodge=True)
+    g = sns.boxplot(x="query", hue=STR_APPROACH, y="time", data=overall, dodge=True)
     g.figure.set_size_inches(20, 8.27)
 
     save(meta, g, name)
@@ -42,7 +43,7 @@ def plot_stages(meta, name="stages"):
     # plot all stages together (stacked bar plot ?)
     for query in dataStages["query"].unique():
         stagesOfQuery = dataStages[dataStages["query"] == query]
-        g = sns.barplot(x="timed_unit", y="time", hue=str_approach, data=stagesOfQuery, dodge=True)
+        g = sns.barplot(x="timed_unit", y="time", hue=STR_APPROACH, data=stagesOfQuery, dodge=True)
         save(meta, g, f'{query}')
         #for stage in stagesOfQuery["timed_unit"].unique():
         #    dataStage = stagesOfQuery[stagesOfQuery["timed_unit"] == stage]
@@ -57,19 +58,19 @@ def plot_pch(meta):
     dataAll = meta["data_overall"]
     for query in dataAll["query"].unique():
         dataQuery = dataAll[dataAll["query"] == query]
-        g = sns.barplot(x=str_approach, y="time", data=dataQuery, dodge=True)
+        g = sns.barplot(x=STR_APPROACH, y="time", data=dataQuery, dodge=True)
         save(meta, g, f'{query}')
 
 
 def plot_filter(meta):
     data = meta["no_headers_representative"]
-    g = sns.barplot(x=str_approach, y="time", data=data, dodge=True)
+    g = sns.barplot(x=STR_APPROACH, y="time", data=data, dodge=True)
     save(meta, g, "representative_no-headers")
 
 
 def plot_window(meta):
     data = meta["window_representative"]
-    g = sns.barplot(x=str_approach, y="time", data=data, dodge=True)
+    g = sns.barplot(x=STR_APPROACH, y="time", data=data, dodge=True)
     save(meta, g, "representative_window")
 
 
@@ -81,39 +82,27 @@ def calc(meta):
     str_header_selection = "Header selection"  # "header selection"
     str_pch = "Precompiled headers"
 
-    avgWindowAll = dataWindow[dataWindow[str_approach] == str_no_optimization]["time"].agg('average')
-    avgWindowSelection = dataWindow[dataWindow[str_approach] == str_header_selection]["time"].agg('average')
-    avgWindowPch = dataWindow[dataWindow[str_approach] == str_pch]["time"].agg('average')
+    def calc_and_print(data, name):
 
-    absImprovementWindowSelection = avgWindowAll - avgWindowSelection
-    relImprovementWindowSelection = 100 / avgWindowAll * absImprovementWindowSelection
+        avg_all = data[data[STR_APPROACH] == str_no_optimization]["time"].agg('average')
+        avg_selection = data[data[STR_APPROACH] == str_header_selection]["time"].agg('average')
+        avg_pch = data[data[STR_APPROACH] == str_pch]["time"].agg('average')
 
-    absImprovementWindowPch = avgWindowAll - avgWindowPch
-    relImprovementWindowPch = 100 / avgWindowAll * absImprovementWindowPch
+        abs_selection = avg_all - avg_selection
+        rel_selection = 100 / avg_all * abs_selection
 
-    print("Window - header selection absolute improvement", absImprovementWindowSelection, "ms")
-    print("Window - header selection relative improvement", relImprovementWindowSelection, "%")
-    print("---")
-    print("Window - precompiled header absolute improvement", absImprovementWindowPch, "ms")
-    print("Window - precompiled header relative improvement", relImprovementWindowPch, "%")
-    print("--- ---")
+        abs_pch = avg_all - avg_pch
+        rel_pch = 100 / avg_all * abs_pch
 
-    avgFilterAll = dataFilter[dataFilter[str_approach] == str_no_optimization]["time"].agg('average')
-    avgFilterSelection = dataFilter[dataFilter[str_approach] == str_header_selection]["time"].agg('average')
-    avgFilterPch = dataFilter[dataFilter[str_approach] == str_pch]["time"].agg('average')
+        print(name, "- header selection absolute improvement", abs_selection, "ms")
+        print(name, "- header selection relative improvement", rel_selection, "%")
+        print("---")
+        print(name, "- precompiled header absolute improvement", abs_pch, "ms")
+        print(name, "- precompiled header relative improvement", rel_pch, "%")
+        print("--- ---")
 
-    absImprovementFilterSelection = avgFilterAll - avgFilterSelection
-    relImprovementFilterSelection = 100 / avgFilterAll * absImprovementFilterSelection
-
-    absImprovementFilterPch = avgFilterAll - avgFilterPch
-    relImprovementFilterPch = 100 / avgFilterAll * absImprovementFilterPch
-
-    print("Filter - header selection absolute improvement", absImprovementFilterSelection, "ms")
-    print("Filter - header selection relative improvement", relImprovementFilterSelection, "%")
-    print("---")
-    print("Filter - precompiled header absolute improvement", absImprovementFilterPch, "ms")
-    print("Filter - precompiled header relative improvement", relImprovementFilterPch, "%")
-    print("--- ---")
+    for (data, name) in [(dataWindow, "Window"), (dataFilter, "Filter")]:
+        calc_and_print(data, name)
 
 
 def prep(args):
