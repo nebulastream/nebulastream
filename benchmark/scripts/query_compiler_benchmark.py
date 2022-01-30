@@ -154,6 +154,10 @@ def save(meta, g, name):
     elif SVG:
         filename = filename + ".svg"
 
+    g.set_xlabel("Query", fontsize=AXES_FONTSIZE)
+    g.set_ylabel("Time [ms]", fontsize=AXES_FONTSIZE)
+    g.legend(title="Approach", fontsize=AXES_FONTSIZE)
+
     g.figure.savefig(filename)
     g.clear()
 
