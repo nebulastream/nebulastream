@@ -116,25 +116,25 @@ def calc(meta):
     dataFilter = meta["no_headers_representative"]
 
     def calc_and_print(data, name):
+        print(data, flush=True)
 
         def aggr_approach(approach):
             return data[data[STR_APPROACH == approach]]["time"].agg('average')
 
         avg_all = aggr_approach("No optimization")  # "all headers"
-        avg_selection = aggr_approach("Header selection")  # "header selection"
-        avg_pch = aggr_approach("Precompiled headers")
 
-        abs_selection = avg_all - avg_selection
-        rel_selection = 100 / avg_all * abs_selection
+        for approach in ["Header selection", "Precompiled headers", "Precompiled headers optimized", "Hybrid minimal",
+                         "Hybrid window", "Hybrid minimal optimized", "Hybrid window optimized"]:
+            print(approach, flush=True)
+            avg_approach = aggr_approach(approach)
 
-        abs_pch = avg_all - avg_pch
-        rel_pch = 100 / avg_all * abs_pch
+            abs_approach = avg_all - avg_approach
+            rel_approach = 100 / avg_all * abs_approach
 
-        print(name, "- header selection absolute improvement", abs_selection, "ms")
-        print(name, "- header selection relative improvement", rel_selection, "%")
-        print("---")
-        print(name, "- precompiled header absolute improvement", abs_pch, "ms")
-        print(name, "- precompiled header relative improvement", rel_pch, "%")
+            print(name, "-", approach, "absolute improvement", abs_approach, "ms")
+            print(name, "-", approach, "relative improvement", rel_approach, "%")
+            print("---")
+
         print("--- ---")
 
     for (data, name) in [(dataWindow, "Window"), (dataFilter, "Filter")]:
