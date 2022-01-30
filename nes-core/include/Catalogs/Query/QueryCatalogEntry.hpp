@@ -150,8 +150,17 @@ class QueryCatalogEntry {
 
     std::string getFailureReason();
 
+    /**
+     * @brief Adds a new phase to the optimizationPhases map
+     * @param phaseName
+     * @param queryPlan
+     */
     void addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan);
 
+    /**
+     * @brief Get all optimization phases for this query
+     * @return
+     */
     std::map<std::string, QueryPlanPtr> getOptimizationPhases();
 
   private:
