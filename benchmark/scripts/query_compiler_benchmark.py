@@ -21,8 +21,10 @@ def plotter(meta):
 
 
 def plot_overall_barchart(meta, name="all_overall_barchart"):
-    overall = meta["data_all"]
+    overall = meta["data_overall_all"]
     g = sns.barplot(x="query", hue=STR_APPROACH, y="time", data=overall, dodge=True)
+    g.figure.set_size_inches(20, 8.27)
+    g.legend(title="Approach", fontsize=AXES_FONTSIZE)
 
     save(meta, g, name)
 
@@ -33,6 +35,7 @@ def plot_overall_boxplot(meta, name="all_overall_boxplot"):
     # plotting
     g = sns.boxplot(x="query", hue=STR_APPROACH, y="time", data=overall, dodge=True)
     g.figure.set_size_inches(20, 8.27)
+    g.legend(title="Approach", fontsize=AXES_FONTSIZE)
 
     save(meta, g, name)
 
@@ -77,10 +80,6 @@ def plot_window(meta):
 def calc(meta):
     dataWindow = meta["window_representative"]
     dataFilter = meta["no_headers_representative"]
-
-    str_no_optimization = "No optimization"  # "all headers"
-    str_header_selection = "Header selection"  # "header selection"
-    str_pch = "Precompiled headers"
 
     def calc_and_print(data, name):
 
@@ -156,7 +155,6 @@ def save(meta, g, name):
 
     g.set_xlabel("Query", fontsize=AXES_FONTSIZE)
     g.set_ylabel("Time [ms]", fontsize=AXES_FONTSIZE)
-    g.legend(title="Approach", fontsize=AXES_FONTSIZE)
 
     g.figure.savefig(filename)
     g.clear()
