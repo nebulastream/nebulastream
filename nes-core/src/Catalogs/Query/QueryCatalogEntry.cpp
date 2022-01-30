@@ -57,4 +57,12 @@ PlacementStrategy::Value QueryCatalogEntry::getQueryPlacementStrategy() {
     return PlacementStrategy::getFromString(queryPlacementStrategy);
 }
 
+void QueryCatalogEntry::addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan){
+    optimizationPhases.insert(std::pair<std::string, QueryPlanPtr>(phaseName, queryPlan));
+}
+
+std::map<std::string, QueryPlanPtr> QueryCatalogEntry::getOptimizationPhases() {
+    return optimizationPhases;
+}
+
 }// namespace NES
