@@ -71,8 +71,42 @@ def plot_filter(meta):
     save(meta, g, "representative_no-headers")
 
 
+def plot_filter_pch(meta):
+    data = meta["no_headers_representative"]
+    data = filter_data(data, "Approach", "PCH optimized")
+    data = filter_data(data, "Approach", "Hybrid minimal optimized")
+    data = filter_data(data, "Approach", "Hybrid minimal")
+    g = sns.barplot(x=STR_APPROACH, y="time", data=data, dodge=True)
+    save(meta, g, "representative_no-headers")
+
+
+def plot_filter_hybrid(meta):
+    data = meta["no_headers_representative"]
+    data = filter_data(data, "Approach", "PCH optimized")
+    data = filter_data(data, "Approach", "Hybrid minimal optimized")
+    g = sns.barplot(x=STR_APPROACH, y="time", data=data, dodge=True)
+    save(meta, g, "representative_no-headers")
+
+
 def plot_window(meta):
     data = meta["window_representative"]
+    g = sns.barplot(x=STR_APPROACH, y="time", data=data, dodge=True)
+    save(meta, g, "representative_window")
+
+
+def plot_window_pch(meta):
+    data = meta["window_representative"]
+    data = filter_data(data, "Approach", "PCH optimized")
+    data = filter_data(data, "Approach", "Hybrid window optimized")
+    data = filter_data(data, "Approach", "Hybrid window")
+    g = sns.barplot(x=STR_APPROACH, y="time", data=data, dodge=True)
+    save(meta, g, "representative_window")
+
+
+def plot_window_hybrid(meta):
+    data = meta["window_representative"]
+    data = filter_data(data, "Approach", "PCH optimized")
+    data = filter_data(data, "Approach", "Hybrid window optimized")
     g = sns.barplot(x=STR_APPROACH, y="time", data=data, dodge=True)
     save(meta, g, "representative_window")
 
@@ -83,9 +117,12 @@ def calc(meta):
 
     def calc_and_print(data, name):
 
-        avg_all = data[data[STR_APPROACH] == str_no_optimization]["time"].agg('average')
-        avg_selection = data[data[STR_APPROACH] == str_header_selection]["time"].agg('average')
-        avg_pch = data[data[STR_APPROACH] == str_pch]["time"].agg('average')
+        def aggr_approach(approach):
+            return data[data[STR_APPROACH == approach]]["time"].agg('average')
+
+        avg_all = aggr_approach("No optimization")  # "all headers"
+        avg_selection = aggr_approach("Header selection")  # "header selection"
+        avg_pch = aggr_approach("Precompiled headers")
 
         abs_selection = avg_all - avg_selection
         rel_selection = 100 / avg_all * abs_selection
@@ -102,6 +139,10 @@ def calc(meta):
 
     for (data, name) in [(dataWindow, "Window"), (dataFilter, "Filter")]:
         calc_and_print(data, name)
+
+
+def filter_data(data, column, value):
+    return data[data[column] != value]
 
 
 def prep(args):
@@ -121,6 +162,8 @@ def prep(args):
     overallAll = fileDataFrame[fileDataFrame["timed_unit"] == "overall runtime"]
 
     no_headers_representative = overall[overall["query"] == "filter"]
+    no_headers_representative = filter_data(no_headers_representative, STR_APPROACH, "Hybrid window")
+    no_headers_representative = filter_data(no_headers_representative, STR_APPROACH, "Hybrid window optimized")
     window_representative = overall[overall["query"] == "window"]
 
     # headers_overall = overall[overall[str_approach] == "header selection"]
