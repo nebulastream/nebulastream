@@ -150,6 +150,10 @@ class QueryCatalogEntry {
 
     std::string getFailureReason();
 
+    void addOptimizationPhase(std::string phaseName, QueryPlanPtr queryPlan);
+
+    std::map<std::string, QueryPlanPtr> getOptimizationPhases();
+
   private:
     QueryId queryId;
     std::string queryString;
@@ -158,6 +162,7 @@ class QueryCatalogEntry {
     QueryPlanPtr executedQueryPlan;
     QueryStatus queryStatus;
     std::string failureReason;
+    std::map<std::string, QueryPlanPtr> optimizationPhases;
 };
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 }// namespace NES

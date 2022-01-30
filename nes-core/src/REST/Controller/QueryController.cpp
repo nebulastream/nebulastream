@@ -108,6 +108,49 @@ void QueryController::handleGet(const std::vector<utility::string_t>& path, web:
             RuntimeUtils::printStackTrace();
             internalServerErrorImpl(request);
         }
+    } else if (path[1] == "optimization-phases") {
+        //Check if the path contains the query id
+        auto param = parameters.find("queryId");
+        if (param == parameters.end()) {
+            NES_ERROR("QueryController: Unable to find query ID for the GET optimization-phases request");
+            web::json::value errorResponse{};
+            errorResponse["detail"] = web::json::value::string("Parameter queryId must be provided");
+            badRequestImpl(request, errorResponse);
+        }
+
+        try {
+            // get the queryId from user input
+            QueryId queryId = std::stoi(param->second);
+
+            //Call the service
+            NES_DEBUG("Check whether query exists in query catalog");
+            if (!queryCatalog->queryExists(queryId)) {
+                throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId)
+                                             + " in query catalog.");
+            }
+            QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+            auto optimizationPhases = queryCatalogEntry->getOptimizationPhases();
+
+            NES_DEBUG("UtilityFunctions: Getting the json representation of the optimized query plans");
+            auto response = web::json::value::object();
+            for (auto const& [phaseName, queryPlan] : optimizationPhases) {
+                auto queryPlanJson = PlanJsonGenerator::getQueryPlanAsJson(queryPlan);
+                response[phaseName] = queryPlanJson;
+            }
+
+            //Prepare the response
+            successMessageImpl(request, response);
+            return;
+        } catch (const std::exception& exc) {
+            NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user "
+                      "request:"
+                      << exc.what());
+            handleException(request, exc);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+        }
     } else {
         resourceNotFoundImpl(request);
     }
