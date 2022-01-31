@@ -63,22 +63,25 @@ namespace NES {
 
 using namespace Configurations;
 
-NesCoordinator::NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorConfig,
-                               const WorkerConfigurationPtr&& workerConfiguration)
+NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig, WorkerConfigurationPtr workerConfiguration)
     : NesCoordinator(std::move(coordinatorConfig)) {
-    workerConfig = workerConfiguration;
+    workerConfig = std::move(workerConfiguration);
 }
 
-NesCoordinator::NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorConfig)
-    : coordinatorConfiguration(coordinatorConfig), restIp(coordinatorConfig->getRestIp()->getValue()),
-      restPort(coordinatorConfig->getRestPort()->getValue()), rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()),
-      rpcPort(coordinatorConfig->getRpcPort()->getValue()), numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
-      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()),
-      numberOfBuffersInGlobalBufferManager(coordinatorConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
-      numberOfBuffersPerWorker(coordinatorConfig->getNumberOfBuffersPerWorker()->getValue()),
-      numberOfBuffersInSourceLocalBufferPool(coordinatorConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
-      bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()),
-      enableMonitoring(coordinatorConfig->getEnableMonitoring()->getValue()) {
+NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
+    : coordinatorConfiguration(std::move(coordinatorConfiguration)),
+      restIp(this->coordinatorConfiguration->getRestIp()->getValue()),
+      restPort(this->coordinatorConfiguration->getRestPort()->getValue()),
+      rpcIp(this->coordinatorConfiguration->getCoordinatorIp()->getValue()),
+      rpcPort(this->coordinatorConfiguration->getRpcPort()->getValue()),
+      numberOfSlots(this->coordinatorConfiguration->getNumberOfSlots()->getValue()),
+      numberOfWorkerThreads(this->coordinatorConfiguration->getNumWorkerThreads()->getValue()),
+      numberOfBuffersInGlobalBufferManager(this->coordinatorConfiguration->getNumberOfBuffersInGlobalBufferManager()->getValue()),
+      numberOfBuffersPerWorker(this->coordinatorConfiguration->getNumberOfBuffersPerWorker()->getValue()),
+      numberOfBuffersInSourceLocalBufferPool(
+          this->coordinatorConfiguration->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
+      bufferSizeInBytes(this->coordinatorConfiguration->getBufferSizeInBytes()->getValue()),
+      enableMonitoring(this->coordinatorConfiguration->getEnableMonitoring()->getValue()) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     topology = Topology::create();
@@ -97,19 +100,19 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorCo
     streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
-    queryRequestQueue = std::make_shared<RequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
+    queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
 
-    auto memoryLayoutPolicyString = coordinatorConfig->getMemoryLayoutPolicy()->getValue();
+    auto memoryLayoutPolicyString = this->coordinatorConfiguration->getMemoryLayoutPolicy()->getValue();
     if (!Optimizer::stringToMemoryLayoutPolicy.contains(memoryLayoutPolicyString)) {
         NES_FATAL_ERROR("Unrecognized MemoryLayoutPolicy Detected " << memoryLayoutPolicyString);
     }
     auto memoryLayoutPolicy = Optimizer::stringToMemoryLayoutPolicy.find(memoryLayoutPolicyString)->second;
 
-    std::string queryMergerRuleName = coordinatorConfig->getQueryMergerRule()->getValue();
+    std::string queryMergerRuleName = this->coordinatorConfiguration->getQueryMergerRule()->getValue();
     auto found = Optimizer::stringToMergerRuleEnum.find(queryMergerRuleName);
 
-    bool performOnlySourceOperatorExpansion = coordinatorConfig->getPerformOnlySourceOperatorExpansion()->getValue();
+    bool performOnlySourceOperatorExpansion = this->coordinatorConfiguration->getPerformOnlySourceOperatorExpansion()->getValue();
     if (found != Optimizer::stringToMergerRuleEnum.end()) {
         queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
                                                                                  topology,
@@ -129,7 +132,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorCo
                                                   queryRequestQueue,
                                                   streamCatalog,
                                                   queryParsingService,
-                                                  coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
+                                                  this->coordinatorConfiguration->getEnableSemanticQueryValidation()->getValue());
 
     udfCatalog = Catalogs::UdfCatalog::create();
     maintenanceService =

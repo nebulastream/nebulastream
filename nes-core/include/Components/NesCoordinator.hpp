@@ -101,9 +101,9 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     using inherited1 = ErrorListener;
 
   public:
-    explicit NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorConfig);
+    explicit NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig);
 
-    explicit NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorConfig, const WorkerConfigurationPtr&& workerConfiguration);
+    explicit NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig, WorkerConfigurationPtr workerConfiguration);
 
     /**
      * @brief dtor
