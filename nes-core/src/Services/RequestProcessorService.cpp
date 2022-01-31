@@ -62,7 +62,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context, queryReconfiguration);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     z3::config cfg;
@@ -119,7 +119,7 @@ void RequestProcessorService::start() {
                                 "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
                                 << sharedQueryId);
 
-                            bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                            bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, sharedQueryPlan);
                             if (!placementSuccessful) {
                                 throw QueryPlacementException(sharedQueryId,
                                                               "QueryProcessingService: Failed to perform query placement for "
@@ -151,7 +151,7 @@ void RequestProcessorService::start() {
 
                             if (!sharedQueryPlan->getChangeLog()->getAddedSinks().empty()) {
 
-                                bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                                bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, sharedQueryPlan);
                                 if (!placementSuccessful) {
                                     throw QueryPlacementException(sharedQueryId,
                                                                   "QueryProcessingService: Failed to perform query placement for "

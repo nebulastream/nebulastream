@@ -29,6 +29,8 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
 
+    bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpstreamNodes) override;
+
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,

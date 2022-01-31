@@ -15,8 +15,10 @@
 #ifndef NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
 #define NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
 
-#include <memory>
+#include <Plans/Query/QueryId.hpp>
 #include <Util/PlacementStrategy.hpp>
+#include <memory>
+#include <vector>
 
 namespace z3 {
 class context;
@@ -28,8 +30,14 @@ namespace NES {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
+class SharedQueryPlan;
+using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
+
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
+
+class OperatorNode;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
@@ -63,29 +71,41 @@ class QueryPlacementPhase {
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
                                          SourceCatalogPtr streamCatalog,
-                                         z3::ContextPtr z3Context);
+                                         z3::ContextPtr z3Context,
+                                         bool queryReconfiguration);
 
     /**
      * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
      * selected query placement strategy
      * @param placementStrategy : name of the placement strategy
-     * @param queryPlan : the query plan
+     * @param sharedQueryPlan : the shared query plan to place
      * @return true is placement successful.
      * @throws QueryPlacementException
      */
-    bool execute(PlacementStrategy::Value placementStrategy, QueryPlanPtr queryPlan);
+    bool execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan);
 
   private:
     explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
                                  TypeInferencePhasePtr typeInferencePhase,
                                  SourceCatalogPtr streamCatalog,
-                                 z3::ContextPtr z3Context);
+                                 z3::ContextPtr z3Context,
+                                 bool queryReconfiguration);
+
+    /**
+     *
+     *
+     * @param pinnedOperators
+     * @return
+     */
+    bool checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators);
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     SourceCatalogPtr streamCatalog;
     z3::ContextPtr z3Context;
+    bool queryReconfiguration;
 };
 }// namespace NES::Optimizer
-#endif  // NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTPHASE_HPP_

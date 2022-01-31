@@ -91,6 +91,15 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     }
 }
 
+bool BottomUpStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpstreamNodes) {
+
+    NES_DEBUG("Perform placement of the pinned and all their downstream operators." << pinnedUpstreamNodes.size());
+
+
+
+    return false;
+}
+
 bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) {
     const QueryId queryId = queryPlan->getQueryId();
     try {
@@ -157,8 +166,8 @@ void BottomUpStrategy::placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan) {
 
     QueryId queryId = queryPlan->getQueryId();
     NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
-    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
-    for (auto& sourceOperator : sourceOperators) {
+    auto leafOperators = queryPlan->getLeafOperators();
+    for (auto& sourceOperator : leafOperators) {
         NES_DEBUG("BottomUpStrategy: Get the topology node for source operator " << sourceOperator->toString() << " placement.");
         auto nodeId = std::any_cast<uint64_t>(sourceOperator->getProperty(PINNED_NODE_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
@@ -253,6 +262,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
 
         NES_TRACE("BottomUpStrategy: Get the candidate query plan where operator is to be appended.");
         QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, operatorNode, candidateExecutionNode);
+        operatorNode->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
         auto operatorCopy = operatorNode->copy();
         if (candidateQueryPlan->getRootOperators().empty()) {
             candidateQueryPlan->appendOperatorAsNewRoot(operatorCopy);

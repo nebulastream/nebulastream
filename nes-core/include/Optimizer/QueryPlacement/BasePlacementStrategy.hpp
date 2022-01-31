@@ -73,7 +73,8 @@ using BasePlacementStrategyPtr = std::unique_ptr<BasePlacementStrategy>;
 
 using PlacementMatrix = std::vector<std::vector<bool>>;
 
-const std::string PINNED_NODE_ID = "PinnedNodeId";
+const std::string PINNED_NODE_ID = "PINNED_NODE_ID";
+const std::string PLACED = "PLACED";
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
@@ -81,10 +82,10 @@ const std::string PINNED_NODE_ID = "PinnedNodeId";
 class BasePlacementStrategy {
 
   private:
-    static constexpr auto NSINK_RETRIES = 100;
-    static constexpr auto NSINK_RETRY_WAIT = std::chrono::milliseconds(5);
-    static constexpr auto NSOURCE_RETRIES = 100;
-    static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
+    static constexpr auto SINK_RETRIES = 100;
+    static constexpr auto SINK_RETRY_WAIT = std::chrono::milliseconds(5);
+    static constexpr auto SOURCE_RETRIES = 100;
+    static constexpr auto SOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
 
   public:
     explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -95,11 +96,19 @@ class BasePlacementStrategy {
     virtual ~BasePlacementStrategy() = default;
 
     /**
-     * @brief Returns an execution graph based on the input query and nes topology.
-     * @param queryPlan: the query plan
-     * @return true if successful
+     * Update Global Execution plan by placing the input query plan
+     * @param queryPlan: the query plan to place
+     * @return true if successful else false
+     * @throws QueryPlacementException
      */
     virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) = 0;
+
+    /**
+     *
+     * @param pinnedUpstreamNodes
+     * @return
+     */
+    virtual bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpstreamNodes) = 0;
 
     /**
      * @brief Modifies the execution graph of the query based on the newly added operators

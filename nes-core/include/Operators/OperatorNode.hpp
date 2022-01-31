@@ -155,7 +155,7 @@ class OperatorNode : public Node {
      * @param key key of the property to check
      * @return true if property exists
      */
-    bool checkIfPropertyExist(const std::string& key);
+    bool hasProperty(const std::string& key);
 
   protected:
     /**

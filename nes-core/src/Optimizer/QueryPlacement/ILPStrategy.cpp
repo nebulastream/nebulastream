@@ -34,10 +34,10 @@
 namespace NES::Optimizer {
 
 std::unique_ptr<BasePlacementStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                 TopologyPtr topology,
-                                                 TypeInferencePhasePtr typeInferencePhase,
-                                                 SourceCatalogPtr streamCatalog,
-                                                 z3::ContextPtr z3Context) {
+                                                           TopologyPtr topology,
+                                                           TypeInferencePhasePtr typeInferencePhase,
+                                                           SourceCatalogPtr streamCatalog,
+                                                           z3::ContextPtr z3Context) {
     return std::make_unique<ILPStrategy>(
         ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context));
 }
@@ -336,9 +336,8 @@ void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizatio
 
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
 
-bool ILPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) {
-    NES_NOT_IMPLEMENTED();
-    return false;
-}
+bool ILPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
+
+bool ILPStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>&) { NES_NOT_IMPLEMENTED(); }
 
 }// namespace NES::Optimizer

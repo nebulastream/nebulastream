@@ -59,4 +59,8 @@ void ManualPlacementStrategy::setBinaryMapping(PlacementMatrix userDefinedBinary
     this->binaryMapping = std::move(userDefinedBinaryMapping);
 }
 
+bool ManualPlacementStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>&) {
+    NES_NOT_IMPLEMENTED();
+}
+
 }// namespace NES::Optimizer
