@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 #define NES_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/LineageType.hpp>
 #include <Util/PlacementStrategy.hpp>
