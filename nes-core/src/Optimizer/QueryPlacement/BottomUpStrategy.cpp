@@ -91,12 +91,11 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     }
 }
 
-bool BottomUpStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpstreamNodes) {
+bool BottomUpStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+                                                 const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) {
 
-    NES_DEBUG("Perform placement of the pinned and all their downstream operators." << pinnedUpstreamNodes.size());
-
-
-
+    NES_DEBUG("Perform placement of the pinned and all their downstream operators." << pinnedUpStreamNodes.size());
+    performPathSelection(pinnedUpStreamNodes, pinnedDownStreamNodes);
 
     return false;
 }
@@ -163,24 +162,24 @@ bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& qu
     }
 }
 
-void BottomUpStrategy::placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan) {
+void BottomUpStrategy::placeQueryPlanOnTopology(QueryId queryId,
+                                                const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+                                                const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) {
 
-    QueryId queryId = queryPlan->getQueryId();
     NES_DEBUG("BottomUpStrategy: Get the all source operators for performing the placement.");
-    auto leafOperators = queryPlan->getLeafOperators();
-    for (auto& sourceOperator : leafOperators) {
-        NES_DEBUG("BottomUpStrategy: Get the topology node for source operator " << sourceOperator->toString() << " placement.");
-        auto nodeId = std::any_cast<uint64_t>(sourceOperator->getProperty(PINNED_NODE_ID));
+    for (auto& pinnedUpStreamNode : pinnedUpStreamNodes) {
+        NES_DEBUG("BottomUpStrategy: Get the topology node for source operator " << pinnedUpStreamNode->toString()
+                                                                                 << " placement.");
+        if (!pinnedUpStreamNode->hasProperty(PLACED) && std::any_cast<bool>(pinnedUpStreamNode->getProperty(PLACED))) {
+        }
+        auto nodeId = std::any_cast<uint64_t>(pinnedUpStreamNode->getProperty(PINNED_NODE_ID));
         TopologyNodePtr candidateTopologyNode = getTopologyNode(nodeId);
         if (candidateTopologyNode->getAvailableResources() == 0
-            && !operatorToExecutionNodeMap.contains(sourceOperator->getId())) {
+            && !operatorToExecutionNodeMap.contains(pinnedUpStreamNode->getId())) {
             NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
-            throw Exception(
-
-                "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator"
-                + std::to_string(queryId));
+            throw Exception("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
         }
-        placeOperatorOnTopologyNode(queryId, sourceOperator, candidateTopologyNode);
+        placeOperatorOnTopologyNode(queryId, pinnedUpStreamNode, candidateTopologyNode);
     }
     NES_DEBUG("BottomUpStrategy: Finished placing query operators into the global execution plan");
 }
@@ -299,9 +298,8 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
 
         NES_TRACE("BottomUpStrategy: Add the query plan to the candidate execution node.");
         if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
-            NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
-            throw Exception("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query "
-                            + std::to_string(queryId));
+            NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query.");
+            throw Exception("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query.");
         }
         NES_TRACE("BottomUpStrategy: Update the global execution plan with candidate execution node");
         globalExecutionPlan->addExecutionNode(candidateExecutionNode);

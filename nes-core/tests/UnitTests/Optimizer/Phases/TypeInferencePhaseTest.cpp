@@ -13,9 +13,9 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
@@ -200,9 +200,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
  */
 TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
 
-    auto inputSchema = Schema::create();
-    inputSchema->addField("f1", BasicType::INT32);
-    inputSchema->addField("f2", BasicType::INT8);
+    auto inputSchema = Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8);
 
     auto query = Query::from("default_logical")
                      .project(Attribute("f3").as("f5"))
@@ -214,8 +212,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("x","x1");
-    LogicalSourcePtr logicalSource = LogicalSource::create("x",inputSchema);
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
+    LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     streamCatalog->addPhysicalSource("default_logical", sce);
@@ -242,8 +240,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
     SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
-    PhysicalSourcePtr physicalSource = PhysicalSource::create("x","x1");
-    LogicalSourcePtr logicalSource = LogicalSource::create("x",inputSchema);
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("x", "x1");
+    LogicalSourcePtr logicalSource = LogicalSource::create("x", inputSchema);
 
     SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, physicalNode);
     streamCatalog->addPhysicalSource("default_logical", sce);
