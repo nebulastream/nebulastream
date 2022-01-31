@@ -25,6 +25,8 @@ std::string collectAndPrintStacktrace() {
     backward::StackTrace stackTrace;
     backward::Printer printer;
     stackTrace.load_here(CALLSTACK_MAX_SIZE);
+    printer.object = true;
+    printer.color_mode = backward::ColorMode::always;
     std::stringbuf buffer;
     std::ostream os(&buffer);
     printer.print(stackTrace, os);

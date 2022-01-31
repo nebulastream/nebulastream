@@ -17,6 +17,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Configurations/Coordinator/NewCoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -40,7 +41,21 @@ class ConfigTest : public testing::Test {
 };
 
 /**
- * @brief This test starts two workers and a coordinator and submit the same query but will output the results in different files
+ * @brief This reads an coordinator yaml and checks the configuration
+ */
+TEST_F(ConfigTest, testConfigurationWithYaml) {
+
+    auto coordinatorConfigPtr = Configurations::NEWCoordinatorConfiguration();
+    coordinatorConfigPtr.overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "testNewCoordinatorConfig.yaml");
+
+    EXPECT_EQ(coordinatorConfigPtr.restPort, coordinatorConfigPtr.restPort.getDefaultValue());
+    coordinatorConfigPtr.restIp = "19";
+    auto x = coordinatorConfigPtr.logLevel;
+    x = LogLevel::LOG_NONE;
+}
+
+/**
+ * @brief This reads an coordinator yaml and checks the configuration
  */
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
