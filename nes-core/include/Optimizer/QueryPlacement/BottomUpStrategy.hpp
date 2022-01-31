@@ -37,14 +37,15 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
-    bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpstreamNodes) override;
+    bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
 
     bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
 
     static std::unique_ptr<BasePlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                    TopologyPtr topology,
-                                                    TypeInferencePhasePtr typeInferencePhase,
-                                                    SourceCatalogPtr streamCatalog);
+                                                         TopologyPtr topology,
+                                                         TypeInferencePhasePtr typeInferencePhase,
+                                                         SourceCatalogPtr streamCatalog);
 
   private:
     explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -54,10 +55,15 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
-     * @param queryPlan: query plan to place
+     *
+     * @param queryId
+     * @param pinnedUpStreamNodes
+     * @param pinnedDownStreamNodes
      * @throws exception if the operator can't be placed.
      */
-    void placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan);
+    void placeQueryPlanOnTopology(QueryId queryId,
+                                  const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+                                  const std::vector<OperatorNodePtr>& pinnedDownStreamNodes);
 
     /**
      * @brief Try to place input operator on the input topology node
@@ -86,4 +92,4 @@ class BottomUpStrategy : public BasePlacementStrategy {
 };
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BOTTOMUPSTRATEGY_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BOTTOMUPSTRATEGY_HPP_

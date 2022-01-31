@@ -106,13 +106,12 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
     }
 }
 
-void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> upstreamPinnedOperators,
-                                                 std::vector<OperatorNodePtr> downStreamPinnedOperators) {
+void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators, std::vector<OperatorNodePtr> downStreamPinnedOperators) {
 
     //1. Find the topology nodes that will host upstream operators
 
     std::set<TopologyNodePtr> topologyNodesWithUpStreamPinnedOperators;
-    for (const auto& pinnedOperator : upstreamPinnedOperators) {
+    for (const auto& pinnedOperator : upStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
         if (!value.has_value()) {
             throw Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "

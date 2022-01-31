@@ -105,10 +105,12 @@ class BasePlacementStrategy {
 
     /**
      *
-     * @param pinnedUpstreamNodes
+     * @param pinnedUpStreamNodes
+     * @param pinnedDownStreamNodes
      * @return
      */
-    virtual bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpstreamNodes) = 0;
+    virtual bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+                                           const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) = 0;
 
     /**
      * @brief Modifies the execution graph of the query based on the newly added operators
@@ -128,7 +130,7 @@ class BasePlacementStrategy {
      * @brief Map the logical source name to the physical source nodes in the topology used for placing the operators
      * @param sourceOperators: the source operators in the query
      */
-    void performPathSelection(std::vector<OperatorNodePtr> upstreamPinnedOperators,
+    void performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators,
                               std::vector<OperatorNodePtr> downStreamPinnedOperators);
 
     /**
