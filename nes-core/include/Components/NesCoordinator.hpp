@@ -93,7 +93,7 @@ namespace Experimental {
 class MaintenanceService;
 using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 
-} // namespace NES::Experimental
+}// namespace Experimental
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
@@ -101,9 +101,9 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     using inherited1 = ErrorListener;
 
   public:
-    explicit NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig);
+    explicit NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorConfig);
 
-    explicit NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig, WorkerConfigurationPtr workerConfigPtr);
+    explicit NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorConfig, const WorkerConfigurationPtr&& workerConfiguration);
 
     /**
      * @brief dtor
@@ -206,6 +206,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     void buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom);
 
+    CoordinatorConfigurationPtr coordinatorConfiguration;
     std::string restIp;
     uint16_t restPort;
     std::string rpcIp;
@@ -243,4 +244,4 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
+#endif// NES_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_

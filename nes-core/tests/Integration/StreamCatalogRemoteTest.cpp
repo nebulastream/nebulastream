@@ -101,7 +101,7 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     //register logical stream qnv
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
-    crd->getStreamCatalogService()->registerLogicalStream("testStream", window);
+    crd->getStreamCatalogService()->registerLogicalSource("testStream", window);
     NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
@@ -146,7 +146,7 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     //register logical stream qnv
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
-    crd->getStreamCatalogService()->registerLogicalStream("testStream", window);
+    crd->getStreamCatalogService()->registerLogicalSource("testStream", window);
     NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
@@ -193,7 +193,7 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     //register logical stream qnv
     std::string window = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField("
                          "\"value\", BasicType::UINT64);";
-    crd->getStreamCatalogService()->registerLogicalStream("testStream", window);
+    crd->getStreamCatalogService()->registerLogicalSource("testStream", window);
     NES_DEBUG("StreamCatalogRemoteTest: Coordinator started successfully");
 
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");

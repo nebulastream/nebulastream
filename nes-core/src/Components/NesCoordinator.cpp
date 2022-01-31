@@ -15,6 +15,7 @@
 */
 
 #include <Catalogs/Query/QueryCatalog.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -26,8 +27,8 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/RestServer.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Services/RequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/RequestProcessorService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger.hpp>
@@ -44,11 +45,11 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
+#include <Services/MaintenanceService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
-#include <Services/MaintenanceService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
@@ -62,15 +63,16 @@ namespace NES {
 
 using namespace Configurations;
 
-NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig, WorkerConfigurationPtr workerConfigInput)
-    : NesCoordinator(coordinatorConfig) {
-    workerConfig = workerConfigInput;
+NesCoordinator::NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorConfig,
+                               const WorkerConfigurationPtr&& workerConfiguration)
+    : NesCoordinator(std::move(coordinatorConfig)) {
+    workerConfig = workerConfiguration;
 }
 
-NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
-    : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
-      rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
-      numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
+NesCoordinator::NesCoordinator(const CoordinatorConfigurationPtr&& coordinatorConfig)
+    : coordinatorConfiguration(coordinatorConfig), restIp(coordinatorConfig->getRestIp()->getValue()),
+      restPort(coordinatorConfig->getRestPort()->getValue()), rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()),
+      rpcPort(coordinatorConfig->getRpcPort()->getValue()), numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
       numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()),
       numberOfBuffersInGlobalBufferManager(coordinatorConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
       numberOfBuffersPerWorker(coordinatorConfig->getNumberOfBuffersPerWorker()->getValue()),
@@ -110,15 +112,15 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
     bool performOnlySourceOperatorExpansion = coordinatorConfig->getPerformOnlySourceOperatorExpansion()->getValue();
     if (found != Optimizer::stringToMergerRuleEnum.end()) {
         queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
-                                                                                    topology,
-                                                                                    queryCatalog,
-                                                                                    globalQueryPlan,
-                                                                                    streamCatalog,
-                                                                                    workerRpcClient,
-                                                                                    queryRequestQueue,
-                                                                                    found->second,
-                                                                                    memoryLayoutPolicy,
-                                                                                    performOnlySourceOperatorExpansion);
+                                                                                 topology,
+                                                                                 queryCatalog,
+                                                                                 globalQueryPlan,
+                                                                                 streamCatalog,
+                                                                                 workerRpcClient,
+                                                                                 queryRequestQueue,
+                                                                                 found->second,
+                                                                                 memoryLayoutPolicy,
+                                                                                 performOnlySourceOperatorExpansion);
     } else {
         NES_FATAL_ERROR("Unrecognized Query Merger Rule Detected " << queryMergerRuleName);
     }
@@ -130,7 +132,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 
     udfCatalog = Catalogs::UdfCatalog::create();
-    maintenanceService = std::make_shared<NES::Experimental::MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
+    maintenanceService =
+        std::make_shared<NES::Experimental::MaintenanceService>(topology, queryCatalog, queryRequestQueue, globalExecutionPlan);
 }
 
 NesCoordinator::~NesCoordinator() {
@@ -159,6 +162,8 @@ NesCoordinator::~NesCoordinator() {
     restThread.reset();
     restServer.reset();
     rpcThread.reset();
+    coordinatorConfiguration.reset();
+    workerConfig.reset();
 
     NES_ASSERT(topology.use_count() == 0, "NesCoordinator topology leaked");
     NES_ASSERT(streamCatalog.use_count() == 0, "NesCoordinator sourceCatalog leaked");
@@ -213,6 +218,12 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     promRPC->get_future().get();
 
     NES_DEBUG("NesCoordinator:buildAndStartGRPCServer: ready");
+
+    NES_DEBUG("NesCoordinator: Register Logical source");
+    for (auto& logicalSource : coordinatorConfiguration->getLogicalSources()) {
+        streamCatalogService->registerLogicalSource(logicalSource->getLogicalSourceName(), logicalSource->getSchema());
+    }
+    NES_DEBUG("NesCoordinator: Finished Registering Logical source");
 
     //start the coordinator worker that is the sink for all queries
     NES_DEBUG("NesCoordinator::startCoordinator: start nes worker");

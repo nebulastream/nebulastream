@@ -303,7 +303,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     //register logical stream
     std::string testSchema1 =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window", testSchema1);
+    crd->getStreamCatalogService()->registerLogicalSource("window", testSchema1);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -384,10 +384,10 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     //register logical stream
     std::string testSchema1 =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window1", testSchema1);
+    crd->getStreamCatalogService()->registerLogicalSource("window1", testSchema1);
     std::string testSchema2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window2", testSchema2);
+    crd->getStreamCatalogService()->registerLogicalSource("window2", testSchema2);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");

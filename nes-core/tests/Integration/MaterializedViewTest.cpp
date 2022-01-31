@@ -59,7 +59,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     // register logical stream
     std::string stream =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
+    crd->getStreamCatalogService()->registerLogicalSource("stream", stream);
 
     NES_INFO("MaterializedViewTupleViewSinkTest: Coordinator started successfully");
 
@@ -117,7 +117,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     //register logical stream
     std::string stream =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
+    crd->getStreamCatalogService()->registerLogicalSource("stream", stream);
     NES_INFO("MaterializedViewTupleBufferSourceTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -172,8 +172,8 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     EXPECT_NE(port, 0UL);
     std::string stream =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
-    crd->getStreamCatalogService()->registerLogicalStream("stream2", stream);
+    crd->getStreamCatalogService()->registerLogicalSource("stream", stream);
+    crd->getStreamCatalogService()->registerLogicalSource("stream2", stream);
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Coordinator started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();

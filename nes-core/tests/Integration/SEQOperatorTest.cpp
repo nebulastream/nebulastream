@@ -78,11 +78,11 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("Win1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("Win1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("Win2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("Win2", window2);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
@@ -172,11 +172,11 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV1", window);
 
     std::string window2 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", window2);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
@@ -292,11 +292,11 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV1", window);
 
     std::string window2 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", window2);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
@@ -430,11 +430,11 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV1", window);
 
     std::string window2 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", window2);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
@@ -539,15 +539,15 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
 
     std::string window1 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV", window1);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV", window1);
 
     std::string window2 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV1", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV1", window2);
 
     std::string window3 =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", window3);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", window3);
 
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 

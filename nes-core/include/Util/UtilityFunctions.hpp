@@ -51,9 +51,9 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 namespace Util {
 namespace detail {
 /**
-    * @brief set of helper functions for splitting for different types
-    * @return splitting function for a given type
-    */
+* @brief set of helper functions for splitting for different types
+* @return splitting function for a given type
+*/
 template<typename T>
 struct SplitFunctionHelper {};
 
@@ -92,100 +92,51 @@ struct SplitFunctionHelper<double> {
     };
 };
 
-template<class CharContainer>
-size_t fileGetContents(const char *filename, CharContainer *container)
-{
-    ::FILE *filestream= ::fopen(filename, "rb");
-    ::fseek(filestream, 0, SEEK_END);
-    long size = ::ftell(filestream);
-    container->resize(static_cast<typename CharContainer::size_type>(size));
-    if(size)
-    {
-        ::rewind(filestream);
-        size_t ret = ::fread(&(*container)[0], 1, container->size(), filestream);
-    }
-    ::fclose(filestream);
-    return container->size();
-}
-
-/** load a file from disk into an existing CharContainer */
-template<class CharContainer>
-CharContainer fileGetContents(const char *filename)
-{
-    CharContainer container;
-    fileGetContents(filename, &container);
-    return container;
-}
-
 }// namespace detail
 /**
-     * @brief escapes all non text characters in a input string, such that the string could be processed as json.
-     * @param s input string.
-     * @return result sing.
-     */
+ * @brief escapes all non text characters in a input string, such that the string could be processed as json.
+ * @param s input string.
+ * @return result sing.
+ */
 std::string escapeJson(const std::string& str);
 
 /**
-     * @brief removes leading and trailing whitespaces
-     */
+ * @brief removes leading and trailing whitespaces
+ */
 std::string trim(std::string s);
 
 /**
-     * @brief Checks if a string ends with a given string.
-     * @param fullString
-     * @param ending
-     * @return true if it ends with the given string, else false
-     */
+ * @brief Checks if a string ends with a given string.
+ * @param fullString
+ * @param ending
+ * @return true if it ends with the given string, else false
+ */
 bool endsWith(const std::string& fullString, const std::string& ending);
 
 /**
-     * @brief Checks if a string starts with a given string.
-     * @param fullString
-     * @param start
-     * @return true if it ends with the given string, else false
-     */
+ * @brief Checks if a string starts with a given string.
+ * @param fullString
+ * @param start
+ * @return true if it ends with the given string, else false
+ */
 uint64_t numberOfUniqueValues(std::vector<uint64_t>& values);
 
-    /**
-     * @brief Get number of unique elements
-     * @param fullString
-     * @param start
-     * @return true if it ends with the given string, else false
-     */
+/**
+ * @brief Get number of unique elements
+ * @param fullString
+ * @param start
+ * @return true if it ends with the given string, else false
+ */
 bool startsWith(const std::string& fullString, const std::string& ending);
 
-
 /**
-   * @brief this function creates an ID string
-   * @return the ID string
-   * https://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library
-   * example id: 665b3caf-f097-568e-2b2f-220b6c0a9bcd
-   */
-std::string generateIdString();
-
-/**
-   * @brief this function creates a hased ID as int
-   * @return the ID as site_t
-   */
-std::uint64_t generateIdInt();
-
-/**
-   * @brief get the first substring between a unique first delimiter and a non-unique second delimiter
-   * @param input
-   * @param delimiter1
-   * @param delimiter2
-   * @return the substring
-   */
-std::string getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& str1, const std::string& str2);
-
-/**
-    * @brief splits a string given a delimiter into multiple substrings stored in a T vector
-    * the delimiter is allowed to be a string rather than a char only.
-    * @param data - the string that is to be split
-    * @param delimiter - the string that is to be split upon e.g. / or -
-    * @param fromStringtoT - the function that converts a string to an arbitrary type T
-    * @return
-    */
+* @brief splits a string given a delimiter into multiple substrings stored in a T vector
+* the delimiter is allowed to be a string rather than a char only.
+* @param data - the string that is to be split
+* @param delimiter - the string that is to be split upon e.g. / or -
+* @param fromStringtoT - the function that converts a string to an arbitrary type T
+* @return
+*/
 template<typename T>
 std::vector<T> splitWithStringDelimiter(const std::string& inputString,
                                         const std::string& delim,
@@ -205,79 +156,72 @@ std::vector<T> splitWithStringDelimiter(const std::string& inputString,
 }
 
 /**
-   * @brief Outputs a tuple buffer accordingly to a specific schema
-   * @param buffer the tuple buffer
-   * @param schema  the schema
-   * @return
-   */
-
+* @brief Outputs a tuple buffer accordingly to a specific schema
+* @param buffer the tuple buffer
+* @param schema  the schema
+* @return
+*/
 std::string prettyPrintTupleBuffer(Runtime::TupleBuffer& buffer, const SchemaPtr& schema);
 
 /**
-   * @brief Outputs a tuple buffer in text format
-   * @param buffer the tuple buffer
-   * @return string of tuple buffer
-   */
+* @brief Outputs a tuple buffer in text format
+* @param buffer the tuple buffer
+* @return string of tuple buffer
+*/
 std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
 
 /**
-    * @brief this method creates a string from the content of a tuple buffer
-    * @return string of the buffer content
-    */
+* @brief this method creates a string from the content of a tuple buffer
+* @return string of the buffer content
+*/
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /**
-    * @brief this method creates a string from the content of a tuple buffer
-    * @return string of the buffer content
-    */
-std::string castStringToBasicTypeAndWriteToBuffer(BasicPhysicalType::NativeType type, Runtime::TupleBuffer& tbuffer);
-
-/**
-     * @brief function to replace all string occurrences
-     * @param data input string will be replaced in-place
-     * @param toSearch search string
-     * @param replaceStr replace string
-     */
+ * @brief function to replace all string occurrences
+ * @param data input string will be replaced in-place
+ * @param toSearch search string
+ * @param replaceStr replace string
+ */
 void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
 
 /**
-     * @brief method to get the schema as a csv string
-     * @param schema
-     * @return schema as csv string
-     */
+ * @brief method to get the schema as a csv string
+ * @param schema
+ * @return schema as csv string
+ */
 std::string toCSVString(const SchemaPtr& schema);
 
 /**
-     * @brief Returns the next free operator id
-     * @return operator id
-     */
+ * @brief Returns the next free operator id
+ * @return operator id
+ */
 OperatorId getNextOperatorId();
 
 /**
-   * @brief Returns the next free pipeline id
-   * @return node id
-   */
+* @brief Returns the next free pipeline id
+* @return node id
+*/
 uint64_t getNextPipelineId();
 
 /**
-     *
-     * @brief This function replaces the first occurrence of search term in a string with the replace term.
-     * @param origin - The original string that is to be manipulated
-     * @param search - The substring/term which we want to have replaced
-     * @param replace - The string that is replacing the search term.
-     * @return
-     */
+ *
+ * @brief This function replaces the first occurrence of search term in a string with the replace term.
+ * @param origin - The original string that is to be manipulated
+ * @param search - The substring/term which we want to have replaced
+ * @param replace - The string that is replacing the search term.
+ * @return
+ */
 std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace);
 
 /**
-     *
-     * @param queryPlan queries to which the properties are assigned
-     * @param properties properties to assign
-     * @return true if the assignment success, and false otherwise
-     */
+ *
+ * @param queryPlan queries to which the properties are assigned
+ * @param properties properties to assign
+ * @return true if the assignment success, and false otherwise
+ */
 bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
 };// namespace Util
 }// namespace NES
 
-#endif  // NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_
+#endif// NES_INCLUDE_UTIL_UTILITYFUNCTIONS_HPP_

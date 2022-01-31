@@ -31,11 +31,11 @@
 
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadNaming.hpp>
-//#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
 #include <numa.h>
 #include <numaif.h>
-//#endif
+#endif
 #endif
 #include <utility>
 namespace NES {

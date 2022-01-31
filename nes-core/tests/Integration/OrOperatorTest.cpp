@@ -77,8 +77,8 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
 
     auto streamCatalogService = crd->getStreamCatalogService();
-    streamCatalogService->registerLogicalStream("QnV1", qnv);
-    streamCatalogService->registerLogicalStream("QnV2", qnv);
+    streamCatalogService->registerLogicalSource("QnV1", qnv);
+    streamCatalogService->registerLogicalSource("QnV2", qnv);
 
     NES_INFO("OrOperatorTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
@@ -171,8 +171,8 @@ TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV1", qnv);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
     NES_INFO("OrOperatorTest: Coordinator started successfully");
 
     NES_INFO("OrOperatorTest: Start worker 1 with physical source");
@@ -269,9 +269,9 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV1", qnv);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", qnv);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV3", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV3", qnv);
     NES_INFO("OrOperatorTest: Coordinator started successfully");
 
     NES_INFO("OrOperatorTest: Start worker 1 with physical source");
@@ -386,8 +386,8 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV", qnv);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
     NES_INFO("SimplePatternTest: Coordinator started successfully");
 
     NES_INFO("OrOperatorTest: Start worker 1 with physical source");

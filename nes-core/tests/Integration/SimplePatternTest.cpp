@@ -81,7 +81,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     //TODO: update CHAR (sensor id is in result set )
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV", qnv);
     NES_DEBUG("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
@@ -154,7 +154,7 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
     //register logical stream qnv
     std::string qnv =
         R"(Schema::create()->addField("sensor_id", UINT64)->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("QnV", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV", qnv);
     NES_DEBUG("coordinator started successfully");
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");

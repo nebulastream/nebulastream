@@ -69,7 +69,7 @@ bool CoordinatorRPCClient::registerPhysicalSources(const std::vector<PhysicalSou
 }
 
 bool CoordinatorRPCClient::registerLogicalStream(const std::string& logicalSourceName, const std::string& filePath) {
-    NES_DEBUG("CoordinatorRPCClient: registerLogicalStream " << logicalSourceName << " with path" << filePath);
+    NES_DEBUG("CoordinatorRPCClient: registerLogicalSource " << logicalSourceName << " with path" << filePath);
 
     // Check if file can be found on system and read.
     std::filesystem::path path{filePath.c_str()};
@@ -94,10 +94,10 @@ bool CoordinatorRPCClient::registerLogicalStream(const std::string& logicalSourc
     Status status = coordinatorStub->RegisterLogicalSource(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("CoordinatorRPCClient::registerLogicalStream: status ok return success=" << reply.success());
+        NES_DEBUG("CoordinatorRPCClient::registerLogicalSource: status ok return success=" << reply.success());
         return reply.success();
     }
-    NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream error=" << status.error_code() << ": " << status.error_message());
+    NES_DEBUG(" CoordinatorRPCClient::registerLogicalSource error=" << status.error_code() << ": " << status.error_message());
     return reply.success();
 }
 
