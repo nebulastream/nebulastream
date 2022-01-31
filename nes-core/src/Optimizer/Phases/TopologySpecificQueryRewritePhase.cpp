@@ -22,15 +22,22 @@
 namespace NES::Optimizer {
 
 TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(SourceCatalogPtr streamCatalog,
-                                                                               bool performOnlySourceOperatorExpansion) {
+                                                                               bool performOnlySourceOperatorExpansion,
+                                                                               uint64_t windowDistributionChildrenThreshold,
+                                                                               uint64_t windowDistributionCombinerThreshold) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(
-        TopologySpecificQueryRewritePhase(std::move(streamCatalog), performOnlySourceOperatorExpansion, windowDistributionChildrenThreshold, windowDistributionCombinerThreshold));
+        TopologySpecificQueryRewritePhase(std::move(streamCatalog),
+                                          performOnlySourceOperatorExpansion,
+                                          windowDistributionChildrenThreshold,
+                                          windowDistributionCombinerThreshold));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(SourceCatalogPtr streamCatalog,
-                                                                     bool performOnlySourceOperatorExpansion) {
+                                                                     bool performOnlySourceOperatorExpansion,
+                                                                     uint64_t windowDistributionChildrenThreshold,
+                                                                     uint64_t windowDistributionCombinerThreshold) {
     logicalSourceExpansionRule = LogicalSourceExpansionRule::create(std::move(streamCatalog), performOnlySourceOperatorExpansion);
-    distributeWindowRule = DistributeWindowRule::create();
+    distributeWindowRule = DistributeWindowRule::create(windowDistributionChildrenThreshold, windowDistributionCombinerThreshold);
     distributeJoinRule = DistributeJoinRule::create();
 }
 
