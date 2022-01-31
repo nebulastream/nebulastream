@@ -15,32 +15,69 @@
 #ifndef NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 #define NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 
+#include <API/Query.hpp>
 #include <Client/QueryConfig.hpp>
 #include <chrono>
-namespace NES{
+#include <cpprest/http_client.h>
+
+namespace NES {
 class Query;
 }
 namespace NES::Client {
+class RemoteClient;
+using RemoteClientPtr = std::shared_ptr<RemoteClient>;
 
 /**
- * @brief CPP client to deploy queries over the REST API
+ * @brief Remote client to deploy queries over the REST API
  */
 class RemoteClient {
   public:
     /* @brief constructor of the client
      * @param coordinator host e.g. 127.0.0.1
      * @param coordinator REST port e.g. 8081
+     * @param request timeout
      */
     RemoteClient(const std::string& coordinatorHost = "127.0.0.1",
-              uint16_t coordinatorPort = 8081,
-              std::chrono::seconds requestTimeout = std::chrono::seconds(20));
+                 uint16_t coordinatorPort = 8081,
+                 std::chrono::seconds requestTimeout = std::chrono::seconds(20));
+
+    /// @brief test if a connection to the coordinator can be established
+    bool testConnection();
 
     /*
      * @brief Deploy a query to the coordinator
      * @param query plan to deploy
-     * @return query id of deployed query.
+     * @return query config
      */
     int64_t submitQuery(const Query& query, QueryConfig config = QueryConfig());
+
+    /// @brief stop the query with the given queryId
+    /// @return stop was successfully
+    bool stopQuery(uint64_t queryId);
+
+    /// @brief get a queries query plan
+    std::string getQueryPlan(uint64_t queryId);
+
+    /// @brief get a queries execution plan
+    std::string getQueryExecutionPlan(uint64_t queryId);
+
+    /// @brief get current topology
+    std::string getTopology();
+
+    /// @brief get all registered queries
+    std::string getQueries();
+
+    /// @brief get all registered queries in the given state
+    std::string getQueries(const QueryStatus& status);
+
+    /// @brief add a logical stream
+    bool addLogicalStream(const SchemaPtr, const std::string& streamName);
+
+    /// @brief get logical streams
+    std::string getLogicalStreams();
+
+    /// @brief get physical streams
+    std::string getPhysicalStreams();
 
   private:
     const std::string coordinatorHost;
@@ -48,6 +85,7 @@ class RemoteClient {
     const std::chrono::seconds requestTimeout;
 
     std::string getHostName();
+    web::json::value send(const web::http::method& method, const std::string& path, const std::string& message);
 };
 }// namespace NES
 
