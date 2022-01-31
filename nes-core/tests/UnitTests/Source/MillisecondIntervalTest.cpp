@@ -268,7 +268,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     EXPECT_NE(port, 0u);
     //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    crd->getStreamCatalogService()->registerLogicalStream("testStream", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("testStream", testSchema);
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 
     NES_INFO("MillisecondIntervalTest: Start worker 1");

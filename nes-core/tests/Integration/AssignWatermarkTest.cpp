@@ -69,7 +69,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     crdConf->setRestPort(restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    crd->getStreamCatalogService()->registerLogicalStream("window", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
@@ -155,9 +155,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     crdConf->setRestPort(restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    crd->getStreamCatalogService()->registerLogicalStream("window", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    crd->getStreamCatalogService()->registerLogicalStream("window", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window", window);
     EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
 
@@ -265,7 +265,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     crdConf->setRestPort(restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    crd->getStreamCatalogService()->registerLogicalStream("window", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
@@ -353,7 +353,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    crd->getStreamCatalogService()->registerLogicalStream("window", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window", window);
     EXPECT_NE(port, 0UL);
     NES_INFO("AssignWatermarkTest: Coordinator started successfully");
 

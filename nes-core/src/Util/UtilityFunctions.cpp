@@ -66,44 +66,6 @@ std::string Util::trim(std::string str) {
     return str;
 }
 
-std::string Util::generateIdString() {
-    static std::random_device dev;
-    static std::mt19937 rng(dev());
-
-    std::uniform_int_distribution<int> dist(0, 15);
-
-    const char* v = "0123456789abcdef";
-    const bool dash[] =
-        {false, false, false, false, true, false, true, false, true, false, true, false, false, false, false, false};
-
-    std::string res;
-    for (bool i : dash) {
-        if (i) {
-            res += "-";
-        }
-        res += v[dist(rng)];
-        res += v[dist(rng)];
-    }
-    NES_DEBUG("UtilityFunctions: generateIdString: " + res);
-    return res;
-}
-
-std::uint64_t Util::generateIdInt() {
-    std::string linkID_string = Util::generateIdString();
-    NES_DEBUG("UtilityFunctions: generateIdInt: create a new string_id=" << linkID_string);
-    std::hash<std::string> hash_fn;
-    return hash_fn(linkID_string);
-}
-
-std::string Util::getFirstStringBetweenTwoDelimiters(const std::string& input, const std::string& str1, const std::string& str2) {
-    unsigned firstDelimPos = input.find(str1);
-    unsigned endPosOfFirstDelim = firstDelimPos + str1.length();
-
-    unsigned lastDelimPos = input.find_first_of(str2, endPosOfFirstDelim);
-
-    return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
-}
-
 std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {

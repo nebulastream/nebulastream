@@ -193,7 +193,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
                             ->addField(createField("healthStatusDuration", UINT32))
                             ->addField(createField("recovered", BOOLEAN))
                             ->addField(createField("dead", BOOLEAN));)";
-    crd->getStreamCatalogService()->registerLogicalStream("stream", stream);
+    crd->getStreamCatalogService()->registerLogicalSource("stream", stream);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 1");

@@ -64,15 +64,15 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -203,15 +203,15 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -349,19 +349,19 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
 
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window4", window4);
+    crd->getStreamCatalogService()->registerLogicalSource("window4", window4);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -504,19 +504,19 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
 
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window4", window4);
+    crd->getStreamCatalogService()->registerLogicalSource("window4", window4);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -665,15 +665,15 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
@@ -809,15 +809,15 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -964,19 +964,19 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
 
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window4", window4);
+    crd->getStreamCatalogService()->registerLogicalSource("window4", window4);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
@@ -1140,19 +1140,19 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField(createField("win1", UINT64))->addField(createField("id1", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window1", window);
 
     std::string window2 =
         R"(Schema::create()->addField(createField("win2", UINT64))->addField(createField("id2", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window2", window2);
+    crd->getStreamCatalogService()->registerLogicalSource("window2", window2);
 
     std::string window3 =
         R"(Schema::create()->addField(createField("win3", UINT64))->addField(createField("id3", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window3", window3);
+    crd->getStreamCatalogService()->registerLogicalSource("window3", window3);
 
     std::string window4 =
         R"(Schema::create()->addField(createField("win4", UINT64))->addField(createField("id4", UINT64))->addField(createField("timestamp", UINT64));)";
-    crd->getStreamCatalogService()->registerLogicalStream("window4", window4);
+    crd->getStreamCatalogService()->registerLogicalSource("window4", window4);
     NES_DEBUG("MultipleJoinsTest: Coordinator started successfully");
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");

@@ -58,11 +58,19 @@ class StreamCatalogService {
 
     /**
      * @brief method to register a logical stream
-     * @param logicalStreamName
-     * @param schemaString
+     * @param logicalSourceName: name of the logical source
+     * @param schemaString: schema as string
      * @return bool indicating success
      */
-    bool registerLogicalStream(const std::string& logicalStreamName, const std::string& schemaString);
+    bool registerLogicalStream(const std::string& logicalSourceName, const std::string& schemaString);
+
+    /**
+     * @brief method to register a logical stream
+     * @param logicalSourceName: logical source name
+     * @param schema: schema object
+     * @return bool indicating success
+     */
+    bool registerLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
 
     /**
      * @brief method to unregister a logical stream
@@ -78,4 +86,4 @@ class StreamCatalogService {
 };
 using StreamCatalogServicePtr = std::shared_ptr<StreamCatalogService>;
 }// namespace NES
-#endif  // NES_INCLUDE_SERVICES_STREAMCATALOGSERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_STREAMCATALOGSERVICE_HPP_

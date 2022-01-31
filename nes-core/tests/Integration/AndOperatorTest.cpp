@@ -81,8 +81,8 @@ TEST_F(AndOperatorTest, testPatternOneSimpleAnd) {
     coConf->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalStream("Win1", window);
-    crd->getStreamCatalogService()->registerLogicalStream("Win2", window);
+    crd->getStreamCatalogService()->registerLogicalSource("Win1", window);
+    crd->getStreamCatalogService()->registerLogicalSource("Win2", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AndOperatorTest: Coordinator started successfully");
@@ -168,8 +168,8 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     coConf->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV1", qnv);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AndOperatorTest: Coordinator started successfully");
@@ -273,8 +273,8 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     coConf->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV1", qnv);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AndOperatorTest: Coordinator started successfully");
@@ -369,8 +369,8 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     coConf->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV1", qnv);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV1", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("AndOperatorTest: Coordinator started successfully");
@@ -473,9 +473,9 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     coConf->resetCoordinatorOptions();
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV", qnv);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", qnv);
-    crd->getStreamCatalogService()->registerLogicalStream("QnV2", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
+    crd->getStreamCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("SimplePatternTest: Coordinator started successfully");

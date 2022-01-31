@@ -70,8 +70,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical stream
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalStream("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalStream("truck", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -240,8 +240,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical stream
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalStream("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalStream("truck", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -410,8 +410,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical stream
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalStream("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalStream("truck", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -579,8 +579,8 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
     //register logical stream
     std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
-    crd->getStreamCatalogService()->registerLogicalStream("car", testSchema);
-    crd->getStreamCatalogService()->registerLogicalStream("truck", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("car", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("truck", testSchema);
     NES_DEBUG("UnionDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("UnionDeploymentTest: Start worker 1");
@@ -657,8 +657,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     //register logical stream
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
-    crd->getStreamCatalogService()->registerLogicalStream("ruby", testSchema);
-    crd->getStreamCatalogService()->registerLogicalStream("diamond", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("ruby", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("diamond", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -813,8 +813,8 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     //register logical stream
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
-    crd->getStreamCatalogService()->registerLogicalStream("ruby", testSchema);
-    crd->getStreamCatalogService()->registerLogicalStream("diamond", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("ruby", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("diamond", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -938,8 +938,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     //register logical stream
     std::string testSchema =
         R"(Schema::create()->addField(createField("value", BasicType::UINT32))->addField(createField("id", BasicType::UINT32))->addField(createField("timestamp", BasicType::INT32));)";
-    crd->getStreamCatalogService()->registerLogicalStream("ruby", testSchema);
-    crd->getStreamCatalogService()->registerLogicalStream("diamond", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("ruby", testSchema);
+    crd->getStreamCatalogService()->registerLogicalSource("diamond", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");

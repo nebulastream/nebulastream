@@ -223,6 +223,7 @@ void CoordinatorConfiguration::resetCoordinatorOptions() {
     setEnableMonitoring(enableMonitoring->getDefaultValue());
     setMemoryLayoutPolicy(memoryLayoutPolicy->getDefaultValue());
     setPerformOnlySourceOperatorExpansion(performOnlySourceOperatorExpansion->getDefaultValue());
+    this->logicalSources.clear();
 }
 
 std::string CoordinatorConfiguration::toString() {
@@ -333,8 +334,19 @@ void CoordinatorConfiguration::setMemoryLayoutPolicy(std::string memoryLayoutPol
 StringConfigOption CoordinatorConfiguration::getMemoryLayoutPolicy() { return memoryLayoutPolicy; }
 
 BoolConfigOption CoordinatorConfiguration::getPerformOnlySourceOperatorExpansion() { return performOnlySourceOperatorExpansion; }
+
 void CoordinatorConfiguration::setPerformOnlySourceOperatorExpansion(bool performOnlySourceOperatorExpansion) {
     this->performOnlySourceOperatorExpansion->setValue(performOnlySourceOperatorExpansion);
+}
+
+std::vector<LogicalSourcePtr> CoordinatorConfiguration::getLogicalSources() { return logicalSources; }
+
+void CoordinatorConfiguration::setLogicalSources(std::vector<LogicalSourcePtr> logicalSources) {
+    this->logicalSources = logicalSources;
+}
+
+void CoordinatorConfiguration::addLogicalSources(LogicalSourcePtr logicalSource) {
+    this->logicalSources.emplace_back(logicalSource);
 }
 
 }// namespace Configurations

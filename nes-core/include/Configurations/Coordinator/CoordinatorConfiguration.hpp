@@ -25,6 +25,9 @@
 
 namespace NES {
 
+class LogicalSource;
+using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
+
 namespace Configurations {
 
 class CoordinatorConfiguration;
@@ -267,6 +270,27 @@ class CoordinatorConfiguration {
      */
     void setPerformOnlySourceOperatorExpansion(bool performOnlySourceOperatorExpansion);
 
+    /**
+     * @deprecated: This is only here for benchmarking purpose. Avoid using this function.
+     * Get all logical sources defined in the configuration.
+     * @return vector of logical sources
+     */
+    std::vector<LogicalSourcePtr> getLogicalSources();
+
+    /**
+     * @deprecated: This is only here for benchmarking purpose. Avoid using this function.
+     * Set logical sources to register in the coordinator
+     * @param logicalSources : collection of logical sources
+     */
+    void setLogicalSources(std::vector<LogicalSourcePtr> logicalSources);
+
+    /**
+     * @deprecated: This is only here for benchmarking purpose. Avoid using this function.
+     * Add logical source to the configuration
+     * @param logicalSource : logical source to register in the coordinator
+     */
+    void addLogicalSources(LogicalSourcePtr logicalSource);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -289,6 +313,9 @@ class CoordinatorConfiguration {
     BoolConfigOption enableMonitoring;
     StringConfigOption memoryLayoutPolicy;
     BoolConfigOption performOnlySourceOperatorExpansion;
+    //NOTE: This is added to support single node benchmarks. Please avoid using it while implementing
+    // new functionality.
+    std::vector<LogicalSourcePtr> logicalSources;
 
     // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;
@@ -297,4 +324,4 @@ class CoordinatorConfiguration {
 }// namespace Configurations
 }// namespace NES
 
-#endif  // NES_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
+#endif// NES_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_

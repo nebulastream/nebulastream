@@ -76,11 +76,17 @@ bool StreamCatalogService::unregisterPhysicalStream(TopologyNodePtr topologyNode
     return success;
 }
 
-bool StreamCatalogService::registerLogicalStream(const std::string& logicalStreamName, const std::string& schemaString) {
-    NES_DEBUG("StreamCatalogService::registerLogicalStream: register logical stream=" << logicalStreamName
+bool StreamCatalogService::registerLogicalStream(const std::string& logicalSourceName, const std::string& schemaString) {
+    NES_DEBUG("StreamCatalogService::registerLogicalSource: register logical stream=" << logicalSourceName
                                                                                       << " schema=" << schemaString);
     std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
-    return streamCatalog->addLogicalStream(logicalStreamName, schemaString);
+    return streamCatalog->addLogicalStream(logicalSourceName, schemaString);
+}
+
+bool StreamCatalogService::registerLogicalSource(const std::string& logicalSourceName, SchemaPtr schema) {
+    NES_DEBUG("StreamCatalogService::registerLogicalSource: register logical stream=" << logicalSourceName);
+    std::unique_lock<std::mutex> lock(addRemoveLogicalStream);
+    return streamCatalog->addLogicalStream(logicalSourceName, std::move(schema));
 }
 
 bool StreamCatalogService::unregisterLogicalStream(const std::string& logicalStreamName) {
