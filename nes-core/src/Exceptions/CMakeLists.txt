@@ -12,6 +12,7 @@
 # limitations under the License.
 
 add_source_nes(
+        ConfigurationException.cpp
         BufferAccessException.cpp
         ExecutionPlanRollbackException.cpp
         RequestTypeNotHandledException.cpp
