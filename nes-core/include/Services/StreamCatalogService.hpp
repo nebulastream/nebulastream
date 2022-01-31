@@ -23,8 +23,12 @@
 namespace NES {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
+
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
+
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 /**
  * @brief: This class is responsible for registering/unregistering physical and logical streams.
@@ -62,7 +66,7 @@ class StreamCatalogService {
      * @param schemaString: schema as string
      * @return bool indicating success
      */
-    bool registerLogicalStream(const std::string& logicalSourceName, const std::string& schemaString);
+    bool registerLogicalSource(const std::string& logicalSourceName, const std::string& schemaString);
 
     /**
      * @brief method to register a logical stream

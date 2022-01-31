@@ -72,11 +72,11 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterLogicalStream) {
 
     std::string logicalStreamName = "testStream";
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
-    bool successRegisterLogicalStream = streamCatalogService->registerLogicalStream(logicalStreamName, testSchema);
+    bool successRegisterLogicalStream = streamCatalogService->registerLogicalSource(logicalStreamName, testSchema);
     EXPECT_TRUE(successRegisterLogicalStream);
 
     //test register existing stream
-    bool successRegisterExistingLogicalStream = streamCatalogService->registerLogicalStream(logicalStreamName, testSchema);
+    bool successRegisterExistingLogicalStream = streamCatalogService->registerLogicalSource(logicalStreamName, testSchema);
     EXPECT_TRUE(!successRegisterExistingLogicalStream);
 
     //test unregister not existing node
@@ -109,7 +109,7 @@ TEST_F(StreamCatalogServiceTest, testRegisterUnregisterPhysicalStream) {
     //setup test
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
     bool successRegisterLogicalStream =
-        streamCatalogService->registerLogicalStream(physicalSource->getLogicalSourceName(), testSchema);
+        streamCatalogService->registerLogicalSource(physicalSource->getLogicalSourceName(), testSchema);
     EXPECT_TRUE(successRegisterLogicalStream);
 
     // common case
