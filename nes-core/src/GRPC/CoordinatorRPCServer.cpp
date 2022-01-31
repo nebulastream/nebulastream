@@ -109,7 +109,7 @@ Status CoordinatorRPCServer::RegisterLogicalSource(ServerContext*,
                                                    RegisterLogicalSourceReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource: request =" << request);
 
-    bool success = streamCatalogService->registerLogicalStream(request->logicalsourcename(), request->sourceschema());
+    bool success = streamCatalogService->registerLogicalSource(request->logicalsourcename(), request->sourceschema());
 
     if (success) {
         NES_DEBUG("CoordinatorRPCServer::RegisterLogicalSource success");
