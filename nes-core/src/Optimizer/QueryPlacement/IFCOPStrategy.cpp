@@ -28,9 +28,9 @@
 namespace NES::Optimizer {
 
 BasePlacementStrategyPtr IFCOPStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
-                                                     NES::TopologyPtr topology,
-                                                     NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                     NES::SourceCatalogPtr streamCatalog) {
+                                               NES::TopologyPtr topology,
+                                               NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
+                                               NES::SourceCatalogPtr streamCatalog) {
     return std::make_unique<IFCOPStrategy>(IFCOPStrategy(std::move(globalExecutionPlan),
                                                          std::move(topology),
                                                          std::move(typeInferencePhase),
@@ -127,7 +127,8 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
     // loop over all logical stream
     for (auto srcOp : queryPlan->getSourceOperators()) {
         LogicalOperatorNodePtr currentOperator = srcOp;
-        for (auto topologyNode : streamCatalog->getSourceNodesForLogicalStream(srcOp->getSourceDescriptor()->getLogicalSourceName())) {
+        for (auto topologyNode :
+             streamCatalog->getSourceNodesForLogicalStream(srcOp->getSourceDescriptor()->getLogicalSourceName())) {
             TopologyNodePtr currentTopologyNodePtr = topologyNode;
 
             topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].first;
@@ -241,7 +242,7 @@ double IFCOPStrategy::getLocalCost(const std::vector<bool>& nodePlacement, NES::
 
         double dmf = 1;// fallback if the DMF property does not exist in the current operator
         // check if the current operator has the data modification factor (DMF) property, otherwise fallback to 1
-        if (currentOperator->checkIfPropertyExist("DMF")) {
+        if (currentOperator->hasProperty("DMF")) {
             // obtain the dmf property
             dmf = std::any_cast<double>(currentOperator->getProperty("DMF"));
         }
@@ -318,9 +319,8 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
     }
 }
 
-bool IFCOPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) {
-    NES_NOT_IMPLEMENTED();
-    return false;
-}
+bool IFCOPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
+
+bool IFCOPStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>&) { NES_NOT_IMPLEMENTED(); }
 
 }// namespace NES::Optimizer

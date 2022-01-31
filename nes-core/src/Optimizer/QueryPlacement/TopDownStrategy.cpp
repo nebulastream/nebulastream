@@ -31,9 +31,9 @@
 namespace NES::Optimizer {
 
 BasePlacementStrategyPtr TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                         TopologyPtr topology,
-                                                         TypeInferencePhasePtr typeInferencePhase,
-                                                         SourceCatalogPtr streamCatalog) {
+                                                 TopologyPtr topology,
+                                                 TypeInferencePhasePtr typeInferencePhase,
+                                                 SourceCatalogPtr streamCatalog) {
     return std::make_unique<TopDownStrategy>(TopDownStrategy(std::move(globalExecutionPlan),
                                                              std::move(topology),
                                                              std::move(typeInferencePhase),
@@ -129,7 +129,7 @@ bool TopDownStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& que
         std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
         std::vector<TopologyNodePtr> mergedGraphSourceNodes;
 
-//        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
+        //        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
 
         for (const auto& sourceOperator : queryPlan->getSourceOperators()) {
             pinnedOperatorLocationMap[sourceOperator->getId()] =
@@ -244,6 +244,9 @@ void TopDownStrategy::placeOperator(QueryId queryId, const OperatorNodePtr& oper
             NES_ERROR("TopDownStrategy: No node available for further placement of operators");
             throw Exception("TopDownStrategy: No node available for further placement of operators");
         }
+
+        //Pin the operator to the candidate node
+        operatorNode->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
 
         NES_TRACE("TopDownStrategy: Get the candidate execution node for the candidate topology node.");
         ExecutionNodePtr candidateExecutionNode = getExecutionNode(candidateTopologyNode);
@@ -401,5 +404,7 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForChildOperators(
     }
     return childNodes;
 }
+
+bool TopDownStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>&) { NES_NOT_IMPLEMENTED(); }
 
 }// namespace NES::Optimizer

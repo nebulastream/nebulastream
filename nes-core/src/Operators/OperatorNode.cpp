@@ -165,7 +165,7 @@ void OperatorNode::addProperty(const std::string& key, const std::any value) { p
 
 std::any OperatorNode::getProperty(const std::string& key) { return properties[key]; }
 
-bool OperatorNode::checkIfPropertyExist(const std::string& key) { return properties.find(key) != properties.end(); }
+bool OperatorNode::hasProperty(const std::string& key) { return properties.find(key) != properties.end(); }
 
 void OperatorNode::removeProperty(const std::string& key) { properties.erase(key); }
 

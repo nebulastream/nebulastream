@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
+#include <Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
@@ -24,10 +27,11 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
                                          SourceCatalogPtr streamCatalog,
-                                         z3::ContextPtr z3Context)
+                                         z3::ContextPtr z3Context,
+                                         bool queryReconfiguration)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
-      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)),
-      z3Context(std::move(z3Context)) {
+      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)), z3Context(std::move(z3Context)),
+      queryReconfiguration(queryReconfiguration) {
     NES_DEBUG("QueryPlacementPhase()");
 }
 
@@ -35,15 +39,17 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
                                                    TopologyPtr topology,
                                                    TypeInferencePhasePtr typeInferencePhase,
                                                    SourceCatalogPtr streamCatalog,
-                                                   z3::ContextPtr z3Context) {
+                                                   z3::ContextPtr z3Context,
+                                                   bool queryReconfiguration) {
     return std::make_shared<QueryPlacementPhase>(QueryPlacementPhase(std::move(globalExecutionPlan),
                                                                      std::move(topology),
                                                                      std::move(typeInferencePhase),
                                                                      std::move(streamCatalog),
-                                                                     std::move(z3Context)));
+                                                                     std::move(z3Context),
+                                                                     queryReconfiguration));
 }
 
-bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, QueryPlanPtr queryPlan) {
+bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO("NESOptimizer: Placing input Query Plan on Global Execution Plan");
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
@@ -53,7 +59,37 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, Qu
                                                                       typeInferencePhase,
                                                                       streamCatalog,
                                                                       z3Context);
-    return placementStrategyPtr->updateGlobalExecutionPlan(std::move(queryPlan));
+
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlan = sharedQueryPlan->getQueryPlan();
+
+    std::vector<OperatorNodePtr> pinnedOperators;
+    //
+    if (!queryReconfiguration) {
+        pinnedOperators = queryPlan->getLeafOperators();
+    } else {
+        auto changeLogs = sharedQueryPlan->getChangeLog();
+        for (auto& addition : changeLogs->getAddition()) {
+            pinnedOperators.emplace_back(addition.first);
+        }
+        //TODO: We need to figure out how to deal with removals
+    }
+
+    if (checkPinnedOperators(pinnedOperators)) {
+        return placementStrategyPtr->updateGlobalExecutionPlan(pinnedOperators);
+    } else {
+        throw QueryPlacementException(queryId, "Found start leaf operator without pinning");
+    }
+}
+
+bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators) {
+
+    for (auto pinnedOperator : pinnedOperators) {
+        if (!pinnedOperator->hasProperty(PINNED_NODE_ID)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 }// namespace NES::Optimizer
