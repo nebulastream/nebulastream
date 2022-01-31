@@ -106,6 +106,64 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
     }
 }
 
+void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> upstreamPinnedOperators,
+                                                 std::vector<OperatorNodePtr> downStreamPinnedOperators) {
+
+    //1. Find the topology nodes that will host upstream operators
+
+    std::set<TopologyNodePtr> topologyNodesWithUpStreamPinnedOperators;
+    for (const auto& pinnedOperator : upstreamPinnedOperators) {
+        auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
+        if (!value.has_value()) {
+            throw Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
+                            + pinnedOperator->toString());
+        }
+        auto nodeId = std::any_cast<uint64_t>(value);
+        auto nodeWithPhysicalStream = topology->findNodeWithId(nodeId);
+        //NOTE: Add the physical node to the set (we used set here to prevent inserting duplicate physical node in-case of self join or
+        // two physical streams located on same physical node)
+        topologyNodesWithUpStreamPinnedOperators.insert(nodeWithPhysicalStream);
+    }
+
+    //2. Find the topology nodes that will host downstream operators
+
+    std::set<TopologyNodePtr> topologyNodesWithDownStreamPinnedOperators;
+    for (const auto& pinnedOperator : downStreamPinnedOperators) {
+        auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
+        if (!value.has_value()) {
+            throw Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
+                            + pinnedOperator->toString());
+        }
+        auto nodeId = std::any_cast<uint64_t>(value);
+        auto nodeWithPhysicalStream = topology->findNodeWithId(nodeId);
+        topologyNodesWithUpStreamPinnedOperators.insert(nodeWithPhysicalStream);
+    }
+
+    //3. Performs path selection
+    std::vector upstreamTopologyNodes(topologyNodesWithUpStreamPinnedOperators.begin(),
+                                      topologyNodesWithUpStreamPinnedOperators.end());
+    std::vector downstreamTopologyNodes(topologyNodesWithDownStreamPinnedOperators.begin(),
+                                        topologyNodesWithDownStreamPinnedOperators.end());
+    std::vector<TopologyNodePtr> selectedTopologyForPlacement =
+        topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
+    if (selectedTopologyForPlacement.empty()) {
+        throw Exception("Could not find the path for placement.");
+    }
+
+    //4. Map nodes in the selected topology by their ids.
+
+    nodeIdToTopologyNodeMap.clear();
+    // fetch root node from the identified path
+    auto rootNode = selectedTopologyForPlacement[0]->getAllRootNodes()[0];
+    auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
+    while (topologyIterator != DepthFirstNodeIterator::end()) {
+        // get the ExecutionNode for the current topology Node
+        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
+        nodeIdToTopologyNodeMap[currentTopologyNode->getId()] = currentTopologyNode;
+        ++topologyIterator;
+    }
+}
+
 ExecutionNodePtr BasePlacementStrategy::getExecutionNode(const TopologyNodePtr& candidateTopologyNode) {
 
     ExecutionNodePtr candidateExecutionNode;

@@ -97,6 +97,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodeP
 
 
 
+
     return false;
 }
 

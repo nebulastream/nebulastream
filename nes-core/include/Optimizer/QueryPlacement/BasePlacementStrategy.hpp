@@ -125,6 +125,13 @@ class BasePlacementStrategy {
     void mapPinnedOperatorToTopologyNodes(const QueryPlanPtr& queryPlan);
 
     /**
+     * @brief Map the logical source name to the physical source nodes in the topology used for placing the operators
+     * @param sourceOperators: the source operators in the query
+     */
+    void performPathSelection(std::vector<OperatorNodePtr> upstreamPinnedOperators,
+                              std::vector<OperatorNodePtr> downStreamPinnedOperators);
+
+    /**
      * @brief Get Execution node for the input topology node
      * @param candidateTopologyNode: topology node
      * @return Execution Node pointer
