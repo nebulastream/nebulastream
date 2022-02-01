@@ -53,10 +53,6 @@
 #include <folly/concurrency/UnboundedQueue.h>
 #endif
 
-#undef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-#undef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-#define NES_USE_ONE_QUEUE_PER_QUERY
-
 namespace NES {
 namespace Runtime {
 
