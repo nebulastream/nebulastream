@@ -51,6 +51,9 @@ class DiskMetrics {
      */
     web::json::value toJson() const;
 
+    bool operator==(const DiskMetrics& rhs) const;
+    bool operator!=(const DiskMetrics& rhs) const;
+
     uint64_t fBsize;
     uint64_t fFrsize;
     uint64_t fBlocks;
@@ -77,7 +80,6 @@ void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64
  * @return the SchemaPtr
  */
 SchemaPtr getSchema(const DiskMetrics& metric, const std::string& prefix);
-
 }// namespace NES
 
 #endif  // NES_INCLUDE_MONITORING_METRICVALUES_DISKMETRICS_HPP_

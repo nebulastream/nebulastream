@@ -30,7 +30,7 @@
 namespace NES {
 
 RuntimeNesMetrics::RuntimeNesMetrics()
-    : memoryUsageInBytes(0), cpuLoadInJiffies(0), blkioBytesRead(0), blkioBytesWritten(0), batteryStatusInPercent(0), latCoord(0),
+    : wallTimeNs(0), memoryUsageInBytes(0), cpuLoadInJiffies(0), blkioBytesRead(0), blkioBytesWritten(0), batteryStatusInPercent(0), latCoord(0),
       longCoord(0) {
     NES_DEBUG("RuntimeNesMetrics: Default ctor");
 }

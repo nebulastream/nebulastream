@@ -86,6 +86,8 @@ class AbstractSystemResourcesReader {
     virtual ~AbstractSystemResourcesReader() = default;
 
 };
+using AbstractSystemResourcesReaderPtr = std::unique_ptr<AbstractSystemResourcesReader>;
+
 }// namespace NES
 
 #endif//NES_ABSTRACTSYSTEMRESOURCESREADER_HPP

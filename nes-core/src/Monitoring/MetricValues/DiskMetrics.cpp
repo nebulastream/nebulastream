@@ -82,4 +82,12 @@ web::json::value DiskMetrics::toJson() const {
 }
 
 SchemaPtr getSchema(const DiskMetrics&, const std::string& prefix) { return DiskMetrics::getSchema(prefix); }
+
+bool DiskMetrics::operator==(const DiskMetrics& rhs) const {
+    return fBavail == rhs.fBavail && fBfree == rhs.fBfree && fBlocks == rhs.fBlocks
+        && fBsize == rhs.fBsize && fFrsize == rhs.fFrsize;
+}
+
+bool DiskMetrics::operator!=(const DiskMetrics& rhs) const { return !(rhs == *this); }
+
 }// namespace NES
