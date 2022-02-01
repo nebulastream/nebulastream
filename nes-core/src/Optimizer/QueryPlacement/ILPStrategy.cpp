@@ -323,7 +323,7 @@ bool ILPStrategy::placeOperators(QueryPlanPtr queryPlan,
     if (!assignSuccess) {
         return false;
     }
-    addNetworkSourceAndSinkOperators(queryPlan);
+//    addNetworkSourceAndSinkOperators(queryPlan);
 
     return true;
 }
@@ -338,6 +338,12 @@ void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight 
 
 bool ILPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
-bool ILPStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>&) { NES_NOT_IMPLEMENTED(); }
+bool ILPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
+                                            FaultToleranceType /*faultToleranceType*/,
+                                            LineageType /*lineageType*/,
+                                            const std::vector<OperatorNodePtr>& /*pinnedUpStreamNodes*/,
+                                            const std::vector<OperatorNodePtr>& /*pinnedDownStreamNodes*/) {
+    NES_NOT_IMPLEMENTED();
+}
 
 }// namespace NES::Optimizer

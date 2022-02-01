@@ -65,6 +65,8 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
                                                                       z3Context);
 
     auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto faultToleranceType = sharedQueryPlan->getQueryPlan()->getFaultToleranceType();
+    auto lineageType = sharedQueryPlan->getQueryPlan()->getLineageType();
 
     //1. Fetch all upstream pinned operators
     auto upStreamPinnedOperators = getUpStreamPinnedOperators(sharedQueryPlan);
@@ -77,7 +79,11 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
         throw QueryPlacementException(queryId, "Found operators without pinning.");
     }
 
-    bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId, upStreamPinnedOperators, downStreamPinnedOperators);
+    bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
+                                                                   faultToleranceType,
+                                                                   lineageType,
+                                                                   upStreamPinnedOperators,
+                                                                   downStreamPinnedOperators);
     NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
     return success;
 }

@@ -106,7 +106,8 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr&
     }
 }
 
-void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators, std::vector<OperatorNodePtr> downStreamPinnedOperators) {
+void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators,
+                                                 std::vector<OperatorNodePtr> downStreamPinnedOperators) {
 
     //1. Find the topology nodes that will host upstream operators
 
@@ -225,23 +226,54 @@ OperatorNodePtr BasePlacementStrategy::createNetworkSourceOperator(QueryId query
                                                         operatorId);
 }
 
-void BasePlacementStrategy::addNetworkSourceAndSinkOperators(const QueryPlanPtr& queryPlan) {
-    QueryId queryId = queryPlan->getQueryId();
-    auto queryExecutionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    for (const auto& queryExecutionNode : queryExecutionNodes) {
-        for (const auto& querySubPlan : queryExecutionNode->getQuerySubPlans(queryId)) {
-            auto nodes = QueryPlanIterator(querySubPlan).snapshot();
-            for (const auto& node : nodes) {
-                const std::shared_ptr<LogicalOperatorNode>& asOperatorNode = node->as<LogicalOperatorNode>();
-                operatorToSubPlan[asOperatorNode->getId()] = querySubPlan;
+bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
+                                                  FaultToleranceType faultToleranceType,
+                                                  LineageType lineageType) {
+    NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    for (const auto& executionNode : executionNodes) {
+        NES_TRACE("BasePlacementStrategy: Get all query sub plans on the execution node for the query with id " << queryId);
+        const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
+        for (const auto& querySubPlan : querySubPlans) {
+            typeInferencePhase->execute(querySubPlan);
+            querySubPlan->setFaultToleranceType(faultToleranceType);
+            querySubPlan->setLineageType(lineageType);
+        }
+    }
+    return true;
+}
+
+void BasePlacementStrategy::addNetworkSourceAndSinkOperators(QueryId queryId,
+                                                             const std::vector<OperatorNodePtr>& pinnedUpStreamOperators) {
+
+    //Map operator id to the query plan that contains the operator
+    // NOTE: I think we can move this logic to placement logic when operator is added to the query plan
+    std::set<ExecutionNodePtr> executionNode;
+    for (const auto& [operatorId, executionNode] : operatorToExecutionNodeMap) {
+        auto queryPlans = executionNode->getQuerySubPlans(queryId);
+        for (const auto& queryPlan : queryPlans) {
+            auto logicalOperator = queryPlan->getOperatorWithId(operatorId);
+            if (logicalOperator) {
+                operatorToSubPlan[operatorId] = queryPlan;
+                break;
             }
         }
     }
+
+    //    auto queryExecutionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    //    for (const auto& queryExecutionNode : queryExecutionNodes) {
+    //        for (const auto& querySubPlan : queryExecutionNode->getQuerySubPlans(queryId)) {
+    //            auto nodes = QueryPlanIterator(querySubPlan).snapshot();
+    //            for (const auto& node : nodes) {
+    //                const std::shared_ptr<LogicalOperatorNode>& asOperatorNode = node->as<LogicalOperatorNode>();
+    //                operatorToSubPlan[asOperatorNode->getId()] = querySubPlan;
+    //            }
+    //        }
+    //    }
+
     NES_DEBUG("BasePlacementStrategy: Add system generated operators for the query with id " << queryId);
-    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
-    NES_TRACE("BasePlacementStrategy: For each source operator check for the assignment of network source and sink operators");
-    for (auto& sourceOperator : sourceOperators) {
-        placeNetworkOperator(queryId, sourceOperator);
+    for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
+        placeNetworkOperator(queryId, pinnedUpStreamOperator);
     }
     operatorToSubPlan.clear();
 }
@@ -373,6 +405,8 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                 }
             }
         }
+
+        //FIXME: Nithish what do we do in this code base?
         if (executionNode->getId() == parentExecutionNode->getId()) {
             auto childPlan = operatorToSubPlan[operatorNode->getId()];
             auto parentPlan = operatorToSubPlan[parentOperator->getId()];
@@ -435,23 +469,6 @@ void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNo
             }
         }
     }
-}
-
-bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId,
-                                                  FaultToleranceType faultToleranceType,
-                                                  LineageType lineageType) {
-    NES_DEBUG("BasePlacementStrategy: Run type inference phase for all the query sub plans to be deployed.");
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    for (const auto& executionNode : executionNodes) {
-        NES_TRACE("BasePlacementStrategy: Get all query sub plans on the execution node for the query with id " << queryId);
-        const std::vector<QueryPlanPtr>& querySubPlans = executionNode->getQuerySubPlans(queryId);
-        for (const auto& querySubPlan : querySubPlans) {
-            typeInferencePhase->execute(querySubPlan);
-            querySubPlan->setFaultToleranceType(faultToleranceType);
-            querySubPlan->setLineageType(lineageType);
-        }
-    }
-    return true;
 }
 
 bool BasePlacementStrategy::assignMappingToTopology(const NES::TopologyPtr topologyPtr,

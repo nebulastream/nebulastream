@@ -88,7 +88,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         }
 
         NES_DEBUG("TopDownStrategy: Add system generated operators for query with id : " << queryId);
-        addNetworkSourceAndSinkOperators(queryPlan);
+//        addNetworkSourceAndSinkOperators(queryPlan);
         NES_DEBUG("TopDownStrategy: clear the temporary map : " << queryId);
         operatorToExecutionNodeMap.clear();
         pinnedOperatorLocationMap.clear();
@@ -140,7 +140,7 @@ bool TopDownStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& que
         placeQueryPlan(queryPlan);
         NES_DEBUG("TopDownStrategy::partiallyUpdateGlobalExecutionPlan: Add system generated operators for query with id : "
                   << queryId);
-        addNetworkSourceAndSinkOperators(queryPlan);
+//        addNetworkSourceAndSinkOperators(queryPlan);
         operatorToExecutionNodeMap.clear();
         pinnedOperatorLocationMap.clear();
         NES_DEBUG("TopDownStrategy::partiallyUpdateGlobalExecutionPlan: Run type inference phase for query plans in global "
@@ -405,6 +405,11 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForChildOperators(
     return childNodes;
 }
 
-bool TopDownStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>&) { NES_NOT_IMPLEMENTED(); }
-
+bool TopDownStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
+                                                FaultToleranceType /*faultToleranceType*/,
+                                                LineageType /*lineageType*/,
+                                                const std::vector<OperatorNodePtr>& /*pinnedUpStreamNodes*/,
+                                                const std::vector<OperatorNodePtr>& /*pinnedDownStreamNodes*/) {
+    NES_NOT_IMPLEMENTED();
+}
 }// namespace NES::Optimizer

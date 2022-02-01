@@ -45,7 +45,11 @@ class ILPStrategy : public BasePlacementStrategy {
 
     bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
 
-    bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpstreamNodes) override;
+    bool updateGlobalExecutionPlan(QueryId queryId,
+                                   FaultToleranceType faultToleranceType,
+                                   LineageType lineageType,
+                                   const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
 
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                TopologyPtr topology,

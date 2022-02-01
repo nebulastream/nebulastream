@@ -30,7 +30,11 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
 
     bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
 
-    bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpstreamNodes) override;
+    bool updateGlobalExecutionPlan(QueryId queryId,
+                                   FaultToleranceType faultToleranceType,
+                                   LineageType lineageType,
+                                   const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
 
     static std::unique_ptr<ManualPlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                            TopologyPtr topology,
@@ -56,4 +60,4 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
 
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MANUALPLACEMENTSTRATEGY_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MANUALPLACEMENTSTRATEGY_HPP_
