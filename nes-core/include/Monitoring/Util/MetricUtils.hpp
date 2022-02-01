@@ -18,6 +18,7 @@
 #define NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
 
 #include <Monitoring/Metrics/Gauge.hpp>
+#include <Monitoring/Util/AbstractSystemResourcesReader.hpp>
 #include <unordered_map>
 
 namespace NES {
@@ -36,6 +37,12 @@ using SchemaPtr = std::shared_ptr<Schema>;
  */
 class MetricUtils {
   public:
+    /**
+     * @brief Creates the appropriate SystemResourcesReader for the OS
+     * @return the SystemResourcesReader
+     */
+    static std::unique_ptr<AbstractSystemResourcesReader> getSystemResourcesReader();
+
     /**
      * @brief Gauge metric for reading the runtime stats of NES
      * @return the cpu stats

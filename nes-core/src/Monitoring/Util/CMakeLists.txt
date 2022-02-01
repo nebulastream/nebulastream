@@ -13,7 +13,8 @@
 # limitations under the License.
 
 add_source_nes(
-        SystemResourcesReader.cpp
+        AbstractSystemResourcesReader.cpp
+        LinuxSystemResourcesReader.cpp
 )
 
 
