@@ -83,7 +83,7 @@ bool IFCOPStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     assignMappingToTopology(topology, queryPlan, bestCandidate);
 
     // 6. complete the placement with system-generated network sources and sinks
-    addNetworkSourceAndSinkOperators(queryPlan);
+//    addNetworkSourceAndSinkOperators(queryPlan);
 
     // 7. run the type inference phase
     return runTypeInferencePhase(queryPlan->getQueryId(), queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
@@ -321,6 +321,12 @@ void IFCOPStrategy::assignRemainingOperator(NES::QueryPlanPtr queryPlan,
 
 bool IFCOPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
-bool IFCOPStrategy::updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>&) { NES_NOT_IMPLEMENTED(); }
+bool IFCOPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
+                                              FaultToleranceType /*faultToleranceType*/,
+                                              LineageType /*lineageType*/,
+                                              const std::vector<OperatorNodePtr>& /*pinnedUpStreamNodes*/,
+                                              const std::vector<OperatorNodePtr>& /*pinnedDownStreamNodes*/) {
+    NES_NOT_IMPLEMENTED();
+}
 
 }// namespace NES::Optimizer

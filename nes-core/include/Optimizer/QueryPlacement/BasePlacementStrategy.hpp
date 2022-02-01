@@ -105,11 +105,16 @@ class BasePlacementStrategy {
 
     /**
      *
+     * @param queryId
+     * @param faultToleranceType
+     * @param lineageType
      * @param pinnedUpStreamNodes
      * @param pinnedDownStreamNodes
      * @return
      */
-    virtual bool updateGlobalExecutionPlan(QueryId queryId, const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+    virtual bool updateGlobalExecutionPlan(QueryId queryId,
+                                           FaultToleranceType faultToleranceType,
+                                           LineageType lineageType,const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) = 0;
 
     /**
@@ -151,7 +156,7 @@ class BasePlacementStrategy {
      * @brief Add network source and sinks between query sub plans allocated on different execution nodes
      * @param queryPlan: the original query plan
      */
-    void addNetworkSourceAndSinkOperators(const QueryPlanPtr& queryPlan);
+    void addNetworkSourceAndSinkOperators(QueryId queryId, const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
 
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id

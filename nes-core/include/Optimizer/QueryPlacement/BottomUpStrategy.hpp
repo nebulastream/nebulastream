@@ -38,6 +38,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
     bool updateGlobalExecutionPlan(QueryId queryId,
+                                   FaultToleranceType faultToleranceType,
+                                   LineageType lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 

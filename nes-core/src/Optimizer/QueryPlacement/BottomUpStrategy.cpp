@@ -75,9 +75,9 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
         }
 
         NES_DEBUG("BottomUpStrategy: place query plan with id : " << queryId);
-        placeQueryPlanOnTopology(queryPlan);
+        //        placeQueryPlanOnTopology(queryPlan);
         NES_DEBUG("BottomUpStrategy: Add system generated operators for query with id : " << queryId);
-        addNetworkSourceAndSinkOperators(queryPlan);
+        //        addNetworkSourceAndSinkOperators(queryPlan);
         NES_DEBUG("BottomUpStrategy: clear the temporary map : " << queryId);
         operatorToExecutionNodeMap.clear();
         pinnedOperatorLocationMap.clear();
@@ -92,6 +92,8 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
 }
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
+                                                 FaultToleranceType faultToleranceType,
+                                                 LineageType lineageType,
                                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
@@ -104,71 +106,72 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
     }
     placeQueryPlanOnTopology(queryId, pinnedUpStreamOperators, pinnedDownstreamOperatorIds);
 
-    addNetworkSourceAndSinkOperators(queryPlan);
+    addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators);
 
-    return runTypeInferencePhase(queryId, queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
+    return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
 }
 
-bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) {
-//    const QueryId queryId = queryPlan->getQueryId();
-//    try {
-//        NES_INFO(
-//            "BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: Performing partial placement of the input query plan with id "
-//            << queryId);
-//        NES_INFO("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: And query plan \n" << queryPlan->toString());
-//        auto nodesWithQueryDeployed = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-//        // Reconstruct internal structures based on the global execution plan
-//        for (const auto& nodeWithQueryDeployed : nodesWithQueryDeployed) {
-//            for (const auto& querySubPlan : nodeWithQueryDeployed->getQuerySubPlans(queryId)) {
-//                auto nodes = QueryPlanIterator(querySubPlan).snapshot();
-//                for (const auto& node : nodes) {
-//                    const std::shared_ptr<LogicalOperatorNode>& asOperatorNode = node->as<LogicalOperatorNode>();
-//                    operatorToExecutionNodeMap[asOperatorNode->getId()] = nodeWithQueryDeployed;
-//                }
-//            }
-//        }
-//        for (const auto& sinkOperator : queryPlan->getSinkOperators()) {
-//            if (operatorToExecutionNodeMap.contains(sinkOperator->getId())) {
-//                pinnedOperatorLocationMap[sinkOperator->getId()] =
-//                    operatorToExecutionNodeMap[sinkOperator->getId()]->getTopologyNode();
-//            }
-//        }
-//
-//        std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
-//        std::vector<TopologyNodePtr> mergedGraphSourceNodes;
-//
-//        //        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
-//
-//        for (const auto& sourceOperator : queryPlan->getSourceOperators()) {
-//            pinnedOperatorLocationMap[sourceOperator->getId()] =
-//                operatorToExecutionNodeMap[sourceOperator->getId()]->getTopologyNode();
-//        }
-//
-//        placeQueryPlanOnTopology(queryPlan);
-//
-//        for (const auto& executionNode : globalExecutionPlan->getExecutionNodesByQueryId(queryId)) {
-//            for (const auto& querySubPlan : executionNode->getQuerySubPlans(queryId)) {
-//                NES_DEBUG("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan:\nQuerySubPlanId: "
-//                          << querySubPlan->getQuerySubPlanId() << "\n"
-//                          << querySubPlan->toString());
-//            }
-//        }
-//
-//        addNetworkSourceAndSinkOperators(queryPlan);
-//
-//        operatorToExecutionNodeMap.clear();
-//        pinnedOperatorLocationMap.clear();
-//
-//        NES_DEBUG("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: Run type inference phase for query plans in global "
-//                  "execution plan for query with id : "
-//                  << queryId);
-//
-//        NES_DEBUG("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: Update Global Execution Plan : \n"
-//                  << globalExecutionPlan->getAsString());
-//        return runTypeInferencePhase(queryId, queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
-//    } catch (Exception& ex) {
-//        throw QueryPlacementException(queryId, ex.what());
-//    }
+bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) {
+    //    const QueryId queryId = queryPlan->getQueryId();
+    //    try {
+    //        NES_INFO(
+    //            "BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: Performing partial placement of the input query plan with id "
+    //            << queryId);
+    //        NES_INFO("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: And query plan \n" << queryPlan->toString());
+    //        auto nodesWithQueryDeployed = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+    //        // Reconstruct internal structures based on the global execution plan
+    //        for (const auto& nodeWithQueryDeployed : nodesWithQueryDeployed) {
+    //            for (const auto& querySubPlan : nodeWithQueryDeployed->getQuerySubPlans(queryId)) {
+    //                auto nodes = QueryPlanIterator(querySubPlan).snapshot();
+    //                for (const auto& node : nodes) {
+    //                    const std::shared_ptr<LogicalOperatorNode>& asOperatorNode = node->as<LogicalOperatorNode>();
+    //                    operatorToExecutionNodeMap[asOperatorNode->getId()] = nodeWithQueryDeployed;
+    //                }
+    //            }
+    //        }
+    //        for (const auto& sinkOperator : queryPlan->getSinkOperators()) {
+    //            if (operatorToExecutionNodeMap.contains(sinkOperator->getId())) {
+    //                pinnedOperatorLocationMap[sinkOperator->getId()] =
+    //                    operatorToExecutionNodeMap[sinkOperator->getId()]->getTopologyNode();
+    //            }
+    //        }
+    //
+    //        std::map<std::string, std::vector<TopologyNodePtr>> mapOfSourceToTopologyNodes;
+    //        std::vector<TopologyNodePtr> mergedGraphSourceNodes;
+    //
+    //        //        pinSinkOperator(queryId, queryPlan->getSourceOperators(), mapOfSourceToTopologyNodes, mergedGraphSourceNodes);
+    //
+    //        for (const auto& sourceOperator : queryPlan->getSourceOperators()) {
+    //            pinnedOperatorLocationMap[sourceOperator->getId()] =
+    //                operatorToExecutionNodeMap[sourceOperator->getId()]->getTopologyNode();
+    //        }
+    //
+    //        placeQueryPlanOnTopology(queryPlan);
+    //
+    //        for (const auto& executionNode : globalExecutionPlan->getExecutionNodesByQueryId(queryId)) {
+    //            for (const auto& querySubPlan : executionNode->getQuerySubPlans(queryId)) {
+    //                NES_DEBUG("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan:\nQuerySubPlanId: "
+    //                          << querySubPlan->getQuerySubPlanId() << "\n"
+    //                          << querySubPlan->toString());
+    //            }
+    //        }
+    //
+    //        addNetworkSourceAndSinkOperators(queryPlan);
+    //
+    //        operatorToExecutionNodeMap.clear();
+    //        pinnedOperatorLocationMap.clear();
+    //
+    //        NES_DEBUG("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: Run type inference phase for query plans in global "
+    //                  "execution plan for query with id : "
+    //                  << queryId);
+    //
+    //        NES_DEBUG("BottomUpStrategy::partiallyUpdateGlobalExecutionPlan: Update Global Execution Plan : \n"
+    //                  << globalExecutionPlan->getAsString());
+    //        return runTypeInferencePhase(queryId, queryPlan->getFaultToleranceType(), queryPlan->getLineageType());
+    //    } catch (Exception& ex) {
+    //        throw QueryPlacementException(queryId, ex.what());
+    //    }
+    return false;
 }
 
 void BottomUpStrategy::placeQueryPlanOnTopology(QueryId queryId,
