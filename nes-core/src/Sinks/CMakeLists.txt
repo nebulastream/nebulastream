@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_nes(
+add_source_files(nes-core
         SinkCreator.cpp
 )
 
@@ -19,7 +19,7 @@ add_subdirectory(Mediums)
 add_subdirectory(Formats)
 
 if(NES_USE_KAFKA)
-    add_source_nes(
+    add_source_files(nes-core
             Mediums/KafkaSink.cpp
     )
 endif()

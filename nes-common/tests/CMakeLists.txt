@@ -17,7 +17,7 @@ include(ExternalProject)
 
 ### Thread Naming Test ###
 add_executable(thread-naming-tests "Util/ThreadNamingTest.cpp")
-target_link_libraries(thread-naming-tests nes_common ${GTEST_LIBRARIES})
+target_link_libraries(thread-naming-tests nes-common ${GTEST_LIBRARIES})
 add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)

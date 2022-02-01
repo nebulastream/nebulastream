@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_nes(
+add_source_files(nes-core
         ExpressionToZ3ExprUtil.cpp
         QuerySignatureUtil.cpp
         DataTypeToZ3ExprUtil.cpp
