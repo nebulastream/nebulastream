@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Runtime/internal/backward.hpp>
 #include <Util/StacktraceLoader.hpp>
+#include <Util/Backward/backward.hpp>
 
 #define CALLSTACK_MAX_SIZE 32
 

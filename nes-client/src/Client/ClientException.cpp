@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Client/ClientException.hpp>
-#include <Runtime/internal/backward.hpp>
 #include <Util/Logger.hpp>
 namespace NES::Client {
 

@@ -16,7 +16,6 @@
 #define NES_INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
 #include <Exceptions/NesRuntimeException.hpp>
-#include <Runtime/ErrorListener.hpp>
 #include <Util/DisableWarningsPragma.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <iostream>

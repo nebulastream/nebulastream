@@ -12,6 +12,5 @@
 # limitations under the License.
 
 add_source_nes(
-      SignalHandling.cpp
       TupleBufferImpl.cpp
 )

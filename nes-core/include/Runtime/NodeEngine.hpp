@@ -20,7 +20,7 @@
 #include <Network/NetworkForwardRefs.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/BufferStorage.hpp>
-#include <Runtime/ErrorListener.hpp>
+#include <Exceptions/ErrorListener.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/MaterializedViewManager.hpp>

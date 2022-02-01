@@ -17,7 +17,7 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Runtime/ErrorListener.hpp>
+#include <Exceptions/ErrorListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>

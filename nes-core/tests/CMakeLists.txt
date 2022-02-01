@@ -399,11 +399,6 @@ target_link_libraries(ilp-placement-test nes ${GTEST_LIBRARIES})
 add_test(NAME ilp-placement-test COMMAND ilp-placement-test)
 
 ### Thread Naming Test ###
-add_executable(thread-naming-tests "UnitTests/Util/ThreadNamingTest.cpp")
-target_link_libraries(thread-naming-tests nes ${GTEST_LIBRARIES})
-add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
-
-### Thread Naming Test ###
 add_executable(global-execution-plan-tests "UnitTests/Plans/Global/Execution/GlobalExecutionPlanTest.cpp")
 target_link_libraries(global-execution-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-execution-plan-tests COMMAND global-execution-plan-tests)

@@ -32,6 +32,10 @@ macro(add_source_nes)
     add_source(nes "${ARGN}")
 endmacro()
 
+macro(add_source_nes_common)
+    add_source(nes_common "${ARGN}")
+endmacro()
+
 macro(get_source_nes SOURCE_FILES)
     get_source(nes SOURCE_FILES_LOCAL)
     set(${SOURCE_FILES} ${SOURCE_FILES_LOCAL})
