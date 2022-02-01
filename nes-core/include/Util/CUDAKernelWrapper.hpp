@@ -24,7 +24,7 @@
  * @tparam InputRecord data type to be processed by the kernel
  * @tparam Size number of tuple to process by the kernel
  */
-template<class InputRecord, int Size>
+template<class InputRecord>
 class CUDAKernelWrapper {
   public:
     CUDAKernelWrapper() = default;
@@ -34,9 +34,11 @@ class CUDAKernelWrapper {
      * the execute() method.
      * @param kernelCode source code of the kernel
      */
-    void setup(const char* const kernelCode) {
-        cudaMalloc(&deviceInputBuffer, Size * sizeof(InputRecord));
-        cudaMalloc(&deviceOutputBuffer, Size * sizeof(InputRecord));
+    void setup(const char* const kernelCode, google::uint64 bufferSize) {
+        gpuBufferSize = bufferSize;
+
+        cudaMalloc(&deviceInputBuffer, gpuBufferSize);
+        cudaMalloc(&deviceOutputBuffer, gpuBufferSize);
 
         static jitify::JitCache kernelCache;
         kernelProgramPtr = std::make_shared<jitify::Program>(kernelCache.program(kernelCode, 0));
@@ -46,9 +48,14 @@ class CUDAKernelWrapper {
      * @brief execute the kernel program
      * @param hostInputBuffer input buffer in the host memory. The kernel reads from this buffer and copy back the output to this buffer.
      */
-    void execute(InputRecord* hostInputBuffer) {
+    void execute(InputRecord* hostInputBuffer, uint64_t numberOfTuples, std::string kernelName) {
+        if (gpuBufferSize < numberOfTuples * sizeof(InputRecord)) {
+            NES_ERROR("Tuples to process exceed the allocated GPU buffer.");
+            throw std::runtime_error("Tuples to process exceed the allocated GPU buffer.");
+        }
+
         // copy the hostInputBuffer (input) to deviceInputBuffer
-        cudaMemcpy(deviceInputBuffer, hostInputBuffer, Size * sizeof(InputRecord), cudaMemcpyHostToDevice);
+        cudaMemcpy(deviceInputBuffer, hostInputBuffer, numberOfTuples * sizeof(InputRecord), cudaMemcpyHostToDevice);
 
         // prepare a kernel launch configuration
         dim3 grid(1);
@@ -56,13 +63,13 @@ class CUDAKernelWrapper {
 
         // execute the kernel program
         using jitify::reflection::type_of;
-        kernelProgramPtr->kernel("simpleAdditionKernel")
+        kernelProgramPtr->kernel(kernelName)
             .instantiate()
             .configure(grid, block) // the configuration
-            .launch(deviceInputBuffer, Size, deviceOutputBuffer); // the parameter of the kernel program
+            .launch(deviceInputBuffer, numberOfTuples, deviceOutputBuffer); // the parameter of the kernel program
 
         // copy the result of kernel execution back to the gpu
-        cudaMemcpy(hostInputBuffer, deviceOutputBuffer, Size * sizeof(InputRecord), cudaMemcpyDeviceToHost);
+        cudaMemcpy(hostInputBuffer, deviceOutputBuffer, numberOfTuples * sizeof(InputRecord), cudaMemcpyDeviceToHost);
     }
 
     /**
@@ -77,6 +84,7 @@ class CUDAKernelWrapper {
     InputRecord* deviceInputBuffer; // device memory for kernel input
     InputRecord* deviceOutputBuffer; // device memory for kernel output
     std::shared_ptr<jitify::Program> kernelProgramPtr;
+    uint64_t gpuBufferSize;
 };
 
 #endif//NES_CUDAKERNELWRAPPER_HPP
