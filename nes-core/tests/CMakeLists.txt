@@ -26,8 +26,6 @@ else ()
     set(CMAKE_ARGS_CROSS "")
 endif ()
 
-set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} cpprestsdk::cpprest)
-
 # Copy Test Data --------------------------------------------------------------
 file(COPY test_data DESTINATION .)
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_data/")
