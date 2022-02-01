@@ -34,5 +34,6 @@ ENV physicalSourceName="exdra_worker_1"
 ENV logicalSourceName="exdra"
 ENV skipHeader=false
 ENV delimiter=","
+ENV logLevel="LOG_INFO"
 
 ENTRYPOINT ["/entrypoint.sh"]

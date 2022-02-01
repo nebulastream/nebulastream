@@ -93,4 +93,4 @@ install(TARGETS nesCoordinator nesWorker
 
 install(DIRECTORY "include"
         COMPONENT nesHeaders
-        DESTINATION "/nebulastream")
+        DESTINATION "/nebulastream/nes-core")

@@ -33,39 +33,46 @@ CoordinatorConfigurationPtr CoordinatorConfiguration::create() {
 
 CoordinatorConfiguration::CoordinatorConfiguration() {
     NES_INFO("Generated new Coordinator Config object. Configurations initialized with default values.");
-    restIp = ConfigurationOption<std::string>::create("restIp", "127.0.0.1", "NES ip of the REST server.");
-    coordinatorIp = ConfigurationOption<std::string>::create("coordinatorIp", "127.0.0.1", "RPC IP address of NES Coordinator.");
-    rpcPort = ConfigurationOption<uint32_t>::create("rpcPort", 4000, "RPC server port of the NES Coordinator");
-    restPort = ConfigurationOption<uint32_t>::create("restPort", 8081, "Port exposed for rest endpoints");
-    dataPort = ConfigurationOption<uint32_t>::create("dataPort", 3001, "NES data server port");
-    numberOfSlots =
-        ConfigurationOption<uint32_t>::create("numberOfSlots", UINT16_MAX, "Number of computing slots for NES Coordinator");
-    logLevel = ConfigurationOption<std::string>::create("logLevel",
+    restIp = ConfigurationOption<std::string>::create(REST_IP_CONFIG, "127.0.0.1", "NES ip of the REST server.");
+    coordinatorIp =
+        ConfigurationOption<std::string>::create(COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator.");
+    rpcPort = ConfigurationOption<uint32_t>::create(RPC_PORT_CONFIG, 4000, "RPC server port of the NES Coordinator");
+    restPort = ConfigurationOption<uint32_t>::create(REST_PORT_CONFIG, 8081, "Port exposed for rest endpoints");
+    dataPort = ConfigurationOption<uint32_t>::create(DATA_PORT_CONFIG, 3001, "NES data server port");
+    numberOfSlots = ConfigurationOption<uint32_t>::create(NUMBER_OF_SLOTS_CONFIG,
+                                                          UINT16_MAX,
+                                                          "Number of computing slots for NES Coordinator");
+    logLevel = ConfigurationOption<std::string>::create(LOG_LEVEL_CONFIG,
                                                         "LOG_DEBUG",
                                                         "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
-    numberOfBuffersInGlobalBufferManager = ConfigurationOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager",
-                                                                                 1024,
-                                                                                 "Number buffers in global buffer pool.");
-    numberOfBuffersPerWorker =
-        ConfigurationOption<uint32_t>::create("numberOfBuffersPerWorker", 128, "Number buffers in task local buffer pool.");
-    numberOfBuffersInSourceLocalBufferPool = ConfigurationOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool",
-                                                                                   64,
-                                                                                   "Number buffers in source local buffer pool.");
-    bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
-    numWorkerThreads = ConfigurationOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
-    queryBatchSize = ConfigurationOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
-    queryMergerRule = ConfigurationOption<std::string>::create("queryMergerRule",
+    numberOfBuffersInGlobalBufferManager =
+        ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
+                                              1024,
+                                              "Number buffers in global buffer pool.");
+    numberOfBuffersPerWorker = ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_PER_WORKER_CONFIG,
+                                                                     128,
+                                                                     "Number buffers in task local buffer pool.");
+    numberOfBuffersInSourceLocalBufferPool =
+        ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
+                                              64,
+                                              "Number buffers in source local buffer pool.");
+    bufferSizeInBytes = ConfigurationOption<uint32_t>::create(BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes.");
+    numWorkerThreads = ConfigurationOption<uint32_t>::create(NUM_WORKER_THREADS_CONFIG, 1, "Number of worker threads.");
+    queryBatchSize =
+        ConfigurationOption<uint32_t>::create(QUERY_BATCH_SIZE_CONFIG, 1, "The number of queries to be processed together");
+    queryMergerRule = ConfigurationOption<std::string>::create(QUERY_MERGER_RULE_CONFIG,
                                                                "DefaultQueryMergerRule",
                                                                "The rule to be used for performing query merging");
-    enableSemanticQueryValidation =
-        ConfigurationOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
-    enableMonitoring = ConfigurationOption<bool>::create("enableMonitoring", false, "Enable monitoring");
+    enableSemanticQueryValidation = ConfigurationOption<bool>::create(ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG,
+                                                                      false,
+                                                                      "Enable semantic query validation feature");
+    enableMonitoring = ConfigurationOption<bool>::create(ENABLE_MONITORING_CONFIG, false, "Enable monitoring");
     memoryLayoutPolicy = ConfigurationOption<std::string>::create(
-        "memoryLayoutPolicy",
+        MEMORY_LAYOUT_POLICY_CONFIG,
         "FORCE_ROW_LAYOUT",
         "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]");
     performOnlySourceOperatorExpansion = ConfigurationOption<bool>::create(
-        "performOnlySourceOperatorExpansion",
+        PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
         false,
         "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)");
 }

@@ -36,48 +36,52 @@ WorkerConfigurationPtr WorkerConfiguration::create() { return std::make_shared<W
 
 WorkerConfiguration::WorkerConfiguration() : physicalSources() {
     NES_INFO("Generated new Worker Config object. Configurations initialized with default values.");
-    localWorkerIp = ConfigurationOption<std::string>::create("localWorkerIp", "127.0.0.1", "Worker IP.");
+    localWorkerIp = ConfigurationOption<std::string>::create(LOCAL_WORKER_IP_CONFIG, "127.0.0.1", "Worker IP.");
     coordinatorIp =
-        ConfigurationOption<std::string>::create("coordinatorIp",
+        ConfigurationOption<std::string>::create(COORDINATOR_IP_CONFIG,
                                                  "127.0.0.1",
                                                  "Server IP of the NES Coordinator to which the NES Worker should connect.");
     coordinatorPort = ConfigurationOption<uint32_t>::create(
-        "coordinatorPort",
+        COORDINATOR_PORT_CONFIG,
         4000,
         "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
         "to be the same as rpcPort in Coordinator.");
-    rpcPort = ConfigurationOption<uint32_t>::create("rpcPort", 4000, "RPC server port of the NES Worker.");
-    dataPort = ConfigurationOption<uint32_t>::create("dataPort", 4001, "Data port of the NES Worker.");
-    numberOfSlots =
-        ConfigurationOption<uint32_t>::create("numberOfSlots", UINT16_MAX, "Number of computing slots for the NES Worker.");
+    rpcPort = ConfigurationOption<uint32_t>::create(RPC_PORT_CONFIG, 4000, "RPC server port of the NES Worker.");
+    dataPort = ConfigurationOption<uint32_t>::create(DATA_PORT_CONFIG, 4001, "Data port of the NES Worker.");
+    numberOfSlots = ConfigurationOption<uint32_t>::create(NUMBER_OF_SLOTS_CONFIG,
+                                                          UINT16_MAX,
+                                                          "Number of computing slots for the NES Worker.");
     numWorkerThreads = ConfigurationOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
 
-    numberOfBuffersInGlobalBufferManager = ConfigurationOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager",
-                                                                                 1024,
-                                                                                 "Number buffers in global buffer pool.");
-    numberOfBuffersPerWorker =
-        ConfigurationOption<uint32_t>::create("numberOfBuffersPerWorker", 128, "Number buffers in task local buffer pool.");
-    numberOfBuffersInSourceLocalBufferPool = ConfigurationOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool",
-                                                                                   64,
-                                                                                   "Number buffers in source local buffer pool.");
-    bufferSizeInBytes = ConfigurationOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
-    parentId = ConfigurationOption<uint32_t>::create("parentId", 0, "Parent ID of this node.");
-    logLevel = ConfigurationOption<std::string>::create("logLevel",
+    numberOfBuffersInGlobalBufferManager =
+        ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
+                                              1024,
+                                              "Number buffers in global buffer pool.");
+    numberOfBuffersPerWorker = ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_PER_WORKER_CONFIG,
+                                                                     128,
+                                                                     "Number buffers in task local buffer pool.");
+    numberOfBuffersInSourceLocalBufferPool =
+        ConfigurationOption<uint32_t>::create(NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
+                                              64,
+                                              "Number buffers in source local buffer pool.");
+    bufferSizeInBytes = ConfigurationOption<uint32_t>::create(BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes.");
+    parentId = ConfigurationOption<uint32_t>::create(PARENT_ID_CONFIG, 0, "Parent ID of this node.");
+    logLevel = ConfigurationOption<std::string>::create(LOG_LEVEL_CONFIG,
                                                         "LOG_DEBUG",
                                                         "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
 
     queryCompilerCompilationStrategy = ConfigurationOption<std::string>::create(
-        "queryCompilerCompilationStrategy",
+        QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG,
         "OPTIMIZE",
         "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE].");
 
     queryCompilerPipeliningStrategy = ConfigurationOption<std::string>::create(
-        "queryCompilerPipeliningStrategy",
+        QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG,
         "OPERATOR_FUSION",
         "Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME].");
 
     queryCompilerOutputBufferOptimizationLevel =
-        ConfigurationOption<std::string>::create("OutputBufferOptimizationLevel",
+        ConfigurationOption<std::string>::create(QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG,
                                                  "ALL",
                                                  "Indicates the OutputBufferAllocationStrategy "
                                                  "[ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,"
@@ -85,16 +89,18 @@ WorkerConfiguration::WorkerConfiguration() : physicalSources() {
                                                  "REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]. ");
 
     sourcePinList =
-        ConfigurationOption<std::string>::create("sourcePinList", "", "comma separated list of where to map the sources");
+        ConfigurationOption<std::string>::create(SOURCE_PIN_LIST_CONFIG, "", "comma separated list of where to map the sources");
 
     workerPinList =
-        ConfigurationOption<std::string>::create("workerPinList", "", "comma separated list of where to map the worker");
+        ConfigurationOption<std::string>::create(WORKER_PIN_LIST_CONFIG, "", "comma separated list of where to map the worker");
 
-    queuePinList = ConfigurationOption<std::string>::create("queuePinList", "", "comma separated list of where to map the worker on the queue");
+    queuePinList = ConfigurationOption<std::string>::create(QUEUE_PIN_LIST_CONFIG,
+                                                            "",
+                                                            "comma separated list of where to map the worker on the queue");
 
-    numaAwareness = ConfigurationOption<bool>::create("numaAwareness", false, "Enable Numa-Aware execution");
+    numaAwareness = ConfigurationOption<bool>::create(NUMA_AWARENESS_CONFIG, false, "Enable Numa-Aware execution");
 
-    enableMonitoring = ConfigurationOption<bool>::create("enableMonitoring", false, "Enable monitoring");
+    enableMonitoring = ConfigurationOption<bool>::create(ENABLE_MONITORING_CONFIG, false, "Enable monitoring");
 }
 
 void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -150,8 +156,9 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
             if (!config[LOG_LEVEL_CONFIG].As<std::string>().empty() && config[LOG_LEVEL_CONFIG].As<std::string>() != "\n") {
                 setLogLevel(config[LOG_LEVEL_CONFIG].As<std::string>());
             }
-            if (!config["queuePinList"].As<std::string>().empty() && config["queuePinList"].As<std::string>() != "\n") {
-                setQueuePinList(config["queuePinList"].As<std::string>());
+            if (!config[QUEUE_PIN_LIST_CONFIG].As<std::string>().empty()
+                && config[QUEUE_PIN_LIST_CONFIG].As<std::string>() != "\n") {
+                setQueuePinList(config[QUEUE_PIN_LIST_CONFIG].As<std::string>());
             }
             if (!config[QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG].As<std::string>().empty()
                 && config[QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG].As<std::string>() != "\n") {
@@ -166,7 +173,7 @@ void WorkerConfiguration::overwriteConfigWithYAMLFileInput(const std::string& fi
                 && config[SOURCE_PIN_LIST_CONFIG].As<std::string>() != "\n") {
                 setSourcePinList(config[SOURCE_PIN_LIST_CONFIG].As<std::string>());
             }
-            if (!config["numaAwareness"].As<bool>()) {
+            if (!config[NUMA_AWARENESS_CONFIG].As<bool>()) {
                 numaAwareness->setValue(false);
             } else {
                 numaAwareness->setValue(true);
