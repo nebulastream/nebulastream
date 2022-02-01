@@ -19,12 +19,12 @@ set -e
 if [ $# -eq 0 ]
 then
     /opt/local/nebula-stream/nesCoordinator --coordinatorIp=$coordinatorIp --rpcPort=$coordinatorPort --restIp=$restIp --restPort=$restPort \
-                                            --enableSemanticQueryValidation=$enableSemanticQueryValidation &
+                                            --enableSemanticQueryValidation=$enableSemanticQueryValidation --logLevel=$logLevel &
     sleep 5s
     /opt/local/nebula-stream/nesWorker --coordinatorPort=$coordinatorPort --type=$type --filePath=$filePath \
                                         --numberOfBuffersToProduce=$numberOfBuffersToProduce --sourceFrequency=$sourceFrequency \
                                         --physicalSourceName=$physicalSourceName --logicalSourceName=$logicalSourceName \
-                                        --skipHeader=$skipHeader --delimiter=$delimiter
+                                        --skipHeader=$skipHeader --delimiter=$delimiter --logLevel=$logLevel
 else
     exec $@
 fi
