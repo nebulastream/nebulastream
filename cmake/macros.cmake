@@ -44,11 +44,6 @@ macro(get_source_nes SOURCE_FILES)
     set(${SOURCE_FILES} ${SOURCE_FILES_LOCAL})
 endmacro()
 
-macro(get_source_nes_client SOURCE_FILES)
-    get_source(nes_client SOURCE_FILES_LOCAL)
-    set(${SOURCE_FILES} ${SOURCE_FILES_LOCAL})
-endmacro()
-
 macro(get_header_nes HEADER_FILES)
     file(GLOB_RECURSE ${HEADER_FILES} "include/*.h" "include/*.hpp")
 endmacro()

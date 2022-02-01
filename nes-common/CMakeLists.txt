@@ -17,7 +17,7 @@ add_subdirectory(src)
 
 get_source(nes-common nes_common_SOURCE_FILES)
 
-message(STATUS "Common Headers: ${nes_common_HEADER_FILES}")
+message(STATUS "Common Source Files: ${nes_common_SOURCE_FILES}")
 
 # Add Library
 add_library(nes_common SHARED ${nes_common_SOURCE_FILES})
