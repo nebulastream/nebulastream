@@ -508,7 +508,7 @@ endif ()
 
 # Add tests with command
 if (NES_ENABLES_TESTS)
-    set(GTEST_LIBRARIES ${LIBRARIES})
+    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES})
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
