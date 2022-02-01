@@ -136,7 +136,7 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
         }
         auto nodeId = std::any_cast<uint64_t>(value);
         auto nodeWithPhysicalStream = topology->findNodeWithId(nodeId);
-        topologyNodesWithUpStreamPinnedOperators.insert(nodeWithPhysicalStream);
+        topologyNodesWithDownStreamPinnedOperators.insert(nodeWithPhysicalStream);
     }
 
     //3. Performs path selection

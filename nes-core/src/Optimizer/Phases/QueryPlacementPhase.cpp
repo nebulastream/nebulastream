@@ -76,7 +76,7 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
 
     //3. Check if all operators are pinned
     if (!checkPinnedOperators(upStreamPinnedOperators) || !checkPinnedOperators(downStreamPinnedOperators)) {
-        throw QueryPlacementException(queryId, "Found operators without pinning.");
+        throw QueryPlacementException(queryId, "QueryPlacementPhase: Found operators without pinning.");
     }
 
     bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId,
@@ -121,12 +121,25 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
         //We pin all root (sink) operators
         auto downStreamOperators = pinnedOperator->getAllRootNodes();
-        for (auto& downStreamOperator : downStreamPinnedOperators) {
+        for (auto& downStreamOperator : downStreamOperators) {
             //Only place sink operators that are not pinned or that are not placed yet
-            if (!downStreamOperator->hasProperty(PINNED_NODE_ID) || !downStreamOperator->hasProperty(PLACED)
-                || !std::any_cast<bool>(downStreamOperator->getProperty(PLACED))) {
-                downStreamOperator->addProperty(PINNED_NODE_ID, rootTopologyNode->getId());
-                downStreamPinnedOperators.emplace_back(downStreamOperator);
+            auto logicalOperator = downStreamOperator->as<OperatorNode>();
+
+            //Check if the operator already in the pinned operator list
+            auto found = std::find_if(downStreamPinnedOperators.begin(),
+                                      downStreamPinnedOperators.end(),
+                                      [logicalOperator](const OperatorNodePtr& operatorNode) {
+                                          return operatorNode->getId() == logicalOperator->getId();
+                                      });
+
+            if (found != downStreamPinnedOperators.end()) {
+                continue;
+            }
+
+            if (!logicalOperator->hasProperty(PINNED_NODE_ID) || !logicalOperator->hasProperty(PLACED)
+                || !std::any_cast<bool>(logicalOperator->getProperty(PLACED))) {
+                logicalOperator->addProperty(PINNED_NODE_ID, rootTopologyNode->getId());
+                downStreamPinnedOperators.emplace_back(logicalOperator);
             }
         }
     }
