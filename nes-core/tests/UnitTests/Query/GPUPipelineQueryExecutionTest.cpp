@@ -24,7 +24,7 @@
 #include "../../util/TestSink.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -37,35 +37,36 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sources/DefaultSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
-
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
-
-#include <Util/jitify/jitify.hpp>
+#include <Util/CUDAKernelWrapper.hpp>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <Util/CUDAKernelWrapper.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
 
 #define NUMBER_OF_TUPLE 10
 
-class QueryExecutionTest : public testing::Test {
+class GPUQueryExecutionTest : public testing::Test {
   public:
     static void SetUpTestCase() { NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG); }
     /* Will be called before a test is executed. */
     void SetUp() override {
-        // create test input buffer
-        testSchema = Schema::create()->addField("test$value", BasicType::INT32);
-        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+        testSchema = Schema::create()
+                         ->addField("test$id", BasicType::INT64)
+                         ->addField("test$one", BasicType::INT64)
+                         ->addField("test$value", BasicType::INT64);
+        auto defaultSourceType = DefaultSourceType::create();
+        PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {streamConf});
     }
 
     /* Will be called before a test is executed. */
@@ -88,6 +89,7 @@ void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& me
     buf.setNumberOfTuples(NUMBER_OF_TUPLE);
 }
 
+using TupleDataType = int;
 class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineStage {
   public:
     uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
@@ -102,8 +104,8 @@ class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineSta
             "    }\n"
             "}\n";
 
-        // setup the kernel program and allocate required memory
-        cudaKernelWrapper.setup(SimpleKernel_cu);
+        // setup the kernel program and allocate gpu buffer
+        cudaKernelWrapper.setup(SimpleKernel_cu, 1024 * sizeof(TupleDataType));
 
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
     }
@@ -111,10 +113,10 @@ class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineSta
     ExecutionResult execute(Runtime::TupleBuffer& buffer,
                             Runtime::Execution::PipelineExecutionContext& ctx,
                             Runtime::WorkerContext& wc) override {
-        auto record = buffer.getBuffer<int>();
+        auto record = buffer.getBuffer<TupleDataType>();
 
         // execute the kernel
-        cudaKernelWrapper.execute(record);
+        cudaKernelWrapper.execute(record, buffer.getNumberOfTuples(), "simpleAdditionKernel");
 
         ctx.emitBuffer(buffer, wc);
         return ExecutionResult::Ok;
@@ -127,10 +129,10 @@ class GPUPipelineStageExample : public Runtime::Execution::ExecutablePipelineSta
         return ExecutablePipelineStage::stop(pipelineExecutionContext);
     }
 
-    CUDAKernelWrapper<int, NUMBER_OF_TUPLE> cudaKernelWrapper;
+    CUDAKernelWrapper<TupleDataType> cudaKernelWrapper;
 };
 
-TEST_F(QueryExecutionTest, GPUOperatorQuery) {
+TEST_F(GPUQueryExecutionTest, GPUOperatorQuery) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
