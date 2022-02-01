@@ -19,7 +19,6 @@
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #include <string>
-#include <concepts>
 namespace NES {
 
 class Query;
@@ -81,7 +80,7 @@ class WindowedQuery {
     * @param onKeys list of keys
     * @return KeyedWindowedQuery
     */
-    template<std::same_as<ExpressionItem>... ExpressionItems>
+    template<class... ExpressionItems>
     [[nodiscard]] KeyedWindowedQuery byKey(ExpressionItems... onKeys) {
         std::vector<ExpressionNodePtr> keyExpressions;
         (keyExpressions.push_back(std::forward<ExpressionItems>(onKeys).getExpressionNode()), ...);
@@ -93,7 +92,7 @@ class WindowedQuery {
     * @param aggregations list of aggregation functions.
     * @return Query
     */
-    template<std::same_as<Windowing::WindowAggregationPtr>... WindowAggregations>
+    template<class... WindowAggregations>
     [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
         std::vector<Windowing::WindowAggregationPtr> windowAggregations;
         (windowAggregations.push_back(std::forward<Windowing::WindowAggregationPtr>(aggregations)), ...);
@@ -108,4 +107,4 @@ class WindowedQuery {
 }// namespace WindowOperatorBuilder
 }// namespace NES
 
-#endif  // NES_INCLUDE_API_WINDOWEDQUERY_HPP_
+#endif// NES_INCLUDE_API_WINDOWEDQUERY_HPP_
