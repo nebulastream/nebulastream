@@ -61,9 +61,7 @@ class GPUQueryExecutionTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() override {
         testSchema = Schema::create()
-                         ->addField("test$id", BasicType::INT64)
-                         ->addField("test$one", BasicType::INT64)
-                         ->addField("test$value", BasicType::INT64);
+                         ->addField("test$value", BasicType::INT32);
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {streamConf});
