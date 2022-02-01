@@ -35,6 +35,7 @@
 namespace NES {
     RuntimeNesMetrics AbstractSystemResourcesReader::readRuntimeNesMetrics() {
         RuntimeNesMetrics output{};
+        //output.wallTimeNs = 0;
         return output;
     }
 

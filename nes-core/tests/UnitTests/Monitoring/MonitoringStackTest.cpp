@@ -50,6 +50,19 @@ class MonitoringStackTest : public testing::Test {
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
+TEST_F(MonitoringStackTest, testAbstractSystemResourcesReader){
+    auto AbstractSystemResourcesReaderPtr = std::make_unique<AbstractSystemResourcesReader>();
+    auto var = AbstractSystemResourcesReaderPtr->readRuntimeNesMetrics();
+    auto varw = RuntimeNesMetrics {};
+    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readRuntimeNesMetrics() == RuntimeNesMetrics {});
+    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readStaticNesMetrics() == StaticNesMetrics {});
+    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readCpuStats() == CpuMetrics {});
+    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readNetworkStats() == NetworkMetrics {});
+    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readMemoryStats() == MemoryMetrics {});
+    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readDiskStats() == DiskMetrics {});
+    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->getWallTimeInNs() == uint64_t {});
+}
+
 TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
     auto runtimeMetrics = MetricUtils::getSystemResourcesReader()->readRuntimeNesMetrics();
     NES_DEBUG("MonitoringStackTest: Runtime metrics=" << runtimeMetrics.toJson());

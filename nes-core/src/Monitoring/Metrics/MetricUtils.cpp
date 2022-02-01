@@ -33,12 +33,12 @@ namespace NES {
 
 std::unique_ptr<AbstractSystemResourcesReader> MetricUtils::getSystemResourcesReader(){
     #ifdef __linux__
-        std::unique_ptr<AbstractSystemResourcesReader>SystemResourcesReader = std::make_unique<LinuxSystemResourcesReader>();
+        std::unique_ptr<AbstractSystemResourcesReader>AbstractSystemResourcesReaderPtr = std::make_unique<LinuxSystemResourcesReader>();
     #else
-        std::unique_ptr<AbstractSystemResourcesReader>SystemResourcesReader = std::make_unique<AbstractSystemResourcesReader>();
+        std::unique_ptr<AbstractSystemResourcesReader>AbstractSystemResourcesReaderPtr = std::make_unique<AbstractSystemResourcesReader>();
     #endif
 
-    return SystemResourcesReader;
+    return AbstractSystemResourcesReaderPtr;
 };
 
 Gauge<RuntimeNesMetrics> MetricUtils::runtimeNesStats() {

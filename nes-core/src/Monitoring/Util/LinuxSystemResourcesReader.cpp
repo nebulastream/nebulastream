@@ -53,6 +53,7 @@ RuntimeNesMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
             output.memoryUsageInBytes = std::stoull(memoryStr);
         }
         else{
+            NES_ERROR("LinuxSystemResourcesReader: File for memory.usage_in_bytes not available");
             AbstractSystemResourcesReader::readStaticNesMetrics();
         }
 
@@ -87,6 +88,7 @@ RuntimeNesMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
             }
         }
         else{
+            NES_ERROR("LinuxSystemResourcesReader: File for cpuacct.stat not available");
             AbstractSystemResourcesReader::readStaticNesMetrics();
         }
 
@@ -117,6 +119,7 @@ RuntimeNesMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
             }
         }
         else{
+            NES_ERROR("LinuxSystemResourcesReader: File for blkio.throttle.io_service_bytes not available");
             AbstractSystemResourcesReader::readStaticNesMetrics();
         }
 
@@ -149,6 +152,7 @@ StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
             output.totalMemoryBytes = std::min(limitMem, systemMem);
         }
         else{
+            NES_ERROR("LinuxSystemResourcesReader: File for memory.usage_in_bytes not available");
             AbstractSystemResourcesReader::readStaticNesMetrics();
         }
 
@@ -171,6 +175,7 @@ StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
             output.cpuPeriodUS = std::stoll(periodStr);
         }
         else{
+            NES_ERROR("LinuxSystemResourcesReader: File for cpu.cfs_period_us not available");
             AbstractSystemResourcesReader::readStaticNesMetrics();
         }
 
@@ -182,6 +187,7 @@ StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
             output.cpuQuotaUS = std::stoll(quotaStr);
         }
         else{
+            NES_ERROR("LinuxSystemResourcesReader: File for cpu.cfs_quota_us not available");
             AbstractSystemResourcesReader::readStaticNesMetrics();
         }
 
