@@ -13,8 +13,8 @@
 */
 
 #include <Exceptions/NesRuntimeException.hpp>
-#include <Runtime/ErrorListener.hpp>
-#include <Runtime/internal/backward.hpp>
+#include <Exceptions/ErrorListener.hpp>
+#include <Util/Backward/backward.hpp>
 #include <Util/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <csignal>

@@ -16,6 +16,7 @@
 #define NES_INCLUDE_MONITORING_METRICSTORE_HPP_
 
 #include <Util/Logger.hpp>
+#include <memory>
 #include <cstdint>
 #include <queue>
 #include <unordered_map>

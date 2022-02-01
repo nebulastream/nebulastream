@@ -13,7 +13,6 @@
 */
 
 #include <Exceptions/BufferAccessException.hpp>
-#include <Runtime/internal/backward.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
 

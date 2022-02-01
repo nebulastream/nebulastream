@@ -50,6 +50,7 @@ target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/../")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
+target_link_libraries(nes PUBLIC nes_common)
 
 if (GRPC_LIBRARIES)
     target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})

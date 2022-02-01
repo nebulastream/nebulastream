@@ -17,18 +17,19 @@ add_subdirectory(src)
 
 get_source(nes_common SOURCE_FILES_LOCAL)
 set(nes_common_SOURCE_FILES ${SOURCE_FILES_LOCAL})
-get_header_nes_client(nes_client_HEADER_FILES)
+#get_header_nes_client(nes_client_HEADER_FILES)
 
 message(STATUS "Common Headers: ${nes_common_HEADER_FILES}")
 message(STATUS "Common Source: ${nes_common_SOURCE_FILES}")
 
 # Add Library
 add_library(nes_common SHARED ${nes_common_HEADER_FILES} ${nes_common_SOURCE_FILES})
+target_link_libraries(nes_common PUBLIC ${LIBRARIES})
 target_include_directories(nes_common PUBLIC "include")
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
-#    add_subdirectory(tests)
+    add_subdirectory(tests)
     message(STATUS "Tests are enabled")
 else ()
     message(STATUS "Tests are disabled")

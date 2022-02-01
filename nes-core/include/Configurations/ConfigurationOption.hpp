@@ -20,6 +20,7 @@
 #include <sstream>
 #include <string>
 #include <typeinfo>
+#include <memory>
 #include <utility>
 
 namespace NES {
