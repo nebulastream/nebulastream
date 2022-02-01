@@ -52,7 +52,7 @@ class KeyedWindowedQuery {
     * @param aggregations list of aggregation functions.
     * @return Query
     */
-    template<std::same_as<Windowing::WindowAggregationPtr>... WindowAggregations>
+    template<class... WindowAggregations>
     [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
         std::vector<Windowing::WindowAggregationPtr> windowAggregations;
         (windowAggregations.push_back(std::forward<Windowing::WindowAggregationPtr>(aggregations)), ...);
