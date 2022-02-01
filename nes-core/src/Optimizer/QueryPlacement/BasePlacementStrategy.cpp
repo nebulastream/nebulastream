@@ -140,6 +140,7 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     }
 
     //3. Performs path selection
+
     std::vector upstreamTopologyNodes(topologyNodesWithUpStreamPinnedOperators.begin(),
                                       topologyNodesWithUpStreamPinnedOperators.end());
     std::vector downstreamTopologyNodes(topologyNodesWithDownStreamPinnedOperators.begin(),
@@ -147,7 +148,7 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     std::vector<TopologyNodePtr> selectedTopologyForPlacement =
         topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
     if (selectedTopologyForPlacement.empty()) {
-        throw Exception("Could not find the path for placement.");
+        throw Exception("BasePlacementStrategy: Could not find the path for placement.");
     }
 
     //4. Map nodes in the selected topology by their ids.
@@ -286,12 +287,18 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
 
     for (const auto& parent : operatorNode->getParents()) {
 
-        OperatorNodePtr parentOperator = parent->as<OperatorNode>();
+        OperatorNodePtr upStreamOperator = parent->as<OperatorNode>();
+        auto found = operatorToExecutionNodeMap.find(upStreamOperator->getId());
+        if (found == operatorToExecutionNodeMap.end()) {
+            NES_WARNING("BasePlacementStrategy::placeNetworkOperator: Skipping ");
+            continue;
+        }
+
         NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Get execution node where parent operator is placed");
-        ExecutionNodePtr parentExecutionNode = operatorToExecutionNodeMap[parentOperator->getId()];
+        ExecutionNodePtr parentExecutionNode = operatorToExecutionNodeMap[upStreamOperator->getId()];
         bool allChildrenPlaced = true;
         if (executionNode->getId() != parentExecutionNode->getId()
-            && !isSourceAndDestinationConnected(operatorNode, parentOperator)) {
+            && !isSourceAndDestinationConnected(operatorNode, upStreamOperator)) {
 
             NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Parent and its child operator are placed on different "
                       "physical node.");
@@ -354,14 +361,14 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                         createNetworkSourceOperator(queryId, inputSchema, sourceOperatorId, sinkNode);
                     bool found = false;
                     for (auto& querySubPlan : querySubPlans) {
-                        OperatorNodePtr targetDownstreamOperator = querySubPlan->getOperatorWithId(parentOperator->getId());
+                        OperatorNodePtr targetDownstreamOperator = querySubPlan->getOperatorWithId(upStreamOperator->getId());
                         if (targetDownstreamOperator) {
                             NES_TRACE("BasePlacementStrategy::placeNetworkOperator: add network source operator as child to the "
                                       "parent operator.");
                             targetDownstreamOperator->addChild(sourceOperator);
                             operatorToSubPlan[sourceOperator->getId()] = querySubPlan;
                             allChildrenPlaced =
-                                (parentOperator->getChildren().size() == targetDownstreamOperator->getChildren().size());
+                                (upStreamOperator->getChildren().size() == targetDownstreamOperator->getChildren().size());
                             found = true;
                             break;
                         }
@@ -409,14 +416,14 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
         //FIXME: Nithish what do we do in this code base?
         if (executionNode->getId() == parentExecutionNode->getId()) {
             auto childPlan = operatorToSubPlan[operatorNode->getId()];
-            auto parentPlan = operatorToSubPlan[parentOperator->getId()];
-            auto parentOperatorInSubPlan = parentPlan->getOperatorWithId(parentOperator->getId());
+            auto parentPlan = operatorToSubPlan[upStreamOperator->getId()];
+            auto parentOperatorInSubPlan = parentPlan->getOperatorWithId(upStreamOperator->getId());
             if (childPlan->getQuerySubPlanId() != parentPlan->getQuerySubPlanId()
                 && parentOperatorInSubPlan->getChildren().empty()) {
                 NES_TRACE("BasePlacementStrategy::placeNetworkOperator: Combining parent and child as they are in different "
                           "plans but same execution plan.");
-                auto parentCopy = parentOperator->copy();
-                for (const auto& child : parentOperator->getChildren()) {
+                auto parentCopy = upStreamOperator->copy();
+                for (const auto& child : upStreamOperator->getChildren()) {
                     const std::shared_ptr<OperatorNode>& childOp = child->as<OperatorNode>();
                     if (childPlan->hasOperatorWithId(childOp->getId())) {
                         const OperatorNodePtr& childOpInSubPlan = childPlan->getOperatorWithId(childOp->getId());
@@ -428,7 +435,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
                 operatorToSubPlan[parentCopy->getId()] = childPlan;
                 parentOperatorInSubPlan->removeAllParent();
                 if (parentOperatorInSubPlan->getChildren().empty()) {
-                    parentPlan->removeAsRootOperator(parentOperator);
+                    parentPlan->removeAsRootOperator(upStreamOperator);
                 }
                 if (parentPlan->getRootOperators().empty()) {
                     auto parentExecutionPlans = parentExecutionNode->getQuerySubPlans(queryId);
@@ -448,7 +455,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId, const Operator
 
         if (allChildrenPlaced) {
             NES_TRACE("BasePlacementStrategy: add network source and sink operator for the parent operator");
-            placeNetworkOperator(queryId, parentOperator);
+            placeNetworkOperator(queryId, upStreamOperator);
         } else {
             NES_TRACE("BasePlacementStrategy: Skipping network source and sink operator for the parent operator as all children "
                       "operators are not processed");

@@ -101,7 +101,7 @@ bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr
 std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan) {
     std::vector<OperatorNodePtr> upStreamPinnedOperators;
     auto queryPlan = sharedQueryPlan->getQueryPlan();
-    if (!queryReconfiguration) {
+    if (!queryReconfiguration || sharedQueryPlan->isNew()) {
         //Fetch all Source operators
         upStreamPinnedOperators = queryPlan->getLeafOperators();
     } else {
@@ -125,19 +125,19 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
             //Only place sink operators that are not pinned or that are not placed yet
             auto logicalOperator = downStreamOperator->as<OperatorNode>();
 
-            //Check if the operator already in the pinned operator list
-            auto found = std::find_if(downStreamPinnedOperators.begin(),
-                                      downStreamPinnedOperators.end(),
-                                      [logicalOperator](const OperatorNodePtr& operatorNode) {
-                                          return operatorNode->getId() == logicalOperator->getId();
-                                      });
-
-            if (found != downStreamPinnedOperators.end()) {
-                continue;
-            }
-
             if (!logicalOperator->hasProperty(PINNED_NODE_ID) || !logicalOperator->hasProperty(PLACED)
                 || !std::any_cast<bool>(logicalOperator->getProperty(PLACED))) {
+
+                //Check if the operator already in the pinned operator list
+                auto found = std::find_if(downStreamPinnedOperators.begin(),
+                                          downStreamPinnedOperators.end(),
+                                          [logicalOperator](const OperatorNodePtr& operatorNode) {
+                                              return operatorNode->getId() == logicalOperator->getId();
+                                          });
+
+                if (found != downStreamPinnedOperators.end()) {
+                    continue;
+                }
                 logicalOperator->addProperty(PINNED_NODE_ID, rootTopologyNode->getId());
                 downStreamPinnedOperators.emplace_back(logicalOperator);
             }
