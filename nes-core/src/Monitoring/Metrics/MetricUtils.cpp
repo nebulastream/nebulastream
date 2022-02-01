@@ -24,31 +24,43 @@
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
-#include <Monitoring/Util/SystemResourcesReader.hpp>
+#include <Monitoring/Util/LinuxSystemResourcesReader.hpp>
+#include <Monitoring/Util/AbstractSystemResourcesReader.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 namespace NES {
+
+std::unique_ptr<AbstractSystemResourcesReader> MetricUtils::getSystemResourcesReader(){
+    #ifdef __linux__
+        std::unique_ptr<AbstractSystemResourcesReader>SystemResourcesReader = std::make_unique<LinuxSystemResourcesReader>();
+    #else
+        std::unique_ptr<AbstractSystemResourcesReader>SystemResourcesReader = std::make_unique<AbstractSystemResourcesReader>();
+    #endif
+
+    return SystemResourcesReader;
+};
+
 Gauge<RuntimeNesMetrics> MetricUtils::runtimeNesStats() {
-    return Gauge<RuntimeNesMetrics>(SystemResourcesReader::readRuntimeNesMetrics);
+    return Gauge<RuntimeNesMetrics>([](){ return getSystemResourcesReader()->readRuntimeNesMetrics(); });
 }
 
 Gauge<StaticNesMetrics> MetricUtils::staticNesStats() {
-    return Gauge<StaticNesMetrics>(SystemResourcesReader::readStaticNesMetrics);
+    return Gauge<StaticNesMetrics>([](){ return getSystemResourcesReader()->readStaticNesMetrics(); });
 }
 
-Gauge<CpuMetrics> MetricUtils::cpuStats() { return Gauge<CpuMetrics>(SystemResourcesReader::readCpuStats); }
+Gauge<CpuMetrics> MetricUtils::cpuStats() { return Gauge<CpuMetrics>([](){ return getSystemResourcesReader()->readCpuStats(); }); }
 
-Gauge<MemoryMetrics> MetricUtils::memoryStats() { return Gauge<MemoryMetrics>(SystemResourcesReader::readMemoryStats); }
+Gauge<MemoryMetrics> MetricUtils::memoryStats() { return Gauge<MemoryMetrics>([](){ return getSystemResourcesReader()->readMemoryStats(); }); }
 
-Gauge<DiskMetrics> MetricUtils::diskStats() { return Gauge<DiskMetrics>(SystemResourcesReader::readDiskStats); }
+Gauge<DiskMetrics> MetricUtils::diskStats() { return Gauge<DiskMetrics>([](){ return getSystemResourcesReader()->readDiskStats(); }); }
 
-Gauge<NetworkMetrics> MetricUtils::networkStats() { return Gauge<NetworkMetrics>(SystemResourcesReader::readNetworkStats); }
+Gauge<NetworkMetrics> MetricUtils::networkStats() { return Gauge<NetworkMetrics>([](){ return getSystemResourcesReader()->readNetworkStats(); }); }
 
 Gauge<uint64_t> MetricUtils::cpuIdle(unsigned int cpuNo) {
     auto gaugeIdle = Gauge<uint64_t>([cpuNo]() {
         NES_DEBUG("MetricUtils: Reading CPU Idle for cpu " << cpuNo);
-        return SystemResourcesReader::readCpuStats().getValues(cpuNo).idle;
+        return getSystemResourcesReader()->readCpuStats().getValues(cpuNo).idle;
     });
     return gaugeIdle;
 }

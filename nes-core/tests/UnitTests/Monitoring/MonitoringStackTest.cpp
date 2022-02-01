@@ -28,7 +28,7 @@
 
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
-#include <Monitoring/Util/SystemResourcesReader.hpp>
+#include <Monitoring/Util/AbstractSystemResourcesReader.hpp>
 #include <Util/Logger.hpp>
 #include <cpprest/json.h>
 
@@ -51,10 +51,10 @@ class MonitoringStackTest : public testing::Test {
 };
 
 TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
-    auto runtimeMetrics = SystemResourcesReader::readRuntimeNesMetrics();
+    auto runtimeMetrics = MetricUtils::getSystemResourcesReader()->readRuntimeNesMetrics();
     NES_DEBUG("MonitoringStackTest: Runtime metrics=" << runtimeMetrics.toJson());
 
-    EXPECT_TRUE(runtimeMetrics.wallTimeNs <= SystemResourcesReader::getWallTimeInNs());
+    EXPECT_TRUE(runtimeMetrics.wallTimeNs <= MetricUtils::getSystemResourcesReader()->getWallTimeInNs());
     EXPECT_TRUE(runtimeMetrics.blkioBytesWritten >= 0);
     EXPECT_TRUE(runtimeMetrics.blkioBytesRead >= 0);
     EXPECT_TRUE(runtimeMetrics.memoryUsageInBytes > 0);
@@ -65,7 +65,7 @@ TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
 }
 
 TEST_F(MonitoringStackTest, testStaticNesMetrics) {
-    auto staticMetrics = SystemResourcesReader::readStaticNesMetrics();
+    auto staticMetrics = MetricUtils::getSystemResourcesReader()->readStaticNesMetrics();
     NES_DEBUG("MonitoringStackTest: Static metrics=" << staticMetrics.toJson());
 
     EXPECT_TRUE(staticMetrics.cpuQuotaUS >= -1);

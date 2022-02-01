@@ -80,7 +80,7 @@ class StaticNesMetrics {
     uint64_t totalMemoryBytes;
 
     uint32_t cpuCoreNum;
-    uint64_t totalCPUJiffies;//user+idle+system (Note: This value can change everytime it is read via SystemResourcesReader)
+    uint64_t totalCPUJiffies;//user+idle+system (Note: This value can change everytime it is read via AbstractSystemResourcesReader)
 
     // Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
     int64_t cpuPeriodUS;//the CPU CFS scheduler period in microseconds
