@@ -15,6 +15,7 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -64,43 +65,21 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
                                                                       z3Context);
 
     auto queryId = sharedQueryPlan->getSharedQueryId();
-    auto queryPlan = sharedQueryPlan->getQueryPlan();
-    auto rootTopology = topology->getRoot();
 
     //1. Fetch all upstream pinned operators
-
-    std::vector<OperatorNodePtr> upStreamPinnedOperators;
-    if (!queryReconfiguration) {
-        upStreamPinnedOperators = queryPlan->getLeafOperators();
-    } else {
-        auto changeLogs = sharedQueryPlan->getChangeLog();
-        for (auto& addition : changeLogs->getAddition()) {
-            upStreamPinnedOperators.emplace_back(addition.first);
-        }
-        //TODO: We need to figure out how to deal with removals
-    }
+    auto upStreamPinnedOperators = getUpStreamPinnedOperators(sharedQueryPlan);
 
     //2. Fetch all downstream pinned operators
+    auto downStreamPinnedOperators = getDownStreamPinnedOperators(upStreamPinnedOperators);
 
-    std::vector<OperatorNodePtr> downStreamPinnedOperators;
-    for (const auto& pinnedOperator : upStreamPinnedOperators) {
-        //We pin all root (sink) operators
-        auto downStreamOperators = pinnedOperator->getAllRootNodes();
-        for (auto& downStreamOperator : downStreamPinnedOperators) {
-            //Only place sink operators that are not pinned or that are not placed yet
-            if (!downStreamOperator->hasProperty(PINNED_NODE_ID) || !downStreamOperator->hasProperty(PLACED)
-                || !std::any_cast<bool>(downStreamOperator->getProperty(PLACED))) {
-                downStreamOperator->addProperty(PINNED_NODE_ID, rootTopology->getId());
-                downStreamPinnedOperators.emplace_back(downStreamOperator);
-            }
-        }
+    //3. Check if all operators are pinned
+    if (!checkPinnedOperators(upStreamPinnedOperators) || !checkPinnedOperators(downStreamPinnedOperators)) {
+        throw QueryPlacementException(queryId, "Found operators without pinning.");
     }
 
-    if (checkPinnedOperators(upStreamPinnedOperators)) {
-        return placementStrategyPtr->updateGlobalExecutionPlan(upStreamPinnedOperators, downStreamPinnedOperators);
-    } else {
-        throw QueryPlacementException(queryId, "Found start leaf operator without pinning");
-    }
+    bool success = placementStrategyPtr->updateGlobalExecutionPlan(queryId, upStreamPinnedOperators, downStreamPinnedOperators);
+    NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+    return success;
 }
 
 bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators) {
@@ -111,6 +90,41 @@ bool QueryPlacementPhase::checkPinnedOperators(const std::vector<OperatorNodePtr
         }
     }
     return true;
+}
+
+std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan) {
+    std::vector<OperatorNodePtr> upStreamPinnedOperators;
+    auto queryPlan = sharedQueryPlan->getQueryPlan();
+    if (!queryReconfiguration) {
+        //Fetch all Source operators
+        upStreamPinnedOperators = queryPlan->getLeafOperators();
+    } else {
+        auto changeLogs = sharedQueryPlan->getChangeLog();
+        for (auto& addition : changeLogs->getAddition()) {
+            upStreamPinnedOperators.emplace_back(addition.first);
+        }
+        //TODO: We need to figure out how to deal with removals
+    }
+    return upStreamPinnedOperators;
+}
+
+std::vector<OperatorNodePtr>
+QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators) {
+    std::vector<OperatorNodePtr> downStreamPinnedOperators;
+    auto rootTopologyNode = topology->getRoot();
+    for (const auto& pinnedOperator : upStreamPinnedOperators) {
+        //We pin all root (sink) operators
+        auto downStreamOperators = pinnedOperator->getAllRootNodes();
+        for (auto& downStreamOperator : downStreamPinnedOperators) {
+            //Only place sink operators that are not pinned or that are not placed yet
+            if (!downStreamOperator->hasProperty(PINNED_NODE_ID) || !downStreamOperator->hasProperty(PLACED)
+                || !std::any_cast<bool>(downStreamOperator->getProperty(PLACED))) {
+                downStreamOperator->addProperty(PINNED_NODE_ID, rootTopologyNode->getId());
+                downStreamPinnedOperators.emplace_back(downStreamOperator);
+            }
+        }
+    }
+    return downStreamPinnedOperators;
 }
 
 }// namespace NES::Optimizer

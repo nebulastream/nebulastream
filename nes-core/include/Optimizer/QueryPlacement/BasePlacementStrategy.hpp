@@ -109,7 +109,7 @@ class BasePlacementStrategy {
      * @param pinnedDownStreamNodes
      * @return
      */
-    virtual bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+    virtual bool updateGlobalExecutionPlan(QueryId queryId, const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) = 0;
 
     /**

@@ -92,6 +92,10 @@ class QueryPlacementPhase {
                                  z3::ContextPtr z3Context,
                                  bool queryReconfiguration);
 
+    std::vector<OperatorNodePtr> getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan);
+
+    std::vector<OperatorNodePtr> getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators);
+
     /**
      *
      *
