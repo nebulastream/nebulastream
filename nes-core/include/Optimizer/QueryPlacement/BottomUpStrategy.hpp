@@ -37,8 +37,9 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
-    bool updateGlobalExecutionPlan(const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
+    bool updateGlobalExecutionPlan(QueryId queryId,
+                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
     bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
 
@@ -63,7 +64,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      */
     void placeQueryPlanOnTopology(QueryId queryId,
                                   const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
-                                  const std::vector<OperatorNodePtr>& pinnedDownStreamNodes);
+                                  const std::vector<uint64_t>& pinnedDownStreamOperatorIds);
 
     /**
      * @brief Try to place input operator on the input topology node
@@ -71,7 +72,10 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void placeOperatorOnTopologyNode(QueryId queryId, const OperatorNodePtr& operatorNode, TopologyNodePtr candidateTopologyNode);
+    void placeOperatorOnTopologyNode(QueryId queryId,
+                                     const OperatorNodePtr& operatorNode,
+                                     TopologyNodePtr candidateTopologyNode,
+                                     const std::vector<uint64_t>& pinnedDownStreamOperatorIds);
 
     /**
      * @brief Get topology node where all children operators of the input operator are placed
