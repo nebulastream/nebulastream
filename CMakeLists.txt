@@ -387,7 +387,7 @@ if (NES_ENABLES_TESTS)
     if (NOT ${GTest_FOUND})
         message(FATAL_ERROR "Unable to find GTest")
     endif ()
-    set(LIBRARIES ${LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 endif ()
 
 # PAPI
@@ -506,59 +506,9 @@ if(iwyu_path)
     set_property(TARGET nes PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
 endif ()
 
-
-# Documentation
-add_subdirectory(cmake/docs)
-
-ExternalProject_Add(
-        gtest
-        URL https://github.com/google/googletest/archive/release-1.11.0.zip
-        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
-        CMAKE_ARGS ${CMAKE_ARGS_CROSS}
-        # Disable install step
-        INSTALL_COMMAND ""
-        URL_HASH SHA256=63afcb1690b2139b2d9c7ad1df3de87697530fb1fd6869622cff26c77a3b0cfb
-)
-
-# Get GTest source and binary directories from CMake project
-ExternalProject_Get_Property(gtest source_dir binary_dir)
-
-# Create a libgtest target to be used as a dependency by test programs
-add_library(libgtest IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest gtest gtest_main)
-
-# Set libgtest properties
-set_target_properties(libgtest PROPERTIES
-        "IMPORTED_LOCATION" "${binary_dir}/lib/libgtest.a"
-        "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-        )
-
-add_library(libgtest_main IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest_main gtest_main)
-
-set_target_properties(libgtest_main PROPERTIES
-        "IMPORTED_LOCATION" "${binary_dir}/lib/libgtest_main.a"
-        "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-        )
-
-# Create a libgmock target to be used as a dependency by test programs
-add_library(libgmock IMPORTED STATIC GLOBAL)
-add_dependencies(libgmock gtest)
-
-# Set libgmock properties
-set_target_properties(libgmock PROPERTIES
-        "IMPORTED_LOCATION" "${binary_dir}/lib/libgmock.a"
-        "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-        )
-
-# Set Include Dirs
-include_directories("${source_dir}/googletest/include"
-        "${source_dir}/googlemock/include")
-
-set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} libgtest libgtest_main libgmock cpprestsdk::cpprest)
-
 # Add tests with command
 if (NES_ENABLES_TESTS)
+    set(GTEST_LIBRARIES ${LIBRARIES})
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
@@ -572,6 +522,10 @@ add_subdirectory(nes-core)
 add_subdirectory(nes-client)
 # Add target for benchmarks
 add_subdirectory(benchmark)
+
+# Documentation
+add_subdirectory(cmake/docs)
+
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
