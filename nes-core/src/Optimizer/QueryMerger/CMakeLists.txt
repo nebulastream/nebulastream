@@ -13,7 +13,7 @@
 
 add_subdirectory(Signature)
 
-add_source_nes(
+add_source_files(nes-core
         SyntaxBasedCompleteQueryMergerRule.cpp
         SyntaxBasedPartialQueryMergerRule.cpp
         Z3SignatureBasedCompleteQueryMergerRule.cpp

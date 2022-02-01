@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_nes(
+add_source_files(nes-core
         FileSink.cpp
         ZmqSink.cpp
         SinkMedium.cpp
@@ -21,19 +21,19 @@ add_source_nes(
 )
 
 if(NES_USE_KAFKA)
-    add_source_nes(
+    add_source_files(nes-core
             KafkaSink.cpp
     )
 endif()
 
 if (NES_USE_OPC)
-    add_source_nes(
+    add_source_files(nes-core
         OPCSink.cpp
     )
 endif ()
 
 if (NES_USE_MQTT)
-    add_source_nes(
+    add_source_files(nes-core
             MQTTSink.cpp
     )
 endif ()

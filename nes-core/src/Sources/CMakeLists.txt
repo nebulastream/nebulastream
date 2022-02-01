@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_nes(
+add_source_files(nes-core
         DataSource.cpp
         GeneratorSource.cpp
         BinarySource.cpp
@@ -30,17 +30,17 @@ add_source_nes(
 add_subdirectory(Parsers)
 
 if(NES_USE_KAFKA)
-    add_source_nes(
+    add_source_files(nes-core
             KafkaSource.cpp
     )
 endif()
 if(NES_USE_OPC)
-    add_source_nes(
+    add_source_files(nes-core
             OPCSource.cpp
     )
 endif()
 if(NES_USE_MQTT)
-    add_source_nes(
+    add_source_files(nes-core
             MQTTSource.cpp
     )
 endif()

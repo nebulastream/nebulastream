@@ -13,14 +13,14 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
-get_source(nes_client nes_client_SOURCE_FILES)
+get_source(nes-client NES_CLIENT_SOURCE_FILES)
 
-message(STATUS "Client Source Files: ${nes_client_SOURCE_FILES}")
+message(STATUS "Client Source Files: ${NES_CLIENT_SOURCE_FILES}")
 
 # Add Library
-add_library(nes_client SHARED ${nes_client_SOURCE_FILES})
-target_include_directories(nes_client PUBLIC "include")
-target_link_libraries(nes_client PRIVATE nes)
+add_library(nes-client SHARED ${NES_CLIENT_SOURCE_FILES})
+target_include_directories(nes-client PUBLIC "include")
+target_link_libraries(nes-client PRIVATE nes)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -31,7 +31,7 @@ else ()
 endif ()
 
 #Add the nes client and headers to cpack
-install(TARGETS nes_client
+install(TARGETS nes-client
         COMPONENT nesLibrary
         DESTINATION lib)
 

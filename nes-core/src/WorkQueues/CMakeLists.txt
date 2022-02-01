@@ -12,6 +12,6 @@
 # limitations under the License.
 
 add_subdirectory(RequestTypes)
-add_source_nes(
+add_source_files(nes-core
         RequestQueue.cpp
 )

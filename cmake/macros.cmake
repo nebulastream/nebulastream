@@ -28,20 +28,10 @@ macro(get_source PROP_NAME SOURCE_FILES)
     set(${SOURCE_FILES} ${SOURCE_FILES_LOCAL})
 endmacro()
 
-macro(add_source_nes PROP_NAME)
-    add_source(nes "${ARGN}")
-endmacro()
-
 macro(add_source_files)
     set(SOURCE_FILES "${ARGN}")
     list(POP_FRONT SOURCE_FILES TARGET_NAME)
-    MESSAGE("TARGET: ${TARGET_NAME} OUTPUT: ${SOURCE_FILES}")
     add_source(${TARGET_NAME} "${SOURCE_FILES}")
-endmacro()
-
-macro(get_source_nes SOURCE_FILES)
-    get_source(nes SOURCE_FILES_LOCAL)
-    set(${SOURCE_FILES} ${SOURCE_FILES_LOCAL})
 endmacro()
 
 macro(get_header_nes HEADER_FILES)

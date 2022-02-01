@@ -15,14 +15,14 @@
 # Set Sources and Headers
 add_subdirectory(src)
 
-get_source(nes-common nes_common_SOURCE_FILES)
+get_source(nes-common NES_COMMON_SOURCE_FILES)
 
-message(STATUS "Common Source Files: ${nes_common_SOURCE_FILES}")
+message(STATUS "Common Source Files: ${NES_COMMON_SOURCE_FILES}")
 
 # Add Library
-add_library(nes_common SHARED ${nes_common_SOURCE_FILES})
-target_link_libraries(nes_common PUBLIC ${LIBRARIES})
-target_include_directories(nes_common PUBLIC "include")
+add_library(nes-common SHARED ${NES_COMMON_SOURCE_FILES})
+target_link_libraries(nes-common PUBLIC ${LIBRARIES})
+target_include_directories(nes-common PUBLIC "include")
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -33,7 +33,7 @@ else ()
 endif ()
 
 #Add the nes common and headers to cpack
-install(TARGETS nes_common
+install(TARGETS nes-common
         COMPONENT nesLibrary
         DESTINATION lib)
 
