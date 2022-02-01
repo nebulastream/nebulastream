@@ -525,7 +525,8 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-# Add target for core, which contains the nes lib
+# Add target for common lib, which contains a minimal set
+# of shared functionality used by all components of nes
 add_subdirectory(nes-common)
 # Add target for core, which contains the nes lib
 add_subdirectory(nes-core)
