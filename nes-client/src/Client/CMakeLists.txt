@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_nes_client(
+add_source_files(nes_client
         RemoteClient.cpp
         QueryConfig.cpp
         ClientException.cpp
-)
+        )
