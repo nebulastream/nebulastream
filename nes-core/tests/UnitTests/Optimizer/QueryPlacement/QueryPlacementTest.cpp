@@ -14,11 +14,11 @@
 
 #include "z3++.h"
 #include <API/QueryAPI.hpp>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/LogicalSource.hpp>
-#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
@@ -57,7 +58,12 @@ using namespace Configurations;
 
 class QueryPlacementTest : public testing::Test {
   public:
-    std::shared_ptr<QueryParsingService> queryParsingService;
+    z3::ContextPtr z3Context;
+    SourceCatalogPtr streamCatalog;
+    TopologyPtr topology;
+    QueryParsingServicePtr queryParsingService;
+    GlobalExecutionPlanPtr globalExecutionPlan;
+    Optimizer::TypeInferencePhasePtr typeInferencePhase;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
 
@@ -65,6 +71,7 @@ class QueryPlacementTest : public testing::Test {
     void SetUp() override {
         NES::setupLogging("QueryPlacementTest.log", NES::LOG_DEBUG);
         std::cout << "Setup QueryPlacementTest test case." << std::endl;
+        z3Context = std::make_shared<z3::context>();
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         queryParsingService = QueryParsingService::create(jitCompiler);
@@ -102,11 +109,16 @@ class QueryPlacementTest : public testing::Test {
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
 
-        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
-        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
+        SourceCatalogEntryPtr streamCatalogEntry1 =
+            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode1);
+        SourceCatalogEntryPtr streamCatalogEntry2 =
+            std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode2);
 
         streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
         streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
+
+        globalExecutionPlan = GlobalExecutionPlan::create();
+        typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {
@@ -125,29 +137,14 @@ class QueryPlacementTest : public testing::Test {
             }
         }
     }
-
-    SourceCatalogPtr streamCatalog;
-    TopologyPtr topology;
 };
 
 /* Test query placement with bottom up strategy  */
 TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 
     setupTopologyAndStreamCatalog({4, 4, 4});
-
-    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::BottomUp,
-                                                                              globalExecutionPlan,
-                                                                              topology,
-                                                                              typeInferencePhase,
-                                                                              streamCatalog);
-
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    QueryId queryId = PlanIdGenerator::getNextQueryId();
-    queryPlan->setQueryId(queryId);
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
@@ -157,7 +154,15 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    placementStrategy->updateGlobalExecutionPlan(queryPlan);
+    auto sharedQueryPlan = SharedQueryPlan::create(queryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
+    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                      topology,
+                                                                      typeInferencePhase,
+                                                                      streamCatalog,
+                                                                      z3Context,
+                                                                      false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     //Assertion

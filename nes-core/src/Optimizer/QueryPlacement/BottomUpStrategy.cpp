@@ -97,7 +97,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
-    NES_DEBUG("Perform placement of the pinned and all their downstream operators." << pinnedUpStreamOperators.size());
+    NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
     performPathSelection(pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     std::vector<OperatorId> pinnedDownstreamOperatorIds;
