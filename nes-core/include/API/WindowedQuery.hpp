@@ -19,7 +19,7 @@
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #include <string>
-
+#include <concepts>
 namespace NES {
 
 class Query;
