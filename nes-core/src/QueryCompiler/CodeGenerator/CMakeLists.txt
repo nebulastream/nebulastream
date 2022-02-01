@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-coreCodeExpression.cpp
+add_source_files(nes-core CodeExpression.cpp
         CodeGenerator.cpp
         GeneratedCode.cpp
         RecordHandler.cpp
