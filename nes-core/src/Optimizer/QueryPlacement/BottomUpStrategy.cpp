@@ -296,6 +296,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
         NES_TRACE("BottomUpStrategy: Get the candidate query plan where operator is to be appended.");
         QueryPlanPtr candidateQueryPlan = getCandidateQueryPlan(queryId, operatorNode, candidateExecutionNode);
         operatorNode->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
+        operatorNode->addProperty(PLACED, true);
         auto operatorCopy = operatorNode->copy();
         if (candidateQueryPlan->getRootOperators().empty()) {
             candidateQueryPlan->appendOperatorAsNewRoot(operatorCopy);
