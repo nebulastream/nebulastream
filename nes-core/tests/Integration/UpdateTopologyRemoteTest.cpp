@@ -78,7 +78,6 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
     workerConfig2->setRpcPort(*node2RpcPort);
     workerConfig2->setDataPort(*node2DataPort);
-    workerConfig->setCoordinatorPort(port);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);

@@ -167,16 +167,16 @@ TEST_F(MQTTSourceTest, DISABLED_MQTTSourceValue) {
 
 // Disabled, because it requires a manually set up MQTT broker and a data sending MQTT client
 TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     //register logical stream qnv

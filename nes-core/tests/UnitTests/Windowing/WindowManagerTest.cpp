@@ -573,7 +573,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
 TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     PhysicalSourcePtr conf = PhysicalSource::create("x","x1");
     auto port = getAvailablePort();
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", port, {conf});
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", *port, {conf});
     auto aggregation = Sum(Attribute("id", INT64));
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();

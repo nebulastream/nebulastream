@@ -68,7 +68,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("car", "physical_car", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -80,7 +80,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -234,7 +234,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("car", "physical_car", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -246,7 +246,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -400,7 +400,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("car", "physical_car", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -412,7 +412,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -565,7 +565,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("car", "physical_car", defaultSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UnionDeploymentTest: Worker1 started successfully");
@@ -577,7 +577,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     defaultSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("truck", "physical_truck", defaultSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UnionDeploymentTest: Worker 2 started successfully");
@@ -640,7 +640,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -653,7 +653,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -791,7 +791,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -804,7 +804,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -912,7 +912,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource1 = PhysicalSource::create("ruby", "physical_ruby", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -925,7 +925,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(28);
     auto physicalSource2 = PhysicalSource::create("diamond", "physical_diamond", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");

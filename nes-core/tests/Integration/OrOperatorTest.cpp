@@ -84,7 +84,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
     worker1Configuration->addPhysicalSource(conf70);
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(worker1Configuration);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("OrOperatorTest: Worker1 started successfully");
@@ -100,7 +100,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
     //register physical stream R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
     worker2Configuration->addPhysicalSource(conf73);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(worker2Configuration);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("OrOperatorTest: Worker2 started successfully");
@@ -269,7 +269,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
     worker1Configuration->addPhysicalSource(conf70);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(worker1Configuration);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("OrOperatorTest: Worker1 started successfully");
@@ -285,7 +285,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     //register physical stream R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
     worker2Configuration->addPhysicalSource(conf73);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(worker2Configuration);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("OrOperatorTest: Worker2 started successfully");
@@ -301,7 +301,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     //register physical stream R20000732
     PhysicalSourcePtr conf732 = PhysicalSource::create("QnV3", "test_stream_QnV3", csvSourceType3);
     worker3Configuration->addPhysicalSource(conf732);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(worker3Configuration);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(worker3Configuration));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("OrOperatorTest: Worker3 started successfully");
@@ -378,7 +378,7 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream_R2000070", csvSourceType1);
     worker1Configuration->addPhysicalSource(conf70);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(worker1Configuration);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("OrOperatorTest: Worker1 started successfully");
@@ -393,7 +393,7 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     //register physical stream R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_R2000073", csvSourceType2);
     worker2Configuration->addPhysicalSource(conf73);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(worker2Configuration);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(worker2Configuration));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("OrOperatorTest: Worker2 started successfully");

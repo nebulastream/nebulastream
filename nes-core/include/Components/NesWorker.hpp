@@ -149,6 +149,8 @@ class NesWorker {
 
     uint64_t getWorkerId();
 
+    const Configurations::WorkerConfigurationPtr& getWorkerConfiguration() const;
+
   private:
     /**
      * @brief method to register physical stream with the coordinator

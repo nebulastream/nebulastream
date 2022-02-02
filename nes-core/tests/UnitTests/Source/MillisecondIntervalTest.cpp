@@ -76,7 +76,7 @@ struct __attribute__((packed)) ysbRecord {
  */
 class MillisecondIntervalTest : public Testing::NESBaseTest {
   public:
-    CoordinatorConfigurationPtr crdConf;
+    CoordinatorConfigurationPtr coordinatorConfig;
     WorkerConfigurationPtr wrkConf;
     CSVSourceTypePtr csvSourceType;
 
@@ -99,9 +99,9 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
         PhysicalSourcePtr streamConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
         this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
 
-        crdConf = CoordinatorConfiguration::create();
-        crdConf->setRpcPort(*rpcCoordinatorPort);
-        crdConf->setRestPort(*restPort);
+        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+        coordinatorConfig->setRestPort(*restPort);
 
         wrkConf = WorkerConfiguration::create();
         wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
@@ -254,11 +254,11 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
 
 TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
 
-    crdConf->resetCoordinatorOptions();
+    coordinatorConfig->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 
     NES_INFO("MillisecondIntervalTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0u);
     //register logical stream

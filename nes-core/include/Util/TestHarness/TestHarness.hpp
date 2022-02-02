@@ -377,7 +377,7 @@ class TestHarness {
             nesWorker->start(/**blocking**/ false, /**withConnect**/ true);
 
             //We are assuming that coordinator has a node id 1
-            nesWorker->replaceParent(1, workerConfiguration->getParentId()->getValue());
+            nesWorker->replaceParent(1, nesWorker->getWorkerConfiguration()->getParentId()->getValue());
 
             //Add Nes Worker to the configuration.
             //Note: this is required to stop the NesWorker at the end of the test

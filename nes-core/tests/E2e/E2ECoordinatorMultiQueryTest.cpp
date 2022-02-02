@@ -54,15 +54,15 @@ class E2ECoordinatorMultiQueryTest : public Testing::NESBaseTest {
  */
 TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTwoQueries) {
     NES_INFO(" start coordinator");
-    std::string pathQuery1 = "query1.out";
-    std::string pathQuery2 = "query2.out";
+    std::string pathQuery1 = getTestResourceFolder() / "query1.out";
+    std::string pathQuery2 = getTestResourceFolder() / "query2.out";
 
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
 
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::numberOfSlots(8)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
 
     auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -72,7 +72,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
                                           TestUtils::sourceType("DefaultSource"),
                                           TestUtils::logicalStreamName("default_logical"),
                                           TestUtils::physicalStreamName("test")});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
     ssQuery1 << R"({"userQuery" : "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
@@ -147,15 +147,15 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     remove(pathQuery2.c_str());
     remove(pathQuery3.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker = TestUtils::startWorker(
-        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPor),
+        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
             TestUtils::sourceType("DefaultSource"),
             TestUtils::logicalStreamName("default_logical"),
             TestUtils::physicalStreamName("test")});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
     ssQuery1 << R"({"userQuery" : "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
@@ -242,8 +242,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     remove(Qpath1.c_str());
     remove(Qpath2.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -345,8 +345,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     string coordinatorRPCPort = std::to_string(*rpcCoordinatorPort);
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
@@ -447,8 +447,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     remove(outputFilePath.c_str());
     remove(outputFilePath2.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "

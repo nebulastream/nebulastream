@@ -33,10 +33,11 @@ using namespace Configurations;
 
 class AndOperatorTest : public Testing::NESBaseTest {
   public:
-    CoordinatorConfigPtr coConf;
-    CSVSourceConfigPtr srcConf;
-    CSVSourceConfigPtr srcConf1;
-    CSVSourceConfigPtr srcConf2;
+    CoordinatorConfigurationPtr coConf;
+    CSVSourceTypePtr srcConf1;
+    CSVSourceTypePtr srcConf2;
+    CSVSourceTypePtr srcConf3;
+
 
     static void SetUpTestCase() {
         NES::setupLogging("AndOperatorTest.log", NES::LOG_DEBUG);
@@ -45,17 +46,13 @@ class AndOperatorTest : public Testing::NESBaseTest {
 
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        coConf = CoordinatorConfig::create();
-        wrkConf1 = WorkerConfig::create();
-        wrkConf2 = WorkerConfig::create();
-        srcConf = CSVSourceConfig::create();
-        srcConf1 = CSVSourceConfig::create();
-        srcConf2 = CSVSourceConfig::create();
+        coConf = CoordinatorConfiguration::create();
+        srcConf1 = CSVSourceType::create();
+        srcConf2 = CSVSourceType::create();
+        srcConf3 = CSVSourceType::create();
 
         coConf->setRpcPort(*rpcCoordinatorPort);
         coConf->setRestPort(*restPort);
-        wrkConf1->setCoordinatorPort(*rpcCoordinatorPort);
-        wrkConf2->setCoordinatorPort(*rpcCoordinatorPort);
     }
 
     string removeRandomKey(string contentString) {
@@ -187,7 +184,7 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     srcConf2->setNumberOfBuffersToProduce(20);
     auto windowStream2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
     workerConfig2->addPhysicalSource(windowStream2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("AndOperatorTest: Worker2 started successfully");

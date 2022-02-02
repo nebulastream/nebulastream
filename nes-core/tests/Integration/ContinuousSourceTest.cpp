@@ -67,7 +67,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 
     NES_DEBUG("ContinuousSourceTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);

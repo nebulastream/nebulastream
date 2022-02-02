@@ -225,7 +225,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, "frequency");
     auto physicalSource = PhysicalSource::create("ysb", "YSB_phy", lambdaSourceType);
     workerConfig->addPhysicalSource(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -265,14 +265,10 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
 
 //TODO test needs to be fixed, since it fails randomly. Covered in issue #2258
 TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
-    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
-    WorkerConfigPtr workerConfig = WorkerConfig::create();
-    CSVSourceConfigPtr sourceConfig = CSVSourceConfig::create();
+    auto coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
 
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    workerConfig->setCoordinatorPort(rpcPort);
-    workerConfig->setNumWorkerThreads(workerThreads);
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -285,19 +281,17 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testCentralWindowEventTime) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    workerConfig->setNumWorkerThreads(workerThreads);
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setNumWorkerThreads(workerThreads);
+    workerConfig1->setCoordinatorPort(port);
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType->setSourceFrequency(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(3);
     auto physicalSource = PhysicalSource::create("window", "test_stream", csvSourceType);
-    workerConfig->addPhysicalSource(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
+    workerConfig1->addPhysicalSource(physicalSource);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -528,7 +522,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeployDistributedTumblingWindowQueryE
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setNumWorkerThreads(workerThreads);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(0);
@@ -1293,7 +1287,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDistributedWindowIngestionTime) {
 TEST_F(ConcurrentWindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort););
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -1870,7 +1864,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationW
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1, -15, 1000}, 2)
@@ -1927,7 +1921,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationW
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("id")).apply(Max(Attribute("value"))))";
 
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithCSVSourceToCoordinator("car", csvSourceType)
                                   .validate()
@@ -1972,7 +1966,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithMinAggregation)
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1, 15, 1000}, 2)
@@ -2021,7 +2015,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggrega
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Min(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1, 15.0, 1000}, 2)
@@ -2072,7 +2066,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithCountAggregatio
 
     std::string queryWithWindowOperator =
         R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Count()))";
-    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()))
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("car")
                                   .pushElement<Car>({1ULL, 15ULL, 15ULL, 1000ULL}, 2)

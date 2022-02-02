@@ -39,11 +39,11 @@ class MemorySourceIntegrationTest : public Testing::NESBaseTest {
 
 /// This test checks that a deployed MemorySource can write M records spanning exactly N records
 TEST_F(MemorySourceIntegrationTest, testMemorySource) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
@@ -138,11 +138,11 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
 
 /// This test checks that a deployed MemorySource can write M records stored in one buffer that is not full
 TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
@@ -239,11 +239,11 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 /// with the invariant that the N+1-th buffer is half full
 
 TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MemorySourceIntegrationTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("MemorySourceIntegrationTest: Coordinator started successfully");
