@@ -15,9 +15,8 @@
 */
 
 #include <gtest/gtest.h>
+#include "../../../tests/util/MetricValidator.hpp"
 
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
@@ -28,7 +27,7 @@
 
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
-#include <Monitoring/Util/AbstractSystemResourcesReader.hpp>
+#include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
 #include <Util/Logger.hpp>
 #include <cpprest/json.h>
 
@@ -36,6 +35,7 @@ namespace NES {
 
 class MonitoringStackTest : public testing::Test {
   public:
+    AbstractSystemResourcesReaderPtr resourcesReader;
     static void SetUpTestCase() {
         NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
         NES_INFO("MonitoringStackTest: Setup MonitoringStackTest test class.");
@@ -44,87 +44,59 @@ class MonitoringStackTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest class." << std::endl; }
 
     /* Will be called before a  test is executed. */
-    void SetUp() override { std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl; }
+    void SetUp() override {
+        resourcesReader = MetricUtils::getSystemResourcesReader();
+    }
 
     /* Will be called before a test is executed. */
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
 TEST_F(MonitoringStackTest, testAbstractSystemResourcesReader){
-    auto AbstractSystemResourcesReaderPtr = std::make_unique<AbstractSystemResourcesReader>();
-    auto var = AbstractSystemResourcesReaderPtr->readRuntimeNesMetrics();
-    auto varw = RuntimeNesMetrics {};
-    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readRuntimeNesMetrics() == RuntimeNesMetrics {});
-    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readStaticNesMetrics() == StaticNesMetrics {});
-    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readCpuStats() == CpuMetrics {});
-    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readNetworkStats() == NetworkMetrics {});
-    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readMemoryStats() == MemoryMetrics {});
-    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->readDiskStats() == DiskMetrics {});
-    EXPECT_TRUE(AbstractSystemResourcesReaderPtr->getWallTimeInNs() == uint64_t {});
+    auto resourcesReader = std::make_shared<AbstractSystemResourcesReader>();
+    EXPECT_TRUE(resourcesReader->readRuntimeNesMetrics() == RuntimeNesMetrics {});
+    EXPECT_TRUE(resourcesReader->readStaticNesMetrics() == StaticNesMetrics {});
+    EXPECT_TRUE(resourcesReader->readCpuStats() == CpuMetrics {});
+    EXPECT_TRUE(resourcesReader->readNetworkStats() == NetworkMetrics {});
+    EXPECT_TRUE(resourcesReader->readMemoryStats() == MemoryMetrics {});
+    EXPECT_TRUE(resourcesReader->readDiskStats() == DiskMetrics {});
+    EXPECT_TRUE(resourcesReader->getWallTimeInNs() == 0);
 }
 
 TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
-    auto runtimeMetrics = MetricUtils::getSystemResourcesReader()->readRuntimeNesMetrics();
+    auto runtimeMetrics = resourcesReader->readRuntimeNesMetrics();
     NES_DEBUG("MonitoringStackTest: Runtime metrics=" << runtimeMetrics.toJson());
-
-    EXPECT_TRUE(runtimeMetrics.wallTimeNs <= MetricUtils::getSystemResourcesReader()->getWallTimeInNs());
-    EXPECT_TRUE(runtimeMetrics.blkioBytesWritten >= 0);
-    EXPECT_TRUE(runtimeMetrics.blkioBytesRead >= 0);
-    EXPECT_TRUE(runtimeMetrics.memoryUsageInBytes > 0);
-    EXPECT_TRUE(runtimeMetrics.cpuLoadInJiffies > 0);
-    EXPECT_TRUE(runtimeMetrics.longCoord >= 0);
-    EXPECT_TRUE(runtimeMetrics.latCoord >= 0);
-    EXPECT_TRUE(runtimeMetrics.batteryStatusInPercent >= 0);
+    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, runtimeMetrics));
 }
 
 TEST_F(MonitoringStackTest, testStaticNesMetrics) {
-    auto staticMetrics = MetricUtils::getSystemResourcesReader()->readStaticNesMetrics();
+    auto staticMetrics = resourcesReader->readStaticNesMetrics();
     NES_DEBUG("MonitoringStackTest: Static metrics=" << staticMetrics.toJson());
-
-    EXPECT_TRUE(staticMetrics.cpuQuotaUS >= -1);
-    EXPECT_TRUE(staticMetrics.cpuPeriodUS >= -1);
-    EXPECT_TRUE(staticMetrics.totalCPUJiffies > 0);
-    EXPECT_TRUE(staticMetrics.cpuCoreNum > 0);
-    EXPECT_TRUE(staticMetrics.totalMemoryBytes > 0);
-    EXPECT_TRUE(staticMetrics.hasBattery == false);
-    EXPECT_TRUE(staticMetrics.isMoving == false);
+    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, staticMetrics));
 }
 
 TEST_F(MonitoringStackTest, testCPUStats) {
-    auto cpuStats = MetricUtils::cpuStats();
-    CpuMetrics cpuMetrics = cpuStats.measure();
-    EXPECT_TRUE(cpuMetrics.getNumCores() > 0);
-    for (int i = 0; i < cpuMetrics.getNumCores(); i++) {
-        EXPECT_TRUE(cpuMetrics.getValues(i).user > 0);
-    }
-    EXPECT_TRUE(cpuMetrics.getTotal().user > 0);
-
-    auto cpuIdle = MetricUtils::cpuIdle(0);
-    NES_INFO("MonitoringStackTest: Idle " << cpuIdle.measure());
+    auto cpuMetrics = resourcesReader->readCpuStats();
+    NES_DEBUG("MonitoringStackTest: CPU metrics=" << cpuMetrics.toJson());
+    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, cpuMetrics));
 }
 
 TEST_F(MonitoringStackTest, testMemoryStats) {
-    auto memStats = MetricUtils::memoryStats();
-    auto memMetrics = memStats.measure();
-    EXPECT_TRUE(memMetrics.FREE_RAM > 0);
-
-    NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM / (1024 * 1024) << "gb");
+    auto memMetrics = resourcesReader->readMemoryStats();
+    NES_DEBUG("MonitoringStackTest: Static metrics=" << memMetrics.toJson());
+    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, memMetrics));
 }
 
 TEST_F(MonitoringStackTest, testDiskStats) {
-    auto diskStats = MetricUtils::diskStats();
-    auto diskMetrics = diskStats.measure();
-    EXPECT_TRUE(diskMetrics.fBavail >= 0);
+    auto diskMetrics = resourcesReader->readDiskStats();
+    NES_DEBUG("MonitoringStackTest: Static metrics=" << diskMetrics.toJson());
+    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, diskMetrics));
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
-    auto networkStats = MetricUtils::networkStats();
-    auto networkMetrics = networkStats.measure();
-    EXPECT_TRUE(!networkMetrics.getInterfaceNames().empty());
-
-    for (const std::string& intfs : networkMetrics.getInterfaceNames()) {
-        NES_INFO("MonitoringStackTest: Received metrics for interface " << intfs);
-    }
+    auto networkMetrics = resourcesReader->readNetworkStats();
+    NES_DEBUG("MonitoringStackTest: Static metrics=" << networkMetrics.toJson());
+    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, networkMetrics));
 }
 
 TEST_F(MonitoringStackTest, testMetric) {
