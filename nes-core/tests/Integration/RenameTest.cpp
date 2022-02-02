@@ -146,12 +146,14 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
+    auto outputFile = getTestResourceFolder() / "test.out";
+
     NES_INFO("RenameTest: Submit query");
     string query = "Query::from(\"default_logical\")"
                    ".project(Attribute(\"id\").as(\"NewName\"))"
                    ".map(Attribute(\"NewName\") = Attribute(\"NewName\") * 2u)"
                    ".project(Attribute(\"NewName\").as(\"id\"))"
-                   ".sink(FileSinkDescriptor::create(\"test.out\"));";
+                   ".sink(FileSinkDescriptor::create(\""s + outputFile.c_str() + "\"));";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -163,10 +165,10 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    ifstream my_file(getTestResourceFolder() / "test.out");
+    ifstream my_file(outputFile);
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs(getTestResourceFolder() / "test.out");
+    std::ifstream ifs(outputFile);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "+----------------------------------------------------+\n"
@@ -224,10 +226,13 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
+    auto outputFile = getTestResourceFolder() / "test.out";
+
     NES_INFO("RenameTest: Submit query");
     std::string query =
-        R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").as("NewName"), Attribute("value")).sink(FileSinkDescriptor::create()";
-    query += getTestResourceFolder() / R"(test.out", "CSV_FORMAT", "APPEND"));)";
+        R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").as("NewName"), Attribute("value")).sink(FileSinkDescriptor::create(")";
+    query += outputFile;
+    query += R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -251,7 +256,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
                              "1,1\n"
                              "1,1\n";
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, getTestResourceFolder() / "test.out"));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFile));
 
     NES_INFO("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
