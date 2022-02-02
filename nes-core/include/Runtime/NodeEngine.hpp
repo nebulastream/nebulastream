@@ -50,7 +50,7 @@ namespace Runtime {
  */
 class NodeEngine : public Network::ExchangeProtocolListener,
                    public NES::detail::virtual_enable_shared_from_this<NodeEngine>,
-                   public ErrorListener {
+                   public Exceptions::ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
     using inherited0 = Network::ExchangeProtocolListener;
     using inherited1 = virtual_enable_shared_from_this<NodeEngine>;

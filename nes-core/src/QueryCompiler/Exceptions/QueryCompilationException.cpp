@@ -17,7 +17,7 @@
 namespace NES::QueryCompilation {
 
 QueryCompilationException::QueryCompilationException(const std::string& message)
-    : RuntimeException(message, NES::collectAndPrintStacktrace()) {
+    : Exceptions::RuntimeException(message, NES::collectAndPrintStacktrace()) {
     NES_ERROR(message);
 }
 

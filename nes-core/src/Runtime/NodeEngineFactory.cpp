@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/SignalHandling.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -31,11 +32,6 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <memory>
-
-namespace NES {
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-}// namespace NES
 
 namespace NES::Runtime {
 
@@ -192,7 +188,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             numberOfBuffersInGlobalBufferManager,
             numberOfBuffersInSourceLocalBufferPool,
             numberOfBuffersPerWorker);
-        installGlobalErrorListener(engine);
+        Exceptions::installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());

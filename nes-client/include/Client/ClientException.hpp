@@ -18,7 +18,7 @@
 
 namespace NES::Client {
 
-    class ClientException : public RuntimeException {
+    class ClientException : public Exceptions::RuntimeException {
       public:
         explicit ClientException(const std::string& message);
     };

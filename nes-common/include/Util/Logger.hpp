@@ -16,6 +16,7 @@
 #define NES_INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
 #include <Exceptions/RuntimeException.hpp>
+#include <Exceptions/SignalHandling.hpp>
 #include <Util/DisableWarningsPragma.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <iostream>
@@ -299,10 +300,6 @@ struct LoggingBlackHole {
     } while (0)
 #endif
 
-namespace NES {
-void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
-}// namespace NES
-
 /// I am aware that we do not like __ before variable names but here we need them
 /// to avoid name collions, e.g., __buffer, __stacktrace
 /// that should not be a problem because of the scope, however, better be safe than sorry :P
@@ -318,7 +315,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << TEXT;                                                                              \
-                NES::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
+                NES::Exceptions::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
@@ -336,7 +333,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << TEXT;                                                                              \
-                NES::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
+                NES::Exceptions::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
@@ -351,7 +348,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << __VA_ARGS__;                                                                       \
-                NES::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
+                NES::Exceptions::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
@@ -363,7 +360,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
         std::ostream __os(&__buffer);                                                                                            \
         __os << __VA_ARGS__;                                                                                                     \
         LOG4CXX_ERROR(NES::NESLogger::getInstance(), __VA_ARGS__);                                                               \
-        throw RuntimeException(__buffer.str(), std::move(__stacktrace));                                                      \
+        throw Exceptions::RuntimeException(__buffer.str(), std::move(__stacktrace));                                                      \
     } while (0)
 
 #define NES_FATAL_ERROR(...)                                                                                                     \
