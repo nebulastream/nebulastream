@@ -32,10 +32,12 @@
 #include <Util/UtilityFunctions.hpp>
 #include <memory>
 
-namespace NES::Runtime {
-
+namespace NES {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+}// namespace NES
+
+namespace NES::Runtime {
 
 NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname,
                                                          uint16_t port,

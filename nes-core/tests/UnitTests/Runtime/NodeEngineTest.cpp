@@ -154,7 +154,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
                                                              1024,
                                                              12,
                                                              12);
-        NES::Runtime::installGlobalErrorListener(mockEngine);
+        NES::installGlobalErrorListener(mockEngine);
         return mockEngine;
     } catch (std::exception& err) {
         NES_ERROR("Cannot start node engine " << err.what());

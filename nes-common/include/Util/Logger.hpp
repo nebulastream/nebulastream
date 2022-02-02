@@ -300,9 +300,7 @@ struct LoggingBlackHole {
 #endif
 
 namespace NES {
-namespace Runtime {
 void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
-}
 }// namespace NES
 
 /// I am aware that we do not like __ before variable names but here we need them
@@ -320,7 +318,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << TEXT;                                                                              \
-                NES::Runtime::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
+                NES::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
@@ -338,7 +336,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << TEXT;                                                                              \
-                NES::Runtime::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
+                NES::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
@@ -353,7 +351,7 @@ void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace);
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
                 __os << " error message: " << __VA_ARGS__;                                                                       \
-                NES::Runtime::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
+                NES::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                      \
             }                                                                                                                    \
         }                                                                                                                        \
     } while (0)
