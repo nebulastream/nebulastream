@@ -35,13 +35,8 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
 add_library(nes-tests "util/NesBaseTest.cpp")
 target_include_directories(nes-tests PUBLIC ${GTEST_INCLUDE_DIRS} "../include")
-target_link_libraries(nes-tests ${LIBRARIES})
+target_link_libraries(nes-tests ${LIBRARIES} ${GTEST_LIBRARIES})
 set(GTEST_LIBRARIES ${LIBRARIES} ${GRPC_LIBRARIES} cpprestsdk::cpprest nes-tests)
-
-
-add_executable(nes-port-server "util/PortServer.cpp")
-target_include_directories(nes-port-server PUBLIC ${GTEST_INCLUDE_DIRS} "../include")
-target_link_libraries(nes-port-server ${LIBRARIES})
 
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
