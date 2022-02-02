@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Exceptions/NesRuntimeException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Util/Backward/backward.hpp>
 #include <Util/Logger.hpp>
@@ -21,7 +21,7 @@
 #include <memory>
 #include <mutex>
 
-namespace NES::Runtime {
+namespace NES {
 
 /// this mutex protected the globalErrorListeners vector
 static std::recursive_mutex globalErrorListenerMutex;
@@ -29,14 +29,14 @@ static std::recursive_mutex globalErrorListenerMutex;
 static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 
 /**
- * @brief calls to this function will create a NesRuntimeException that is passed to all system-wide error listeners
+ * @brief calls to this function will create a RuntimeException that is passed to all system-wide error listeners
  * @param buffer the message of the exception
  * @param stacktrace the stacktrace of where the error was raised
  */
 void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace) {
     NES_TRACE("invokeErrorHandlers with buffer=" << buffer << " trace=" << stacktrace);
     std::unique_lock lock(globalErrorListenerMutex);
-    auto exception = std::make_shared<NesRuntimeException>(buffer, stacktrace);
+    auto exception = std::make_shared<RuntimeException>(buffer, stacktrace);
     for (auto& listener : globalErrorListeners) {
         if (!listener.expired()) {
             listener.lock()->onFatalException(exception, stacktrace);

@@ -13,7 +13,7 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_
-#include <Exceptions/NesRuntimeException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <stdexcept>
 namespace NES {
 namespace QueryCompilation {
@@ -21,7 +21,7 @@ namespace QueryCompilation {
 /**
  * @brief Exception thrown by the query compiler.
  */
-class QueryCompilationException : public NesRuntimeException {
+class QueryCompilationException : public RuntimeException {
   public:
     explicit QueryCompilationException(const std::string& message);
 };

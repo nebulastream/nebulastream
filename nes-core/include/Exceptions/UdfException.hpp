@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
 #define NES_INCLUDE_EXCEPTIONS_UDFEXCEPTION_HPP_
 
-#include <Exceptions/NesRuntimeException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 
 #include <string>
 
@@ -24,7 +24,7 @@ namespace NES {
 /**
  * @brief This exception is thrown when an error occurs during UDF processing.
  */
-class UdfException : public NesRuntimeException {
+class UdfException : public RuntimeException {
   public:
     /**
      * @brief Construct a UDF exception from a message and include the current stack trace.
@@ -35,7 +35,7 @@ class UdfException : public NesRuntimeException {
      * @brief Return the exception message without the stack trace.
      * @return The original exception message without the stack trace.
      *
-     * NesRuntimeException automatically includes the stack trace at the time when the exception was constructed.
+     * RuntimeException automatically includes the stack trace at the time when the exception was constructed.
      * However, the error message is also returned to clients which submit UDFs over the REST API.
      * These clients should not receive the stack trace information.
      */

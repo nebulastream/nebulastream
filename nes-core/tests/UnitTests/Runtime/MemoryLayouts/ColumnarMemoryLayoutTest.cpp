@@ -183,9 +183,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
     auto field0 = ColumnLayoutField<uint8_t, true>::create(0, columnLayout, tupleBuffer);
     auto field1 = ColumnLayoutField<uint16_t, true>::create(1, columnLayout, tupleBuffer);
     auto field2 = ColumnLayoutField<uint32_t, true>::create(2, columnLayout, tupleBuffer);
-    ASSERT_THROW((ColumnLayoutField<uint8_t, true>::create(3, columnLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint16_t, true>::create(4, columnLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create(5, columnLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint8_t, true>::create(3, columnLayout, tupleBuffer)), NES::RuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint16_t, true>::create(4, columnLayout, tupleBuffer)), NES::RuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create(5, columnLayout, tupleBuffer)), NES::RuntimeException);
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -194,13 +194,13 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck) {
         ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
     }
 
-    ASSERT_THROW(field0[i], NES::NesRuntimeException);
-    ASSERT_THROW(field1[i], NES::NesRuntimeException);
-    ASSERT_THROW(field2[i], NES::NesRuntimeException);
+    ASSERT_THROW(field0[i], NES::RuntimeException);
+    ASSERT_THROW(field1[i], NES::RuntimeException);
+    ASSERT_THROW(field2[i], NES::RuntimeException);
 
-    ASSERT_THROW(field0[++i], NES::NesRuntimeException);
-    ASSERT_THROW(field1[i], NES::NesRuntimeException);
-    ASSERT_THROW(field2[i], NES::NesRuntimeException);
+    ASSERT_THROW(field0[++i], NES::RuntimeException);
+    ASSERT_THROW(field1[i], NES::RuntimeException);
+    ASSERT_THROW(field2[i], NES::RuntimeException);
 }
 
 TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck) {
@@ -231,7 +231,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
 
     try {
         ColumnLayoutField<uint32_t, false>::create(3, columnLayout, tupleBuffer);
-    } catch (NES::NesRuntimeException& e) {
+    } catch (NES::RuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
         EXPECT_TRUE(true);
@@ -239,7 +239,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
 
     try {
         ColumnLayoutField<uint32_t, false>::create(4, columnLayout, tupleBuffer);
-    } catch (NES::NesRuntimeException& e) {
+    } catch (NES::RuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
         EXPECT_TRUE(true);
@@ -247,7 +247,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
 
     try {
         ColumnLayoutField<uint32_t, false>::create(5, columnLayout, tupleBuffer);
-    } catch (NES::NesRuntimeException& e) {
+    } catch (NES::RuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
         EXPECT_TRUE(true);
@@ -262,7 +262,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
 
     try {
         ((void) field0[i]);
-    } catch (NES::NesRuntimeException& e) {
+    } catch (NES::RuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
         EXPECT_TRUE(true);
@@ -270,7 +270,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
 
     try {
         ((void) field2[i]);
-    } catch (NES::NesRuntimeException& e) {
+    } catch (NES::RuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
         EXPECT_TRUE(true);
@@ -278,7 +278,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
 
     try {
         ((void) field2[i]);
-    } catch (NES::NesRuntimeException& e) {
+    } catch (NES::RuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
         EXPECT_TRUE(true);
@@ -286,7 +286,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
 
     try {
         ((void) field0[++i]);
-    } catch (NES::NesRuntimeException& e) {
+    } catch (NES::RuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
         EXPECT_TRUE(true);
@@ -294,7 +294,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
 
     try {
         ((void) field1[i]);
-    } catch (NES::NesRuntimeException& e) {
+    } catch (NES::RuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
         EXPECT_TRUE(true);
@@ -302,7 +302,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
 
     try {
         ((void) field2[i]);
-    } catch (NES::NesRuntimeException& e) {
+    } catch (NES::RuntimeException& e) {
         EXPECT_TRUE(false);
     } catch (Exception& e) {
         EXPECT_TRUE(true);
@@ -363,9 +363,9 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout) {
     ASSERT_NO_THROW((ColumnLayoutField<uint16_t, true>::create("t2", columnLayout, tupleBuffer)));
     ASSERT_NO_THROW((ColumnLayoutField<uint32_t, true>::create("t3", columnLayout, tupleBuffer)));
 
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t4", columnLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t5", columnLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t6", columnLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t4", columnLayout, tupleBuffer)), NES::RuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t5", columnLayout, tupleBuffer)), NES::RuntimeException);
+    ASSERT_THROW((ColumnLayoutField<uint32_t, true>::create("t6", columnLayout, tupleBuffer)), NES::RuntimeException);
 }
 
 TEST_F(ColumnarMemoryLayoutTest, accessDynamicColumnBufferTest) {
