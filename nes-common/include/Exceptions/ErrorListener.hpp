@@ -17,7 +17,7 @@
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <memory>
 
-namespace NES {
+namespace NES::Exceptions {
 
 /**
  * @brief This is an error interceptor suitable for signals and exceptions

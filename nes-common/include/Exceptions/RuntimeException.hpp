@@ -19,7 +19,7 @@
 #include <stdexcept>
 #include <string>
 #include <Util/SourceLocation.hpp>
-namespace NES {
+namespace NES::Exceptions {
 
 /**
  * @brief Exception to be used to report errors and stacktraces

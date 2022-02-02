@@ -24,7 +24,7 @@ namespace NES {
 /**
  * @brief This exception is thrown when an error occurs during UDF processing.
  */
-class BufferAccessException : public RuntimeException {
+class BufferAccessException : public Exceptions::RuntimeException {
   public:
     /**
      * @brief Construct a UDF exception from a message and include the current stack trace.

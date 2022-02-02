@@ -19,7 +19,7 @@ namespace NES::Compiler {
 /**
  * @brief Represents an wrapper for all compilation related exceptions.
  */
-class CompilerException : public RuntimeException {
+class CompilerException : public Exceptions::RuntimeException {
   public:
     explicit CompilerException(const std::string& message);
 };

@@ -12,5 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-      TupleBufferImpl.cpp
-)
+        TupleBufferImpl.cpp
+        RuntimeSignalHandling.cpp
+        )

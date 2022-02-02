@@ -21,7 +21,7 @@ namespace QueryCompilation {
 /**
  * @brief Exception thrown by the query compiler.
  */
-class QueryCompilationException : public RuntimeException {
+class QueryCompilationException : public Exceptions::RuntimeException {
   public:
     explicit QueryCompilationException(const std::string& message);
 };
