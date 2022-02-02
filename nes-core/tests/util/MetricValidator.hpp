@@ -31,6 +31,9 @@
 
 namespace NES {
 
+/**
+ * @brief This class is responsible for verifying the content of metrics read by the SystemResourcesReader.
+ */
 class MetricValidator {
   public:
     static bool isValid(AbstractSystemResourcesReaderPtr reader, RuntimeNesMetrics metrics) {
