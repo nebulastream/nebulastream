@@ -69,15 +69,14 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
 }
 
 TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
-
     cout << "start coordinator" << endl;
     for (uint64_t i = 0; i < 10; i++) {
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+        WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+
+        coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+        coordinatorConfig->setRestPort(*restPort);
+        workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
         cout << "iteration = " << i << endl;
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
         uint64_t port = crd->startCoordinator(/**blocking**/ false);
