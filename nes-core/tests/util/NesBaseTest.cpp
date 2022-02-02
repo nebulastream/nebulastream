@@ -62,9 +62,9 @@ class ShmFixedVector {
         }
         NES_ASSERT2_FMT(shmemFd != -1, "cannot create shared area: " << strerror(errno));
         if (created) {
-            auto ret = ftruncate(shmemFd, mmapSize) != -1;
-            if (ret) {
-                std::cerr << "cannot create shared area: " << strerror(errno) << std::endl;
+            auto ret = ftruncate(shmemFd, mmapSize) == 0;
+            if (!ret) {
+                std::cerr << "cannot ftruncate shared area: " << strerror(errno) << std::endl;
             }
             NES_ASSERT(ret, "cannot create shared area");
         } else {
