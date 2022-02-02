@@ -65,13 +65,14 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     NES_INFO("AssignWatermarkTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
-    CSVSourceTypePtr srcConf = CSVSourceType::create();
-    srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(3);
-    srcConf->setNumberOfBuffersToProduce(4);
-
+    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
+    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
+    csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
+    csvSourceType->setNumberOfBuffersToProduce(4);
     // register physical stream with 4 buffers, each contains 3 tuples (12 tuples in total)
     // window-out-of-order.csv contains 12 rows
+    auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceType);
+    workerConfig->addPhysicalSource(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
