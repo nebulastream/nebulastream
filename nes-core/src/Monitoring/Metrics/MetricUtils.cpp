@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
-#include "Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp"
+#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
+#include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
