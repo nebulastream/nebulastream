@@ -181,8 +181,8 @@ class NesPortDispatcher {
         while (true) {
             auto nextIndex = data.getNextIndex();
             auto expected = true;
-            if (data[nextIndex].checksum == CHECKSUM) {
-                std::cerr << "invalid checksum " << data[nextIndex].checksum << std::endl;
+            if (data[nextIndex].checksum != CHECKSUM) {
+                std::cerr << "invalid checksum " << data[nextIndex].checksum << "!=" << CHECKSUM << std::endl;
             }
             NES_ASSERT2_FMT(data[nextIndex].checksum == CHECKSUM, "invalid checksum");
             if (data[nextIndex].free.compare_exchange_strong(expected, false)) {
