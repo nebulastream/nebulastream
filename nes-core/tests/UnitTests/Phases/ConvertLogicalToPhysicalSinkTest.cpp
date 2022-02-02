@@ -38,7 +38,6 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSinkTest test class." << std::endl; }
 
     void SetUp() override {
-
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr physicalSource = PhysicalSource::create("default", "default1", defaultSourceType);
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
