@@ -798,15 +798,21 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
     auto wrkConf1 = WorkerConfiguration::create();
-    auto wrkConf2 = WorkerConfiguration::create();
     wrkConf1->setCoordinatorPort(port);
-    wrkConf2->setCoordinatorPort(port);
+    auto defaultSource1 = DefaultSourceType::create();
+    auto physicalSource1= PhysicalSource::create("default_logical", "x1", defaultSource1);
+    wrkConf1->addPhysicalSource(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
+    auto wrkConf2 = WorkerConfiguration::create();
+    wrkConf2->setCoordinatorPort(port);
+    auto defaultSource2 = DefaultSourceType::create();
+    auto physicalSource2= PhysicalSource::create("default_logical", "x2", defaultSource2);
+    wrkConf2->addPhysicalSource(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
