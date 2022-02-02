@@ -88,6 +88,14 @@ void BufferManager::destroy() {
 
 BufferManager::~BufferManager() { destroy(); }
 
+uint32_t BufferManager::alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
+    if (bufferSize % withAlignment) {
+        // make sure that each buffer is a multiple of the alignment
+       return bufferSize + (withAlignment - bufferSize % withAlignment);
+    }
+    return bufferSize;
+}
+
 void BufferManager::initialize(uint32_t withAlignment) {
     std::unique_lock lock(availableBuffersMutex);
 
@@ -111,10 +119,7 @@ void BufferManager::initialize(uint32_t withAlignment) {
 
     allBuffers.reserve(numOfBuffers);
     allocatedAreaSize = bufferSize + sizeof(detail::BufferControlBlock);
-    if (allocatedAreaSize % withAlignment) {
-        // make sure that each buffer is a multiple of the alignment
-        allocatedAreaSize = allocatedAreaSize + (withAlignment - allocatedAreaSize % withAlignment);
-    }
+    allocatedAreaSize = alignBufferSize(allocatedAreaSize, withAlignment);
     size_t offsetBetweenBuffers = allocatedAreaSize;
     allocatedAreaSize *= numOfBuffers;
     basePointer = static_cast<uint8_t*>(memoryResource->allocate(allocatedAreaSize, withAlignment));
@@ -223,18 +228,20 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         }
     }
     // we could not find a buffer, allocate it
-    auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(bufferSize + sizeof(detail::BufferControlBlock)));
+    // we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
+    auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
+    auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSize+ sizeof(detail::BufferControlBlock)));
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
     auto memSegment = std::make_unique<detail::MemorySegment>(ptr,
-                                                              bufferSize,
+                                                              alignedBufferSize,
                                                               this,
                                                               [](detail::MemorySegment* segment, BufferRecycler* recycler) {
                                                                   recycler->recycleUnpooledBuffer(segment);
                                                               });
     auto* leakedMemSegment = memSegment.get();
-    unpooledBuffers.emplace_back(std::move(memSegment), bufferSize);
+    unpooledBuffers.emplace_back(std::move(memSegment), alignedBufferSize);
     if (leakedMemSegment->controlBlock->prepare()) {
         return TupleBuffer(leakedMemSegment->controlBlock, leakedMemSegment->ptr, leakedMemSegment->size);
     }
