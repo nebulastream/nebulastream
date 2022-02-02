@@ -73,7 +73,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
 
     NES_INFO("RenameTest: Submit query");
     string query = "Query::from(\"default_logical\").project(Attribute(\"id\").as(\"NewName\")).sink(FileSinkDescriptor::"
-                   "create(\"" + getTestResourceFolder() + "/test.out\"));";
+                   "create(\""s + getTestResourceFolder().c_str() + "/test.out\"));";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
