@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_EXCEPTIONS_BUFFERACCESSEXCEPTION_HPP_
 #define NES_INCLUDE_EXCEPTIONS_BUFFERACCESSEXCEPTION_HPP_
 
-#include <Exceptions/NesRuntimeException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 
 #include <string>
 
@@ -24,7 +24,7 @@ namespace NES {
 /**
  * @brief This exception is thrown when an error occurs during UDF processing.
  */
-class BufferAccessException : public NesRuntimeException {
+class BufferAccessException : public RuntimeException {
   public:
     /**
      * @brief Construct a UDF exception from a message and include the current stack trace.

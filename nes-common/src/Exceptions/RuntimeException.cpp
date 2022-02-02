@@ -12,24 +12,24 @@
     limitations under the License.
 */
 
-#include <Exceptions/NesRuntimeException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <utility>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-NesRuntimeException::NesRuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location) : errorMessage(std::move(msg)) {
+RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location) : errorMessage(std::move(msg)) {
     auto spiLocation = spi::LocationInfo(location.file_name(), location.function_name(), location.line());
     NESLogger::getInstance()->error(errorMessage, spiLocation);
     errorMessage.append(":: callstack:\n");
     errorMessage.append(stacktrace);
 }
 
-NesRuntimeException::NesRuntimeException(std::string msg, const std::string& stacktrace) : errorMessage(std::move(msg)) {
+RuntimeException::RuntimeException(std::string msg, const std::string& stacktrace) : errorMessage(std::move(msg)) {
     errorMessage.append(":: callstack:\n");
     errorMessage.append(stacktrace);
 }
 
-const char* NesRuntimeException::what() const noexcept { return errorMessage.c_str(); }
+const char* RuntimeException::what() const noexcept { return errorMessage.c_str(); }
 
 }// namespace NES

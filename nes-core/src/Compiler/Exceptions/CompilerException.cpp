@@ -16,7 +16,7 @@
 namespace NES::Compiler {
 
 Compiler::CompilerException::CompilerException(const std::string& message)
-    : NesRuntimeException(message, NES::Runtime::collectAndPrintStacktrace()) {
+    : RuntimeException(message, NES::collectAndPrintStacktrace()) {
     NES_ERROR(message);
 }
 

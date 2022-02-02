@@ -69,7 +69,7 @@ TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty) {
     ASSERT_TRUE(node->getNodeProperty("cores").has_value());
 
     node->removeNodeProperty("cores");
-    EXPECT_THROW(node->getNodeProperty("cores"), NesRuntimeException);
+    EXPECT_THROW(node->getNodeProperty("cores"), RuntimeException);
 }
 
 // test assigning link properties
@@ -130,8 +130,8 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
     sourceNode->removeLinkProperty(destinationNode);
     destinationNode->removeLinkProperty(sourceNode);
 
-    EXPECT_THROW(sourceNode->getLinkProperty(destinationNode), NesRuntimeException);
-    EXPECT_THROW(destinationNode->getLinkProperty(sourceNode), NesRuntimeException);
+    EXPECT_THROW(sourceNode->getLinkProperty(destinationNode), RuntimeException);
+    EXPECT_THROW(destinationNode->getLinkProperty(sourceNode), RuntimeException);
 }
 
 }// namespace NES

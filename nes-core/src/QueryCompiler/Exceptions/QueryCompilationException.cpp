@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/NesRuntimeException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <Util/Logger.hpp>
 namespace NES::QueryCompilation {
 
 QueryCompilationException::QueryCompilationException(const std::string& message)
-    : NesRuntimeException(message, NES::Runtime::collectAndPrintStacktrace()) {
+    : RuntimeException(message, NES::collectAndPrintStacktrace()) {
     NES_ERROR(message);
 }
 

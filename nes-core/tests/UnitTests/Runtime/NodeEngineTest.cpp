@@ -656,13 +656,13 @@ void assertKiller() {
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override {
             ASSERT_TRUE(stop(false));
             EXPECT_TRUE(strcmp(exception->what(),
-                               "Failed assertion on false error message: this will fail now with a NesRuntimeException")
+                               "Failed assertion on false error message: this will fail now with a RuntimeException")
                         == 0);
             NodeEngine::onFatalException(exception, std::move(callstack));
         }
     };
     auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31340);
-    NES_ASSERT(false, "this will fail now with a NesRuntimeException");
+    NES_ASSERT(false, "this will fail now with a RuntimeException");
 }
 }// namespace detail
 

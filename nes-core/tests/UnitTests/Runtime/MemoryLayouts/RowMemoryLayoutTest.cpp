@@ -183,9 +183,9 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
     auto field1 = RowLayoutField<uint16_t, true>::create(1, rowLayout, tupleBuffer);
     auto field2 = RowLayoutField<uint32_t, true>::create(2, rowLayout, tupleBuffer);
 
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(3, rowLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(4, rowLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(5, rowLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(3, rowLayout, tupleBuffer)), NES::RuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(4, rowLayout, tupleBuffer)), NES::RuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create(5, rowLayout, tupleBuffer)), NES::RuntimeException);
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i) {
@@ -193,13 +193,13 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck) {
         ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);
         ASSERT_EQ(std::get<2>(allTuples[i]), field2[i]);
     }
-    ASSERT_THROW(field0[i], NES::NesRuntimeException);
-    ASSERT_THROW(field1[i], NES::NesRuntimeException);
-    ASSERT_THROW(field2[i], NES::NesRuntimeException);
+    ASSERT_THROW(field0[i], NES::RuntimeException);
+    ASSERT_THROW(field1[i], NES::RuntimeException);
+    ASSERT_THROW(field2[i], NES::RuntimeException);
 
-    ASSERT_THROW(field0[++i], NES::NesRuntimeException);
-    ASSERT_THROW(field1[i], NES::NesRuntimeException);
-    ASSERT_THROW(field2[i], NES::NesRuntimeException);
+    ASSERT_THROW(field0[++i], NES::RuntimeException);
+    ASSERT_THROW(field1[i], NES::RuntimeException);
+    ASSERT_THROW(field2[i], NES::RuntimeException);
 }
 
 TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout) {
@@ -252,9 +252,9 @@ TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout) {
     ASSERT_NO_THROW((RowLayoutField<uint16_t, true>::create("t2", rowLayout, tupleBuffer)));
     ASSERT_NO_THROW((RowLayoutField<uint32_t, true>::create("t3", rowLayout, tupleBuffer)));
 
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t4", rowLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t5", rowLayout, tupleBuffer)), NES::NesRuntimeException);
-    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t6", rowLayout, tupleBuffer)), NES::NesRuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t4", rowLayout, tupleBuffer)), NES::RuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t5", rowLayout, tupleBuffer)), NES::RuntimeException);
+    ASSERT_THROW((RowLayoutField<uint32_t, true>::create("t6", rowLayout, tupleBuffer)), NES::RuntimeException);
 }
 
 }// namespace NES::Runtime::MemoryLayouts

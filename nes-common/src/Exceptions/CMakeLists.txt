@@ -14,6 +14,5 @@
 
 add_source_files(nes-common
         SignalHandling.cpp
-        NesRuntimeException.cpp
-
+        RuntimeException.cpp
 )

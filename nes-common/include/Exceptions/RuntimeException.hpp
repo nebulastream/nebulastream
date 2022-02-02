@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_EXCEPTIONS_NESRUNTIMEEXCEPTION_HPP_
-#define NES_INCLUDE_EXCEPTIONS_NESRUNTIMEEXCEPTION_HPP_
+#ifndef NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
+#define NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
 
 #include <exception>
 #include <stdexcept>
@@ -25,7 +25,7 @@ namespace NES {
  * @brief Exception to be used to report errors and stacktraces
  * This is meant to be used for NES-related errors, wrap std exceptions with their own stacktrace, etc..
  */
-class NesRuntimeException : virtual public std::exception {
+class RuntimeException : virtual public std::exception {
 
   protected:
     std::string errorMessage;///< Error message
@@ -35,19 +35,19 @@ class NesRuntimeException : virtual public std::exception {
      *  @param msg The error message
      *  @param stacktrace Error stacktrace
      */
-    explicit NesRuntimeException(std::string msg, std::string&& stacktrace,
+    explicit RuntimeException(std::string msg, std::string&& stacktrace,
                                  std::source_location location = std::source_location::current());
 
     /** Constructor
     *  @param msg The error message
     *  @param stacktrace Error stacktrace
     */
-    explicit NesRuntimeException(std::string msg, const std::string& stacktrace);
+    explicit RuntimeException(std::string msg, const std::string& stacktrace);
 
     /** Destructor.
      *  Virtual to allow for subclassing.
      */
-    ~NesRuntimeException() noexcept override = default;
+    ~RuntimeException() noexcept override = default;
 
     /** Returns a pointer to the (constant) error description.
      *  @return A pointer to a const char*. The underlying memory
@@ -59,4 +59,4 @@ class NesRuntimeException : virtual public std::exception {
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_EXCEPTIONS_NESRUNTIMEEXCEPTION_HPP_
+#endif  // NES_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_

@@ -13,13 +13,13 @@
 */
 #ifndef NES_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
 #define NES_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
-#include <Exceptions/NesRuntimeException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 namespace NES::Compiler {
 
 /**
  * @brief Represents an wrapper for all compilation related exceptions.
  */
-class CompilerException : public NesRuntimeException {
+class CompilerException : public RuntimeException {
   public:
     explicit CompilerException(const std::string& message);
 };

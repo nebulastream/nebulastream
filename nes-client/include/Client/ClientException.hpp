@@ -14,11 +14,11 @@
 #ifndef NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
 #define NES_NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_
 
-#include <Exceptions/NesRuntimeException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 
 namespace NES::Client {
 
-    class ClientException : public NesRuntimeException{
+    class ClientException : public RuntimeException {
       public:
         explicit ClientException(const std::string& message);
     };
