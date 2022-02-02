@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp"
+#include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
@@ -28,7 +28,6 @@
 #include <chrono>
 #include <fstream>
 #include <iterator>
-#include <memory>
 #include <string>
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>
