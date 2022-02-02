@@ -1183,11 +1183,8 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-
     coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
     coordinatorConfig->setRestPort(*restPort);
-
-
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";

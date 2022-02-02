@@ -124,7 +124,14 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     std::string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
+    auto testHarness = TestHarness(query,*restPort, *rpcCoordinatorPort, getTestResourceFolder())
+                           .addLogicalSource("test", testSchema)
+                           .attachWorkerWithMemorySourceToCoordinator("test")     //id=2
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //id=3
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", 2) //id=4
+                           .attachWorkerWithMemorySourceToCoordinator("test")     //id=5
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", 5) //id=6
+                           .attachWorkerWithMemorySourceToWorkerWithId("test", 5);//id=7
 
     for (int i = 0; i < 10; ++i) {
         testHarness = testHarness.pushElement<Test>({1, 1}, 2)
