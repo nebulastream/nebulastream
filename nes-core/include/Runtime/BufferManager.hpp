@@ -114,6 +114,8 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
      */
     void initialize(uint32_t withAlignment);
 
+    uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment);
+
   public:
     /**
      * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
