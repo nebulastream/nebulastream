@@ -36,7 +36,7 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
-class NesWorker {
+class NesWorker : public ErrorListener {
   public:
     /**
      * @brief default constructor which creates a sensor node
@@ -171,6 +171,11 @@ class NesWorker {
     bool waitForConnect() const;
 
     void handleRpcs(WorkerRPCServer& service);
+
+
+    void onFatalError(int signalNumber, std::string callstack);
+
+    void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack);
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;

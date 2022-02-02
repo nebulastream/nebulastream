@@ -51,10 +51,15 @@ void BufferManager::destroy() {
         for (auto& localPool : localBufferPools) {
             localPool->destroy();
         }
+#ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
+        size_t numOfAvailableBuffers = this->numOfAvailableBuffers.load();
+#else
+        size_t numOfAvailableBuffers = availableBuffers.size();
+#endif
         localBufferPools.clear();
-        if (allBuffers.size() != (size_t) availableBuffers.size()) {
+        if (allBuffers.size() != numOfAvailableBuffers) {
             NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers "
-                                                       << availableBuffers.size());
+                                                       << numOfAvailableBuffers);
             success = false;
         }
         for (auto& buffer : allBuffers) {
@@ -67,7 +72,7 @@ void BufferManager::destroy() {
         }
         if (!success) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers="
-                                    << numOfAvailableBuffers.load() << " available=" << availableBuffers.size());
+                                    << allBuffers.size() << " available=" << numOfAvailableBuffers);
         }
         // RAII takes care of deallocating memory here
         allBuffers.clear();
