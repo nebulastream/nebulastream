@@ -50,10 +50,15 @@ const string logo = "/********************************************************\n
                     " *\n"
                     " ********************************************************/";
 
+namespace NES::Runtime {
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+}// namespace NES::Runtime
+
 int main(int argc, char** argv) {
     std::cout << logo << std::endl;
 
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+    NES::setupLogging("nesWorkerStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
     WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
 
@@ -82,12 +87,12 @@ int main(int argc, char** argv) {
 
     NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
     NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
+    Runtime::installGlobalErrorListener(nesWorker);
 
-    if (workerConfiguration->getParentId()->getValue() != 0) {
-        NES_INFO("start with dedicated parent=" << workerConfiguration->getParentId()->getValue());
-        nesWorker->setWithParent(workerConfiguration->getParentId()->getValue());
+    if (nesWorker->getWorkerConfiguration()->getParentId()->getValue() != 0) {
+        NES_INFO("start with dedicated parent=" << nesWorker->getWorkerConfiguration()->getParentId()->getValue());
+        nesWorker->setWithParent(nesWorker->getWorkerConfiguration()->getParentId()->getValue());
     }
-
     try {
         nesWorker->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
         nesWorker->stop(/**force*/ true);
