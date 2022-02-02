@@ -71,7 +71,7 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
 
     NES_INFO("MQTTSinkDeploymentTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MQTTSinkDeploymentTest: Worker1 started successfully");

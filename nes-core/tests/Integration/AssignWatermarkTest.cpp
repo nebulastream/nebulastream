@@ -14,6 +14,7 @@
 
 #include <gtest/gtest.h>
 #include "../util/NesBaseTest.hpp"
+#include "Catalogs/Source/PhysicalSource.hpp"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -49,10 +50,10 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     //Setup Coordinator
     std::string window = R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))
                                             ->addField(createField("timestamp", UINT64));)";
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     crd->getStreamCatalogService()->registerLogicalSource("window", window);
@@ -63,15 +64,11 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     //Setup Worker
     NES_INFO("AssignWatermarkTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    workerConfig->setCoordinatorPort(port);
-    workerConfig = WorkerConfiguration::create();
-    workerConfig->setCoordinatorPort(rpcPort);
+    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
     CSVSourceTypePtr srcConf = CSVSourceType::create();
     srcConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(4);
-    auto windowStream = PhysicalSource::create("window", "test_stream", srcConf);
-    workerConfig->addPhysicalSource(windowStream);
 
     // register physical stream with 4 buffers, each contains 3 tuples (12 tuples in total)
     // window-out-of-order.csv contains 12 rows
@@ -133,10 +130,10 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     std::string window = R"(Schema::create()->addField(createField("value", UINT64))
                                             ->addField(createField("id", UINT64))
                                             ->addField(createField("timestamp", UINT64));)";
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     crd->getStreamCatalogService()->registerLogicalSource("window", window);
@@ -148,9 +145,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     //Setup Worker 1
     NES_INFO("AssignWatermarkTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(rpcPort);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
     //Add Source To Worker
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -237,10 +232,10 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     //Setup Coordinator
     std::string window = R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))
                                             ->addField(createField("timestamp", UINT64));)";
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     crd->getStreamCatalogService()->registerLogicalSource("window", window);
@@ -320,12 +315,12 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     std::string window =
         R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))
                            ->addField(createField("timestamp", UINT64));)";
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("AssignWatermarkTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     crd->getStreamCatalogService()->registerLogicalSource("window", window);
     EXPECT_NE(port, 0UL);

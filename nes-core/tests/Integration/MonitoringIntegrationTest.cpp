@@ -61,20 +61,20 @@ class MonitoringIntegrationTest : public Testing::NESBaseTest {
 };
 
 TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setEnableMonitoring(true);
-    crdConf->setRestPort(*restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setEnableMonitoring(true);
+    coordinatorConfig->setRestPort(*restPort);
     wrkConf1->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf1->setEnableMonitoring(true);
     wrkConf2->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf2->setEnableMonitoring(true);
 
     cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0ull);
     cout << "coordinator started successfully" << endl;
@@ -144,20 +144,20 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
 }
 
 TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEnabled) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setEnableMonitoring(true);
-    crdConf->setRestPort(*restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setEnableMonitoring(true);
+    coordinatorConfig->setRestPort(*restPort);
     wrkConf1->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf1->setEnableMonitoring(true);
     wrkConf2->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf2->setEnableMonitoring(true);
 
     cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0ull);
     cout << "coordinator started successfully" << endl;
@@ -230,21 +230,21 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
 
 TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDisabled) {
     // TODO Refactor this once #2239 is solved.
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
     bool monitoring = false;
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
-    crdConf->setEnableMonitoring(monitoring);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->setEnableMonitoring(monitoring);
     wrkConf1->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf1->setEnableMonitoring(monitoring);
     wrkConf2->setCoordinatorPort(*rpcCoordinatorPort);
     wrkConf2->setEnableMonitoring(monitoring);
 
     cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0ull);
     cout << "coordinator started successfully" << endl;

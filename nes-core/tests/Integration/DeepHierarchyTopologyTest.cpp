@@ -124,7 +124,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     std::string query = R"(Query::from("test"))";
-    TestHarness testHarness = TestHarness(query);
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     for (int i = 0; i < 10; ++i) {
         testHarness = testHarness.pushElement<Test>({1, 1}, 2)
@@ -183,7 +183,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     ASSERT_EQ(sizeof(Test), testSchema->getSchemaSizeInBytes());
 
     std::string query = R"(Query::from("test"))";
-    auto testHarness = TestHarness(query)
+    auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("test", testSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test")     //2
                            .attachWorkerToWorkerWithId(2)                         //3
@@ -410,9 +410,8 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
 
     std::string query = R"(Query::from("testStream").filter(Attribute("val1") < 3).project(Attribute("val3")))";
-    TestHarness testHarness = TestHarness(query);
 
-    TestHarness testHarness = TestHarness(query)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("testStream", testSchema)
                                   // Workers
                                   .attachWorkerToCoordinator()  // id=2
@@ -490,9 +489,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
 
     std::string query =
         R"(Query::from("window").window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))))";
-    TestHarness testHarness = TestHarness(query);
-
-    TestHarness testHarness = TestHarness(query)
+    TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("window", testSchema)
                                   // Workers
                                   .attachWorkerToCoordinator()  // id=2

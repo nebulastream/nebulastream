@@ -429,6 +429,7 @@ class MockedExecutablePipeline : public Runtime::Execution::ExecutablePipelineSt
 class SourceTest : public Testing::NESBaseTest {
   public:
     void SetUp() override {
+        Testing::NESBaseTest::SetUp();
         PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
         this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
         this->path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
@@ -1655,12 +1656,12 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
 }
 
 TEST_F(SourceTest, testIngestionRateFromQuery) {
-    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
-    auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
+    auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
@@ -1875,12 +1876,12 @@ TEST_F(SourceTest, testMemorySource) {
 }
 
 TEST_F(SourceTest, testTwoLambdaSources) {
-    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
-    auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
+    auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
@@ -1964,18 +1965,18 @@ TEST_F(SourceTest, testTwoLambdaSources) {
 }
 
 TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
-    NES::CoordinatorConfigurationPtr crdConf = NES::CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
-    crdConf->setNumWorkerThreads(4);
-    //    crdConf->setNumberOfBuffersInGlobalBufferManager(3000);
-    //    crdConf->setNumberOfBuffersInSourceLocalBufferPool(124);
-    //    crdConf->setNumberOfBuffersPerWorker(124);
-    //    crdConf->setBufferSizeInBytes(524288);
+    NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->setNumWorkerThreads(4);
+    //    coordinatorConfig->setNumberOfBuffersInGlobalBufferManager(3000);
+    //    coordinatorConfig->setNumberOfBuffersInSourceLocalBufferPool(124);
+    //    coordinatorConfig->setNumberOfBuffersPerWorker(124);
+    //    coordinatorConfig->setBufferSizeInBytes(524288);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
 
-    auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
+    auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
     auto port = crd->startCoordinator(/**blocking**/ false);
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";

@@ -54,23 +54,23 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithFi
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPor),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalStreamName("default_logical"),
                                            TestUtils::physicalStreamName("test2")});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPor),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalStreamName("default_logical"),
                                            TestUtils::physicalStreamName("test1")});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -130,8 +130,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
-    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -207,8 +207,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidQueryWithFileOutputTwoWorker.out";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
@@ -221,7 +221,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     auto worker1 =
         TestUtils::startWorker({TestUtils::rpcPort(0),
                                 TestUtils::dataPort(0),
-                                TestUtils::coordinatorPort(*rpcCoordinatorPor),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                 TestUtils::sourceType("CSVSource"),
                                 TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv"),
                                 TestUtils::physicalStreamName("test_stream1"),
@@ -233,7 +233,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
     auto worker2 =
         TestUtils::startWorker({TestUtils::rpcPort(0),
                                 TestUtils::dataPort(0),
-                                TestUtils::coordinatorPort(*rpcCoordinatorPor),
+                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                 TestUtils::sourceType("CSVSource"),
                                 TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv"),
                                 TestUtils::physicalStreamName("test_stream2"),
@@ -302,8 +302,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidUserQueryWithTumblingWindowFileOutput.txt";
     remove(outputFilePath.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
-    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"window\",\"schema\" "
@@ -383,23 +383,23 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
 
 TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPor), TestUtils::restPort(restPort)});
-    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
     auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPor),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalStreamName("default_logical"),
                                            TestUtils::physicalStreamName("test")});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPor),
+                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
                                            TestUtils::sourceType("DefaultSource"),
                                            TestUtils::logicalStreamName("default_logical"),
                                            TestUtils::physicalStreamName("test")});
-    ASSERT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 2));
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     web::json::value json_return;
 

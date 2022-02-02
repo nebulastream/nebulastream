@@ -46,7 +46,7 @@ class MonitoringSerializationTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     std::string ipAddress = "127.0.0.1";
-    CoordinatorConfigurationPtr crdConf;
+    CoordinatorConfigurationPtr coordinatorConfig;
     WorkerConfigurationPtr wrkConf;
     uint64_t bufferSize = 0;
 
@@ -60,16 +60,16 @@ class MonitoringSerializationTest : public Testing::NESBaseTest {
     /* Will be called before a  test is executed. */
     void SetUp() override {
         Testing::NESBaseTest::SetUp();
-        crdConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
+        coordinatorConfig = CoordinatorConfiguration::create();
+        wrkConf = WorkerConfiguration::create();
         std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
         bufferSize = 4096 + (numCPU + 1) * sizeof(CpuValues) + sizeof(CpuMetrics);
 
-        crdConf->setRpcPort(*rpcCoordinatorPort);
-        crdConf->setRestPort(*restPort);
+        coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+        coordinatorConfig->setRestPort(*restPort);
         wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
     }
 

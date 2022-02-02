@@ -63,6 +63,7 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       enableNumaAwareness(this->workerConfig->isNumaAware()), enableMonitoring(this->workerConfig->getEnableMonitoring()->getValue()) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
+    NES_ASSERT2_FMT(coordinatorPort > 0, "Cannot use 0 as coordinator port");
 }
 
 NesWorker::~NesWorker() { stop(true); }
@@ -276,6 +277,10 @@ bool NesWorker::unregisterPhysicalStream(std::string logicalName, std::string ph
     bool success = coordinatorRpcClient->unregisterPhysicalStream(std::move(logicalName), std::move(physicalName));
     NES_DEBUG("NesWorker::unregisterPhysicalStream success=" << success);
     return success;
+}
+
+const Configurations::WorkerConfigurationPtr& NesWorker::getWorkerConfiguration() const {
+    return workerConfig;
 }
 
 bool NesWorker::registerPhysicalSources(const std::vector<PhysicalSourcePtr>& physicalSources) {

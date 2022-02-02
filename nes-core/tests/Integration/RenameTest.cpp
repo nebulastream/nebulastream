@@ -45,15 +45,15 @@ class RenameTest : public Testing::NESBaseTest {
 };
 
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
     NES_INFO("RenameTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("RenameTest: Coordinator started successfully");
@@ -63,7 +63,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     wrkConf->addPhysicalSource(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
@@ -85,10 +85,10 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    ifstream my_file("test.out");
+    ifstream my_file(getTestResourceFolder() / "test.out");
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs("test.out");
+    std::ifstream ifs(getTestResourceFolder() / "test.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "+----------------------------------------------------+\n"
@@ -120,15 +120,15 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
 }
 
 TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
     NES_INFO("RenameTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("RenameTest: Coordinator started successfully");
@@ -138,7 +138,7 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     wrkConf->addPhysicalSource(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
@@ -163,10 +163,10 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    ifstream my_file("test.out");
+    ifstream my_file(getTestResourceFolder() / "test.out");
     EXPECT_TRUE(my_file.good());
 
-    std::ifstream ifs("test.out");
+    std::ifstream ifs(getTestResourceFolder() / "test.out");
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "+----------------------------------------------------+\n"
@@ -198,15 +198,15 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
 }
 
 TEST_F(RenameTest, testAttributeRenameAndFilter) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
     NES_INFO("RenameTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("RenameTest: Coordinator started successfully");
@@ -216,7 +216,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     wrkConf->addPhysicalSource(physicalSource);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RenameTest: Worker1 started successfully");
@@ -226,7 +226,8 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
 
     NES_INFO("RenameTest: Submit query");
     std::string query =
-        R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").as("NewName"), Attribute("value")).sink(FileSinkDescriptor::create("test.out", "CSV_FORMAT", "APPEND"));)";
+        R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").as("NewName"), Attribute("value")).sink(FileSinkDescriptor::create()";
+    query += getTestResourceFolder() / R"(test.out", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -250,7 +251,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
                              "1,1\n"
                              "1,1\n";
 
-    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, "test.out"));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, getTestResourceFolder() / "test.out"));
 
     NES_INFO("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -281,14 +282,13 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -369,7 +369,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -383,7 +383,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     workerConfig2->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");

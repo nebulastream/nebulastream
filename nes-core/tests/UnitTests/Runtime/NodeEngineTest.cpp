@@ -323,7 +323,7 @@ TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
-    auto [qep, pipeline] = setupQEP(engine, getTestResourceFolder() / testQueryId);
+    auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
@@ -338,7 +338,7 @@ TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
     PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
     auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
-    auto [qep, pipeline] = setupQEP(engine, getTestResourceFolder() /  testQueryId);
+    auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->registerQueryInNodeEngine(qep));
     EXPECT_TRUE(engine->startQuery(testQueryId));
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
@@ -586,8 +586,9 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
 }
 //
 TEST_F(NodeEngineTest, testStartStopStartStop) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, streamConf);
+    DefaultSourceTypePtr defaultSourceType = DefaultSourceType::create();
+    PhysicalSourcePtr physicalSource = PhysicalSource::create("test", "test1", defaultSourceType);
+    auto engine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {physicalSource});
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));

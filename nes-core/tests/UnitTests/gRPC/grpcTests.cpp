@@ -50,17 +50,17 @@ class grpcTests : public Testing::NESBaseTest {
 * Test of Notification from Worker to Coordinator of a failed Query.
 */
 TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     auto defaultSource = DefaultSourceType::create();
     PhysicalSourcePtr srcConf = PhysicalSource::create("default_logical", "x1", defaultSource);
     wrkConf->addPhysicalSource(srcConf);
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
     NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");

@@ -74,7 +74,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     auto windowStream = PhysicalSource::create("exdra", "test_stream", sourceConfig);
     workerConfig->addPhysicalSource(windowStream);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -852,7 +852,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -900,13 +900,13 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig->addPhysicalSource(windowStream);
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
 
     coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
     coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
 
     //register logical stream qnv
     std::string window =
@@ -919,14 +919,14 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig.clone()));
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig.clone());
+    workerConfig2->setCoordinatorPort(port);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -957,6 +957,10 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("WindowDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("WindowDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
@@ -995,7 +999,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -1037,20 +1041,21 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
  */
 TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-
+    auto workerConfig1 = WorkerConfiguration::create();
+    auto workerConfig2 = WorkerConfiguration::create();
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     sourceConfig->setSourceFrequency(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     auto windowStream = PhysicalSource::create("windowStream", "test_stream", sourceConfig);
-    workerConfig->addPhysicalSource(windowStream);
+    workerConfig1->addPhysicalSource(windowStream);
 
     coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
     coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
 
     //register logical stream qnv
     std::string window =
@@ -1063,15 +1068,15 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    workerConfig1->setCoordinatorPort(port);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
+    workerConfig2->setCoordinatorPort(port);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker2 started successfully");
@@ -1172,11 +1177,19 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfig5 = WorkerConfiguration::create();
 
     coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
     coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig3->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig4->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig5->setCoordinatorPort(*rpcCoordinatorPort);
 
     //register logical stream qnv
     std::string window =
@@ -1189,8 +1202,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -1202,19 +1214,22 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig->addPhysicalSource(windowStream);
+    workerConfig1->addPhysicalSource(windowStream);
+    workerConfig2->addPhysicalSource(windowStream);
+    workerConfig3->addPhysicalSource(windowStream);
+    workerConfig4->addPhysicalSource(windowStream);
+    workerConfig5->addPhysicalSource(windowStream);
+
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);//id=3
     wrk2->replaceParent(1, 2);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 3");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     wrk3->replaceParent(1, 2);
 
@@ -1222,16 +1237,14 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     NES_INFO("WindowDeploymentTest: Worker 3 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 4");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     wrk4->replaceParent(1, 2);
     EXPECT_TRUE(retStart4);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 5");
-    workerConfig->setCoordinatorPort(port);
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(workerConfig);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(std::move(workerConfig5));
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     wrk5->replaceParent(1, 2);
     EXPECT_TRUE(retStart5);

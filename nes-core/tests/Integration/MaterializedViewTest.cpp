@@ -33,7 +33,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
-#include "../../util/NesBaseTest.hpp"
+#include "../util/NesBaseTest.hpp"
 
 class MaterializedViewTest : public Testing::NESBaseTest {
 public:
@@ -45,11 +45,11 @@ public:
 
 /// @brief tests if a query with materialized view sink starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MaterializedViewTupleViewSinkTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
     // register logical stream
@@ -74,7 +74,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     csvSourceType1->setSkipHeader(true);
     auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -100,11 +100,11 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
 
 /// @brief tests if a query with materialized view source starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MaterializedViewTupleBufferSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
     //register logical stream
@@ -124,7 +124,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     materializeViewSourceType->setId(viewId);
     auto physicalSource1 = PhysicalSource::create("stream", "MV", materializeViewSourceType);
     workerConfig1->addPhysicalSource(physicalSource1);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -154,11 +154,11 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
 
 // @brief tests with two concurrent queries if writing and reading of MVs works properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
-    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
     EXPECT_NE(port, 0UL);
     std::string stream =
@@ -188,7 +188,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     auto physicalSource2 = PhysicalSource::create("stream", "test_stream", materializeViewSourceType);
     workerConfig1->addPhysicalSource(physicalSource1);
     workerConfig1->addPhysicalSource(physicalSource2);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
