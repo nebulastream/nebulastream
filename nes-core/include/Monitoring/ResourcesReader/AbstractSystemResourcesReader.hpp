@@ -17,6 +17,7 @@
 #ifndef NES_ABSTRACTSYSTEMRESOURCESREADER_HPP
 #define NES_ABSTRACTSYSTEMRESOURCESREADER_HPP
 
+#include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -36,6 +37,16 @@ class StaticNesMetrics;
 */
 class AbstractSystemResourcesReader {
   public:
+    //  -- Constructors --
+    AbstractSystemResourcesReader();
+    AbstractSystemResourcesReader(const AbstractSystemResourcesReader&) = default;
+    AbstractSystemResourcesReader(AbstractSystemResourcesReader&&) = default;
+    //  -- Assignment --
+    AbstractSystemResourcesReader& operator=(const AbstractSystemResourcesReader&) = default;
+    AbstractSystemResourcesReader& operator=(AbstractSystemResourcesReader&&) = default;
+    //  -- dtor --
+    virtual ~AbstractSystemResourcesReader() = default;
+
     /**
     * @brief This methods reads runtime system metrics that are used within NES (e.g., memory usage, cpu load).
     * @return A RuntimeNesMetrics object containing the metrics.
@@ -78,15 +89,21 @@ class AbstractSystemResourcesReader {
     virtual NetworkMetrics readNetworkStats();
 
     /**
+     * @brief Getter for the wall clock time.
     * @return Returns the wall clock time of the system in nanoseconds.
     */
     virtual uint64_t getWallTimeInNs();
 
-    AbstractSystemResourcesReader() = default;
-    virtual ~AbstractSystemResourcesReader() = default;
+    /**
+     * @brief Getter for the reader type.
+     * @return The SystemResourcesReaderType
+     */
+    [[nodiscard]] SystemResourcesReaderType getReaderType() const;
 
+  protected:
+    SystemResourcesReaderType readerType;
 };
-using AbstractSystemResourcesReaderPtr = std::unique_ptr<AbstractSystemResourcesReader>;
+using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
 
 }// namespace NES
 

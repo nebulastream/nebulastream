@@ -14,59 +14,52 @@
     limitations under the License.
 */
 
+#include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/CpuValues.hpp>
 #include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
 #include <Monitoring/MetricValues/StaticNesMetrics.hpp>
-#include <Monitoring/Util/AbstractSystemResourcesReader.hpp>
-
-#include <Util/Logger.hpp>
-#include <chrono>
-#include <fstream>
-#include <iterator>
-#include <sys/statvfs.h>
-#include <thread>
-#include <vector>
 
 namespace NES {
-    RuntimeNesMetrics AbstractSystemResourcesReader::readRuntimeNesMetrics() {
-        RuntimeNesMetrics output{};
-        //output.wallTimeNs = 0;
-        return output;
-    }
+AbstractSystemResourcesReader::AbstractSystemResourcesReader(): readerType(AbstractReader) {
+}
 
-    StaticNesMetrics AbstractSystemResourcesReader::readStaticNesMetrics() {
-        StaticNesMetrics output{};
-        return output;
-    }
+RuntimeNesMetrics AbstractSystemResourcesReader::readRuntimeNesMetrics() {
+    RuntimeNesMetrics output{};
+    return output;
+}
 
-    CpuMetrics AbstractSystemResourcesReader::readCpuStats() {
-        CpuMetrics output{};
-        return output;
-    }
+StaticNesMetrics AbstractSystemResourcesReader::readStaticNesMetrics() {
+    StaticNesMetrics output{};
+    return output;
+}
 
-    NetworkMetrics AbstractSystemResourcesReader::readNetworkStats() {
-        NetworkMetrics output{};
-        return output;
-    }
+CpuMetrics AbstractSystemResourcesReader::readCpuStats() {
+    CpuMetrics output{};
+    return output;
+}
 
-    MemoryMetrics AbstractSystemResourcesReader::readMemoryStats() {
-        MemoryMetrics output{};
-        return output;
-    }
+NetworkMetrics AbstractSystemResourcesReader::readNetworkStats() {
+    NetworkMetrics output{};
+    return output;
+}
 
-    DiskMetrics AbstractSystemResourcesReader::readDiskStats() {
-        DiskMetrics output{};
-        return output;
-    }
+MemoryMetrics AbstractSystemResourcesReader::readMemoryStats() {
+    MemoryMetrics output{};
+    return output;
+}
 
-    uint64_t AbstractSystemResourcesReader::getWallTimeInNs() {
-        uint64_t output{};
-        return output;
-    }
+DiskMetrics AbstractSystemResourcesReader::readDiskStats() {
+    DiskMetrics output{};
+    return output;
+}
 
+uint64_t AbstractSystemResourcesReader::getWallTimeInNs() {
+    uint64_t output{};
+    return output;
+}
+
+SystemResourcesReaderType AbstractSystemResourcesReader::getReaderType() const { return readerType; }
 }// namespace NES
