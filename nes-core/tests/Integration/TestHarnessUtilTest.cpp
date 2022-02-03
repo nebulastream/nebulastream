@@ -627,7 +627,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
 
     std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") < 1000))";
 
-    EXPECT_THROW(TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).validate().setupTopology(), Exception);
+    EXPECT_THROW(TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder()).validate().setupTopology(), log4cxx::helpers::Exception);
 }
 
 /*
