@@ -159,6 +159,8 @@ class CoordinatorRPCClient {
      */
     std::vector<std::pair<uint64_t, GeographicalLocation>> getNodeIdsInRange(GeographicalLocation coord, double radius);
 
+    bool sendErrors(uint64_t workerId, std::string errorMsg);
+
   private:
     uint64_t workerId;
     std::string address;

@@ -504,4 +504,24 @@ bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t q
     return false;
 }
 
+bool CoordinatorRPCClient::sendErrors(uint64_t workerId, std::string errorMsg) {
+
+    // create & fill the protobuf
+    SendErrorsMessage request;
+    request.set_workerid(workerId);
+    request.set_errormsg(errorMsg);
+
+    ErrorReply reply;
+
+    ClientContext context;
+
+    Status status = coordinatorStub->SendErrors(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::SendErrors: status ok");
+        return true;
+    }
+    return false;
+}
+
 }// namespace NES
