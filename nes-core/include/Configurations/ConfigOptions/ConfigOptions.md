@@ -9,7 +9,7 @@
    - Enumerations -> Specific values of en Enum entry (e.g., Optimizer::QueryMergerRule)
    - Nested Options -> Allows nesting of configurations into each other 
    - SequenceOptions -> A list of options only applicable to yaml configuration 
-   - WrapOption -> Uses a custom class as an option (e.g., PhysicalSource) and uses an Factory to construct the custom object (e.g., PhysicalSourceFactory).
+   - Custom Objects -> Uses a custom class as an option (e.g., PhysicalSource) and uses an Factory to construct the custom object (e.g., PhysicalSourceFactory).
 
 ### Design:
 
