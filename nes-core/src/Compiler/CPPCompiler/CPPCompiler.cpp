@@ -29,7 +29,8 @@
 
 namespace NES::Compiler {
 
-const std::string NESIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-core/include/";
+const std::string NESCoreIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-core/include/";
+const std::string NESCommonIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-common/include/";
 const std::string DEBSIncludePath = PATH_TO_DEB_SOURCE_CODE "/include/";
 
 #ifdef __APPLE__
@@ -163,7 +164,8 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 #error "Unknown platform"
 #endif
     // add header of NES Source
-    compilationFlags.addFlag("-I" + NESIncludePath);
+    compilationFlags.addFlag("-I" + NESCommonIncludePath);
+    compilationFlags.addFlag("-I" + NESCoreIncludePath);
     // add header of all dependencies
     compilationFlags.addFlag("-I" + DEBSIncludePath);
 
