@@ -39,6 +39,10 @@ const string worker = "\n"
                       "▒█▒█▒█ █░░█ █▄▄▀ █▀▄ █▀▀ █▄▄▀ \n"
                       "▒█▄▀▄█ ▀▀▀▀ ▀░▀▀ ▀░▀ ▀▀▀ ▀░▀▀";
 
+namespace NES::Runtime {
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+}
+
 int main(int argc, char** argv) {
     try {
         std::cout << logo << std::endl;
@@ -82,6 +86,8 @@ int main(int argc, char** argv) {
         nesWorker->stop(/**force*/ true);
     } catch (std::exception& exp) {
         NES_ERROR("Problem with worker: " << exp.what());
+        std::shared_ptr<std::exception> e = std::make_shared<std::exception>(exp);
+        nesWorker->onFatalException(e, "Problem with worker");
         return 1;
     } catch (...) {
         NES_ERROR("Unknown exception was thrown");

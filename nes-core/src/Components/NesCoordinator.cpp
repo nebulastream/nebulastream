@@ -65,6 +65,9 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig, Wo
     : NesCoordinator(std::move(coordinatorConfig)) {
     workerConfig = std::move(workerConfiguration);
 }
+namespace Runtime {
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
+}
 
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
@@ -232,6 +235,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     auto workerConfigCopy = workerConfig;
     worker = std::make_shared<NesWorker>(std::move(workerConfigCopy));
     worker->start(/**blocking*/ false, /**withConnect*/ true);
+
+    NES::Runtime::installGlobalErrorListener(worker);
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");

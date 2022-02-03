@@ -374,6 +374,34 @@ bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
     return success;
 }
 
+void NesWorker::onFatalError(int signalNumber, std::string string){
+    NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << string);
+    std::string errorMsg;
+    std::cerr << "Query failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
+    std::cerr << "Error: " << strerror(errno) << std::endl;
+    std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
+    std::cerr << "Callstack:\n " << string << std::endl;
+    //in errorMsg schreiben
+    errorMsg = "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + string;
+    //send it to Coordinator:
+    //new endpoint instead of this one!
+    this->notifyQueryFailure(0,0,this->getWorkerId(), 0, errorMsg);
+}
+
+void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string string) {
+    NES_ERROR("onFatalException: exception=[" << ptr->what() << "] callstack=\n" << string);
+    std::string errorMsg;
+    std::cerr << "Query failed fatally" << std::endl;
+    std::cerr << "Error: " << strerror(errno) << std::endl;
+    std::cerr << "Exception: " << ptr->what() << std::endl;
+    std::cerr << "Callstack:\n " << string << std::endl;
+    //in errorMsg schreiben
+    errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + string;
+
+    //new endpoint instead of this one!
+    this->notifyQueryFailure(0,0,this->getWorkerId(), 0, errorMsg);
+}
+
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
 bool NesWorker::hasLocation() { return locationCoordinates.has_value(); }
