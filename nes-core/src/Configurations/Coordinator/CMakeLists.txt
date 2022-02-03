@@ -13,5 +13,6 @@
 
 add_source_nes(
         CoordinatorConfiguration.cpp
+        LogicalSourceFactory.cpp
 )
 

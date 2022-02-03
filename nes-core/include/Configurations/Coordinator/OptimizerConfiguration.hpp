@@ -21,21 +21,51 @@ class OptimizerConfiguration : public BaseConfiguration {
   public:
     OptimizerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
 
+    /**
+     * @brief The number of queries to be processed together.
+     */
     IntOption queryBatchSize = {"queryBatchSize", 1, "The number of queries to be processed together"};
 
+    /**
+     * @brief The rule to be used for performing query merging.
+     * Valid options are:
+     * SyntaxBasedCompleteQueryMergerRule,
+     * SyntaxBasedPartialQueryMergerRule,
+     * Z3SignatureBasedCompleteQueryMergerRule,
+     * Z3SignatureBasedPartialQueryMergerRule,
+     * Z3SignatureBasedPartialQueryMergerBottomUpRule,
+     * HashSignatureBasedCompleteQueryMergerRule,
+     * ImprovedStringSignatureBasedCompleteQueryMergerRule,
+     * ImprovedStringSignatureBasedPartialQueryMergerRule,
+     * StringSignatureBasedPartialQueryMergerRule,
+     * DefaultQueryMergerRule,
+     * HybridCompleteQueryMergerRule
+     */
     EnumOption<Optimizer::QueryMergerRule> queryMergerRule = {"queryMergerRule",
-                                                                  Optimizer::QueryMergerRule::DefaultQueryMergerRule,
-                                                                  "The rule to be used for performing query merging"};
+                                                              Optimizer::QueryMergerRule::DefaultQueryMergerRule,
+                                                              "The rule to be used for performing query merging"};
 
+    /**
+     * @brief Enable semantic query validation feature
+     */
     BoolOption enableSemanticQueryValidation = {"enableSemanticQueryValidation",
-                                                    false,
-                                                    "Enable semantic query validation feature"};
+                                                false,
+                                                "Enable semantic query validation feature"};
 
+    /**
+     * @brief Indicates the memory layout policy and allows the engine to prefer a row or columnar layout.
+     * Valid options are:
+     * FORCE_ROW_LAYOUT
+     * FORCE_COLUMN_LAYOUT
+     */
     EnumOption<Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy> memoryLayoutPolicy = {
         "memoryLayoutPolicy",
         Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT,
         "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]"};
 
+    /**
+     * @brief Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)
+     */
     BoolOption performOnlySourceOperatorExpansion = {
         "performOnlySourceOperatorExpansion",
         false,

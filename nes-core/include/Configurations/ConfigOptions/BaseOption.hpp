@@ -16,7 +16,7 @@ class BaseOption {
   protected:
     friend class BaseConfiguration;
     virtual void parseFromYAMLNode(Yaml::Node node) = 0;
-    virtual void parseFromString(std::string basicString) = 0;
+    virtual void parseFromString(std::string identifier, std::string value) = 0;
     std::string name;
     std::string description;
 };

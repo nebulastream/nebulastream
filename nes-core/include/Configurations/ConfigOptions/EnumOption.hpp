@@ -13,9 +13,10 @@ requires std::is_enum<T>::value class EnumOption : public TypedBaseOption<T> {
   public:
     EnumOption(std::string name, T value, std::string description);
     EnumOption<T>& operator=(const T& value);
+
   protected:
     void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(std::string basicString) override;
+    void parseFromString(std::string identifier, std::string value) override;
 };
 
 template<class T>
@@ -31,15 +32,16 @@ requires std::is_enum<T>::value EnumOption<T>
 
 template<class T>
 requires std::is_enum<T>::value void EnumOption<T>::parseFromYAMLNode(Yaml::Node node) {
-    parseFromString(node.As<std::string>());
+    parseFromString("", node.As<std::string>());
 }
 
 template<class T>
-requires std::is_enum<T>::value void EnumOption<T>::parseFromString(std::string basicString) {
-    if (!magic_enum::enum_contains<T>(basicString)) {
-        throw ConfigurationException("Enum for " + basicString + " was not found");
+requires std::is_enum<T>::value void EnumOption<T>::parseFromString(std::string, std::string value) {
+    if (!magic_enum::enum_contains<T>(value)) {
+        auto name = std::string(magic_enum::enum_names_to_string<T>());
+        throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + name);
     }
-    this->value = magic_enum::enum_cast<T>(basicString).value();
+    this->value = magic_enum::enum_cast<T>(value).value();
 }
 
 }// namespace NES::Configurations

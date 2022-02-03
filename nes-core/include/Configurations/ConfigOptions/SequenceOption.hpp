@@ -16,7 +16,7 @@ class SequenceOption : public BaseOption {
 
   protected:
     void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(std::string) override;
+    void parseFromString(std::string identifier, std::string value) override;
 
   private:
     std::vector<T> options;
@@ -45,7 +45,7 @@ void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node) {
 }
 template<class T>
 requires std::is_base_of_v<BaseOption, T>
-void SequenceOption<T>::parseFromString(std::string) {}
+void SequenceOption<T>::parseFromString(std::string, std::string) {}
 
 template<class T>
 requires std::is_base_of_v<BaseOption, T> T SequenceOption<T>::operator[](size_t index) const { return options[index]; }

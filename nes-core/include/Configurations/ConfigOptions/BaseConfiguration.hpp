@@ -17,7 +17,7 @@ class BaseConfiguration : public BaseOption {
     BaseConfiguration(std::string name, std::string description);
     virtual ~BaseConfiguration() = default;
     void parseFromYAMLNode(Yaml::Node config) override;
-    void parseFromString(std::string) override;
+    void parseFromString(std::string identifier, std::string value) override;
     /**
      * @brief overwrite the default configurations with those loaded from a yaml file
      * @param filePath file path to the yaml file
