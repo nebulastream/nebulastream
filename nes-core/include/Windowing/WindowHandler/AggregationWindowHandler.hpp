@@ -133,6 +133,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                 break;
             }
             case Runtime::HardEndOfStream: {
+                stop();
                 break;
             }
             default: {

@@ -956,8 +956,8 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)                                  \
     || defined(NES_USE_ONE_QUEUE_PER_QUERY)
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
-        NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
-                        "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
+//        NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
+//                        "Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
         NES_DEBUG("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer " << buffer
                                                                 << " queueId=" << queueId);
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
