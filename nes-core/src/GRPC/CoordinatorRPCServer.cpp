@@ -231,7 +231,7 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
     auto middlePoint = std::make_tuple(request->coord().lat(), request->coord().lng());
-    std::vector<std::pair<uint64 , std::tuple<double, double>>> resultVec = topologyManagerService->getNodesIdsInRange(middlePoint, request->radius());
+    std::vector<std::pair<uint64_t , std::tuple<double, double>>> resultVec = topologyManagerService->getNodesIdsInRange(middlePoint, request->radius());
 
     for (auto elem : resultVec) {
         NodeGeoInfo* nodeInfo = reply->add_nodes();

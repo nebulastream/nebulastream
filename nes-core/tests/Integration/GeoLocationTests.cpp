@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 #include <iostream>
 
 #include <Components/NesCoordinator.hpp>
@@ -141,7 +155,6 @@ TEST_F(GeoLocationTests, createNodeWithLocation) {
     topology->setPhysicalNodePosition(node2, std::make_tuple(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(topology->getClosestNodeTo(node4), node2);
     EXPECT_EQ(node2->getCoordinates(), std::make_tuple(52.51094383152051, 13.463078966025266));
-    //TODO: make sure to remove node before changing position
     EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 3);
     NES_INFO("NEIGHBORS");
     auto inRange = topology->getNodesInRange(std::make_tuple(52.53736960143897, 13.299134894776092), 50.0);
@@ -179,5 +192,6 @@ TEST_F(GeoLocationTests, createNodeWithLocation) {
     NES_INFO("stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
+
 }
 }

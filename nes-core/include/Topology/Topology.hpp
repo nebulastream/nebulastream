@@ -21,7 +21,9 @@
 #include <mutex>
 #include <optional>
 #include <vector>
+#ifdef S2DEF
 #include <s2/s2point_index.h>
+#endif
 
 namespace NES {
 
@@ -254,8 +256,11 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
+
+#ifdef S2DEF
     // a spatial index that stores pointers to all the field nodes
     S2PointIndex<TopologyNodePtr> nodePointIndex;
+#endif
 };
 }// namespace NES
 #endif  // NES_INCLUDE_TOPOLOGY_TOPOLOGY_HPP_

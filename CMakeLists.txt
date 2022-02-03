@@ -24,6 +24,9 @@ option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
 # Enable prebuild dependencies only if NES_BUILD_DEPENDENCIES_LOCAL is OFF and CMAKE_TOOLCHAIN_FILE is not set.
 cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies" ON "NOT NES_BUILD_NATIVE; NOT CMAKE_TOOLCHAIN_FILE" OFF)
 
+#toggle import and usage of s2 library
+option(USE_S2 "Toggle use of s2 library" OFF)
+
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
@@ -368,9 +371,14 @@ find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
 set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
 
 # s2 Library
-add_library(s2 SHARED IMPORTED)
-set_target_properties(s2 PROPERTIES IMPORTED_LOCATION "/usr/local/lib/libs2.so.0")
-set(LIBRARIES ${LIBRARIES} s2)
+if (USE_S2)
+    find_package(s2)
+    set(LIBRARIES ${LIBRARIES} s2)
+    add_compile_definitions(S2DEF)
+    message(STATUS "s2 is enabled")
+else()
+    message(STATUS "s2 is disabled")
+endif ()
 
 # Library containing Kafka client
 if (NES_USE_KAFKA)
