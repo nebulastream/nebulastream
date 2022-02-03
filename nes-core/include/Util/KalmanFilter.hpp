@@ -145,7 +145,16 @@ class KalmanFilter {
      * should be.
      * @return a new gathering interval that we can sleep on
      */
-    std::chrono::milliseconds getNewMagnitudeBasedFrequency();
+    std::chrono::milliseconds getValueMagnitudeBasedFrequency();
+
+    /**
+     * Use difference in error between sensed values
+     * to re-calculate a new frequency. The difference
+     * dictates how faster/slower the new frequency
+     * should be.
+     * @return a new gathering interval that we can sleep on
+     */
+    std::chrono::milliseconds getErrorBasedFrequency();
 
     /**
      * @return the total estimation error, calculated
