@@ -644,7 +644,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
 
     ASSERT_EQ(testHarness.getWorkerCount(), 0UL);
-    EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), RuntimeException);
+    EXPECT_THROW(testHarness.pushElement<Car>({30, 30, 30}, 0), Exceptions::RuntimeException);
 }
 
 /*
@@ -685,7 +685,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
-    EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 2), RuntimeException);
+    EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 2), Exceptions::RuntimeException);
 }
 
 }// namespace NES
