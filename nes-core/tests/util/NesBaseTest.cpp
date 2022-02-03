@@ -88,11 +88,14 @@ class ShmFixedVector {
     }
 
     ~ShmFixedVector() {
-        if (metadata->refCnt.fetch_sub(1) == 1) {
-            NES_ASSERT(0 == munmap(mem, mmapSize), "Cannot munmap");
-            NES_ASSERT(0 == close(shmemFd), "Cannot close");
-            NES_ASSERT(0 == shm_unlink(name.c_str()), "Cannot shm_unlink");
-            std::filesystem::remove_all("/tmp/nes.tests.begin");
+        bool doCleanup = metadata->refCnt.fetch_sub(1) == 1;
+        NES_ASSERT(0 == munmap(mem, mmapSize), "Cannot munmap");
+        NES_ASSERT(0 == close(shmemFd), "Cannot close");
+        if (doCleanup) {
+            if (0 == shm_unlink(name.c_str())) {
+                // no process has the shared memory segment open
+                std::filesystem::remove_all("/tmp/nes.tests.begin");
+            }
         }
     }
 

@@ -68,7 +68,7 @@ struct StateVariableDestroyerHelper<Key, T*> {
 
 class Destroyable {
   public:
-    virtual ~Destroyable() { NES_DEBUG("~Destroyable()"); }
+    virtual ~Destroyable() { }
 };
 }// namespace detail
 
@@ -274,7 +274,6 @@ class StateVariable : public detail::Destroyable {
      * @brief Destructor of a state variable. It frees all allocated resources.
      */
     virtual ~StateVariable() override {
-        NES_DEBUG("~StateVariable()");
         detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend);
     }
 

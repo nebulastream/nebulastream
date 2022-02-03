@@ -51,6 +51,7 @@ void WindowOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPt
     windowHandler->start(stateManager, localStateVariableId);
 }
 void WindowOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) { windowHandler->stop(); }
+
 void WindowOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
     windowHandler->reconfigure(task, context);
