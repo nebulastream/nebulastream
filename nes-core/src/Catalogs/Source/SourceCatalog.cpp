@@ -31,7 +31,7 @@ void SourceCatalog::addDefaultStreams() {
     bool success = addLogicalStream("default_logical", schema);
     if (!success) {
         NES_ERROR("SourceCatalog::addDefaultStreams: error while add default_logical");
-        throw Exception("Error while addDefaultStreams SourceCatalog");
+        throw log4cxx::helpers::Exception("Error while addDefaultStreams SourceCatalog");
     }
 
     //TODO I think we should get rid of this soon
@@ -55,7 +55,7 @@ void SourceCatalog::addDefaultStreams() {
     bool success2 = addLogicalStream("exdra", schemaExdra);
     if (!success2) {
         NES_ERROR("SourceCatalog::addDefaultStreams: error while adding exdra logical stream");
-        throw Exception("Error while addDefaultStreams SourceCatalog");
+        throw log4cxx::helpers::Exception("Error while addDefaultStreams SourceCatalog");
     }
 }
 SourceCatalog::SourceCatalog(QueryParsingServicePtr queryParsingService) : queryParsingService(queryParsingService) {
@@ -237,7 +237,7 @@ LogicalSourcePtr SourceCatalog::getStreamForLogicalStreamOrThrowException(const 
         return LogicalSource::create(logicalStreamName, logicalSourceNameToSchemaMapping[logicalStreamName]);
     }
     NES_ERROR("SourceCatalog::getStreamForLogicalStreamOrThrowException: stream does not exists " << logicalStreamName);
-    throw Exception("Required stream does not exists " + logicalStreamName);
+    throw log4cxx::helpers::Exception("Required stream does not exists " + logicalStreamName);
 }
 
 bool SourceCatalog::containsLogicalSource(const std::string& logicalStreamName) {

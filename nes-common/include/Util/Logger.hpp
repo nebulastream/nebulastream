@@ -27,9 +27,6 @@
 #include <mutex>
 #include <sstream>
 
-using namespace log4cxx;
-using namespace log4cxx::helpers;
-
 namespace NES {
 
 /// XXX: C++2a remove when format is available.
@@ -379,7 +376,7 @@ DISABLE_WARNING_UNREFERENCED_FUNCTION
 #define NES_NOT_IMPLEMENTED()                                                                                                    \
     do {                                                                                                                         \
         NES_ERROR("Function Not Implemented!");                                                                                  \
-        throw Exception("not implemented");                                                                                      \
+        throw log4cxx::helpers::Exception("not implemented");                                                                                      \
     } while (0)
 
 }// namespace NES

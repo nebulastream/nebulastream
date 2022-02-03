@@ -74,7 +74,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
     }));
     if (!this->queryManager->startThreadPool(numberOfBuffersPerWorker)) {
         NES_ERROR("Runtime: error while start thread pool");
-        throw Exception("Error while start thread pool");
+        throw log4cxx::helpers::Exception("Error while start thread pool");
     }
     NES_DEBUG("NodeEngine(): thread pool successfully started");
 

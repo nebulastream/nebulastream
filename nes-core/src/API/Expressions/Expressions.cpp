@@ -83,7 +83,7 @@ FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionNodePtr ass
         return FieldAssignmentExpressionNode::create(expression->as<FieldAccessExpressionNode>(), assignExpression);
     }
     NES_FATAL_ERROR("Expression API: we can only assign something to a field access expression");
-    throw IllegalArgumentException("Expression API: we can only assign something to a field access expression");
+    throw log4cxx::helpers::IllegalArgumentException("Expression API: we can only assign something to a field access expression");
 }
 
 ExpressionItem Attribute(std::string fieldName) {

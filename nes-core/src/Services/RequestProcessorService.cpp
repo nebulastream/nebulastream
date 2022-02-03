@@ -206,7 +206,7 @@ void RequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService QueryUndeploymentException: " << ex.what());
             } catch (InvalidQueryException& ex) {
                 NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
-            } catch (Exception& ex) {
+            } catch (log4cxx::helpers::Exception& ex) {
                 NES_FATAL_ERROR(
                     "QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
                 shutDown();

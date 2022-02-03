@@ -120,7 +120,7 @@ QueryPtr QueryParsingService::createQueryFromCodeString(const std::string& query
         throw;
     } catch (...) {
         NES_ERROR("Util: Failed to create the query from input code string: " << queryCodeSnippet);
-        throw Exception("Failed to create the query from input code string");
+        throw log4cxx::helpers::Exception("Failed to create the query from input code string");
     }
 }
 }// namespace NES

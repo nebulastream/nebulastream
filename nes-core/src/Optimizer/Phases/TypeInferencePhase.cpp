@@ -69,12 +69,12 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         auto sinks = queryPlan->getSinkOperators();
         for (auto& sink : sinks) {
             if (!sink->inferSchema()) {
-                throw Exception("TypeInferencePhase: Failed!");
+                throw log4cxx::helpers::Exception("TypeInferencePhase: Failed!");
             }
         }
         NES_DEBUG("TypeInferencePhase: we inferred all schemas");
         return queryPlan;
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase " << e.what());
         auto queryId = queryPlan->getQueryId();
         throw TypeInferenceException(queryId, e.what());

@@ -275,17 +275,17 @@ class TestHarness {
     TestHarness& validate() {
         validationDone = true;
         if (this->logicalSources.empty()) {
-            throw Exception("No Logical source defined. Please make sure you add logical source while defining up test harness.");
+            throw log4cxx::helpers::Exception("No Logical source defined. Please make sure you add logical source while defining up test harness.");
         }
 
         if (testHarnessWorkerConfigurations.empty()) {
-            throw Exception("TestHarness: No worker added to the test harness.");
+            throw log4cxx::helpers::Exception("TestHarness: No worker added to the test harness.");
         }
 
         uint64_t sourceCount = 0;
         for (const auto& workerConf : testHarnessWorkerConfigurations) {
             if (workerConf->getSourceType() == TestHarnessWorkerConfiguration::MemorySource && workerConf->getRecords().empty()) {
-                throw Exception("TestHarness: No Record defined for Memory Source with logical source Name: "
+                throw log4cxx::helpers::Exception("TestHarness: No Record defined for Memory Source with logical source Name: "
                                 + workerConf->getLogicalSourceName() + " and Physical source name : "
                                 + workerConf->getPhysicalSourceName() + ". Please add data to the test harness.");
             }
@@ -297,7 +297,7 @@ class TestHarness {
         }
 
         if (sourceCount == 0) {
-            throw Exception("TestHarness: No Physical source defined in the test harness.");
+            throw log4cxx::helpers::Exception("TestHarness: No Physical source defined in the test harness.");
         }
         return *this;
     }
@@ -316,7 +316,7 @@ class TestHarness {
         }
 
         if (!schema) {
-            throw Exception("Unable to find logical source with name " + logicalSourceName
+            throw log4cxx::helpers::Exception("Unable to find logical source with name " + logicalSourceName
                             + ". Make sure you are adding a logical source with the name to the test harness.");
         }
 
@@ -406,7 +406,7 @@ class TestHarness {
                              uint64_t testTimeout = 60) {
 
         if (!topologySetupDone || !validationDone) {
-            throw Exception(
+            throw log4cxx::helpers::Exception(
                 "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
         }
 
@@ -496,7 +496,7 @@ class TestHarness {
     TopologyPtr getTopology() {
 
         if (!validationDone && !topologySetupDone) {
-            throw Exception(
+            throw log4cxx::helpers::Exception(
                 "Make sure to call first validate() and then setupTopology() to the test harness before checking the output");
         }
         return nesCoordinator->getTopology();

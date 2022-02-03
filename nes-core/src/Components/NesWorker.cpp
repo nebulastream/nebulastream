@@ -146,7 +146,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << enableMonitoring);
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
-        throw Exception("NesWorker error while starting node engine");
+        throw log4cxx::helpers::Exception("NesWorker error while starting node engine");
     }
 
     rpcAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
@@ -211,7 +211,7 @@ bool NesWorker::stop(bool) {
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
-            throw Exception("NesWorker::stop  error while stopping node engine");
+            throw log4cxx::helpers::Exception("NesWorker::stop  error while stopping node engine");
         }
         NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
 

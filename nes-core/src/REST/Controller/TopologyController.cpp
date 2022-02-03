@@ -57,18 +57,18 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     NES_DEBUG("TopologyController::handlePost:addParent: childId=" << childId << " parentId=" << parentId);
 
                     if (parentId == childId) {
-                        throw Exception("Could not add parent for node in topology: childId and parentId must be different.");
+                        throw log4cxx::helpers::Exception("Could not add parent for node in topology: childId and parentId must be different.");
                     }
 
                     TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
                     if (!childPhysicalNode) {
-                        throw Exception("Could not add parent for node in topology: Node with childId=" + std::to_string(childId)
+                        throw log4cxx::helpers::Exception("Could not add parent for node in topology: Node with childId=" + std::to_string(childId)
                                         + " not found.");
                     }
 
                     TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
                     if (!parentPhysicalNode) {
-                        throw Exception("Could not add parent for node in topology: Node with parentId="
+                        throw log4cxx::helpers::Exception("Could not add parent for node in topology: Node with parentId="
                                         + std::to_string(parentId) + " not found.");
                     }
 
@@ -78,7 +78,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                         topology->print();
                     } else {
                         NES_ERROR("TopologyController::handlePost:addParent: Failed");
-                        throw Exception("TopologyController::handlePost:addParent: Failed");
+                        throw log4cxx::helpers::Exception("TopologyController::handlePost:addParent: Failed");
                     }
 
                     //Prepare the response
@@ -118,19 +118,19 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                     NES_DEBUG("TopologyController::handlePost:removeParent: childId=" << childId << " parentId=" << parentId);
 
                     if (parentId == childId) {
-                        throw Exception("Could not remove parent for node in topology: childId and parentId must be different.");
+                        throw log4cxx::helpers::Exception("Could not remove parent for node in topology: childId and parentId must be different.");
                     }
 
                     TopologyNodePtr childPhysicalNode = topology->findNodeWithId(childId);
                     if (!childPhysicalNode) {
-                        throw Exception("Could not remove parent for node in topology: Node with childId="
+                        throw log4cxx::helpers::Exception("Could not remove parent for node in topology: Node with childId="
                                         + std::to_string(childId) + " not found.");
                     }
                     NES_DEBUG("TopologyController::handlePost:removeParent: childId: " << childId << " exists");
 
                     TopologyNodePtr parentPhysicalNode = topology->findNodeWithId(parentId);
                     if (!parentPhysicalNode) {
-                        throw Exception("Could not remove parent for node in topology: Node with parentId="
+                        throw log4cxx::helpers::Exception("Could not remove parent for node in topology: Node with parentId="
                                         + std::to_string(parentId) + " not found.");
                     }
                     NES_DEBUG("TopologyController::handlePost:removeParent: parent node: " << parentId << " exists");
@@ -141,7 +141,7 @@ void TopologyController::handlePost(const std::vector<utility::string_t>& path, 
                         topology->print();
                     } else {
                         NES_ERROR("TopologyController::handlePost:removeParent: Failed");
-                        throw Exception("TopologyController::handlePost:removeParent: Failed");
+                        throw log4cxx::helpers::Exception("TopologyController::handlePost:removeParent: Failed");
                     }
 
                     //Prepare the response

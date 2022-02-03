@@ -76,7 +76,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
       bufferSizeInBytes(this->coordinatorConfiguration->bufferSizeInBytes),
       enableMonitoring(this->coordinatorConfiguration->enableMonitoring) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
-    MDC::put("threadName", "NesCoordinator");
+    log4cxx::MDC::put("threadName", "NesCoordinator");
     topology = Topology::create();
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, enableMonitoring);
@@ -273,7 +273,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
         bool successStopRest = restServer->stop();
         if (!successStopRest) {
             NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer");
-            throw Exception("Error while stopping NesCoordinator");
+            throw log4cxx::helpers::Exception("Error while stopping NesCoordinator");
         }
         NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest);
 
@@ -282,7 +282,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             restThread->join();
         } else {
             NES_ERROR("NesCoordinator: rest thread not joinable");
-            throw Exception("Error while stopping thread->join");
+            throw log4cxx::helpers::Exception("Error while stopping thread->join");
         }
 
         queryRequestProcessorService->shutDown();
@@ -291,13 +291,13 @@ bool NesCoordinator::stopCoordinator(bool force) {
             queryRequestProcessorThread->join();
         } else {
             NES_ERROR("NesCoordinator: query processor thread not joinable");
-            throw Exception("Error while stopping thread->join");
+            throw log4cxx::helpers::Exception("Error while stopping thread->join");
         }
 
         bool successShutdownWorker = worker->stop(force);
         if (!successShutdownWorker) {
             NES_ERROR("NesCoordinator::stop node engine stop not successful");
-            throw Exception("NesCoordinator::stop error while stopping node engine");
+            throw log4cxx::helpers::Exception("NesCoordinator::stop error while stopping node engine");
         }
         NES_DEBUG("NesCoordinator::stop Node engine stopped successfully");
 
@@ -312,7 +312,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
             rpcThread.reset();
         } else {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
-            throw Exception("Error while stopping thread->join");
+            throw log4cxx::helpers::Exception("Error while stopping thread->join");
         }
         return true;
     }
