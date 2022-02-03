@@ -45,13 +45,46 @@ class ConfigTest : public testing::Test {
  */
 TEST_F(ConfigTest, testConfigurationWithYaml) {
 
-    auto coordinatorConfigPtr = Configurations::NEWCoordinatorConfiguration();
-    coordinatorConfigPtr.overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "testNewCoordinatorConfig.yaml");
+    auto config = Configurations::TestConfiguration();
+    config.overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "testConfig.yaml");
 
-    EXPECT_EQ(coordinatorConfigPtr.restPort, coordinatorConfigPtr.restPort.getDefaultValue());
-    coordinatorConfigPtr.restIp = "19";
-    auto x = coordinatorConfigPtr.logLevel;
-    x = LogLevel::LOG_NONE;
+    EXPECT_EQ(config.rpcPort, 100);
+    EXPECT_EQ(config.logLevel, LogLevel::LOG_WARNING);
+    EXPECT_FALSE(config.optimizerConfig.enableSemanticQueryValidation);
+
+    LogicalSourcePtr logicalSource1 = config.logicalSources[0];
+    EXPECT_EQ(logicalSource1->getLogicalSourceName(), "Source1");
+    EXPECT_EQ(logicalSource1->getSchema()->fields.size(), 2);
+
+}
+
+/**
+ * @brief This reads an coordinator yaml and checks the configuration
+ */
+TEST_F(ConfigTest, testConfigurationWithCommandLine) {
+
+    std::string argv[] = {
+        "--rpcPort=42",
+        "--logLevel=LOG_NONE",
+        "--optimizerConfig.enableSemanticQueryValidation=TRUE"
+    };
+    int argc = 3;
+
+    std::map<string, string> commandLineParams;
+
+    for (int i = 0; i < argc; ++i) {
+        commandLineParams.insert(
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+    }
+
+    auto config = Configurations::TestConfiguration();
+    config.overwriteConfigWithCommandLineInput(commandLineParams);
+    EXPECT_EQ(config.logLevel, LogLevel::LOG_NONE);
+    EXPECT_EQ(config.rpcPort, 42);
+    EXPECT_TRUE(config.optimizerConfig.enableSemanticQueryValidation);
+
+
 }
 
 /**

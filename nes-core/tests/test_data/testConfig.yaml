@@ -1,0 +1,19 @@
+
+restIp: localhost
+rpcPort: 100
+enableMonitoring: false
+logLevel: LOG_WARNING
+
+optimizerConfig:
+  enableSemanticQueryValidation: false
+  memoryLayoutPolicy: FORCE_COLUMN_LAYOUT
+
+logicalSources:
+  - logicalSourceName: Source1
+    schema:
+      - f1
+      - f2
+  - logicalSourceName: Source2
+    schema:
+      - x
+      - y

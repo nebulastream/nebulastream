@@ -8,3 +8,4 @@ Checks:          '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-u
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     none
+IgnoreClassesWithAllMemberVariablesBeingPublic: true
