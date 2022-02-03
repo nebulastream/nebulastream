@@ -116,7 +116,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
 #endif
         if (bufferManagers.empty()) {
             NES_ERROR("Runtime: error while creating buffer manager");
-            throw Exception("Error while creating buffer manager");
+            throw log4cxx::helpers::Exception("Error while creating buffer manager");
         }
 
         QueryManagerPtr queryManager;
@@ -138,23 +138,23 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto materializedViewManager = std::make_shared<Experimental::MaterializedView::MaterializedViewManager>();
         if (!partitionManager) {
             NES_ERROR("Runtime: error while creating partition manager");
-            throw Exception("Error while creating partition manager");
+            throw log4cxx::helpers::Exception("Error while creating partition manager");
         }
         if (!queryManager) {
             NES_ERROR("Runtime: error while creating queryManager");
-            throw Exception("Error while creating queryManager");
+            throw log4cxx::helpers::Exception("Error while creating queryManager");
         }
         if (!stateManager) {
             NES_ERROR("Runtime: error while creating stateManager");
-            throw Exception("Error while creating stateManager");
+            throw log4cxx::helpers::Exception("Error while creating stateManager");
         }
         if (!bufferStorage) {
             NES_ERROR("Runtime: error while creating bufferStorage");
-            throw Exception("Error while creating bufferStorage");
+            throw log4cxx::helpers::Exception("Error while creating bufferStorage");
         }
         if (!materializedViewManager) {
             NES_ERROR("Runtime: error while creating materializedViewMananger");
-            throw Exception("Error while creating materializedViewMananger");
+            throw log4cxx::helpers::Exception("Error while creating materializedViewMananger");
         }
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -164,7 +164,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler);
         if (!compiler) {
             NES_ERROR("Runtime: error while creating compiler");
-            throw Exception("Error while creating compiler");
+            throw log4cxx::helpers::Exception("Error while creating compiler");
         }
         auto engine = std::make_shared<NodeEngine>(
             physicalSources,

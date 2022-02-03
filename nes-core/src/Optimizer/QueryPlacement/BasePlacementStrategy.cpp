@@ -50,7 +50,7 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
         if (!value.has_value()) {
-            throw Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
+            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
                             + pinnedOperator->toString());
         }
         auto nodeId = std::any_cast<uint64_t>(value);
@@ -120,13 +120,13 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId) {
 
     if (found == nodeIdToTopologyNodeMap.end()) {
         NES_ERROR("BasePlacementStrategy: Topology node with id " << nodeId << " not considered for the placement.");
-        throw Exception("BasePlacementStrategy: Topology node with id " + std::to_string(nodeId)
+        throw log4cxx::helpers::Exception("BasePlacementStrategy: Topology node with id " + std::to_string(nodeId)
                         + " not considered for the placement.");
     }
 
     if (found->second->getAvailableResources() == 0 && !operatorToExecutionNodeMap.contains(nodeId)) {
         NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
-        throw Exception("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
+        throw log4cxx::helpers::Exception("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
     }
     return found->second;
 }
@@ -288,7 +288,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     if (!found) {
                         NES_ERROR("BasePlacementStrategy::placeNetworkOperator: unable to place network sink operator for the "
                                   "child operator");
-                        throw Exception("BasePlacementStrategy::placeNetworkOperator: unable to place network sink operator for "
+                        throw log4cxx::helpers::Exception("BasePlacementStrategy::placeNetworkOperator: unable to place network sink operator for "
                                         "the child operator");
                     }
                 } else if (i == nodesBetween.size() - 1) {
@@ -314,7 +314,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                     if (!found) {
                         NES_WARNING("BasePlacementStrategy::placeNetworkOperator: unable to place network source operator for "
                                     "the parent operator");
-                        throw Exception("BasePlacementStrategy::placeNetworkOperator: unable to place network source operator "
+                        throw log4cxx::helpers::Exception("BasePlacementStrategy::placeNetworkOperator: unable to place network source operator "
                                         "for the parent operator");
                     }
                 } else {
@@ -424,7 +424,7 @@ void BasePlacementStrategy::addExecutionNodeAsRoot(ExecutionNodePtr& executionNo
         if (!globalExecutionPlan->checkIfExecutionNodeIsARoot(executionNode->getId())) {
             if (!globalExecutionPlan->addExecutionNodeAsRoot(executionNode)) {
                 NES_ERROR("BasePlacementStrategy: failed to add execution node as root");
-                throw Exception("BasePlacementStrategy: failed to add execution node as root");
+                throw log4cxx::helpers::Exception("BasePlacementStrategy: failed to add execution node as root");
             }
         }
     }

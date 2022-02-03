@@ -102,7 +102,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 queryPlan = queryRewritePhase->execute(queryPlan);
 
                 if (!queryPlan) {
-                    throw Exception("QueryProcessingService: Failed during query rewrite phase for query: "
+                    throw log4cxx::helpers::Exception("QueryProcessingService: Failed during query rewrite phase for query: "
                                     + std::to_string(queryId));
                 }
                 queryCatalogEntry->addOptimizationPhase("Query Rewrite Phase", queryPlan);
@@ -117,21 +117,21 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
                 if (!queryPlan) {
-                    throw Exception("QueryProcessingService: Failed during query topology specific rewrite phase for query: "
+                    throw log4cxx::helpers::Exception("QueryProcessingService: Failed during query topology specific rewrite phase for query: "
                                     + std::to_string(queryId));
                 }
                 queryCatalogEntry->addOptimizationPhase("Topology Specific Query Rewrite Phase", queryPlan);
 
                 queryPlan = typeInferencePhase->execute(queryPlan);
                 if (!queryPlan) {
-                    throw Exception("QueryProcessingService: Failed during Type inference phase for query: "
+                    throw log4cxx::helpers::Exception("QueryProcessingService: Failed during Type inference phase for query: "
                                     + std::to_string(queryId));
                 }
                 queryCatalogEntry->addOptimizationPhase("Type Inference Phase 3", queryPlan);
 
                 queryPlan = setMemoryLayoutPhase->execute(queryPlan);
                 if (!queryPlan) {
-                    throw Exception("QueryProcessingService: Failed during Memory Layout Selection phase for query: "
+                    throw log4cxx::helpers::Exception("QueryProcessingService: Failed during Memory Layout Selection phase for query: "
                                     + std::to_string(queryId));
                 }
                 queryCatalogEntry->addOptimizationPhase("Set Memory Layout Phase 2", queryPlan);

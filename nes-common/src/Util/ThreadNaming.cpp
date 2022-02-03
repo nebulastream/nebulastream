@@ -42,7 +42,7 @@ void setThreadName(const char* threadNameFmt, ...) {
     resized_buffer[sz] = 0;
     std::string thName(resized_buffer);
     //this will add the thread name in the log
-    MDC::put("threadName", thName);
+    log4cxx::MDC::put("threadName", thName);
 
 #ifdef HAS_POSIX_THREAD
 #ifdef __linux__

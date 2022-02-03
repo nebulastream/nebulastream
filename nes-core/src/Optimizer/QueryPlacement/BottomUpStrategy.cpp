@@ -154,7 +154,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
-                    throw Exception("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
+                    throw log4cxx::helpers::Exception("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
                 }
             }
         }
@@ -175,7 +175,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
 
         if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
-            throw Exception("BottomUpStrategy: No node available for further placement of operators");
+            throw log4cxx::helpers::Exception("BottomUpStrategy: No node available for further placement of operators");
         }
 
         NES_TRACE("BottomUpStrategy: Get the candidate execution node for the candidate topology node.");

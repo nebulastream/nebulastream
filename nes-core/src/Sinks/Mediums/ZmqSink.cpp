@@ -59,7 +59,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
     connect();
     if (!connected) {
         NES_DEBUG("ZmqSink  " << this << ": cannot write buffer " << inputBuffer << " because queue is not connected");
-        throw Exception("Write to zmq sink failed");
+        throw log4cxx::helpers::Exception("Write to zmq sink failed");
     }
 
     if (!inputBuffer.isValid()) {

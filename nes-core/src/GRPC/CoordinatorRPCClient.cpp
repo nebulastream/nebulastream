@@ -189,7 +189,7 @@ bool CoordinatorRPCClient::registerLogicalStream(const std::string& logicalSourc
     std::filesystem::path path{filePath.c_str()};
     if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path)) {
         NES_ERROR("CoordinatorRPCClient: file does not exits");
-        throw Exception("files does not exist");
+        throw log4cxx::helpers::Exception("files does not exist");
     }
 
     /* Read file from file system. */

@@ -75,7 +75,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
         NES_TRACE("LogicalSourceExpansionRule: Found " << sourceCatalogEntries.size()
                                                        << " physical source locations in the topology.");
         if (sourceCatalogEntries.empty()) {
-            throw Exception("LogicalSourceExpansionRule: Unable to find physical stream locations for the logical stream "
+            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find physical stream locations for the logical stream "
                             + logicalSourceName);
         }
 
@@ -120,7 +120,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
                     for (auto blockingParentId : listOfConnectedBlockingParents) {
                         auto blockingOperator = blockingOperators[blockingParentId];
                         if (!blockingOperator) {
-                            throw Exception("LogicalSourceExpansionRule: Unable to find blocking operator with id "
+                            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find blocking operator with id "
                                             + std::to_string(blockingParentId));
                         }
                         blockingOperator->addChild(operatorNode);
@@ -159,7 +159,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const Operator
 void LogicalSourceExpansionRule::removeAndAddBlockingUpstreamOperator(const OperatorNodePtr& operatorNode,
                                                                       const OperatorNodePtr& upstreamOperator) {
     if (!operatorNode->removeParent(upstreamOperator)) {
-        throw Exception("LogicalSourceExpansionRule: Unable to remove non-blocking child operator from the blocking operator");
+        throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to remove non-blocking child operator from the blocking operator");
     }
 
     //extract the list of connected blocking parents and add the current parent to the list

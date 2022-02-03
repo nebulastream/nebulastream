@@ -150,7 +150,7 @@ bool ZmqSource::disconnect() {
         // that we commented out
         bool success = zmq_ctx_shutdown(static_cast<void*>(context)) == 0;
         if (!success) {
-            throw Exception("ZmqSource::disconnect() error");
+            throw log4cxx::helpers::Exception("ZmqSource::disconnect() error");
         }
         //        context.shutdown();
         connected = false;
