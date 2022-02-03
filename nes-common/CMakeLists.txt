@@ -39,4 +39,4 @@ install(TARGETS nes-common
 
 install(DIRECTORY "include"
         COMPONENT nesHeaders
-        DESTINATION "/nebulastream")
+        DESTINATION "/nebulastream/nes-common")
