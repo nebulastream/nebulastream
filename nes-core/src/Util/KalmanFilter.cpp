@@ -47,6 +47,7 @@ void KalmanFilter::init() {
 void KalmanFilter::init(const Eigen::VectorXd& initialState) {
     this->setDefaultValues();
     this->xHat = initialState;
+    this->lastValuesWindow.emplace(initialState[2]);
 }
 
 void KalmanFilter::init(const Eigen::VectorXd& initialState, double initialTimestamp) {
@@ -176,7 +177,7 @@ std::chrono::milliseconds KalmanFilter::getValueMagnitudeBasedFrequency() {
     auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
     auto newFreqCandidate = this->frequency.count() + thetaPart;
     auto magnitude = this->getMagnitudeFromLastValues(this->lastValuesWindow[1], this->lastValuesWindow[0]);
-    auto canonicalizedFreqCandidate = newFreqCandidate / magnitude;
+    auto canonicalizedFreqCandidate = (magnitude > 0) ? newFreqCandidate / magnitude : newFreqCandidate;
     // forget upper/lower thresholds or error thresholds for now
     this->frequency = std::chrono::milliseconds((int) trunc(canonicalizedFreqCandidate));
     return this->frequency;
