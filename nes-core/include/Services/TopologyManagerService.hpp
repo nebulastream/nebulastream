@@ -19,7 +19,10 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <optional>
+#ifdef S2DEF
 #include <s2/base/integral_types.h>
+#endif
 
 namespace NES {
 class Topology;
@@ -98,7 +101,7 @@ class TopologyManagerService {
      * @param radius: all field nodes within this radius around the center will be returned
      * @return vector of pairs containing node ids and the corresponding location
      */
-    std::vector<std::pair<uint64 , std::tuple<double, double>>> getNodesIdsInRange(std::tuple<double, double> center, double radius);
+    std::vector<std::pair<uint64_t , std::tuple<double, double>>> getNodesIdsInRange(std::tuple<double, double> center, double radius);
 
   private:
     TopologyPtr topology;

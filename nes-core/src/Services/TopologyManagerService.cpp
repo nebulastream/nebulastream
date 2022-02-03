@@ -195,9 +195,9 @@ std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> TopologyMana
 }
 
 
-std::vector<std::pair<uint64 , std::tuple<double, double>>> TopologyManagerService::getNodesIdsInRange(std::tuple<double, double> center, double radius) {
+std::vector<std::pair<uint64_t , std::tuple<double, double>>> TopologyManagerService::getNodesIdsInRange(std::tuple<double, double> center, double radius) {
    auto list = getNodesInRange(center, radius);
-   std::vector<std::pair<uint64, std::tuple<double, double>>> retList{};
+   std::vector<std::pair<uint64_t, std::tuple<double, double>>> retList{};
    retList.reserve(list.size());
 for (auto elem : list) {
        retList.emplace_back(std::pair(elem.first->getId(), elem.second));

@@ -18,6 +18,7 @@
 #include <Nodes/Node.hpp>
 #include <Topology/LinkProperty.hpp>
 #include <any>
+#include <optional>
 
 namespace NES {
 class TopologyNode;

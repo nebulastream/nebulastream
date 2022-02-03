@@ -19,9 +19,11 @@
 #include <algorithm>
 #include <deque>
 #include <utility>
+#ifdef S2DEF
 #include <s2/s2latlng.h>
 #include <s2/s2closest_point_query.h>
 #include <s2/s2earth.h>
+#endif
 
 namespace NES {
 
@@ -73,6 +75,7 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, std::tuple<double, double> newCoordinates, bool init) {
     double newLat = get<0>(newCoordinates);
     double newLng = get<1>(newCoordinates);
+#ifdef S2DEF
     S2Point newLoc(S2LatLng::FromDegrees(newLat, newLng));
     NES_DEBUG("updating location of Node to: " << newLat << ", " << newLng);
 
@@ -91,19 +94,30 @@ bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, std::tuple<d
     }
 
     nodePointIndex.Add(newLoc, node);
+#else
+    NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
+    NES_INFO("init = " << init);
+#endif
     node->setCoordinates(newCoordinates);
     return true;
 }
 
 TopologyNodePtr Topology::getClosestNodeTo(const std::tuple<double, double> coordTuple, int radius) {
+#ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
     S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(std::get<0>(coordTuple), std::get<1>(coordTuple))));
     TopologyNodePtr closest = query.FindClosestPoint(&target).data();
     return closest;
+#else
+    NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
+    NES_INFO("supplied values: " << std::get<0>(coordTuple) << radius);
+    return {};
+#endif
 }
 
 TopologyNodePtr Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
+#ifdef S2DEF
     auto coordTupleOpt = nodePtr->getCoordinates();
 
     if (!coordTupleOpt.has_value()) {
@@ -121,9 +135,16 @@ TopologyNodePtr Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int r
         return closest;
     }
     return query.FindClosestPoints(&target)[1].data();
+
+#else
+    NES_WARNING("Files were compiled without s2, cannot find closest nodes");
+    NES_INFO(radius << nodePtr);
+    return {};
+#endif
 }
 
 std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> Topology::getNodesInRange(std::tuple<double, double> center, double radius) {
+#ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
 
@@ -135,10 +156,21 @@ std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> Topology::ge
         retList.emplace_back(r.data(), std::tuple(latLng.lat().degrees(), latLng.lng().degrees()));
     }
     return retList;
+
+#else
+    NES_WARNING("Files were compiled without s2, cannot find closest nodes");
+    NES_INFO(radius << std::get<0>(center));
+    return {};
+#endif
 }
 
 size_t Topology::getSizeOfPointIndex() {
+#ifdef S2DEF
     return nodePointIndex.num_points();
+#else
+    NES_WARNING("s2 lib not included");
+    return {};
+#endif
 }
 
 std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<TopologyNodePtr>& sourceNodes,
