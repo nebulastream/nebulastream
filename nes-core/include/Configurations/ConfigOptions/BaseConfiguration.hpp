@@ -4,6 +4,7 @@
 #include <Configurations/ConfigOptions/EnumOption.hpp>
 #include <Configurations/ConfigOptions/ScalarOption.hpp>
 #include <Configurations/ConfigOptions/SequenceOption.hpp>
+#include <Configurations/ConfigOptions/WrapOption.hpp>
 #include <Exceptions/ConfigurationException.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>

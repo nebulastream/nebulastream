@@ -30,6 +30,18 @@ namespace Configurations {
 
 enum LogLevel { LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
 
+class LogicalSourceFactory {
+  public:
+    static LogicalSourcePtr createFromString(std::string string) {
+        NES_DEBUG("Hallo" << string);
+        return LogicalSourcePtr();
+    }
+    static LogicalSourcePtr createFromYaml(Yaml::Node ) {
+        NES_DEBUG("Hallo");
+        return LogicalSourcePtr();
+    }
+};
+
 /**
  * @brief ConfigOptions for Coordinator
  */
@@ -42,20 +54,20 @@ class NEWCoordinatorConfiguration : public BaseConfiguration {
     IntOption dataPort = {"dataPort", 3001, "NES data server port"};
     IntOption numberOfSlots = {"numberOfSlots", UINT16_MAX, "Number of computing slots for NES Coordinator"};
     EnumOption<LogLevel> logLevel = {"logLevel",
-                                         LOG_DEBUG,
-                                         "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
+                                     LOG_DEBUG,
+                                     "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
     IntOption numberOfBuffersInGlobalBufferManager = {"numberOfBuffersInGlobalBufferManager",
-                                                          1024,
-                                                          "Number buffers in global buffer pool."};
+                                                      1024,
+                                                      "Number buffers in global buffer pool."};
     IntOption numberOfBuffersPerWorker = {"numberOfBuffersPerWorker", 128, "Number buffers in task local buffer pool."};
     IntOption numberOfBuffersInSourceLocalBufferPool = {"numberOfBuffersInSourceLocalBufferPool",
-                                                            64,
-                                                            "Number buffers in source local buffer pool."};
+                                                        64,
+                                                        "Number buffers in source local buffer pool."};
     IntOption bufferSizeInBytes = {"bufferSizeInBytes", 4096, "BufferSizeInBytes."};
     IntOption numWorkerThreads = {"numWorkerThreads", 1, "Number of worker threads."};
     BoolOption enableMonitoring = {"enableMonitoring", false, "Enable monitoring"};
     OptimizerConfiguration optimizerConfig = {"optimizerConfig", "Defines optimizer configuration"};
-    SequenceOption<IntOption> sequence = {"sequence", "Defines optimizer configuration"};
+    SequenceOption<WrapOption<LogicalSourcePtr, LogicalSourceFactory>> sequence = {"sequence", "Defines optimizer configuration"};
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
