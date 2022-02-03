@@ -233,7 +233,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         ColumnLayoutField<uint32_t, false>::create(3, columnLayout, tupleBuffer);
     } catch (NES::Exceptions::RuntimeException& e) {
         EXPECT_TRUE(false);
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         EXPECT_TRUE(true);
     }
 
@@ -241,7 +241,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         ColumnLayoutField<uint32_t, false>::create(4, columnLayout, tupleBuffer);
     } catch (NES::Exceptions::RuntimeException& e) {
         EXPECT_TRUE(false);
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         EXPECT_TRUE(true);
     }
 
@@ -249,7 +249,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         ColumnLayoutField<uint32_t, false>::create(5, columnLayout, tupleBuffer);
     } catch (NES::Exceptions::RuntimeException& e) {
         EXPECT_TRUE(false);
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         EXPECT_TRUE(true);
     }
 
@@ -264,7 +264,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         ((void) field0[i]);
     } catch (NES::Exceptions::RuntimeException& e) {
         EXPECT_TRUE(false);
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         EXPECT_TRUE(true);
     }
 
@@ -272,7 +272,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         ((void) field2[i]);
     } catch (NES::Exceptions::RuntimeException& e) {
         EXPECT_TRUE(false);
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         EXPECT_TRUE(true);
     }
 
@@ -280,7 +280,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         ((void) field2[i]);
     } catch (NES::Exceptions::RuntimeException& e) {
         EXPECT_TRUE(false);
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         EXPECT_TRUE(true);
     }
 
@@ -288,7 +288,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         ((void) field0[++i]);
     } catch (NES::Exceptions::RuntimeException& e) {
         EXPECT_TRUE(false);
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         EXPECT_TRUE(true);
     }
 
@@ -296,7 +296,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         ((void) field1[i]);
     } catch (NES::Exceptions::RuntimeException& e) {
         EXPECT_TRUE(false);
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         EXPECT_TRUE(true);
     }
 
@@ -304,7 +304,7 @@ TEST_F(ColumnarMemoryLayoutTest, DISABLED_columnLayoutLayoutFieldBoundaryNoCheck
         ((void) field2[i]);
     } catch (NES::Exceptions::RuntimeException& e) {
         EXPECT_TRUE(false);
-    } catch (Exception& e) {
+    } catch (log4cxx::helpers::Exception& e) {
         EXPECT_TRUE(true);
     }
 }
