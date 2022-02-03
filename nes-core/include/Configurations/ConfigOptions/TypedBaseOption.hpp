@@ -7,6 +7,7 @@ template<class T>
 class TypedBaseOption : public BaseOption {
   public:
     TypedBaseOption();
+    TypedBaseOption(std::string name, std::string description);
     TypedBaseOption(std::string name, T value, std::string description);
     TypedBaseOption(std::string name, T value, T defaultValue, std::string description);
 
@@ -34,6 +35,9 @@ class TypedBaseOption : public BaseOption {
 
 template<class T>
 TypedBaseOption<T>::TypedBaseOption() : BaseOption() {}
+
+template<class T>
+TypedBaseOption<T>::TypedBaseOption(std::string name, std::string description) : BaseOption(name, description) {}
 
 template<class T>
 TypedBaseOption<T>::TypedBaseOption(std::string name, T value, std::string description)
@@ -64,7 +68,7 @@ void TypedBaseOption<T>::clear() {
 
 template<class T>
 bool TypedBaseOption<T>::operator==(const BaseOption& other) {
-    return this->BaseOption::operator==(other) && value == value;
+    return this->BaseOption::operator==(other);
 }
 
 }// namespace NES::Configurations

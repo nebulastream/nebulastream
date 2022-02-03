@@ -11,13 +11,13 @@ namespace NES::Configurations {
 template<class T>
 class ScalarOption : public TypedBaseOption<T> {
   public:
+    ScalarOption(std::string name, std::string description);
     ScalarOption(std::string name, T value, std::string description);
     ScalarOption(std::string name, T value, T defaultValue, std::string description);
     ScalarOption<T>& operator=(const T& value);
     void clear() override;
     bool operator==(const BaseOption& other) override;
 
-  protected:
     virtual void parseFromYAMLNode(Yaml::Node node) override;
     void parseFromString(std::string basicString) override;
 
@@ -27,6 +27,9 @@ class ScalarOption : public TypedBaseOption<T> {
     friend class SequenceOption;
     ScalarOption() : TypedBaseOption<T>() {}
 };
+
+template<class T>
+ScalarOption<T>::ScalarOption(std::string name, std::string description) : TypedBaseOption<T>(name, description) {}
 
 template<class T>
 ScalarOption<T>::ScalarOption(std::string name, T value, std::string description)
@@ -58,15 +61,6 @@ void ScalarOption<T>::parseFromYAMLNode(Yaml::Node node) {
 }
 
 template<class T>
-requires {
-
-}
-void ScalarOption<T>::parseFromString(std::string basicString) {
-    this->value = Yaml::impl::StringConverter<T>::Get(basicString);
-}
-
-template<class T>
-requires std::is_integral<T>
 void ScalarOption<T>::parseFromString(std::string basicString) {
     this->value = Yaml::impl::StringConverter<T>::Get(basicString);
 }
@@ -75,6 +69,8 @@ using StringOption = ScalarOption<std::string>;
 using IntOption = ScalarOption<int64_t>;
 using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
+
+
 
 }// namespace NES::Configurations
 
