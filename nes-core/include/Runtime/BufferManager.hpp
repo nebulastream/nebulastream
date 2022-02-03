@@ -114,6 +114,12 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
      */
     void initialize(uint32_t withAlignment);
 
+    /**
+     * @brief Increase the bufferSize such that it conforms with the specified alignment
+     * @param bufferSize buffer size
+     * @param withAlignment target alignment
+     * @return bufferSize which conforms the alignment requirement
+     */
     uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment);
 
   public:
