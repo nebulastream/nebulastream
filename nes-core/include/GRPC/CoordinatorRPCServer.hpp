@@ -172,6 +172,16 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) override;
 
+
+    /**
+     * @brief RPC Call to send errors to the coordinator
+     * @param context: the server context
+     * @param request that is sent from worker to the coordinator and filled with information of errors
+     * @param reply that is sent back from the coordinator to the worker to confirm that notification was successful
+     * @return success
+     */
+    Status SendErrors(ServerContext*, const SendErrorsMessage* request, ErrorReply* reply) override;
+
   private:
     TopologyManagerServicePtr topologyManagerService;
     SourceCatalogServicePtr sourceCatalogService;

@@ -237,3 +237,17 @@ Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRan
     }
     return Status::OK;
 }
+
+Status CoordinatorRPCServer::SendErrors(ServerContext*, const SendErrorsMessage* request, ErrorReply* reply) {
+    try {
+        NES_ERROR("CoordinatorRPCServer::sendErrors: failure message received."
+                  << "Id of worker: " << request->workerid()
+                  << " Reason for failure: " << request->errormsg());
+        // TODO implement here what happens with received Error Messages
+        reply->set_success(true);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("CoordinatorRPCServer: received broken failure message: " << ex.what());
+        return Status::CANCELLED;
+    }
+}

@@ -51,6 +51,9 @@ service CoordinatorRPCService {
   rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
 
   rpc NotifyEpochTermination (EpochBarrierPropagationNotification) returns (EpochBarrierPropagationReply) {}
+
+  // send errors to the coordinator
+  rpc SendErrors (SendErrorsMessage) returns (ErrorReply) {}
 }
 
 message RegisterNodeRequest {
@@ -194,4 +197,13 @@ message SerializableRegistrationMetrics {
   int64 cpuQuotaUS = 5;
   bool isMoving = 6;
   bool hasBattery = 7;
+}
+
+message SendErrorsMessage{
+  uint64 workerId = 1;
+  string errorMsg = 2;
+}
+
+message ErrorReply{
+  bool success = 1;
 }

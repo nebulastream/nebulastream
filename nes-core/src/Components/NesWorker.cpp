@@ -374,6 +374,15 @@ bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
     return success;
 }
 
+bool NesWorker::sendErrors(uint64_t workerId, std::string errorMsg) {
+    bool con = waitForConnect();
+    NES_DEBUG("connected= " << con);
+    NES_ASSERT(con, "Connection failed");
+    bool success = coordinatorRpcClient->sendErrors(workerId, errorMsg);
+    NES_DEBUG("NesWorker::sendErrors success=" << success);
+    return success;
+}
+
 void NesWorker::onFatalError(int signalNumber, std::string string){
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << string);
     std::string errorMsg;
@@ -381,11 +390,10 @@ void NesWorker::onFatalError(int signalNumber, std::string string){
     std::cerr << "Error: " << strerror(errno) << std::endl;
     std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
     std::cerr << "Callstack:\n " << string << std::endl;
-    //in errorMsg schreiben
+    // save errors in errorMsg
     errorMsg = "onFatalError: signal [" + std::to_string(signalNumber) + "] error [" + strerror(errno) + "] callstack " + string;
-    //send it to Coordinator:
-    //new endpoint instead of this one!
-    this->notifyQueryFailure(0,0,this->getWorkerId(), 0, errorMsg);
+    //send it to Coordinator
+    this->sendErrors(this->getWorkerId(), errorMsg);
 }
 
 void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::string string) {
@@ -395,11 +403,10 @@ void NesWorker::onFatalException(std::shared_ptr<std::exception> ptr, std::strin
     std::cerr << "Error: " << strerror(errno) << std::endl;
     std::cerr << "Exception: " << ptr->what() << std::endl;
     std::cerr << "Callstack:\n " << string << std::endl;
-    //in errorMsg schreiben
+    // save errors in errorMsg
     errorMsg = "onFatalException: exception=[" + std::string(ptr->what()) + "] callstack=\n" + string;
-
-    //new endpoint instead of this one!
-    this->notifyQueryFailure(0,0,this->getWorkerId(), 0, errorMsg);
+    //send it to Coordinator
+    this->sendErrors(this->getWorkerId(), errorMsg);
 }
 
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
