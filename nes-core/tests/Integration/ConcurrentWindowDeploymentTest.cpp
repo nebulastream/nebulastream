@@ -140,7 +140,7 @@ TEST_F(ConcurrentWindowDeploymentTest, testYSBWindow) {
     EXPECT_NE(port, 0UL);
     std::string input =
         R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
-    NES_ASSERT(crd->getStreamCatalogService()->registerLogicalSource("ysb", input), "failed to create logical stream ysb");
+    ASSERT_TRUE(crd->getStreamCatalogService()->registerLogicalSource("ysb", input));
     NES_DEBUG("ConcurrentWindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("ConcurrentWindowDeploymentTest: Start worker 1");
@@ -2109,7 +2109,7 @@ TEST_F(ConcurrentWindowDeploymentTest, DISABLED_testLongWindow) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
     std::string input = R"(Schema::create()->addField("key", UINT64)->addField("value", UINT64)->addField("ts", UINT64);)";
-    NES_ASSERT(crd->getStreamCatalogService()->registerLogicalSource("schema", input), "failed to create logical stream ysb");
+    ASSERT_TRUE(crd->getStreamCatalogService()->registerLogicalSource("schema", input));
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");

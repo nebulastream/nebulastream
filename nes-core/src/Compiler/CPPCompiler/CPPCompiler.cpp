@@ -164,7 +164,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 #error "Unknown platform"
 #endif
     // add header of NES Source
-    compilationFlags.addFlag("-I" + NESCommonIncludePath);
+    //compilationFlags.addFlag("-I" + NESCommonIncludePath);
     compilationFlags.addFlag("-I" + NESCoreIncludePath);
     // add header of all dependencies
     compilationFlags.addFlag("-I" + DEBSIncludePath);
