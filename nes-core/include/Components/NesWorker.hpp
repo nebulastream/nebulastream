@@ -205,6 +205,9 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
       */
     bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId);
 
+    void onFatalError(int signalNumber, std::string string) override;
+    void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
+
   private:
     /**
      * @brief method to register physical source with the coordinator
