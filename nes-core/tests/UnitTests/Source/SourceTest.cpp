@@ -466,7 +466,7 @@ class SourceTest : public Testing::NESBaseTest {
         this->queryId = 1;
         this->bufferAreaSize = this->numberOfBuffers * this->buffer_size;
         void* tmp = nullptr;
-        NES_ASSERT(posix_memalign(&tmp, 64, bufferAreaSize) == 0, "memory allocation failed with aligment");
+        ASSERT_TRUE(posix_memalign(&tmp, 64, bufferAreaSize) == 0);
         this->singleMemoryArea = static_cast<uint8_t*>(tmp);
         this->sourceAffinity = std::numeric_limits<uint64_t>::max();
     }
@@ -1696,7 +1696,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     wrkConf->physicalSources.add(physicalSource);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    NES_ASSERT(retStart1, "retStart1");
+    ASSERT_TRUE(retStart1);
 
     std::string outputFilePath = getTestResourceFolder() / "testIngestionRateFromQuery.out";
     remove(outputFilePath.c_str());
@@ -1707,7 +1707,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     auto queryCatalog = crd->getQueryCatalog();
     auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
-    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
+    ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     auto start = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     string expectedContent = "input1$id:INTEGER,input1$value:INTEGER,input1$timestamp:INTEGER\n"
@@ -1789,11 +1789,11 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     std::cout << "E2EBase: Stop worker 1" << std::endl;
     bool retStopWrk1 = wrk1->stop(true);
-    NES_ASSERT(retStopWrk1, "retStopWrk1");
+    ASSERT_TRUE(retStopWrk1);
 
     std::cout << "E2EBase: Stop Coordinator" << std::endl;
     bool retStopCord = crd->stopCoordinator(true);
-    NES_ASSERT(retStopCord, "retStopCord");
+    ASSERT_TRUE(retStopCord);
     std::cout << "E2EBase: Test finished" << std::endl;
 }
 
@@ -1935,7 +1935,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     wrkConf->physicalSources.add(physicalSource2);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    NES_ASSERT(retStart1, "retStart1");
+    ASSERT_TRUE(retStart1);
 
     string query =
         R"(Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
@@ -1944,11 +1944,11 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
     auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
+    ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     sleep(2);
     std::cout << "E2EBase: Remove query" << std::endl;
-    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     std::cout << "E2EBase: wait for stop" << std::endl;
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
@@ -1957,11 +1957,11 @@ TEST_F(SourceTest, testTwoLambdaSources) {
 
     std::cout << "E2EBase: Stop worker 1" << std::endl;
     bool retStopWrk1 = wrk1->stop(true);
-    NES_ASSERT(retStopWrk1, "retStopWrk1");
+    ASSERT_TRUE(retStopWrk1);
 
     std::cout << "E2EBase: Stop Coordinator" << std::endl;
     bool retStopCord = crd->stopCoordinator(true);
-    NES_ASSERT(retStopCord, "retStopCord");
+    ASSERT_TRUE(retStopCord);
     std::cout << "E2EBase: Test finished" << std::endl;
 }
 
@@ -2017,7 +2017,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
+    ASSERT_TRUE(retStart1);
     NES_INFO("MillisecondIntervalTest: Worker1 started successfully");
 
     string query = R"(Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());)";
@@ -2025,11 +2025,11 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
     auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
+    ASSERT_TRUE(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     sleep(2);
     std::cout << "E2EBase: Remove query" << std::endl;
-    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no valid stop quest");
+    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     std::cout << "E2EBase: wait for stop" << std::endl;
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
@@ -2038,7 +2038,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
 
     std::cout << "E2EBase: Stop Coordinator" << std::endl;
     bool retStopCord = crd->stopCoordinator(true);
-    NES_ASSERT(retStopCord, "retStopCord");
+    ASSERT_TRUE(retStopCord);
     std::cout << "E2EBase: Test finished" << std::endl;
 }
 
