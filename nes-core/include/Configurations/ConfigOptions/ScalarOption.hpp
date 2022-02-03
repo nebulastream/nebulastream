@@ -18,8 +18,8 @@ class ScalarOption : public TypedBaseOption<T> {
     bool operator==(const BaseOption& other) override;
 
   protected:
-    virtual void parseFromYAMLNode(Yaml::Node node) override { this->value = node.As<T>(); }
-    void parseFromString(std::string basicString) override { this->value = Yaml::impl::StringConverter<T>::Get(basicString); }
+    virtual void parseFromYAMLNode(Yaml::Node node) override;
+    void parseFromString(std::string basicString) override;
 
   private:
     template<class X>
@@ -50,6 +50,25 @@ void ScalarOption<T>::clear() {
 template<class T>
 bool ScalarOption<T>::operator==(const BaseOption& other) {
     return TypedBaseOption<T>::operator==(other);
+}
+
+template<class T>
+void ScalarOption<T>::parseFromYAMLNode(Yaml::Node node) {
+    this->value = node.As<T>();
+}
+
+template<class T>
+requires {
+
+}
+void ScalarOption<T>::parseFromString(std::string basicString) {
+    this->value = Yaml::impl::StringConverter<T>::Get(basicString);
+}
+
+template<class T>
+requires std::is_integral<T>
+void ScalarOption<T>::parseFromString(std::string basicString) {
+    this->value = Yaml::impl::StringConverter<T>::Get(basicString);
 }
 
 using StringOption = ScalarOption<std::string>;
