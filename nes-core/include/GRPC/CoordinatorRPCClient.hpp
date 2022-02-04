@@ -36,8 +36,17 @@ using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
  * @brief This class provides utility to interact with NES coordinator over RPC interface.
  */
 class CoordinatorRPCClient {
+
   public:
-    explicit CoordinatorRPCClient(const std::string& address);
+    /**
+     * @brief
+     * @param address
+     * @param retryAttempts: number of attempts for connecting
+     * @param backOffTimeMs: backoff time to wait after a failed connection attempt
+     */
+    explicit CoordinatorRPCClient(const std::string& address,
+                                  uint32_t rpcRetryAttemps = 10,
+                                  std::chrono::milliseconds rpcBackoff = std::chrono::milliseconds(50));
 
     /**
      * @brief this methods registers physical sources provided by the node at the coordinator
@@ -99,8 +108,6 @@ class CoordinatorRPCClient {
      * @param grpcPort: the grpc port of the node
      * @param dataPort: the data port of the node
      * @param numberOfSlots: processing slots capacity
-     * @param retryAttempts: number of attempts for connecting
-     * @param backOffTimeMs: backoff time to wait after a failed connection attempt
      * @param staticNesMetrics: metrics to report
      * @return bool indicating success
      */
@@ -108,8 +115,6 @@ class CoordinatorRPCClient {
                       int64_t grpcPort,
                       int64_t dataPort,
                       int16_t numberOfSlots,
-                      uint32_t retryAttempts,
-                      std::chrono::milliseconds backOffTimeMs,
                       std::optional<StaticNesMetricsPtr> staticNesMetrics);
 
     /**
@@ -140,8 +145,10 @@ class CoordinatorRPCClient {
     std::string address;
     std::shared_ptr<::grpc::Channel> rpcChannel;
     std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub;
+    uint32_t rpcRetryAttemps;
+    std::chrono::milliseconds rpcBackoff;
 };
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
 }// namespace NES
-#endif  // NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
+#endif// NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
