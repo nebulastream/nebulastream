@@ -183,12 +183,38 @@ std::chrono::milliseconds KalmanFilter::getValueMagnitudeBasedFrequency() {
     return this->frequency;
 }
 
-std::chrono::milliseconds KalmanFilter::getErrorBasedFrequency() {
-    auto totalEstimationError = this->calculateTotalEstimationError();
-    auto powerOfEuler = (totalEstimationError + lambda) / lambda;
-    auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
-    auto newFreqCandidate = this->frequency.count() + thetaPart;
-    // TODO: using error might make sense only as a threshold, scrap this
+std::chrono::milliseconds KalmanFilter::getExponentialFrequency() {
+    auto errorDiff = this->getEstimationErrorDifference();
+    if (errorDiff > 0.6) {
+        return this->getExponentialDecayFrequency();
+    }
+    if (std::abs(errorDiff) <= 0.16) {
+        return this->getExponentialGrowthFrequency();
+    }
+    return this->frequency;
+}
+
+double KalmanFilter::getEstimationErrorDifference() {
+    return this->kfErrorWindow[0] - this->kfErrorWindow[1];
+}
+
+std::chrono::milliseconds KalmanFilter::getExponentialDecayFrequency() {
+    auto newFreqCandidate = this->frequency.count() * (1 - std::pow(eulerConstant, this->decreaseCounter));
+    ++this->decreaseCounter;
+    if (this->increaseCounter > 1) {
+        --this->increaseCounter;
+    }
+    this->frequency = std::chrono::milliseconds((int) trunc(newFreqCandidate));
+    return this->frequency;
+}
+
+std::chrono::milliseconds KalmanFilter::getExponentialGrowthFrequency() {
+    auto newFreqCandidate = this->frequency.count() * (1 + std::pow(eulerConstant, this->increaseCounter));
+    ++this->increaseCounter;
+    if (this->decreaseCounter > 1) {
+        --this->decreaseCounter;
+    }
+    this->frequency = std::chrono::milliseconds((int) trunc(newFreqCandidate));
     return this->frequency;
 }
 

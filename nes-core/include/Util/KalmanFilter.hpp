@@ -148,20 +148,22 @@ class KalmanFilter {
     std::chrono::milliseconds getValueMagnitudeBasedFrequency();
 
     /**
-     * Use difference in error between sensed values
-     * to re-calculate a new frequency. The difference
-     * dictates how faster/slower the new frequency
-     * should be.
-     * @return a new gathering interval that we can sleep on
-     */
-    std::chrono::milliseconds getErrorBasedFrequency();
-
-    /**
      * @return the total estimation error, calculated
      * from the window. This just exposes it in a
      * public API.
      */
     double getTotalEstimationError();
+
+    // decides to exponentially grow/decay the frequency
+    std::chrono::milliseconds getExponentialFrequency();
+    // used to _decrease_ freq.
+    uint64_t decreaseCounter = 1;
+    std::chrono::milliseconds getExponentialDecayFrequency();
+    // used to _increase_ freq.
+    uint64_t increaseCounter = 1;
+    std::chrono::milliseconds getExponentialGrowthFrequency();
+    // used to calculate the diff in error between consecutive samples
+    double getEstimationErrorDifference();
 
   protected:
     /**
