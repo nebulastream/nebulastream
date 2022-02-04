@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
 
-#include "CpuValues.hpp"
-#include "Monitoring/MonitoringForwardRefs.hpp"
-#include "Runtime/RuntimeForwardRefs.hpp"
+#include <Monitoring/Metrics/Gauge/CpuValues.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES {
 

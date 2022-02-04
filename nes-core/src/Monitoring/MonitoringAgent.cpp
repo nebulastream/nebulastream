@@ -1,96 +1,92 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
-        https://www.apache.org/licenses/LICENSE-2.0
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
-#include <optional>
 
 #include <API/Schema.hpp>
-#include "Monitoring/Metrics/Gauge/MetricValueType.hpp"
-#include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
-#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
-#include "Monitoring/MonitoringPlan.hpp"
+#include <Components/NesWorker.hpp>
+#include <Monitoring/MetricCollectors/MetricCollector.hpp>
+#include <Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/StaticNesMetrics.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/MonitoringCatalog.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
-
+#include <cpprest/json.h>
 #include <utility>
 
 namespace NES {
+    using namespace Configurations;
 
-MonitoringAgent::MonitoringAgent() : MonitoringAgent(MonitoringPlan::DefaultPlan(), MetricCatalog::NesMetrics(), true) {}
+    MonitoringAgent::MonitoringAgent() : MonitoringAgent(true) {}
 
-MonitoringAgent::MonitoringAgent(bool enabled)
-    : MonitoringAgent(MonitoringPlan::DefaultPlan(), MetricCatalog::NesMetrics(), enabled) {}
+    MonitoringAgent::MonitoringAgent(bool enabled)
+        : MonitoringAgent(MonitoringPlan::createDefaultPlan(), MonitoringCatalog::defaultCatalog(), enabled) {}
 
-MonitoringAgent::MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog, bool enabled)
-    : monitoringPlan(monitoringPlan), catalog(std::move(catalog)), schema(monitoringPlan->createSchema()), enabled(enabled) {
-    NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString() + " and enabled=" << enabled);
-}
-
-MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
-
-MonitoringAgentPtr MonitoringAgent::create(bool enabled) { return std::make_shared<MonitoringAgent>(enabled); }
-
-MonitoringAgentPtr
-MonitoringAgent::create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog, bool enabled) {
-    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, enabled);
-}
-
-SchemaPtr MonitoringAgent::registerMonitoringPlan(const MonitoringPlanPtr& monitoringPlan) {
-    this->monitoringPlan = monitoringPlan;
-    schema = monitoringPlan->createSchema();
-    return schema;
-}
-
-bool MonitoringAgent::getMetricsFromPlan(Runtime::TupleBuffer& tupleBuffer) {
-    if (enabled) {
-        MetricGroupPtr metricGroup = monitoringPlan->createMetricGroup(catalog);
-        metricGroup->getSample(tupleBuffer);
-        return true;
+    MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled)
+        : monitoringPlan(monitoringPlan), catalog(catalog), enabled(enabled) {
+        NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString() + " and enabled=" << enabled);
     }
-    NES_WARNING("MonitoringAgent: Monitoring disabled, getMetricsFromPlan() failed.");
-    return false;
-}
 
-SchemaPtr MonitoringAgent::getSchema() { return schema; }
+    MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
 
-std::optional<StaticNesMetricsPtr> MonitoringAgent::getStaticNesMetrics() const {
-    if (enabled) {
-        auto staticStats = MetricUtils::staticNesStats();
-        auto measuredVal = std::make_shared<StaticNesMetrics>(staticStats.measure());
-        return measuredVal;
+    MonitoringAgentPtr MonitoringAgent::create(bool enabled) { return std::make_shared<MonitoringAgent>(enabled); }
+
+    MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled) {
+        return std::make_shared<MonitoringAgent>(monitoringPlan, catalog, enabled);
     }
-    NES_WARNING("MonitoringAgent: Monitoring disabled, getStaticNesMetrics() returns empty object.");
-    return std::nullopt;
-}
 
-std::optional<RuntimeNesMetricsPtr> MonitoringAgent::getRuntimeNesMetrics() const {
-    if (enabled) {
-        auto runtimeStats = MetricUtils::runtimeNesStats();
-        auto measuredVal = std::make_shared<RuntimeNesMetrics>(runtimeStats.measure());
-        return measuredVal;
+    void MonitoringAgent::startContinuousMonitoring(NesWorkerPtr nesWorker) {
+        if (enabled) {
+            NES_NOT_IMPLEMENTED();
+        } else {
+            NES_INFO("MonitoringDisabled: ");
+        }
     }
-    NES_WARNING("MonitoringAgent: Monitoring disabled, getRuntimeNesMetrics() returns empty object.");
-    return std::nullopt;
-}
 
-bool MonitoringAgent::isEnabled() const { return enabled; }
+    std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() {
+        std::vector<MetricPtr> output;
+        if (enabled) {
+            for (auto type : monitoringPlan->getMetricTypes()) {
+                auto collector = catalog->getMetricCollector(type);
+                MetricPtr metric = collector->readMetric();
+                output.emplace_back(metric);
+            }
+        }
+        NES_WARNING("MonitoringAgent: Monitoring disabled, getMetricsFromPlan() returns empty vector.");
+        return output;
+    }
 
-void MonitoringAgent::setEnableMonitoring(bool enable) {
-    NES_INFO("MonitoringAgent: Setting enable monitoring=" << enable);
-    enable = enabled;
-}
+    bool MonitoringAgent::isEnabled() const { return enabled; }
+
+    MonitoringPlanPtr MonitoringAgent::getMonitoringPlan() const { return monitoringPlan; }
+
+    void MonitoringAgent::setMonitoringPlan(const MonitoringPlanPtr monitoringPlan) { this->monitoringPlan = monitoringPlan; }
+
+    web::json::value MonitoringAgent::getMetricsAsJson() {
+        web::json::value metricsJson{};
+        if (enabled) {
+            for (auto type : monitoringPlan->getMetricTypes()) {
+                auto collector = catalog->getMetricCollector(type);
+                MetricPtr metric = collector->readMetric();
+                metricsJson[toString(getMetricType(metric))] = asJson(metric);
+            }
+        }
+        return metricsJson;
+    }
 
 }// namespace NES

@@ -93,25 +93,10 @@ message SerializableDataValue {
   google.protobuf.Any value = 1;
 }
 
-enum MetricCollectorType {
-    CPU_COLLECTOR = 0;
-    DISK_COLLECTOR = 1;
-    MEMORY_COLLECTOR = 2;
-    NETWORK_COLLECTOR = 3;
-    STATIC_SYSTEM_METRICS_COLLECTOR = 4;
-    RUNTIME_METRICS_COLLECTOR = 5;
-}
-
 message SerializableMonitoringPlan {
-    repeated MetricCollectorType metricTypes = 1 [packed = true];
+    repeated uint32 metricTypes = 1;
 }
 
-message SerializableStaticNesMetrics {
-    uint64 totalMemoryBytes = 1;
-    uint32 cpuCoreNum = 2;
-    uint64 totalCPUJiffies = 3;
-    int64 cpuPeriodUS = 4;
-    int64 cpuQuotaUS = 5;
-    bool isMoving = 6;
-    bool hasBattery = 7;
+message SerializableMetrics {
+    string metricsAsJson = 1;
 }
