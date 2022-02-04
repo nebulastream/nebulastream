@@ -127,6 +127,7 @@ class KFProxy : public KalmanFilter {
     FRIEND_TEST(AdaptiveKFTest, kfErrorDividerTest);
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalMillisTest);
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalMagnitudeTest);
+    FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalExponentialTest);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
@@ -504,6 +505,29 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalMagnitudeTest) {
         y << measurements[i];
         kfProxy.update(y);
         auto newFreq = kfProxy.getValueMagnitudeBasedFrequency();
+    }
+
+    EXPECT_TRUE(true);
+}
+
+TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialTest) {
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
+    initialState << 0, measurements[0], measurements[0];
+
+    // empty filter
+    KFProxy kfProxy{10};
+    kfProxy.init(initialState);
+    kfProxy.setFrequency(std::chrono::milliseconds{4000});
+
+    // start measurements vector
+    Eigen::VectorXd y(1);
+
+    // predict and update
+    for(uint64_t i = 1; i < measurements.size(); ++i) {
+        y << measurements[i];
+        kfProxy.update(y);
+        auto newFreq = kfProxy.getExponentialFrequency();
     }
 
     EXPECT_TRUE(true);
