@@ -24,7 +24,7 @@ if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${Requi
 # This is important to check the log to identify test errors on new platforms.
 if [ -z "${RequireTest}" ]; then RequireTest="true"; else RequireTest=${RequireTest}; fi
 # parallel test
-if [ -z "${NesTestParallelism}" ]; then NesTestParallelism="1"; else RequireTest=${NesTestParallelism}; fi
+if [ -z "${NesTestParallelism}" ]; then NesTestParallelism="1"; else NesTestParallelism=${NesTestParallelism}; fi
 echo "Required Build Failed=$RequireBuild"
 echo "Required Test Failed=$RequireTest"
 echo "Test Parallelism=$NesTestParallelism"
@@ -54,7 +54,7 @@ then
       # timeout after 70 minutes
       # We don't want to rely on the github-action timeout, because
       # this would fail the job in any case.
-      timeout 70m make test_debug -j${RequireTest}
+      timeout 70m make test_debug -j$NesTestParallelism
       errorCode=$?
       if [ $errorCode -ne 0 ];
       then
