@@ -1,4 +1,6 @@
 /*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -12,21 +14,45 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
-#define NES_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_
+#define NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_
 
 namespace NES {
 
 /**
- * @brief The metric types of NES
- * Counter for incrementing and decrementing values
- * Gauge for reading and returning a specific value
- * Histogram that creates a histogram over time
- * Meter that measures an interval between two points in time
- * Unknown is used for all kind of metrics that are not defined during creation, e.g. in case basic types are used
- */
-enum MetricType { CounterType, GaugeType, HistogramType, MeterType, UnknownType };
+* @brief The metric types of NES
+* Counter for incrementing and decrementing values
+* GaugeCollectors for reading and returning a specific value
+* Histogram that creates a histogram over time
+* Meter that measures an interval between two points in time
+* Unknown is used for all kind of metrics that are not defined during creation, e.g. in case basic types are used
+*/
+enum MetricType {
+    CpuMetric,
+    CpuValue,
+    DiskMetric,
+    MemoryMetric,
+    NetworkMetric,
+    NetworkValue,
+    RuntimeMetric,
+    StaticMetric,
+    UnknownType
+};
+
+std::string toString(MetricType type) {
+    switch (type) {
+        case MetricType::CpuMetric: return "cpu";
+        case MetricType::CpuValue: return "cpu_val";
+        case MetricType::DiskMetric: return "disk";
+        case MetricType::MemoryMetric: return "memory";
+        case MetricType::NetworkMetric: return "network";
+        case MetricType::NetworkValue: return "network_val";
+        case MetricType::RuntimeMetric: return "runtime";
+        case MetricType::StaticMetric: return "static";
+        default: return "unknown";
+    }
+}
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_

@@ -20,7 +20,6 @@
 #include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
 #include "Monitoring/MonitoringPlan.hpp"
 #include <Monitoring/Util/MetricUtils.hpp>
 
@@ -99,7 +98,7 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
 }
 
 TEST_F(MonitoringStackTest, testMetric) {
-    Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
+    CpuMetrics cpuStats = MetricUtils::cpuStats();
     Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
     Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
     Gauge<MemoryMetrics> memStats = MetricUtils::memoryStats();

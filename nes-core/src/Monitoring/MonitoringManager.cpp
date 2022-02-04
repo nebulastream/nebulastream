@@ -1,26 +1,27 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
-        https://www.apache.org/licenses/LICENSE-2.0
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
 #include <Monitoring/MonitoringManager.hpp>
 #include <Util/Logger.hpp>
 
 #include <API/Schema.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include "Monitoring/Storage/MetricStore.hpp"
-#include "Monitoring/Metrics/Gauge/GroupedMetricValues.hpp"
-#include "Monitoring/Metrics/Gauge/MetricValueType.hpp"
-#include "Monitoring/MonitoringPlan.hpp"
+#include <Monitoring/MonitoringPlan.hpp>
+#include <Monitoring/Storage/MetricStore.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -31,124 +32,161 @@
 
 namespace NES {
 
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
-    : MonitoringManager(workerClient, topology, true) {}
+    MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
+        : MonitoringManager(workerClient, topology, true) {}
 
-MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
-    : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology),
-      enableMonitoring(enableMonitoring) {
-    NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring);
-}
-
-MonitoringManager::~MonitoringManager() {
-    NES_DEBUG("MonitoringManager: Shutting down");
-    workerClient.reset();
-    topology.reset();
-}
-
-bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds,
-                                                      const MonitoringPlanPtr& monitoringPlan) {
-    if (!enableMonitoring) {
-        NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
-        return false;
-    }
-    if (!monitoringPlan) {
-        NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
-        return false;
-    }
-    if (nodeIds.empty()) {
-        NES_ERROR("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
-        return false;
+    MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
+        : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology),
+          enableMonitoring(enableMonitoring) {
+        NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring);
     }
 
-    for (auto nodeId : nodeIds) {
-        NES_DEBUG("MonitoringManager: Registering monitoring plan for worker id= " + std::to_string(nodeId));
-        TopologyNodePtr node = topology->findNodeWithId(nodeId);
+    MonitoringManager::~MonitoringManager() {
+        NES_DEBUG("MonitoringManager: Shutting down");
+        workerClient.reset();
+        topology.reset();
+    }
 
-        if (node) {
-            auto nodeIp = node->getIpAddress();
-            auto nodeGrpcPort = node->getGrpcPort();
-            std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
-
-            auto success = workerClient->registerMonitoringPlan(destAddress, monitoringPlan);
-
-            if (success) {
-                NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
-                monitoringPlanMap[nodeId] = monitoringPlan;
-            } else {
-                NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
-                return false;
-            }
-        } else {
-            NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " does not exit.");
+    bool MonitoringManager::registerRemoteMonitoringPlans(const std::vector<uint64_t>& nodeIds,
+                                                          const MonitoringPlanPtr& monitoringPlan) {
+        if (!enableMonitoring) {
+            NES_ERROR("MonitoringManager: Register plan failed. Monitoring is disabled.");
             return false;
         }
-    }
-    return true;
-}
-
-GroupedMetricValues MonitoringManager::requestMonitoringData(uint64_t nodeId, Runtime::BufferManagerPtr bufferManager) {
-    if (!enableMonitoring) {
-        NES_ERROR("MonitoringManager: Requesting monitoring data for node " << nodeId
-                                                                            << " failed. Monitoring is disabled, "
-                                                                               "returning empty object");
-        return GroupedMetricValues{};
-    }
-
-    NES_DEBUG("MonitoringManager: Requesting metrics for node id=" + std::to_string(nodeId));
-    auto plan = getMonitoringPlan(nodeId);
-    auto schema = plan->createSchema();
-
-    //getMonitoringPlan(..) checks if node exists, so no further check necessary
-    TopologyNodePtr node = topology->findNodeWithId(nodeId);
-    auto tupleBuffer = bufferManager->getUnpooledBuffer(schema->getSchemaSizeInBytes()).value();
-
-    auto nodeIp = node->getIpAddress();
-    auto nodeGrpcPort = node->getGrpcPort();
-    std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
-    auto success = workerClient->requestMonitoringData(destAddress, tupleBuffer, schema->getSchemaSizeInBytes());
-
-    if (success) {
-        NES_DEBUG("MonitoringManager: Received monitoring data with status " + std::to_string(success));
-        GroupedMetricValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
-        return parsedValues;
-    }
-    NES_THROW_RUNTIME_ERROR("MonitoringManager: Error receiving monitoring metrics for node with id "
-                            + std::to_string(node->getId()));
-}
-
-void MonitoringManager::receiveMonitoringData(uint64_t nodeId, GroupedMetricValuesPtr metrics) {
-    NES_DEBUG("MonitoringManager: Adding metrics for node " << nodeId);
-    metricStore->addMetric(nodeId, std::move(metrics));
-}
-
-void MonitoringManager::removeMonitoringNode(uint64_t nodeId) {
-    NES_DEBUG("MonitoringManager: Removing node and metrics for node " << nodeId);
-    monitoringPlanMap.erase(nodeId);
-    metricStore->removeMetrics(nodeId);
-}
-
-GroupedMetricValuesPtr MonitoringManager::requestNewestMonitoringDataFromMetricStore(uint64_t nodeId) {
-    if (metricStore->hasMetric(nodeId)) {
-        return metricStore->getNewestMetric(nodeId);
-    } else {
-        NES_THROW_RUNTIME_ERROR("MonitoringManager: Node with ID " << nodeId << " not found in MetricStore.");
-    }
-}
-
-MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
-    if (monitoringPlanMap.find(nodeId) == monitoringPlanMap.end()) {
-        TopologyNodePtr node = topology->findNodeWithId(nodeId);
-        if (node) {
-            NES_DEBUG("MonitoringManager: No registered plan found. Returning default plan for node " + std::to_string(nodeId));
-            return MonitoringPlan::DefaultPlan();
+        if (!monitoringPlan) {
+            NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
+            return false;
         }
-        NES_THROW_RUNTIME_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId)
-                                + " failed. Node does not exist in topology.");
+        if (nodeIds.empty()) {
+            NES_ERROR("MonitoringManager: Register monitoring plan failed, no nodes are provided.");
+            return false;
+        }
 
-    } else {
-        return monitoringPlanMap[nodeId];
+        for (auto nodeId : nodeIds) {
+            NES_DEBUG("MonitoringManager: Registering monitoring plan for worker id= " + std::to_string(nodeId));
+            TopologyNodePtr node = topology->findNodeWithId(nodeId);
+
+            if (node) {
+                auto nodeIp = node->getIpAddress();
+                auto nodeGrpcPort = node->getGrpcPort();
+                std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
+
+                auto success = workerClient->registerMonitoringPlan(destAddress, monitoringPlan);
+
+                if (success) {
+                    NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
+                    monitoringPlanMap[nodeId] = monitoringPlan;
+                } else {
+                    NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
+                    return false;
+                }
+            } else {
+                NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " does not exit.");
+                return false;
+            }
+        }
+        return true;
     }
-}
+
+    std::vector<MetricPtr> MonitoringManager::requestMonitoringData(uint64_t nodeId, Runtime::BufferManagerPtr bufferManager) {
+        std::vector<MetricPtr> output;
+        if (!enableMonitoring) {
+            NES_ERROR("MonitoringManager: Requesting monitoring data for node " << nodeId
+                                                                                << " failed. Monitoring is disabled, "
+                                                                                   "returning empty object");
+            return output;
+        }
+
+        NES_DEBUG("MonitoringManager: Requesting metrics for node id=" + std::to_string(nodeId));
+        auto plan = getMonitoringPlan(nodeId);
+
+        //getMonitoringPlan(..) checks if node exists, so no further check necessary
+        TopologyNodePtr node = topology->findNodeWithId(nodeId);
+        auto nodeIp = node->getIpAddress();
+        auto nodeGrpcPort = node->getGrpcPort();
+        std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
+        auto success = workerClient->requestMonitoringDataAsJson(destAddress, tupleBuffer, schema->getSchemaSizeInBytes());
+
+        if (success) {
+            NES_DEBUG("MonitoringManager: Received monitoring data with status " + std::to_string(success));
+            GroupedMetricValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
+            return parsedValues;
+        }
+        NES_THROW_RUNTIME_ERROR("MonitoringManager: Error receiving monitoring metrics for node with id "
+                                + std::to_string(node->getId()));
+    }
+
+    void MonitoringManager::receiveMonitoringData(uint64_t nodeId, MetricCollectorType metricValues) {
+        NES_DEBUG("MonitoringManager: Adding metrics for node " << nodeId);
+        metricStore->addMetric(nodeId, std::move(metrics));
+    }
+
+    void MonitoringManager::removeMonitoringNode(uint64_t nodeId) {
+        NES_DEBUG("MonitoringManager: Removing node and metrics for node " << nodeId);
+        monitoringPlanMap.erase(nodeId);
+        metricStore->removeMetrics(nodeId);
+    }
+
+    GroupedMetricValuesPtr MonitoringManager::requestMonitoringDataByType(uint64_t nodeId) {
+        if (metricStore->hasMetric(nodeId)) {
+            return metricStore->getNewestMetric(nodeId);
+        } else {
+            NES_THROW_RUNTIME_ERROR("MonitoringManager: Node with ID " << nodeId << " not found in MetricStore.");
+        }
+    }
+
+    MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
+        if (monitoringPlanMap.find(nodeId) == monitoringPlanMap.end()) {
+            TopologyNodePtr node = topology->findNodeWithId(nodeId);
+            if (node) {
+                NES_DEBUG("MonitoringManager: No registered plan found. Returning default plan for node " + std::to_string(nodeId));
+                return MonitoringPlan::DefaultPlan();
+            }
+            NES_THROW_RUNTIME_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId)
+                                    + " failed. Node does not exist in topology.");
+
+        } else {
+            return monitoringPlanMap[nodeId];
+        }
+    }
+
+    bool MonitoringManager::registerMonitoringLogical(StreamCatalogPtr streamCatalog) {
+        // Check if logical stream already exists
+        if (enableMonitoring) {
+            const auto* logicalStreamName = "monitoring";
+            auto schema = MonitoringPlan::DefaultPlan()->createSchema();
+            if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
+                NES_DEBUG("MonitoringManager: logical source does not exist in the stream catalog, adding a new logical stream "
+                          << logicalStreamName);
+                streamCatalog->addLogicalStream(logicalStreamName, schema);
+                return true;
+            } else {
+                // Check if it has the same schema
+                if (!streamCatalog->getSchemaForLogicalStream(logicalStreamName)->equals(schema, true)) {
+                    NES_DEBUG("MonitoringManager: logical source " << logicalStreamName
+                                                                   << " exists in the stream catalog with "
+                                                                      "different schema, replacing it with a new schema");
+                    streamCatalog->removeLogicalStream(logicalStreamName);
+                    streamCatalog->addLogicalStream(logicalStreamName, schema);
+                    return true;
+                }
+            }
+            NES_DEBUG("MonitoringManager: Logical stream monitoring already exists.");
+            return false;
+        }
+        NES_DEBUG("MonitoringManager: Monitoring is disabled, registering of MonitoringSource failed.");
+        return false;
+    }
+
+    bool MonitoringManager::setupContinuousMonitoring(StreamCatalogPtr streamCatalog) {
+        auto success = true;
+        //register logical stream
+        registerMonitoringLogical(streamCatalog);
+        return success;
+    }
+
+    MetricPtr MonitoringManager::getMonitoringDataFromMetricStore(uint64_t nodeId) { return NES::MetricPtr(); }
+
+    void MonitoringManager::addMonitoringData(uint64_t nodeId, MetricPtr metric) {}
 
 }// namespace NES

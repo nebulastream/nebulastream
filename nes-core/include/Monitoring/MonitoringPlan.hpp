@@ -20,7 +20,7 @@ limitations under the License.
 #include <memory>
 #include <set>
 #include <string>
-#include <WorkerRPCService.pb.h>
+#include <Monitoring/Metri>
 
 namespace NES {
 

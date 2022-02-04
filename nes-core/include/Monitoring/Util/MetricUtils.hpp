@@ -25,12 +25,6 @@ namespace NES {
 class MetricUtils {
   public:
     /**
-     * @brief Creates the appropriate SystemResourcesReader for the OS
-     * @return the SystemResourcesReader
-     */
-    static AbstractSystemResourcesReaderPtr getSystemResourcesReader();
-
-    /**
      *
      * @param metricSchema
      * @param bufferSchema

@@ -632,6 +632,16 @@ add_executable(network-stack-integration-test "Integration/NetworkStackIntegrati
 target_link_libraries(network-stack-integration-test nes-tests)
 add_test(NAME network-stack-integration-test COMMAND network-stack-integration-test)
 
+# MetricCollectorTest
+add_executable(metric-collector-test "UnitTests/Monitoring/MetricCollectorTest.cpp")
+target_link_libraries(metric-collector-test nes ${GTEST_LIBRARIES})
+add_test(NAME metric-collector-test COMMAND metric-collector-test)
+
+# MetricReaderTest
+add_executable(metric-reader-test "UnitTests/Monitoring/MetricReaderTest.cpp")
+target_link_libraries(metric-reader-test nes ${GTEST_LIBRARIES})
+add_test(NAME metric-reader-test COMMAND metric-reader-test)
+
 # MonitoringStackTest
 add_executable(monitoring-stack-test "UnitTests/Monitoring/MonitoringStackTest.cpp")
 target_link_libraries(monitoring-stack-test nes-tests)

@@ -14,9 +14,7 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
-#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
-#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
-#include "Monitoring/MonitoringPlan.hpp"
+#include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
