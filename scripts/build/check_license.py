@@ -31,7 +31,7 @@ license_text_cpp = """/*
 """
 
 if __name__ == "__main__":
-    exclude = set(['cmake-build-debug', 'cmake-build-release', 'build', 'yaml', 'jitify'])
+    exclude = set(['cmake-build-debug', 'cmake-build-release', 'build', 'yaml', 'jitify', 'magicenum'])
     result = True
     for subdir, dirs, files in os.walk(sys.argv[1]):
         dirs[:] = [d for d in dirs if d not in exclude]
