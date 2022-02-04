@@ -551,8 +551,6 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setRpcPort(port + 20);
-    workerConfig2->setDataPort(port + 21);
 
     workerConfig2->addPhysicalSource(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));

@@ -234,6 +234,8 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t grpcPort,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
+                                        uint32_t retryAttempts,
+                                        std::chrono::milliseconds backOffTime,
                                         std::optional<StaticNesMetricsPtr> staticNesMetrics) {
     RegisterNodeRequest request;
     request.set_address(ipAddress);
@@ -249,17 +251,22 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
 
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
 
-    RegisterNodeReply reply;
-    ClientContext context;
+    for (uint32_t i = 0; i < retryAttempts; ++i, backOffTime *= 2) {
+        RegisterNodeReply reply;
+        ClientContext context;
 
-    Status status = coordinatorStub->RegisterNode(&context, request, &reply);
+        Status status = coordinatorStub->RegisterNode(&context, request, &reply);
 
-    if (status.ok()) {
-        NES_DEBUG("CoordinatorRPCClient::registerNode: status ok id=" << reply.id());
-        this->workerId = reply.id();
-        return true;
+        if (status.ok()) {
+            NES_DEBUG("CoordinatorRPCClient::registerNode: status ok id=" << reply.id());
+            this->workerId = reply.id();
+            return true;
+        }
+        NES_ERROR(" CoordinatorRPCClient::registerNode error=" << status.error_code() << ": " << status.error_message());
+        // TODO maybe some error handling here??
+        usleep(std::chrono::duration_cast<std::chrono::microseconds>(backOffTime).count());
     }
-    NES_ERROR(" CoordinatorRPCClient::registerNode error=" << status.error_code() << ": " << status.error_message());
+
     return false;
 }
 

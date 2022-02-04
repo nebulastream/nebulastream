@@ -821,7 +821,9 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
+// TODO this test needs rethinking as we just check if the file sink creates a file, there is no ingestion time windowing currently
+TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTime) {
+
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
@@ -850,8 +852,6 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
