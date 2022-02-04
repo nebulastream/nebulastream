@@ -54,7 +54,8 @@ QueryPlacementPhasePtr QueryPlacementPhase::create(GlobalExecutionPlanPtr global
 }
 
 bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, const SharedQueryPlanPtr& sharedQueryPlan) {
-    NES_INFO("NESOptimizer: Placing input Query Plan on Global Execution Plan");
+    NES_INFO("QueryPlacementPhase: Perform query placement phase for shared query plan "
+             + std::to_string(sharedQueryPlan->getSharedQueryId()));
     //TODO: At the time of placement we have to make sure that there are no changes done on nesTopologyPlan (how to handle the case of dynamic topology?)
     // one solution could be: 1.) Take the snapshot of the topology and perform the placement 2.) If the topology changed meanwhile, repeat step 1.
     auto placementStrategyPtr = PlacementStrategyFactory::getStrategy(placementStrategy,
@@ -65,8 +66,10 @@ bool QueryPlacementPhase::execute(PlacementStrategy::Value placementStrategy, co
                                                                       z3Context);
 
     auto queryId = sharedQueryPlan->getSharedQueryId();
-    auto faultToleranceType = sharedQueryPlan->getQueryPlan()->getFaultToleranceType();
-    auto lineageType = sharedQueryPlan->getQueryPlan()->getLineageType();
+    auto queryPlan = sharedQueryPlan->getQueryPlan();
+    auto faultToleranceType = queryPlan->getFaultToleranceType();
+    auto lineageType = queryPlan->getLineageType();
+    NES_DEBUG("QueryPlacementPhase: Perform query placement for query plan \n " + queryPlan->toString());
 
     //1. Fetch all upstream pinned operators
     auto upStreamPinnedOperators = getUpStreamPinnedOperators(sharedQueryPlan);

@@ -106,7 +106,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
     }
     placeQueryPlanOnTopology(queryId, pinnedUpStreamOperators, pinnedDownstreamOperatorIds);
 
-    addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators);
+    addNetworkSourceAndSinkOperators(queryId, pinnedUpStreamOperators, pinnedDownStreamOperators);
 
     return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
 }

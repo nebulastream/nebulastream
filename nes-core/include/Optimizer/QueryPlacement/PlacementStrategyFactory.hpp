@@ -66,21 +66,6 @@ class PlacementStrategyFactory {
                                                 const TypeInferencePhasePtr& typeInferencePhase,
                                                 const SourceCatalogPtr& streamCatalog,
                                                 const z3::ContextPtr& z3Context);
-
-    /**
-     * @brief Factory method returning different kind of optimizer (without the z3 optimizer).
-     * @param strategyName : name of the strategy
-     * @param topology : topology information
-     * @param globalExecutionPlan : global execution plan to be updated
-     * @param typeInferencePhase : type inference phase instance
-     * @param streamCatalog : stream catalog
-     * @return instance of type BaseOptimizer
-     */
-    static BasePlacementStrategyPtr getStrategy(PlacementStrategy::Value placementStrategy,
-                                                const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                const TopologyPtr& topology,
-                                                const TypeInferencePhasePtr& typeInferencePhase,
-                                                const SourceCatalogPtr& streamCatalog);
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_PLACEMENTSTRATEGYFACTORY_HPP_
