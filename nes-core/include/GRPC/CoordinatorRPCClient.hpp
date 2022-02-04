@@ -99,6 +99,8 @@ class CoordinatorRPCClient {
      * @param grpcPort: the grpc port of the node
      * @param dataPort: the data port of the node
      * @param numberOfSlots: processing slots capacity
+     * @param retryAttempts: number of attempts for connecting
+     * @param backOffTimeMs: backoff time to wait after a failed connection attempt
      * @param staticNesMetrics: metrics to report
      * @return bool indicating success
      */
@@ -106,6 +108,8 @@ class CoordinatorRPCClient {
                       int64_t grpcPort,
                       int64_t dataPort,
                       int16_t numberOfSlots,
+                      uint32_t retryAttempts,
+                      std::chrono::milliseconds backOffTimeMs,
                       std::optional<StaticNesMetricsPtr> staticNesMetrics);
 
     /**
