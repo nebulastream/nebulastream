@@ -8,40 +8,58 @@
 
 namespace NES::Configurations {
 
-template<class T>
-requires std::is_enum<T>::value class EnumOption : public TypedBaseOption<T> {
+/**
+ * @brief This class defines an option, which has only the member of an enum as possible values.
+ * @tparam EnumType
+ */
+template<class EnumType>
+requires std::is_enum<EnumType>::value class EnumOption : public TypedBaseOption<EnumType> {
   public:
-    EnumOption(std::string name, T value, std::string description);
-    EnumOption<T>& operator=(const T& value);
+    /**
+     * @brief Constructor to define a EnumOption with a specific default value.
+     * @param name of the EnumOption.
+     * @param defaultValue of the EnumOption, has to be an member of the EnumType.
+     * @param description of the EnumOption.
+     */
+    EnumOption(const std::string& name, EnumType defaultValue, const std::string& description);
+
+    /**
+     * @brief Operator to assign a new value as a value of this option.
+     * @param value that will be assigned
+     * @return Reference to this option.
+     */
+    EnumOption<EnumType>& operator=(const EnumType& value);
 
   protected:
     void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(std::string identifier, std::string value) override;
+    void parseFromString(const std::string& identifier, const std::string& value) override;
 };
 
-template<class T>
-requires std::is_enum<T>::value EnumOption<T>::EnumOption(std::string name, T value, std::string description)
-    : TypedBaseOption<T>(name, value, value, description){};
+template<class EnumType>
+requires std::is_enum<EnumType>::value
+EnumOption<EnumType>::EnumOption(const std::string& name, EnumType defaultValue, const std::string& description)
+    : TypedBaseOption<EnumType>(name, defaultValue, description){};
 
-template<class T>
-requires std::is_enum<T>::value EnumOption<T>
-&EnumOption<T>::operator=(const T& value) {
+template<class EnumType>
+requires std::is_enum<EnumType>::value EnumOption<EnumType>
+&EnumOption<EnumType>::operator=(const EnumType& value) {
     this->value = value;
     return *this;
 }
 
-template<class T>
-requires std::is_enum<T>::value void EnumOption<T>::parseFromYAMLNode(Yaml::Node node) {
+template<class EnumType>
+requires std::is_enum<EnumType>::value void EnumOption<EnumType>::parseFromYAMLNode(Yaml::Node node) {
     parseFromString("", node.As<std::string>());
 }
 
-template<class T>
-requires std::is_enum<T>::value void EnumOption<T>::parseFromString(std::string, std::string value) {
-    if (!magic_enum::enum_contains<T>(value)) {
-        auto name = std::string(magic_enum::enum_names_to_string<T>());
+template<class EnumType>
+requires std::is_enum<EnumType>::value void EnumOption<EnumType>::parseFromString(const std::string&, const std::string& value) {
+    // Check if the value is a member of this enum type.
+    if (!magic_enum::enum_contains<EnumType>(value)) {
+        auto name = std::string(magic_enum::enum_names_to_string<EnumType>());
         throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + name);
     }
-    this->value = magic_enum::enum_cast<T>(value).value();
+    this->value = magic_enum::enum_cast<EnumType>(value).value();
 }
 
 }// namespace NES::Configurations

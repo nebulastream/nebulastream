@@ -4,9 +4,9 @@ namespace NES::Configurations {
 
 BaseConfiguration::BaseConfiguration() : BaseOption(){};
 
-BaseConfiguration::BaseConfiguration(std::string name, std::string description) : BaseOption(name, description){};
+BaseConfiguration::BaseConfiguration(const std::string& name, const std::string& description) : BaseOption(name, description){};
 
-void BaseConfiguration::parseFromYAMLNode(Yaml::Node config) {
+void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
     auto optionMap = getOptionMap();
     if (!config.IsMap()) {
         throw ConfigurationException("Malformed YAML configuration file");
@@ -25,7 +25,7 @@ void BaseConfiguration::parseFromYAMLNode(Yaml::Node config) {
     }
 }
 
-void BaseConfiguration::parseFromString(std::string identifier, std::string value) {
+void BaseConfiguration::parseFromString(const std::string& identifier, const std::string& value) {
     auto optionMap = getOptionMap();
     if (value.empty()) {
         throw ConfigurationException("The value field in empty.");

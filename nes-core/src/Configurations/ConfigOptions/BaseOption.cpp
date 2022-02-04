@@ -2,7 +2,7 @@
 
 namespace NES::Configurations {
 
-BaseOption::BaseOption(std::string name, std::string description) : name(name), description(description){};
+BaseOption::BaseOption(const std::string& name, const std::string& description) : name(name), description(description){};
 
 bool BaseOption::operator==(const BaseOption& other) { return name == other.name && description == other.description; };
 

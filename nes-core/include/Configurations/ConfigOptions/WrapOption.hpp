@@ -11,13 +11,30 @@ concept IsFactory = requires(std::string z, Yaml::Node node) {
     {Factory::createFromYaml(node)} -> std::convertible_to<Type>;
 };
 
+/**
+ * @brief This class provides a general option, that can wrap an object as an arbitrary Type as an option.
+ * To this end, users have to specific a Factory which implements the following two static functions:
+ * - Type Factory::createFromString(std::string) -> creates an object of the option Type from an string value.
+ * - Type Factory::createFromYaml(Yaml::Node) -> creates an object of the option Type from an YAML node.
+ * This allows users to represent custom domain types as members of a configuration object, e.g., see PhysicalSources in the WorkerConfiguration.
+ * @note WrapOptions can't have a default type.
+ * @tparam Type of the object that is wrapped by the option.
+ * @tparam Factory type which implements the static create function to initialize a value of this option.
+ */
 template<class Type, class Factory>
 requires IsFactory<Type, Factory>
 class WrapOption : public TypedBaseOption<Type> {
   public:
-    WrapOption(std::string name, std::string description);
+    /**
+     * @brief Constructor to create a new option that sets a name, and description.
+     * @param name of the option.
+     * @param description of the option.
+     */
+    WrapOption(const std::string& name, const std::string& description);
+
+  protected:
     virtual void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(std::string identifier, std::string basicString) override;
+    void parseFromString(const std::string& identifier, const std::string& basicString) override;
   private:
     template<class X>
     requires std::is_base_of_v<BaseOption, X>
@@ -27,11 +44,11 @@ class WrapOption : public TypedBaseOption<Type> {
 
 template<class Type, class Factory>
 requires IsFactory<Type, Factory>
-WrapOption<Type, Factory>::WrapOption(std::string name, std::string description) : TypedBaseOption<Type>(name, description) {}
+WrapOption<Type, Factory>::WrapOption(const std::string& name, const std::string& description) : TypedBaseOption<Type>(name, description) {}
 
 template<class Type, class Factory>
 requires IsFactory<Type, Factory>
-void WrapOption<Type, Factory>::parseFromString(std::string, std::string value) {
+void WrapOption<Type, Factory>::parseFromString(const std::string&, const std::string& value) {
     this->value = Factory::createFromString(value);
 }
 
