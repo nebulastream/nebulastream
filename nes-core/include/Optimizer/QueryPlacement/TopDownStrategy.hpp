@@ -32,8 +32,8 @@ class TopDownStrategy : public BasePlacementStrategy {
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
-                                   const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
-                                   const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
+                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                            TopologyPtr topology,
@@ -51,15 +51,20 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param queryPlan: query plan to place
      * @throws exception if the operator can't be placed.
      */
-    void placeQueryPlan(const QueryPlanPtr& queryPlan);
+    void performOperatorPlacement(QueryId queryId,
+                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to place input operator on the input topology node
-     * @param queryId :  the query id
+     * @param pinnedUpStreamOperator :  the query id
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void placeOperator(QueryId queryId, const OperatorNodePtr& operatorNode, TopologyNodePtr candidateTopologyNode);
+    void placeOperator(QueryId pinnedUpStreamOperator,
+                       const OperatorNodePtr& operatorNode,
+                       TopologyNodePtr candidateTopologyNode,
+                       const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
 
     /**
      * @brief Get topology node where all parent operators of the input operator are placed

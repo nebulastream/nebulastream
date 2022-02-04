@@ -108,15 +108,15 @@ class BasePlacementStrategy {
      * @param queryId
      * @param faultToleranceType
      * @param lineageType
-     * @param pinnedUpStreamNodes
-     * @param pinnedDownStreamNodes
+     * @param pinnedUpStreamOperators
+     * @param pinnedDownStreamOperators
      * @return
      */
     virtual bool updateGlobalExecutionPlan(QueryId queryId,
                                            FaultToleranceType faultToleranceType,
                                            LineageType lineageType,
-                                           const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
-                                           const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) = 0;
+                                           const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                           const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
     /**
      * @brief Modifies the execution graph of the query based on the newly added operators
