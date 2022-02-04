@@ -217,6 +217,8 @@ void TopDownStrategy::placeOperator(QueryId queryId,
 
     if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
+        auto nodeId = std::any_cast<uint64_t>(operatorNode->getProperty(PINNED_NODE_ID));
+        operatorToExecutionNodeMap[operatorNode->getId()] = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
         return;
     }
 
@@ -288,8 +290,9 @@ void TopDownStrategy::placeOperator(QueryId queryId,
             throw Exception("TopDownStrategy: No node available for further placement of operators");
         }
 
-        //Pin the operator to the candidate node
+        //Pin the operator to the candidate node and mark as placed
         operatorNode->addProperty(PINNED_NODE_ID, candidateTopologyNode->getId());
+        operatorNode->addProperty(PLACED, true);
 
         NES_TRACE("TopDownStrategy: Get the candidate execution node for the candidate topology node.");
         ExecutionNodePtr candidateExecutionNode = getExecutionNode(candidateTopologyNode);
@@ -428,34 +431,40 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForParentOperators
 }
 
 std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForChildOperators(const OperatorNodePtr& candidateOperator) {
-    std::vector<TopologyNodePtr> childNodes;
+    std::vector<TopologyNodePtr> upStreamTopologyNodes;
 
-    NES_TRACE("TopDownStrategy::getTopologyNodesForChildOperators: Get the pinned or closest placed sources nodes for the the "
+    NES_TRACE("TopDownStrategy::getTopologyNodesForChildOperators: Get the pinned or closest placed upStreamOperators nodes for "
+              "the the "
               "input operator.");
+    //FIXME: This logic needs to be changed now as non source operators can also be pinned
+    std::vector<NodePtr> upStreamOperators = {candidateOperator};
 
-    std::vector<NodePtr> sources = {candidateOperator->as<Node>()};
-
-    while (!sources.empty()) {
-        auto childOp = sources.back()->as<OperatorNode>();
-        sources.pop_back();
-        if (childOp->instanceOf<SourceLogicalOperatorNode>()) {
-            auto nodeId = std::any_cast<uint64_t>(childOp->getProperty(PINNED_NODE_ID));
+    while (!upStreamOperators.empty()) {
+        auto upStreamOperator = upStreamOperators.back()->as<OperatorNode>();
+        upStreamOperators.pop_back();
+        if (upStreamOperator->hasProperty(PINNED_NODE_ID)) {
+            auto nodeId = std::any_cast<uint64_t>(upStreamOperator->getProperty(PINNED_NODE_ID));
             auto pinnedTopologyNode = getTopologyNode(nodeId);
-            childNodes.push_back(pinnedTopologyNode);
+            upStreamTopologyNodes.emplace_back(pinnedTopologyNode);
             continue;
         }
-        if (operatorToExecutionNodeMap.contains(childOp->getId())) {
-            childNodes.push_back(operatorToExecutionNodeMap[childOp->getId()]->getTopologyNode());
+        //TODO: Is this required?
+        if (operatorToExecutionNodeMap.contains(upStreamOperator->getId())) {
+            upStreamTopologyNodes.push_back(operatorToExecutionNodeMap[upStreamOperator->getId()]->getTopologyNode());
             continue;
         }
-        sources.insert(sources.end(), childOp->getChildren().begin(), childOp->getChildren().end());
+        upStreamOperators.insert(upStreamOperators.end(),
+                                 upStreamOperator->getChildren().begin(),
+                                 upStreamOperator->getChildren().end());
     }
-    if (childNodes.empty()) {
-        NES_ERROR("TopDownStrategy::getTopologyNodesForChildOperators: Unable to find the sources operators to the candidate "
-                  "operator");
-        throw Exception("TopDownStrategy::getTopologyNodesForChildOperators: Unable to find the sources operators to the "
-                        "candidate operator");
+    if (upStreamTopologyNodes.empty()) {
+        NES_ERROR(
+            "TopDownStrategy::getTopologyNodesForChildOperators: Unable to find the upStreamOperators operators to the candidate "
+            "operator");
+        throw Exception(
+            "TopDownStrategy::getTopologyNodesForChildOperators: Unable to find the upStreamOperators operators to the "
+            "candidate operator");
     }
-    return childNodes;
+    return upStreamTopologyNodes;
 }
 }// namespace NES::Optimizer

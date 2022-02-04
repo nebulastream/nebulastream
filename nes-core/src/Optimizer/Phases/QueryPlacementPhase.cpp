@@ -21,7 +21,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Topology/TopologyNodeId.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 
@@ -110,7 +109,11 @@ std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(Sha
     } else {
         auto changeLogs = sharedQueryPlan->getChangeLog();
         for (auto& addition : changeLogs->getAddition()) {
-            upStreamPinnedOperators.emplace_back(addition.first);
+            //FIXME: We need logic to identify containment logic of new addition
+            //Only consider selecting already placed and pinned upstream operator
+            if(addition.first->hasProperty(PINNED_NODE_ID) && addition.first->hasProperty(PLACED)){
+                upStreamPinnedOperators.emplace_back(addition.first);
+            }
         }
         //TODO: We need to figure out how to deal with removals
     }
@@ -122,7 +125,7 @@ QueryPlacementPhase::getDownStreamPinnedOperators(std::vector<OperatorNodePtr> u
     std::vector<OperatorNodePtr> downStreamPinnedOperators;
     auto rootTopologyNode = topology->getRoot();
     for (const auto& pinnedOperator : upStreamPinnedOperators) {
-        //We pin all root (sink) operators
+        //We check all root (sink) operators
         auto downStreamOperators = pinnedOperator->getAllRootNodes();
         for (auto& downStreamOperator : downStreamOperators) {
             //Only place sink operators that are not pinned or that are not placed yet

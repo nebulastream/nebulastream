@@ -635,6 +635,8 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     auto queryPlacementPhase =
         Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context, true);
     queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, updatedSharedQMToDeploy[0]);
+    //Mark as deployed
+    updatedSharedQMToDeploy[0]->markAsDeployed();
 
     // new Query
     auto queryPlan2 = Query::from("car")
@@ -672,9 +674,7 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
-
     auto sharedQueryPlanId = updatedSharedQMToDeploy[0]->getSharedQueryId();
-
     ASSERT_EQ(sharedQueryPlanId, queryPlan1->getQueryId());
 
     queryPlacementPhase->execute(NES::PlacementStrategy::TopDown, updatedSharedQMToDeploy[0]);
