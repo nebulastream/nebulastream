@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifdef __linux__
 #include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
@@ -407,3 +407,4 @@ uint64_t LinuxSystemResourcesReader::getWallTimeInNs() {
     return duration;
 }
 }// namespace NES
+#endif
