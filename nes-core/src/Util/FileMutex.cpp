@@ -1,6 +1,4 @@
 /*
-    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -43,7 +41,7 @@ FileMutex::~FileMutex() {
 }
 
 void FileMutex::lock() {
-    struct flock lock;
+    flock lock;
     lock.l_type = F_WRLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
@@ -53,7 +51,7 @@ void FileMutex::lock() {
 
 bool FileMutex::try_lock() {
     bool acquired = false;
-    struct flock lock;
+    flock lock;
     lock.l_type = F_WRLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
@@ -66,7 +64,7 @@ bool FileMutex::try_lock() {
 }
 
 void FileMutex::unlock() {
-    struct flock lock;
+    flock lock;
     lock.l_type = F_UNLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
