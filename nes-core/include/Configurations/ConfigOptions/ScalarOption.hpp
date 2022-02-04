@@ -5,49 +5,64 @@
 namespace NES::Configurations {
 
 /**
- * @brief Template for a ConfigurationOption object
- * @tparam T template parameter, depends on ConfigOptions
+ * @brief This class provides a general implementation for all ScalarOption<T> this is used e.g., for IntOption, StringOption, BoolOption.
+ * @tparam T of the value.
  */
 template<class T>
 class ScalarOption : public TypedBaseOption<T> {
   public:
-    ScalarOption(std::string name, std::string description);
-    ScalarOption(std::string name, T value, std::string description);
-    ScalarOption(std::string name, T value, T defaultValue, std::string description);
+    /**
+     * @brief Constructor to create a new option that sets a name, and description.
+     * @param name of the option.
+     * @param description of the option.
+     */
+    ScalarOption(const std::string& name, const std::string& description);
+    /**
+     * @brief Constructor to create a new option that declares a specific default value.
+     * @param name of the option.
+     * @param defaultValue of the option. Has to be of type T.
+     * @param description of the option.
+     */
+    ScalarOption(const std::string& name, T defaultValue, const std::string& description);
+    /**
+     * @brief Operator to assign a new value as a value of this option.
+     * @param value that will be assigned
+     * @return Reference to this option.
+     */
     ScalarOption<T>& operator=(const T& value);
-    void clear() override;
+    /**
+     * @brief Checks if the option is equal to another option.
+     * @param other option.
+     * @return true if the option is equal.
+     */
     bool operator==(const BaseOption& other) override;
 
+  protected:
     virtual void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(std::string identifier, std::string value) override;
+    void parseFromString(const std::string& identifier, const std::string& value) override;
 
   private:
     template<class X>
     requires std::is_base_of_v<BaseOption, X>
     friend class SequenceOption;
+    /**
+     * @brief Private constructor to create an scalar option without a name and description.
+     * This can only be used in SequenceOptions.
+     */
     ScalarOption() : TypedBaseOption<T>() {}
 };
 
 template<class T>
-ScalarOption<T>::ScalarOption(std::string name, std::string description) : TypedBaseOption<T>(name, description) {}
+ScalarOption<T>::ScalarOption(const std::string& name, const std::string& description) : TypedBaseOption<T>(name, description) {}
 
 template<class T>
-ScalarOption<T>::ScalarOption(std::string name, T value, std::string description)
+ScalarOption<T>::ScalarOption(const std::string& name, T value, const std::string& description)
     : TypedBaseOption<T>(name, value, description) {}
-
-template<class T>
-ScalarOption<T>::ScalarOption(std::string name, T value, T defaultValue, std::string description)
-    : TypedBaseOption<T>(name, value, defaultValue, description) {}
 
 template<class T>
 ScalarOption<T>& ScalarOption<T>::operator=(const T& value) {
     this->value = value;
     return *this;
-}
-
-template<class T>
-void ScalarOption<T>::clear() {
-    this->value = this->defaultValue;
 }
 
 template<class T>
@@ -61,7 +76,7 @@ void ScalarOption<T>::parseFromYAMLNode(Yaml::Node node) {
 }
 
 template<class T>
-void ScalarOption<T>::parseFromString(std::string, std::string value) {
+void ScalarOption<T>::parseFromString(const std::string&, const std::string& value) {
     this->value = Yaml::impl::StringConverter<T>::Get(value);
 }
 
@@ -69,8 +84,6 @@ using StringOption = ScalarOption<std::string>;
 using IntOption = ScalarOption<int64_t>;
 using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
-
-
 
 }// namespace NES::Configurations
 

@@ -43,6 +43,7 @@ class LogicalSourceFactory {
 class TestConfiguration : public BaseConfiguration {
   public:
     StringOption restIp = {"restIp", "127.0.0.1", "NES ip of the REST server."};
+    StringOption dataip = {"dataip", "127.0.0.1", "NES ip of the REST server."};
     IntOption rpcPort = {"rpcPort", 4000, "RPC server port of the NES Coordinator"};
     BoolOption enableMonitoring = {"enableMonitoring", false, "Enable monitoring"};
     EnumOption<LogLevel> logLevel = {"logLevel", LOG_DEBUG, "Sets the log level"};
@@ -52,7 +53,7 @@ class TestConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&restIp, &rpcPort, &enableMonitoring, &logLevel, &optimizerConfig, &logicalSources};
+        return {&restIp, &dataip, &rpcPort, &enableMonitoring, &logLevel, &optimizerConfig, &logicalSources};
     }
 };
 

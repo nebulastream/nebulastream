@@ -84,7 +84,6 @@ TEST_F(ConfigTest, testConfigurationWithCommandLine) {
     EXPECT_EQ(config.rpcPort, 42);
     EXPECT_TRUE(config.optimizerConfig.enableSemanticQueryValidation);
 
-
 }
 
 /**
