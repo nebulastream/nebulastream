@@ -1075,11 +1075,18 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
 
     assignDataModificationFactor(testQueryPlan);
 
+    auto sharedQueryPlan = SharedQueryPlan::create(testQueryPlan);
+    auto queryId = sharedQueryPlan->getSharedQueryId();
     // Execute the placement
-    placementStrategy->updateGlobalExecutionPlan(testQueryPlan);
-    NES_DEBUG("RandomSearchTest: globalExecutionPlanAsString=" << globalExecutionPlan->getAsString());
+    auto queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                      topology,
+                                                                      typeInferencePhase,
+                                                                      streamCatalog,
+                                                                      z3Context,
+                                                                      false);
+    queryPlacementPhase->execute(NES::PlacementStrategy::BottomUp, sharedQueryPlan);
 
-    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(testQueryPlan->getQueryId());
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     EXPECT_EQ(executionNodes.size(), 3UL);
     // check if map is placed two times
@@ -1435,13 +1442,6 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::BottomUp,
-                                                                              globalExecutionPlan,
-                                                                              topology,
-                                                                              typeInferencePhase,
-                                                                              streamCatalog,
-                                                                              z3Context);
-
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
@@ -1468,7 +1468,7 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
     bool isSource1PlacementValid = false;
     bool isSource2PlacementValid = false;
     for (const auto& executionNode : executionNodes) {
-        for (const auto& querySubPlan : executionNode->getQuerySubPlans(testQueryPlan->getQueryId())) {
+        for (const auto& querySubPlan : executionNode->getQuerySubPlans(queryId)) {
             OperatorNodePtr root = querySubPlan->getRootOperators()[0];
 
             // if the current operator is the sink of the query, it must be placed in the sink node (topology node with id 0)
