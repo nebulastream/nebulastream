@@ -32,14 +32,14 @@ class CUDAKernelWrapper {
      * the execute() method.
      * @param kernelCode source code of the kernel
      */
-    void setup(const char* const kernelCode, google::uint64 bufferSize) {
+    void setup(const char* const kernelCode, uint64_t bufferSize, jitify::detail::vector<std::string> headers = 0) {
         gpuBufferSize = bufferSize;
 
         cudaMalloc(&deviceInputBuffer, gpuBufferSize);
         cudaMalloc(&deviceOutputBuffer, gpuBufferSize);
 
         static jitify::JitCache kernelCache;
-        kernelProgramPtr = std::make_shared<jitify::Program>(kernelCache.program(kernelCode, 0));
+        kernelProgramPtr = std::make_shared<jitify::Program>(kernelCache.program(kernelCode, headers));
     }
 
     /**
@@ -61,10 +61,10 @@ class CUDAKernelWrapper {
 
         // execute the kernel program
         using jitify::reflection::type_of;
-        kernelProgramPtr->kernel(kernelName)
+        kernelProgramPtr->kernel(std::move(kernelName))
             .instantiate()
-            .configure(grid, block) // the configuration
-            .launch(deviceInputBuffer, numberOfTuples, deviceOutputBuffer); // the parameter of the kernel program
+            .configure(grid, block)                                        // the configuration
+            .launch(deviceInputBuffer, numberOfTuples, deviceOutputBuffer);// the parameter of the kernel program
 
         // copy the result of kernel execution back to the gpu
         cudaMemcpy(hostInputBuffer, deviceOutputBuffer, numberOfTuples * sizeof(InputRecord), cudaMemcpyDeviceToHost);
@@ -80,7 +80,7 @@ class CUDAKernelWrapper {
 
   private:
     InputRecord* deviceInputBuffer; // device memory for kernel input
-    InputRecord* deviceOutputBuffer; // device memory for kernel output
+    InputRecord* deviceOutputBuffer;// device memory for kernel output
     std::shared_ptr<jitify::Program> kernelProgramPtr;
     uint64_t gpuBufferSize;
 };
