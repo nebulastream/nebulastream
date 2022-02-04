@@ -775,7 +775,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     }
 }
 
-TEST_F(QueryPlacementTest, testManualPlacement) {
+TEST_F(QueryPlacementTest, DISABLED_testManualPlacement) {
     // Setup the topology
     // We are using a linear topology of three nodes:
     // srcNode -> midNode -> sinkNode
@@ -875,7 +875,7 @@ TEST_F(QueryPlacementTest, testManualPlacement) {
     }
 }
 
-TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
+TEST_F(QueryPlacementTest, DISABLED_testManualPlacementMultipleOperatorInANode) {
     // Setup the topology
     // We are using a linear topology of three nodes:
     // srcNode -> midNode -> sinkNode
@@ -981,7 +981,7 @@ TEST_F(QueryPlacementTest, testManualPlacementMultipleOperatorInANode) {
  * Topology: sinkNode--midNode---srcNode
  * Query: SinkOp---MapOp---SourceOp
  */
-TEST_F(QueryPlacementTest, testIFCOPPlacement) {
+TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacement) {
     // Setup the topology
     // We are using a linear topology of three nodes:
     // srcNode -> midNode -> sinkNode
@@ -1107,7 +1107,7 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
  *                    --mid2--srcNode2
  * Query: SinkOp---MapOp---SourceOp
  */
-TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
+TEST_F(QueryPlacementTest, DISABLED_testIFCOPPlacementOnBranchedTopology) {
     // Setup the topology
     auto sinkNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
     auto midNode1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
