@@ -526,8 +526,11 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialTest) {
     // predict and update
     for(uint64_t i = 1; i < measurements.size(); ++i) {
         y << measurements[i];
+        std::cout << "Measurement: " << y.value() << std::endl;
+        std::cout << "Old freq: " << kfProxy.getCurrentFrequency().count() << std::endl;
         kfProxy.update(y);
         auto newFreq = kfProxy.getExponentialFrequency();
+        std::cout << "New freq: " << newFreq.count() << std::endl;
     }
 
     EXPECT_TRUE(true);
