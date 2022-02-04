@@ -16,7 +16,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
+#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <filesystem>

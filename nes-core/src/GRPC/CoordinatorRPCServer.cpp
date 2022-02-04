@@ -13,8 +13,8 @@
 */
 
 #include <GRPC/CoordinatorRPCServer.hpp>
-#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
-#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
+#include "Monitoring/Metrics/Gauge/GroupedMetricValues.hpp"
+#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
 #include <Monitoring/MonitoringManager.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger.hpp>

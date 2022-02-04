@@ -17,10 +17,10 @@
 
 #include <API/Schema.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Monitoring/MetricStore.hpp>
-#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
-#include <Monitoring/MetricValues/MetricValueType.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include "Monitoring/Storage/MetricStore.hpp"
+#include "Monitoring/Metrics/Gauge/GroupedMetricValues.hpp"
+#include "Monitoring/Metrics/Gauge/MetricValueType.hpp"
+#include "Monitoring/MonitoringPlan.hpp"
 #include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>

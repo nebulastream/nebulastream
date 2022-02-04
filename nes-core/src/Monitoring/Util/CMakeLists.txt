@@ -11,12 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        AbstractSystemResourcesReader.cpp
+add_source_files(
+        MetricUtils.cpp
 )
-if (NOT APPLE)
-    add_source_files(nes-core
-            LinuxSystemResourcesReader.cpp
-    )
-endif()
-

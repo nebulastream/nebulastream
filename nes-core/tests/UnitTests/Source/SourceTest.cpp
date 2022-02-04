@@ -28,11 +28,11 @@
 #include <Util/Logger.hpp>
 #include <Util/SourceMode.hpp>
 
-#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
-#include <Monitoring/MetricValues/MetricValueType.hpp>
-#include <Monitoring/Metrics/MetricCatalog.hpp>
-#include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include "Monitoring/Metrics/Gauge/GroupedMetricValues.hpp"
+#include "Monitoring/Metrics/Gauge/MetricValueType.hpp"
+#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
+#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
+#include "Monitoring/MonitoringPlan.hpp"
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>

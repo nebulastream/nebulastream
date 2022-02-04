@@ -19,7 +19,7 @@
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include "Monitoring/MonitoringPlan.hpp"
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>

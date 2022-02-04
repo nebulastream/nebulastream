@@ -11,15 +11,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_nes(
 add_source_files(nes-core
-        MonitoringManager.cpp
         MonitoringAgent.cpp
-        MetricStore.cpp
+        MonitoringCatalog.cpp
+        MonitoringManager.cpp
+        MonitoringPlan.cpp
 )
 
+add_subdirectory(MetricCollectors)
 add_subdirectory(Metrics)
-add_subdirectory(MetricValues)
-add_subdirectory(Protocols)
+add_subdirectory(ResourcesReader)
+add_subdirectory(Storage)
 add_subdirectory(Util)
-
-

@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/MetricCatalog.hpp>
-#include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
+#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
+#include "Monitoring/MonitoringPlan.hpp"
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/MonitoringSource.hpp>

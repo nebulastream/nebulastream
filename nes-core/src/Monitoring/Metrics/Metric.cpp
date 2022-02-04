@@ -13,7 +13,7 @@
 */
 
 #include <Monitoring/Metrics/Metric.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include "Monitoring/MonitoringPlan.hpp"
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>

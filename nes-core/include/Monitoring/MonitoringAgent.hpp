@@ -1,108 +1,102 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
-        https://www.apache.org/licenses/LICENSE-2.0
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
-#define NES_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
-#include <optional>
+#ifndef NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_
+#define NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_
 
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <memory>
 #include <unordered_map>
 
 namespace NES {
 
-class MonitoringPlan;
-class TupleBuffer;
-class MetricCatalog;
-class Schema;
-class MonitoringAgent;
-class StaticNesMetrics;
-class RuntimeNesMetrics;
+    class MonitoringPlan;
+    class TupleBuffer;
+    class MonitoringCatalog;
+    class Schema;
+    class MonitoringAgent;
+    class StaticNesMetrics;
+    class RuntimeNesMetrics;
+    class NesWorker;
+    class Metric;
 
-using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
-using MetricCatalogPtr = std::shared_ptr<MetricCatalog>;
-using SchemaPtr = std::shared_ptr<Schema>;
-using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
-using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
-using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeNesMetrics>;
+    using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
+    using MonitoringCatalogPtr = std::shared_ptr<MonitoringCatalog>;
+    using SchemaPtr = std::shared_ptr<Schema>;
+    using MetricPtr = std::shared_ptr<Metric>;
 
-/**
- * @brief The MonitoringAgent which is responsible for collecting metrics on a local level.
+    /**
+* @brief The MonitoringAgent which is responsible for collecting metrics on a local level.
+*/
+    class MonitoringAgent {
+      public:
+        MonitoringAgent();
+        explicit MonitoringAgent(bool enabled);
+        MonitoringAgent(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled);
+
+        static MonitoringAgentPtr create();
+        static MonitoringAgentPtr create(bool enabled);
+        static MonitoringAgentPtr create(MonitoringPlanPtr monitoringPlan, MonitoringCatalogPtr catalog, bool enabled);
+
+        /**
+ * @brief Collect the metrics and store them in to the given output. The collected metrics depend on the monitoring plan.
+ * If monitoring is disabled an empty vector will be returned.
+ * @return the metrics of the monitoring plan
  */
-class MonitoringAgent {
-  public:
-    MonitoringAgent();
-    MonitoringAgent(bool enabled);
-    MonitoringAgent(const MonitoringPlanPtr& monitoringPlan, MetricCatalogPtr catalog, bool enabled);
+        std::vector<MetricPtr> getMetricsFromPlan();
 
-    static MonitoringAgentPtr create();
-    static MonitoringAgentPtr create(bool enabled);
-    static MonitoringAgentPtr create(const MonitoringPlanPtr& monitoringPlan, const MetricCatalogPtr& catalog, bool enabled);
+        /**
+ * @brief Returns all metrics defined by the plan as a unified JSON.
+ * @return Metrics as JSON.
+ */
+        web::json::value getMetricsAsJson();
 
-    /**
-     * @brief Register a monitoring plan at the local worker. The plan is indicating which metrics to collect.
-     * @param monitoringPlan
-     * @return the schema of the monitoring plan
-     */
-    SchemaPtr registerMonitoringPlan(const MonitoringPlanPtr& monitoringPlan);
+        /**
+ * @brief Checks if monitoring is enabled
+ * @return If enabled then true, else false
+ */
+        [[nodiscard]] bool isEnabled() const;
 
-    /**
-     * @brief Collect the metrics and store them in to the given tuple buffer. The collected metrics depend on the monitoring plan.
-     * If no plan is provided, then all metrics will be returned as default.
-     * @param tupleBuffer
-     * @return the schema of the monitoring plan
-     */
-    bool getMetricsFromPlan(Runtime::TupleBuffer& tupleBuffer);
+        /**
+ * @brief Create monitoring sources for the provided MonitoringPlan and handle them as data streams within the NES engine.
+ * If monitoring is disabled this method is not doing anything.
+ * @param nesWorker
+ */
+        void startContinuousMonitoring(NesWorkerPtr nesWorker);
 
-    /**
-     * @brief Return the schema based on the monitoring plan. If no schema is provided then the default schema is return, which
-     * contains all metrics.
-     * @return the schema
-     */
-    SchemaPtr getSchema();
+        /**
+ * @brief Getter for the MonitoringPlan
+ * @return Ptr to the MonitoringPlan
+ */
+        MonitoringPlanPtr getMonitoringPlan() const;
 
-    /**
-     * @brief Returns the static metrics used for NES.
-     * @return The metric object.
-     */
-    [[nodiscard]] std::optional<StaticNesMetricsPtr> getStaticNesMetrics() const;
+        /**
+ * @brief
+ * @param monitoringPlan
+ */
+        void setMonitoringPlan(MonitoringPlanPtr monitoringPlan);
 
-    /**
-     * @brief Returns the static metrics used for NES.
-     * @return The metric object.
-     */
-    [[nodiscard]] std::optional<RuntimeNesMetricsPtr> getRuntimeNesMetrics() const;
 
-    /**
-     * @brief Enables collecting of metrics
-     * @param If enabled then true, else false
-     */
-    void setEnableMonitoring(bool enable);
-
-    /**
-     * @brief Checks if monitoring is enabled
-     * @return If enabled then true, else false
-     */
-    [[nodiscard]] bool isEnabled() const;
-
-  private:
-    MonitoringPlanPtr monitoringPlan;
-    MetricCatalogPtr catalog;
-    SchemaPtr schema;
-    bool enabled;
-};
+      private:
+        MonitoringPlanPtr monitoringPlan;
+        MonitoringCatalogPtr catalog;
+        bool enabled;
+    };
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_MONITORINGAGENT_HPP_
+#endif// NES_INCLUDE_MONITORING_MONITORING_AGENT_HPP_

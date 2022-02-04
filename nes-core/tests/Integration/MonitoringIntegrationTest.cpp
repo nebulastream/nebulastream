@@ -17,13 +17,13 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/DiskMetrics.hpp>
-#include <Monitoring/MetricValues/MemoryMetrics.hpp>
-#include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/MetricCatalog.hpp>
-#include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
+#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
+#include "Monitoring/MonitoringPlan.hpp"
 
 #include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
@@ -34,7 +34,7 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Monitoring/MetricValues/GroupedMetricValues.hpp>
+#include "Monitoring/Metrics/Gauge/GroupedMetricValues.hpp"
 #include <Services/MonitoringService.hpp>
 #include <cpprest/json.h>
 #include <cstdint>
