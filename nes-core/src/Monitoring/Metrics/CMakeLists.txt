@@ -1,3 +1,4 @@
+# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +14,7 @@
 
 add_source_files(nes-core
         Metric.cpp
-        MetricCatalog.cpp
-        MonitoringPlan.cpp
-        MetricGroup.cpp
         MetricType.cpp
-        MetricUtils.cpp
-        IntCounter.cpp
 )
 
-
+add_subdirectory(Gauge)

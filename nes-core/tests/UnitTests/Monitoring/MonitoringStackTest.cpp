@@ -16,16 +16,16 @@
 #include <NesBaseTest.hpp>
 #include "../../../tests/util/MetricValidator.hpp"
 
-#include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/DiskMetrics.hpp>
-#include <Monitoring/MetricValues/MemoryMetrics.hpp>
-#include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
+#include "Monitoring/MonitoringPlan.hpp"
 #include <Monitoring/Util/MetricUtils.hpp>
 
-#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
-#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
+#include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
 #include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
 #include <Util/Logger.hpp>
 #include <cpprest/json.h>

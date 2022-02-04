@@ -14,12 +14,12 @@
 #include <optional>
 
 #include <API/Schema.hpp>
-#include <Monitoring/MetricValues/MetricValueType.hpp>
-#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
-#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
-#include <Monitoring/Metrics/MetricCatalog.hpp>
-#include <Monitoring/Metrics/MetricGroup.hpp>
-#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include "Monitoring/Metrics/Gauge/MetricValueType.hpp"
+#include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
+#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
+#include "Monitoring/MonitoringPlan.hpp"
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/TupleBuffer.hpp>

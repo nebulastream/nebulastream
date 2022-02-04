@@ -20,17 +20,24 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <Monitoring/Metrics/MetricType.hpp>
 
 namespace NES {
 class Schema;
-class MonitoringPlan;
 using SchemaPtr = std::shared_ptr<Schema>;
+
+class MonitoringPlan;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
+
+class AbstractSystemResourcesReader;
+using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
+
+class Metric;
+using MetricPtr = std::shared_ptr<Metric>;
 }// namespace NES
 
-namespace web {
-namespace json {
+namespace web::json {
 class value;
-}
 }// namespace web
 
 #endif  // NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_

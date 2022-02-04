@@ -15,20 +15,9 @@
 #ifndef NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
 #define NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
 
-#include <Monitoring/Metrics/Gauge.hpp>
-#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
-#include <unordered_map>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 
 namespace NES {
-
-class CpuMetrics;
-class MemoryMetrics;
-class DiskMetrics;
-class NetworkMetrics;
-class RuntimeNesMetrics;
-class StaticNesMetrics;
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
 
 /**
  * @brief Pre-defined metrics used for NES internally.
@@ -42,49 +31,6 @@ class MetricUtils {
     static AbstractSystemResourcesReaderPtr getSystemResourcesReader();
 
     /**
-     * @brief Gauge metric for reading the runtime stats of NES
-     * @return the cpu stats
-     */
-    static Gauge<RuntimeNesMetrics> runtimeNesStats();
-
-    /**
-     * @brief Gauge metric for reading the static stats of NES
-     * @return the cpu stats
-     */
-    static Gauge<StaticNesMetrics> staticNesStats();
-
-    /**
-     * @brief Gauge metric for reading the CPU stats
-     * @return the cpu stats
-     */
-    static Gauge<CpuMetrics> cpuStats();
-
-    /**
-     * @brief Gauge metric for reading the memory stats
-     * @return the memory stats
-     */
-    static Gauge<MemoryMetrics> memoryStats();
-
-    /**
-     * @brief Gauge metric for reading the disk stats
-     * @return the disk stats
-     */
-    static Gauge<DiskMetrics> diskStats();
-
-    /**
-     * @brief Gauge metric for reading reading the network stats
-     * @return the network stats
-     */
-    static Gauge<NetworkMetrics> networkStats();
-
-    /**
-     * @brief Gauge metric for reading idle of the cpu
-     * @param the cpu core
-     * @return the gauge metric
-     */
-    static Gauge<uint64_t> cpuIdle(unsigned int cpuNo);
-
-    /**
      *
      * @param metricSchema
      * @param bufferSchema
@@ -93,8 +39,7 @@ class MetricUtils {
      */
     static bool validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t schemaIndex);
 
-  private:
-    MetricUtils() = default;
+    static web::json::value toJson(std::vector<MetricPtr> metrics);
 };
 
 }// namespace NES
