@@ -63,6 +63,44 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
 
+  build-x64-linux-parallel:
+    if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
+    runs-on: [ self-hosted, linux, arm64, Build ]
+    timeout-minutes: 120
+    continue-on-error: true
+    steps:
+      - uses: AutoModality/action-clean@v1
+      - uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.7.0
+        with:
+          access_token: ${{ github.token }}
+      #TODO: 2268 remove the environment variable to allow test execution on arm server
+      - name: Run build and test
+        run: |
+          docker run --name ${{ github.run_id }}_build_parallel -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild="true" -eRequireTest="false" -eNesTestParallelism="4" --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build nebulastream/nes-build-image:latest
+      - name: docker cleanup build
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_build_parallel
+      - name: docker cleanup test
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_test_parallel
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v2
+        with:
+          status: ${{ job.status }}
+          author_name: ${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
+
   build-arm64-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI: Updating NES version to')"
     runs-on: [self-hosted, linux, arm64, Build]

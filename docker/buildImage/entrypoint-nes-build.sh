@@ -23,8 +23,11 @@ if [ -z "${RequireBuild}" ]; then RequireBuild="true"; else RequireBuild=${Requi
 # RequireTest indicates if the build should succeed if we fail during tests.
 # This is important to check the log to identify test errors on new platforms.
 if [ -z "${RequireTest}" ]; then RequireTest="true"; else RequireTest=${RequireTest}; fi
+# parallel test
+if [ -z "${NesTestParallelism}" ]; then NesTestParallelism="1"; else RequireTest=${NesTestParallelism}; fi
 echo "Required Build Failed=$RequireBuild"
 echo "Required Test Failed=$RequireTest"
+echo "Test Parallelism=$NesTestParallelism"
 if [ $# -eq 0 ]
 then
     # Build NES
@@ -51,7 +54,7 @@ then
       # timeout after 70 minutes
       # We don't want to rely on the github-action timeout, because
       # this would fail the job in any case.
-      timeout 70m make test_debug
+      timeout 70m make test_debug -j${RequireTest}
       errorCode=$?
       if [ $errorCode -ne 0 ];
       then
