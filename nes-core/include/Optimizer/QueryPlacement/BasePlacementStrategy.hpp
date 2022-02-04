@@ -114,7 +114,8 @@ class BasePlacementStrategy {
      */
     virtual bool updateGlobalExecutionPlan(QueryId queryId,
                                            FaultToleranceType faultToleranceType,
-                                           LineageType lineageType,const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
+                                           LineageType lineageType,
+                                           const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) = 0;
 
     /**
@@ -156,7 +157,9 @@ class BasePlacementStrategy {
      * @brief Add network source and sinks between query sub plans allocated on different execution nodes
      * @param queryPlan: the original query plan
      */
-    void addNetworkSourceAndSinkOperators(QueryId queryId, const std::vector<OperatorNodePtr>& pinnedUpStreamOperators);
+    void addNetworkSourceAndSinkOperators(QueryId queryId,
+                                          const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                          const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Run the type inference phase for all the query sub plans for the input query id
@@ -212,9 +215,15 @@ class BasePlacementStrategy {
     /**
      * @brief Attach network source or sink operator to the given operator
      * @param queryId : the id of the query
-     * @param operatorNode : the logical operator to which source or sink operator need to be attached
+     * @param upStreamOperator : the logical operator to which source or sink operator need to be attached
      */
-    void placeNetworkOperator(QueryId queryId, const OperatorNodePtr& operatorNode);
+    void placeNetworkOperator(QueryId queryId,
+                              const OperatorNodePtr& upStreamOperator,
+                              const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+
+
+    bool operatorPresentInCollection(const OperatorNodePtr& operatorToSearch,
+                                 const std::vector<OperatorNodePtr>& operatorCollection);
 
     /**
      * @brief Add an execution node as root
@@ -223,12 +232,13 @@ class BasePlacementStrategy {
     void addExecutionNodeAsRoot(ExecutionNodePtr& executionNode);
 
     /**
-     * @brief Validates if the source operator and destination operator are connected directly or via network sinks
-     * @param source : The source operator
-     * @param destination : The destination operator
-     * @return true if the source and destination are connected otherwise false
+     * @brief This method validates if the given upStream and downStream operators are connected to each other directly or via
+     * intermediate query plans
+     * @param upStreamOperator : The up stream operator
+     * @param downStreamOperator : The down stream operator
+     * @return true if operators connected otherwise false
      */
-    bool isSourceAndDestinationConnected(const OperatorNodePtr& source, const OperatorNodePtr& destination);
+    bool isSourceAndDestinationConnected(const OperatorNodePtr& upStreamOperator, const OperatorNodePtr& downStreamOperator);
 };
 }// namespace NES::Optimizer
 #endif// NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_BASEPLACEMENTSTRATEGY_HPP_

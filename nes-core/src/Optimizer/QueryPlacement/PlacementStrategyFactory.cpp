@@ -30,17 +30,6 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
     switch (placementStrategy) {
         case PlacementStrategy::ILP:
             return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
-        default: return getStrategy(placementStrategy, globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
-    }
-}
-
-BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy::Value placementStrategy,
-                                                               const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                                               const TopologyPtr& topology,
-                                                               const TypeInferencePhasePtr& typeInferencePhase,
-                                                               const SourceCatalogPtr& streamCatalog) {
-
-    switch (placementStrategy) {
         case PlacementStrategy::BottomUp:
             return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
         case PlacementStrategy::TopDown:
@@ -53,8 +42,7 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
         //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
         //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
         //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
-        default: return nullptr;
+        default: throw Exception("Unknown placement strategy type " + std::to_string(placementStrategy));
     }
 }
-
 }// namespace NES::Optimizer

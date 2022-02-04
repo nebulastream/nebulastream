@@ -207,7 +207,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              streamCatalog);
+                                                                              streamCatalog,
+                                                                              z3Context);
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
@@ -426,7 +427,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              streamCatalog);
+                                                                              streamCatalog,
+                                                                              z3Context);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -616,7 +618,8 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              streamCatalog);
+                                                                              streamCatalog,
+                                                                              z3Context);
 
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     auto topologySpecificReWrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false);
@@ -691,7 +694,8 @@ TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithT
                                                                                     globalExecutionPlan,
                                                                                     topology,
                                                                                     typeInferencePhase,
-                                                                                    streamCatalog);
+                                                                                    streamCatalog,
+                                                                                    z3Context);
 
     mergedPlacementStrategy->partiallyUpdateGlobalExecutionPlan(planToDeploy);
 
@@ -731,7 +735,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              streamCatalog);
+                                                                              streamCatalog,
+                                                                              z3Context);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -1056,7 +1061,8 @@ TEST_F(QueryPlacementTest, testIFCOPPlacement) {
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              streamCatalog);
+                                                                              streamCatalog,
+                                                                              z3Context);
 
     // Execute optimization phases prior to placement
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
@@ -1182,7 +1188,8 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              streamCatalog);
+                                                                              streamCatalog,
+                                                                              z3Context);
 
     // Execute optimization phases prior to placement
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
@@ -1315,7 +1322,8 @@ TEST_F(QueryPlacementTest, testTopDownPlacementOfSelfJoinQuery) {
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              streamCatalog);
+                                                                              streamCatalog,
+                                                                              z3Context);
 
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
@@ -1431,7 +1439,8 @@ TEST_F(QueryPlacementTest, testBottomUpPlacementOfSelfJoinQuery) {
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              streamCatalog);
+                                                                              streamCatalog,
+                                                                              z3Context);
 
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
