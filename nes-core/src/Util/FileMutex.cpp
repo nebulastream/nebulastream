@@ -41,7 +41,7 @@ FileMutex::~FileMutex() {
 }
 
 void FileMutex::lock() {
-    flock lock;
+    struct flock lock;
     lock.l_type = F_WRLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
@@ -51,7 +51,7 @@ void FileMutex::lock() {
 
 bool FileMutex::try_lock() {
     bool acquired = false;
-    flock lock;
+    struct flock lock;
     lock.l_type = F_WRLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;
@@ -64,7 +64,7 @@ bool FileMutex::try_lock() {
 }
 
 void FileMutex::unlock() {
-    flock lock;
+    struct flock lock;
     lock.l_type = F_UNLCK;
     lock.l_whence = SEEK_SET;
     lock.l_start = 0;

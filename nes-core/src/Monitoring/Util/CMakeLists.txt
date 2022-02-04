@@ -13,7 +13,10 @@
 
 add_source_nes(
         AbstractSystemResourcesReader.cpp
-        LinuxSystemResourcesReader.cpp
 )
-
+if (NOT APPLE)
+    add_source_nes(
+            LinuxSystemResourcesReader.cpp
+    )
+endif()
 
