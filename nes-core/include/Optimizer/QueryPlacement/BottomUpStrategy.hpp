@@ -62,21 +62,21 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
      *
      * @param queryId
-     * @param pinnedUpStreamNodes
+     * @param pinnedUpStreamOperators
      * @param pinnedDownStreamNodes
      * @throws exception if the operator can't be placed.
      */
-    void placeQueryPlanOnTopology(QueryId queryId,
-                                  const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
-                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperatorIds);
+    void performOperatorPlacement(QueryId queryId,
+                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to place input operator on the input topology node
-     * @param pinnedDownStreamOperator :  the query id
+     * @param queryId :  the query id
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void placeOperatorOnTopologyNode(QueryId pinnedDownStreamOperator,
+    void placeOperator(QueryId queryId,
                                      const OperatorNodePtr& operatorNode,
                                      TopologyNodePtr candidateTopologyNode,
                                      const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
