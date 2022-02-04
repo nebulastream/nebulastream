@@ -50,7 +50,6 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <utility>
-#include <z3++.h>
 
 using namespace NES;
 using namespace z3;

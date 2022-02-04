@@ -35,14 +35,16 @@ class BottomUpStrategy : public BasePlacementStrategy {
   public:
     ~BottomUpStrategy() override = default;
 
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
-
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
 
+    //TODO: Remove once all strategies are adjusted
+    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
+
+    //TODO: Remove once all strategies are adjusted
     bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
 
     static std::unique_ptr<BasePlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -66,18 +68,18 @@ class BottomUpStrategy : public BasePlacementStrategy {
      */
     void placeQueryPlanOnTopology(QueryId queryId,
                                   const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
-                                  const std::vector<uint64_t>& pinnedDownStreamOperatorIds);
+                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperatorIds);
 
     /**
      * @brief Try to place input operator on the input topology node
-     * @param queryId :  the query id
+     * @param pinnedDownStreamOperator :  the query id
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
-    void placeOperatorOnTopologyNode(QueryId queryId,
+    void placeOperatorOnTopologyNode(QueryId pinnedDownStreamOperator,
                                      const OperatorNodePtr& operatorNode,
                                      TopologyNodePtr candidateTopologyNode,
-                                     const std::vector<uint64_t>& pinnedDownStreamOperatorIds);
+                                     const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Get topology node where all children operators of the input operator are placed
