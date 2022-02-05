@@ -237,7 +237,7 @@ TEST_F(ILPPlacementTest, Z3Test) {
 }
 
 /* Test query placement with ILP strategy - simple filter query */
-TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     setupTopologyAndStreamCatalogForILP();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
@@ -294,7 +294,7 @@ TEST_F(ILPPlacementTest, testPlacingFilterQueryWithILPStrategy) {
 }
 
 /* Test query placement with ILP strategy - simple map query */
-TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
 
     setupTopologyAndStreamCatalogForILP();
 
@@ -356,7 +356,7 @@ TEST_F(ILPPlacementTest, testPlacingMapQueryWithILPStrategy) {
 }
 
 /* Test query placement with ILP strategy - simple query of source - filter - map - sink */
-TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
 
     setupTopologyAndStreamCatalogForILP();
 
