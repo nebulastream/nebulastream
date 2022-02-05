@@ -472,7 +472,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     }
 }
 
-/* Test query placement of query with multiple sinks with TopDown strategy  */
+/* Test query placement of query with multiple sinks with Bottom up strategy  */
 TEST_F(QueryPlacementTest, testPartialPlacingQueryWithMultipleSinkOperatorsWithBottomUpStrategy) {
 
     setupTopologyAndStreamCatalog({4, 4, 4});
