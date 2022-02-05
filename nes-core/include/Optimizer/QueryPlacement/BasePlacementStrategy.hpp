@@ -103,13 +103,14 @@ class BasePlacementStrategy {
     virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
 
     /**
-     *
-     * @param queryId
-     * @param faultToleranceType
-     * @param lineageType
-     * @param pinnedUpStreamOperators
-     * @param pinnedDownStreamOperators
-     * @return
+     * Update Global execution plan by placing operators including and between input pinned upstream and downstream operators
+     * for the query with input id and input fault tolerance strategy
+     * @param queryId: id of the query
+     * @param faultToleranceType: fault tolerance type
+     * @param lineageType: lineage type
+     * @param pinnedUpStreamOperators: pinned upstream operators
+     * @param pinnedDownStreamOperators: pinned downstream operators
+     * @return true if successful else false
      */
     virtual bool updateGlobalExecutionPlan(QueryId queryId,
                                            FaultToleranceType faultToleranceType,
@@ -118,11 +119,10 @@ class BasePlacementStrategy {
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
   protected:
-
     /**
-     *
-     * @param upStreamPinnedOperators
-     * @param downStreamPinnedOperators
+     * Find topology path for placing operators between the input pinned upstream and downstream operators
+     * @param upStreamPinnedOperators: the pinned upstream operators
+     * @param downStreamPinnedOperators: the pinned downstream operators
      */
     void performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators,
                               std::vector<OperatorNodePtr> downStreamPinnedOperators);
@@ -170,7 +170,6 @@ class BasePlacementStrategy {
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
-    std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
     std::map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;
     std::unordered_map<OperatorId, QueryPlanPtr> operatorToSubPlan;
@@ -191,7 +190,7 @@ class BasePlacementStrategy {
      * @param queryId : the query id to which the source belongs to
      * @param inputSchema : the schema for input event stream
      * @param operatorId : the operator id of the source network operator
-     * @param sinkTopologyNode
+     * @param sinkTopologyNode: sink topology node
      * @return the instance of network source operator
      */
     static OperatorNodePtr createNetworkSourceOperator(QueryId queryId,
@@ -203,18 +202,24 @@ class BasePlacementStrategy {
      * @brief Attach network source or sink operator to the given operator
      * @param queryId : the id of the query
      * @param upStreamOperator : the logical operator to which source or sink operator need to be attached
+     * @param pinnedDownStreamOperators: the collection of pinned downstream operator after which to stop
      */
     void placeNetworkOperator(QueryId queryId,
                               const OperatorNodePtr& upStreamOperator,
                               const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
-
+    /**
+     * Check if operator present in the given collection
+     * @param operatorToSearch : operator to search
+     * @param operatorCollection : collection to search into
+     * @return true if successful
+     */
     bool operatorPresentInCollection(const OperatorNodePtr& operatorToSearch,
-                                 const std::vector<OperatorNodePtr>& operatorCollection);
+                                     const std::vector<OperatorNodePtr>& operatorCollection);
 
     /**
-     * @brief Add an execution node as root
-     * @param executionNode
+     * @brief Add an execution node as root of the global execution plan
+     * @param executionNode: execution node to add as root
      */
     void addExecutionNodeAsRoot(ExecutionNodePtr& executionNode);
 

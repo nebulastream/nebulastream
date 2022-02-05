@@ -51,10 +51,9 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
-     *
-     * @param queryId
-     * @param pinnedUpStreamOperators
-     * @param pinnedDownStreamNodes
+     * @param queryId: query id
+     * @param pinnedUpStreamOperators: pinned upstream operators
+     * @param pinnedDownStreamNodes: pinned downstream operators
      * @throws exception if the operator can't be placed.
      */
     void performOperatorPlacement(QueryId queryId,
