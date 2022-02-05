@@ -35,22 +35,16 @@ class BottomUpStrategy : public BasePlacementStrategy {
   public:
     ~BottomUpStrategy() override = default;
 
+    static std::unique_ptr<BasePlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                         TopologyPtr topology,
+                                                         TypeInferencePhasePtr typeInferencePhase,
+                                                         SourceCatalogPtr streamCatalog);
+
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
-
-    //TODO: Remove once all strategies are adjusted
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
-
-    //TODO: Remove once all strategies are adjusted
-    bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
-
-    static std::unique_ptr<BasePlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                         TopologyPtr topology,
-                                                         TypeInferencePhasePtr typeInferencePhase,
-                                                         SourceCatalogPtr streamCatalog);
 
   private:
     explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,

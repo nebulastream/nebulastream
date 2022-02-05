@@ -28,8 +28,6 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
-    bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
-
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
