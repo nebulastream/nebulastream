@@ -16,6 +16,7 @@
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <filesystem>
+#include <vector>
 
 namespace NES::Compiler {
 class CPPCompilerFlags;
@@ -58,10 +59,8 @@ class CPPCompiler : public LanguageCompiler {
      */
     void compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const;
     std::unique_ptr<ClangFormat> format;
-
-#ifdef __APPLE__
     std::filesystem::path libNesPath;
-#endif
+    std::filesystem::path publicIncludePath;
 };
 
 }// namespace NES::Compiler

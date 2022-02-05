@@ -19,6 +19,7 @@
 #include <Compiler/Util/ClangFormat.hpp>
 #include <Compiler/Util/File.hpp>
 #include <Compiler/Util/SharedLibrary.hpp>
+#include <Util/ExecutablePath.hpp>
 #include <Util/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <chrono>
@@ -26,7 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-
+#include <unistd.h>
 namespace NES::Compiler {
 
 const std::string NESCoreIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-core/include/";
@@ -92,31 +93,10 @@ std::filesystem::path recursiveFindFileReverse(std::filesystem::path currentPath
 std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_shared<CPPCompiler>(); }
 
 CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
-#ifdef __APPLE__
-    libNesPath = detail::recursiveFindFileReverse(detail::getExecutablePath(), "libnes.dylib");
-
-    if (std::filesystem::is_regular_file(libNesPath)) {
-        NES_DEBUG("Library libnes.dylib found at: " << libNesPath.parent_path());
-        return;
-    } else {
-        NES_DEBUG("Invalid libnes.dylib file found at " << libNesPath << ". Searching next in DYLD_LIBRARY_PATH.");
-
-        std::stringstream dyld_string(std::getenv("DYLD_LIBRARY_PATH"));
-        std::string path;
-
-        while (std::getline(dyld_string, path, ':')) {
-            if (path == "") {
-                continue;
-            }
-            libNesPath = detail::recursiveFindFileReverse(path, "libnes.dylib");
-            if (std::filesystem::is_regular_file(libNesPath)) {
-                NES_DEBUG("Library libnes.dylib found at: " << libNesPath.parent_path());
-                return;
-            }
-        }
-        NES_FATAL_ERROR("No valid libnes.dylib found in executable path or DYLD_LIBRARY_PATH.");
-    }
-#endif
+    libNesPath = ExecutablePath::getLibPath("libnes.so");
+    NES_DEBUG("LibNesPath: " << libNesPath.string());
+    publicIncludePath = ExecutablePath::getPublicIncludes();
+    NES_DEBUG("PublicIncludePath: " << publicIncludePath.string());
 }
 
 std::string CPPCompiler::getLanguage() const { return "cpp"; }
@@ -163,10 +143,9 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 #error "Unknown platform"
 #endif
     // add header of NES Source
-    compilationFlags.addFlag("-I" + NESCommonIncludePath);
-    compilationFlags.addFlag("-I" + NESCoreIncludePath);
+    compilationFlags.addFlag("-I" + publicIncludePath.string() + "/nebulastream");
     // add header of all dependencies
-    compilationFlags.addFlag("-I" + DEBSIncludePath);
+    //compilationFlags.addFlag("-I" + DEBSIncludePath);
 
     compilationFlags.addFlag("-o" + libraryFileName);
 

@@ -42,16 +42,41 @@ add_custom_command(
         "${PROTO_FILE_PATH}"
         DEPENDS "${PROTO_FILES}")
 
+macro(target_public_headers TARGET)
+    set_target_properties(${TARGET} PROPERTIES PUBLIC_HEADER "${ARGN}")
+endmacro()
+
 # Add Library
 get_source(nes-core NES_CORE_SOURCE_FILES)
 message(STATUS "Found the following NES_CORE_SOURCE_FILES files: " ${NES_CORE_SOURCE_FILES})
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/../")
+#target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/../")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
 target_link_libraries(nes PUBLIC nes-common nes-compiler)
 target_link_libraries(nes PUBLIC ${GRPC_LIBRARIES})
+
+# set all public headers for this target
+#target_public_headers(nes ${nes_HEADER_FILES})
+
+get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
+foreach(dir ${LIBA_INCLUDES})
+    string(APPEND INCLUDE_COMPILER_STRING "/I${dir} ")
+    message(STATUS "LIBNES inclues ${dir}")
+endforeach()
+
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
+
+add_custom_command(TARGET nes POST_BUILD
+        COMMENT "COPY ${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/ ${CMAKE_BINARY_DIR}/include/nebulastream)
+
+#add_dependencies(nes copy)
+if (GRPC_LIBRARIES)
+    target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})
+endif ()
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC ${LIBRARIES} nes)
@@ -76,17 +101,15 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-
 #Add the nes lib and headers to cpack
-install(TARGETS nes
-        COMPONENT nesLibrary
-        DESTINATION lib)
+install(TARGETS nes LIBRARY
+        COMPONENT nesLibrary)
 
 install(TARGETS nesCoordinator nesWorker
-        COMPONENT nesExecutables
         RUNTIME
-        DESTINATION "/opt/local/nebula-stream")
+        COMPONENT nesExecutables)
 
-install(DIRECTORY "include"
+include(GNUInstallDirs)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include/nebulastream
         COMPONENT nesHeaders
-        DESTINATION "/nebulastream/nes-core")
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
