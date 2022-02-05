@@ -101,7 +101,7 @@ class BasePlacementStrategy {
      * @return true if successful else false
      * @throws QueryPlacementException
      */
-    virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) = 0;
+    virtual bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
 
     /**
      *
@@ -117,13 +117,6 @@ class BasePlacementStrategy {
                                            LineageType lineageType,
                                            const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
-
-    /**
-     * @brief Modifies the execution graph of the query based on the newly added operators
-     * @param queryPlan: the query plan
-     * @return true if successful
-     */
-    virtual bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) = 0;
 
   protected:
     /**

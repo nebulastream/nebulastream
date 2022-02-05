@@ -40,71 +40,7 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topologyPtr)),
       typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)) {}
 
-void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(const QueryPlanPtr& queryPlan) {
-
-    auto queryId = queryPlan->getQueryId();
-
-    //1. Find the section of topology that will be used to place the operators
-
-    std::set<TopologyNodePtr> nodesWithPhysicalStreams;
-    //Fetch all topology node contributing the physical streams involved in the query plan
-    auto sourceOperators = queryPlan->getSourceOperators();
-    for (const auto& sourceOperator : sourceOperators) {
-        auto value = sourceOperator->getProperty(PINNED_NODE_ID);
-        if (!value.has_value()) {
-            throw Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical source operator.");
-        }
-        auto nodeId = std::any_cast<uint64_t>(value);
-        auto nodeWithPhysicalStream = topology->findNodeWithId(nodeId);
-        //NOTE: Add the physical node to the set (we used set here to prevent inserting duplicate physical node in-case of self join or
-        // two physical streams located on same physical node)
-        nodesWithPhysicalStreams.insert(nodeWithPhysicalStream);
-    }
-    std::vector sourceNodes(nodesWithPhysicalStreams.begin(), nodesWithPhysicalStreams.end());
-    auto sinkNode = topology->getRoot();
-    //NOTE: This step performs path selection
-    std::vector<TopologyNodePtr> selectedTopologyForPlacement = topology->findPathBetween(sourceNodes, {sinkNode});
-
-    //2. Now we perform pinning of the non-source operators
-
-    //Find the root node of the topology to place sink operators
-    NES_TRACE("BasePlacementStrategy: Locating node to pin sink operator.");
-    std::vector<NodePtr> rootNodes = selectedTopologyForPlacement[0]->getAllRootNodes();
-    //TODO: change here if the topology can have more than one root node
-    // NOTE: this is not supported currently
-    if (rootNodes.size() > 1) {
-        NES_NOT_IMPLEMENTED();
-    }
-    if (rootNodes.empty()) {
-        NES_ERROR("BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
-        throw QueryPlacementException(
-            queryId,
-            "BasePlacementStrategy: Found no root nodes in the topology plan. Please check the topology graph.");
-    }
-    TopologyNodePtr rootNode = rootNodes[0]->as<TopologyNode>();
-
-    //NOTE: This step pins only the sink operators
-    auto sinkOperators = queryPlan->getSinkOperators();
-    //Fetch one root node and pin all sink operators to the node
-    NES_TRACE("BasePlacementStrategy: Adding location for sink operator.");
-    for (const auto& sinkOperator : sinkOperators) {
-        auto value = sinkOperator->getProperty(PINNED_NODE_ID);
-        if (!value.has_value()) {
-            sinkOperator->addProperty(PINNED_NODE_ID, rootNode->getId());
-        }
-    }
-
-    //3. Map nodes in the selected topology by their ids.
-
-    nodeIdToTopologyNodeMap.clear();
-    auto topologyIterator = NES::DepthFirstNodeIterator(rootNode).begin();
-    while (topologyIterator != DepthFirstNodeIterator::end()) {
-        // get the ExecutionNode for the current topology Node
-        auto currentTopologyNode = (*topologyIterator)->as<TopologyNode>();
-        nodeIdToTopologyNodeMap[currentTopologyNode->getId()] = currentTopologyNode;
-        ++topologyIterator;
-    }
-}
+bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
 void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators,
                                                  std::vector<OperatorNodePtr> downStreamPinnedOperators) {
@@ -261,17 +197,6 @@ void BasePlacementStrategy::addNetworkSourceAndSinkOperators(QueryId queryId,
             }
         }
     }
-
-    //    auto queryExecutionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    //    for (const auto& queryExecutionNode : queryExecutionNodes) {
-    //        for (const auto& querySubPlan : queryExecutionNode->getQuerySubPlans(queryId)) {
-    //            auto nodes = QueryPlanIterator(querySubPlan).snapshot();
-    //            for (const auto& node : nodes) {
-    //                const std::shared_ptr<LogicalOperatorNode>& asOperatorNode = node->as<LogicalOperatorNode>();
-    //                operatorToSubPlan[asOperatorNode->getId()] = querySubPlan;
-    //            }
-    //        }
-    //    }
 
     NES_DEBUG("BasePlacementStrategy: Add system generated operators for the query with id " << queryId);
     for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {

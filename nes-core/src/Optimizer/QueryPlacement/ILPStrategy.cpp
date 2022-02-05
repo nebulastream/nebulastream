@@ -323,8 +323,7 @@ bool ILPStrategy::placeOperators(QueryPlanPtr queryPlan,
     if (!assignSuccess) {
         return false;
     }
-//    addNetworkSourceAndSinkOperators(queryPlan);
-
+    //addNetworkSourceAndSinkOperators(queryPlan);
     return true;
 }
 
@@ -335,8 +334,6 @@ double ILPStrategy::getNetworkCostWeight() { return this->networkCostWeight; }
 void ILPStrategy::setOverUtilizationWeight(double weight) { this->overUtilizationCostWeight = weight; }
 
 void ILPStrategy::setNetworkCostWeight(double weight) { this->networkCostWeight = weight; }
-
-bool ILPStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
 bool ILPStrategy::updateGlobalExecutionPlan(QueryId /*queryId*/,
                                             FaultToleranceType /*faultToleranceType*/,

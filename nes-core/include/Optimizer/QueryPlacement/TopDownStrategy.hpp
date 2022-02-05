@@ -25,20 +25,16 @@ class TopDownStrategy : public BasePlacementStrategy {
   public:
     ~TopDownStrategy() override = default;
 
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
-
-    bool partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& queryPlan) override;
+    static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                           TopologyPtr topology,
+                                           TypeInferencePhasePtr typeInferencePhase,
+                                           SourceCatalogPtr streamCatalog);
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
                                    LineageType lineageType,
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
-
-    static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                           TopologyPtr topology,
-                                           TypeInferencePhasePtr typeInferencePhase,
-                                           SourceCatalogPtr streamCatalog);
 
   private:
     TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
