@@ -27,8 +27,7 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                            TopologyPtr topology,
-                                           TypeInferencePhasePtr typeInferencePhase,
-                                           SourceCatalogPtr streamCatalog);
+                                           TypeInferencePhasePtr typeInferencePhase);
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
@@ -39,8 +38,7 @@ class TopDownStrategy : public BasePlacementStrategy {
   private:
     TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                     TopologyPtr topology,
-                    TypeInferencePhasePtr typeInferencePhase,
-                    SourceCatalogPtr streamCatalog);
+                    TypeInferencePhasePtr typeInferencePhase);
 
     /**
      * @brief place query operators and prepare the global execution plan

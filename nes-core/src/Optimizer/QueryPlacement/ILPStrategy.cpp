@@ -16,7 +16,6 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -36,18 +35,15 @@ namespace NES::Optimizer {
 std::unique_ptr<BasePlacementStrategy> ILPStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                            TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
-                                                           SourceCatalogPtr streamCatalog,
                                                            z3::ContextPtr z3Context) {
-    return std::make_unique<ILPStrategy>(
-        ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context));
+    return std::make_unique<ILPStrategy>(ILPStrategy(globalExecutionPlan, topology, typeInferencePhase, z3Context));
 }
 
 ILPStrategy::ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
                          TypeInferencePhasePtr typeInferencePhase,
-                         SourceCatalogPtr streamCatalog,
                          z3::ContextPtr z3Context)
-    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog), z3Context(std::move(z3Context)) {}
+    : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase), z3Context(std::move(z3Context)) {}
 
 bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     const QueryId queryId = queryPlan->getQueryId();
@@ -68,20 +64,21 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     // 1. Construct the placementVariable, compute distance, utilization and mileages
     for (const auto& sourceNode : sourceOperators) {
         std::string streamName = sourceNode->getSourceDescriptor()->getLogicalSourceName();
-        TopologyNodePtr sourceToplogyNode = streamCatalog->getSourceNodesForLogicalStream(streamName)[0];
-        std::vector<NodePtr> operatorPath = findPathToRoot(sourceNode);
-        std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
-        auto success = addConstraints(z3Context,
-                                      opt,
-                                      operatorPath,
-                                      topologyPath,
-                                      operatorNodes,
-                                      topologyNodes,
-                                      placementVariables,
-                                      distances,
-                                      utilizations,
-                                      milages);
-        if (!success) {
+        //Dwi: Can we extract this information from the operators?
+        //TopologyNodePtr sourceToplogyNode = streamCatalog->getSourceNodesForLogicalStream(streamName)[0];
+        //std::vector<NodePtr> operatorPath = findPathToRoot(sourceNode);
+        //std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
+        //auto success = addConstraints(z3Context,
+        //                              opt,
+        //                              operatorPath,
+        //                              topologyPath,
+        //                              operatorNodes,
+        //                              topologyNodes,
+        //                              placementVariables,
+        //                              distances,
+        //                              utilizations,
+        //                              milages);
+        if (false /*!success*/) {
             NES_ERROR("ILPStrategy: an error occurred when adding path.");
         }
     }
@@ -204,9 +201,12 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
     // populate the whole distance map
     for (const auto& sourceNode : sourceOperators) {
         std::string streamName = sourceNode->getSourceDescriptor()->getLogicalSourceName();
-        for (const auto& sourceToplogyNode : streamCatalog->getSourceNodesForLogicalStream(streamName)) {
-            computeDistanceRecursive(sourceToplogyNode, mileageMap);
-        }
+        auto nodeId = std::any_cast<uint64_t>(sourceNode->getProperty(PINNED_NODE_ID));
+        auto topologyNode = topology->findNodeWithId(nodeId);
+        //NOTE: Dwi: can we use the pinning information from the source operators?
+        // for (const auto& sourceToplogyNode : streamCatalog->getSourceNodesForLogicalStream(streamName)) {
+        //    computeDistanceRecursive(sourceToplogyNode, mileageMap);
+        // }
     }
 
     return mileageMap;

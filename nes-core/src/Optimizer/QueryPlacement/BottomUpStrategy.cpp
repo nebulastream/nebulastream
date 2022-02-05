@@ -30,22 +30,16 @@ namespace NES::Optimizer {
 
 std::unique_ptr<BasePlacementStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                                 TopologyPtr topology,
-                                                                TypeInferencePhasePtr typeInferencePhase,
-                                                                SourceCatalogPtr streamCatalog) {
+                                                                TypeInferencePhasePtr typeInferencePhase) {
     return std::make_unique<BottomUpStrategy>(BottomUpStrategy(std::move(globalExecutionPlan),
                                                                std::move(topology),
-                                                               std::move(typeInferencePhase),
-                                                               std::move(streamCatalog)));
+                                                               std::move(typeInferencePhase)));
 }
 
 BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                    TopologyPtr topology,
-                                   TypeInferencePhasePtr typeInferencePhase,
-                                   SourceCatalogPtr streamCatalog)
-    : BasePlacementStrategy(std::move(globalExecutionPlan),
-                            std::move(topology),
-                            std::move(typeInferencePhase),
-                            std::move(streamCatalog)) {}
+                                   TypeInferencePhasePtr typeInferencePhase)
+    : BasePlacementStrategy(std::move(globalExecutionPlan), std::move(topology), std::move(typeInferencePhase)) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                  FaultToleranceType faultToleranceType,
@@ -69,10 +63,6 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
         throw QueryPlacementException(queryId, ex.what());
     }
 }
-
-bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
-
-bool BottomUpStrategy::partiallyUpdateGlobalExecutionPlan(const QueryPlanPtr& /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 
 void BottomUpStrategy::performOperatorPlacement(QueryId queryId,
                                                 const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
@@ -108,9 +98,9 @@ void BottomUpStrategy::performOperatorPlacement(QueryId queryId,
 }
 
 void BottomUpStrategy::placeOperator(QueryId queryId,
-                                                   const OperatorNodePtr& operatorNode,
-                                                   TopologyNodePtr candidateTopologyNode,
-                                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
+                                     const OperatorNodePtr& operatorNode,
+                                     TopologyNodePtr candidateTopologyNode,
+                                     const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) {
 
     if (operatorNode->hasProperty(PLACED) && std::any_cast<bool>(operatorNode->getProperty(PLACED))) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");

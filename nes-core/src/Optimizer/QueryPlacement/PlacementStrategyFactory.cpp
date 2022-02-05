@@ -25,17 +25,16 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
                                                                const GlobalExecutionPlanPtr& globalExecutionPlan,
                                                                const TopologyPtr& topology,
                                                                const TypeInferencePhasePtr& typeInferencePhase,
-                                                               const SourceCatalogPtr& streamCatalog,
                                                                const z3::ContextPtr& z3Context) {
     switch (placementStrategy) {
         case PlacementStrategy::ILP:
-            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog, z3Context);
+            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, z3Context);
         case PlacementStrategy::BottomUp:
-            return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+            return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::TopDown:
-            return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+            return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::IFCOP:
-            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         // FIXME: enable them with issue #755
         //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
         //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);

@@ -237,6 +237,7 @@ TEST_F(ILPPlacementTest, Z3Test) {
 }
 
 /* Test query placement with ILP strategy - simple filter query */
+//TODO: enable this test after fixing #2485
 TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
     setupTopologyAndStreamCatalogForILP();
 
@@ -246,7 +247,6 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
                                                                               typeInferencePhase,
-                                                                              streamCatalogForILP,
                                                                               z3Context);
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
@@ -294,6 +294,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
 }
 
 /* Test query placement with ILP strategy - simple map query */
+//TODO: enable this test after fixing #2485
 TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
 
     setupTopologyAndStreamCatalogForILP();
@@ -304,7 +305,6 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
                                                                               typeInferencePhase,
-                                                                              streamCatalogForILP,
                                                                               z3Context);
 
     Query query = Query::from("car")
@@ -356,6 +356,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
 }
 
 /* Test query placement with ILP strategy - simple query of source - filter - map - sink */
+//TODO: enable this test after fixing #2485
 TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
 
     setupTopologyAndStreamCatalogForILP();
@@ -366,7 +367,6 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
                                                                               globalExecutionPlan,
                                                                               topologyForILP,
                                                                               typeInferencePhase,
-                                                                              streamCatalogForILP,
                                                                               z3Context);
 
     Query query = Query::from("car")
