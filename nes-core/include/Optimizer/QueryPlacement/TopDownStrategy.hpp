@@ -43,6 +43,8 @@ class TopDownStrategy : public BasePlacementStrategy {
     /**
      * @brief place query operators and prepare the global execution plan
      * @param queryPlan: query plan to place
+     * @param pinnedUpStreamOperators: pinned upstream operators
+     * @param pinnedDownStreamOperators: pinned downstream operators
      * @throws exception if the operator can't be placed.
      */
     void performOperatorPlacement(QueryId queryId,
