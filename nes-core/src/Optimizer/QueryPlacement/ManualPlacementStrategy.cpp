@@ -20,22 +20,18 @@ namespace NES::Optimizer {
 
 std::unique_ptr<ManualPlacementStrategy> ManualPlacementStrategy::create(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                                          NES::TopologyPtr topology,
-                                                                         NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                                         NES::SourceCatalogPtr streamCatalog) {
+                                                                         NES::Optimizer::TypeInferencePhasePtr typeInferencePhase) {
     return std::make_unique<ManualPlacementStrategy>(ManualPlacementStrategy(std::move(globalExecutionPlan),
                                                                              std::move(topology),
-                                                                             std::move(typeInferencePhase),
-                                                                             std::move(streamCatalog)));
+                                                                             std::move(typeInferencePhase)));
 }
 
 ManualPlacementStrategy::ManualPlacementStrategy(NES::GlobalExecutionPlanPtr globalExecutionPlan,
                                                  NES::TopologyPtr topology,
-                                                 NES::Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                                 NES::SourceCatalogPtr streamCatalog)
+                                                 NES::Optimizer::TypeInferencePhasePtr typeInferencePhase)
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
-                            std::move(typeInferencePhase),
-                            std::move(streamCatalog)) {}
+                            std::move(typeInferencePhase)) {}
 
 bool ManualPlacementStrategy::updateGlobalExecutionPlan(NES::QueryPlanPtr queryPlan) {
     // check if user has specify binary mapping for placement

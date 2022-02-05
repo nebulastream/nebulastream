@@ -90,8 +90,7 @@ class BasePlacementStrategy {
   public:
     explicit BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                    TopologyPtr topologyPtr,
-                                   TypeInferencePhasePtr typeInferencePhase,
-                                   SourceCatalogPtr streamCatalog);
+                                   TypeInferencePhasePtr typeInferencePhase);
 
     virtual ~BasePlacementStrategy() = default;
 
@@ -119,15 +118,11 @@ class BasePlacementStrategy {
                                            const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) = 0;
 
   protected:
-    /**
-     * @brief Map the logical source name to the physical source nodes in the topology used for placing the operators
-     * @param sourceOperators: the source operators in the query
-     */
-    void mapPinnedOperatorToTopologyNodes(const QueryPlanPtr& queryPlan);
 
     /**
-     * @brief Map the logical source name to the physical source nodes in the topology used for placing the operators
-     * @param sourceOperators: the source operators in the query
+     *
+     * @param upStreamPinnedOperators
+     * @param downStreamPinnedOperators
      */
     void performPathSelection(std::vector<OperatorNodePtr> upStreamPinnedOperators,
                               std::vector<OperatorNodePtr> downStreamPinnedOperators);
@@ -175,7 +170,6 @@ class BasePlacementStrategy {
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
-    SourceCatalogPtr streamCatalog;
     std::map<uint64_t, TopologyNodePtr> pinnedOperatorLocationMap;
     std::map<uint64_t, TopologyNodePtr> nodeIdToTopologyNodeMap;
     std::map<uint64_t, ExecutionNodePtr> operatorToExecutionNodeMap;

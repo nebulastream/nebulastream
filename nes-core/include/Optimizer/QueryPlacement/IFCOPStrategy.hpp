@@ -26,6 +26,9 @@ using IdToIteratorIndexMapping = std::map<std::pair<OperatorId, uint64_t>, std::
 class IFCOPStrategy : public BasePlacementStrategy {
 
   public:
+    static BasePlacementStrategyPtr
+    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+
     ~IFCOPStrategy() override = default;
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
@@ -36,16 +39,8 @@ class IFCOPStrategy : public BasePlacementStrategy {
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
 
-    static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                           TopologyPtr topology,
-                                           TypeInferencePhasePtr typeInferencePhase,
-                                           SourceCatalogPtr streamCatalog);
-
   private:
-    IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
-                  TopologyPtr topology,
-                  TypeInferencePhasePtr typeInferencePhase,
-                  SourceCatalogPtr streamCatalog);
+    IFCOPStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
 
     /**
      * Get an random operator placement candidate

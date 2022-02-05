@@ -52,7 +52,6 @@ class ILPStrategy : public BasePlacementStrategy {
     static BasePlacementStrategyPtr create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                TopologyPtr topology,
                                                TypeInferencePhasePtr typeInferencePhase,
-                                               SourceCatalogPtr streamCatalog,
                                                z3::ContextPtr z3Context);
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
@@ -86,7 +85,6 @@ class ILPStrategy : public BasePlacementStrategy {
     explicit ILPStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                          TopologyPtr topology,
                          TypeInferencePhasePtr typeInferencePhase,
-                         SourceCatalogPtr streamCatalog,
                          z3::ContextPtr z3Context);
     /**
      * @brief assigns operators to topology nodes based on ILP solution

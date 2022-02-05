@@ -32,22 +32,18 @@ namespace NES::Optimizer {
 
 BasePlacementStrategyPtr TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                  TopologyPtr topology,
-                                                 TypeInferencePhasePtr typeInferencePhase,
-                                                 SourceCatalogPtr streamCatalog) {
+                                                 TypeInferencePhasePtr typeInferencePhase) {
     return std::make_unique<TopDownStrategy>(TopDownStrategy(std::move(globalExecutionPlan),
                                                              std::move(topology),
-                                                             std::move(typeInferencePhase),
-                                                             std::move(streamCatalog)));
+                                                             std::move(typeInferencePhase)));
 }
 
 TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                  TopologyPtr topology,
-                                 TypeInferencePhasePtr typeInferencePhase,
-                                 SourceCatalogPtr streamCatalog)
+                                 TypeInferencePhasePtr typeInferencePhase)
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
-                            std::move(typeInferencePhase),
-                            std::move(streamCatalog)) {}
+                            std::move(typeInferencePhase)) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
                                                 FaultToleranceType faultToleranceType,

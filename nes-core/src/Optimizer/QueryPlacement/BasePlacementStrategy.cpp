@@ -35,10 +35,9 @@ namespace NES::Optimizer {
 
 BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                              TopologyPtr topologyPtr,
-                                             TypeInferencePhasePtr typeInferencePhase,
-                                             SourceCatalogPtr streamCatalog)
+                                             TypeInferencePhasePtr typeInferencePhase)
     : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topologyPtr)),
-      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)) {}
+      typeInferencePhase(std::move(typeInferencePhase)) {}
 
 bool BasePlacementStrategy::updateGlobalExecutionPlan(QueryPlanPtr /*queryPlan*/) { NES_NOT_IMPLEMENTED(); }
 

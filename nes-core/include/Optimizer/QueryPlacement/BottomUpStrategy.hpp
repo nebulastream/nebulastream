@@ -35,10 +35,8 @@ class BottomUpStrategy : public BasePlacementStrategy {
   public:
     ~BottomUpStrategy() override = default;
 
-    static std::unique_ptr<BasePlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                         TopologyPtr topology,
-                                                         TypeInferencePhasePtr typeInferencePhase,
-                                                         SourceCatalogPtr streamCatalog);
+    static std::unique_ptr<BasePlacementStrategy>
+    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
 
     bool updateGlobalExecutionPlan(QueryId queryId,
                                    FaultToleranceType faultToleranceType,
@@ -49,8 +47,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
   private:
     explicit BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                               TopologyPtr topology,
-                              TypeInferencePhasePtr typeInferencePhase,
-                              SourceCatalogPtr streamCatalog);
+                              TypeInferencePhasePtr typeInferencePhase);
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
@@ -71,9 +68,9 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param candidateTopologyNode : the candidate topology node to place operator on
      */
     void placeOperator(QueryId queryId,
-                                     const OperatorNodePtr& operatorNode,
-                                     TopologyNodePtr candidateTopologyNode,
-                                     const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+                       const OperatorNodePtr& operatorNode,
+                       TopologyNodePtr candidateTopologyNode,
+                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Get topology node where all children operators of the input operator are placed

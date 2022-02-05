@@ -34,10 +34,8 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
                                    const std::vector<OperatorNodePtr>& pinnedUpStreamNodes,
                                    const std::vector<OperatorNodePtr>& pinnedDownStreamNodes) override;
 
-    static std::unique_ptr<ManualPlacementStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                           TopologyPtr topology,
-                                                           TypeInferencePhasePtr typeInferencePhase,
-                                                           SourceCatalogPtr streamCatalog);
+    static std::unique_ptr<ManualPlacementStrategy>
+    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
 
     /**
      * @brief set the binary mapping of the current strategy
@@ -49,8 +47,7 @@ class ManualPlacementStrategy : public BasePlacementStrategy {
   private:
     explicit ManualPlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                      TopologyPtr topology,
-                                     TypeInferencePhasePtr typeInferencePhase,
-                                     SourceCatalogPtr streamCatalog);
+                                     TypeInferencePhasePtr typeInferencePhase);
 
     // stores the binary mapping  of the current strategy
     PlacementMatrix binaryMapping;
