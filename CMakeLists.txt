@@ -109,7 +109,6 @@ if (NES_USE_ONE_QUEUE_PER_QUERY)
         message(STATUS "use CMAKE_USE_LATCH_FREE_BUFFER_MANAGER")
         set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
     endif ()
-
 endif ()
 
 if (NES_USE_ONE_QUEUE_PER_QUERY)
@@ -405,7 +404,7 @@ endif (NES_USE_MQTT)
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
     enable_language(CUDA)
-    if (NOT ${CUDAToolkit_FOUND})
+    if(NOT ${CUDAToolkit_FOUND})
         message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
     endif ()
     set(CMAKE_CUDA_STANDARD 17)
@@ -474,7 +473,7 @@ if (LLVM_FOUND)
     message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")
     message("-- LLVM tool dir ${LLVM_TOOLS_INSTALL_DIR}")
-    set(CLANG_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang++)
+    set(CLANG_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-13)
     set(CLANG_FORMAT_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-format)
 else ()
     message(FATAL_ERROR "Cannot find llvm")
@@ -547,6 +546,8 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
+file(COPY ${PATH_TO_DEB_SOURCE_CODE}/include/ DESTINATION ${CMAKE_BINARY_DIR}/include/nebulastream)
+
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
@@ -567,16 +568,20 @@ add_subdirectory(cmake/docs)
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j${NES_TEST_PARALLELISM} --output-on-failure DEPENDS ${UNITTESTS})
 
+message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
+install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)
+
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")
 set(CPACK_PACKAGE_RELEASE 1)
+set(CPACK_STRIP_FILES TRUE)
 set(CPACK_PACKAGE_CONTACT "Team NebulaStream")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Team NebulaStream") #required
 set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CPACK_COMPONENTS_ALL nesExecutables nesLibrary nesHeaders)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "cmake, libdwarf-dev, libdwarf1, binutils-dev, libdw-dev, libssl-dev")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libdwarf-dev, libdwarf1, binutils-dev, libdw-dev")
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}.${CMAKE_SYSTEM_PROCESSOR}")
 
 ##This allows call to ldconfig to load the configuration after installation

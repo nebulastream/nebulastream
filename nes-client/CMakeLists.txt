@@ -31,10 +31,10 @@ else ()
 endif ()
 
 #Add the nes client and headers to cpack
-install(TARGETS nes-client
-        COMPONENT nesLibrary
-        DESTINATION lib)
+install(TARGETS nes-client LIBRARY
+        COMPONENT nesLibrary)
 
-install(DIRECTORY "include"
+include(GNUInstallDirs)
+install(DIRECTORY "include/"
         COMPONENT nesHeaders
-        DESTINATION "/nebulastream/nes-client")
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nebulastream/)

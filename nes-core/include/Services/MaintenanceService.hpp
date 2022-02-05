@@ -30,6 +30,7 @@ namespace NES::Experimental {
 
 //fwd. decl.
 class MaintenanceService;
+class MaintenanceService;
 using MaintenanceServicePtr = std::shared_ptr<MaintenanceService>;
 
 /**
