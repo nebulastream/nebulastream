@@ -70,7 +70,7 @@ class TypedBaseOption : public BaseOption {
      * @brief Getter to access the default value of this option.
      * @return default value
      */
-    [[nodiscard]] T getDefaultValue() const;
+    [[nodiscard]] const T& getDefaultValue() const;
 
   protected:
     T value;
@@ -98,7 +98,7 @@ void TypedBaseOption<T>::setValue(T newValue) {
 }
 
 template<class T>
-T TypedBaseOption<T>::getDefaultValue() const {
+const T& TypedBaseOption<T>::getDefaultValue() const {
     return defaultValue;
 }
 template<class T>

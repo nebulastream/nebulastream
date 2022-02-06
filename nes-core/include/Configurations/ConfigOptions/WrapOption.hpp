@@ -20,8 +20,8 @@ namespace NES::Configurations {
 
 template<class Type, class Factory>
 concept IsFactory = requires(std::string z, Yaml::Node node) {
-    {Factory::createFromString(z)} -> std::convertible_to<typename Type::value_type>;
-    {Factory::createFromYaml(node)} -> std::convertible_to<typename Type::value_type>;
+    {Factory::createFromString(z)};
+    {Factory::createFromYaml(node)};
 };
 
 /**
