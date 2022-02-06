@@ -94,7 +94,8 @@ std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_share
 
 CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
     libNesPath = ExecutablePath::getLibPath("libnes.so");
-    NES_DEBUG("LibNesPath: " << libNesPath.string());
+    clangPath = ExecutablePath::getClangPath();
+    NES_DEBUG("clang path: " << clangPath.string());
     publicIncludePath = ExecutablePath::getPublicIncludes();
     NES_DEBUG("PublicIncludePath: " << publicIncludePath.string());
 }
@@ -143,7 +144,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 #error "Unknown platform"
 #endif
     // add header of NES Source
-    compilationFlags.addFlag("-I" + publicIncludePath.string() + "/nebulastream");
+    compilationFlags.addFlag("-I" + publicIncludePath.string());
     // add header of all dependencies
     //compilationFlags.addFlag("-I" + DEBSIncludePath);
 
@@ -193,7 +194,7 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
     const std::lock_guard<std::mutex> fileLock(sourceFile->getFileMutex());
 
     std::stringstream compilerCall;
-    compilerCall << CLANG_EXECUTABLE << " ";
+    compilerCall << clangPath << " ";
     for (const auto& arg : flags.getFlags()) {
         compilerCall << arg << " ";
     }
@@ -223,7 +224,7 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
     // Closing the stream, which also gives us the exit status of the compiler call
     auto ret = pclose(fp);
 
-    // If the compilation did't return with 0, we throw an exception containing the compiler output
+    // If the compilation didn't return with 0, we throw an exception containing the compiler output
     if (ret != 0) {
         NES_ERROR("Compiler: compilation of " << libraryFileName << " failed.");
         throw std::runtime_error(strstream.str());
