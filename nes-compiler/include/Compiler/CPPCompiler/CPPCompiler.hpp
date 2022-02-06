@@ -61,6 +61,7 @@ class CPPCompiler : public LanguageCompiler {
     std::unique_ptr<ClangFormat> format;
     std::filesystem::path libNesPath;
     std::filesystem::path publicIncludePath;
+    std::filesystem::path clangPath;
 };
 
 }// namespace NES::Compiler
