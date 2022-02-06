@@ -67,7 +67,7 @@ GatheringMode::Value MemorySourceType::getGatheringMode() const { return gatheri
 
 std::string MemorySourceType::toString() {
     std::stringstream ss;
-    ss << "LambdaSourceType => {\n";
+    ss << "MemorySourceType => {\n";
     ss << "MemoryArea :" << memoryArea;
     ss << "MemoryAreaSize :" << memoryAreaSize;
     ss << "NumberOfBuffersToProduce :" << numberOfBufferToProduce;

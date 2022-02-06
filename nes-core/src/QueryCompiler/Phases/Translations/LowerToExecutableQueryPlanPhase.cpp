@@ -21,6 +21,7 @@
 #include <Catalogs/Source/PhysicalSourceTypes/MaterializedViewSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/SenseSourceType.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -30,7 +31,7 @@
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -54,6 +55,7 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 
 namespace NES::QueryCompilation {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,
@@ -315,6 +317,11 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                      benchmarkSourceType->getSourceMode(),
                                                      benchmarkSourceType->getSourceAffinity(),
                                                      benchmarkSourceType->getTaskQueueId());
+        }
+        case STATIC_DATA_SOURCE: {
+            auto staticDataSourceType = physicalSourceType->as<Experimental::StaticDataSourceType>();
+            return Experimental::StaticDataSourceDescriptor::create(schema,
+                                                     staticDataSourceType->getPathTableFile());
         }
         case LAMBDA_SOURCE: {
             auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
