@@ -142,7 +142,7 @@ jobs:
   release:
     runs-on: [self-hosted, linux, X64, Build]
     if: github.ref == 'refs/heads/master'
-    needs: [build-x64-linux, build-arm64-linux]
+    needs: [build-x64-linux, build-arm64-linux, build-x64-linux-parallel]
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
