@@ -136,6 +136,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   numberOfBuffersInGlobalBufferManager,
                                                                   numberOfBuffersInSourceLocalBufferPool,
                                                                   numberOfBuffersPerWorker,
+                                                                  this->shared_from_this(),
                                                                   queryCompilerConfiguration,
                                                                   enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
                                                                                       : Runtime::NumaAwarenessFlag::DISABLED,
@@ -355,6 +356,15 @@ bool NesWorker::notifyQueryFailure(uint64_t queryId,
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->notifyQueryFailure(queryId, subQueryId, workerId, operatorId, errorMsg);
     NES_DEBUG("NesWorker::notifyQueryFailure success=" << success);
+    return success;
+}
+
+bool NesWorker::propagatePunctuation(uint64_t timestamp, uint64_t querySubPlanId) {
+    bool con = waitForConnect();
+    NES_DEBUG("connected= " << con);
+    NES_ASSERT(con, "Connection failed");
+    bool success = coordinatorRpcClient->propagatePunctuation(timestamp, querySubPlanId);
+    NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
     return success;
 }
 

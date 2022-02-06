@@ -201,3 +201,18 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
         return Status::CANCELLED;
     }
 }
+
+Status CoordinatorRPCServer::PropagatePunctuation(ServerContext*,
+                            const PropagateTimestampNotification* request,
+                            PropagateTimestampReply* reply) {
+    try {
+        NES_ERROR("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp "
+                  << request->timestamp() << "and querySubPlanId " << request->querysubplanid());
+        // TODO implement here what happens with received Query that failed
+        reply->set_success(true);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("CoordinatorRPCServer: received broken punctuation message: " << ex.what());
+        return Status::CANCELLED;
+    }
+}

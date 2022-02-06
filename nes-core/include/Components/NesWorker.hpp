@@ -22,6 +22,7 @@
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
 #include <vector>
+#include <memory>
 
 namespace grpc {
 class Server;
@@ -37,7 +38,7 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
-class NesWorker : public Exceptions::ErrorListener {
+class NesWorker: std::enable_shared_from_this<NesWorker>, public Exceptions::ErrorListener {
   public:
     /**
      * @brief default constructor which creates a sensor node
@@ -147,6 +148,14 @@ class NesWorker : public Exceptions::ErrorListener {
      * @return true if Notification was successful, false otherwise
      */
     bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
+
+    /**
+     * @brief method to propagate new epoch timestamp to coordinator
+     * @param timestamp: max timestamp of current epoch
+     * @param querySubPlanId: identifies what query sends punctuation
+     * @return bool indicating success
+     */
+    bool propagatePunctuation(uint64_t timestamp, QuerySubPlanId querySubPlanId);
 
     uint64_t getWorkerId();
 

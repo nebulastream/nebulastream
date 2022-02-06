@@ -51,6 +51,8 @@ class MultiOriginWatermarkProcessor {
      */
     explicit MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins);
 
+    ~MultiOriginWatermarkProcessor();
+
     /**
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param numberOfOrigins

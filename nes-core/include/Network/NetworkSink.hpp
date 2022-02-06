@@ -47,6 +47,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          NesPartition nesPartition,
                          const Runtime::BufferManagerPtr& bufferManager,
                          Runtime::QueryManagerPtr queryManager,
+                         Runtime::NodeEnginePtr nodeEngine,
                          Runtime::BufferStoragePtr bufferStorage,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,

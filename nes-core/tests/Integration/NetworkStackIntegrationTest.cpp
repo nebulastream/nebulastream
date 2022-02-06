@@ -150,8 +150,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64,
-                                                     queryCompilerConfiguration);
+        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, nullptr, queryCompilerConfiguration);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -181,8 +180,7 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
     auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64,
-                                                     queryCompilerConfiguration);
+        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, nullptr, queryCompilerConfiguration);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -205,7 +203,8 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
                                                      nodeLocation,
                                                      nesPartition,
                                                      nodeEngine->getBufferManager(),
-                                                     nullptr,
+                                                     nodeEngine->getQueryManager(),
+                                                     nodeEngine,
                                                      nodeEngine->getBufferStorage(),
                                                      1,
                                                      NSOURCE_RETRY_WAIT,
@@ -305,6 +304,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                          std::move(partitionManager),
                          std::move(queryCompiler),
                          std::make_shared<NES::Runtime::StateManager>(0),
+                         nullptr,
                          std::make_shared<NES::Experimental::MaterializedView::MaterializedViewManager>(),
                          0,
                          64,
@@ -369,7 +369,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
         auto nodeEngine2 =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort2, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, nullptr, Configurations::QueryCompilerConfiguration());
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
@@ -379,6 +379,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
                                                          nesPartition,
                                                          nodeEngine2->getBufferManager(),
                                                          nullptr,
+                                                         nodeEngine2,
                                                          nodeEngine2->getBufferStorage(),
                                                          numSendingThreads,
                                                          NSOURCE_RETRY_WAIT,
@@ -478,6 +479,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                                          buffersManaged,
                                                                          64,
                                                                          12,
+                                                                         nullptr,
                                                                          Configurations::QueryCompilerConfiguration(),
                                                                          NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto netManagerSender = nodeEngineSender->getNetworkManager();
@@ -490,6 +492,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                                            buffersManaged,
                                                                            64,
                                                                            12,
+                                                                           nullptr,
                                                                            Configurations::QueryCompilerConfiguration(),
                                                                            NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto netManagerReceiver = nodeEngineReceiver->getNetworkManager();
@@ -564,6 +567,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                          nesPartition,
                                                          nodeEngineSender->getBufferManager(),
                                                          nodeEngineSender->getQueryManager(),
+                                                         nodeEngineSender,
                                                          nodeEngineSender->getBufferStorage(),
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
@@ -715,6 +719,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                                          buffersManaged,
                                                                          64,
                                                                          12,
+                                                                         nullptr,
                                                                          queryCompilerConfiguration,
                                                                          NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto nodeEngineReceiver = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
@@ -725,6 +730,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                                            buffersManaged,
                                                                            64,
                                                                            12,
+                                                                           nullptr,
                                                                            queryCompilerConfiguration,
                                                                            NES::Runtime::NumaAwarenessFlag::DISABLED);
     // create NetworkSink
@@ -846,6 +852,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                          nesPartition,
                                                          nodeEngineSender->getBufferManager(),
                                                          nodeEngineSender->getQueryManager(),
+                                                         nodeEngineSender,
                                                          nodeEngineSender->getBufferStorage(),
                                                          1,
                                                          NSOURCE_RETRY_WAIT,

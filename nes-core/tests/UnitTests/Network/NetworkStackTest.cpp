@@ -792,13 +792,14 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                                                          nesPartition,
                                                          bMgr,
                                                          nullptr,
+                                                         nullptr,
                                                          bSt,
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES);
         PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
         auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {streamConf}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {streamConf}, 1, bufferSize, buffersManaged, 64, 64, nullptr, Configurations::QueryCompilerConfiguration());
 
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {

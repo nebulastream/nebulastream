@@ -50,19 +50,19 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
+                       NesWorkerPtr&& nesWorker,
                        Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker)
-    : physicalSources(std::move(physicalSources)), queryManager(std::move(queryManager)),
-      hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
-      queryCompiler(std::move(queryCompiler)), partitionManager(std::move(partitionManager)),
-      stateManager(std::move(stateManager)), materializedViewManager(std::move(materializedViewManager)),
-      bufferStorage(std::move(bufferStorage)), nodeEngineId(nodeEngineId),
+    : physicalSources(std::move(physicalSources)), queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)), hardwareManager(std::move(hardwareManager)),
+      bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
+      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)),
+      nesWorker(std::move(nesWorker)), materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
-      numberOfBuffersPerWorker(numberOfBuffersPerWorker) {
+      numberOfBuffersPerWorker(numberOfBuffersPerWorker){
 
     NES_TRACE("Runtime() id=" << nodeEngineId);
     // here shared_from_this() does not work because of the machinery behind make_shared

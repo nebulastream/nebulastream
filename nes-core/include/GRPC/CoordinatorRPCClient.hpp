@@ -16,6 +16,7 @@
 #define NES_INCLUDE_GRPC_COORDINATORRPCCLIENT_HPP_
 
 #include <CoordinatorRPCService.grpc.pb.h>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <grpcpp/grpcpp.h>
 #include <optional>
 #include <string>
@@ -139,6 +140,14 @@ class CoordinatorRPCClient {
      * @return bool indicating success
      */
     bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
+
+    /**
+     * @brief method to propagate new epoch timestamp to coordinator
+     * @param timestamp: max timestamp of current epoch
+     * @param querySubPlanId: identifies what query sends punctuation
+     * @return bool indicating success
+     */
+    bool propagatePunctuation(uint64_t timestamp, QuerySubPlanId querySubPlanId);
 
   private:
     uint64_t workerId;

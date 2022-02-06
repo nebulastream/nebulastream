@@ -72,9 +72,8 @@ class QueryExecutionTest : public testing::Test {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
-        auto defaultSourceType = DefaultSourceType::create();
-        PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf}, nullptr);
     }
 
     /* Will be called before a test is executed. */

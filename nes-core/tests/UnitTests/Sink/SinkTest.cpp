@@ -65,7 +65,7 @@ class SinkTest : public Testing::NESBaseTest {
         path_to_bin_file = std::string(TEST_DATA_DIRECTORY) + "sink.bin";
         path_to_osfile_file = std::string(TEST_DATA_DIRECTORY) + "testOs.txt";
         PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
-        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
+        this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf}, nullptr);
     }
 
     /* Called after a single test. */
