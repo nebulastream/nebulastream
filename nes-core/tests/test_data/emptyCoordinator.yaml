@@ -4,25 +4,10 @@
 # Set NES ip of the REST server
 restIp: localhost
 
-# Set RPC IP address of NES Coordinator
-coordinatorIp:
-
-# Set the data port of the network manager
-dataPort:
-
 # ~~ Processing Configurations ~~
 # Set the number of computing slots in NES Coordinator
 # 0 is a place holder, default is number of processors installed in host machine
 numberOfSlots: 10
-
-# Enable Query Merging Feature
-enableQueryMerging:
-
-# Number buffers in global buffer pool
-numberOfBuffersInGlobalBufferManager:
-
-# Number buffers in task local buffer pool
-numberOfBuffersPerWorker:
 
 # Number buffers in source local buffer pool
 numberOfBuffersInSourceLocalBufferPool: 128

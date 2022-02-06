@@ -15,6 +15,7 @@
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_SCALAROPTION_HPP_
 
 #include <Configurations/ConfigOptions/TypedBaseOption.hpp>
+#include <ostream>
 namespace NES::Configurations {
 
 /**
@@ -49,6 +50,17 @@ class ScalarOption : public TypedBaseOption<T> {
      * @return true if the option is equal.
      */
     bool operator==(const BaseOption& other) override;
+    bool operator==(const T& other);
+
+
+    /**
+     * @brief Operator to directly access the value of this option.
+     * @return Returns an object of the option type T.
+     */
+    operator T() { return this->value; }
+
+    template<class X>
+    friend std::ostream& operator<<( std::ostream& os, const ScalarOption<X>& option);
 
   protected:
     virtual void parseFromYAMLNode(Yaml::Node node) override;
@@ -64,6 +76,16 @@ class ScalarOption : public TypedBaseOption<T> {
      */
     ScalarOption() : TypedBaseOption<T>() {}
 };
+
+template<class X>
+std::ostream& operator<<(std::ostream& os, const  ScalarOption<X>& option) {
+    os << "Config Object: \n";
+    os << "Name: " << option.name << "\n";
+    os << "Description: " << option.description << "\n";
+    os << "Value: " << option.value << "\n";
+    os << "Default Value: " << option.defaultValue << "\n";
+    return os;
+}
 
 template<class T>
 ScalarOption<T>::ScalarOption(const std::string& name, const std::string& description) : TypedBaseOption<T>(name, description) {}
@@ -81,6 +103,11 @@ ScalarOption<T>& ScalarOption<T>::operator=(const T& value) {
 template<class T>
 bool ScalarOption<T>::operator==(const BaseOption& other) {
     return TypedBaseOption<T>::operator==(other);
+}
+
+template<class T>
+bool ScalarOption<T>::operator==(const T& other) {
+    return this->value == other;
 }
 
 template<class T>

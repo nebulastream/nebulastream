@@ -17,7 +17,6 @@
 #include <Catalogs/Source/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Coordinator/NewCoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -43,95 +42,39 @@ class ConfigTest : public testing::Test {
 /**
  * @brief This reads an coordinator yaml and checks the configuration
  */
-TEST_F(ConfigTest, testConfigurationWithYaml) {
-
-    auto config = Configurations::TestConfiguration();
-    config.overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "testConfig.yaml");
-
-    EXPECT_EQ(config.rpcPort, 100);
-    EXPECT_EQ(config.logLevel, LogLevel::LOG_WARNING);
-    EXPECT_FALSE(config.optimizerConfig.enableSemanticQueryValidation);
-
-    LogicalSourcePtr logicalSource1 = config.logicalSources[0];
-    EXPECT_EQ(logicalSource1->getLogicalSourceName(), "Source1");
-    EXPECT_EQ(logicalSource1->getSchema()->fields.size(), 2);
-
-}
-
-/**
- * @brief This reads an coordinator yaml and checks the configuration
- */
-TEST_F(ConfigTest, testConfigurationWithCommandLine) {
-
-    std::string argv[] = {
-        "--rpcPort=42",
-        "--logLevel=LOG_NONE",
-        "--optimizerConfig.enableSemanticQueryValidation=TRUE"
-    };
-    int argc = 3;
-
-    std::map<string, string> commandLineParams;
-
-    for (int i = 0; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
-    auto config = Configurations::TestConfiguration();
-    config.overwriteConfigWithCommandLineInput(commandLineParams);
-    EXPECT_EQ(config.logLevel, LogLevel::LOG_NONE);
-    EXPECT_EQ(config.rpcPort, 42);
-    EXPECT_TRUE(config.optimizerConfig.enableSemanticQueryValidation);
-
-}
-
-/**
- * @brief This reads an coordinator yaml and checks the configuration
- */
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
 
-    CoordinatorConfigurationPtr coordinatorConfigPtr = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
     coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyCoordinator.yaml");
-
-    EXPECT_EQ(coordinatorConfigPtr->getRestPort()->getValue(), coordinatorConfigPtr->getRestPort()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getRpcPort()->getValue(), coordinatorConfigPtr->getRpcPort()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getDataPort()->getValue(), coordinatorConfigPtr->getDataPort()->getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->getRestIp()->getValue(), coordinatorConfigPtr->getRestIp()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getCoordinatorIp()->getValue(), coordinatorConfigPtr->getCoordinatorIp()->getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->getNumberOfSlots()->getValue(), coordinatorConfigPtr->getNumberOfSlots()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getLogLevel()->getValue(), coordinatorConfigPtr->getLogLevel()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
-              coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
-              coordinatorConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
-              coordinatorConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->getBufferSizeInBytes()->getValue(),
-              coordinatorConfigPtr->getBufferSizeInBytes()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getNumWorkerThreads()->getValue(),
-              coordinatorConfigPtr->getNumWorkerThreads()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getQueryBatchSize()->getValue(),
-              coordinatorConfigPtr->getQueryBatchSize()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getQueryMergerRule()->getValue(),
-              coordinatorConfigPtr->getQueryMergerRule()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getEnableSemanticQueryValidation()->getValue(),
-              coordinatorConfigPtr->getEnableSemanticQueryValidation()->getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->restPort.getValue(), coordinatorConfigPtr->restPort.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->dataPort.getValue(), coordinatorConfigPtr->dataPort.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), coordinatorConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->numberOfSlots.getValue(), coordinatorConfigPtr->numberOfSlots.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
+              coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersPerWorker.getValue(),
+              coordinatorConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
+              coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->numWorkerThreads.getValue(), coordinatorConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->queryBatchSize.getValue(), coordinatorConfigPtr->queryBatchSize.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->queryMergerRule.getValue(), coordinatorConfigPtr->queryMergerRule.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->enableSemanticQueryValidation.getValue(),
+              coordinatorConfigPtr->enableSemanticQueryValidation.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 
-    CoordinatorConfigurationPtr coordinatorConfigPtr = CoordinatorConfiguration::create();
+    CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
     std::string argv[] = {"--restIp=localhost",
-                          "--coordinatorIp=",
-                          "--dataPort=",
                           "--numberOfSlots=10",
-                          "--enableQueryMerging=",
-                          "--numberOfBuffersInGlobalBufferManager=",
-                          "--numberOfBuffersPerWorker=",
                           "--numberOfBuffersInSourceLocalBufferPool=128",
                           "--bufferSizeInBytes=1024"};
-    int argc = 9;
+    int argc = 4;
 
     std::map<string, string> commandLineParams;
 
@@ -143,29 +86,24 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 
     coordinatorConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
 
-    EXPECT_EQ(coordinatorConfigPtr->getRestPort()->getValue(), coordinatorConfigPtr->getRestPort()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getRpcPort()->getValue(), coordinatorConfigPtr->getRpcPort()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getDataPort()->getValue(), coordinatorConfigPtr->getDataPort()->getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->getRestIp()->getValue(), coordinatorConfigPtr->getRestIp()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getCoordinatorIp()->getValue(), coordinatorConfigPtr->getCoordinatorIp()->getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->getNumberOfSlots()->getValue(), coordinatorConfigPtr->getNumberOfSlots()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getLogLevel()->getValue(), coordinatorConfigPtr->getLogLevel()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
-              coordinatorConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
-              coordinatorConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
-              coordinatorConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->getBufferSizeInBytes()->getValue(),
-              coordinatorConfigPtr->getBufferSizeInBytes()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getNumWorkerThreads()->getValue(),
-              coordinatorConfigPtr->getNumWorkerThreads()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getQueryBatchSize()->getValue(),
-              coordinatorConfigPtr->getQueryBatchSize()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getQueryMergerRule()->getValue(),
-              coordinatorConfigPtr->getQueryMergerRule()->getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->getEnableSemanticQueryValidation()->getValue(),
-              coordinatorConfigPtr->getEnableSemanticQueryValidation()->getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->restPort.getValue(), coordinatorConfigPtr->restPort.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->dataPort.getValue(), coordinatorConfigPtr->dataPort.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->coordinatorIp.getValue(), coordinatorConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->numberOfSlots.getValue(), coordinatorConfigPtr->numberOfSlots.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
+              coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersPerWorker.getValue(), coordinatorConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
+              coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
+    EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->numWorkerThreads.getValue(), coordinatorConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->queryBatchSize.getValue(), coordinatorConfigPtr->queryBatchSize.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->queryMergerRule.getValue(), coordinatorConfigPtr->queryMergerRule.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->enableSemanticQueryValidation.getValue(),
+              coordinatorConfigPtr->enableSemanticQueryValidation.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
@@ -224,12 +162,9 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
     WorkerConfigurationPtr workerConfigPtr = WorkerConfiguration::create();
     std::string argv[] = {
         "--localWorkerIp=localhost",
-        "--coordinatorIp=",
         "--coordinatorPort=5000",
-        "--numberOfSlots=",
         "--numWorkerThreads=5",
         "--numberOfBuffersInGlobalBufferManager=2048",
-        "--numberOfBuffersPerWorker=",
         "--numberOfBuffersInSourceLocalBufferPool=128",
         "--queryCompilerCompilationStrategy=FAST",
         "--queryCompilerPipeliningStrategy=OPERATPR_AT_A_TIME",

@@ -59,6 +59,7 @@ class SequenceOption : public BaseOption {
     std::vector<T> options;
 };
 
+
 template<class T>
 requires std::is_base_of_v<BaseOption, T> SequenceOption<T>::SequenceOption(const std::string& name,
                                                                             const std::string& description)
