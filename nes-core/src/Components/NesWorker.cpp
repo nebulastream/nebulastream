@@ -46,21 +46,19 @@ void termFunc(int) {
 namespace NES {
 
 NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
-    : workerConfig(std::move(workerConfig)), coordinatorIp(this->workerConfig->getCoordinatorIp()->getValue()),
-      localWorkerIp(this->workerConfig->getLocalWorkerIp()->getValue()),
-      workerToCoreMapping(this->workerConfig->getWorkerPinList()->getValue()),
-      queuePinList(this->workerConfig->getQueuePinList()->getValue()),
-      coordinatorPort(this->workerConfig->getCoordinatorPort()->getValue()), localWorkerRpcPort(this->workerConfig->getRpcPort()->getValue()),
-      localWorkerZmqPort(this->workerConfig->getDataPort()->getValue()), numberOfSlots(this->workerConfig->getNumberOfSlots()->getValue()),
-      numWorkerThreads(this->workerConfig->getNumWorkerThreads()->getValue()),
-      numberOfBuffersInGlobalBufferManager(this->workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
-      numberOfBuffersPerWorker(this->workerConfig->getNumberOfBuffersPerWorker()->getValue()),
-      numberOfBuffersInSourceLocalBufferPool(this->workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
-      bufferSizeInBytes(this->workerConfig->getBufferSizeInBytes()->getValue()),
-      queryCompilerCompilationStrategy(this->workerConfig->getQueryCompilerCompilationStrategy()->getValue()),
-      queryCompilerPipeliningStrategy(this->workerConfig->getQueryCompilerPipeliningStrategy()->getValue()),
-      queryCompilerOutputBufferOptimizationLevel(this->workerConfig->getQueryCompilerOutputBufferAllocationStrategy()->getValue()),
-      enableNumaAwareness(this->workerConfig->isNumaAware()), enableMonitoring(this->workerConfig->getEnableMonitoring()->getValue()) {
+    : workerConfig(std::move(workerConfig)), coordinatorIp(this->workerConfig->coordinatorIp.getValue()),
+      localWorkerIp(this->workerConfig->localWorkerIp.getValue()), workerToCoreMapping(this->workerConfig->workerPinList.getValue()),
+      queuePinList(this->workerConfig->queuePinList.getValue()), coordinatorPort(this->workerConfig->coordinatorPort.getValue()),
+      localWorkerRpcPort(this->workerConfig->rpcPort.getValue()), localWorkerZmqPort(this->workerConfig->dataPort.getValue()),
+      numberOfSlots(this->workerConfig->numberOfSlots.getValue()), numWorkerThreads(this->workerConfig->numWorkerThreads.getValue()),
+      numberOfBuffersInGlobalBufferManager(this->workerConfig->numberOfBuffersInGlobalBufferManager.getValue()),
+      numberOfBuffersPerWorker(this->workerConfig->numberOfBuffersPerWorker.getValue()),
+      numberOfBuffersInSourceLocalBufferPool(this->workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
+      bufferSizeInBytes(this->workerConfig->bufferSizeInBytes.getValue()),
+      queryCompilerCompilationStrategy(this->workerConfig->queryCompilerCompilationStrategy.getValue()),
+      queryCompilerPipeliningStrategy(this->workerConfig->queryCompilerPipeliningStrategy.getValue()),
+      queryCompilerOutputBufferOptimizationLevel(this->workerConfig->queryCompilerOutputBufferOptimizationLevel.getValue()),
+      enableNumaAwareness(this->workerConfig->numaAwareness.getValue()), enableMonitoring(this->workerConfig->enableMonitoring.getValue()) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -127,10 +125,15 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
+    std::vector<PhysicalSourcePtr> physicalSources;
+    for (auto physicalSource : workerConfig->physicalSources.getValues()) {
+        physicalSources.push_back(physicalSource);
+    }
+
     try {
         nodeEngine = Runtime::NodeEngineFactory::createNodeEngine(localWorkerIp,
                                                                   localWorkerZmqPort,
-                                                                  workerConfig->getPhysicalSources(),
+                                                                  physicalSources,
                                                                   numWorkerThreads,
                                                                   bufferSizeInBytes,
                                                                   numberOfBuffersInGlobalBufferManager,
@@ -170,9 +173,9 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_DEBUG("connected= " << con);
         NES_ASSERT(con, "cannot connect");
     }
-    if (!workerConfig->getPhysicalSources().empty()) {
+    if (!workerConfig->physicalSources.getValues().empty()) {
         NES_DEBUG("NesWorker: start with register stream");
-        bool success = registerPhysicalSources(workerConfig->getPhysicalSources());
+        bool success = registerPhysicalSources(physicalSources);
         NES_DEBUG("registered= " << success);
         NES_ASSERT(success, "cannot register");
     }

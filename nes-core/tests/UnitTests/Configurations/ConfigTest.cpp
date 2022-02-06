@@ -95,7 +95,8 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
     EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
               coordinatorConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersPerWorker.getValue(), coordinatorConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->numberOfBuffersPerWorker.getValue(),
+              coordinatorConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
               coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
@@ -108,58 +109,56 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
 
-    WorkerConfigurationPtr workerConfigPtr = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "emptyWorker.yaml");
 
-    EXPECT_NE(workerConfigPtr->getLocalWorkerIp()->getValue(), workerConfigPtr->getLocalWorkerIp()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getRpcPort()->getValue(), workerConfigPtr->getRpcPort()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getDataPort()->getValue(), workerConfigPtr->getDataPort()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getCoordinatorPort()->getValue(), workerConfigPtr->getCoordinatorPort()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getCoordinatorIp()->getValue(), workerConfigPtr->getCoordinatorIp()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getNumberOfSlots()->getValue(), workerConfigPtr->getNumberOfSlots()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getLogLevel()->getValue(), workerConfigPtr->getLogLevel()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
-              workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
-              workerConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
-              workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getNumWorkerThreads()->getValue(), workerConfigPtr->getNumWorkerThreads()->getDefaultValue());
-    EXPECT_TRUE(workerConfigPtr->getPhysicalSources().empty());
+    EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->coordinatorIp.getValue(), workerConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
+              workerConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->numberOfBuffersPerWorker.getValue(), workerConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
+              workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_TRUE(workerConfigPtr->physicalSources.empty());
 }
 
 TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
 
-    WorkerConfigurationPtr workerConfigPtr = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     workerConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "workerWithPhysicalSources.yaml");
 
-    EXPECT_NE(workerConfigPtr->getLocalWorkerIp()->getValue(), workerConfigPtr->getLocalWorkerIp()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getRpcPort()->getValue(), workerConfigPtr->getRpcPort()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getDataPort()->getValue(), workerConfigPtr->getDataPort()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getCoordinatorPort()->getValue(), workerConfigPtr->getCoordinatorPort()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getCoordinatorIp()->getValue(), workerConfigPtr->getCoordinatorIp()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getNumberOfSlots()->getValue(), workerConfigPtr->getNumberOfSlots()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getLogLevel()->getValue(), workerConfigPtr->getLogLevel()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
-              workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
-              workerConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
-              workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getNumWorkerThreads()->getValue(), workerConfigPtr->getNumWorkerThreads()->getDefaultValue());
-    EXPECT_TRUE(!workerConfigPtr->getPhysicalSources().empty());
-    EXPECT_TRUE(workerConfigPtr->getPhysicalSources().size() == 2);
-    for (const auto& physicalSource : workerConfigPtr->getPhysicalSources()) {
-        EXPECT_TRUE(physicalSource->getPhysicalSourceType()->instanceOf<DefaultSourceType>()
-                    || physicalSource->getPhysicalSourceType()->instanceOf<MQTTSourceType>());
+    EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->coordinatorIp.getValue(), workerConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
+              workerConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->numberOfBuffersPerWorker.getValue(), workerConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
+              workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_TRUE(!workerConfigPtr->physicalSources.empty());
+    EXPECT_TRUE(workerConfigPtr->physicalSources.size() == 2);
+    for (const auto& physicalSource : workerConfigPtr->physicalSources.getValues()) {
+        EXPECT_TRUE(physicalSource.getValue()->getPhysicalSourceType()->instanceOf<DefaultSourceType>()
+                    || physicalSource.getValue()->getPhysicalSourceType()->instanceOf<MQTTSourceType>());
     }
 }
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
-    WorkerConfigurationPtr workerConfigPtr = WorkerConfiguration::create();
+    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     std::string argv[] = {
         "--localWorkerIp=localhost",
         "--coordinatorPort=5000",
@@ -170,7 +169,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
         "--queryCompilerPipeliningStrategy=OPERATPR_AT_A_TIME",
         "--queryCompilerOutputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
     };
-    int argc = 11;
+    int argc = 8;
 
     std::map<string, string> commandLineParams;
 
@@ -182,27 +181,26 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
 
-    EXPECT_NE(workerConfigPtr->getLocalWorkerIp()->getValue(), workerConfigPtr->getLocalWorkerIp()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getRpcPort()->getValue(), workerConfigPtr->getRpcPort()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getDataPort()->getValue(), workerConfigPtr->getDataPort()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getCoordinatorPort()->getValue(), workerConfigPtr->getCoordinatorPort()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getCoordinatorIp()->getValue(), workerConfigPtr->getCoordinatorIp()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getNumberOfSlots()->getValue(), workerConfigPtr->getNumberOfSlots()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getLogLevel()->getValue(), workerConfigPtr->getLogLevel()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getValue(),
-              workerConfigPtr->getNumberOfBuffersInGlobalBufferManager()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getNumberOfBuffersPerWorker()->getValue(),
-              workerConfigPtr->getNumberOfBuffersPerWorker()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getValue(),
-              workerConfigPtr->getNumberOfBuffersInSourceLocalBufferPool()->getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->getBufferSizeInBytes()->getValue(), workerConfigPtr->getBufferSizeInBytes()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getNumWorkerThreads()->getValue(), workerConfigPtr->getNumWorkerThreads()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getQueryCompilerCompilationStrategy()->getValue(),
-              workerConfigPtr->getQueryCompilerCompilationStrategy()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getQueryCompilerPipeliningStrategy()->getValue(),
-              workerConfigPtr->getQueryCompilerPipeliningStrategy()->getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getQueryCompilerOutputBufferAllocationStrategy()->getValue(),
-              workerConfigPtr->getQueryCompilerOutputBufferAllocationStrategy()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->localWorkerIp.getValue(), workerConfigPtr->localWorkerIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->coordinatorIp.getValue(), workerConfigPtr->coordinatorIp.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
+              workerConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->numberOfBuffersPerWorker.getValue(), workerConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
+              workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->queryCompilerCompilationStrategy.getValue(),
+              workerConfigPtr->queryCompilerCompilationStrategy.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->queryCompilerPipeliningStrategy.getValue(),
+              workerConfigPtr->queryCompilerPipeliningStrategy.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->queryCompilerOutputBufferOptimizationLevel.getValue(),
+              workerConfigPtr->queryCompilerOutputBufferOptimizationLevel.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {

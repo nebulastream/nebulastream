@@ -229,20 +229,20 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         NES_DEBUG("Use provided external worker config");
     } else {
         NES_DEBUG("Use provided default worker config");
-        workerConfig = WorkerConfiguration::create();
-        workerConfig->resetWorkerOptions();
-        workerConfig->setCoordinatorIp(rpcIp);
-        workerConfig->setLocalWorkerIp(rpcIp);
-        workerConfig->setCoordinatorPort(rpcPort);
-        workerConfig->setRpcPort(0);
-        workerConfig->setDataPort(0);
-        workerConfig->setNumberOfSlots(numberOfSlots);
-        workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
-        workerConfig->setBufferSizeInBytes(bufferSizeInBytes);
-        workerConfig->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
-        workerConfig->setNumberOfBuffersPerWorker(numberOfBuffersPerWorker);
-        workerConfig->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
-        workerConfig->setEnableMonitoring(enableMonitoring);
+        workerConfig = std::make_shared<WorkerConfiguration>();
+        workerConfig.reset();
+        workerConfig->coordinatorIp = rpcIp;
+        workerConfig->localWorkerIp =rpcIp;
+        workerConfig->coordinatorPort=rpcPort;
+        workerConfig->rpcPort=0;
+        workerConfig->dataPort =0;
+        workerConfig->numberOfSlots = numberOfSlots;
+        workerConfig->numWorkerThreads = numberOfWorkerThreads;
+        workerConfig->bufferSizeInBytes = bufferSizeInBytes;
+        workerConfig->numberOfBuffersInSourceLocalBufferPool = numberOfBuffersInSourceLocalBufferPool;
+        workerConfig->numberOfBuffersPerWorker = numberOfBuffersPerWorker;
+        workerConfig->numberOfBuffersInGlobalBufferManager = numberOfBuffersInGlobalBufferManager;
+        workerConfig->enableMonitoring = enableMonitoring;
     }
 
     auto workerConfigCopy = workerConfig;

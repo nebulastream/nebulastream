@@ -22,6 +22,10 @@
 
 namespace NES {
 
+class PhysicalSourceType;
+using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
+
+
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
@@ -36,13 +40,16 @@ class PhysicalSourceFactory {
      * @return source config object
      */
     static PhysicalSourcePtr createPhysicalSource(const std::map<std::string, std::string>& commandLineParams);
+    static PhysicalSourcePtr createFromString(std::string string);
 
     /**
      * @brief create physical stream config with yaml file
      * @param physicalStreamConfig yaml elements from yaml file
      * @return physical stream config object
      */
-    static std::vector<PhysicalSourcePtr> createPhysicalSources(Yaml::Node& yamlConfig);
+    static PhysicalSourcePtr createFromYaml(Yaml::Node& yamlConfig);
+
+
 
   private:
     /**
@@ -65,4 +72,4 @@ class PhysicalSourceFactory {
 }// namespace Configurations
 }// namespace NES
 
-#endif  // NES_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORY_HPP_
+#endif// NES_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORY_HPP_

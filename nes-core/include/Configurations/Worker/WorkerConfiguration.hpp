@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License"};
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -15,6 +15,8 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 
+#include <Configurations/ConfigOptions/BaseConfiguration.hpp>
+#include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <map>
 #include <string>
@@ -32,284 +34,84 @@ using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 /**
  * @brief object for storing worker configuration
  */
-class WorkerConfiguration {
-
+class WorkerConfiguration : public BaseConfiguration {
   public:
-    /**
-     * @brief constructor to create a new coordinator option object initialized with default values as set below
-     */
-    explicit WorkerConfiguration();
+    StringOption localWorkerIp = {LOCAL_WORKER_IP_CONFIG, "127.0.0.1", "Worker IP."};
+    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG,
+                                  "127.0.0.1",
+                                  "Server IP of the NES Coordinator to which the NES Worker should connect."};
+    UIntOption coordinatorPort = {
+        COORDINATOR_PORT_CONFIG,
+        4000,
+        "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
+        "to be the same as rpcPort in Coordinator."};
+    UIntOption rpcPort = {RPC_PORT_CONFIG, 4000, "RPC server port of the NES Worker."};
+    UIntOption dataPort = {DATA_PORT_CONFIG, 4001, "Data port of the NES Worker."};
+    UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for the NES Worker."};
+    UIntOption numWorkerThreads = {"numWorkerThreads", 1, "Number of worker threads."};
 
-    static WorkerConfigurationPtr create();
+    UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
+                                                       1024,
+                                                       "Number buffers in global buffer pool."};
+    UIntOption numberOfBuffersPerWorker = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG, 128, "Number buffers in task local buffer pool."};
+    UIntOption numberOfBuffersInSourceLocalBufferPool = {NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
+                                                         64,
+                                                         "Number buffers in source local buffer pool."};
+    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes."};
+    UIntOption parentId = {PARENT_ID_CONFIG, 0, "Parent ID of this node."};
+    StringOption logLevel = {LOG_LEVEL_CONFIG, "LOG_DEBUG", "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) "};
 
-    /**
-     * @brief overwrite the default configurations with those loaded from a yaml file
-     * @param filePath file path to the yaml file
-     */
-    void overwriteConfigWithYAMLFileInput(const std::string& filePath);
+    StringOption queryCompilerCompilationStrategy = {
+        QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG,
+        "OPTIMIZE",
+        "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]."};
 
-    /**
-     * @brief overwrite the default and the yaml file configurations with command line input
-     * @param commandLineArguments map with key=command line parameter and value = value
-     */
-    void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& commandLineArguments);
+    StringOption queryCompilerPipeliningStrategy = {
+        QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG,
+        "OPERATOR_FUSION",
+        "Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME]."};
 
-    /**
-     * @brief resets all options to default values
-     */
-    void resetWorkerOptions();
-
-    /**
-     * @brief prints the current worker configuration (name: current value)
-     */
-    std::string toString();
-
-    /**
-     * @brief gets a ConfigurationOption object with localWorkerIp
-     */
-    StringConfigOption getLocalWorkerIp();
-
-    /**
-     * @brief set the value for localWorkerIp with the appropriate data format
-     */
-    void setLocalWorkerIp(std::string localWorkerIp);
-
-    /**
-     * @brief gets a ConfigurationOption object with coordinatorIp
-     */
-    StringConfigOption getCoordinatorIp();
-
-    /**
-     * @brief set the value for coordinatorIp with the appropriate data format
-     */
-    void setCoordinatorIp(std::string coordinatorIp);
-
-    /**
-     * @brief gets a ConfigurationOption object with coordinatorPort
-     */
-    IntConfigOption getCoordinatorPort();
-
-    /**
-     * @brief set the value for coordinatorPort with the appropriate data format
-     */
-    void setCoordinatorPort(uint16_t coordinatorPort);
-
-    /**
-     * @brief gets a ConfigurationOption object with rpcPort
-     */
-    IntConfigOption getRpcPort();
-
-    /**
-     * @brief set the value for rpcPort with the appropriate data format
-     */
-    void setRpcPort(uint16_t rpcPort);
-
-    /**
-     * @brief gets a ConfigurationOption object with dataPort
-     */
-    IntConfigOption getDataPort();
-
-    /**
-     * @brief set the value for dataPort with the appropriate data format
-     */
-    void setDataPort(uint16_t dataPort);
-
-    /**
-     * @brief gets a ConfigurationOption object with numberOfSlots
-     */
-    IntConfigOption getNumberOfSlots();
-
-    /**
-     * @brief set the value for numberOfSlots with the appropriate data format
-     */
-    void setNumberOfSlots(uint16_t numberOfSlots);
-
-    /**
-     * @brief gets a ConfigurationOption object with numWorkerThreads
-     */
-    IntConfigOption getNumWorkerThreads();
-
-    /**
-     * @brief set the value for numWorkerThreads with the appropriate data format
-     */
-    void setNumWorkerThreads(uint16_t numWorkerThreads);
-
-    /**
-    * @brief gets a ConfigurationOption object with buffer size in bytes
-    */
-    IntConfigOption getBufferSizeInBytes();
-
-    /**
-     * @brief set the value for buffer size in bytes with the appropriate data format
-     */
-    void setBufferSizeInBytes(uint64_t sizeInBytes);
-
-    /**
-     * @brief gets a ConfigurationOption object with number of numberOfBuffersInGlobalBufferManager
-     */
-    IntConfigOption getNumberOfBuffersInGlobalBufferManager();
-
-    /**
-    * @brief gets a ConfigurationOption object with number of numberOfBuffersPerWorker
-    */
-    IntConfigOption getNumberOfBuffersPerWorker();
-
-    /**
-    * @brief gets a ConfigurationOption object with number of numberOfBuffersInSourceLocalBufferPool
-    */
-    IntConfigOption getNumberOfBuffersInSourceLocalBufferPool();
-
-    /**
-     * @brief set the value for number of numberOfBuffersInGlobalBufferManager
-     */
-    void setNumberOfBuffersInGlobalBufferManager(uint64_t count);
-
-    /**
-     * @brief set the value for number of numberOfBuffersPerWorker
-     */
-    void setNumberOfBuffersPerWorker(uint64_t count);
-
-    /**
-     * @brief set the value for number of numberOfBuffersInSourceLocalBufferPool
-     */
-    void setNumberOfBuffersInSourceLocalBufferPool(uint64_t count);
-
-    /**
-     * @brief gets a ConfigurationOption object with parentId
-     */
-    IntConfigOption getParentId();
-
-    /**
-     * @brief set the value for parentId with the appropriate data format
-     */
-    void setParentId(uint32_t parentId);
-
-    /**
-     * @brief gets a ConfigurationOption object with logLevel
-     */
-    StringConfigOption getLogLevel();
-
-    /**
-     * @brief set the value for logLevel with the appropriate data format
-     */
-    void setLogLevel(std::string logLevel);
-
-    /**
-     * @brief gets the configuration for the query compiler execution mode
-     */
-    [[nodiscard]] const StringConfigOption getQueryCompilerCompilationStrategy() const;
-
-    /**
-     * @brief sets the configuration for the query compiler execution mode
-     * @param queryCompilerExecutionMode
-     */
-    void setQueryCompilerCompilationStrategy(std::string queryCompilerCompilationStrategy);
-
-    /**
-     * @brief gets the configuration for the query compiler execution mode
-     */
-    [[nodiscard]] const StringConfigOption getQueryCompilerPipeliningStrategy() const;
-
-    /**
-     * @brief sets the configuration for the query compiler execution mode
-     * @param queryCompilerPipeliningStrategy
-     */
-    void setQueryCompilerPipeliningStrategy(std::string queryCompilerPipeliningStrategy);
-
-    /**
-    * @brief gets the configuration for the query compiler buffer allocation strategy
-    */
-    [[nodiscard]] const StringConfigOption getQueryCompilerOutputBufferAllocationStrategy() const;
-
-    /**
-    * @brief sets the configuration for the query compiler buffer allocation strategy
-    * @param queryCompilerExecutionMode
-    */
-    void setQueryCompilerOutputBufferAllocationStrategy(std::string queryCompilerOutputBufferAllocationStrategy);
-
-    /**
-    * @brief getter/setter for sourcePinList
-    * @return
-    */
-    [[nodiscard]] const StringConfigOption& getSourcePinList() const;
-    void setSourcePinList(std::string list);
-
-    /**
-    * @brief getter/setter for workerPinList
-    * @return
-    */
-    [[nodiscard]] const StringConfigOption& getWorkerPinList() const;
-    void setWorkerPinList(std::string list);
-
-    /**
-    * @brief getter/setter for queuePinList
-    * @return
-    */
-    [[nodiscard]] const StringConfigOption& getQueuePinList() const;
-    void setQueuePinList(std::string list);
-
-    /**
-    * @brief getter/setter for numa awareness
-    * @return
-    */
-    [[nodiscard]] bool isNumaAware() const;
-    void setNumaAware(bool status);
-
-    /**
-    * @brief getter/setter to check if monitoring is enabled
-    * @return
-    */
-    BoolConfigOption getEnableMonitoring();
-    void setEnableMonitoring(bool enableMonitoring);
-
-    /**
-    * @brief getter/setter to obtain physicalSources
-    * @return
-    */
-    std::vector<PhysicalSourcePtr> getPhysicalSources();
-
-    /**
-     * @brief Set physical stream configurations
-     * @param physicalSources: vector of physical stream configurations
-     */
-    void setPhysicalSources(std::vector<PhysicalSourcePtr> physicalSources);
-
-    /**
-     * @brief add a physical stream configuration to the worker configuration
-     * @param physicalSource: physical source configuration to add
-     */
-    void addPhysicalSource(PhysicalSourcePtr physicalSource);
+    StringOption queryCompilerOutputBufferOptimizationLevel = {
+        QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG,
+        "ALL",
+        "Indicates the OutputBufferAllocationStrategy "
+        "[ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,"
+        "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"
+        "REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]. "};
+    StringOption sourcePinList = {SOURCE_PIN_LIST_CONFIG, "", "comma separated list of where to map the sources"};
+    StringOption workerPinList = {WORKER_PIN_LIST_CONFIG, "", "comma separated list of where to map the worker"};
+    StringOption queuePinList = {QUEUE_PIN_LIST_CONFIG, "", "comma separated list of where to map the worker on the queue"};
+    BoolOption numaAwareness = {NUMA_AWARENESS_CONFIG, false, "Enable Numa-Aware execution"};
+    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
+    SequenceOption<WrapOption<PhysicalSourcePtr, PhysicalSourceFactory>> physicalSources = {"physicalSources", "Physical sources"};
 
   private:
-    StringConfigOption localWorkerIp;
-    StringConfigOption coordinatorIp;
-    IntConfigOption coordinatorPort;
-    IntConfigOption rpcPort;
-    IntConfigOption dataPort;
-    IntConfigOption numberOfSlots;
-    IntConfigOption numWorkerThreads;
-    IntConfigOption numberOfBuffersInGlobalBufferManager;
-    IntConfigOption numberOfBuffersPerWorker;
-    IntConfigOption numberOfBuffersInSourceLocalBufferPool;
-    IntConfigOption bufferSizeInBytes;
-    IntConfigOption parentId;
-    StringConfigOption logLevel;
-    // indicates the compilation strategy of the query compiler [FAST|DEBUG|OPTIMIZE].
-    StringConfigOption queryCompilerCompilationStrategy;
-    // indicates the pipelining strategy for the query compiler [OPERATOR_FUSION, OPERATOR_AT_A_TIME].
-    StringConfigOption queryCompilerPipeliningStrategy;
-    // indicates, which output buffer allocation strategy should be used.
-    StringConfigOption queryCompilerOutputBufferOptimizationLevel;
-    // numa awareness
-    BoolConfigOption numaAwareness;
-    // enable monitoring
-    BoolConfigOption enableMonitoring;
-    StringConfigOption sourcePinList;
-    StringConfigOption workerPinList;
-    std::vector<PhysicalSourcePtr> physicalSources;
-    StringConfigOption queuePinList;
+    std::vector<Configurations::BaseOption*> getOptions() override {
+        return {&localWorkerIp,
+                &coordinatorIp,
+                &rpcPort,
+                &dataPort,
+                &coordinatorPort,
+                &numberOfSlots,
+                &numWorkerThreads,
+                &numberOfBuffersInGlobalBufferManager,
+                &numberOfBuffersPerWorker,
+                &numberOfBuffersInSourceLocalBufferPool,
+                &bufferSizeInBytes,
+                &parentId,
+                &logLevel,
+                &queryCompilerCompilationStrategy,
+                &queryCompilerPipeliningStrategy,
+                &queryCompilerOutputBufferOptimizationLevel,
+                &sourcePinList,
+                &workerPinList,
+                &queuePinList,
+                &numaAwareness,
+                &enableMonitoring};
+    }
 };
 }// namespace Configurations
+// namespace Configurations
 }// namespace NES
 
-#endif  // NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
+#endif// NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
