@@ -51,6 +51,9 @@ class SequenceOption : public BaseOption {
      */
     [[nodiscard]] size_t size() const;
 
+    [[nodiscard]] std::vector<T> getValues() const;
+    [[nodiscard]] bool empty() const;
+
   protected:
     void parseFromYAMLNode(Yaml::Node node) override;
     void parseFromString(const std::string& identifier, const std::string& value) override;
@@ -58,7 +61,6 @@ class SequenceOption : public BaseOption {
   private:
     std::vector<T> options;
 };
-
 
 template<class T>
 requires std::is_base_of_v<BaseOption, T> SequenceOption<T>::SequenceOption(const std::string& name,
@@ -96,6 +98,14 @@ requires std::is_base_of_v<BaseOption, T> T SequenceOption<T>::operator[](size_t
 template<class T>
 requires std::is_base_of_v<BaseOption, T> size_t SequenceOption<T>::size()
 const { return options.size(); }
+
+template<class T>
+requires std::is_base_of_v<BaseOption, T> std::vector<T> SequenceOption<T>::getValues()
+const { return options; }
+
+template<class T>
+requires std::is_base_of_v<BaseOption, T>
+bool SequenceOption<T>::empty() const { return options.empty(); }
 
 }// namespace NES::Configurations
 
