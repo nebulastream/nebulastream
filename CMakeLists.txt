@@ -26,6 +26,7 @@ cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies
 
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
+option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
 option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" ON)
 option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
@@ -102,29 +103,39 @@ if (NES_USE_ONE_QUEUE_PER_QUERY)
         message(STATUS "use CMAKE_USE_LATCH_FREE_BUFFER_MANAGER")
         set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
     endif ()
+
 endif ()
 
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    if(NOT NES_USE_ONE_QUEUE_PER_QUERY)
-    message(STATUS "use CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE=1")
-    if (CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
-        message(STATUS "use CMAKE_USE_LATCH_FREE_BUFFER_MANAGER")
-        set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
-    endif ()
+    if (NOT NES_USE_ONE_QUEUE_PER_QUERY)
+        message(STATUS "use CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
+        set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE=1")
+        if (CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
+            message(STATUS "use CMAKE_USE_LATCH_FREE_BUFFER_MANAGER")
+            set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
+        endif ()
     endif ()
 endif ()
 
 if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
-    if(NOT NES_USE_ONE_QUEUE_PER_QUERY)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_NUMA_NODE=1")
-    if (CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
-        set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
+    message(STATUS "ENABLE CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE")
+    if (NOT NES_USE_ONE_QUEUE_PER_QUERY)
+        set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_NUMA_NODE=1")
+        if (CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
+            set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
+        endif ()
     endif ()
+    if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
+        # Numa awareness
+        find_package(NUMA)
+        if (NUMA_FOUND)
+            set(LIBRARIES ${LIBRARIES} -lnuma)
+            message(STATUS "Using Numa")
+        endif ()
+        find_package(folly CONFIG REQUIRED)
+        set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
     endif ()
 endif ()
-
-
 
 # enables tracing of stack traces if operator / expression nodes are created
 if (CMAKE_NES_TRACE_NODE_CREATION)
@@ -252,13 +263,6 @@ if (UNIX AND NOT APPLE)
     set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
 endif ()
 
-# Numa awareness
-find_package(NUMA)
-if (NUMA_FOUND)
-    set(LIBRARIES ${LIBRARIES} -lnuma)
-    message(STATUS "Using Numa")
-endif ()
-
 # GRPC and protobuf
 set(gRPC_RELEASE "v1.28.1")
 # This assumes that gRPC and all its dependencies are already installed
@@ -289,8 +293,6 @@ else ()
     set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif ()
 set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
-
-
 
 
 # LibZMQ
@@ -342,11 +344,6 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
 endif ()
 
-if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
-    find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
-endif ()
-
 
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
@@ -384,7 +381,7 @@ endif (NES_USE_MQTT)
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
     enable_language(CUDA)
-    if(NOT ${CUDAToolkit_FOUND})
+    if (NOT ${CUDAToolkit_FOUND})
         message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
     endif ()
     set(CMAKE_CUDA_STANDARD 17)
@@ -512,7 +509,7 @@ endif ()
 ###########################################################################################
 
 
-if(iwyu_path)
+if (iwyu_path)
     set_property(TARGET nes PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
 endif ()
 
