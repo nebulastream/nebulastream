@@ -1,6 +1,4 @@
 /*
-    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -40,6 +38,10 @@ bool StaticDataSourceDescriptor::equal(SourceDescriptorPtr const& other) {
 }
 
 SchemaPtr StaticDataSourceDescriptor::getSchema() const { return schema; }
+
+SourceDescriptorPtr StaticDataSourceDescriptor::copy() {
+    return StaticDataSourceDescriptor::create(schema->copy(), pathTableFile);
+}
 
 std::string StaticDataSourceDescriptor::getPathTableFile() const { return pathTableFile; }
 }// namespace NES

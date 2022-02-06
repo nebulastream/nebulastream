@@ -24,4 +24,5 @@ add_source_nes(
         OPCSourceType.cpp
         SenseSourceType.cpp
         MaterializedViewSourceType.cpp
+        StaticDataSourceType.cpp
 )
