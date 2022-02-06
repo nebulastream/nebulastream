@@ -35,8 +35,7 @@ BufferManager::BufferManager(uint32_t bufferSize,
                              uint32_t withAlignment)
     :
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-      availableBuffers(numOfBuffers),
-      numOfAvailableBuffers(numOfBuffers),
+      availableBuffers(numOfBuffers), numOfAvailableBuffers(numOfBuffers),
 #endif
       bufferSize(bufferSize), numOfBuffers(numOfBuffers), memoryResource(memoryResource) {
     initialize(withAlignment);
@@ -58,8 +57,7 @@ void BufferManager::destroy() {
 #endif
         localBufferPools.clear();
         if (allBuffers.size() != numOfAvailableBuffers) {
-            NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers "
-                                                       << numOfAvailableBuffers);
+            NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << numOfAvailableBuffers);
             success = false;
         }
         for (auto& buffer : allBuffers) {
@@ -83,7 +81,9 @@ void BufferManager::destroy() {
 #endif
         for (auto& holder : unpooledBuffers) {
             if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0) {
-                NES_ASSERT2_FMT(false, "Deletion of unpooled buffer invoked on used memory segment size=" << holder.size);
+                NES_ASSERT2_FMT(false,
+                                "Deletion of unpooled buffer invoked on used memory segment size="
+                                    << holder.size << " refcnt=" << holder.segment->controlBlock->getReferenceCount());
             }
         }
         unpooledBuffers.clear();
@@ -97,7 +97,7 @@ BufferManager::~BufferManager() { destroy(); }
 uint32_t BufferManager::alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
     if (bufferSize % withAlignment) {
         // make sure that each buffer is a multiple of the alignment
-       return bufferSize + (withAlignment - bufferSize % withAlignment);
+        return bufferSize + (withAlignment - bufferSize % withAlignment);
     }
     return bufferSize;
 }
@@ -239,7 +239,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     // we could not find a buffer, allocate it
     // we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
-    auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSize+ sizeof(detail::BufferControlBlock)));
+    auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSize + sizeof(detail::BufferControlBlock)));
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }

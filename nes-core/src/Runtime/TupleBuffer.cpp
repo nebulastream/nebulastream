@@ -21,6 +21,7 @@ namespace NES::Runtime {
 TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent) {
     auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler) {
         recycler->recyclePooledBuffer(segment);
+        delete segment;
     };
     auto* memSegment = new detail::MemorySegment(ptr, length, parent, callback, true);
     return TupleBuffer(memSegment->controlBlock, ptr, length);
