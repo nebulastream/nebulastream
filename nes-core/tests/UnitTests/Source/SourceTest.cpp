@@ -232,7 +232,7 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
         return fakeBuffer;
     }
 
-    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) { delete buffer; }
+    void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) { delete buffer->getPointer(); }
 
   private:
     FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
@@ -479,11 +479,12 @@ class SourceTest : public Testing::NESBaseTest {
     }
 
     void TearDown() override {
-        Testing::NESBaseTest::TearDown();
+        free(singleMemoryArea);
         ASSERT_TRUE(nodeEngine->stop());
+        Testing::NESBaseTest::TearDown();
     }
 
-    std::optional<Runtime::TupleBuffer> GetEmptyBuffer() { return this->nodeEngine->getBufferManager()->getBufferNoBlocking(); }
+    std::optional<Runtime::TupleBuffer> GetEmptyBuffer() { return this->nodeEngine->getBufferManager()->getBufferBlocking(); }
 
     DataSourceProxyPtr createDataSourceProxy(const SchemaPtr& schema,
                                              Runtime::BufferManagerPtr bufferManager,
