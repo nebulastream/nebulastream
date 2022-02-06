@@ -105,6 +105,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   nullptr,
                                                                    Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
@@ -153,6 +154,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   nullptr,
                                                                    Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED,
                                                                    "");
@@ -201,6 +203,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   nullptr,
                                                                    Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
@@ -253,6 +256,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   nullptr,
                                                                    Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
@@ -306,6 +310,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   nullptr,
                                                                    Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
@@ -362,6 +367,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   nullptr,
                                                                    Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
@@ -423,6 +429,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   nullptr,
                                                                    Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();

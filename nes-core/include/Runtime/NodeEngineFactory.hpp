@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #define NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Components/NesWorker.hpp>
 #include <vector>
 
 namespace NES {
@@ -40,7 +41,7 @@ class NodeEngineFactory {
      * @param config
      * @return
      */
-    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<PhysicalSourcePtr> physicalSources);
+    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<PhysicalSourcePtr> physicalSources, NesWorkerPtr&& nesWorker = nullptr);
 
     /**
     * @brief this creates a new Runtime
@@ -59,6 +60,7 @@ class NodeEngineFactory {
                                           uint64_t numberOfBuffersInGlobalBufferManager,
                                           uint64_t numberOfBuffersInSourceLocalBufferPool,
                                           uint64_t numberOfBuffersPerWorker,
+                                          NesWorkerPtr&& nesWorker,
                                           const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                           NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
                                           const std::string& workerToCodeMapping = "",

@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
+#include <Components/NesWorker.hpp>
 
 namespace NES {
 
@@ -72,6 +73,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
+                        NesWorkerPtr&&,
                         NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
@@ -207,6 +209,18 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     uint64_t getNodeEngineId();
 
     /**
+    * @brief getter of nes worker
+    * @return NesWorker
+    */
+    std::weak_ptr<NesWorker> getNesWorker();
+
+    /**
+     * @brief getter of buffer manager
+     * @return bufferManager
+     */
+    QueryCompilation::QueryCompilerPtr getCompiler();
+
+    /**
      * @brief getter of network manager
      * @return network manager
      */
@@ -295,6 +309,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::atomic<bool> isRunning{};
     BufferStoragePtr bufferStorage;
+    std::weak_ptr<NesWorker> nesWorker;
     mutable std::recursive_mutex engineMutex;
     [[maybe_unused]] uint64_t nodeEngineId;
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;

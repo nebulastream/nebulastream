@@ -37,7 +37,7 @@ namespace NES::Runtime {
 
 NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname,
                                                          uint16_t port,
-                                                         std::vector<PhysicalSourcePtr> physicalSources) {
+                                                         std::vector<PhysicalSourcePtr> physicalSources, NesWorkerPtr&& nesWorker) {
     return createNodeEngine(hostname,
                             port,
                             std::move(physicalSources),
@@ -46,6 +46,7 @@ NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& host
                             1024,
                             128,
                             12,
+                            std::move(nesWorker),
                             Configurations::QueryCompilerConfiguration(),
                             NumaAwarenessFlag::DISABLED,
                             "");
@@ -59,6 +60,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
                                                   const uint64_t numberOfBuffersPerWorker,
+                                                  NesWorkerPtr&& nesWorker,
                                                   const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                                   NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& workerToCodeMapping,
@@ -183,6 +185,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             std::move(partitionManager),
             std::move(compiler),
             std::move(stateManager),
+            std::move(nesWorker),
             std::move(materializedViewManager),
             nodeEngineId,
             numberOfBuffersInGlobalBufferManager,

@@ -41,7 +41,7 @@ DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                bool append) {
     //TODO: this is not nice and should be fixed such that we only provide the paramter once
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format, nodeEngine->getQueryManager(), filePath, append, querySubPlanId);
+    return std::make_shared<FileSink>(format, nodeEngine->getQueryManager(), nodeEngine, filePath, append, querySubPlanId);
 }
 
 DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
@@ -50,7 +50,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               const std::string& filePath,
                               bool append) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format, nodeEngine->getQueryManager(), filePath, append, querySubPlanId);
+    return std::make_shared<FileSink>(format, nodeEngine->getQueryManager(), nodeEngine, filePath, append, querySubPlanId);
 }
 
 DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
@@ -59,7 +59,7 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     const std::string& filePath,
                                     bool append) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format, nodeEngine->getQueryManager(), filePath, append, querySubPlanId);
+    return std::make_shared<FileSink>(format, nodeEngine->getQueryManager(), nodeEngine, filePath, append, querySubPlanId);
 }
 
 DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
@@ -68,7 +68,7 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                const std::string& filePath,
                                bool append) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<FileSink>(format, nodeEngine->getQueryManager(), filePath, append, querySubPlanId);
+    return std::make_shared<FileSink>(format, nodeEngine->getQueryManager(), nodeEngine, filePath, append, querySubPlanId);
 }
 
 DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
@@ -77,7 +77,7 @@ DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                               const std::string& host,
                               uint16_t port) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<ZmqSink>(format, nodeEngine->getQueryManager(), host, port, false, querySubPlanId);
+    return std::make_shared<ZmqSink>(format, nodeEngine->getQueryManager(), nodeEngine, host, port, false, querySubPlanId);
 }
 
 DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
@@ -86,7 +86,7 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                              const std::string& host,
                              uint16_t port) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<ZmqSink>(format, nodeEngine->getQueryManager(), host, port, false, querySubPlanId);
+    return std::make_shared<ZmqSink>(format, nodeEngine->getQueryManager(), nodeEngine, host, port, false, querySubPlanId);
 }
 
 DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
@@ -96,7 +96,7 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 uint16_t port,
                                 bool internal) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<ZmqSink>(format, nodeEngine->getQueryManager(), host, port, internal, querySubPlanId);
+    return std::make_shared<ZmqSink>(format, nodeEngine->getQueryManager(), nodeEngine, host, port, internal, querySubPlanId);
 }
 
 DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
@@ -104,11 +104,11 @@ DataSinkPtr createTextPrintSink(const SchemaPtr& schema,
                                 const Runtime::NodeEnginePtr& nodeEngine,
                                 std::ostream& out) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<PrintSink>(format, nodeEngine->getQueryManager(), querySubPlanId, out);
+    return std::make_shared<PrintSink>(format, nodeEngine->getQueryManager(), nodeEngine, querySubPlanId, out);
 }
 
 DataSinkPtr createNullOutputSink(QuerySubPlanId querySubPlanId, const Runtime::NodeEnginePtr& nodeEngine) {
-    return std::make_shared<NullOutputSink>(nodeEngine->getQueryManager(), querySubPlanId);
+    return std::make_shared<NullOutputSink>(nodeEngine->getQueryManager(), nodeEngine, querySubPlanId);
 }
 
 DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
@@ -116,7 +116,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                std::ostream& out) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<PrintSink>(format, nodeEngine->getQueryManager(), querySubPlanId, out);
+    return std::make_shared<PrintSink>(format, nodeEngine->getQueryManager(), nodeEngine, querySubPlanId, out);
 }
 
 DataSinkPtr createNetworkSink(const SchemaPtr& schema,
@@ -136,6 +136,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   nesPartition,
                                                   nodeEngine->getBufferManager(),
                                                   nodeEngine->getQueryManager(),
+                                                  nodeEngine,
                                                   nodeEngine->getBufferStorage(),
                                                   numOfProducers,
                                                   waitTime,

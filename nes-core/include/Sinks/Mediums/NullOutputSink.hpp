@@ -34,7 +34,7 @@ class NullOutputSink : public SinkMedium {
      * @brief Default constructor
      * @Note the default output will be written to cout
      */
-    explicit NullOutputSink(Runtime::QueryManagerPtr queryManager, QuerySubPlanId querySubPlanId);
+    explicit NullOutputSink(Runtime::QueryManagerPtr queryManager, Runtime::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId);
 
     /**
      * @brief destructor
