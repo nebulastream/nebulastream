@@ -34,7 +34,7 @@ then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
     python3 /nebulastream/scripts/build/check_license.py /nebulastream || exit 1
-    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_TEST_PARALLELISM=$NesTestParallelism ..
     make -j4
     # Check if build was successful
     errorCode=$?
@@ -54,7 +54,7 @@ then
       # timeout after 70 minutes
       # We don't want to rely on the github-action timeout, because
       # this would fail the job in any case.
-      timeout 70m make test_debug -j$NesTestParallelism
+      timeout 70m make test_debug
       errorCode=$?
       if [ $errorCode -ne 0 ];
       then

@@ -36,7 +36,10 @@ option(ENABLE_CLANG_TIDY OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_USE_LLD "Use LLD" OFF)
-
+set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
+if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
+    set(NES_TEST_PARALLELISM "1")
+endif()
 
 if (NOT CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
     message(FATAL_ERROR "Disabling CMAKE_USE_LATCH_FREE_BUFFER_MANAGER is not supported for now, please enable it")
@@ -534,7 +537,8 @@ add_subdirectory(cmake/docs)
 
 
 # Custom test commands --------------------------------------------------------
-add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
+message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
+add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j${NES_TEST_PARALLELISM} --output-on-failure DEPENDS ${UNITTESTS})
 
 SET(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
