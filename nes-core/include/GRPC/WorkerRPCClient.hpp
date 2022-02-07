@@ -176,6 +176,14 @@ class WorkerRPCClient {
      */
     static bool checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
 
+    /**
+     * @brief method to propagate new epoch timestamp to source
+     * @param timestamp: max timestamp of current epoch
+     * @param adsress: address of the source
+     * @return bool indicating success
+     */
+    bool propagatePunctuation(uint64_t timestamp, const std::string& address);
+
   private:
 };
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
