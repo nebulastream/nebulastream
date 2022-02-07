@@ -42,7 +42,7 @@ class QueryCatalog {
      * @brief registers a new query into the NES Query catalog and add it to the scheduling queue for later execution.
      * @param queryString: a user query in string form
      * @param queryPlan: a user query plan to be executed
-     * @param placementStrategyName: the placement strategy (bottomUp or topDown)
+     * @param placementStrategyName: the placement strategy (e.g. bottomUp, topDown, etc)
      * @return query catalog entry or nullptr
      */
     QueryCatalogEntryPtr

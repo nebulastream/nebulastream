@@ -26,8 +26,8 @@ class PlacementStrategy {
     enum Value : uint8_t {
         TopDown = 0,
         BottomUp = 1,
-        IFCOP = 2,
-        ILP = 3
+//        IFCOP = 2, #2486
+//        ILP = 3 #2485
         // FIXME: enable them with issue #755
         // LowLatency,
         //  HighThroughput,

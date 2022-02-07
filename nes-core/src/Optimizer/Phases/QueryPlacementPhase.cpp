@@ -102,13 +102,12 @@ std::vector<OperatorNodePtr> QueryPlacementPhase::getUpStreamPinnedOperators(Sha
     } else {
         auto changeLogs = sharedQueryPlan->getChangeLog();
         for (auto& addition : changeLogs->getAddition()) {
-            //FIXME: We need logic to identify containment logic of new addition
             //Only consider selecting already placed and pinned upstream operator
             if (addition.first->hasProperty(PINNED_NODE_ID) && addition.first->hasProperty(PLACED)) {
                 upStreamPinnedOperators.emplace_back(addition.first);
             }
         }
-        //TODO: We need to figure out how to deal with removals
+        //TODO: #2496 We need to figure out how to deal with removals
     }
     return upStreamPinnedOperators;
 }

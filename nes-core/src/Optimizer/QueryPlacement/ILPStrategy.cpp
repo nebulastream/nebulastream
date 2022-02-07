@@ -64,7 +64,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
     // 1. Construct the placementVariable, compute distance, utilization and mileages
     for (const auto& sourceNode : sourceOperators) {
         std::string streamName = sourceNode->getSourceDescriptor()->getLogicalSourceName();
-        //Dwi: Can we extract this information from the operators?
+        //FIXME: #2485 Dwi: Can we extract this information from the operators?
         //TopologyNodePtr sourceToplogyNode = streamCatalog->getSourceNodesForLogicalStream(streamName)[0];
         //std::vector<NodePtr> operatorPath = findPathToRoot(sourceNode);
         //std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
@@ -203,7 +203,7 @@ std::map<std::string, double> ILPStrategy::computeDistanceHeuristic(QueryPlanPtr
         std::string streamName = sourceNode->getSourceDescriptor()->getLogicalSourceName();
         auto nodeId = std::any_cast<uint64_t>(sourceNode->getProperty(PINNED_NODE_ID));
         auto topologyNode = topology->findNodeWithId(nodeId);
-        //NOTE: Dwi: can we use the pinning information from the source operators?
+        //FIXME: #2485 Dwi: can we use the pinning information from the source operators?
         // for (const auto& sourceToplogyNode : streamCatalog->getSourceNodesForLogicalStream(streamName)) {
         //    computeDistanceRecursive(sourceToplogyNode, mileageMap);
         // }
