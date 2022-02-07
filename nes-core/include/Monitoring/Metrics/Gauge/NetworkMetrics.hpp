@@ -15,9 +15,9 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
 
-#include "NetworkValues.hpp"
-#include "Monitoring/MonitoringForwardRefs.hpp"
-#include "Runtime/RuntimeForwardRefs.hpp"
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Monitoring/Metrics/Gauge/NetworkValues.hpp>
 
 namespace NES {
 

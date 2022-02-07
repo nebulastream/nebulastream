@@ -19,9 +19,9 @@ limitations under the License.
 
 #include <memory>
 #include <unordered_map>
+#include <Monitoring/Metrics/MetricType.hpp>
 
 namespace NES {
-
     class MetricCollector;
     using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
     class MonitoringCatalog;
@@ -29,14 +29,14 @@ namespace NES {
 
     class MonitoringCatalog {
       public:
-        static MonitoringCatalogPtr create(const std::unordered_map<MetricCollectorType, MetricCollectorPtr>&);
+        static MonitoringCatalogPtr create(const std::unordered_map<MetricType, MetricCollectorPtr>&);
         static MonitoringCatalogPtr defaultCatalog();
 
-        MetricCollectorPtr getMetricCollector(MetricCollectorType metricCollectorType);
+        MetricCollectorPtr getMetricCollector(MetricType metricCollectorType);
 
       private:
-        explicit MonitoringCatalog(const std::unordered_map<MetricCollectorType, MetricCollectorPtr>&);
-        std::unordered_map<MetricCollectorType, MetricCollectorPtr> metricMap;
+        explicit MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>&);
+        std::unordered_map<MetricType, MetricCollectorPtr> metricMap;
     };
 
 }

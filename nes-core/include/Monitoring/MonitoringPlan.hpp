@@ -17,67 +17,55 @@ limitations under the License.
 #ifndef NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_MONITORING_PLAN_HPP_
 
+#include <Monitoring/Metrics/MetricType.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <memory>
 #include <set>
 #include <string>
-#include <Monitoring/Metri>
 
 namespace NES {
 
-    class MonitoringPlan;
-    using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
-    class Schema;
-    using SchemaPtr = std::shared_ptr<Schema>;
-
-    /**
+/**
 * @brief The MonitoringPlan is a config class to represent what metrics shall be collected and how.
 */
-    class MonitoringPlan {
-      public:
-        static MonitoringPlanPtr create(const std::set<MetricCollectorType>& metrics);
-        static MonitoringPlanPtr create(const SerializableMonitoringPlan& shippable);
-        static MonitoringPlanPtr createDefaultPlan();
+class MonitoringPlan {
+  public:
+    static MonitoringPlanPtr create(const std::set<MetricType>& metrics);
+    static MonitoringPlanPtr createDefaultPlan();
 
-        /**
- * @brief Add a specific metric to the plan
- * @param metric
- */
-        bool addMetric(MetricCollectorType metric);
+    /**
+     * @brief Add a specific metric to the plan
+     * @param metric
+    */
+    bool addMetric(MetricType metric);
 
-        /**
- * @brief Checks if a metric is part of the MonitoringPlan
- * @param metric
- * @return true if contained, else false
- */
-        [[nodiscard]] bool hasMetric(MetricCollectorType metric) const;
+    /**
+     * @brief Checks if a metric is part of the MonitoringPlan
+     * @param metric
+     * @return true if contained, else false
+    */
+    [[nodiscard]] bool hasMetric(MetricType metric) const;
 
-        /**
- * @brief Creates a serializable monitoring plan according to the Protobuf definition.
- * @return the serializable monitoring plan
- */
-        [[nodiscard]] SerializableMonitoringPlan serialize() const;
+    /**
+     * @brief Returns a string representation of the plan
+     * @return The string representation
+    */
+    [[nodiscard]] std::string toString() const;
 
-        /**
- * @brief Returns a string representation of the plan
- * @return The string representation
- */
-        [[nodiscard]] std::string toString() const;
+    /**
+     * @brief Returns the MetricColletorType objects that represent the plan.
+     * @return A set of MetricCollectorType objects.
+    */
+    [[nodiscard]] const std::set<MetricType>& getMetricTypes() const;
 
-        /**
- * @brief Returns the MetricColletorType objects that represent the plan.
- * @return A set of MetricCollectorType objects.
- */
-        [[nodiscard]] const std::set<MetricCollectorType>& getMetricTypes() const;
+    friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
 
-        friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
+  private:
+    explicit MonitoringPlan(const std::set<MetricType>& metrics);
 
-      private:
-        explicit MonitoringPlan(const std::set<MetricCollectorType>& metrics);
-        explicit MonitoringPlan(const SerializableMonitoringPlan& plan);
-
-        //enum defined in SerializableDataType.proto
-        std::set<MetricCollectorType> metricTypes;
-    };
+    //enum defined in SerializableDataType.proto
+    std::set<MetricType> metricTypes;
+};
 
 }// namespace NES
 

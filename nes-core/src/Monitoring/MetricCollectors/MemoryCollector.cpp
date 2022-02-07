@@ -1,20 +1,48 @@
 /*
-Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    https://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+    
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    
+        https://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_COLLECTORS_MEMORYCOLLECTOR_HPP_
-#define NES_INCLUDE_MONITORING_COLLECTORS_MEMORYCOLLECTOR_HPP_
+#include <API/Schema.hpp>
+#include <Monitoring/MetricCollectors/MemoryCollector.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 
-#endif//NES_INCLUDE_MONITORING_COLLECTORS_MEMORYCOLLECTOR_HPP_
+#include <Util/Logger.hpp>
+
+namespace NES {
+    MemoryCollector::MemoryCollector()
+        : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+          schema(MemoryMetrics::getSchema("")) {
+        NES_INFO("MemoryCollector: Init MemoryCollector with schema " << schema->toString());
+    }
+
+    bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
+        try {
+            MemoryMetrics measuredVal = resourceReader->readMemoryStats();
+            writeToBuffer(measuredVal, tupleBuffer, 0);
+        } catch (const std::exception& ex) {
+            NES_ERROR("MemoryCollector: Error while collecting metrics " << ex.what());
+            return false;
+        }
+        return true;
+    }
+
+    SchemaPtr MemoryCollector::getSchema() { return schema; }
+
+    MetricPtr MemoryCollector::readMetric() { return std::make_shared<Metric>(resourceReader->readMemoryStats()); }
+
+}// namespace NES

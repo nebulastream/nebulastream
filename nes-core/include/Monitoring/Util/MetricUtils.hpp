@@ -33,6 +33,11 @@ class MetricUtils {
      */
     static bool validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t schemaIndex);
 
+    /**
+     * Converts a vector of metrics into json.
+     * @param metrics
+     * @return json of metrics
+     */
     static web::json::value toJson(std::vector<MetricPtr> metrics);
 };
 

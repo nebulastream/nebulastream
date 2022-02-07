@@ -17,10 +17,40 @@ limitations under the License.
 #ifndef NES_INCLUDE_MONITORING_COLLECTORS_NETWORKCOLLECTOR_HPP_
 #define NES_INCLUDE_MONITORING_COLLECTORS_NETWORKCOLLECTOR_HPP_
 
+#include <Monitoring/MetricCollectors/MetricCollector.hpp>
+#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
+
 namespace NES {
 
+class NetworkCollector : public MetricCollector {
+  public:
+    explicit NetworkCollector();
 
+    /**
+     * @brief Fill a buffer with a given metric.
+     * @param tupleBuffer The tuple buffer
+     * @return True if successful, else false
+     */
+    bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
 
-}
+    /**
+     * @brief Return the schema representing the metrics gathered by the collector.
+     * @return The schema
+     */
+    SchemaPtr getSchema() override;
 
+    /**
+     * @brief Read the Network metrics based on the underlying utility systems reader and return the metrics.
+     * @return The metrics object
+     */
+    MetricPtr readMetric() override;
+
+  private:
+    AbstractSystemResourcesReaderPtr resourceReader;
+    SchemaPtr schema;
+};
+
+using NetworkCollectorPtr = std::shared_ptr<NetworkCollector>;
+
+}// namespace NES
 #endif//NES_INCLUDE_MONITORING_COLLECTORS_NETWORKCOLLECTOR_HPP_

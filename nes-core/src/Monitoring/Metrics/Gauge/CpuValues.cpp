@@ -30,6 +30,7 @@ namespace NES {
 
 SchemaPtr CpuValues::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create()
+                           ->addField(prefix + "core_num", BasicType::UINT64)
                            ->addField(prefix + "user", BasicType::UINT64)
                            ->addField(prefix + "nice", BasicType::UINT64)
                            ->addField(prefix + "system", BasicType::UINT64)
@@ -45,42 +46,44 @@ SchemaPtr CpuValues::getSchema(const std::string& prefix) {
 
 CpuValues CpuValues::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     CpuValues output{};
-    auto i = schema->getIndex(prefix + "user");
+    auto schema_idx = schema->getIndex(prefix + "core_num");
 
     if (buf.getNumberOfTuples() > 1) {
         NES_THROW_RUNTIME_ERROR("CpuValues: Tuple size should be 1, but is larger " + std::to_string(buf.getNumberOfTuples()));
     }
 
-    if (!MetricUtils::validateFieldsInSchema(CpuValues::getSchema(""), schema, i)) {
+    if (!MetricUtils::validateFieldsInSchema(CpuValues::getSchema(""), schema, schema_idx)) {
         NES_THROW_RUNTIME_ERROR("CpuValues: Incomplete number of fields in schema.");
     }
 
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
-    output.user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 0, layout, buf)[0];
-    output.nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 1, layout, buf)[0];
-    output.system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 2, layout, buf)[0];
-    output.idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 3, layout, buf)[0];
-    output.iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 4, layout, buf)[0];
-    output.irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 5, layout, buf)[0];
-    output.softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 6, layout, buf)[0];
-    output.steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 7, layout, buf)[0];
-    output.guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 8, layout, buf)[0];
-    output.guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i + 9, layout, buf)[0];
+    int cnt = 0;
+    output.core_num = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
 
     return output;
 }
 
 std::ostream& operator<<(std::ostream& os, const CpuValues& values) {
-    os << "user: " << values.user << " nice: " << values.nice << " system: " << values.system << " idle: " << values.idle
-       << " iowait: " << values.iowait << " irq: " << values.irq << " softirq: " << values.softirq << " steal: " << values.steal
-       << " guest: " << values.guest << " guestnice: " << values.guestnice;
+    os << "core_num: " << values.core_num << "user: " << values.user << " nice: " << values.nice << " system: " << values.system
+       << " idle: " << values.idle << " iowait: " << values.iowait << " irq: " << values.irq << " softirq: " << values.softirq
+       << " steal: " << values.steal << " guest: " << values.guest << " guestnice: " << values.guestnice;
     return os;
 }
 
 web::json::value CpuValues::toJson() const {
     web::json::value metricsJson{};
-
+    metricsJson["CORE_NUM"] = web::json::value::number(core_num);
     metricsJson["USER"] = web::json::value::number(user);
     metricsJson["NICE"] = web::json::value::number(nice);
     metricsJson["SYSTEM"] = web::json::value::number(system);
@@ -104,9 +107,11 @@ void writeToBuffer(const CpuValues& metrics, Runtime::TupleBuffer& buf, uint64_t
 }
 
 bool CpuValues::operator==(const CpuValues& rhs) const {
-    return user == rhs.user && nice == rhs.nice && system == rhs.system && idle == rhs.idle && iowait == rhs.iowait
-        && irq == rhs.irq && softirq == rhs.softirq && steal == rhs.steal && guest == rhs.guest && guestnice == rhs.guestnice;
+    return core_num == rhs.core_num && user == rhs.user && nice == rhs.nice && system == rhs.system && idle == rhs.idle
+        && iowait == rhs.iowait && irq == rhs.irq && softirq == rhs.softirq && steal == rhs.steal && guest == rhs.guest
+        && guestnice == rhs.guestnice;
 }
+
 bool CpuValues::operator!=(const CpuValues& rhs) const { return !(rhs == *this); }
 
 }// namespace NES

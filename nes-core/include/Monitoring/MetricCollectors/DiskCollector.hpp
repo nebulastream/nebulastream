@@ -22,33 +22,35 @@ limitations under the License.
 
 namespace NES {
 
-    class DiskCollector : public MetricCollector {
-      public:
-        explicit DiskCollector();
+class DiskCollector : public MetricCollector {
+  public:
+    explicit DiskCollector();
 
-        /**
+    /**
      * @brief Fill a buffer with a given metric.
      * @param tupleBuffer The tuple buffer
      * @return True if successful, else false
      */
-        bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
+    bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) override;
 
-        /**
+    /**
      * @brief Return the schema representing the metrics gathered by the collector.
      * @return The schema
      */
-        SchemaPtr getSchema() override;
+    SchemaPtr getSchema() override;
 
-        /**
+    /**
      * @brief Read the disk metrics based on the underlying utility systems reader and return the metrics.
      * @return The metrics object
      */
-        MetricPtr readMetric() override;
+    MetricPtr readMetric() override;
 
-      private:
-        LinuxReaderPtr resourceReader;
-        SchemaPtr schema;
-    };
+  private:
+    AbstractSystemResourcesReaderPtr resourceReader;
+    SchemaPtr schema;
+};
+
+using DiskCollectorPtr = std::shared_ptr<DiskCollector>;
 
 }// namespace NES
 

@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
 
-#include "Monitoring/MonitoringForwardRefs.hpp"
-#include "Runtime/RuntimeForwardRefs.hpp"
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES {
 
@@ -47,7 +47,7 @@ class MemoryMetrics {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    web::json::value toJson() const;
+    [[nodiscard]] web::json::value toJson() const;
 
     //equality operators
     bool operator==(const MemoryMetrics& rhs) const;

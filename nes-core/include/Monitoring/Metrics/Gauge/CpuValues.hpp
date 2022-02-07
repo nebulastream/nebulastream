@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
-#include "Monitoring/MonitoringForwardRefs.hpp"
-#include "Runtime/RuntimeForwardRefs.hpp"
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <string>
 
 namespace NES {
@@ -61,6 +61,7 @@ class CpuValues {
     bool operator==(const CpuValues& rhs) const;
     bool operator!=(const CpuValues& rhs) const;
 
+    uint64_t core_num;
     uint64_t user;
     uint64_t nice;
     uint64_t system;

@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_STATICNESMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_STATICNESMETRICS_HPP_
 
-#include "Monitoring/MonitoringForwardRefs.hpp"
-#include "Runtime/RuntimeForwardRefs.hpp"
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES {
 
@@ -64,13 +64,13 @@ class StaticNesMetrics {
      * @brief Returns the metric as protobuf class
      * @return the SerializableStaticNesMetrics from Protobuf
      */
-    SerializableStaticNesMetricsPtr toProtobufSerializable() const;
+    [[nodiscard]] SerializableStaticNesMetricsPtr toProtobufSerializable() const;
 
     /**
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    web::json::value toJson() const;
+    [[nodiscard]] web::json::value toJson() const;
 
     bool operator==(const StaticNesMetrics& rhs) const;
     bool operator!=(const StaticNesMetrics& rhs) const;

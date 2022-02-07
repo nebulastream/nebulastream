@@ -26,28 +26,14 @@ namespace NES {
  */
 class CpuMetrics {
   public:
-    explicit CpuMetrics() = default;
-
-    explicit CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues>&& arr);
+    explicit CpuMetrics(std::vector<CpuValues>&& arr);
 
     /**
      * @brief Returns the cpu metrics for a given core
      * @param cpuCore core number
      * @return the cpu metrics
-     */
+    */
     [[nodiscard]] CpuValues getValues(unsigned int cpuCore) const;
-
-    /**
-     * @brief Returns the total cpu metrics summed up across all cores
-     * @return The cpu values for all cores
-     */
-    [[nodiscard]] CpuValues getTotal() const;
-
-    /**
-     * @brief Returns the number of cores of the node
-     * @return core numbers
-     */
-    [[nodiscard]] uint16_t getNumCores() const;
 
     /**
      * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
@@ -55,21 +41,19 @@ class CpuMetrics {
      * @param buf
      * @param prefix
      * @return The object
-     */
+    */
     static CpuMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json
      * @return Json containing the metrics
-     */
+    */
     web::json::value toJson();
 
     bool operator==(const CpuMetrics& rhs) const;
     bool operator!=(const CpuMetrics& rhs) const;
 
   private:
-    CpuValues total;
-    uint16_t numCores = 0;
     std::vector<CpuValues> cpuValues;
 } __attribute__((packed));
 
@@ -80,7 +64,7 @@ class CpuMetrics {
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
- */
+*/
 void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
@@ -88,9 +72,9 @@ void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_
  * @param metric
  * @param prefix
  * @return the SchemaPtr
- */
+*/
 SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix);
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_

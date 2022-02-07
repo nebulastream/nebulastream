@@ -205,7 +205,7 @@ StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
 CpuMetrics LinuxSystemResourcesReader::readCpuStats() {
     std::string metricLocation = "/proc/stat";
     CpuValues totalCpu{};
-    unsigned int numCPU = std::thread::hardware_concurrency();
+    unsigned int numCPU = std::thread::hardware_concurrency() + 1;
     auto cpu = std::vector<CpuValues>(numCPU);
 
     if (access(metricLocation.c_str(), F_OK) == -1) {
@@ -234,6 +234,7 @@ CpuMetrics LinuxSystemResourcesReader::readCpuStats() {
                 name[len] = '\0';
 
                 auto cpuStats = CpuValues();
+                cpuStats.core_num = i;
                 cpuStats.user = std::stoul(tokens[1]);
                 cpuStats.nice = std::stoul(tokens[2]);
                 cpuStats.system = std::stoul(tokens[3]);
@@ -244,11 +245,8 @@ CpuMetrics LinuxSystemResourcesReader::readCpuStats() {
                 cpuStats.steal = std::stoul(tokens[8]);
                 cpuStats.guest = std::stoul(tokens[9]);
                 cpuStats.guestnice = std::stoul(tokens[10]);
-                if (i == 0) {
-                    totalCpu = cpuStats;
-                } else {
-                    cpu[i - 1] = cpuStats;
-                }
+
+                cpu[i] = cpuStats;
                 i++;
             }
         }
