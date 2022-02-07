@@ -117,7 +117,7 @@ bool ThreadPool::start() {
         threads.emplace_back([this, i, barrier]() {
           setThreadName("Wrk-%d-%d", nodeId, i);
           BufferManagerPtr localBufferManager;
-#if defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
+//#if defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
           uint64_t queueIdx = 0;
           if (workerPinningPositionList.size() != 0) {
               NES_ASSERT(numThreads <= workerPinningPositionList.size(),
@@ -140,7 +140,7 @@ bool ThreadPool::start() {
               NES_THROW_RUNTIME_ERROR(
                   "NES_USE_ONE_QUEUE_PER_NUMA_NODE or NES_USE_ONE_QUEUE_PER_QUERY require a mapping list");
           }
-#endif
+//#endif
 
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
           NES_ASSERT(false, "I don't think this works anymore");
@@ -161,7 +161,6 @@ bool ThreadPool::start() {
               std::cout << "worker " << i << " pins to queue 0 as no  queuePinList is provided " << std::endl;
               queueIdx = 0;
           } else {
-              NES_ASSERT(queuePinListMapping.size() == numThreads, "We need as many threads as queues");
               NES_ASSERT(queuePinListMapping.size() == numThreads, "We need as many threads as queues");
               NES_WARNING("worker " << i << " pins to queue=" << queuePinListMapping[i]);
               std::cout << "worker " << i << " pins to queue=" << queuePinListMapping[i] << std::endl;
