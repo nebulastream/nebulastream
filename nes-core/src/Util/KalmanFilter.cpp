@@ -191,9 +191,11 @@ std::chrono::milliseconds KalmanFilter::getExponentialFrequency() {
      */
     if (errorDiff > 0.6) {
         return this->getExponentialDecayFrequency();
-    }
-    if (std::abs(errorDiff) <= 0.16) {
+    } else if (std::abs(errorDiff) <= 0.16) {
         return this->getExponentialGrowthFrequency();
+    } else {
+        this->increaseCounter = 1;
+        this->decreaseCounter = 1;
     }
     return this->frequency;
 }
@@ -206,8 +208,8 @@ std::chrono::milliseconds KalmanFilter::getExponentialDecayFrequency() {
     std::cout << "Alteration: decay" << std::endl;
     auto newFreqCandidate = this->frequency.count() * (1 - std::pow(eulerConstant, this->decreaseCounter));
     ++this->decreaseCounter;
-    this->increaseCounter = 0;
-    this->frequency = std::chrono::milliseconds((int) trunc(newFreqCandidate));
+    this->increaseCounter = 1;
+    this->frequency = std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
     return this->frequency;
 }
 
@@ -215,7 +217,7 @@ std::chrono::milliseconds KalmanFilter::getExponentialGrowthFrequency() {
     std::cout << "Alteration: growth" << std::endl;
     auto newFreqCandidate = this->frequency.count() * (1 + std::pow(eulerConstant, this->increaseCounter));
     ++this->increaseCounter;
-    this->decreaseCounter = 0;
+    this->decreaseCounter = 1;
     this->frequency = std::chrono::milliseconds((int) trunc(newFreqCandidate));
     return this->frequency;
 }
