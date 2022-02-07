@@ -115,7 +115,7 @@ bool DataSource::start() {
     // only CPU i as set.
 #ifdef __linux__
         if (sourceAffinity  != std::numeric_limits<uint64_t>::max()) {
-            NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(), "pinning position is out of cpu range maxPosition=" << maxPosition);
+            NES_ASSERT(sourceAffinity < std::thread::hardware_concurrency(), "pinning position is out of cpu range maxPosition=" << sourceAffinity);
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
             CPU_SET(sourceAffinity, &cpuset);
