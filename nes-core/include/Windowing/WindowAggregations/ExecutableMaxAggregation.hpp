@@ -46,7 +46,7 @@ class ExecutableMaxAggregation : public ExecutableWindowAggregation<InputType, I
      * @param the new input element
      * @return new partial aggregate as combination of partialValue and inputValue
      */
-    InputType combine(InputType partialValue, InputType inputValue) override {
+    InputType combine(InputType& partialValue, InputType& inputValue) override {
         if (inputValue > partialValue) {
             partialValue = inputValue;
         }
@@ -58,7 +58,7 @@ class ExecutableMaxAggregation : public ExecutableWindowAggregation<InputType, I
      * @param partial aggregate element
      * @return element mapped to FinalAggregationType
      */
-    InputType lower(InputType partialAggregateValue) override { return partialAggregateValue; }
+    InputType lower(InputType& partialAggregateValue) override { return partialAggregateValue; }
 };
 
 }// namespace NES::Windowing

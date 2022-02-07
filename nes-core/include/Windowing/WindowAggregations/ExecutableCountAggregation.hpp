@@ -46,14 +46,14 @@ class ExecutableCountAggregation : public ExecutableWindowAggregation<InputType,
      * @param the new input element
      * @return new partial aggregate as combination of partialValue and inputValue
      */
-    CountType combine(CountType partialValue, CountType inputValue) override { return partialValue + inputValue; }
+    CountType combine(CountType& partialValue, CountType& inputValue) override { return partialValue + inputValue; }
 
     /*
      * @brief maps partial aggregates to an element of FinalAggregationType
      * @param partial aggregate element
      * @return element mapped to FinalAggregationType
      */
-    CountType lower(CountType partialAggregateValue) override { return partialAggregateValue; }
+    CountType lower(CountType& partialAggregateValue) override { return partialAggregateValue; }
 };
 
 }// namespace NES::Windowing

@@ -22,6 +22,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -101,186 +102,6 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 
     std::vector<TupleBuffer> buffers;
 };
-/*
-TEST_F(WindowManagerTest, sliceStoreTest) {
-    auto sliceStore = Experimental::SliceStore<robin_hood::unordered_map<uint64_t, uint64_t>>(1);
-    for (uint64_t i = 0; i < 99; ++i) {
-        auto& slice = sliceStore.findSliceByTs(i);
-        ASSERT_EQ(slice->start, i);
-    }
-    sliceStore.eraseFirst(20);
-    for (uint64_t i = 0; i < 20; ++i) {
-        auto& slice = sliceStore.findSliceByTs(99 + i);
-        ASSERT_EQ(slice->start, 99 + i);
-    }
-    for (uint64_t i = 0; i < 20; ++i) {
-        auto& slice = sliceStore.findSliceByTs(99 + i);
-        ASSERT_EQ(slice->start, 99 + i);
-    }
-}
-
-TEST_F(WindowManagerTest, sliceStoreTest3) {
-    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
-    auto sliceStore = Experimental::MapedSliceStore<uint64_t, uint64_t, 100>(bufferManager, 1);
-    for (uint64_t i = 0; i < 99; ++i) {
-        auto& slice = sliceStore.findSliceByTs(i);
-        ASSERT_EQ(slice->start, i);
-    }
-
-    for (uint64_t i = 0; i < 20; ++i) {
-        sliceStore.dropFirstSlice();
-        auto& slice = sliceStore.findSliceByTs(99 + i);
-        ASSERT_EQ(slice->start, 99 + i);
-    }
-    for (uint64_t i = 0; i < 20; ++i) {
-        auto& slice = sliceStore.findSliceByTs(99 + i);
-        ASSERT_EQ(slice->start, 99 + i);
-        ASSERT_EQ(slice->sliceIndex, 99 + i);
-    }
-
-    for (uint64_t i = 0; i < 90; ++i) {
-        sliceStore.dropFirstSlice();
-    }
-
-    // check if the get inserted the correct amount of slices if necessary.
-    sliceStore[200];
-    for (uint64_t i = 0; i < 99; ++i) {
-        auto& slice = sliceStore.findSliceByTs(110 + i);
-        ASSERT_EQ(slice->start, 110 + i);
-        ASSERT_EQ(slice->sliceIndex, 110 + i);
-    }
-}
-
-TEST_F(WindowManagerTest, sliceStoreTest2) {
-    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
-    auto sliceStore = Experimental::PartitionedSliceStore<uint64_t, uint64_t, 100>(bufferManager, 1);
-    for (uint64_t i = 0; i < 99; ++i) {
-        auto& slice = sliceStore.findSliceByTs(i);
-        ASSERT_EQ(slice->start, i);
-    }
-    ASSERT_ANY_THROW(sliceStore.findSliceByTs(100));
-
-    for (uint64_t i = 0; i < 20; ++i) {
-        sliceStore.dropFirstSlice();
-        auto& slice = sliceStore.findSliceByTs(99 + i);
-        ASSERT_EQ(slice->start, 99 + i);
-    }
-    for (uint64_t i = 0; i < 20; ++i) {
-        auto& slice = sliceStore.findSliceByTs(99 + i);
-        ASSERT_EQ(slice->start, 99 + i);
-        ASSERT_EQ(slice->sliceIndex, 99 + i);
-    }
-
-    for (uint64_t i = 0; i < 90; ++i) {
-        sliceStore.dropFirstSlice();
-    }
-
-    // check if the get inserted the correct amount of slices if necessary.
-    sliceStore[200];
-    for (uint64_t i = 0; i < 99; ++i) {
-        auto& slice = sliceStore.findSliceByTs(110 + i);
-        ASSERT_EQ(slice->start, 110 + i);
-        ASSERT_EQ(slice->sliceIndex, 110 + i);
-    }
-}
-
-TEST_F(WindowManagerTest, cleanSliceStoreTest) {
-    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
-    auto sliceStore = Experimental::PartitionedSliceStore<uint64_t, uint64_t, 100>(bufferManager, 1);
-    for (uint64_t i = 0; i < 99; ++i) {
-        auto& slice = sliceStore.findSliceByTs(i);
-        ASSERT_EQ(slice->start, i);
-    }
-
-    for (uint64_t i = 0; i < 99; ++i) {
-        sliceStore.dropFirstSlice();
-    }
-
-    for (uint64_t i = 0; i < 20; ++i) {
-        auto& slice = sliceStore.findSliceByTs(99 + i);
-        ASSERT_EQ(slice->start, 99 + i);
-    }
-}
-
-TEST_F(WindowManagerTest, PartitionedHashMap) {
-    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
-    auto partitionedHashMap = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
-    for (uint64_t i = 0; i < 1000; ++i) {
-        auto* entry = partitionedHashMap.getEntry(i);
-       // entry->value = 42;
-    }
-
-    for (uint64_t i = 0; i < 1000; ++i) {
-        auto* entry = partitionedHashMap.getEntry(i);
-       // ASSERT_EQ(entry->value, 42ULL);
-    }
-
-    partitionedHashMap.clear();
-
-    for (uint64_t i = 0; i < 1000; ++i) {
-        //auto* entry = partitionedHashMap.getEntry(i);
-        //entry->value = 5;
-    }
-
-    for (uint64_t i = 0; i < 1000; ++i) {
-        //auto* entry = partitionedHashMap.getEntry(i);
-      //  ASSERT_EQ(entry->value, 5ULL);
-    }
-}
-
-TEST_F(WindowManagerTest, MergePartitionedHashMap) {
-
-    auto  stage = Experimental::PreAggregateSliceStaging<uint64_t, uint64_t>();
-
-
-    Runtime::BufferManagerPtr bufferManager = std::make_shared<Runtime::BufferManager>();
-    auto partitionedHashMapT1 = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
-    auto partitionedHashMapT2 = Experimental::PartitionedHashMap<uint64_t, uint64_t>(bufferManager);
-    for (uint64_t i = 0; i < 1000; ++i) {
-        //auto* entry = partitionedHashMapT1.getEntry(i);
-       // entry->value = 42;
-       // auto* entry2 = partitionedHashMapT2.getEntry(i);
-       // entry2->value = 42;
-    }
-
-    auto globalSliceStore = Experimental::GlobalAggregateStore<uint64_t, uint64_t>(bufferManager);
-
-    // merges partitions
-    for (uint64_t i = 0; i < 2; i++) {
-
-       // auto& partition = globalSliceStore.erasePartition(i);
-       // auto& slice = partition->getSlice(0);
-        auto& partition1 = partitionedHashMapT1.getPartition(i);
-        stage.addPartition(0, std::move(partition1));
-       //slice->addPartition(std::move(partition1));
-
-        auto& partition2 = partitionedHashMapT2.getPartition(i);
-        auto result = stage.addPartition(0, std::move(partition2));
-       // auto result = slice->addPartition(std::move(partition2));
-        if (result == 2) {
-            // merge thread local state
-            auto partitions = stage.erasePartition(0);
-            std::cout <<  partitions->size() <<  std::endl;
-          auto& globalAggregate = slice->getGlobalState();
-            for(auto& partition: slice->getPartitions()){
-                for(uint64_t index = 0; index < partition->size(); index++){
-                    auto* partitionEntry = (*partition)[index];
-                    auto* globalEntry = globalAggregate.getEntry(partitionEntry->key);
-                    globalEntry->value = globalEntry->value + partitionEntry->value;
-                }
-            }
-            auto& globalPartition = globalAggregate.erasePartition(0);
-            for(uint64_t index = 0; index < globalPartition->size(); index++){
-                auto* partitionEntry = (*globalPartition)[index];
-                std::cout <<  partitionEntry->key << " - " << partitionEntry->value  << std::endl;
-            }
-
-
-        }
-
-    }
-}
-
 
 TEST_F(WindowManagerTest, testSumAggregation) {
     auto aggregation = ExecutableSumAggregation<int64_t>::create();
@@ -290,7 +111,6 @@ TEST_F(WindowManagerTest, testSumAggregation) {
     auto result = aggregation->lower(combined);
     ASSERT_EQ(result, 3);
 }
-
 
 TEST_F(WindowManagerTest, testMaxAggregation) {
     auto aggregation = ExecutableMaxAggregation<int64_t>::create();
@@ -359,7 +179,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation,
+    auto windowDef = Windowing::LogicalWindowDefinition::create({aggregation},
                                                                 TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)),
                                                                 DistributionCharacteristic::createCompleteWindowType(),
                                                                 1,
@@ -412,8 +232,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef =
-        Windowing::LogicalWindowDefinition::create(Attribute("key", UINT64),
-                                                   aggregation,
+        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+                                                   {aggregation},
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createCompleteWindowType(),
                                                    1,
@@ -503,8 +323,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef =
-        Windowing::LogicalWindowDefinition::create(Attribute("key"),
-                                                   aggregation,
+        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+                                                   {aggregation},
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createCompleteWindowType(),
                                                    1,
@@ -596,8 +416,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef =
-        Windowing::LogicalWindowDefinition::create(Attribute("key", UINT64),
-                                                   aggregation,
+        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+                                                   {aggregation},
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createCompleteWindowType(),
                                                    1,
@@ -679,8 +499,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef =
-        Windowing::LogicalWindowDefinition::create(Attribute("key", INT64),
-                                                   aggregation,
+        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+                                                   {aggregation},
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createSlicingWindowType(),
                                                    1,
@@ -758,8 +578,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowDef = LogicalWindowDefinition::create(Attribute("key", INT64),
-                                                     aggregation,
+    auto windowDef = LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+                                                     {aggregation},
                                                      TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                      DistributionCharacteristic::createCombiningWindowType(),
                                                      1,
@@ -845,8 +665,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
     auto windowDef =
-        Windowing::LogicalWindowDefinition::create(Attribute("key", UINT64),
-                                                   aggregation,
+        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+                                                   {aggregation},
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createCompleteWindowType(),
                                                    1,
@@ -930,8 +750,8 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     auto windowInputSchema = Schema::create();
 
     auto windowDef =
-        Windowing::LogicalWindowDefinition::create(Attribute("key", INT64),
-                                                   aggregation,
+        Windowing::LogicalWindowDefinition::create({Attribute("key", UINT64).getExpressionNode()->as<FieldAccessExpressionNode>()},
+                                                   {aggregation},
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createSlicingWindowType(),
                                                    1,
@@ -1003,6 +823,5 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     ASSERT_EQ(store->getSliceMetadata().size(), 2U);
     ASSERT_EQ(store->getPartialAggregates().size(), 2U);
 }
- */
 
 }// namespace NES

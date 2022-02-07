@@ -52,14 +52,14 @@ class ExecutableWindowAggregation {
     * @param the new input element
     * @return new partial aggregate as combination of partialValue and inputValue
     */
-    virtual PartialAggregateType combine(PartialAggregateType partialAggregate1, PartialAggregateType partialAggregate2) = 0;
+    virtual PartialAggregateType combine(PartialAggregateType& partialAggregate1, PartialAggregateType& partialAggregate2) = 0;
 
     /*
     * @brief maps partial aggregates to an element of FinalAggregationType
     * @param partial aggregate element
     * @return element mapped to FinalAggregationType
     */
-    virtual FinalAggregateType lower(PartialAggregateType partialAggregate) = 0;
+    virtual FinalAggregateType lower(PartialAggregateType& partialAggregate) = 0;
 };
 
 }// namespace NES::Windowing

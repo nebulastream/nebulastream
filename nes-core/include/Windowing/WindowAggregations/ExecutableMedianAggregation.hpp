@@ -51,7 +51,7 @@ class ExecutableMedianAggregation : public ExecutableWindowAggregation<InputType
      * @param the new input element
      * @return new partial aggregate as combination of partialValue and inputValue
      */
-    std::vector<InputType> combine(std::vector<InputType> partialValue, std::vector<InputType> inputValue) override {
+    std::vector<InputType> combine(std::vector<InputType>& partialValue, std::vector<InputType>& inputValue) override {
         partialValue.insert(partialValue.end(), inputValue.begin(), inputValue.end());
         return partialValue;
     }
@@ -61,7 +61,7 @@ class ExecutableMedianAggregation : public ExecutableWindowAggregation<InputType
      * @param partial aggregate element
      * @return element mapped to FinalAggregationType
      */
-    MedianResultType lower(std::vector<InputType> partialAggregateValue) override {
+    MedianResultType lower(std::vector<InputType>& partialAggregateValue) override {
         // sort the partial aggregate vector before finding the median
         std::sort(partialAggregateValue.begin(), partialAggregateValue.end());
 
