@@ -23,10 +23,10 @@ PlacementStrategy::Value PlacementStrategy::getFromString(const std::string plac
         return PlacementStrategy::BottomUp;
     } else if (placementStrategy == "TopDown") {
         return PlacementStrategy::TopDown;
-    } else if (placementStrategy == "IFCOP") {
-        return PlacementStrategy::IFCOP;
-    } else if (placementStrategy == "ILP") {
-        return PlacementStrategy::ILP;
+//    } else if (placementStrategy == "IFCOP") {
+//        return PlacementStrategy::IFCOP;
+//    } else if (placementStrategy == "ILP") {
+//        return PlacementStrategy::ILP;
     } else {
         NES_THROW_RUNTIME_ERROR("PlacementStrategy not supported " + placementStrategy);
     }
