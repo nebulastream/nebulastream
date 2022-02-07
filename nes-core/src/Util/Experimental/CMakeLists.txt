@@ -11,21 +11,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        UtilityFunctions.cpp
-        TimeMeasurement.cpp
-        BufferSequenceNumber.cpp
-        TestUtils.cpp
-        FaultToleranceType.cpp
-        LineageType.cpp
-        PlacementStrategy.cpp
-        GatheringMode.cpp
-        SourceMode.cpp
-        KalmanFilter.cpp
+add_source_nes(
+        HashMap.cpp
 )
-if (NES_USE_MQTT)
-    add_source_files(nes-core
-        MQTTClientWrapper.cpp
-    )
-endif ()
-add_subdirectory(Experimental)
