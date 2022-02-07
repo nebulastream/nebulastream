@@ -22,7 +22,7 @@ namespace NES::Experimental {
 #ifdef __aarch64__
 class CRC32Hash : public Hash<CRC32Hash> {
   public:
-    inline auto hashKey(uint64_t, hash_t) const { NES_NOT_IMPLEMENTED(); }
+    inline uint64_t hashKey(uint64_t, hash_t) const { NES_NOT_IMPLEMENTED(); }
     inline uint64_t hashKey(uint64_t k) const { return hashKey(k, 0); }
 
     inline uint64_t hashKey(const void*, int, uint64_t) const { NES_NOT_IMPLEMENTED(); }
