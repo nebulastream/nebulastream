@@ -16,7 +16,7 @@
 #define NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
 #include <Util/Experimental/Hash.hpp>
 #include <Util/Logger.hpp>
-#include <x86intrin.h>
+
 namespace NES::Experimental {
 
 #ifdef defined(__aarch64__) || defined(_M_ARM64)
