@@ -65,6 +65,8 @@ class BaseConfiguration : public BaseOption {
      */
     void clear() override;
 
+    std::string toString();
+
   protected:
     void parseFromYAMLNode(const Yaml::Node config) override;
     void parseFromString(const std::string& identifier, const std::string& value) override;

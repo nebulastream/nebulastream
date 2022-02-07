@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <thread>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -28,8 +29,6 @@ class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
 namespace Configurations {
-
-enum LogLevel { LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
 
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
@@ -45,7 +44,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption restPort = {REST_PORT_CONFIG, 8081, "Port exposed for rest endpoints"};
     UIntOption dataPort = {DATA_PORT_CONFIG, 3001, "NES data server port"};
     UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for NES Coordinator"};
-    EnumOption<LogLevel> logLevel = {LOG_LEVEL_CONFIG,
+    EnumOption<DebugLevel> logLevel = {LOG_LEVEL_CONFIG,
                                      LOG_DEBUG,
                                      "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
     UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
@@ -81,6 +80,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
         "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)"};
 
     std::vector<LogicalSourcePtr> logicalSources;
+
+    static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {

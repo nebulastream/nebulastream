@@ -1079,6 +1079,7 @@ class CustomPipelineStageOne : public Runtime::Execution::ExecutablePipelineStag
         auto record = buffer.getBuffer<InputRecord>();
         for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
             record[i].test$value = record[i].test$value + 42;
+            // call into python
         }
         ctx.emitBuffer(buffer, wc);
         return ExecutionResult::Ok;

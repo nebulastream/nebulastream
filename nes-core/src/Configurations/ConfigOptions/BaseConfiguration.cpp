@@ -85,6 +85,14 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::
     }
 }
 
+std::string BaseConfiguration::toString() {
+    std::stringstream ss;
+    for(auto option: getOptions()){
+        ss << option << "\n";
+    }
+    return ss.str();
+}
+
 void BaseConfiguration::clear() {
     for (auto* option : getOptions()) {
         option->clear();
