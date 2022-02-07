@@ -22,6 +22,7 @@
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <future>
 #include <string>
 #include <thread>
@@ -195,6 +196,14 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @return
      */
     TopologyManagerServicePtr getTopologyManagerService() const;
+
+    /**
+     * @brief method to propagate new epoch timestamp to source nodes
+     * @param timestamp: max timestamp of current epoch
+     * @param querySubPlanId: identifies what query sends punctuation
+     * @return bool indicating success
+     */
+    bool propagatePunctuation(uint64_t timestamp, QuerySubPlanId querySubPlanId);
 
     NesWorkerPtr getNesWorker();
 

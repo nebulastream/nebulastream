@@ -60,7 +60,7 @@ class NodeEngineFactory {
                                           uint64_t numberOfBuffersInGlobalBufferManager,
                                           uint64_t numberOfBuffersInSourceLocalBufferPool,
                                           uint64_t numberOfBuffersPerWorker,
-                                          NesWorkerPtr&& nesWorker,
+                                          std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>(),
                                           const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                           NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
                                           const std::string& workerToCodeMapping = "",
