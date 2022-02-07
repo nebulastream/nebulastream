@@ -263,6 +263,7 @@ void QueryManager::destroy() {
         if (threadPool) {
             threadPool->stop();
             threadPool.reset();
+            taskQueue = decltype(taskQueue)();
         }
         NES_DEBUG("QueryManager::resetQueryManager finished");
     } else {

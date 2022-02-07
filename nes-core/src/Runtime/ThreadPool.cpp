@@ -72,6 +72,7 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
                     break;
                 }
                 case ExecutionResult::AllFinished: {
+                    NES_DEBUG("Threadpool got poison pill - shutting down...");
                     running = false;
                     break;
                 }
