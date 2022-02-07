@@ -125,16 +125,15 @@ if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
             set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
         endif ()
     endif ()
-    if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
-        # Numa awareness
-        find_package(NUMA)
-        if (NUMA_FOUND)
-            set(LIBRARIES ${LIBRARIES} -lnuma)
-            message(STATUS "Using Numa")
-        endif ()
-        find_package(folly CONFIG REQUIRED)
-        set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
+
+    # Numa awareness
+    find_package(NUMA)
+    if (NUMA_FOUND)
+        set(LIBRARIES ${LIBRARIES} -lnuma)
+        message(STATUS "Using Numa")
     endif ()
+    find_package(folly CONFIG REQUIRED)
+    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
 endif ()
 
 # enables tracing of stack traces if operator / expression nodes are created
