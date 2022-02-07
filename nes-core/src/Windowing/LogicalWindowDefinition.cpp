@@ -136,14 +136,12 @@ bool LogicalWindowDefinition::equal(LogicalWindowDefinitionPtr otherWindowDefini
         return false;
     }
 
-    if (this->isKeyed()) {
-        // todo add equals for multy keys
-        //this->getOnKey()->equal(otherWindowDefinition->getOnKey())
-        // return false;
+    if (this->isKeyed() && this->getKeys() != otherWindowDefinition->getKeys()) {
+        return false;
     }
 
-    return this->windowType->equal(otherWindowDefinition->getWindowType());
-    //  && this->windowAggregation->equal(otherWindowDefinition->getWindowAggregation());
+    return this->windowType->equal(otherWindowDefinition->getWindowType())
+        && this->windowAggregation == otherWindowDefinition->getWindowAggregation();
 }
 
 }// namespace NES::Windowing
