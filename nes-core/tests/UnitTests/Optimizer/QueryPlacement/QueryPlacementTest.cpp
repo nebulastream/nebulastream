@@ -17,6 +17,7 @@
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include "Catalogs/Source/PhysicalSourceTypes/MQTTSourceType.hpp"
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
@@ -140,31 +141,31 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 4);
         sourceNode1->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode1);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 4);
         sourceNode2->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode2);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
         TopologyNodePtr sourceNode11 = TopologyNode::create(4, "localhost", 123, 124, 4);
         sourceNode11->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(sourceNode1, sourceNode11);
+        topology->addNewTopologyNodeAsChild(sourceNode1, sourceNode11);
 
         TopologyNodePtr sourceNode12 = TopologyNode::create(5, "localhost", 123, 124, 4);
         sourceNode12->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(sourceNode1, sourceNode12);
+        topology->addNewTopologyNodeAsChild(sourceNode1, sourceNode12);
 
         TopologyNodePtr sourceNode21 = TopologyNode::create(6, "localhost", 123, 124, 4);
         sourceNode21->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(sourceNode2, sourceNode21);
+        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode21);
 
         TopologyNodePtr sourceNode22 = TopologyNode::create(7, "localhost", 123, 124, 4);
         sourceNode22->addNodeProperty("tf_installed", false);
-        topology->addNewPhysicalNodeAsChild(sourceNode2, sourceNode22);
+        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode22);
 
         TopologyNodePtr sourceNode121 = TopologyNode::create(8, "localhost", 123, 124, 1);
         sourceNode121->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(sourceNode12, sourceNode121);
+        topology->addNewTopologyNodeAsChild(sourceNode12, sourceNode121);
 
         std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
                            ->addField(createField("SepalLengthCm", FLOAT32))
@@ -174,26 +175,25 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
                            ->addField(createField("SpeciesCode", UINT64));)";
         const std::string streamName = "iris";
 
-        streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+        streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         streamCatalog->addLogicalStream(streamName, schema);
+        auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
 
-        SourceConfigPtr sourceConfig = MQTTSourceConfig::create();
-        sourceConfig->setSourceFrequency(0);
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->setPhysicalStreamName("test2");
-        sourceConfig->setLogicalStreamName("iris");
 
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+        MQTTSourceTypePtr mqttSourceType = MQTTSourceType::create();
+        auto physicalSource = PhysicalSource::create(streamName, "test2", mqttSourceType);
 
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode11);
-        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode22);
-        StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(conf, sourceNode121);
-        StreamCatalogEntryPtr streamCatalogEntry4 = std::make_shared<StreamCatalogEntry>(conf, sourceNode21);
 
-        streamCatalog->addPhysicalStream("iris", streamCatalogEntry1);
-        streamCatalog->addPhysicalStream("iris", streamCatalogEntry2);
-        streamCatalog->addPhysicalStream("iris", streamCatalogEntry3);
-        streamCatalog->addPhysicalStream("iris", streamCatalogEntry4);
+        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode11);
+        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode22);
+        SourceCatalogEntryPtr streamCatalogEntry3 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode121);
+        SourceCatalogEntryPtr streamCatalogEntry4 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode21);
+
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry3);
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry4);
+
     }
 
     void setupComplexTopologyAndStreamCatalog2() {
@@ -205,31 +205,31 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
 
         TopologyNodePtr sourceNode1 = TopologyNode::create(2, "localhost", 123, 124, 10);
         sourceNode1->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode1);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode1);
 
         TopologyNodePtr sourceNode2 = TopologyNode::create(3, "localhost", 123, 124, 10);
         sourceNode2->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(rootNode, sourceNode2);
+        topology->addNewTopologyNodeAsChild(rootNode, sourceNode2);
 
         TopologyNodePtr sourceNode11 = TopologyNode::create(4, "localhost", 123, 124, 4);
         sourceNode11->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(sourceNode1, sourceNode11);
+        topology->addNewTopologyNodeAsChild(sourceNode1, sourceNode11);
 
         TopologyNodePtr sourceNode12 = TopologyNode::create(5, "localhost", 123, 124, 4);
         sourceNode12->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(sourceNode1, sourceNode12);
+        topology->addNewTopologyNodeAsChild(sourceNode1, sourceNode12);
 
         TopologyNodePtr sourceNode21 = TopologyNode::create(6, "localhost", 123, 124, 10);
         sourceNode21->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(sourceNode2, sourceNode21);
+        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode21);
 
         TopologyNodePtr sourceNode22 = TopologyNode::create(7, "localhost", 123, 124, 4);
         sourceNode22->addNodeProperty("tf_installed", false);
-        topology->addNewPhysicalNodeAsChild(sourceNode2, sourceNode22);
+        topology->addNewTopologyNodeAsChild(sourceNode2, sourceNode22);
 
         TopologyNodePtr sourceNode121 = TopologyNode::create(8, "localhost", 123, 124, 1);
         sourceNode121->addNodeProperty("tf_installed", true);
-        topology->addNewPhysicalNodeAsChild(sourceNode12, sourceNode121);
+        topology->addNewTopologyNodeAsChild(sourceNode12, sourceNode121);
 
         std::string schema = R"(Schema::create()->addField(createField("id", UINT64))
                            ->addField(createField("SepalLengthCm", FLOAT32))
@@ -239,26 +239,24 @@ class QueryPlacementTest : public Testing::TestWithErrorHandling<testing::Test> 
                            ->addField(createField("SpeciesCode", UINT64));)";
         const std::string streamName = "iris";
 
-        streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
+        streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
         streamCatalog->addLogicalStream(streamName, schema);
+        auto logicalSource = streamCatalog->getStreamForLogicalStream(streamName);
 
-        SourceConfigPtr sourceConfig = MQTTSourceConfig::create();
-        sourceConfig->setSourceFrequency(0);
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->setPhysicalStreamName("test2");
-        sourceConfig->setLogicalStreamName("iris");
 
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+        MQTTSourceTypePtr mqttSourceType = MQTTSourceType::create();
+        auto physicalSource = PhysicalSource::create(streamName, "test2", mqttSourceType);
 
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode11);
-        StreamCatalogEntryPtr streamCatalogEntry2 = std::make_shared<StreamCatalogEntry>(conf, sourceNode22);
-        StreamCatalogEntryPtr streamCatalogEntry3 = std::make_shared<StreamCatalogEntry>(conf, sourceNode121);
-        StreamCatalogEntryPtr streamCatalogEntry4 = std::make_shared<StreamCatalogEntry>(conf, sourceNode21);
 
-        streamCatalog->addPhysicalStream("iris", streamCatalogEntry1);
-        streamCatalog->addPhysicalStream("iris", streamCatalogEntry2);
-        streamCatalog->addPhysicalStream("iris", streamCatalogEntry3);
-        streamCatalog->addPhysicalStream("iris", streamCatalogEntry4);
+        SourceCatalogEntryPtr streamCatalogEntry1 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode11);
+        SourceCatalogEntryPtr streamCatalogEntry2 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode22);
+        SourceCatalogEntryPtr streamCatalogEntry3 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode121);
+        SourceCatalogEntryPtr streamCatalogEntry4 = std::make_shared<SourceCatalogEntry>(physicalSource, logicalSource, sourceNode21);
+
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry1);
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry2);
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry3);
+        streamCatalog->addPhysicalSource(streamName, streamCatalogEntry4);
     }
 
     static void assignDataModificationFactor(QueryPlanPtr queryPlan) {

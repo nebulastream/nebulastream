@@ -926,70 +926,48 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModel) {
 
 TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithInferModelFromCsvDatasource) {
 
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
-    SourceConfigPtr srcConf = SourceConfigFactory::createSourceConfig();
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0UL);
+    NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    //register logical stream
+    std::string testSchema =
+        R"(Schema::create()->addField(createField("id", UINT64))
+                   ->addField(createField("SepalLengthCm", FLOAT32))
+                   ->addField(createField("SepalWidthCm", FLOAT32))
+                   ->addField(createField("PetalLengthCm", FLOAT32))
+                   ->addField(createField("PetalWidthCm", FLOAT32))
+                   ->addField(createField("SpeciesCode", UINT64));)";
+    crd->getStreamCatalogService()->registerLogicalSource("iris", testSchema);
 
     remove("test.out");
 
-    NES_INFO("QueryDeploymentTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
-    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
-
-    NES_INFO("QueryDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    wrkConf->setTfInstalled(true);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NES_DEBUG("QueryDeploymentTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->setRpcPort(port + 10);
+    workerConfig1->setDataPort(port + 11);
+    workerConfig1->setTfInstalled(true);
+    CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string("../tests/test_data/iris.csv"));
+    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
+    csvSourceType1->setNumberOfBuffersToProduce(1000);
+    csvSourceType1->setSkipHeader(true);
+    auto physicalSource1 = PhysicalSource::create("iris", "iris_physical", csvSourceType1);
+    workerConfig1->addPhysicalSource(physicalSource1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
 
-//    NES_INFO("QueryDeploymentTest: Start worker 2");
-//    wrkConf->setCoordinatorPort(port);
-//    wrkConf->setRpcPort(port + 20);
-//    wrkConf->setDataPort(port + 21);
-//    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-//    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart2);
-//    NES_INFO("QueryDeploymentTest: Worker2 started successfully");
-
     std::string outputFilePath = "test.out";
-
-    //register logical stream qnv
-    std::string iris =
-        R"(Schema::create()->addField(createField("id", UINT64))
-                           ->addField(createField("SepalLengthCm", FLOAT32))
-                           ->addField(createField("SepalWidthCm", FLOAT32))
-                           ->addField(createField("PetalLengthCm", FLOAT32))
-                           ->addField(createField("PetalWidthCm", FLOAT32))
-                           ->addField(createField("SpeciesCode", UINT64));)";
-    std::string testSchemaFileName = "iris.hpp";
-    std::ofstream out(testSchemaFileName);
-    out << iris;
-    out.close();
-    wrk1->registerLogicalStream("iris", testSchemaFileName);
-
-    srcConf->setSourceType("CSVSource");
-    srcConf->as<CSVSourceConfig>()->setFilePath(std::string("../tests/test_data/iris.csv"));
-    srcConf->setNumberOfTuplesToProducePerBuffer(10);
-    srcConf->setNumberOfBuffersToProduce(15);
-    srcConf->setPhysicalStreamName("iris_physical");
-    srcConf->setLogicalStreamName("iris");
-//    srcConf->setSkipHeader(false);
-
-    //register physical stream
-    PhysicalStreamConfigPtr irisStream = PhysicalStreamConfig::create(srcConf);
-
-    wrk1->registerPhysicalStream(irisStream);
-//    wrk2->registerPhysicalStream(irisStream);
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();

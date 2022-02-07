@@ -242,8 +242,8 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfig) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigIrisDataset) {
-    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
-    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 //    SourceConfigPtr srcConf = SourceConfig::create();
 
     crdConf->setRpcPort(rpcPort);
@@ -262,7 +262,7 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigIrisDatas
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
@@ -282,9 +282,11 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigIrisDatas
     std::ofstream out(testSchemaFileName);
     out << stream;
     out.close();
-    wrk1->registerLogicalStream("iris", testSchemaFileName);
+    crd->getStreamCatalogService()->registerLogicalSource("iris", stream);
 
-    srcConf->setSourceType("MQTTSource");
+//    wrk1->registerLogicalStream("iris", testSchemaFileName);
+
+//    srcConf->setSourceType("MQTTSource");
     //0 = serverAddress; 1 = clientId; 2 = user; 3 = topic; 4 = inputFormat; 5 = qos; 6 = cleanSession; 7 = tupleBuffer flush interval in milliseconds
 //    srcConf->setSourceConfig("127.0.0.1:1883;cpp-mqtt-iris;emqx;iris;CSV;2;true;3000");
 //    srcConf->setNumberOfTuplesToProducePerBuffer(1);
@@ -292,13 +294,13 @@ TEST_F(MQTTSourceTest, DISABLED_testDeployOneWorkerWithMQTTSourceConfigIrisDatas
 //    srcConf->setNumberOfTuplesToProducePerBuffer(10);
 //    srcConf->setNumberOfBuffersToProduce(15);
 //    srcConf->setSourceFrequency(3000);
-    srcConf->setSourceFrequency(1);
-    srcConf->setPhysicalStreamName("iris_physical");
-    srcConf->setLogicalStreamName("iris");
+//    srcConf->setSourceFrequency(1);
+//    srcConf->setPhysicalStreamName("iris_physical");
+//    srcConf->setLogicalStreamName("iris");
 //    srcConf->setSkipHeader(false);
     //register physical stream
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
-    wrk1->registerPhysicalStream(streamConf);
+//    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
+//    wrk1->registerPhysicalStream(streamConf);
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
