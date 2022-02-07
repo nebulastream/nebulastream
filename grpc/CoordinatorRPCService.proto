@@ -58,10 +58,10 @@ message RegisterNodeRequest {
   uint32 grpcPort = 2;
   uint32 dataPort = 3;
   uint32 numberOfSlots = 4;
-  NES.SerializableStaticNesMetrics monitoringData = 6;
-  Coordinates coordinates = 7;
+  string monitoringDataAsJson = 5;
+  Coordinates coordinates = 6;
   //TODO #2474 also pass isMobile once it is implemented at Worker and Topology
-  //bool isMobile = 8;
+  //bool isMobile = 7;
 }
 
 message RegisterNodeReply {

@@ -7,7 +7,7 @@ namespace NES {
 class AbstractSystemResourcesReader;
 using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
 
-class SystemsReaderFactory {
+class SystemResourcesReaderFactory {
   public:
     /**
      * @brief Creates the appropriate SystemResourcesReader for the OS

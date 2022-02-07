@@ -14,7 +14,35 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_COLLECTORS_CPUCOLLECTOR_HPP_
-#define NES_INCLUDE_MONITORING_COLLECTORS_CPUCOLLECTOR_HPP_
+#include <API/Schema.hpp>
+#include <Monitoring/MetricCollectors/CpuCollector.hpp>
+#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 
-#endif//NES_INCLUDE_MONITORING_COLLECTORS_CPUCOLLECTOR_HPP_
+#include <Util/Logger.hpp>
+
+namespace NES {
+    CpuCollector::CpuCollector()
+        : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+          schema(CpuValues::getSchema("")) {
+        NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
+    }
+
+    bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
+        try {
+            CpuMetrics measuredVal = resourceReader->readCpuStats();
+            writeToBuffer(measuredVal, tupleBuffer, 0);
+        } catch (const std::exception& ex) {
+            NES_ERROR("CpuCollector: Error while collecting metrics " << ex.what());
+            return false;
+        }
+        return true;
+    }
+
+    SchemaPtr CpuCollector::getSchema() { return schema; }
+
+    MetricPtr CpuCollector::readMetric() { return std::make_shared<Metric>(resourceReader->readCpuStats()); }
+
+}// namespace NES

@@ -50,53 +50,6 @@ class MonitoringStackTest : public testing::Test {
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
-TEST_F(MonitoringStackTest, testAbstractSystemResourcesReader){
-    auto resourcesReader = std::make_shared<AbstractSystemResourcesReader>();
-    EXPECT_TRUE(resourcesReader->readRuntimeNesMetrics() == RuntimeNesMetrics {});
-    EXPECT_TRUE(resourcesReader->readStaticNesMetrics() == StaticNesMetrics {});
-    EXPECT_TRUE(resourcesReader->readCpuStats() == CpuMetrics {});
-    EXPECT_TRUE(resourcesReader->readNetworkStats() == NetworkMetrics {});
-    EXPECT_TRUE(resourcesReader->readMemoryStats() == MemoryMetrics {});
-    EXPECT_TRUE(resourcesReader->readDiskStats() == DiskMetrics {});
-    EXPECT_TRUE(resourcesReader->getWallTimeInNs() == 0);
-}
-
-TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
-    auto runtimeMetrics = resourcesReader->readRuntimeNesMetrics();
-    NES_DEBUG("MonitoringStackTest: Runtime metrics=" << runtimeMetrics.toJson());
-    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, runtimeMetrics));
-}
-
-TEST_F(MonitoringStackTest, testStaticNesMetrics) {
-    auto staticMetrics = resourcesReader->readStaticNesMetrics();
-    NES_DEBUG("MonitoringStackTest: Static metrics=" << staticMetrics.toJson());
-    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, staticMetrics));
-}
-
-TEST_F(MonitoringStackTest, testCPUStats) {
-    auto cpuMetrics = resourcesReader->readCpuStats();
-    NES_DEBUG("MonitoringStackTest: CPU metrics=" << cpuMetrics.toJson());
-    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, cpuMetrics));
-}
-
-TEST_F(MonitoringStackTest, testMemoryStats) {
-    auto memMetrics = resourcesReader->readMemoryStats();
-    NES_DEBUG("MonitoringStackTest: Static metrics=" << memMetrics.toJson());
-    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, memMetrics));
-}
-
-TEST_F(MonitoringStackTest, testDiskStats) {
-    auto diskMetrics = resourcesReader->readDiskStats();
-    NES_DEBUG("MonitoringStackTest: Static metrics=" << diskMetrics.toJson());
-    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, diskMetrics));
-}
-
-TEST_F(MonitoringStackTest, testNetworkStats) {
-    auto networkMetrics = resourcesReader->readNetworkStats();
-    NES_DEBUG("MonitoringStackTest: Static metrics=" << networkMetrics.toJson());
-    EXPECT_TRUE(MetricValidator::isValid(resourcesReader, networkMetrics));
-}
-
 TEST_F(MonitoringStackTest, testMetric) {
     CpuMetrics cpuStats = MetricUtils::cpuStats();
     Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();

@@ -143,7 +143,7 @@ class WorkerRPCClient {
      * @param the buffer where the data will be written into
      * @return true if successful, else false
      */
-    static bool requestMonitoringData(const std::string& address, Runtime::TupleBuffer& buf, uint64_t schemaSizeBytes);
+    static std::string requestMonitoringData(const std::string& address);
 
     /**
      * @brief Requests remote worker to start buffering data on a single NetworkSink identified by

@@ -14,6 +14,7 @@
 add_source_files(nes-core
         AbstractSystemResourcesReader.cpp
         LinuxSystemResourcesReader.cpp
+        SystemResourcesReaderFactory.cpp
 )
 
 

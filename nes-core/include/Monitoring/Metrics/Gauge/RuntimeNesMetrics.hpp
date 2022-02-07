@@ -15,8 +15,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICVALUES_RUNTIMENESMETRICS_HPP_
 #define NES_INCLUDE_MONITORING_METRICVALUES_RUNTIMENESMETRICS_HPP_
 
-#include "Monitoring/MonitoringForwardRefs.hpp"
-#include "Runtime/RuntimeForwardRefs.hpp"
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES {
 
@@ -47,7 +47,7 @@ class RuntimeNesMetrics {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    web::json::value toJson() const;
+    [[nodiscard]] web::json::value toJson() const;
 
     bool operator==(const RuntimeNesMetrics& rhs) const;
     bool operator!=(const RuntimeNesMetrics& rhs) const;

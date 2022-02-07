@@ -1,47 +1,49 @@
 /*
-Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-    https://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-    DiskCollector::DiskCollector()
-        : MetricCollector(), resourceReader(MetricUtils::getSystemResourcesReader()), schema(DiskMetrics::getSchema("")) {
-        NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
+DiskCollector::DiskCollector()
+    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+      schema(DiskMetrics::getSchema("")) {
+    NES_INFO("DiskCollector: Init DiskCollector with schema " << schema->toString());
+}
+
+bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
+    try {
+        DiskMetrics measuredVal = resourceReader->readDiskStats();
+        writeToBuffer(measuredVal, tupleBuffer, 0);
+    } catch (const std::exception& ex) {
+        NES_ERROR("DiskCollector: Error while collecting metrics " << ex.what());
+        return false;
     }
+    return true;
+}
 
-    bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
-        try {
-            DiskMetrics measuredVal = resourceReader->readDiskStats();
-            writeToBuffer(measuredVal, tupleBuffer, 0);
-        } catch (const std::exception& ex) {
-            NES_ERROR("DiskCollector: Error while collecting metrics " << ex.what());
-            return false;
-        }
-        return true;
-    }
+SchemaPtr DiskCollector::getSchema() { return schema; }
 
-    SchemaPtr DiskCollector::getSchema() { return DiskMetrics::getSchema(""); }
-
-    MetricPtr DiskCollector::readMetric() { return std::make_shared<Metric>(resourceReader->readDiskStats()); }
+MetricPtr DiskCollector::readMetric() { return std::make_shared<Metric>(resourceReader->readDiskStats()); }
 
 }// namespace NES

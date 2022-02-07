@@ -34,6 +34,12 @@ using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResources
 
 class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
+
+class MetricStore;
+using MetricStorePtr = std::shared_ptr<MetricStore>;
+
+class MonitoringCatalog;
+using MonitoringCatalogPtr = std::shared_ptr<MonitoringCatalog>;
 }// namespace NES
 
 namespace web::json {

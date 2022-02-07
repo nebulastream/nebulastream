@@ -14,8 +14,6 @@
 
 syntax = "proto3";
 import "SerializableQueryPlan.proto";
-import "SerializableOperator.proto";
-import "SerializableDataType.proto";
 
 service WorkerRPCService {
   rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
@@ -87,17 +85,18 @@ message StopQueryReply {
 }
 
 message MonitoringRegistrationRequest {
-  NES.SerializableMonitoringPlan monitoringPlan = 1;
+  repeated uint32 metricTypes = 1;
 }
 
 message MonitoringRegistrationReply {
 }
 
 message MonitoringDataRequest {
+    repeated uint32 metricTypes = 1;
 }
 
 message MonitoringDataReply {
-  bytes buffer = 1;
+  string metricsAsJson = 1;
 }
 
 message EpochBarrierNotification{

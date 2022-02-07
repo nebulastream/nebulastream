@@ -12,36 +12,32 @@
     limitations under the License.
 */
 
-#include "API/AttributeField.hpp"
-#include "API/Schema.hpp"
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
-#include "Monitoring/MonitoringPlan.hpp"
-#include "Runtime/MemoryLayout/RowLayout.hpp"
-#include "Runtime/MemoryLayout/RowLayoutField.hpp"
-#include "Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp"
-#include "Runtime/TupleBuffer.hpp"
-#include "Util/Logger.hpp"
-#include "Util/UtilityFunctions.hpp"
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 #include <cpprest/json.h>
 #include <cstring>
 
 namespace NES {
 
-CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues>&& arr) : total(total), numCores(size) {
-    if (numCores > 0) {
+CpuMetrics::CpuMetrics(std::vector<CpuValues>&& arr) {
+    if (!arr.empty()) {
         cpuValues = std::move(arr);
     } else {
         NES_THROW_RUNTIME_ERROR("CpuMetrics: Object cannot be allocated with less than 0 cores.");
     }
-    NES_DEBUG("CpuMetrics: Allocating memory for " + std::to_string(numCores) + " metrics.");
+    NES_DEBUG("CpuMetrics: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
 }
 
-uint16_t CpuMetrics::getNumCores() const { return numCores; }
-
 CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const { return cpuValues.at(cpuCore); }
-
-CpuValues CpuMetrics::getTotal() const { return total; }
 
 CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
     //get index where the schema for CpuMetrics is starting
@@ -53,13 +49,12 @@ CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer&
         auto numCores = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(idx, layout, buf)[0];
 
         auto cpu = std::vector<CpuValues>(numCores);
-        auto totalCpu = CpuValues::fromBuffer(schema, buf, prefix + "CPU[TOTAL]_");
 
         for (int n = 0; n < numCores; n++) {
             //for each core parse the according CpuValues
             cpu[n] = CpuValues::fromBuffer(schema, buf, prefix + "CPU[" + std::to_string(n + 1) + "]_");
         }
-        return CpuMetrics{totalCpu, numCores, std::move(cpu)};
+        return CpuMetrics{std::move(cpu)};
     }
     NES_THROW_RUNTIME_ERROR("CpuMetrics: Prefix " + prefix + " could not be parsed from schema " + schema->toString());
     throw 0;// just to make the compiler happy
@@ -85,7 +80,7 @@ void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_
                "CpuMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
-    auto coreNum = metrics.getNumCores();
+    auto coreNum = metrics.getNumCores() + 1;
     memcpy(tbuffer + byteOffset, &coreNum, sizeof(uint16_t));
     byteOffset += sizeof(uint16_t);
 
@@ -100,22 +95,6 @@ void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_
     buf.setNumberOfTuples(1);
 }
 
-SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix) {
-    auto schema = Schema::create();
-    schema->addField(prefix + "CORE_NO", BasicType::UINT16);
-
-    //add schema for total
-    schema->copyFields(CpuValues::getSchema(prefix + "CPU[TOTAL]_"));
-
-    //add schema for each core
-    for (int i = 0; i < metrics.getNumCores(); i++) {
-        auto corePrefix = prefix + "CPU[" + std::to_string(i + 1) + "]_";
-        schema->copyFields(CpuValues::getSchema(corePrefix));
-    }
-
-    return schema;
-}
-
 bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
     if (cpuValues.size() != rhs.cpuValues.size()) {
         return false;
@@ -126,8 +105,6 @@ bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
             return false;
         }
     }
-
-    return total == rhs.total && numCores == rhs.numCores;
 }
 
 bool CpuMetrics::operator!=(const CpuMetrics& rhs) const { return !(rhs == *this); }

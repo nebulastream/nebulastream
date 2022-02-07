@@ -14,12 +14,12 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
+#include "Monitoring/MonitoringPlan.hpp"
 #include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include "Monitoring/MonitoringPlan.hpp"
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
@@ -310,8 +310,9 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
 
     MonitoringRegistrationRequest request;
-    request.mutable_monitoringplan()->CopyFrom(plan->serialize());
-
+    for (auto metric: plan->getMetricTypes()) {
+        request.mutable_metrictypes()->Add(metric);
+    }
     ClientContext context;
     MonitoringRegistrationReply reply;
 
@@ -325,17 +326,14 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
     }
     NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
                             + status.error_message());
-
     return false;
 }
 
-bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime::TupleBuffer& buf, uint64_t schemaSizeBytes) {
+std::string WorkerRPCClient::requestMonitoringData(const std::string& address) {
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
     MonitoringDataRequest request;
     ClientContext context;
     MonitoringDataReply reply;
-    reply.set_buffer(buf.getBuffer<char>());
-
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
@@ -343,17 +341,10 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
-        memcpy(buf.getBuffer<char>(), reply.buffer().data(), schemaSizeBytes);
-        buf.setNumberOfTuples(1);
-        reply.release_buffer();
-        return true;
+        return reply.metricsasjson();
     }
-    // We need to release reply's buffer (in case we handle the exception).
-    reply.release_buffer();
     NES_THROW_RUNTIME_ERROR("WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
                                                                             << status.error_message());
-
-    return false;
 }
 
 bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address) {
@@ -390,15 +381,18 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
     } else {
         NES_ERROR(" WorkerRPCClient::BeginBuffer "
                   "error="
-                      << status.error_code() << ": " << status.error_message());
+                  << status.error_code() << ": " << status.error_message());
         throw log4cxx::helpers::Exception("Error while WorkerRPCClient::stopQuery");
     }
     return false;
 }
 
-
-bool WorkerRPCClient::updateNetworkSink(const std::string &address, uint64_t newNodeId, const std::string &newHostname,
-                                        uint32_t newPort, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
+bool WorkerRPCClient::updateNetworkSink(const std::string& address,
+                                        uint64_t newNodeId,
+                                        const std::string& newHostname,
+                                        uint32_t newPort,
+                                        uint64_t querySubPlanId,
+                                        uint64_t uniqueNetworkSinDescriptorId) {
     UpdateNetworkSinkRequest request;
     request.set_newnodeid(newNodeId);
     request.set_newhostname(newHostname);

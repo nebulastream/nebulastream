@@ -11,16 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "API/AttributeField.hpp"
-#include "API/Schema.hpp"
-#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
-#include "Runtime/MemoryLayout/RowLayout.hpp"
-#include "Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp"
-#include "Runtime/TupleBuffer.hpp"
-#include "Util/Logger.hpp"
-#include "Util/UtilityFunctions.hpp"
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
-#include "Runtime/MemoryLayout/RowLayoutField.hpp"
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
@@ -82,8 +81,8 @@ web::json::value DiskMetrics::toJson() const {
 SchemaPtr getSchema(const DiskMetrics&, const std::string& prefix) { return DiskMetrics::getSchema(prefix); }
 
 bool DiskMetrics::operator==(const DiskMetrics& rhs) const {
-    return fBavail == rhs.fBavail && fBfree == rhs.fBfree && fBlocks == rhs.fBlocks
-        && fBsize == rhs.fBsize && fFrsize == rhs.fFrsize;
+    return fBavail == rhs.fBavail && fBfree == rhs.fBfree && fBlocks == rhs.fBlocks && fBsize == rhs.fBsize
+        && fFrsize == rhs.fFrsize;
 }
 
 bool DiskMetrics::operator!=(const DiskMetrics& rhs) const { return !(rhs == *this); }

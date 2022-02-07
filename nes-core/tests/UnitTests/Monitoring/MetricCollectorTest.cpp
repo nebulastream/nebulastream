@@ -21,9 +21,9 @@
 #include <Util/Logger.hpp>
 
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/CpuValues.hpp"
-#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
+#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/CpuValues.hpp>
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 
 namespace NES {
 

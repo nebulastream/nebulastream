@@ -92,11 +92,3 @@ message SerializableDataValue {
   }
   google.protobuf.Any value = 1;
 }
-
-message SerializableMonitoringPlan {
-    repeated uint32 metricTypes = 1;
-}
-
-message SerializableMetrics {
-    string metricsAsJson = 1;
-}

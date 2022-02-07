@@ -13,50 +13,51 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Storage/MetricStore.hpp>
 #include <Util/Logger.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
 
 namespace NES {
 
-    MetricStore::MetricStore(MetricStoreStrategy storeType) : storeType(storeType) {
-        NES_DEBUG("MetricStore: Init with store type " << storeType);
+MetricStore::MetricStore(MetricStoreStrategy storeType) : storeType(storeType) {
+    NES_DEBUG("MetricStore: Init with store type " << storeType);
+}
+
+void MetricStore::addMetric(uint64_t nodeId, const std::vector<MetricPtr>& metrics) {
+    std::unordered_map<MetricType, MetricPtr> metricEntry;
+    for (const auto& metric : metrics) {
+        metricEntry.insert({getMetricType(metric), metric});
     }
 
-    void MetricStore::addMetric(uint64_t nodeId, std::vector<MetricPtr> metrics) {
-        std::unordered_map<MetricType, MetricPtr> metricEntry;
-        for (auto metric: metrics) {
-            metricEntry.insert({getMetricType(metric), metric});
-        }
-
-        if (storeType == MetricStoreStrategy::NEWEST) {
-            if (storedMetrics.contains(nodeId)) {
-                storedMetrics[nodeId].swap(metricEntry);
-            } else {
-                storedMetrics.emplace(nodeId, std::move(metricEntry));
-            }
+    if (storeType == MetricStoreStrategy::NEWEST) {
+        if (storedMetrics.contains(nodeId)) {
+            storedMetrics[nodeId].swap(metricEntry);
         } else {
-            NES_THROW_RUNTIME_ERROR("MetricStore: StoreType " << storeType << " not found.");
+            storedMetrics.emplace(nodeId, std::move(metricEntry));
         }
+    } else {
+        NES_THROW_RUNTIME_ERROR("MetricStore: StoreType " << storeType << " not found.");
     }
+}
 
-    std::priority_queue<GroupedMetricValuesPtr> MetricStore::getMetrics(uint64_t nodeId) { return storedMetrics[nodeId]; }
-
-    GroupedMetricValuesPtr MetricStore::getNewestMetric(uint64_t nodeId) { return storedMetrics[nodeId].top(); }
-
-    bool MetricStore::removeMetrics(uint64_t nodeId) {
-        if (storedMetrics.contains(nodeId)) {
-            storedMetrics.erase(nodeId);
-            return true;
-        }
-        return false;
+bool MetricStore::removeMetrics(uint64_t nodeId) {
+    if (storedMetrics.contains(nodeId)) {
+        storedMetrics.erase(nodeId);
+        return true;
     }
+    return false;
+}
 
-    bool MetricStore::hasMetric(uint64_t nodeId) {
-        if (storedMetrics.contains(nodeId)) {
-            return true;
-        }
-        return false;
-    }
+bool MetricStore::hasMetric(uint64_t nodeId) { return storedMetrics.contains(nodeId); }
+
+std::vector<MetricPtr> MetricStore::getNewestMetric(uint64_t nodeId) {
+    using MetricMap = std::unordered_map<MetricType, MetricPtr>;
+    auto metricMap = storedMetrics.at(nodeId);
+    std::vector<MetricPtr> output;
+    transform(metricMap.begin(), metricMap.end(), back_inserter(output), [](const MetricMap::value_type& val) {
+        return val.second;
+    });
+    return output;
+}
 
 }// namespace NES
