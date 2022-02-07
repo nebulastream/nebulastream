@@ -118,7 +118,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
     std::map<TopologyNodePtr, std::vector<std::string>> topologyNodeToStreamName;
     std::vector<OperatorId> placedOperatorIds;// bookkeeping: each operator should be placed once
     // loop over all logical stream
-    // NOTE: Dwi: I think we will get this information from source operator's properties
+    // FIXME: #2486 Dwi: I think we will get this information from source operator's properties
     //    for (auto srcOp : queryPlan->getSourceOperators()) {
     //        LogicalOperatorNodePtr currentOperator = srcOp;
     //        for (auto topologyNode :

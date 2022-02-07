@@ -325,7 +325,6 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForChildOperators(
     NES_TRACE("TopDownStrategy::getTopologyNodesForChildOperators: Get the pinned or closest placed upStreamOperators nodes for "
               "the the "
               "input operator.");
-    //FIXME: This logic needs to be changed now as non source operators can also be pinned
     std::vector<NodePtr> upStreamOperators = {candidateOperator};
 
     while (!upStreamOperators.empty()) {
@@ -335,11 +334,6 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForChildOperators(
             auto nodeId = std::any_cast<uint64_t>(upStreamOperator->getProperty(PINNED_NODE_ID));
             auto pinnedTopologyNode = getTopologyNode(nodeId);
             upStreamTopologyNodes.emplace_back(pinnedTopologyNode);
-            continue;
-        }
-        //TODO: Is this required?
-        if (operatorToExecutionNodeMap.contains(upStreamOperator->getId())) {
-            upStreamTopologyNodes.push_back(operatorToExecutionNodeMap[upStreamOperator->getId()]->getTopologyNode());
             continue;
         }
         upStreamOperators.insert(upStreamOperators.end(),

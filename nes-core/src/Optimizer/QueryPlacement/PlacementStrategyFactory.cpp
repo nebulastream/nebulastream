@@ -27,14 +27,14 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
                                                                const TypeInferencePhasePtr& typeInferencePhase,
                                                                const z3::ContextPtr& z3Context) {
     switch (placementStrategy) {
-        case PlacementStrategy::ILP:
-            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, z3Context);
+// #2485        case PlacementStrategy::ILP:
+//            return ILPStrategy::create(globalExecutionPlan, topology, typeInferencePhase, z3Context);
         case PlacementStrategy::BottomUp:
             return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         case PlacementStrategy::TopDown:
             return TopDownStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-        case PlacementStrategy::IFCOP:
-            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+// #2486        case PlacementStrategy::IFCOP:
+//            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
         // FIXME: enable them with issue #755
         //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
         //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);

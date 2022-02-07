@@ -58,8 +58,9 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
  */
 class QueryPlacementPhase {
   public:
+
     /**
-     *
+     * This method creates an instance of query placement phase
      * @param globalExecutionPlan : an instance of global execution plan
      * @param topology : topology in which the placement is to be performed
      * @param typeInferencePhase  : a type inference phase instance
@@ -90,15 +91,25 @@ class QueryPlacementPhase {
                                  z3::ContextPtr z3Context,
                                  bool queryReconfiguration);
 
+    /**
+     * This method extracts the upstream pinned operators from the shared query plan. IF the reconfiguration is enabled then the
+     * method brows through the change log to extract the upstream operators
+     * @param sharedQueryPlan : shared query plan to investigate
+     * @return collection of upstream operators
+     */
     std::vector<OperatorNodePtr> getUpStreamPinnedOperators(SharedQueryPlanPtr sharedQueryPlan);
 
+    /**
+     * This method extracts the downstream pinned operators connected to the collection of upstream operators.
+     * @param upStreamPinnedOperators : collection of upstream pinned operators
+     * @return collection of downstream operators
+     */
     std::vector<OperatorNodePtr> getDownStreamPinnedOperators(std::vector<OperatorNodePtr> upStreamPinnedOperators);
 
     /**
-     *
-     *
-     * @param pinnedOperators
-     * @return
+     * This method checks if the operators in the list are pinned or not
+     * @param pinnedOperators: operators to check
+     * @return false if one of the operator is not pinned else true
      */
     bool checkPinnedOperators(const std::vector<OperatorNodePtr>& pinnedOperators);
 

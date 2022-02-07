@@ -65,6 +65,7 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param queryId :  the query id
      * @param operatorNode : the input operator to place
      * @param candidateTopologyNode : the candidate topology node to place operator on
+     * @param pinnedDownStreamOperators: list of pinned downstream node after which placement stops
      */
     void placeOperator(QueryId queryId,
                        const OperatorNodePtr& operatorNode,
