@@ -42,13 +42,13 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
     static std::unique_ptr<MlHeuristicStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                     TopologyPtr topology,
                                                     TypeInferencePhasePtr typeInferencePhase,
-                                                    StreamCatalogPtr streamCatalog);
+                                                    SourceCatalogPtr streamCatalog);
 
   private:
     explicit MlHeuristicStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                               TopologyPtr topology,
                               TypeInferencePhasePtr typeInferencePhase,
-                              StreamCatalogPtr streamCatalog);
+                              SourceCatalogPtr streamCatalog);
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.

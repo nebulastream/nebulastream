@@ -312,6 +312,8 @@ const std::string PASSWORD_CONFIG = "password";
 const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
 const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
+const std::string TF_INSTALLED_CONFIG = "tfInstalled";
+
 
 //TCPSourceType configs
 const std::string SOCKET_HOST_CONFIG = "socketHost";

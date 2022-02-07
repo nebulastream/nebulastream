@@ -927,8 +927,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates an infer model operator
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, streamConf);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto physicalSource = PhysicalSource::create("default", "defaultPhysical", defaultSourceType);
+    auto nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 6116, {physicalSource});
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());

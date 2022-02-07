@@ -491,7 +491,9 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int16_t numberOfSlots,
                                         const Monitoring::RegistrationMetrics& registrationMetrics,
                                         Spatial::Index::Experimental::Location fixedCoordinates,
-                                        Spatial::Index::Experimental::NodeType spatialType) {
+                                        Spatial::Index::Experimental::NodeType spatialType,
+                                        bool isMobile,
+                                        bool tfInstalled) {
 
     RegisterNodeRequest request;
     request.set_address(ipAddress);
@@ -500,6 +502,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     request.set_numberofslots(numberOfSlots);
     request.set_spatialtype(Spatial::Util::NodeTypeUtilities::toProtobufEnum(spatialType));
     request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
+    request.set_tfinstalled(tfInstalled);
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     Coordinates* pCoordinates = request.mutable_coordinates();
     pCoordinates->set_lat(fixedCoordinates.getLatitude());
