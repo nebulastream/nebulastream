@@ -154,7 +154,7 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
                                                                    1024,
                                                                    12,
                                                                    12,
-                                                                   nullptr,
+                                                                   std::weak_ptr<NesWorker>(),
                                                                    Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED,
                                                                    "");

@@ -50,6 +50,8 @@
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -167,6 +169,30 @@ NesCoordinator::~NesCoordinator() {
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
+
+bool NesCoordinator::propagatePunctuation(uint64_t timestamp, QuerySubPlanId querySubPlanId) {
+    std::vector<SourceLogicalOperatorNodePtr> sources;
+
+    NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << timestamp << "to sources with querySubPlanId " << querySubPlanId);
+    for (auto query: queryCatalog->getQueries(QueryStatus::Running)) {
+        auto executedQueryPlan = query.second->getExecutedQueryPlan();
+        if (executedQueryPlan->getQuerySubPlanId() == querySubPlanId) {
+            sources = executedQueryPlan->getSourceOperators();
+        }
+    }
+    if (!sources.empty()) {
+        for (auto& sourceOperator : sources) {
+            SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
+            auto streamName = sourceDescriptor->getStreamName();
+            std::vector<TopologyNodePtr> sourceLocations = streamCatalog->getSourceNodesForLogicalStream(streamName);
+        }
+    }
+    else {
+        NES_ERROR("NesCoordinator::propagatePunctuation: no sources found for querySubPlanId " << querySubPlanId);
+    }
+
+    return true;
+}
 
 Runtime::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
 bool NesCoordinator::isCoordinatorRunning() { return isRunning; }
