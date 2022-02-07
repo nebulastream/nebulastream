@@ -44,8 +44,8 @@ WorkerConfiguration::WorkerConfiguration() : physicalSources() {
         4000,
         "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
         "to be the same as rpcPort in Coordinator.");
-    rpcPort = ConfigurationOption<uint32_t>::create(RPC_PORT_CONFIG, 4000, "RPC server port of the NES Worker.");
-    dataPort = ConfigurationOption<uint32_t>::create(DATA_PORT_CONFIG, 4001, "Data port of the NES Worker.");
+    rpcPort = ConfigurationOption<uint32_t>::create(RPC_PORT_CONFIG, 5000, "RPC server port of the NES Worker.");
+    dataPort = ConfigurationOption<uint32_t>::create(DATA_PORT_CONFIG, 5001, "Data port of the NES Worker.");
     numberOfSlots = ConfigurationOption<uint32_t>::create(NUMBER_OF_SLOTS_CONFIG,
                                                           UINT16_MAX,
                                                           "Number of computing slots for the NES Worker.");

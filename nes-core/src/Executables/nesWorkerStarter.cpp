@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
                                       string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
     }
 
-    auto workerConfigPath = commandLineParams.find("--workerConfigPath");
+    auto workerConfigPath = commandLineParams.find("--configPath");
 
     //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
     if (workerConfigPath != commandLineParams.end()) {
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
 
     //if command line params are provided that do not contain a path to a yaml file for worker config,
     //command line param physicalSources are used to overwrite default physicalSources
-    if (argc >= 1 && !commandLineParams.contains("--workerConfigPath")) {
+    if (argc >= 1 && !commandLineParams.contains("--configPath")) {
         workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
     }
 

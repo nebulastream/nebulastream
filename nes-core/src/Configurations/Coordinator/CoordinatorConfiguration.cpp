@@ -36,7 +36,7 @@ CoordinatorConfiguration::CoordinatorConfiguration() {
         ConfigurationOption<std::string>::create(COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator.");
     rpcPort = ConfigurationOption<uint32_t>::create(RPC_PORT_CONFIG, 4000, "RPC server port of the NES Coordinator");
     restPort = ConfigurationOption<uint32_t>::create(REST_PORT_CONFIG, 8081, "Port exposed for rest endpoints");
-    dataPort = ConfigurationOption<uint32_t>::create(DATA_PORT_CONFIG, 3001, "NES data server port");
+    dataPort = ConfigurationOption<uint32_t>::create(DATA_PORT_CONFIG, 4001, "NES data server port");
     numberOfSlots = ConfigurationOption<uint32_t>::create(NUMBER_OF_SLOTS_CONFIG,
                                                           UINT16_MAX,
                                                           "Number of computing slots for NES Coordinator");

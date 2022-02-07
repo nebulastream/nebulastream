@@ -1,61 +1,65 @@
 # ~~~ Configurations for the NES Coordinator ~~~
 
 # ~~ IPs and Ports ~~
-# Set NES ip of the REST server
+# Set NES ip of the REST server. Default: 127.0.0.1
 restIp:
 
-# Set RPC IP address of NES Coordinator
-coordinatorIp:
-
-# Set RPC Server port of NES Coordinator
-rpcPort:
-
-# Set port exposed for REST endpoints
+# Set port exposed for REST endpoints. Default: 8081
 restPort:
 
-# Set the data port of the network manager
+# Set RPC IP address of NES Coordinator. Default: 127.0.0.1
+coordinatorIp:
+
+# Set RPC Server port of NES Coordinator. Default: 4000
+rpcPort:
+
+# Set the data port of the network manager. Default: 3001
 dataPort:
 
 
 # ~~ Processing Configurations ~~
-# Set the number of computing slots in NES Coordinator
+# Set the number of computing slots in NES Coordinator. Default: UINT16_MAX
 numberOfSlots:
 
-# The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
+# The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE). Default: LOG_DEBUG
 logLevel:
 
-# Number buffers in global buffer pool
+# Number buffers in global buffer pool. Default: 1024
 numberOfBuffersInGlobalBufferManager:
 
-# Number buffers in task local buffer pool
+# Number buffers in task local buffer pool. Default: 128
 numberOfBuffersPerWorker:
 
-# Number buffers in source local buffer pool
+# Number buffers in source local buffer pool. Default: 64
 numberOfBuffersInSourceLocalBufferPool:
 
-# Size of buffer to pass data through the system
+# Size of buffer to pass data through the system. Default: 4096
 bufferSizeInBytes:
 
-# Number of threads available for the worker node. Defines how many queries can run in parallel.
+# Number of threads available for the worker node. Defines how many queries can run in parallel. Default: 1
 numWorkerThreads:
 
-# The number of queries to be processed together
+# The number of queries to be processed together. Default: 1
 queryBatchSize:
 
-# The rule to be used for performing query merging
+# The rule to be used for performing query merging can be
+#  [SyntaxBasedCompleteQueryMergerRule|SyntaxBasedPartialQueryMergerRule|Z3SignatureBasedCompleteQueryMergerRule|
+#  Z3SignatureBasedPartialQueryMergerRule|Z3SignatureBasedPartialQueryMergerBottomUpRule|HashSignatureBasedCompleteQueryMergerRule|
+#  ImprovedStringSignatureBasedCompleteQueryMergerRule|ImprovedStringSignatureBasedPartialQueryMergerRule|
+#  StringSignatureBasedPartialQueryMergerRule|HybridCompleteQueryMergerRule|DefaultQueryMergerRule]. Default: DefaultQueryMergerRule
 queryMergerRule:
 
-# Semantic Query Validation Feature
+# Semantic Query Validation Feature. Default: false
 enableSemanticQueryValidation:
 
-# Enable monitoring
+# Enable monitoring. Default: false
 enableMonitoring:
 
-# Selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]
+# Selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]. Default: FORCE_ROW_LAYOUT
 memoryLayoutPolicy:
 
-# Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule
+# Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. Default: false
 performOnlySourceOperatorExpansion:
 
-# Enable reconfiguration of running query plans
+# Enable reconfiguration of running query plans. Default: false
 enableQueryReconfiguration:
