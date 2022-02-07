@@ -19,7 +19,7 @@
 
 namespace NES::Experimental {
 
-#ifdef defined(__aarch64__) || defined(_M_ARM64)
+#ifdef __aarch64__
 class CRC32Hash : public Hash<CRC32Hash> {
   public:
     inline auto hashKey(uint64_t k, hash_t seed) const {
@@ -31,8 +31,9 @@ class CRC32Hash : public Hash<CRC32Hash> {
         NES_NOT_IMPLEMENTED();
     }
 };
+#endif
 
-#elif defined(__x86_64__) || defined(_M_X64)
+#ifdef __x86_64__
 
 #include <x86intrin.h>
 
