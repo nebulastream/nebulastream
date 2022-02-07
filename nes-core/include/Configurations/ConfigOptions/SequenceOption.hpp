@@ -53,6 +53,12 @@ class SequenceOption : public BaseOption {
 
     [[nodiscard]] std::vector<T> getValues() const;
     [[nodiscard]] bool empty() const;
+    template<class X>
+    void add(X value){
+        auto option = T();
+        option.setValue(value);
+        options.push_back(option);
+    };
 
   protected:
     void parseFromYAMLNode(Yaml::Node node) override;

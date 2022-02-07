@@ -63,7 +63,7 @@ int main(int argc, const char* argv[]) {
     if (argc > 1) {
         coordinatorConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
-    NES::setLogLevel(NES::getDebugLevelFromString(coordinatorConfig->getLogLevel()->getValue()));
+    NES::setLogLevel(coordinatorConfig->logLevel.getValue());
 
     NES_INFO("start coordinator with " << coordinatorConfig->toString());
 

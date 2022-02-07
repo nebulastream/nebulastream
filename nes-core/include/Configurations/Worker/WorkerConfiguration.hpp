@@ -16,8 +16,8 @@
 #define NES_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 
 #include <Configurations/ConfigOptions/BaseConfiguration.hpp>
-#include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceFactory.hpp>
 #include <map>
 #include <string>
 
@@ -83,7 +83,10 @@ class WorkerConfiguration : public BaseConfiguration {
     StringOption queuePinList = {QUEUE_PIN_LIST_CONFIG, "", "comma separated list of where to map the worker on the queue"};
     BoolOption numaAwareness = {NUMA_AWARENESS_CONFIG, false, "Enable Numa-Aware execution"};
     BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
-    SequenceOption<WrapOption<PhysicalSourcePtr, PhysicalSourceFactory>> physicalSources = {"physicalSources", "Physical sources"};
+    SequenceOption<WrapOption<PhysicalSourcePtr, PhysicalSourceFactory>> physicalSources = {"physicalSources",
+                                                                                            "Physical sources"};
+
+    static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
