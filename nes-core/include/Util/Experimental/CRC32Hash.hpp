@@ -15,7 +15,26 @@
 #ifndef NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
 #define NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_
 #include <Util/Experimental/Hash.hpp>
+#include <Util/Logger.hpp>
+#include <x86intrin.h>
 namespace NES::Experimental {
+
+#ifdef defined(__aarch64__) || defined(_M_ARM64)
+class CRC32Hash : public Hash<CRC32Hash> {
+  public:
+    inline auto hashKey(uint64_t k, hash_t seed) const {
+       NES_NOT_IMPLEMENTED();
+    }
+    inline uint64_t hashKey(uint64_t k) const { return hashKey(k, 0); }
+
+    inline uint64_t hashKey(const void* key, int len, uint64_t seed) const {
+        NES_NOT_IMPLEMENTED();
+    }
+};
+
+#elif defined(__x86_64__) || defined(_M_X64)
+
+#include <x86intrin.h>
 
 class CRC32Hash : public Hash<CRC32Hash> {
   public:
@@ -48,7 +67,7 @@ class CRC32Hash : public Hash<CRC32Hash> {
         return s;
     }
 };
-
+#endif
 }// namespace NES::Experimental
 
 #endif//NES_NES_CORE_INCLUDE_UTIL_EXPERIMENTAL_CRC32HASH_HPP_

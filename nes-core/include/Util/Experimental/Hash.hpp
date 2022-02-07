@@ -19,7 +19,6 @@
 #include <functional>
 #include <tuple>
 #include <utility>
-#include <x86intrin.h>
 #include <cstdint>
 namespace NES::Experimental {
 
