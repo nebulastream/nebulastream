@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
-
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Experimental/CRC32Hash.hpp>
 #include <Util/Experimental/Hash.hpp>
 #include <assert.h>
-#include <Util/Experimental/CRC32Hash.hpp>
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
 
@@ -28,7 +27,13 @@ namespace NES::Experimental {
  */
 class Hashmap {
   public:
+#ifdef __aarch64__
+    const auto hasher = Hash<CRC32Hash>();
+#endif
+
+#ifdef __x86_64__
     const Hash<CRC32Hash> hasher = Hash<CRC32Hash>();
+#endif
     using hash_t = uint64_t;
     static const size_t headerSize = 16;// next* + hash = 16byte
     const size_t entrySize;
@@ -41,18 +46,14 @@ class Hashmap {
       public:
         Entry* next;
         hash_t hash;
-        Entry(Entry* next, hash_t hash) : next(next), hash(hash) {}
         // payload data follows this header
+        Entry(Entry* next, hash_t hash);
     };
 
     explicit Hashmap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
                      size_t keySize,
                      size_t valueSize,
-                     size_t nrEntries)
-        : entrySize(headerSize + keySize + valueSize), keyOffset(headerSize), valueOffset(keyOffset + keySize),
-          entriesPerBuffer(bufferManager->getBufferSize() / entrySize), bufferManager(bufferManager) {
-        setSize(nrEntries);
-    }
+                     size_t nrEntries);
 
     /**
      * @brief Get the key for a specific entry
@@ -66,8 +67,8 @@ class Hashmap {
         return (T*) getKeyPtr(entry);
     };
 
-    std::unique_ptr<std::vector<Runtime::TupleBuffer>> extractEntries() { return std::move(storageBuffers); };
-    std::unique_ptr<std::vector<Runtime::TupleBuffer>>& getEntries() { return storageBuffers; };
+    std::unique_ptr<std::vector<Runtime::TupleBuffer>> extractEntries();
+    std::unique_ptr<std::vector<Runtime::TupleBuffer>>& getEntries();
 
     /**
      * @brief Get the value for a specific entry
@@ -81,25 +82,23 @@ class Hashmap {
      */
     inline Entry* find_chain(hash_t hash);
 
-    /**Returns the first entry of the chain for the given hash
-    * Uses pointer tagging as a filter to quickly determine whether hash iscontained
-    */
+    /**
+     * @brief Returns the first entry of the chain for the given hash
+     * Uses pointer tagging as a filter to quickly determine whether hash iscontained
+     */
     inline Entry* find_chain_tagged(hash_t hash);
     /// Insert entry into chain for the given hash
     inline void insert(Entry* entry, hash_t hash);
     /// Insert entry into chain for the given hash
     /// Updates tag
     inline void insert_tagged(Entry* entry, hash_t hash);
-    /// Insert n entries starting from first, always looking for the next entry
-    /// step bytes after the previous
-    inline void insertAll(Entry* first, size_t n, size_t step);
-
-    inline void insertAll_tagged(Entry* first, size_t n, size_t step);
 
     template<typename K, bool useTags>
     inline Entry* findOneEntry(const K& key, hash_t h);
+
     template<class KeyType>
     inline uint8_t* getEntry(KeyType& key);
+
     template<typename K, bool useTags>
     Hashmap::Entry* findOrCreate(K key, hash_t hash);
     /// Set size (no resize functionality)
@@ -107,24 +106,11 @@ class Hashmap {
     /// Removes all elements from the hashtable
     inline void clear();
 
-    Entry** entries;
-    Runtime::TupleBuffer entryBuffer;
-    std::unique_ptr<std::vector<Runtime::TupleBuffer>> storageBuffers;
-
-    hash_t mask;
-    using ptr_t = uint64_t;
-    const ptr_t maskPointer = (~(ptr_t) 0) >> (16);
-    const ptr_t maskTag = (~(ptr_t) 0) << (sizeof(ptr_t) * 8 - 16);
-
     inline static Entry* end();
 
     Hashmap(const Hashmap&) = delete;
 
-    inline ~Hashmap(){
-        if(storageBuffers){
-            storageBuffers->clear();
-        }
-    }
+    ~Hashmap();
 
     Runtime::TupleBuffer& getBufferForEntry(uint64_t entry) {
         auto bufferIndex = entry / entriesPerBuffer;
@@ -138,30 +124,24 @@ class Hashmap {
         return reinterpret_cast<Entry*>(buffer.getBuffer() + (entryOffsetInBuffer * entrySize));
     }
 
-    Entry* allocateNewEntry() {
-        if (currentSize % entriesPerBuffer == 0) {
-            auto buffer = bufferManager->getBufferNoBlocking();
-            if (!buffer.has_value()) {
-                //     throw Compiler::CompilerException("BufferManager is empty. Size "
-                //                                     + std::to_string(bufferManager->getNumOfPooledBuffers()));
-            }
-            (*storageBuffers).emplace_back(buffer.value());
-        }
-        auto buffer = getBufferForEntry(currentSize);
-        buffer.setNumberOfTuples(buffer.getNumberOfTuples() + 1);
-        return entryIndexToAddress(currentSize);
-    }
+    Entry* allocateNewEntry();
+
+    Entry** entries;
 
   private:
+    using ptr_t = uint64_t;
     std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;
     inline Hashmap::Entry* ptr(Hashmap::Entry* p);
     inline ptr_t tag(hash_t p);
     inline Hashmap::Entry* update(Hashmap::Entry* old, Hashmap::Entry* p, hash_t hash);
+    Runtime::TupleBuffer entryBuffer;
+    std::unique_ptr<std::vector<Runtime::TupleBuffer>> storageBuffers;
+    hash_t mask;
+    const ptr_t maskPointer = (~(ptr_t) 0) >> (16);
+    const ptr_t maskTag = (~(ptr_t) 0) << (sizeof(ptr_t) * 8 - 16);
     size_t capacity = 0;
     uint64_t currentSize = 0;
 };
-
-extern Hashmap::Entry notFound;
 
 inline Hashmap::Entry* Hashmap::end() { return nullptr; }
 
@@ -254,15 +234,19 @@ void inline Hashmap::clear() {
 template<typename K, bool useTags>
 inline Hashmap::Entry* Hashmap::findOneEntry(const K& key, hash_t h) {
     Entry* entry;
-    if (useTags)
+    if (useTags) {
         entry = reinterpret_cast<Entry*>(find_chain_tagged(h));
-    else
+    } else {
         entry = reinterpret_cast<Entry*>(find_chain(h));
-    if (entry == end())
+    }
+    if (entry == end()) {
         return nullptr;
-    for (; entry != end(); entry = reinterpret_cast<Entry*>(entry->next))
-        if (entry->hash == h && (*getKeyPtr<K>(entry)) == key)
+    }
+    for (; entry != end(); entry = reinterpret_cast<Entry*>(entry->next)) {
+        if (entry->hash == h && (*getKeyPtr<K>(entry)) == key) {
             return entry;
+        }
+    }
     return nullptr;
 }
 
@@ -290,9 +274,8 @@ class HashMapFactory {
     HashMapFactory(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
                    size_t keySize,
                    size_t valueSize,
-                   size_t nrEntries)
-        : bufferManager(bufferManager), keySize(keySize), valueSize(valueSize), nrEntries(nrEntries){};
-    Hashmap create() { return Hashmap(bufferManager, keySize, valueSize, nrEntries); }
+                   size_t nrEntries);
+    Hashmap create();
 
   private:
     std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;

@@ -14,6 +14,8 @@
 
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Util/Experimental/HashMap.hpp>
+#include <Util/Experimental/Hash.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
 #include <unistd.h>
@@ -34,12 +36,7 @@ class HashMapTest : public testing::Test {
     }
     static void TearDownTestCase() { NES_INFO("HashMapTest test class TearDownTestCase."); }
 };
-/*
-TEST_F(HashMapTest, CRC32HashTest) {
-    auto hash = Experimental::CRC32Hash();
-    auto h = hash(10, Experimental::Hash<Experimental::CRC32Hash>::SEED);
-    std::cout << h << std::endl;
-}
+
 
 TEST_F(HashMapTest, putEntry) {
     auto bm = std::make_shared<Runtime::BufferManager>();
@@ -147,5 +144,4 @@ TEST_F(HashMapTest, insertMultipleValues) {
         ASSERT_EQ(value->v2, i * 42ULL);
     }
 }
-*/
 }// namespace NES
