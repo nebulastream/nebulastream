@@ -30,6 +30,8 @@ service WorkerRPCService {
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
 
+  rpc ReceivePunctuation (PropagateTimestampNotificationToWorker) returns (PropagateTimestampReplyFromWorker) {}
+
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 
   rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
@@ -96,6 +98,14 @@ message MonitoringDataRequest {
 
 message MonitoringDataReply {
   bytes buffer = 1;
+}
+
+message PropagateTimestampNotificationToWorker{
+  uint64 timestamp = 1;
+}
+
+message PropagateTimestampReplyFromWorker{
+  bool success = 1;
 }
 
 message UpdateNetworkSinkRequest{

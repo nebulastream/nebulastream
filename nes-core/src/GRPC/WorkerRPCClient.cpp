@@ -356,6 +356,22 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     return false;
 }
 
+bool WorkerRPCClient::propagatePunctuation(uint64_t timestamp, const std::string& address) {
+    PropagateTimestampNotificationToWorker request;
+    request.set_timestamp(timestamp);
+    PropagateTimestampReplyFromWorker reply;
+    ClientContext context;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->ReceivePunctuation(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
+        return true;
+    }
+    return false;
+}
+
 bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
     NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);
     BufferRequest request;

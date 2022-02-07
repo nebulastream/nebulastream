@@ -49,6 +49,7 @@
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <grpcpp/health_check_service_interface.h>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -174,7 +175,7 @@ bool NesCoordinator::propagatePunctuation(uint64_t timestamp, QuerySubPlanId que
     std::vector<SourceLogicalOperatorNodePtr> sources;
 
     NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << timestamp << "to sources with querySubPlanId " << querySubPlanId);
-    for (auto query: queryCatalog->getQueries(QueryStatus::Running)) {
+    for (auto& query : queryCatalog->getQueries(QueryStatus::Running)) {
         auto executedQueryPlan = query.second->getExecutedQueryPlan();
         if (executedQueryPlan->getQuerySubPlanId() == querySubPlanId) {
             sources = executedQueryPlan->getSourceOperators();
@@ -185,13 +186,23 @@ bool NesCoordinator::propagatePunctuation(uint64_t timestamp, QuerySubPlanId que
             SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
             auto streamName = sourceDescriptor->getStreamName();
             std::vector<TopologyNodePtr> sourceLocations = streamCatalog->getSourceNodesForLogicalStream(streamName);
+            if (!sourceLocations.empty()) {
+                 for (auto& sourceLocation : sourceLocations) {
+                     auto coordinatorRpcClient = std::make_shared<WorkerRPCClient>();
+                     bool success = coordinatorRpcClient->propagatePunctuation(timestamp, sourceLocation->getIpAddress());
+                     NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
+                     return success;
+                 }
+            }
+            else {
+                NES_ERROR("NesCoordinator::propagatePunctuation: no physical sources found for the querySubPlanId " << querySubPlanId);
+            }
         }
     }
     else {
-        NES_ERROR("NesCoordinator::propagatePunctuation: no sources found for querySubPlanId " << querySubPlanId);
+        NES_ERROR("NesCoordinator::propagatePunctuation: no sources found for the querySubPlanId " << querySubPlanId);
     }
-
-    return true;
+    return false;
 }
 
 Runtime::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }

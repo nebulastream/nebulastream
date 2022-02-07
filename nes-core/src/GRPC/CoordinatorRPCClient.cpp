@@ -473,7 +473,7 @@ bool CoordinatorRPCClient::propagatePunctuation(uint64_t timestamp, QuerySubPlan
     ClientContext context;
     Status status = coordinatorStub->PropagatePunctuation(&context, request, &reply);
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
+        NES_DEBUG("CoordinatorRPCClient::PropagatePunctuation: status ok");
         return true;
     }
     return false;

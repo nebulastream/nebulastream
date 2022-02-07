@@ -123,6 +123,21 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     }
     return Status::CANCELLED;
 }
+
+Status WorkerRPCServer::ReceivePunctuation(ServerContext*,
+                                           const PropagateTimestampNotificationToWorker* request,
+                                           PropagateTimestampReplyFromWorker* reply) {
+    try {
+        NES_ERROR("WorkerRPCServer::propagatePunctuation: received a punctuation with the timestamp "
+          << request->timestamp());
+        reply->set_success(true);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());
+        return Status::CANCELLED;
+    }
+}
+
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
     NES_DEBUG("WorkerRPCServer::BeginBuffer request received");
 
