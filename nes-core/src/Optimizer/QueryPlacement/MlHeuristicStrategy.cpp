@@ -14,13 +14,13 @@
     limitations under the License.
 */
 
-#include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
@@ -35,13 +35,14 @@
 #include <Util/Logger.hpp>
 #include <utility>
 #include <z3++.h>
+#include <API/Schema.hpp>
 
 namespace NES::Optimizer {
 
 std::unique_ptr<MlHeuristicStrategy> MlHeuristicStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                            TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
-                                                           StreamCatalogPtr streamCatalog) {
+                                                           SourceCatalogPtr streamCatalog) {
     return std::make_unique<MlHeuristicStrategy>(MlHeuristicStrategy(std::move(globalExecutionPlan),
                                                                std::move(topology),
                                                                std::move(typeInferencePhase),
@@ -51,7 +52,7 @@ std::unique_ptr<MlHeuristicStrategy> MlHeuristicStrategy::create(GlobalExecution
 MlHeuristicStrategy::MlHeuristicStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                                    TopologyPtr topology,
                                    TypeInferencePhasePtr typeInferencePhase,
-                                   StreamCatalogPtr streamCatalog)
+                                   SourceCatalogPtr streamCatalog)
     : BasePlacementStrategy(std::move(globalExecutionPlan),
                             std::move(topology),
                             std::move(typeInferencePhase),

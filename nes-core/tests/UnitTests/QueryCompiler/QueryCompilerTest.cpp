@@ -163,13 +163,16 @@ TEST_F(QueryCompilerTest, filterQuery) {
  */
 TEST_F(QueryCompilerTest, inferModelQuery) {
     SchemaPtr schema = Schema::create();
-    schema->addField("F1", FLOAT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    schema->addField("F1", INT32);
+    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    std::string logicalSourceName = "logicalSourceName";
+    std::string physicalSourceName = "x1";
+    streamCatalog->addLogicalStream(logicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
-                                                                   streamConf,
+                                                                   {streamConf},
                                                                    1,
                                                                    4096,
                                                                    1024,
@@ -208,13 +211,16 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
  */
 TEST_F(QueryCompilerTest, mapQuery) {
     SchemaPtr schema = Schema::create();
-    schema->addField("F1", FLOAT32);
-    auto streamCatalog = std::make_shared<StreamCatalog>(queryParsingService);
-    streamCatalog->addLogicalStream("streamName", schema);
-    auto streamConf = PhysicalStreamConfig::createEmpty();
+    schema->addField("F1", INT32);
+    auto streamCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    std::string logicalSourceName = "logicalSourceName";
+    std::string physicalSourceName = "x1";
+    streamCatalog->addLogicalStream(logicalSourceName, schema);
+    auto defaultSourceType = DefaultSourceType::create();
+    auto streamConf = PhysicalSource::create(logicalSourceName, physicalSourceName, defaultSourceType);
     auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                    31337,
-                                                                   streamConf,
+                                                                   {streamConf},
                                                                    1,
                                                                    4096,
                                                                    1024,
