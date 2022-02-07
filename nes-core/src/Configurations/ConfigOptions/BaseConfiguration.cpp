@@ -29,7 +29,7 @@ void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
         auto identifier = (*entry).first;
         auto node = (*entry).second;
         if (!optionMap.contains(identifier)) {
-            throw ConfigurationException("Identifier: " + identifier + " is not known.");
+            throw ConfigurationException("Identifier: " + identifier + " is not known. Check if it exposed in the getOptions function.");
         }
         // check if config is empty
         if (!config.As<std::string>().empty() && config.As<std::string>() != "\n") {

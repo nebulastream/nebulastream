@@ -110,7 +110,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &workerPinList,
                 &queuePinList,
                 &numaAwareness,
-                &enableMonitoring};
+                &enableMonitoring,
+                &physicalSources};
     }
 };
 }// namespace Configurations
