@@ -26,7 +26,23 @@ class AVGPartialType {
   public:
     explicit AVGPartialType(SumType sum) : sum(sum), count(1) {}
     explicit AVGPartialType() : sum(0) {}
+    AVGPartialType(const AVGPartialType& a) : sum(a.sum), count(a.count) {}
+    AVGPartialType(AVGPartialType&& a) noexcept// move constructor
+        : sum(a.sum), count(a.count) {}
 
+    AVGPartialType& operator=(const AVGPartialType& other)// copy assignment
+    {
+        this->sum = other.sum;
+        this->count = other.count;
+        return *this;
+    }
+
+    AVGPartialType& operator=(AVGPartialType&& other) noexcept// move assignment
+    {
+        this->sum = other.sum;
+        this->count = other.count;
+        return *this;
+    }
     [[nodiscard]] SumType getSum() const { return sum; }
     [[nodiscard]] int64_t getCount() const { return count; }
 
@@ -42,14 +58,6 @@ class AVGPartialType {
         count += value.count;
         return *this;
     }
-
-    AVGPartialType& operator=(AVGPartialType<SumType>& other)
-    {
-        this->sum = other.sum;
-        this->count = other.count;
-        return *this;
-    }
-
 
     SumType sum;
     int64_t count{0};
@@ -85,7 +93,7 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
      * @param the new input element
      * @return new partial aggregate as combination of partialValue and inputValue
      */
-    AVGPartialType<InputType> combine(AVGPartialType<InputType> partialValue, AVGPartialType<InputType> inputValue) override {
+    AVGPartialType<InputType> combine(AVGPartialType<InputType>& partialValue, AVGPartialType<InputType>& inputValue) override {
         partialValue.addToSum(inputValue.getSum());
         partialValue.addToCount(inputValue.getCount());
         return partialValue;
@@ -96,11 +104,11 @@ class ExecutableAVGAggregation : public ExecutableWindowAggregation<InputType, A
      * @param partial aggregate element
      * @return element mapped to FinalAggregationType
      */
-    AVGResultType lower(AVGPartialType<InputType> partialAggregateValue) override {
+    AVGResultType lower(AVGPartialType<InputType>& partialAggregateValue) override {
         return (AVGResultType) partialAggregateValue.getSum() / (AVGResultType) partialAggregateValue.getCount();
     }
 };
 
 }// namespace NES::Windowing
 
-#endif  // NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLEAVGAGGREGATION_HPP_
+#endif// NES_INCLUDE_WINDOWING_WINDOWAGGREGATIONS_EXECUTABLEAVGAGGREGATION_HPP_
