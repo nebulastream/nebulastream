@@ -60,9 +60,8 @@ MQTTSource::MQTTSource(SchemaPtr schema,
                  gatheringMode,
                  std::move(executableSuccessors)),
       sourceConfig(sourceConfig), connected(false), serverAddress(sourceConfig->getUrl()->getValue()),
-      clientId(sourceConfig->getClientId()->getValue()), user(sourceConfig->getUserName()->getValue()), topic(sourceConfig->getTopic()->getValue()),
-      inputFormat(inputFormat),
-      tupleSize(schema->getSchemaSizeInBytes()),
+      clientId(sourceConfig->getClientId()->getValue()), user(sourceConfig->getUserName()->getValue()),
+      topic(sourceConfig->getTopic()->getValue()), inputFormat(inputFormat), tupleSize(schema->getSchemaSizeInBytes()),
       qualityOfService(MQTTSourceDescriptor::ServiceQualities(sourceConfig->getQos()->getValue())),
       cleanSession(sourceConfig->getCleanSession()->getValue()),
       bufferFlushIntervalMs(sourceConfig->getFlushIntervalMS()->getValue()),
@@ -218,6 +217,7 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
 }
 
 bool MQTTSource::connect() {
+    NES_INFO("...................................... URL ........................." << toString());
     if (!connected) {
         NES_DEBUG("MQTTSource was !connect now connect " << this << ": connected");
         // connect with user name and password
