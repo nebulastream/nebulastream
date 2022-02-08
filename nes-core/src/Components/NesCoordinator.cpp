@@ -45,7 +45,6 @@
 #include <Services/MaintenanceService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/QueryParsingService.hpp>
-#include <Services/MaintenanceService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Topology/Topology.hpp>
@@ -97,7 +96,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
-
     queryRequestProcessorService =
         std::make_shared<RequestProcessorService>(globalExecutionPlan,
                                                   topology,
@@ -106,8 +104,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                   streamCatalog,
                                                   workerRpcClient,
                                                   queryRequestQueue,
-                                                  this->coordinatorConfiguration->getQueryReconfiguration()->getValue(),
-                                                  this->coordinatorConfiguration->optimizer);
+                                                  this->coordinatorConfiguration->optimizer,
+                                                  this->coordinatorConfiguration->enableQueryReconfiguration);
 
     queryService = std::make_shared<QueryService>(queryCatalog,
                                                   queryRequestQueue,

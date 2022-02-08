@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
@@ -55,13 +55,16 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  RequestQueuePtr queryRequestQueue,
                                                  const Configurations::OptimizerConfiguration optimizerConfiguration,
                                                  bool queryReconfiguration)
-    : queryProcessorRunning(true), queryCatalog(queryCatalog), queryReconfiguration(queryReconfiguration), queryRequestQueue(std::move(queryRequestQueue)),
-      globalQueryPlan(globalQueryPlan) {
+    : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalog(queryCatalog),
+      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    queryPlacementPhase =
-        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, z3Context, queryReconfiguration);
+    queryPlacementPhase = Optimizer::QueryPlacementPhase::create(globalExecutionPlan,
+                                                                 topology,
+                                                                 typeInferencePhase,
+                                                                 z3Context,
+                                                                 queryReconfiguration);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     z3::config cfg;
