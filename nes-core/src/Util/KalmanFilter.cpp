@@ -185,17 +185,15 @@ std::chrono::milliseconds KalmanFilter::getValueMagnitudeBasedFrequency() {
 
 std::chrono::milliseconds KalmanFilter::getExponentialFrequency() {
     auto errorDiff = this->getEstimationErrorDifference();
+    std::cout << "Error diff: " << errorDiff << std::endl;
     /**
      * diff is new - old, negative means new is small
      * so we don't need to cover it
      */
     if (errorDiff > 0.6) {
         return this->getExponentialDecayFrequency();
-    } else if (std::abs(errorDiff) <= 0.16) {
-        return this->getExponentialGrowthFrequency();
-    } else {
-        this->increaseCounter = 1;
-        this->decreaseCounter = 1;
+//    } else if (std::abs(errorDiff) <= 0.16) {
+//        return this->getExponentialGrowthFrequency();
     }
     return this->gatheringInterval;
 }
@@ -206,7 +204,7 @@ double KalmanFilter::getEstimationErrorDifference() {
 
 std::chrono::milliseconds KalmanFilter::getExponentialDecayFrequency() {
     std::cout << "Alteration: decay" << std::endl;
-    auto newFreqCandidate = this->initialFreq.count() * (1 - std::pow(eulerConstant, this->decreaseCounter));
+    auto newFreqCandidate = this->initialFreq.count() * std::pow((1 - .25), this->decreaseCounter); // y = y0 * ((1-b) ^ x)
     ++this->decreaseCounter;
     this->increaseCounter = 1;
     this->gatheringInterval = std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
