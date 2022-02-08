@@ -92,7 +92,7 @@ MQTTSourceType::MQTTSourceType(Yaml::Node yamlConfig) : MQTTSourceType() {
     }
     if (!yamlConfig[Configurations::QOS_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::QOS_CONFIG].As<std::string>() != "\n") {
-        qos->setValue(yamlConfig[Configurations::QOS_CONFIG].As<uint8_t>());
+        qos->setValue(yamlConfig[Configurations::QOS_CONFIG].As<uint32_t>());
     }
     if (!yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<std::string>().empty()
         && yamlConfig[Configurations::CLEAN_SESSION_CONFIG].As<std::string>() != "\n") {
