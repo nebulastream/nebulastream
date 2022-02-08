@@ -248,9 +248,10 @@ class KalmanFilter {
      * Paper is not clear on the magnitude (size) of
      * the range, this can be determined in tests later.
      */
-    std::chrono::milliseconds gatheringIntervalRange{8000};   // allowed to change by +4s/-4s
-    std::chrono::milliseconds gatheringInterval{1000};        // currently in use
-    std::chrono::milliseconds gatheringIntervalReceived{1000};// from coordinator
+    std::chrono::milliseconds gatheringIntervalRange{8000}; // allowed to change by +4s/-4s
+    std::chrono::milliseconds gatheringInterval{1000}; // currently in use
+    std::chrono::milliseconds gatheringIntervalReceived{1000}; // from coordinator
+    std::chrono::milliseconds initialFreq{1000}; // initial freq
 
     /**
      * @brief control units for changing the new

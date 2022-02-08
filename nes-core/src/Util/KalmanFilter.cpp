@@ -175,12 +175,12 @@ std::chrono::milliseconds KalmanFilter::getValueMagnitudeBasedFrequency() {
     auto totalEstimationError = this->calculateTotalEstimationError();
     auto powerOfEuler = (totalEstimationError + lambda) / lambda;
     auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
-    auto newFreqCandidate = this->frequency.count() + thetaPart;
+    auto newFreqCandidate = this->gatheringInterval.count() + thetaPart;
     auto magnitude = this->getMagnitudeFromLastValues(this->lastValuesWindow[1], this->lastValuesWindow[0]);
     auto canonicalizedFreqCandidate = (magnitude > 0) ? newFreqCandidate / magnitude : newFreqCandidate;
     // forget upper/lower thresholds or error thresholds for now
-    this->frequency = std::chrono::milliseconds((int) trunc(canonicalizedFreqCandidate));
-    return this->frequency;
+    this->gatheringInterval = std::chrono::milliseconds((int) trunc(canonicalizedFreqCandidate));
+    return this->gatheringInterval;
 }
 
 std::chrono::milliseconds KalmanFilter::getExponentialFrequency() {
@@ -197,7 +197,7 @@ std::chrono::milliseconds KalmanFilter::getExponentialFrequency() {
         this->increaseCounter = 1;
         this->decreaseCounter = 1;
     }
-    return this->frequency;
+    return this->gatheringInterval;
 }
 
 double KalmanFilter::getEstimationErrorDifference() {
@@ -206,20 +206,20 @@ double KalmanFilter::getEstimationErrorDifference() {
 
 std::chrono::milliseconds KalmanFilter::getExponentialDecayFrequency() {
     std::cout << "Alteration: decay" << std::endl;
-    auto newFreqCandidate = this->frequency.count() * (1 - std::pow(eulerConstant, this->decreaseCounter));
+    auto newFreqCandidate = this->initialFreq.count() * (1 - std::pow(eulerConstant, this->decreaseCounter));
     ++this->decreaseCounter;
     this->increaseCounter = 1;
-    this->frequency = std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
-    return this->frequency;
+    this->gatheringInterval = std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
+    return this->gatheringInterval;
 }
 
 std::chrono::milliseconds KalmanFilter::getExponentialGrowthFrequency() {
     std::cout << "Alteration: growth" << std::endl;
-    auto newFreqCandidate = this->frequency.count() * (1 + std::pow(eulerConstant, this->increaseCounter));
+    auto newFreqCandidate = this->initialFreq.count() * (1 + std::pow(eulerConstant, this->increaseCounter));
     ++this->increaseCounter;
     this->decreaseCounter = 1;
-    this->frequency = std::chrono::milliseconds((int) trunc(newFreqCandidate));
-    return this->frequency;
+    this->gatheringInterval = std::chrono::milliseconds((int) trunc(newFreqCandidate));
+    return this->gatheringInterval;
 }
 
 double KalmanFilter::getMagnitudeFromLastValues(double oldValue, double newValue) {
@@ -253,9 +253,11 @@ float KalmanFilter::getLambda() { return lambda; }
 
 void KalmanFilter::setLambda(float newLambda) { this->lambda = newLambda; }
 
+
 void KalmanFilter::setGatheringInterval(std::chrono::milliseconds gatheringIntervalInMillis) {
     this->gatheringInterval = gatheringIntervalInMillis;
     this->gatheringIntervalReceived = gatheringIntervalInMillis;
+    initialFreq = gatheringIntervalInMillis;
 }
 void KalmanFilter::setGatheringIntervalRange(std::chrono::milliseconds gatheringIntervalRange) {
     this->gatheringIntervalRange = gatheringIntervalRange;
