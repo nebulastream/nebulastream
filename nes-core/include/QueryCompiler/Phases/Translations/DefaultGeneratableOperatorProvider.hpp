@@ -165,6 +165,20 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
     static void lowerJoinSink(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
+     * @brief Lowers a batch join build operator.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
+    static void lowerBatchJoinBuild(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+
+    /**
+     * @brief Lowers a batch join sink operator.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
+    static void lowerBatchJoinProbe(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
+
+    /**
      * @brief Lowers a window operator.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.

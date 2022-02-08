@@ -24,6 +24,7 @@
 #include <Windowing/WindowHandler/BatchJoinHandler.hpp>
 
 
+// todo jm delete as it is not used anymore
 class CustomPipelineStageBatchJoinBuild : public NES::Runtime::Execution::ExecutablePipelineStage {
 
     struct __attribute__((packed)) InputBuildTuple {
@@ -50,9 +51,7 @@ class CustomPipelineStageBatchJoinBuild : public NES::Runtime::Execution::Execut
         for (uint64_t recordIndex = 0; recordIndex < numberOfTuples;
         ++recordIndex) {
             uint64_t tmp_build$id = inputTuples[recordIndex].build$id1;
-            InputBuildTuple build_tuple =
-                    {inputTuples[recordIndex].build$id1, inputTuples[recordIndex].build$value};
-            hashTable->insert({tmp_build$id, build_tuple});
+            hashTable->insert({tmp_build$id, inputTuples[recordIndex]});
         };
 
         return ret;
@@ -62,12 +61,15 @@ class CustomPipelineStageBatchJoinBuild : public NES::Runtime::Execution::Execut
             __attribute__((unused)) NES::Runtime::Execution::PipelineExecutionContext &pipelineExecutionContext) {
         /* variable declarations */
 
-        NES::Join::BatchJoinOperatorHandlerPtr joinOperatorHandler =
+        NES::Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler =
                 pipelineExecutionContext.getOperatorHandler<NES::Join::BatchJoinOperatorHandler>(0); // <-- get index from
 
+        auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
+
         NES::Join::AbstractBatchJoinHandlerPtr batchJoinHandler =
-                std::make_shared<NES::Join::BatchJoinHandler<int64_t, InputBuildTuple>>(joinOperatorHandler->getBatchJoinDefinition(), 99999);
-        joinOperatorHandler->setBatchJoinHandler(batchJoinHandler);
+            NES::Join::BatchJoinHandler<int64_t, InputBuildTuple>::create(batchJoinDefinition, 99999);
+
+        batchJoinOperatorHandler->setBatchJoinHandler(batchJoinHandler);
 
         /* statements section */
         return 0;
@@ -107,8 +109,9 @@ OperatorNodePtr PhysicalBatchJoinBuildOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler);
 }
 
+// todo jm delete as it is not used anymore
 Runtime::Execution::ExecutablePipelineStagePtr PhysicalBatchJoinBuildOperator::getExecutablePipelineStage() {
-    return std::make_shared<CustomPipelineStageBatchJoinBuild>(); // todo jm qc
+    return std::make_shared<CustomPipelineStageBatchJoinBuild>();
 }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

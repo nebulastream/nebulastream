@@ -43,41 +43,41 @@ class LogicalBatchJoinDefinition { // todo its dumb that this is in the windowin
      *
      */
     enum JoinType { INNER_JOIN, CARTESIAN_PRODUCT }; // <-- todo duplicate to LogicalJoinDefinition::JoinType
-    static LogicalBatchJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
-                                           const FieldAccessExpressionNodePtr& rightJoinKeyType,
+    static LogicalBatchJoinDefinitionPtr create(const FieldAccessExpressionNodePtr& keyTypeBuild,
+                                           const FieldAccessExpressionNodePtr& keyTypeProbe,
                                            uint64_t numberOfInputEdgesLeft,
                                            uint64_t numberOfInputEdgesRight,
                                            JoinType joinType);
 
-    explicit LogicalBatchJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType,
-                                   FieldAccessExpressionNodePtr rightJoinKeyType,
+    explicit LogicalBatchJoinDefinition(FieldAccessExpressionNodePtr keyTypeBuild,
+                                   FieldAccessExpressionNodePtr keyTypeProbe,
                                    uint64_t numberOfInputEdgesLeft,
                                    uint64_t numberOfInputEdgesRight,
                                    JoinType joinType);
 
     /**
-    * @brief getter/setter for on left join key
+    * @brief getter/setter for on build join key
     */
-    FieldAccessExpressionNodePtr getLeftJoinKey();
+    FieldAccessExpressionNodePtr getBuildJoinKey();
 
     /**
-   * @brief getter/setter for on left join key
+   * @brief getter/setter for on probe join key
    */
-    FieldAccessExpressionNodePtr getRightJoinKey();
+    FieldAccessExpressionNodePtr getProbeJoinKey();
 
     /**
-   * @brief getter left stream type
+   * @brief getter build schema
    */
-    SchemaPtr getLeftStreamType();
+    SchemaPtr getBuildSchema();
 
     /**
-   * @brief getter of right stream type
+   * @brief getter probe schema
    */
-    SchemaPtr getRightStreamType();
+    SchemaPtr getProbeSchema();
 
     /**
-     * @brief getter for on trigger action
-     * @return trigger action
+     * @brief getter for the join type
+     * @return jointype
     */
     [[nodiscard]] JoinType getJoinType() const;
 
@@ -86,20 +86,20 @@ class LogicalBatchJoinDefinition { // todo its dumb that this is in the windowin
      * @experimental This is experimental API
      * @return
      */
-    uint64_t getNumberOfInputEdgesLeft() const;
+    uint64_t getNumberOfInputEdgesBuild() const;
 
     /**
      * @brief number of input edges. Need to define a clear concept for this
      * @return
      */
-    uint64_t getNumberOfInputEdgesRight() const;
+    uint64_t getNumberOfInputEdgesProbe() const;
 
     /**
      * @brief Update the left and right stream types upon type inference
-     * @param leftStreamType the type of the left stream
-     * @param rightStreamType the type of the right stream
+     * @param buildSchema
+     * @param probeSchema
      */
-    void updateStreamTypes(SchemaPtr leftStreamType, SchemaPtr rightStreamType);
+    void updateInputSchemas(SchemaPtr buildSchema, SchemaPtr probeSchema);
 
     /**
      * @brief Update the output stream type upon type inference
@@ -113,17 +113,17 @@ class LogicalBatchJoinDefinition { // todo its dumb that this is in the windowin
      */
     [[nodiscard]] SchemaPtr getOutputSchema() const;
 
-    void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
-    void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
+    void setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft);
+    void setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight);
 
   private:
-    FieldAccessExpressionNodePtr leftJoinKeyType;
-    FieldAccessExpressionNodePtr rightJoinKeyType;
-    SchemaPtr leftStreamType{nullptr};
-    SchemaPtr rightStreamType{nullptr};
+    FieldAccessExpressionNodePtr keyTypeBuild;
+    FieldAccessExpressionNodePtr keyTypeProbe;
+    SchemaPtr buildSchema{nullptr};
+    SchemaPtr probeSchema{nullptr};
     SchemaPtr outputSchema{nullptr};
-    uint64_t numberOfInputEdgesLeft;
-    uint64_t numberOfInputEdgesRight;
+    uint64_t numberOfInputEdgesBuild;
+    uint64_t numberOfInputEdgesProbe;
     JoinType joinType;
 };
 

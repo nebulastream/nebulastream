@@ -485,12 +485,11 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 }
 
 struct __attribute__((packed)) ResultTuple {
+    int64_t build$id;
+    int64_t build$value;
     int64_t probe$id;
     int64_t probe$one;
     int64_t probe$value;
-
-    int64_t build$id;
-    int64_t build$value;
 
     bool operator==(const ResultTuple& other) const {
         return  (
@@ -504,8 +503,9 @@ struct __attribute__((packed)) ResultTuple {
 
 };
 std::ostream& operator<<(std::ostream& os, const ResultTuple t) {
-    os << "ResultTuple: {" << t.probe$id <<  ", " << t.probe$one <<  ", " << t.probe$value
-    <<  ", " << t.build$id <<  ", " << t.build$value << "}" << std::endl;
+    os << "ResultTuple: {" << t.build$id <<  ", " << t.build$value << ", "
+    << t.probe$id <<  ", " << t.probe$one <<  ", " << t.probe$value
+    << "}" << std::endl;
     return os;
 }
 
@@ -632,8 +632,8 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-    auto query = TestQuery::from(sourceDescriptorBuildSide)
-                        .batchJoinWith(TestQuery::from(sourceDescriptorProbeSide))
+    auto query = TestQuery::from(sourceDescriptorProbeSide)
+                        .batchJoinWith(TestQuery::from(sourceDescriptorBuildSide))
                             .where(Attribute("id1")).equalsTo(Attribute("id2"))
                         .sink(testSinkDescriptor)
         ;
@@ -667,7 +667,8 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
     std::vector<std::vector<int64_t>> dataProbeSide = {{5, 1, 5000}, {6, 1, 6000}, {6, 1, 6001}};
     fillBufferWithData(bufferProbeSide, memoryLayoutProbeSide, dataProbeSide);
 
-    std::vector<std::vector<int64_t>> dataProbeSide2(110, {6, 1, 6002}); // 110 tuples in probe side to fill result buffer more than once
+    // 110 tuples in probe side -> we fill result buffer more than once, 2 are emitted
+    std::vector<std::vector<int64_t>> dataProbeSide2(110, {6, 1, 6002});
     fillBufferWithData(bufferProbeSide2, memoryLayoutProbeSide, dataProbeSide2);
 
     plan->setup();
@@ -701,13 +702,13 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
 
     // content of res buffer 1
     std::vector<ResultTuple> expectedTuples1 = {
-        {5, 1, 5000, 5, 50},
-        {6, 1, 6000, 6, 60},
-        {6, 1, 6001, 6, 60}
+        {5, 50, 5, 1, 5000},
+        {6, 60, 6, 1, 6000},
+        {6, 60, 6, 1, 6001}
     };
 
     // res buffers 2 and 3 will always contain the same tuple:
-    ResultTuple expectedTuple2 = {6, 1, 6002, 6, 60};
+    ResultTuple expectedTuple2 = {6, 60, 6, 1, 6002};
     for (int i=0; i<3; ++i) {
         EXPECT_EQ(resultRecordIndexFields1[i], expectedTuples1[i]);
     }

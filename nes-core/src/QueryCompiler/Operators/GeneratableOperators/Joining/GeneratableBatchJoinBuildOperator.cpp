@@ -46,13 +46,13 @@ GeneratableBatchJoinBuildOperator::GeneratableBatchJoinBuildOperator(OperatorId 
     : OperatorNode(id), GeneratableBatchJoinOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler)){}
 
 void GeneratableBatchJoinBuildOperator::generateOpen(__attribute__((unused)) CodeGeneratorPtr codegen, __attribute__((unused)) PipelineContextPtr context) {
-//    auto joinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition(); // todo jm
-//    codegen->generateCodeForJoinSinkSetup(joinDefinition, context, this->id, batchJoinOperatorHandler);
+    auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
+    codegen->generateCodeForBatchJoinHandlerSetup(batchJoinDefinition, context, this->id, batchJoinOperatorHandler);
 }
 
 void GeneratableBatchJoinBuildOperator::generateExecute(__attribute__((unused)) CodeGeneratorPtr codegen, __attribute__((unused)) PipelineContextPtr context) {
-//    auto joinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
-//    codegen->generateCodeForJoinBuild(joinDefinition, context, batchJoinOperatorHandler); // todo jm
+    auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
+    codegen->generateCodeForBatchJoinBuild(batchJoinDefinition, context, batchJoinOperatorHandler);
 }
 
 std::string GeneratableBatchJoinBuildOperator::toString() const { return "GeneratableBatchJoinBuildOperator"; }

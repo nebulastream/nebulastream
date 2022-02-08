@@ -20,6 +20,8 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableBatchJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableAvgAggregation.hpp>
@@ -36,6 +38,8 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
@@ -69,8 +73,6 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
 #ifdef PYTHON_UDF_ENABLED
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
 #endif
@@ -124,11 +126,11 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         return lowerKeyedSlidingWindowSink(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalKeyedGlobalSliceStoreAppendOperator>()) {
         return lowerPhysicalKeyedGlobalSliceStoreAppendOperator(queryPlan, operatorNode);
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalExternalOperator>()) {
-        return; // todo qc
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalBatchJoinBuildOperator>()) {
-        return; // todo qc
+        lowerBatchJoinBuild(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalBatchJoinProbeOperator>()) {
+        lowerBatchJoinProbe(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalExternalOperator>()) {
         return;
     }
 #ifdef PYTHON_UDF_ENABLED
@@ -298,6 +300,25 @@ void DefaultGeneratableOperatorProvider::lowerJoinSink(const QueryPlanPtr& query
                                                                                              physicalJoinSink->getOutputSchema(),
                                                                                              physicalJoinSink->getJoinHandler());
     queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
+}
+
+void DefaultGeneratableOperatorProvider::lowerBatchJoinBuild(const QueryPlanPtr& queryPlan,
+                                                        const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+    auto physicalBatchJoinBuild = operatorNode->as<PhysicalOperators::PhysicalBatchJoinBuildOperator>();
+    auto generatableBatchJoinOperator =
+        GeneratableOperators::GeneratableBatchJoinBuildOperator::create(physicalBatchJoinBuild->getInputSchema(),
+                                                                   physicalBatchJoinBuild->getOutputSchema(),
+                                                                   physicalBatchJoinBuild->getBatchJoinHandler());
+    queryPlan->replaceOperator(operatorNode, generatableBatchJoinOperator);
+}
+
+void DefaultGeneratableOperatorProvider::lowerBatchJoinProbe(const QueryPlanPtr& queryPlan,
+                                                       const PhysicalOperators::PhysicalOperatorPtr& operatorNode) {
+    auto physicalBatchJoinSink = operatorNode->as<PhysicalOperators::PhysicalBatchJoinProbeOperator>();
+    auto generatableBatchJoinOperator = GeneratableOperators::GeneratableBatchJoinProbeOperator::create(physicalBatchJoinSink->getOutputSchema(),
+                                                                                             physicalBatchJoinSink->getOutputSchema(),
+                                                                                             physicalBatchJoinSink->getBatchJoinHandler());
+    queryPlan->replaceOperator(operatorNode, generatableBatchJoinOperator);
 }
 
 void DefaultGeneratableOperatorProvider::lowerCEPIteration(QueryPlanPtr queryPlan,

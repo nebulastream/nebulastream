@@ -90,16 +90,16 @@ JoinCondition::JoinCondition(const Query& subQueryRhs,
 
 namespace BatchJoinOperatorBuilder {
 
-JoinWhere Join::where(const ExpressionItem& onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
-
 Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
 
-Query& JoinWhere::equalsTo(const ExpressionItem& onRightKey) const {
-    return originalQuery.batchJoinWith(subQueryRhs, onLeftKey, onRightKey);
+JoinWhere Join::where(const ExpressionItem& onProbeKey) const { return JoinWhere(subQueryRhs, originalQuery, onProbeKey); }
+
+Query& JoinWhere::equalsTo(const ExpressionItem& onBuildKey) const {
+    return originalQuery.batchJoinWith(subQueryRhs, onProbeKey, onBuildKey);
 }
 
-JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onLeftKey)
-    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey.getExpressionNode()) {}
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, const ExpressionItem& onProbeKey)
+: subQueryRhs(subQueryRhs), originalQuery(originalQuery), onProbeKey(onProbeKey.getExpressionNode()) {}
 
 }// namespace BatchJoinOperatorBuilder
 
@@ -371,25 +371,25 @@ Query& Query::join(const Query& subQueryRhs,
 }
 
 Query& Query::batchJoin(const Query& subQueryRhs,
-                   ExpressionItem onLeftKey,
-                   ExpressionItem onRightKey,
+                   ExpressionItem onProbeKey,
+                   ExpressionItem onBuildKey,
                    Join::LogicalBatchJoinDefinition::JoinType joinType) {
     NES_DEBUG("Query: batchJoinWith the subQuery to current query");
 
     auto subQuery = const_cast<Query&>(subQueryRhs);
 
-    auto leftKeyExpression = onLeftKey.getExpressionNode();
-    if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + leftKeyExpression->toString());
+    auto probeKeyExpression = onProbeKey.getExpressionNode();
+    if (!probeKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + probeKeyExpression->toString());
         NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
     }
-    auto rightKeyExpression = onRightKey.getExpressionNode();
-    if (!rightKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + rightKeyExpression->toString());
+    auto buildKeyExpression = onBuildKey.getExpressionNode();
+    if (!buildKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
+        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + buildKeyExpression->toString());
         NES_THROW_RUNTIME_ERROR("Query: window key has to be an FieldAccessExpression");
     }
-    auto leftKeyFieldAccess = leftKeyExpression->as<FieldAccessExpressionNode>();
-    auto rightKeyFieldAccess = rightKeyExpression->as<FieldAccessExpressionNode>();
+    auto probeKeyFieldAccess = probeKeyExpression->as<FieldAccessExpressionNode>();
+    auto buildKeyFieldAccess = buildKeyExpression->as<FieldAccessExpressionNode>();
 
     auto rightQueryPlan = subQuery.getQueryPlan();
     NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid right query plan");
@@ -400,11 +400,12 @@ Query& Query::batchJoin(const Query& subQueryRhs,
     // todo here again we wan't to extend to distributed joins:
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalBatchJoinDefinition::create(leftKeyFieldAccess,
-                                                              rightKeyFieldAccess,
-                                                              1,
-                                                              1,
-                                                              joinType);
+    auto joinDefinition = Join::LogicalBatchJoinDefinition::create(
+                                                                buildKeyFieldAccess,
+                                                                probeKeyFieldAccess,
+                                                                1,
+                                                                1,
+                                                                joinType);
 
     auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
@@ -431,12 +432,12 @@ Query& Query::joinWith(const Query& subQueryRhs,
 }
 
 Query& Query::batchJoinWith(const Query& subQueryRhs,
-                       ExpressionItem onLeftKey,
-                       ExpressionItem onRightKey) {
+                       ExpressionItem onProbeKey,
+                       ExpressionItem onBuildKey) {
     NES_DEBUG("Query: add JoinType (INNER_JOIN) to Join Operator");
 
     Join::LogicalBatchJoinDefinition::JoinType joinType = Join::LogicalBatchJoinDefinition::INNER_JOIN;
-    return Query::batchJoin(subQueryRhs, onLeftKey, onRightKey, joinType);
+    return Query::batchJoin(subQueryRhs, onProbeKey, onBuildKey, joinType);
 }
 
 Query& Query::andWith(const Query& subQueryRhs,

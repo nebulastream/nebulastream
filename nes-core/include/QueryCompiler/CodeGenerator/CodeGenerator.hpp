@@ -31,6 +31,7 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 
@@ -316,6 +317,17 @@ class CodeGenerator {
                                                   Join::JoinOperatorHandlerPtr joinOperatorHandler) = 0;
 
     /**
+    * @brief Code generation the setup method for batch join operators, which depends on a particular join definition.
+    * @param join The batch join definition.
+    * @param context The context of the current pipeline.
+    * @return the operator id
+    */
+    virtual uint64_t generateCodeForBatchJoinHandlerSetup(Join::LogicalBatchJoinDefinitionPtr batchJoin,
+                                                          PipelineContextPtr context,
+                                                          uint64_t id,
+                                                          Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
+
+    /**
     * @brief Code generation for a join operator, which depends on a particular join definition
     * @param window The join definition, which contains all properties of the join.
     * @param context The context of the current pipeline.
@@ -337,6 +349,30 @@ class CodeGenerator {
                                           PipelineContextPtr context,
                                           Join::JoinOperatorHandlerPtr joinOperatorHandler,
                                           QueryCompilation::JoinBuildSide buildSide) = 0;
+    /**
+    * @brief Code generation for a batch join build operator, which depends on a particular join definition
+    * @param batchJoinDef The join batch definition, which contains all properties of the join.
+    * @param context The context of the current pipeline.
+    * @param operatorHandlerIndex index for the operator handler. todo jm do we need this?
+    * @return flag if the generation was successful.
+    */
+    virtual bool
+    generateCodeForBatchJoinBuild(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+                                  PipelineContextPtr context,
+                                  Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
+
+    /**
+    * @brief Code generation for a batch join probe operator, which depends on a particular join definition
+    * @param batchJoinDef The join batch definition, which contains all properties of the join.
+    * @param context The context of the current pipeline.
+    * @param operatorHandlerIndex index for the operator handler. todo jm do we need this?
+    * @return flag if the generation was successful.
+    */
+    virtual bool
+    generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+                                  PipelineContextPtr context,
+                                  Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) = 0;
+
     /**
      * @brief Performs the actual compilation the generated code pipeline.
      * @param code generated code.

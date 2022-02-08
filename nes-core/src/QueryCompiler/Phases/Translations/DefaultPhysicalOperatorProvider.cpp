@@ -303,8 +303,8 @@ void DefaultPhysicalOperatorProvider::lowerBatchJoinOperator(const QueryPlanPtr&
 
     auto rightInputOperator = //    called to demultiplex, if there are multiple right childs. this var is not used further.
         getBatchJoinChildInputOperator(batchJoinOperator, batchJoinOperator->getRightInputSchema(), batchJoinOperator->getRightOperators());
-    auto batchJoinProbeOperator = PhysicalOperators::PhysicalBatchJoinProbeOperator::create(batchJoinOperator->getLeftInputSchema(),
-                                                                                       batchJoinOperator->getRightInputSchema(),
+    auto batchJoinProbeOperator = PhysicalOperators::PhysicalBatchJoinProbeOperator::create(
+                                                                                       batchJoinOperator->getRightInputSchema(), // right = probe side!
                                                                                        batchJoinOperator->getOutputSchema(),
                                                                                        batchJoinOperatorHandler);
     operatorNode->replace(batchJoinProbeOperator);

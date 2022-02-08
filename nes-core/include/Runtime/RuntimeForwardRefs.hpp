@@ -102,6 +102,13 @@ namespace Execution {
 class OperatorHandler;
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 
+enum OperatorHandlerType : uint8_t {
+    WINDOW,
+    CEP,
+    JOIN,
+    BATCH_JOIN
+};
+
 class ExecutablePipeline;
 using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 
