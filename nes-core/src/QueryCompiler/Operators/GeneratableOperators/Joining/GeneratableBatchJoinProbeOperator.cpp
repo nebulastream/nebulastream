@@ -42,12 +42,11 @@ GeneratableBatchJoinProbeOperator::create(SchemaPtr inputSchema, SchemaPtr outpu
     return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler));
 }
 
-void GeneratableBatchJoinProbeOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForScanSetup(context); // todo jm
-}
+void GeneratableBatchJoinProbeOperator::generateOpen(__attribute__((unused)) CodeGeneratorPtr codegen, __attribute__((unused)) PipelineContextPtr context) {}
 
 void GeneratableBatchJoinProbeOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    codegen->generateCodeForScan(outputSchema, outputSchema, context); // todo jm
+    auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
+    codegen->generateCodeForBatchJoinProbe(batchJoinDefinition, context, batchJoinOperatorHandler);
 }
 std::string GeneratableBatchJoinProbeOperator::toString() const { return "GeneratableBatchJoinProbeOperator"; }
 

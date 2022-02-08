@@ -29,6 +29,11 @@ class ForLoopStatement : public Statement {
                      ExpressionStatementPtr advance,
                      std::vector<StatementPtr> loopBody = std::vector<StatementPtr>());
 
+    ForLoopStatement(ExpressionStatementPtr varDeclarationStatement,
+                     ExpressionStatementPtr condition,
+                     ExpressionStatementPtr advance,
+                     std::vector<StatementPtr> loop_body = std::vector<StatementPtr>());
+
     ~ForLoopStatement() noexcept override = default;
 
     [[nodiscard]] StatementType getStamentType() const override;
@@ -43,6 +48,7 @@ class ForLoopStatement : public Statement {
 
   private:
     DeclarationPtr varDeclaration;
+    ExpressionStatementPtr varDeclarationStatement;
     ExpressionStatementPtr condition;
     ExpressionStatementPtr advance;
     CompoundStatementPtr body;

@@ -68,25 +68,6 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
         return pipeline;
     }
 
-    // todo rem when we have query compilation
-    // if this pipeline contains a batch join build operator we skip compilation
-    if (rootOperator->instanceOf<PhysicalOperators::PhysicalBatchJoinBuildOperator>()) {
-        auto op = rootOperator->as<PhysicalOperators::PhysicalBatchJoinBuildOperator>();
-        auto pipelineStage = op->getExecutablePipelineStage();
-        auto executableOperator = ExecutableOperator::create(pipelineStage, {});
-        pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
-        return pipeline;
-    }
-
-    // if this pipeline contains a batch join build operator we skip compilation
-    if (rootOperator->instanceOf<PhysicalOperators::PhysicalBatchJoinProbeOperator>()) {
-        auto op = rootOperator->as<PhysicalOperators::PhysicalBatchJoinProbeOperator>();
-        auto pipelineStage = op->getExecutablePipelineStage();
-        auto executableOperator = ExecutableOperator::create(pipelineStage, {});
-        pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
-        return pipeline;
-    }
-
 #ifdef PYTHON_UDF_ENABLED
     // same as for external operators
     if (rootOperator->instanceOf<PhysicalOperators::PhysicalPythonUdfOperator>()) {
@@ -98,6 +79,7 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
         return pipeline;
     }
 #endif
+
     generate(rootOperator, [this, &context](const GeneratableOperators::GeneratableOperatorPtr& operatorNode) {
         operatorNode->generateOpen(codeGenerator, context);
     });

@@ -170,10 +170,10 @@ class Join {
 
     /**
      * @brief sets the left key item, after that it can be compared with the function implemented in Condition
-     * @param onLeftKey
+     * @param onProbeKey (probe key should be given as the left key)
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    [[nodiscard]] JoinWhere where(const ExpressionItem& onLeftKey) const;
+    [[nodiscard]] JoinWhere where(const ExpressionItem& onProbeKey) const;
 
   private:
     const Query& subQueryRhs;
@@ -192,15 +192,15 @@ class JoinWhere {
 
     /**
      * @brief sets the rightKey item
-     * @param onRightKey
+     * @param onBuildKey (build key should be given as right key)
      * @return Joined Query.
      */
-    [[nodiscard]] Query& equalsTo(const ExpressionItem& onRightKey) const;
+    [[nodiscard]] Query& equalsTo(const ExpressionItem& onBuildKey) const;
 
   private:
     const Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionNodePtr onLeftKey;
+    ExpressionNodePtr onProbeKey;
 };
 
 }//namespace BatchJoinOperatorBuilder
@@ -556,14 +556,14 @@ class Query {
      * @brief This methods add the join operator to a query
      * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
      * @param subQueryRhs subQuery to be joined
-     * @param onLeftKey key attribute of the left stream
-     * @param onLeftKey key attribute of the right stream
+     * @param onProbeKey key attribute of the left stream
+     * @param onBuildKey key attribute of the right stream
      * @param joinType the definition of how the composition of the streams should be performed, i.e., INNER_JOIN or CARTESIAN_PRODUCT
      * @return the query
      */
     Query& batchJoin(const Query& subQueryRhs,
-                ExpressionItem onLeftKey,
-                ExpressionItem onRightKey,
+                ExpressionItem onProbeKey,
+                ExpressionItem onBuildKey,
                 Join::LogicalBatchJoinDefinition::JoinType joinType);
 
     /**

@@ -18,6 +18,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
@@ -27,21 +28,17 @@ namespace PhysicalOperators {
  * @brief Physical operator for the join sink.
  * This operator queries the operator state and computes final join results.
  */
-// todo think about emit and scan inheritance
-class PhysicalBatchJoinProbeOperator : public PhysicalBatchJoinOperator, public PhysicalBinaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
+class PhysicalBatchJoinProbeOperator : public PhysicalBatchJoinOperator, public PhysicalUnaryOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id,
-                                      const SchemaPtr& leftInputSchema,
-                                      const SchemaPtr& rightInputSchema,
+                                      const SchemaPtr& inputSchemaProbe,
                                       const SchemaPtr& outputSchema,
                                       const Join::BatchJoinOperatorHandlerPtr& operatorHandler);
-    static PhysicalOperatorPtr create(SchemaPtr leftInputSchema,
-                                      SchemaPtr rightInputSchema,
+    static PhysicalOperatorPtr create(SchemaPtr inputSchemaProbe,
                                       SchemaPtr outputSchema,
                                       Join::BatchJoinOperatorHandlerPtr operatorHandler);
     PhysicalBatchJoinProbeOperator(OperatorId id,
-                             SchemaPtr leftInputSchema,
-                             SchemaPtr rightInputSchema,
+                             SchemaPtr inputSchemaProbe,
                              SchemaPtr outputSchema,
                              Join::BatchJoinOperatorHandlerPtr operatorHandler);
     [[nodiscard]] std::string toString() const override;
