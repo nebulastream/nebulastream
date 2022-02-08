@@ -19,6 +19,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Network/NetworkChannel.hpp>
@@ -87,6 +88,7 @@ class CodeGenerationTest : public testing::Test {
                                                                   1024,
                                                                   12,
                                                                   12,
+                                                                  Configurations::QueryCompilerConfiguration(),
                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
     }
 

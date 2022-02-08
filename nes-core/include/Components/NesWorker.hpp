@@ -202,12 +202,7 @@ class NesWorker : public ErrorListener {
     uint32_t numberOfBuffersPerWorker;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
-    // indicates the compilation strategy of the query compiler [FAST|DEBUG|OPTIMIZE].
-    std::string queryCompilerCompilationStrategy;
-    // indicates the pipelining strategy for the query compiler [OPERATOR_FUSION, OPERATOR_AT_A_TIME].
-    std::string queryCompilerPipeliningStrategy;
-    // indicates, which output buffer allocation strategy should be used.
-    std::string queryCompilerOutputBufferOptimizationLevel;
+    Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;
     std::atomic<bool> isRunning{false};

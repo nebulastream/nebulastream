@@ -24,6 +24,7 @@ namespace NES::Configurations {
 class BaseOption {
   public:
     BaseOption() = default;
+
     /**
      * @brief Constructor to create a new option.
      * @param name of the option.
@@ -31,10 +32,12 @@ class BaseOption {
      */
     BaseOption(const std::string& name, const std::string& description);
     virtual ~BaseOption() = default;
+
     /**
      * @brief Clears the option and sets a default value if available.
      */
     virtual void clear() = 0;
+
     /**
      * @brief Checks if the option is equal to another option.
      * @param other option.

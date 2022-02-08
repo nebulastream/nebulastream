@@ -28,16 +28,19 @@ template<class T>
 requires std::is_base_of_v<BaseOption, T>
 class SequenceOption : public BaseOption {
   public:
+
     /**
      * @brief Constructor to create a new option that sets a name, and description.
      * @param name of the option.
      * @param description of the option.
      */
     SequenceOption(const std::string& name, const std::string& description);
+
     /**
      * @brief Clears the option and removes all values in the sequence.
      */
     void clear() override;
+
     /**
      * @brief Accesses an option at a specific index.
      * @param index

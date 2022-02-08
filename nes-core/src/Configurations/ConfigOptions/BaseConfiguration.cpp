@@ -76,11 +76,12 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::
     for (auto parm = inputParams.begin(); parm != inputParams.end(); ++parm) {
         auto identifier = parm->first;
         auto value = parm->second;
-        if (!identifier.starts_with("--")) {
+        const std::string identifierStart = "--";
+        if (!identifier.starts_with(identifierStart)) {
             throw ConfigurationException("Identifier " + identifier + " is not malformed. All commands should start with a --.");
         }
         // remove the -- in the beginning
-        identifier = identifier.substr(2);
+        identifier = identifier.substr(identifierStart.size());
         parseFromString(identifier, value);
     }
 }

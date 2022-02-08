@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -52,12 +53,10 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  const SourceCatalogPtr& streamCatalog,
                                                  const WorkerRPCClientPtr& workerRpcClient,
                                                  RequestQueuePtr queryRequestQueue,
-                                                 Optimizer::QueryMergerRule queryMergerRule,
-                                                 Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
-                                                 bool performOnlySourceOperatorExpansion,
+                                                 const Configurations::OptimizerConfiguration optimizerConfiguration,
                                                  bool queryReconfiguration)
-    : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalog(queryCatalog),
-      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
+    : queryProcessorRunning(true), queryCatalog(queryCatalog), queryReconfiguration(queryReconfiguration), queryRequestQueue(std::move(queryRequestQueue)),
+      globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -74,9 +73,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                                                streamCatalog,
                                                                                globalQueryPlan,
                                                                                z3Context,
-                                                                               queryMergerRule,
-                                                                               memoryLayoutPolicy,
-                                                                               performOnlySourceOperatorExpansion);
+                                                                               optimizerConfiguration);
 }
 
 void RequestProcessorService::start() {

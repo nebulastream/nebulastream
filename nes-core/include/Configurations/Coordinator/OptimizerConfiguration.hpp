@@ -22,6 +22,7 @@
 #include <string>
 #include <thread>
 #include <utility>
+#include <Configurations/ConfigurationOption.hpp>
 
 namespace NES {
 
@@ -32,12 +33,13 @@ namespace Configurations {
  */
 class OptimizerConfiguration : public BaseConfiguration {
   public:
+    OptimizerConfiguration() : BaseConfiguration(){};
     OptimizerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
 
     /**
      * @brief The number of queries to be processed together.
      */
-    IntOption queryBatchSize = {"queryBatchSize", 1, "The number of queries to be processed together"};
+    IntOption queryBatchSize = {QUERY_BATCH_SIZE_CONFIG, 1, "The number of queries to be processed together"};
 
     /**
      * @brief The rule to be used for performing query merging.
@@ -54,14 +56,14 @@ class OptimizerConfiguration : public BaseConfiguration {
      * DefaultQueryMergerRule,
      * HybridCompleteQueryMergerRule
      */
-    EnumOption<Optimizer::QueryMergerRule> queryMergerRule = {"queryMergerRule",
+    EnumOption<Optimizer::QueryMergerRule> queryMergerRule = {QUERY_MERGER_RULE_CONFIG,
                                                               Optimizer::QueryMergerRule::DefaultQueryMergerRule,
                                                               "The rule to be used for performing query merging"};
 
     /**
      * @brief Enable semantic query validation feature
      */
-    BoolOption enableSemanticQueryValidation = {"enableSemanticQueryValidation",
+    BoolOption enableSemanticQueryValidation = {ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG,
                                                 false,
                                                 "Enable semantic query validation feature"};
 
@@ -72,7 +74,7 @@ class OptimizerConfiguration : public BaseConfiguration {
      * FORCE_COLUMN_LAYOUT
      */
     EnumOption<Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy> memoryLayoutPolicy = {
-        "memoryLayoutPolicy",
+        MEMORY_LAYOUT_POLICY_CONFIG,
         Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy::FORCE_ROW_LAYOUT,
         "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]"};
 
@@ -80,7 +82,7 @@ class OptimizerConfiguration : public BaseConfiguration {
      * @brief Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)
      */
     BoolOption performOnlySourceOperatorExpansion = {
-        "performOnlySourceOperatorExpansion",
+        PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
         false,
         "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)"};
 

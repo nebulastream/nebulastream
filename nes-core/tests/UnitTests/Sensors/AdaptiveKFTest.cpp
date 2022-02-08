@@ -18,12 +18,13 @@
 #include <Util/KalmanFilter.hpp>
 #include <Util/Logger.hpp>
 
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Eigen/Dense>
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <vector>
 
 namespace NES {
@@ -35,7 +36,7 @@ class AdaptiveKFTest : public testing::Test {
     Runtime::NodeEnginePtr nodeEngine;
     std::vector<double> measurements;
     float defaultEstimationErrorDivider = 2.9289684;
-    std::chrono::time_point<std::chrono::system_clock,std::chrono::milliseconds> now_ms;
+    std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> now_ms;
 
     static void SetUpTestCase() {
         NES::setupLogging("AdaptiveKFTest.log", NES::LOG_DEBUG);
@@ -46,23 +47,27 @@ class AdaptiveKFTest : public testing::Test {
 
     void SetUp() override {
         NES_INFO("Setup AdaptiveKFTest class.");
-        streamConf = PhysicalSource::create("x","x1");
+        streamConf = PhysicalSource::create("x", "x1");
         schema = Schema::create()->addField("temperature", UINT32);
-        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, {streamConf}, 1, 4096, 1024, 12, 12);
+        nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                  31337,
+                                                                  {streamConf},
+                                                                  1,
+                                                                  4096,
+                                                                  1024,
+                                                                  12,
+                                                                  12,
+                                                                  Configurations::QueryCompilerConfiguration());
         now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
         // Fake measurements for y with noise
         measurements = {
-            1.04202710058, 1.10726790452, 1.2913511148, 1.48485250951, 1.72825901034,
-            1.74216489744, 2.11672039768, 2.14529225112, 2.16029641405, 2.21269371128,
-            2.57709350237, 2.6682215744, 2.51641839428, 2.76034056782, 2.88131780617,
-            2.88373786518, 2.9448468727, 2.82866600131, 3.0006601946, 3.12920591669,
-            2.858361783, 2.83808170354, 2.68975330958, 2.66533185589, 2.81613499531,
-            2.81003612051, 2.88321849354, 2.69789264832, 2.4342229249, 2.23464791825,
-            2.30278776224, 2.02069770395, 1.94393985809, 1.82498398739, 1.52526230354,
-            1.86967808173, 1.18073207847, 1.10729605087, 0.916168349913, 0.678547664519,
-            0.562381751596, 0.355468474885, 500, 900, 900,
-            -0.155607486619, -0.287198661013, -0.602973173813
-        };
+            1.04202710058, 1.10726790452, 1.2913511148,  1.48485250951,   1.72825901034,   1.74216489744,  2.11672039768,
+            2.14529225112, 2.16029641405, 2.21269371128, 2.57709350237,   2.6682215744,    2.51641839428,  2.76034056782,
+            2.88131780617, 2.88373786518, 2.9448468727,  2.82866600131,   3.0006601946,    3.12920591669,  2.858361783,
+            2.83808170354, 2.68975330958, 2.66533185589, 2.81613499531,   2.81003612051,   2.88321849354,  2.69789264832,
+            2.4342229249,  2.23464791825, 2.30278776224, 2.02069770395,   1.94393985809,   1.82498398739,  1.52526230354,
+            1.86967808173, 1.18073207847, 1.10729605087, 0.916168349913,  0.678547664519,  0.562381751596, 0.355468474885,
+            500,           900,           900,           -0.155607486619, -0.287198661013, -0.602973173813};
     }
 
     void TearDown() override { NES_INFO("Tear down AdaptiveKFTest class."); }
@@ -114,7 +119,7 @@ TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
     auto initialError = kalmanFilter.getError();
 
     // predict and update
-    for(auto measurement : measurements) {
+    for (auto measurement : measurements) {
         y << measurement;
         kalmanFilter.update(y);
     }
@@ -140,7 +145,7 @@ TEST_F(AdaptiveKFTest, kfStateChangeTest) {
     auto initialError = kalmanFilter.getError();
 
     // predict and update
-    for(auto measurement : measurements) {
+    for (auto measurement : measurements) {
         y << measurement;
 
         // get current xHat, update, assert NE with new one
@@ -165,7 +170,7 @@ TEST_F(AdaptiveKFTest, kfStateChangeEmptyInitialStateTest) {
     auto initialError = kalmanFilter.getError();
 
     // predict and update
-    for(auto measurement : measurements) {
+    for (auto measurement : measurements) {
         y << measurement;
 
         // get current xHat, update, assert NE with new one
@@ -192,7 +197,7 @@ TEST_F(AdaptiveKFTest, kfStepChangeTest) {
     auto initialError = kalmanFilter.getError();
 
     // predict and update
-    for(auto measurement : measurements) {
+    for (auto measurement : measurements) {
         y << measurement;
 
         // get current step, update, assert NE with new one
@@ -219,7 +224,7 @@ TEST_F(AdaptiveKFTest, kfInnovationErrorChangeTest) {
     auto initialError = kalmanFilter.getError();
 
     // predict and update
-    for(auto measurement : measurements) {
+    for (auto measurement : measurements) {
         y << measurement;
 
         // get current error, update, assert NE with new one
@@ -353,7 +358,7 @@ TEST_F(AdaptiveKFTest, kfEstimationErrorFilledWindowTest) {
     kfProxy.setDefaultValues();
     kfProxy.kfErrorWindow.push(2);
     EXPECT_EQ(kfProxy.calculateTotalEstimationError(), 2);
-    kfProxy.kfErrorWindow.push(0); // will replace 2
+    kfProxy.kfErrorWindow.push(0);// will replace 2
     EXPECT_EQ(kfProxy.calculateTotalEstimationError(), 0);
 
     // window of 2
@@ -420,7 +425,7 @@ TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
     // compare errors after one "normal" and one "abnormal" value
 
     // keep last 2 error values
-    KalmanFilter kfNormal{2}; // normal
+    KalmanFilter kfNormal{2};  // normal
     KalmanFilter kfAbnormal{2};// abnormal
 
     // initial state estimations, values are the same up to this point
@@ -434,18 +439,18 @@ TEST_F(AdaptiveKFTest, kfUpdateUnusualValueTest) {
 
     // start measurements vector
     Eigen::VectorXd y(1);
-    y << measurements[2]; // 1.2913511148
-    kfNormal.update(y); // update once, this has a huge error due to starting vals
+    y << measurements[2];// 1.2913511148
+    kfNormal.update(y);  // update once, this has a huge error due to starting vals
     kfAbnormal.update(y);
     EXPECT_EQ(kfNormal.getEstimationError(), kfAbnormal.getEstimationError());
 
     // update 1st filter, normal value (similar to first update)
-    y << measurements[3]; // 1.48485250951, somewhat "normal"
+    y << measurements[3];// 1.48485250951, somewhat "normal"
     kfNormal.update(y);
     auto normalEstimationError = kfNormal.getEstimationError();
 
     // update 2nd filter, abnormal value (very different from first update)
-    y << -0.287; // didn't expect this, chief!
+    y << -0.287;// didn't expect this, chief!
     kfAbnormal.update(y);
     auto abnormalEstimationError = kfAbnormal.getEstimationError();
 

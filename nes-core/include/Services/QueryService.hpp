@@ -17,6 +17,7 @@
 
 #include <API/Query.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 
 namespace NES::Optimizer {
 class SyntacticQueryValidation;
@@ -50,7 +51,7 @@ class QueryService {
                           RequestQueuePtr queryRequestQueue,
                           SourceCatalogPtr streamCatalog,
                           QueryParsingServicePtr queryParsingService,
-                          bool enableSemanticQueryValidation);
+                          Configurations::OptimizerConfiguration optimizerConfiguration);
 
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -125,7 +126,7 @@ class QueryService {
     RequestQueuePtr queryRequestQueue;
     Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
-    bool enableSemanticQueryValidation;
+    Configurations::OptimizerConfiguration optimizerConfiguration;
 
     void assignQueryAndOperatorIds(QueryPlanPtr queryPlan);
 };

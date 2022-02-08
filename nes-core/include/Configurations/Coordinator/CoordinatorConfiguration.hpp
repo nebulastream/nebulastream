@@ -17,11 +17,12 @@
 
 #include <Configurations/ConfigOptions/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Util/Logger.hpp>
 #include <iostream>
 #include <map>
 #include <string>
 #include <thread>
-#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -45,8 +46,8 @@ class CoordinatorConfiguration : public BaseConfiguration {
     UIntOption dataPort = {DATA_PORT_CONFIG, 3001, "NES data server port"};
     UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for NES Coordinator"};
     EnumOption<DebugLevel> logLevel = {LOG_LEVEL_CONFIG,
-                                     LOG_DEBUG,
-                                     "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
+                                       LOG_DEBUG,
+                                       "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
     UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
                                                        1024,
                                                        "Number buffers in global buffer pool."};
@@ -56,29 +57,13 @@ class CoordinatorConfiguration : public BaseConfiguration {
                                                          "Number buffers in source local buffer pool."};
     UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes."};
     UIntOption numWorkerThreads = {NUM_WORKER_THREADS_CONFIG, 1, "Number of worker threads."};
-    UIntOption queryBatchSize = {QUERY_BATCH_SIZE_CONFIG, 1, "The number of queries to be processed together"};
-    StringOption queryMergerRule = {QUERY_MERGER_RULE_CONFIG,
-                                    "DefaultQueryMergerRule",
-                                    "The rule to be used for performing query merging"};
-    BoolOption enableSemanticQueryValidation = {ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG,
-                                                false,
-                                                "Enable semantic query validation feature"};
     BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
-
-    StringOption memoryLayoutPolicy = {
-        MEMORY_LAYOUT_POLICY_CONFIG,
-        "FORCE_ROW_LAYOUT",
-        "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]"};
-
-    BoolOption performOnlySourceOperatorExpansion = {
-        PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
-        false,
-        "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)"};
     BoolOption enableQueryReconfiguration = {
         PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
         false,
         "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)"};
 
+    OptimizerConfiguration optimizer = {OPTIMIZER_CONFIG, "Defines the configuration for the optimizer."};
     std::vector<LogicalSourcePtr> logicalSources;
 
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
@@ -98,12 +83,9 @@ class CoordinatorConfiguration : public BaseConfiguration {
             &numberOfBuffersInSourceLocalBufferPool,
             &bufferSizeInBytes,
             &numWorkerThreads,
-            &queryBatchSize,
-            &queryMergerRule,
-            &enableSemanticQueryValidation,
+            &optimizer,
+            &enableQueryReconfiguration,
             &enableMonitoring,
-            &memoryLayoutPolicy,
-            &performOnlySourceOperatorExpansion,
         };
     }
 };

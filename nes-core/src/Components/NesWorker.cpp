@@ -45,20 +45,17 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
-    : workerConfig(std::move(workerConfig)), coordinatorIp(this->workerConfig->coordinatorIp.getValue()),
-      localWorkerIp(this->workerConfig->localWorkerIp.getValue()), workerToCoreMapping(this->workerConfig->workerPinList.getValue()),
-      queuePinList(this->workerConfig->queuePinList.getValue()), coordinatorPort(this->workerConfig->coordinatorPort.getValue()),
-      localWorkerRpcPort(this->workerConfig->rpcPort.getValue()), localWorkerZmqPort(this->workerConfig->dataPort.getValue()),
-      numberOfSlots(this->workerConfig->numberOfSlots.getValue()), numWorkerThreads(this->workerConfig->numWorkerThreads.getValue()),
-      numberOfBuffersInGlobalBufferManager(this->workerConfig->numberOfBuffersInGlobalBufferManager.getValue()),
-      numberOfBuffersPerWorker(this->workerConfig->numberOfBuffersPerWorker.getValue()),
-      numberOfBuffersInSourceLocalBufferPool(this->workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
-      bufferSizeInBytes(this->workerConfig->bufferSizeInBytes.getValue()),
-      queryCompilerCompilationStrategy(this->workerConfig->queryCompilerCompilationStrategy.getValue()),
-      queryCompilerPipeliningStrategy(this->workerConfig->queryCompilerPipeliningStrategy.getValue()),
-      queryCompilerOutputBufferOptimizationLevel(this->workerConfig->queryCompilerOutputBufferOptimizationLevel.getValue()),
-      enableNumaAwareness(this->workerConfig->numaAwareness.getValue()), enableMonitoring(this->workerConfig->enableMonitoring.getValue()) {
+NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig)
+    : workerConfig(std::move(workerConfig)), coordinatorIp(workerConfig->coordinatorIp.getValue()),
+      localWorkerIp(workerConfig->localWorkerIp.getValue()), workerToCoreMapping(workerConfig->workerPinList.getValue()),
+      queuePinList(workerConfig->queuePinList.getValue()), coordinatorPort(workerConfig->coordinatorPort.getValue()),
+      localWorkerRpcPort(workerConfig->rpcPort.getValue()), localWorkerZmqPort(workerConfig->dataPort.getValue()),
+      numberOfSlots(workerConfig->numberOfSlots.getValue()), numWorkerThreads(workerConfig->numWorkerThreads.getValue()),
+      numberOfBuffersInGlobalBufferManager(workerConfig->numberOfBuffersInGlobalBufferManager.getValue()),
+      numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
+      numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
+      bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()), queryCompilerConfiguration(workerConfig->queryCompiler),
+      enableNumaAwareness(workerConfig->numaAwareness.getValue()), enableMonitoring(workerConfig->enableMonitoring.getValue()) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -139,13 +136,11 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                                   numberOfBuffersInGlobalBufferManager,
                                                                   numberOfBuffersInSourceLocalBufferPool,
                                                                   numberOfBuffersPerWorker,
+                                                                  queryCompilerConfiguration,
                                                                   enableNumaAwareness ? Runtime::NumaAwarenessFlag::ENABLED
                                                                                       : Runtime::NumaAwarenessFlag::DISABLED,
                                                                   workerToCoreMapping,
-                                                                  queuePinList,
-                                                                  queryCompilerCompilationStrategy,
-                                                                  queryCompilerPipeliningStrategy,
-                                                                  queryCompilerOutputBufferOptimizationLevel);
+                                                                  queuePinList);
         NES_DEBUG("NesWorker: Node engine started successfully");
         monitoringAgent = MonitoringAgent::create(enableMonitoring);
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring=" << enableMonitoring);

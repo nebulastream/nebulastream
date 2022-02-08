@@ -61,10 +61,10 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
               coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->numWorkerThreads.getValue(), coordinatorConfigPtr->numWorkerThreads.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->queryBatchSize.getValue(), coordinatorConfigPtr->queryBatchSize.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->queryMergerRule.getValue(), coordinatorConfigPtr->queryMergerRule.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->enableSemanticQueryValidation.getValue(),
-              coordinatorConfigPtr->enableSemanticQueryValidation.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(), coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.enableSemanticQueryValidation.getValue(),
+              coordinatorConfigPtr->optimizer.enableSemanticQueryValidation.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
@@ -101,10 +101,10 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
               coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->numWorkerThreads.getValue(), coordinatorConfigPtr->numWorkerThreads.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->queryBatchSize.getValue(), coordinatorConfigPtr->queryBatchSize.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->queryMergerRule.getValue(), coordinatorConfigPtr->queryMergerRule.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->enableSemanticQueryValidation.getValue(),
-              coordinatorConfigPtr->enableSemanticQueryValidation.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(), coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.enableSemanticQueryValidation.getValue(),
+              coordinatorConfigPtr->optimizer.enableSemanticQueryValidation.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile) {
@@ -195,12 +195,12 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
               workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->queryCompilerCompilationStrategy.getValue(),
-              workerConfigPtr->queryCompilerCompilationStrategy.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->queryCompilerPipeliningStrategy.getValue(),
-              workerConfigPtr->queryCompilerPipeliningStrategy.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->queryCompilerOutputBufferOptimizationLevel.getValue(),
-              workerConfigPtr->queryCompilerOutputBufferOptimizationLevel.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->queryCompiler.compilationStrategy.getValue(),
+              workerConfigPtr->queryCompiler.compilationStrategy.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->queryCompiler.pipeliningStrategy.getValue(),
+              workerConfigPtr->queryCompiler.pipeliningStrategy.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getValue(),
+              workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {

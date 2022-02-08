@@ -14,6 +14,7 @@
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
@@ -35,26 +36,23 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
                                                        const SourceCatalogPtr& streamCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan,
                                                        z3::ContextPtr z3Context,
-                                                       QueryMergerRule queryMergerRule,
-                                                       MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
-                                                       bool performOnlySourceOperatorExpansion)
+                                                       const Configurations::OptimizerConfiguration optimizerConfiguration)
     : queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)), z3Context(std::move(z3Context)) {
-    queryMergerPhase = QueryMergerPhase::create(this->z3Context, queryMergerRule);
+    queryMergerPhase = QueryMergerPhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    bool applyRulesImprovingSharingIdentification = false;
     //If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
-    // then apply special rewrite rules for improving the match identification
-    if (queryMergerRule == QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
-        || queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
-        || queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
-        || queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule) {
-        applyRulesImprovingSharingIdentification = true;
-    }
+    //then apply special rewrite rules for improving the match identification
+    bool applyRulesImprovingSharingIdentification =
+        optimizerConfiguration.queryMergerRule == QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
+        || optimizerConfiguration.queryMergerRule == QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
+        || optimizerConfiguration.queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
+        || optimizerConfiguration.queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule;
+
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     topologySpecificQueryRewritePhase =
-        TopologySpecificQueryRewritePhase::create(streamCatalog, performOnlySourceOperatorExpansion);
-    signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, queryMergerRule);
-    setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(memoryLayoutPolicy);
+        TopologySpecificQueryRewritePhase::create(streamCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion.getValue());
+    signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
+    setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(optimizerConfiguration.memoryLayoutPolicy);
 }
 
 GlobalQueryPlanUpdatePhasePtr
@@ -62,16 +60,12 @@ GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
                                    SourceCatalogPtr streamCatalog,
                                    GlobalQueryPlanPtr globalQueryPlan,
                                    z3::ContextPtr z3Context,
-                                   QueryMergerRule queryMergerRule,
-                                   MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
-                                   bool performOnlySourceOperatorExpansion) {
+                                   const Configurations::OptimizerConfiguration optimizerConfiguration) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(GlobalQueryPlanUpdatePhase(std::move(queryCatalog),
                                                                                    std::move(streamCatalog),
                                                                                    std::move(globalQueryPlan),
                                                                                    std::move(z3Context),
-                                                                                   queryMergerRule,
-                                                                                   memoryLayoutPolicy,
-                                                                                   performOnlySourceOperatorExpansion));
+                                                                                   optimizerConfiguration));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {

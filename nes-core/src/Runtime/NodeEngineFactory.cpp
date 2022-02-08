@@ -15,6 +15,7 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/PartitionManager.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
@@ -22,10 +23,10 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>
+#include <Runtime/MaterializedViewManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Runtime/MaterializedViewManager.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -39,7 +40,17 @@ extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname,
                                                          uint16_t port,
                                                          std::vector<PhysicalSourcePtr> physicalSources) {
-    return createNodeEngine(hostname, port, std::move(physicalSources), 1, 4096, 1024, 128, 12, NumaAwarenessFlag::DISABLED, "");
+    return createNodeEngine(hostname,
+                            port,
+                            std::move(physicalSources),
+                            1,
+                            4096,
+                            1024,
+                            128,
+                            12,
+                            Configurations::QueryCompilerConfiguration(),
+                            NumaAwarenessFlag::DISABLED,
+                            "");
 }
 
 NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
@@ -50,12 +61,10 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
                                                   const uint64_t numberOfBuffersPerWorker,
+                                                  const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                                   NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& workerToCodeMapping,
-                                                  const std::string& queuePinList,
-                                                  const std::string& queryCompilerCompilationStrategy,
-                                                  const std::string& queryCompilerPipeliningStrategy,
-                                                  const std::string& queryCompilerOutputBufferOptimizationLevel) {
+                                                  const std::string& queuePinList) {
 
     try {
         auto nodeEngineId = getNextNodeEngineId();
@@ -89,12 +98,11 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto numberOfQueues = Util::numberOfUniqueValues(queuePinListMapping);
 
         //create one buffer manager per queue
-        if(numberOfQueues == 0) {
+        if (numberOfQueues == 0) {
             bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
                                                                      numberOfBuffersInGlobalBufferManager,
                                                                      hardwareManager->getGlobalAllocator()));
-        }
-        else {
+        } else {
             for (auto i = 0u; i < numberOfQueues; ++i) {
                 bufferManagers.push_back(std::make_shared<BufferManager>(bufferSize,
                                                                          numberOfBuffersInGlobalBufferManager,
@@ -153,9 +161,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
-        auto queryCompilationOptions = createQueryCompilationOptions(queryCompilerCompilationStrategy,
-                                                                     queryCompilerPipeliningStrategy,
-                                                                     queryCompilerOutputBufferOptimizationLevel);
+        auto queryCompilationOptions = createQueryCompilationOptions(queryCompilerConfiguration);
         queryCompilationOptions->setNumSourceLocalBuffers(numberOfBuffersInSourceLocalBufferPool);
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(queryCompilationOptions, phaseFactory, jitCompiler);
         if (!compiler) {
@@ -193,52 +199,18 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
 }
 
 QueryCompilation::QueryCompilerOptionsPtr
-NodeEngineFactory::createQueryCompilationOptions(const std::string& queryCompilerCompilationStrategy,
-                                                 const std::string& queryCompilerPipeliningStrategy,
-                                                 const std::string& queryCompilerOutputBufferOptimizationLevel) {
+NodeEngineFactory::createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration queryCompilerConfiguration) {
     auto queryCompilationOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
 
     // set compilation mode
-    if (queryCompilerCompilationStrategy == "FAST") {
-        queryCompilationOptions->setCompilationStrategy(QueryCompilation::QueryCompilerOptions::FAST);
-    } else if (queryCompilerCompilationStrategy == "DEBUG") {
-        queryCompilationOptions->setCompilationStrategy(QueryCompilation::QueryCompilerOptions::DEBUG);
-    } else if (queryCompilerCompilationStrategy == "OPTIMIZE") {
-        queryCompilationOptions->setCompilationStrategy(QueryCompilation::QueryCompilerOptions::OPTIMIZE);
-    } else {
-        NES_FATAL_ERROR("queryCompilerCompilationStrategy " << queryCompilerCompilationStrategy << " not supported");
-    }
+    queryCompilationOptions->setCompilationStrategy(queryCompilerConfiguration.compilationStrategy);
 
     // set pipelining strategy mode
-    if (queryCompilerPipeliningStrategy == "OPERATOR_AT_A_TIME") {
-        queryCompilationOptions->setPipeliningStrategy(QueryCompilation::QueryCompilerOptions::OPERATOR_AT_A_TIME);
-    } else if (queryCompilerPipeliningStrategy == "OPERATOR_FUSION") {
-        queryCompilationOptions->setPipeliningStrategy(QueryCompilation::QueryCompilerOptions::OPERATOR_FUSION);
-    } else {
-        NES_FATAL_ERROR("queryCompilerPipeliningStrategy " << queryCompilerCompilationStrategy << " not supported");
-    }
+    queryCompilationOptions->setPipeliningStrategy(queryCompilerConfiguration.pipeliningStrategy);
 
     // set output buffer optimization level
-    if (queryCompilerOutputBufferOptimizationLevel == "ALL") {
-        queryCompilationOptions->setOutputBufferOptimizationLevel(QueryCompilation::QueryCompilerOptions::ALL);
-    } else if (queryCompilerOutputBufferOptimizationLevel == "NO") {
-        queryCompilationOptions->setOutputBufferOptimizationLevel(QueryCompilation::QueryCompilerOptions::NO);
-    } else if (queryCompilerOutputBufferOptimizationLevel == "REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK") {
-        queryCompilationOptions->setOutputBufferOptimizationLevel(
-            QueryCompilation::QueryCompilerOptions::REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK);
-    } else if (queryCompilerOutputBufferOptimizationLevel == "ONLY_INPLACE_OPERATIONS_NO_FALLBACK") {
-        queryCompilationOptions->setOutputBufferOptimizationLevel(
-            QueryCompilation::QueryCompilerOptions::ONLY_INPLACE_OPERATIONS_NO_FALLBACK);
-    } else if (queryCompilerOutputBufferOptimizationLevel == "REUSE_INPUT_BUFFER_NO_FALLBACK") {
-        queryCompilationOptions->setOutputBufferOptimizationLevel(
-            QueryCompilation::QueryCompilerOptions::REUSE_INPUT_BUFFER_NO_FALLBACK);
-    } else if (queryCompilerOutputBufferOptimizationLevel == "OMIT_OVERFLOW_CHECK_NO_FALLBACK") {
-        queryCompilationOptions->setOutputBufferOptimizationLevel(
-            QueryCompilation::QueryCompilerOptions::OMIT_OVERFLOW_CHECK_NO_FALLBACK);
-    } else {
-        NES_FATAL_ERROR("queryCompilerOutputBufferOptimizationLevel " << queryCompilerOutputBufferOptimizationLevel
-                                                                      << " not supported");
-    }
+    queryCompilationOptions->setOutputBufferOptimizationLevel(queryCompilerConfiguration.outputBufferOptimizationLevel);
+
     return queryCompilationOptions;
 }
 

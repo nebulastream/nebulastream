@@ -1,68 +1,68 @@
 # ~~~ Configurations for the NES Worker ~~~
 
 # ~~ IPs and Ports ~~
-# IP address of the worker node. Default: 127.0.0.1
-localWorkerIp:
+# Set worker IP
+localWorkerIp: 127.0.0.1
 
-# Set IP address of Coordinator to which the Worker should connect. Default: 127.0.0.1
-coordinatorIp:
+# Set IP address of NES Coordinator to which the NES Worker should connect
+coordinatorIp: 127.0.0.1
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
-# Needs to be the same as rpcPort in Coordinator. Default: 4000
-coordinatorPort:
+# Needs to be the same as rpcPort in Coordinator
+coordinatorPort: 4000
 
-# Set RPC server port of NES Worker. Default: 5000
-rpcPort:
+# Set RPC server port of NES Worker
+rpcPort: 3000
 
-# Set the data port of the NES Worker. Default: 5001
-dataPort:
+# Set the data port of the NES Worker
+dataPort: 3001
 
-# Set number of computing slots in NES Worker. Default: UINT16_MAX
-numberOfSlots:
+# Set number of computing slots in NES Worker
+numberOfSlots: 65535
 
-# Set the number of worker threads. Default: 1
-numWorkerThreads:
+# Set the number of worker threads
+numWorkerThreads: 1
 
-# Number buffers in global buffer pool. Default: 1024
-numberOfBuffersInGlobalBufferManager:
+# Number buffers in global buffer pool
+numberOfBuffersInGlobalBufferManager: 1024
 
-# Number buffers in task local buffer pool. Default: 128
-numberOfBuffersPerWorker:
+# Number buffers in task local buffer pool
+numberOfBuffersPerWorker: 128
 
-# Number buffers in source local buffer pool. Default: 64
-numberOfBuffersInSourceLocalBufferPool:
+# Number buffers in source local buffer pool
+numberOfBuffersInSourceLocalBufferPool: 64
 
-# Size of buffer to pass data through the system. Default: 4096
-bufferSizeInBytes:
+# Size of buffer to pass data through the system
+bufferSizeInBytes: 4096
 
-# Set parentId of NES Worker node. Default: 0
-parentId:
+# Set parentId of NES Worker node
+parentId: -1
 
-# The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE). Default: LOG_DEBUG
-logLevel:
+# The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
+logLevel: LOG_DEBUG
 
-# Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]. Default: OPTIMIZE
-queryCompilerCompilationStrategy:
-
-# Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME]. Default: OPERATOR_FUSION
-queryCompilerPipeliningStrategy:
-
-# Indicates the OutputBufferAllocationStrategy [ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,
-# |REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]
-# Default: ALL
-queryCompilerOutputBufferOptimizationLevel:
-
-# Comma separated list of where to map the sources. Default: ""
+# Comma separated list of where to map the sources
 sourcePinList:
 
-# Comma separated list of where to map the worker. Default: ""
+# Comma separated list of where to map the worker
 workerPinList:
 
-# Enable Numa-Aware execution. Default: false
-numaAwareness:
+# Enable Numa-Aware execution
+numaAwareness: false
 
-# Enable monitoring. Default: false
-enableMonitoring:
+# Enable monitoring
+enableMonitoring: false
+
+queryCompiler:
+  # Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]
+  queryCompilerCompilationStrategy: OPTIMIZE
+
+  # Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME]
+  queryCompilerPipeliningStrategy: OPERATOR_FUSION
+
+  # Indicates the OutputBufferAllocationStrategy [ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,
+  # |REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]
+  queryCompilerOutputBufferOptimizationLevel: ALL
 
 # ~~~ Physical Stream Configurations ~~~
 
@@ -71,38 +71,39 @@ enableMonitoring:
 # Available source Types: DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
 #                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
 #                         BinarySource (ToDo: Make source available))
-# Default: empty
 physicalSources:
   # Set logical stream name where this stream is added to
-  - logicalSourceName:
+  - logicalSourceName: default_source_log
     # Set physical stream name
-    physicalSourceName:
+    physicalSourceName: default_source_phy
     # Define source type, also need to specify source configurations for source type below
     type: CSV
     # CSVSource and its needed configuration params
     configuration:
       ###### Define only the following configurations for CSV stream
       # Set file path
-      filePath:
+      filePath: /tests/test_data/exdra.csv
       # Skip first line of the file
-      skipHeader:
+      skipHeader: false
       # Set delimiter, e.g. ',' or '.'
-      delimiter:
+      delimiter: ","
       # Set number of buffers to produce, i.e. how often the read csv file is repeated
-      numberOfBuffersToProduce:
+      numberOfBuffersToProduce: 1
       # Set number of tuples to produce per buffer
-      numberOfTuplesToProducePerBuffer:
+      numberOfTuplesToProducePerBuffer: 1
       # Set sampling frequency of source
-      sourceFrequency:
+      sourceFrequency: 1
+      # Set input data format
+      inputFormat: JSON
       ###### Define only the following configurations for DefaultSource stream
       # Set number of buffers to produce, i.e. how often the default data is repeated for this source
-      #numberOfBuffersToProduce:
+      #numberOfBuffersToProduce: 1
       ###### Define only the following configurations for BinarySource stream
       # Set number of buffers to produce, i.e. how often the default data is repeated for this source
-      #filePath:
+      #filePath: 1
       ###### Define only the following configurations for SenseSource stream
       # Set number of buffers to produce, i.e. how often the default data is repeated for this source
-      #udfs:
+      #udfs: 1
       ###### Define only the following configurations for MQTTSource stream
       # Set url to connect to
       #url:
@@ -113,24 +114,24 @@ physicalSources:
       # Set topic to listen to
       #topic:
       # set quality of service
-      #qos:
+      #qos: 2
       # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-      #cleanSession:
+      #cleanSession: true
       # set tupleBuffer flush interval in milliseconds
-      #flushIntervalMS:
+      #flushIntervalMS: -1
       # Set input data format
-      #inputFormat:
+      #inputFormat: JSON
       ###### Define only the following configurations for KafkaSource stream
       # Set kafka broker string
       #brokers:
       # Set auto commit, boolean value where 1 equals true, and 0 equals false
-      #autoCommit:
+      #autoCommit: 1
       # Set groupId
       #groupId:
       # Set topic to listen to
-      #topic:
+      #topic: "test"
       # Set connection time out for source
-      #connectionTimeout:
+      #connectionTimeout: 10
       ###### Define only the following configurations for OPCSource stream
       # Set namespaceIndex for node, needed for: OPCSource
       #namespaceIndex:
