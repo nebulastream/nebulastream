@@ -19,13 +19,13 @@
 namespace NES::Configurations {
 
 template<class Type, class Factory>
-concept IsFactory = requires(std::string z, Yaml::Node node) {
-    {Factory::createFromString(z)};
+concept IsFactory = requires(std::string argument, Yaml::Node node) {
+    {Factory::createFromString(argument)};
     {Factory::createFromYaml(node)};
 };
 
 /**
- * @brief This class provides a general option, that can wrap an object as an arbitrary Type as an option.
+ * @brief This class provides a general option, that can wrap an object of arbitrary Type as an option.
  * To this end, users have to specific a Factory which implements the following two static functions:
  * - Type Factory::createFromString(std::string) -> creates an object of the option Type from an string value.
  * - Type Factory::createFromYaml(Yaml::Node) -> creates an object of the option Type from an YAML node.

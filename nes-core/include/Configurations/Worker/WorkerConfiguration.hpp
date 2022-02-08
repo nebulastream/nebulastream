@@ -18,6 +18,7 @@
 #include <Configurations/ConfigOptions/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceFactory.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <map>
 #include <string>
 
@@ -61,29 +62,13 @@ class WorkerConfiguration : public BaseConfiguration {
     UIntOption parentId = {PARENT_ID_CONFIG, 0, "Parent ID of this node."};
     StringOption logLevel = {LOG_LEVEL_CONFIG, "LOG_DEBUG", "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) "};
 
-    StringOption queryCompilerCompilationStrategy = {
-        QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG,
-        "OPTIMIZE",
-        "Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]."};
-
-    StringOption queryCompilerPipeliningStrategy = {
-        QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG,
-        "OPERATOR_FUSION",
-        "Indicates the pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME]."};
-
-    StringOption queryCompilerOutputBufferOptimizationLevel = {
-        QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG,
-        "ALL",
-        "Indicates the OutputBufferAllocationStrategy "
-        "[ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,"
-        "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"
-        "REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]. "};
     StringOption sourcePinList = {SOURCE_PIN_LIST_CONFIG, "", "comma separated list of where to map the sources"};
     StringOption workerPinList = {WORKER_PIN_LIST_CONFIG, "", "comma separated list of where to map the worker"};
     StringOption queuePinList = {QUEUE_PIN_LIST_CONFIG, "", "comma separated list of where to map the worker on the queue"};
     BoolOption numaAwareness = {NUMA_AWARENESS_CONFIG, false, "Enable Numa-Aware execution"};
     BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
-    SequenceOption<WrapOption<PhysicalSourcePtr, PhysicalSourceFactory>> physicalSources = {"physicalSources",
+    QueryCompilerConfiguration queryCompiler = {QUERY_COMPILER_CONFIG, "Configuration for the query compiler"};
+    SequenceOption<WrapOption<PhysicalSourcePtr, PhysicalSourceFactory>> physicalSources = {PHYSICAL_SOURCES,
                                                                                             "Physical sources"};
 
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
@@ -103,9 +88,6 @@ class WorkerConfiguration : public BaseConfiguration {
                 &bufferSizeInBytes,
                 &parentId,
                 &logLevel,
-                &queryCompilerCompilationStrategy,
-                &queryCompilerPipeliningStrategy,
-                &queryCompilerOutputBufferOptimizationLevel,
                 &sourcePinList,
                 &workerPinList,
                 &queuePinList,

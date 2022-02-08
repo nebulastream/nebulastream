@@ -24,6 +24,10 @@ class context;
 using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
+namespace NES::Configurations {
+class OptimizerConfiguration;
+}
+
 namespace NES::Optimizer {
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
@@ -73,15 +77,16 @@ using RequestQueuePtr = std::shared_ptr<RequestQueue>;
 class RequestProcessorService {
   public:
     explicit RequestProcessorService(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                        const TopologyPtr& topology,
-                                        const QueryCatalogPtr& queryCatalog,
-                                        const GlobalQueryPlanPtr& globalQueryPlan,
-                                        const SourceCatalogPtr& streamCatalog,
-                                        const WorkerRPCClientPtr& workerRpcClient,
+                                     const TopologyPtr& topology,
+                                     const QueryCatalogPtr& queryCatalog,
+                                     const GlobalQueryPlanPtr& globalQueryPlan,
+                                     const SourceCatalogPtr& streamCatalog,
+                                     const WorkerRPCClientPtr& workerRpcClient,
                                      RequestQueuePtr queryRequestQueue,
                                         Optimizer::QueryMergerRule queryMergerRule,
                                         Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
                                         bool performOnlySourceOperatorExpansion,
+                                        const Configurations::OptimizerConfiguration optimizerConfiguration,
                                         bool queryReconfiguration);
 
     /**
@@ -115,4 +120,4 @@ class RequestProcessorService {
     z3::ContextPtr z3Context;
 };
 }// namespace NES
-#endif  // NES_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_
+#endif// NES_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_

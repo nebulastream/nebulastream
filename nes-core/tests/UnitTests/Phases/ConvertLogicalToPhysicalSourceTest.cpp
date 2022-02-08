@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -53,6 +54,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
                                                               1024,
                                                               12,
                                                               12,
+                                                              Configurations::QueryCompilerConfiguration(),
                                                               NES::Runtime::NumaAwarenessFlag::DISABLED);
     }
 

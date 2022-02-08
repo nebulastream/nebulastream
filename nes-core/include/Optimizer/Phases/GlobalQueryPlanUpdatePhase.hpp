@@ -25,7 +25,12 @@ class context;
 using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
+
 namespace NES {
+
+namespace Configurations {
+class OptimizerConfiguration;
+}
 
 class Request;
 using NESRequestPtr = std::shared_ptr<Request>;
@@ -74,19 +79,14 @@ class GlobalQueryPlanUpdatePhase {
      * @param queryCatalog: the catalog of queries
      * @param streamCatalog: the catalog of streams
      * @param globalQueryPlan: the input global query plan
-     * @param enableQueryMerging: enable or disable query merging
-     * @param queryMergerRule: Rule to be used fro performing query merging if merging enabled
-     * @param memoryLayoutPolicy: Layout selection policy
-     * @param performOnlySourceOperatorExpansion: perform expansion of only logical source operator
+     * @param optimizerConfiguration: configuration for the optimizer
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog,
                                                 SourceCatalogPtr streamCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan,
                                                 z3::ContextPtr z3Context,
-                                                QueryMergerRule queryMergerRule,
-                                                MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
-                                                bool performOnlySourceOperatorExpansion);
+                                                const Configurations::OptimizerConfiguration optimizerConfiguration);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -100,9 +100,7 @@ class GlobalQueryPlanUpdatePhase {
                                         const SourceCatalogPtr& streamCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan,
                                         z3::ContextPtr z3Context,
-                                        QueryMergerRule queryMergerRule,
-                                        MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
-                                        bool performOnlySourceOperatorExpansion);
+                                        const Configurations::OptimizerConfiguration optimizerConfiguration);
 
     QueryCatalogPtr queryCatalog;
     GlobalQueryPlanPtr globalQueryPlan;

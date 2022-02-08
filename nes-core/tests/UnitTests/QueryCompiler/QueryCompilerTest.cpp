@@ -53,6 +53,7 @@
 #include "../../util/NesBaseTest.hpp"
 #include <iostream>
 #include <memory>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 
 using namespace std;
 using namespace std;
@@ -104,6 +105,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
@@ -151,10 +153,9 @@ TEST_F(QueryCompilerTest, filterQueryBitmask) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED,
-                                                                   "",
-                                                                   "Release",
-                                                                   "No");
+                                                                   "");
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory, jitCompiler);
@@ -200,6 +201,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
@@ -251,6 +253,7 @@ TEST_F(QueryCompilerTest, windowQueryEventTime) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
@@ -303,6 +306,7 @@ TEST_F(QueryCompilerTest, unionQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
@@ -358,6 +362,7 @@ TEST_F(QueryCompilerTest, joinQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
@@ -418,6 +423,7 @@ TEST_F(QueryCompilerTest, externalOperatorTest) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();

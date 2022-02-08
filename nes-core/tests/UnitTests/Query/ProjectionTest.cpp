@@ -41,7 +41,7 @@
 #include <future>
 #include <iostream>
 #include <utility>
-
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
@@ -82,6 +82,7 @@ class ProjectionTest : public Testing::NESBaseTest {
                                                                   1024,
                                                                   12,
                                                                   12,
+                                                                  Configurations::QueryCompilerConfiguration(),
                                                                   NES::Runtime::NumaAwarenessFlag::DISABLED);
     }
 

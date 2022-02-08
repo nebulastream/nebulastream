@@ -38,9 +38,9 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog,
                            RequestQueuePtr queryRequestQueue,
                            SourceCatalogPtr streamCatalog,
                            std::shared_ptr<QueryParsingService> queryParsingService,
-                           bool enableSemanticQueryValidation)
+                           Configurations::OptimizerConfiguration optimizerConfiguration)
     : queryCatalog(std::move(queryCatalog)), queryRequestQueue(std::move(queryRequestQueue)),
-      enableSemanticQueryValidation(enableSemanticQueryValidation) {
+      optimizerConfiguration(optimizerConfiguration) {
     NES_DEBUG("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(std::move(queryParsingService));
     semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalog);
@@ -83,7 +83,7 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
     queryPlan->setLineageType(lineage);
 
     // Execute only if the semantic validation flag is enabled
-    if (enableSemanticQueryValidation) {
+    if (optimizerConfiguration.enableSemanticQueryValidation) {
         NES_INFO("QueryService: Executing Semantic validation");
         try {
             // Checking semantic validity

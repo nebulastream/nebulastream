@@ -15,12 +15,17 @@
 #ifndef NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #define NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
+
 #include <vector>
 
 namespace NES {
 
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
+
+namespace Configurations{
+class QueryCompilerConfiguration;
+}
 
 namespace Runtime {
 enum class NumaAwarenessFlag { ENABLED, DISABLED };
@@ -55,18 +60,14 @@ class NodeEngineFactory {
                                           uint64_t numberOfBuffersInGlobalBufferManager,
                                           uint64_t numberOfBuffersInSourceLocalBufferPool,
                                           uint64_t numberOfBuffersPerWorker,
+                                          const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                           NumaAwarenessFlag enableNumaAwareness = NumaAwarenessFlag::DISABLED,
                                           const std::string& workerToCodeMapping = "",
-                                          const std::string& queuePinList = "",
-                                          const std::string& queryCompilerCompilationStrategy = "DEBUG",
-                                          const std::string& queryCompilerPipeliningStrategy = "OPERATOR_FUSION",
-                                          const std::string& queryCompilerOutputBufferOptimizationLevel = "ALL");
+                                          const std::string& queuePinList = "");
 
   private:
     static QueryCompilation::QueryCompilerOptionsPtr
-    createQueryCompilationOptions(const std::string& queryCompilerCompilationStrategy,
-                                  const std::string& queryCompilerPipeliningStrategy,
-                                  const std::string& queryCompilerOutputBufferOptimizationLevel);
+    createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration queryCompilerConfiguration);
 
     /**
      * @brief Returns the next free node id

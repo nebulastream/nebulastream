@@ -94,40 +94,26 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     streamCatalogService = std::make_shared<StreamCatalogService>(streamCatalog);
     topologyManagerService = std::make_shared<TopologyManagerService>(topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
-    queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->queryBatchSize);
+    queryRequestQueue = std::make_shared<RequestQueue>(this->coordinatorConfiguration->optimizer.queryBatchSize);
     globalQueryPlan = GlobalQueryPlan::create();
 
-    auto memoryLayoutPolicyString = this->coordinatorConfiguration->memoryLayoutPolicy;
-    if (!Optimizer::stringToMemoryLayoutPolicy.contains(memoryLayoutPolicyString)) {
-        NES_FATAL_ERROR("Unrecognized MemoryLayoutPolicy Detected " << memoryLayoutPolicyString);
-    }
-    auto memoryLayoutPolicy = Optimizer::stringToMemoryLayoutPolicy.find(memoryLayoutPolicyString)->second;
 
-    std::string queryMergerRuleName = this->coordinatorConfiguration->queryMergerRule;
-    auto found = Optimizer::stringToMergerRuleEnum.find(queryMergerRuleName);
-
-    bool performOnlySourceOperatorExpansion = this->coordinatorConfiguration->performOnlySourceOperatorExpansion;
-    if (found != Optimizer::stringToMergerRuleEnum.end()) {
-        queryRequestProcessorService = std::make_shared<RequestProcessorService>(globalExecutionPlan,
-                                                                                    topology,
-                                                                                    queryCatalog,
-                                                                                    globalQueryPlan,
-                                                                                    streamCatalog,
-                                                                                    workerRpcClient,
-                                                                                    queryRequestQueue,
-                                                                                    found->second,
-                                                                                    memoryLayoutPolicy,
-                                                                                    performOnlySourceOperatorExpansion,
-                                                                                    this->coordinatorConfiguration->getQueryReconfiguration()->getValue());
-    } else {
-        NES_FATAL_ERROR("Unrecognized Query Merger Rule Detected " << queryMergerRuleName);
-    }
+    queryRequestProcessorService =
+        std::make_shared<RequestProcessorService>(globalExecutionPlan,
+                                                  topology,
+                                                  queryCatalog,
+                                                  globalQueryPlan,
+                                                  streamCatalog,
+                                                  workerRpcClient,
+                                                  queryRequestQueue,
+                                                  this->coordinatorConfiguration->getQueryReconfiguration()->getValue(),
+                                                  this->coordinatorConfiguration->optimizer);
 
     queryService = std::make_shared<QueryService>(queryCatalog,
                                                   queryRequestQueue,
                                                   streamCatalog,
                                                   queryParsingService,
-                                                  this->coordinatorConfiguration->enableSemanticQueryValidation);
+                                                  this->coordinatorConfiguration->optimizer);
 
     udfCatalog = Catalogs::UdfCatalog::create();
     maintenanceService =
@@ -232,10 +218,10 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig = std::make_shared<WorkerConfiguration>();
         workerConfig.reset();
         workerConfig->coordinatorIp = rpcIp;
-        workerConfig->localWorkerIp =rpcIp;
-        workerConfig->coordinatorPort=rpcPort;
-        workerConfig->rpcPort=0;
-        workerConfig->dataPort =0;
+        workerConfig->localWorkerIp = rpcIp;
+        workerConfig->coordinatorPort = rpcPort;
+        workerConfig->rpcPort = 0;
+        workerConfig->dataPort = 0;
         workerConfig->numberOfSlots = numberOfSlots;
         workerConfig->numWorkerThreads = numberOfWorkerThreads;
         workerConfig->bufferSizeInBytes = bufferSizeInBytes;

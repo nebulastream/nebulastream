@@ -150,14 +150,18 @@ const std::string NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG = "numberOfB
 const std::string NUMBER_OF_BUFFERS_PER_WORKER_CONFIG = "numberOfBuffersPerWorker";
 const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG = "numberOfBuffersInSourceLocalBufferPool";
 const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
-const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
-const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
-const std::string ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG = "enableSemanticQueryValidation";
 const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
+const std::string OPTIMIZER_CONFIG = "optimizer";
+
+//Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
 const std::string ENABLE_QUERY_RECONFIGURATION = "enableQueryReconfiguration";
+const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
+const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
+const std::string ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG = "enableSemanticQueryValidation";
+
 
 //Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
@@ -172,6 +176,7 @@ const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
+const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 
 //Different Stream Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
