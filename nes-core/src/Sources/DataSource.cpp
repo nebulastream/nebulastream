@@ -124,7 +124,6 @@ bool DataSource::start() {
             if (rc != 0) {
                 NES_ERROR("Error calling set pthread_setaffinity_np: " << rc);
             } else {
-
                 unsigned long cur_mask;
                 auto ret = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), (cpu_set_t*) &cur_mask);
                 if (ret != 0) {
@@ -135,6 +134,7 @@ bool DataSource::start() {
             }
         } else {
             NES_WARNING("Use default affinity for source");
+            std::cout << "source " << operatorId << " does not use affinity" << std::endl;
         }
 #endif
 
