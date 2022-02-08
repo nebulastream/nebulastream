@@ -238,6 +238,17 @@ class CCodeGenerator : public CodeGenerator {
                                           Join::JoinOperatorHandlerPtr joinOperatorHandler) override;
 
     /**
+    * @brief Code generation the setup method for batch join operators, which depends on a particular join definition.
+    * @param join The batch join definition.
+    * @param context The context of the current pipeline.
+    * @return the operator id
+    */
+    uint64_t generateCodeForBatchJoinHandlerSetup(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+                                                  PipelineContextPtr context,
+                                                  uint64_t id,
+                                                  Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
+
+    /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param The join definition, which contains all properties of the join.
     * @param context The context of the current pipeline.
@@ -260,6 +271,28 @@ class CCodeGenerator : public CodeGenerator {
                                   PipelineContextPtr context,
                                   Join::JoinOperatorHandlerPtr joinOperatorHandler,
                                   QueryCompilation::JoinBuildSide buildSide) override;
+
+    /**
+    * @brief Code generation for a batch join build operator, which depends on a particular join definition
+    * @param batchJoinDef The join batch definition, which contains all properties of the join.
+    * @param context The context of the current pipeline.
+    * @param operatorHandlerIndex index for the operator handler. todo jm do we need this?
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForBatchJoinBuild(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+                                       PipelineContextPtr context,
+                                       Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
+
+    /**
+    * @brief Code generation for a batch join probe operator, which depends on a particular join definition
+    * @param batchJoinDef The join batch definition, which contains all properties of the join.
+    * @param context The context of the current pipeline.
+    * @param operatorHandlerIndex index for the operator handler. todo jm do we need this?
+    * @return flag if the generation was successful.
+    */
+    bool generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinitionPtr batchJoinDef,
+                                       PipelineContextPtr context,
+                                       Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler) override;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.
@@ -291,6 +324,18 @@ class CCodeGenerator : public CodeGenerator {
     static StructDeclaration
     generatePartialAggregationEntry(const Windowing::LogicalWindowDefinitionPtr window,
                                     std::vector<GeneratableOperators::GeneratableWindowAggregationPtr> generatableAggregation);
+
+    /**
+     * @brief returns getOperatorHandler<type>(operatorIndex) assigned to the given handle.
+     * @param context
+     * @param tupleBufferVariable
+     * @param index
+     * @return
+     */
+    VariableDeclaration getOperatorHandler(const PipelineContextPtr& context,
+                                                 const VariableDeclaration& tupleBufferVariable,
+                                                 uint64_t operatorIndex,
+                                                 NES::Runtime::Execution::OperatorHandlerType type);
 
     /**
      * @brief returns getOperatorHandler<Windowing::WindowOperatorHandler>(windowOperatorIndex);
@@ -448,6 +493,17 @@ class CCodeGenerator : public CodeGenerator {
                                                  const std::string& rightType);
 
     /**
+     * @brief returns getBatchJoinHandler<NES::Join::BatchJoinHandler,KeyType,buildType>()
+     * @param pipelineContextVariable
+     * @param KeyType
+     * @param buildType
+     * @return
+     */
+    BinaryOperatorStatement getBatchJoinHandler(const VariableDeclaration& pipelineContextVariable,
+                                                 DataTypePtr KeyType,
+                                                 const std::string& buildType);
+
+    /**
      * @brief returns windowHandlerVariable.getTypedWindowState()
      * @param windowHandlerVariable
      * @return
@@ -519,6 +575,18 @@ class CCodeGenerator : public CodeGenerator {
     VariableDeclaration getJoinOperatorHandler(const PipelineContextPtr& context,
                                                const VariableDeclaration& tupleBufferVariable,
                                                uint64_t joinOperatorIndex);
+
+    /**
+     * @brief creates batchJoinOperatorHandler = tupleBufferVariable.getOperatorHandler<Join::BatchJoinOperatorHandler>(batchJoinOperatorIndex) and
+     * appends it to the variableInitStmts
+     * @param context
+     * @param tupleBufferVariable
+     * @param batchJoinOperatorIndex
+     * @return
+     */
+    VariableDeclaration getBatchJoinOperatorHandler(const PipelineContextPtr& context,
+                                               const VariableDeclaration& tupleBufferVariable,
+                                               uint64_t batchJoinOperatorIndex);
 
     /**
      * @brief in a col layout, all pointers in the structDeclaration have to be set to the correct field

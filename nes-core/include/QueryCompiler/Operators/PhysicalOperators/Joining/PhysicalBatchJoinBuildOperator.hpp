@@ -27,7 +27,7 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * This operator receives input records and adds them to its operator state.
  */
  // todo think about emit and scan inheritance
-class PhysicalBatchJoinBuildOperator : public PhysicalBatchJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
+class PhysicalBatchJoinBuildOperator : public PhysicalBatchJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
 public:
     static PhysicalOperatorPtr create(OperatorId id,
                                       const SchemaPtr& inputSchema,

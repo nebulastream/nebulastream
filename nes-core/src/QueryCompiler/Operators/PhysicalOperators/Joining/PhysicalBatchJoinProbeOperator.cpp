@@ -64,7 +64,7 @@ class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::Execut
         NES::Runtime::TupleBuffer resultTupleBuffer = workerContext.allocateTupleBuffer();;
         ResultTuple *resultTuples = (ResultTuple *) resultTupleBuffer.getBuffer();
 
-        uint64_t maxTuple=resultTupleBuffer.getBufferSize()/sizeof(ResultTuple);
+        int64_t maxTuple=resultTupleBuffer.getBufferSize()/sizeof(ResultTuple);
 
 
         NES::Join::BatchJoinOperatorHandlerPtr joinOperatorHandler =
@@ -82,25 +82,25 @@ class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::Execut
             int64_t tmp_probe$value = inputTuples[recordIndex].probe$value;
 
             auto rangeJoinable = hashTable->equal_range(tmp_probe$id);
-            size_t numJoinable = std::distance(rangeJoinable.first, rangeJoinable.second);
-            if (numJoinable != 0) {
-                if(numberOfResultTuples + numJoinable > maxTuple){ // check if everything will fit.
+
+            for (auto it = rangeJoinable.first; it != rangeJoinable.second; ++it) {
+                resultTuples[numberOfResultTuples].probe$id = tmp_probe$id;
+                resultTuples[numberOfResultTuples].probe$one = tmp_probe$one;
+                resultTuples[numberOfResultTuples].probe$value = tmp_probe$value;
+                resultTuples[numberOfResultTuples].build$id = it->second.build$id;
+                resultTuples[numberOfResultTuples].build$value = it->second.build$value;
+
+                ++numberOfResultTuples;
+
+                if(numberOfResultTuples>=maxTuple){
                     resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
                     resultTupleBuffer.setOriginId(inputTupleBuffer.getOriginId());
                     resultTupleBuffer.setWatermark(inputTupleBuffer.getWatermark());
-
-                    NES_DEBUG("Buffer to emit from probe (EARLY): \n" + NES::Util::prettyPrintTupleBuffer(resultTupleBuffer, outputSchema));
-
                     pipelineExecutionContext.emitBuffer(resultTupleBuffer, workerContext);
                     numberOfResultTuples=0;
                     resultTupleBuffer=workerContext.allocateTupleBuffer();
                     resultTuples=(ResultTuple*)resultTupleBuffer.getBuffer();
-                }
-                for (auto it = rangeJoinable.first; it != rangeJoinable.second; ++it) {
-                    ResultTuple resTuple = {tmp_probe$id,tmp_probe$one,tmp_probe$value,
-                                            it->second.build$id, it->second.build$value};
-                    resultTuples[numberOfResultTuples] = resTuple;
-                    ++numberOfResultTuples;
+
                 }
             }
         };
@@ -127,37 +127,33 @@ class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::Execut
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(SchemaPtr leftInputSchema,
-                                                     SchemaPtr rightInputSchema,
+PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(SchemaPtr inputSchema,
                                                      SchemaPtr outputSchema,
                                                      Join::BatchJoinOperatorHandlerPtr joinOperatorHandler) {
     return create(Util::getNextOperatorId(),
-                  std::move(leftInputSchema),
-                  std::move(rightInputSchema),
+                  std::move(inputSchema),
                   std::move(outputSchema),
                   std::move(joinOperatorHandler));
 }
 
 PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(OperatorId id,
-                                                     const SchemaPtr& leftInputSchema,
-                                                     const SchemaPtr& rightInputSchema,
+                                                     const SchemaPtr& inputSchema,
                                                      const SchemaPtr& outputSchema,
                                                      const Join::BatchJoinOperatorHandlerPtr& joinOperatorHandler) {
-    return std::make_shared<PhysicalBatchJoinProbeOperator>(id, leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
+    return std::make_shared<PhysicalBatchJoinProbeOperator>(id, inputSchema, outputSchema, joinOperatorHandler);
 }
 
 PhysicalBatchJoinProbeOperator::PhysicalBatchJoinProbeOperator(OperatorId id,
-                                                   SchemaPtr leftInputSchema,
-                                                   SchemaPtr rightInputSchema,
+                                                   SchemaPtr inputSchema,
                                                    SchemaPtr outputSchema,
                                                    Join::BatchJoinOperatorHandlerPtr joinOperatorHandler)
     : OperatorNode(id), PhysicalBatchJoinOperator(std::move(joinOperatorHandler)),
-      PhysicalBinaryOperator(id, std::move(leftInputSchema), std::move(rightInputSchema), std::move(outputSchema)){};
+      PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)){};
 
 std::string PhysicalBatchJoinProbeOperator::toString() const { return "PhysicalBatchJoinProbeOperator"; }
 
 OperatorNodePtr PhysicalBatchJoinProbeOperator::copy() {
-    return create(id, leftInputSchema, rightInputSchema, outputSchema, operatorHandler); // todo is this a valid copy? looks like we could loose the schemas and handlers at the move operator
+    return create(id, inputSchema, outputSchema, operatorHandler); // todo is this a valid copy? looks like we could loose the schemas and handlers at the move operator
 }
 
 Runtime::Execution::ExecutablePipelineStagePtr PhysicalBatchJoinProbeOperator::getExecutablePipelineStage() {

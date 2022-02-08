@@ -17,6 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ForLoopStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
+#include <Util/Logger.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -27,8 +28,21 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
                                    ExpressionStatementPtr condition,
                                    ExpressionStatementPtr advance,
                                    std::vector<StatementPtr> loopBody)
-    : varDeclaration(std::move(varDeclaration)), condition(std::move(condition)), advance(std::move(advance)),
-      body(std::make_shared<CompoundStatement>()) {
+        : varDeclaration(std::move(varDeclaration)), varDeclarationStatememt(nullptr),
+        condition(std::move(condition)), advance(std::move(advance)),
+        body(std::make_shared<CompoundStatement>()) {
+    for (auto const& stmt : loopBody) {
+        if (stmt) {
+            body->addStatement(stmt);
+        }
+    }
+}
+ForLoopStatement::ForLoopStatement(ExpressionStatementPtr varDeclarationStatement,
+                                   ExpressionStatementPtr condition,
+                                   ExpressionStatementPtr advance,
+                                   std::vector<StatementPtr> loopBody)
+        : varDeclaration(nullptr), varDeclarationStatement(std::move(varDeclarationStatement)), condition(std::move(condition)), advance(std::move(advance)),
+        body(std::make_shared<CompoundStatement>()) {
     for (auto const& stmt : loopBody) {
         if (stmt) {
             body->addStatement(stmt);
@@ -36,11 +50,12 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
     }
 }
 
+
 ForLoopStatement::ForLoopStatement(ExpressionStatementPtr condition,
                                    ExpressionStatementPtr advance,
                                    std::vector<StatementPtr> loopBody)
-    : varDeclaration(nullptr), condition(std::move(condition)), advance(std::move(advance)),
-      body(std::make_shared<CompoundStatement>()) {
+        : varDeclaration(nullptr), varDeclarationStatement(nullptr), condition(std::move(condition)), advance(std::move(advance)),
+        body(std::make_shared<CompoundStatement>()) {
     for (auto const& stmt : loopBody) {
         if (stmt) {
             body->addStatement(stmt);
@@ -55,12 +70,19 @@ CompoundStatementPtr ForLoopStatement::getCompoundStatement() { return body; }
 StatementType ForLoopStatement::getStamentType() const { return StatementType::FOR_LOOP_STMT; }
 
 CodeExpressionPtr ForLoopStatement::getCode() const {
+    if (varDeclaration && varDeclarationStatement) {
+        NES_ERROR("ForLoopStatement: At most one of varDeclaration & varDeclarationStatement"
+                  "should be defined for code generation.");
+    }
+
     std::stringstream code;
     code << "for(";
-    if (varDeclaration != nullptr) {
-        code << varDeclaration->getCode();
+    if (varDeclaration) {
+        code << varDeclaration->getCode() << ";";
+    } else if (varDeclarationStatement) {
+        code << varDeclarationStatement->getCode()->code_ << ";";
     }
-    code << ";" << condition->getCode()->code_ << ";" << advance->getCode()->code_ << "){" << std::endl;
+    code << condition->getCode()->code_ << ";" << advance->getCode()->code_ << "){" << std::endl;
     code << body->getCode()->code_ << std::endl;
     code << "}" << std::endl;
     return std::make_shared<CodeExpression>(code.str());

@@ -60,12 +60,12 @@ bool BatchJoinLogicalOperatorNode::inferSchema() {
     rightInputSchema->clear();
 
     //Find the schema for left join key
-    FieldAccessExpressionNodePtr leftJoinKey = batchJoinDefinition->getLeftJoinKey();
-    auto leftJoinKeyName = leftJoinKey->getFieldName();
+    FieldAccessExpressionNodePtr buildJoinKey = batchJoinDefinition->getBuildJoinKey();
+    auto buildJoinKeyName = buildJoinKey->getFieldName();
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
-        if ((*itr)->hasFieldName(leftJoinKeyName)) {
+        if ((*itr)->hasFieldName(buildJoinKeyName)) {
             leftInputSchema->copyFields(*itr);
-            leftJoinKey->inferStamp(leftInputSchema);
+            buildJoinKey->inferStamp(leftInputSchema);
             //remove the schema from distinct schema list
             distinctSchemas.erase(itr);
             break;
@@ -74,26 +74,26 @@ bool BatchJoinLogicalOperatorNode::inferSchema() {
     }
 
     //Find the schema for right join key
-    FieldAccessExpressionNodePtr rightJoinKey = batchJoinDefinition->getRightJoinKey();
-    auto rightJoinKeyName = rightJoinKey->getFieldName();
+    FieldAccessExpressionNodePtr probeJoinKey = batchJoinDefinition->getProbeJoinKey();
+    auto probeJoinKeyName = probeJoinKey->getFieldName();
     for (auto& schema : distinctSchemas) {
-        if (schema->hasFieldName(rightJoinKeyName)) {
+        if (schema->hasFieldName(probeJoinKeyName)) {
             rightInputSchema->copyFields(schema);
-            rightJoinKey->inferStamp(rightInputSchema);
+            probeJoinKey->inferStamp(rightInputSchema);
         }
     }
 
     //Check if left input schema was identified
     if (!leftInputSchema) {
         NES_ERROR("BatchJoinLogicalOperatorNode: Left input schema is not initialized. Make sure that left join key is present : "
-                  + leftJoinKeyName);
+                  + buildJoinKeyName);
         throw TypeInferenceException("BatchJoinLogicalOperatorNode: Left input schema is not initialized.");
     }
 
     //Check if right input schema was identified
     if (!rightInputSchema) {
         NES_ERROR("BatchJoinLogicalOperatorNode: Right input schema is not initialized. Make sure that right join key is present : "
-                  + rightJoinKeyName);
+                  + probeJoinKeyName);
         throw TypeInferenceException("BatchJoinLogicalOperatorNode: Right input schema is not initialized.");
     }
 
@@ -119,9 +119,9 @@ bool BatchJoinLogicalOperatorNode::inferSchema() {
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
-    NES_DEBUG("Outputschma for join=" << outputSchema->toString());
+    NES_DEBUG("Output schema for join=" << outputSchema->toString());
     batchJoinDefinition->updateOutputDefinition(outputSchema);
-    batchJoinDefinition->updateStreamTypes(leftInputSchema, rightInputSchema);
+    batchJoinDefinition->updateInputSchemas(leftInputSchema, rightInputSchema);
     return true;
 }
 
@@ -150,8 +150,8 @@ void BatchJoinLogicalOperatorNode::inferStringSignature() {
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    signatureStream << "BATCHJOIN(LEFT-KEY=" << batchJoinDefinition->getLeftJoinKey()->toString() << ",";
-    signatureStream << "RIGHT-KEY=" << batchJoinDefinition->getRightJoinKey()->toString() << ",";
+    signatureStream << "BATCHJOIN(LEFT-KEY=" << batchJoinDefinition->getBuildJoinKey()->toString() << ",";
+    signatureStream << "RIGHT-KEY=" << batchJoinDefinition->getProbeJoinKey()->toString() << ",";
 
     auto rightChildSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
     auto leftChildSignature = children[1]->as<LogicalOperatorNode>()->getHashBasedSignature();

@@ -19,62 +19,62 @@
 #include <utility>
 namespace NES::Join {
 
-LogicalBatchJoinDefinition::LogicalBatchJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType,
-                                             FieldAccessExpressionNodePtr rightJoinKeyType,
+LogicalBatchJoinDefinition::LogicalBatchJoinDefinition(FieldAccessExpressionNodePtr keyTypeBuild,
+                                             FieldAccessExpressionNodePtr keyTypeProbe,
                                              uint64_t numberOfInputEdgesLeft,
                                              uint64_t numberOfInputEdgesRight,
                                              JoinType joinType)
-    : leftJoinKeyType(std::move(leftJoinKeyType)), rightJoinKeyType(std::move(rightJoinKeyType)),
-      numberOfInputEdgesLeft(numberOfInputEdgesLeft),
-      numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType) {
+    : keyTypeBuild(std::move(keyTypeBuild)), keyTypeProbe(std::move(keyTypeProbe)),
+      numberOfInputEdgesBuild(numberOfInputEdgesLeft),
+      numberOfInputEdgesProbe(numberOfInputEdgesRight), joinType(joinType) {
 
-    NES_ASSERT(this->leftJoinKeyType, "Invalid left join key type");
-    NES_ASSERT(this->rightJoinKeyType, "Invalid right join key type");
+    NES_ASSERT(this->keyTypeBuild, "Invalid left join key type");
+    NES_ASSERT(this->keyTypeProbe, "Invalid right join key type");
 
-    NES_ASSERT(this->numberOfInputEdgesLeft > 0, "Invalid number of left edges");
-    NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
+    NES_ASSERT(this->numberOfInputEdgesBuild > 0, "Invalid number of left edges");
+    NES_ASSERT(this->numberOfInputEdgesProbe > 0, "Invalid number of right edges");
     NES_ASSERT((this->joinType == INNER_JOIN || this->joinType == CARTESIAN_PRODUCT), "Invalid Join Type");
 }
 
-LogicalBatchJoinDefinitionPtr LogicalBatchJoinDefinition::create(const FieldAccessExpressionNodePtr& leftJoinKeyType,
-                                                       const FieldAccessExpressionNodePtr& rightJoinKeyType,
+LogicalBatchJoinDefinitionPtr LogicalBatchJoinDefinition::create(const FieldAccessExpressionNodePtr& keyTypeBuild,
+                                                       const FieldAccessExpressionNodePtr& keyTypeProbe,
                                                        uint64_t numberOfInputEdgesLeft,
                                                        uint64_t numberOfInputEdgesRight,
                                                        JoinType joinType) {
-    return std::make_shared<Join::LogicalBatchJoinDefinition>(leftJoinKeyType,
-                                                         rightJoinKeyType,
-                                                         numberOfInputEdgesLeft,
-                                                         numberOfInputEdgesRight,
-                                                         joinType);
+    return std::make_shared<Join::LogicalBatchJoinDefinition>(keyTypeBuild,
+                                                              keyTypeProbe,
+                                                              numberOfInputEdgesLeft,
+                                                              numberOfInputEdgesRight,
+                                                              joinType);
 }
 
-FieldAccessExpressionNodePtr LogicalBatchJoinDefinition::getLeftJoinKey() { return leftJoinKeyType; }
+FieldAccessExpressionNodePtr LogicalBatchJoinDefinition::getBuildJoinKey() { return keyTypeBuild; }
 
-FieldAccessExpressionNodePtr LogicalBatchJoinDefinition::getRightJoinKey() { return rightJoinKeyType; }
+FieldAccessExpressionNodePtr LogicalBatchJoinDefinition::getProbeJoinKey() { return keyTypeProbe; }
 
-SchemaPtr LogicalBatchJoinDefinition::getLeftStreamType() { return leftStreamType; }
+SchemaPtr LogicalBatchJoinDefinition::getBuildSchema() { return buildSchema; }
 
-SchemaPtr LogicalBatchJoinDefinition::getRightStreamType() { return rightStreamType; }
+SchemaPtr LogicalBatchJoinDefinition::getProbeSchema() { return probeSchema; }
 
 Join::LogicalBatchJoinDefinition::JoinType LogicalBatchJoinDefinition::getJoinType() const { return joinType; }
 
-uint64_t LogicalBatchJoinDefinition::getNumberOfInputEdgesLeft() const { return numberOfInputEdgesLeft; }
+uint64_t LogicalBatchJoinDefinition::getNumberOfInputEdgesBuild() const { return numberOfInputEdgesBuild; }
 
-uint64_t LogicalBatchJoinDefinition::getNumberOfInputEdgesRight() const { return numberOfInputEdgesRight; }
+uint64_t LogicalBatchJoinDefinition::getNumberOfInputEdgesProbe() const { return numberOfInputEdgesProbe; }
 
-void LogicalBatchJoinDefinition::updateStreamTypes(SchemaPtr leftStreamType, SchemaPtr rightStreamType) {
-    this->leftStreamType = std::move(leftStreamType);
-    this->rightStreamType = std::move(rightStreamType);
+void LogicalBatchJoinDefinition::updateInputSchemas(SchemaPtr buildSchema, SchemaPtr probeSchema) {
+    this->buildSchema = std::move(buildSchema);
+    this->probeSchema = std::move(probeSchema);
 }
 
 void LogicalBatchJoinDefinition::updateOutputDefinition(SchemaPtr outputSchema) { this->outputSchema = std::move(outputSchema); }
 
 SchemaPtr LogicalBatchJoinDefinition::getOutputSchema() const { return outputSchema; }
-void LogicalBatchJoinDefinition::setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft) {
-    LogicalBatchJoinDefinition::numberOfInputEdgesLeft = numberOfInputEdgesLeft;
+void LogicalBatchJoinDefinition::setNumberOfInputEdgesBuild(uint64_t numberOfInputEdgesLeft) {
+    LogicalBatchJoinDefinition::numberOfInputEdgesBuild = numberOfInputEdgesLeft;
 }
-void LogicalBatchJoinDefinition::setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight) {
-    LogicalBatchJoinDefinition::numberOfInputEdgesRight = numberOfInputEdgesRight;
+void LogicalBatchJoinDefinition::setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight) {
+    LogicalBatchJoinDefinition::numberOfInputEdgesProbe = numberOfInputEdgesRight;
 }
 
 };// namespace NES::Join
