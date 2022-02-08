@@ -214,7 +214,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     } else {
         NES_DEBUG("Use provided default worker config");
         workerConfig = std::make_shared<WorkerConfiguration>();
-        workerConfig.reset();
         workerConfig->coordinatorIp = rpcIp;
         workerConfig->localWorkerIp = rpcIp;
         workerConfig->coordinatorPort = rpcPort;
