@@ -83,11 +83,8 @@ class RequestProcessorService {
                                      const SourceCatalogPtr& streamCatalog,
                                      const WorkerRPCClientPtr& workerRpcClient,
                                      RequestQueuePtr queryRequestQueue,
-                                        Optimizer::QueryMergerRule queryMergerRule,
-                                        Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy memoryLayoutPolicy,
-                                        bool performOnlySourceOperatorExpansion,
-                                        const Configurations::OptimizerConfiguration optimizerConfiguration,
-                                        bool queryReconfiguration);
+                                     const Configurations::OptimizerConfiguration optimizerConfiguration,
+                                     bool queryReconfiguration);
 
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
