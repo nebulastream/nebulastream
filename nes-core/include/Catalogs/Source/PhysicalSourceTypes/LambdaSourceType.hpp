@@ -47,7 +47,7 @@ class LambdaSourceType : public PhysicalSourceType {
            uint64_t numBuffersToProduce,
            uint64_t gatheringValue,
            const std::string& gatheringMode,
-           uint64_t sourceAffinity = 0,
+           uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
            uint64_t taskQueueId = 0);
 
     std::function<void(NES::Runtime::TupleBuffer&, uint64_t)> getGenerationFunction() const;
