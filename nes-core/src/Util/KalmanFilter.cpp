@@ -204,7 +204,6 @@ double KalmanFilter::getEstimationErrorDifference() {
 }
 
 std::chrono::milliseconds KalmanFilter::getExponentialDecayFrequency() {
-    std::cout << "Alteration: decay" << std::endl;
     auto newFreqCandidate = this->initialFreq.count() * std::pow((1 - .25), this->decreaseCounter); // y = y0 * ((1-b) ^ x)
     ++this->decreaseCounter;
     this->increaseCounter = 1;
@@ -213,8 +212,7 @@ std::chrono::milliseconds KalmanFilter::getExponentialDecayFrequency() {
 }
 
 std::chrono::milliseconds KalmanFilter::getExponentialGrowthFrequency() {
-    std::cout << "Alteration: growth" << std::endl;
-    auto newFreqCandidate = this->initialFreq.count() * (1 + std::pow(eulerConstant, this->increaseCounter));
+    auto newFreqCandidate = this->initialFreq.count() * std::pow((1 + .25), this->increaseCounter); // y = y0 * ((1+b) ^ x)
     ++this->increaseCounter;
     this->decreaseCounter = 1;
     this->gatheringInterval = std::chrono::milliseconds((int) trunc(newFreqCandidate));
