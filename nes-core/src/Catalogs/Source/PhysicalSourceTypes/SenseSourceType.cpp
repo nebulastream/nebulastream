@@ -31,8 +31,8 @@ SenseSourceTypePtr SenseSourceType::create() { return std::make_shared<SenseSour
 
 SenseSourceType::SenseSourceType(std::map<std::string, std::string> sourceConfigMap) : SenseSourceType() {
     NES_INFO("SenseSourceConfig: Init source config object with values from sourceConfigMap.");
-    if (sourceConfigMap.find("--" + Configurations::UDFS_CONFIG) != sourceConfigMap.end()) {
-        udfs->setValue(sourceConfigMap.find("--" + Configurations::UDFS_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::UDFS_CONFIG) != sourceConfigMap.end()) {
+        udfs->setValue(sourceConfigMap.find(Configurations::UDFS_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no udfs defined! Please define a udfs.");
     }

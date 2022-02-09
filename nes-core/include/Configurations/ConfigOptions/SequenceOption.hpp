@@ -96,8 +96,10 @@ void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node) {
 }
 template<class T>
 requires std::is_base_of_v<BaseOption, T>
-void SequenceOption<T>::parseFromString(std::string, std::map<std::string, std::string>&) {
-    throw ConfigurationException("Currently we cant set sequential option with command line parameters");
+void SequenceOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+    auto option = T();
+    option.parseFromString(identifier, inputParams);
+    options.push_back(option);
 }
 
 template<class T>

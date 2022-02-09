@@ -57,28 +57,28 @@ CSVSourceType::CSVSourceType()
 
 CSVSourceType::CSVSourceType(std::map<std::string, std::string> sourceConfigMap) : CSVSourceType() {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from command line.");
-    if (sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
-        filePath->setValue(sourceConfigMap.find("--" + Configurations::FILE_PATH_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end()) {
+        filePath->setValue(sourceConfigMap.find(Configurations::FILE_PATH_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("CSVSourceType:: no filePath defined! Please define a filePath using "
                                 << Configurations::FILE_PATH_CONFIG << " configuration.");
     }
-    if (sourceConfigMap.find("--" + Configurations::DELIMITER_CONFIG) != sourceConfigMap.end()) {
-        delimiter->setValue(sourceConfigMap.find("--" + Configurations::DELIMITER_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::DELIMITER_CONFIG) != sourceConfigMap.end()) {
+        delimiter->setValue(sourceConfigMap.find(Configurations::DELIMITER_CONFIG)->second);
     }
-    if (sourceConfigMap.find("--" + Configurations::SKIP_HEADER_CONFIG) != sourceConfigMap.end()) {
-        skipHeader->setValue((sourceConfigMap.find("--" + Configurations::SKIP_HEADER_CONFIG)->second == "true"));
+    if (sourceConfigMap.find(Configurations::SKIP_HEADER_CONFIG) != sourceConfigMap.end()) {
+        skipHeader->setValue((sourceConfigMap.find(Configurations::SKIP_HEADER_CONFIG)->second == "true"));
     }
-    if (sourceConfigMap.find("--" + Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
+    if (sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG) != sourceConfigMap.end()) {
         numberOfBuffersToProduce->setValue(
-            std::stoi(sourceConfigMap.find("--" + Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
+            std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG)->second));
     }
-    if (sourceConfigMap.find("--" + Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG) != sourceConfigMap.end()) {
+    if (sourceConfigMap.find(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG) != sourceConfigMap.end()) {
         numberOfTuplesToProducePerBuffer->setValue(
-            std::stoi(sourceConfigMap.find("--" + Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
+            std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
     }
-    if (sourceConfigMap.find("--" + Configurations::SOURCE_FREQUENCY_CONFIG) != sourceConfigMap.end()) {
-        sourceFrequency->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::SOURCE_FREQUENCY_CONFIG)->second));
+    if (sourceConfigMap.find(Configurations::SOURCE_FREQUENCY_CONFIG) != sourceConfigMap.end()) {
+        sourceFrequency->setValue(std::stoi(sourceConfigMap.find(Configurations::SOURCE_FREQUENCY_CONFIG)->second));
     }
 }
 

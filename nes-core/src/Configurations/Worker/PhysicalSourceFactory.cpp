@@ -34,11 +34,11 @@ PhysicalSourcePtr PhysicalSourceFactory::createFromString(std::string ,
 
     std::string sourceType, logicalSourceName, physicalSourceName;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
-        if (it->first == "--" + SOURCE_TYPE_CONFIG && !it->second.empty()) {
+        if (it->first == SOURCE_TYPE_CONFIG && !it->second.empty()) {
             sourceType = it->second;
-        } else if (it->first == "--" + PHYSICAL_SOURCE_NAME_CONFIG && !it->second.empty()) {
+        } else if (it->first == PHYSICAL_SOURCE_NAME_CONFIG && !it->second.empty()) {
             physicalSourceName = it->second;
-        } else if (it->first == "--" + LOGICAL_SOURCE_NAME_CONFIG && !it->second.empty()) {
+        } else if (it->first == LOGICAL_SOURCE_NAME_CONFIG && !it->second.empty()) {
             logicalSourceName = it->second;
         }
     }

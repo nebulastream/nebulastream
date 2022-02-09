@@ -32,34 +32,34 @@ MQTTSourceTypePtr MQTTSourceType::create() { return std::make_shared<MQTTSourceT
 MQTTSourceType::MQTTSourceType(std::map<std::string, std::string> sourceConfigMap) : MQTTSourceType() {
     NES_INFO("MQTTSourceConfig: Init default MQTT source config object with values from command line args.");
 
-    if (sourceConfigMap.find("--" + Configurations::URL_CONFIG) != sourceConfigMap.end()) {
-        url->setValue(sourceConfigMap.find("--" + Configurations::URL_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::URL_CONFIG) != sourceConfigMap.end()) {
+        url->setValue(sourceConfigMap.find(Configurations::URL_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no Url defined! Please define a Url.");
     }
-    if (sourceConfigMap.find("--" + Configurations::CLIENT_ID_CONFIG) != sourceConfigMap.end()) {
-        clientId->setValue(sourceConfigMap.find("--" + Configurations::CLIENT_ID_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::CLIENT_ID_CONFIG) != sourceConfigMap.end()) {
+        clientId->setValue(sourceConfigMap.find(Configurations::CLIENT_ID_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no ClientId defined! Please define a ClientId.");
     }
-    if (sourceConfigMap.find("--" + Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
-        userName->setValue(sourceConfigMap.find("--" + Configurations::USER_NAME_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
+        userName->setValue(sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no UserName defined! Please define a UserName.");
     }
-    if (sourceConfigMap.find("--" + Configurations::TOPIC_CONFIG) != sourceConfigMap.end()) {
-        topic->setValue(sourceConfigMap.find("--" + Configurations::TOPIC_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::TOPIC_CONFIG) != sourceConfigMap.end()) {
+        topic->setValue(sourceConfigMap.find(Configurations::TOPIC_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("MQTTSourceConfig:: no topic defined! Please define a topic.");
     }
-    if (sourceConfigMap.find("--" + Configurations::QOS_CONFIG) != sourceConfigMap.end()) {
-        qos->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::QOS_CONFIG)->second));
+    if (sourceConfigMap.find(Configurations::QOS_CONFIG) != sourceConfigMap.end()) {
+        qos->setValue(std::stoi(sourceConfigMap.find(Configurations::QOS_CONFIG)->second));
     }
-    if (sourceConfigMap.find("--" + Configurations::CLEAN_SESSION_CONFIG) != sourceConfigMap.end()) {
-        cleanSession->setValue((sourceConfigMap.find("--" + Configurations::CLEAN_SESSION_CONFIG)->second == "true"));
+    if (sourceConfigMap.find(Configurations::CLEAN_SESSION_CONFIG) != sourceConfigMap.end()) {
+        cleanSession->setValue((sourceConfigMap.find(Configurations::CLEAN_SESSION_CONFIG)->second == "true"));
     }
-    if (sourceConfigMap.find("--" + Configurations::FLUSH_INTERVAL_MS_CONFIG) != sourceConfigMap.end()) {
-        flushIntervalMS->setValue(std::stof(sourceConfigMap.find("--" + Configurations::FLUSH_INTERVAL_MS_CONFIG)->second));
+    if (sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG) != sourceConfigMap.end()) {
+        flushIntervalMS->setValue(std::stof(sourceConfigMap.find(Configurations::FLUSH_INTERVAL_MS_CONFIG)->second));
     }
 }
 

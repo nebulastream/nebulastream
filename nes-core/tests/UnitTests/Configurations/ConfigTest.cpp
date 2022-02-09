@@ -69,7 +69,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
               coordinatorConfigPtr->optimizer.enableSemanticQueryValidation.getDefaultValue());
 }
 
-TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
+TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput) {
 
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
     std::string argv[] = {"--restIp=localhost",
@@ -170,10 +170,15 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
         "--numberOfBuffersInGlobalBufferManager=2048",
         "--numberOfBuffersInSourceLocalBufferPool=128",
         "--queryCompiler.compilationStrategy=FAST",
-        "--queryCompiler.pipeliningStrategy=OPERATPR_AT_A_TIME",
-        "--queryCompiler.OutputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+        "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
+        "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+        "--physicalSources.type=DefaultSource",
+        "--physicalSources.numberOfBuffersToProduce=5",
+        "--physicalSources.rowLayout=false",
+        "--physicalSources.physicalSourceName=x",
+        "--physicalSources.logicalSourceName=default"
     };
-    int argc = 8;
+    int argc = 13;
 
     std::map<string, string> commandLineParams;
 
@@ -209,11 +214,11 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
 
-    std::string argv[] = {"--type=DefaultSource",
-                          "--numberOfBuffersToProduce=5",
-                          "--rowLayout=false",
-                          "--physicalSourceName=x",
-                          "--logicalSourceName=default"};
+    std::string argv[] = {"type=DefaultSource",
+                          "numberOfBuffersToProduce=5",
+                          "rowLayout=false",
+                          "physicalSourceName=x",
+                          "logicalSourceName=default"};
     int argc = 5;
 
     std::map<string, string> commandLineParams;
@@ -234,13 +239,13 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
               physicalSourceType1->getSourceFrequency()->getDefaultValue());
     EXPECT_NE(physicalSourceType1->getNumberOfBuffersToProduce()->getValue(), 5u);
 
-    std::string argv1[] = {"--type=KafkaSource",
-                           "--physicalSourceName=x",
-                           "--logicalSourceName=default",
-                           "--topic=newTopic",
-                           "--connectionTimeout=100",
-                           "--brokers=testBroker",
-                           "--groupId=testId"};
+    std::string argv1[] = {"type=KafkaSource",
+                           "physicalSourceName=x",
+                           "logicalSourceName=default",
+                           "topic=newTopic",
+                           "connectionTimeout=100",
+                           "brokers=testBroker",
+                           "groupId=testId"};
 
     argc = 7;
 

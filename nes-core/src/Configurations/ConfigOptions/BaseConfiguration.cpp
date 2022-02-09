@@ -46,8 +46,12 @@ void BaseConfiguration::parseFromString(std::string identifier, std::map<std::st
     if (!optionMap.contains(identifier)) {
         throw ConfigurationException("Identifier " + identifier + " is not known.");
     }
-
-    optionMap[identifier]->parseFromString(identifier, inputParams);
+    auto option = optionMap[identifier];
+    if(dynamic_cast<BaseConfiguration*>(option)){
+        dynamic_cast<BaseConfiguration*>(optionMap[identifier])->overwriteConfigWithCommandLineInput(inputParams);
+    }else{
+        optionMap[identifier]->parseFromString(identifier, inputParams);
+    }
 
     // for (auto [childIdentifier, value] : inputParams) {
     //     if (value.empty()) {
@@ -72,11 +76,12 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::
         auto identifier = parm->first;
         auto value = parm->second;
         const std::string identifierStart = "--";
-        if (!identifier.starts_with(identifierStart)) {
-            throw ConfigurationException("Identifier " + identifier + " is not malformed. All commands should start with a --.");
+        if (identifier.starts_with(identifierStart)) {
+            // remove the -- in the beginning
+            identifier = identifier.substr(identifierStart.size());
+            // throw ConfigurationException("Identifier " + identifier + " is not malformed. All commands should start with a --.");
         }
-        // remove the -- in the beginning
-        identifier = identifier.substr(identifierStart.size());
+
         if (identifier.find('.') != std::string::npos) {
             auto index = std::string(identifier).find('.');
             auto parentIdentifier = std::string(identifier).substr(0, index);

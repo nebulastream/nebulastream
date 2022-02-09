@@ -31,21 +31,21 @@ OPCSourceTypePtr OPCSourceType::create() { return std::make_shared<OPCSourceType
 
 OPCSourceType::OPCSourceType(std::map<std::string, std::string> sourceConfigMap) : OPCSourceType() {
     NES_INFO("OPCSourceType: Init default OPC source config object with values from command line args.");
-    if (sourceConfigMap.find("--" + Configurations::OPC_SOURCE_CONFIG) != sourceConfigMap.end()) {
-        namespaceIndex->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::OPC_SOURCE_CONFIG)->second));
+    if (sourceConfigMap.find(Configurations::OPC_SOURCE_CONFIG) != sourceConfigMap.end()) {
+        namespaceIndex->setValue(std::stoi(sourceConfigMap.find(Configurations::OPC_SOURCE_CONFIG)->second));
     }
-    if (sourceConfigMap.find("--" + Configurations::NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
-        nodeIdentifier->setValue(sourceConfigMap.find("--" + Configurations::NAME_SPACE_INDEX_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG) != sourceConfigMap.end()) {
+        nodeIdentifier->setValue(sourceConfigMap.find(Configurations::NAME_SPACE_INDEX_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no nodeIdentifier defined! Please define a nodeIdentifier.");
     }
-    if (sourceConfigMap.find("--" + Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
-        userName->setValue(sourceConfigMap.find("--" + Configurations::USER_NAME_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::USER_NAME_CONFIG) != sourceConfigMap.end()) {
+        userName->setValue(sourceConfigMap.find(Configurations::USER_NAME_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("OPCSourceConfig:: no userName defined! Please define a userName.");
     }
-    if (sourceConfigMap.find("--" + Configurations::PASSWORD_CONFIG) != sourceConfigMap.end()) {
-        password->setValue(sourceConfigMap.find("--" + Configurations::PASSWORD_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::PASSWORD_CONFIG) != sourceConfigMap.end()) {
+        password->setValue(sourceConfigMap.find(Configurations::PASSWORD_CONFIG)->second);
     }
 }
 
