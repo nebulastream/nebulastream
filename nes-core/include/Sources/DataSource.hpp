@@ -191,7 +191,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @brief Returns the list of successor pipelines.
      * @return  std::vector<Runtime::Execution::SuccessorExecutablePipeline>
      */
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> getExecutableSuccessors();
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline>& getExecutableSuccessors();
 
     /**
      * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
@@ -29,11 +30,29 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
                                         SourceDescriptorPtr sourceDescriptor,
                                         Runtime::NodeEnginePtr nodeEngine,
                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
-    return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
-                                                            std::move(sourceDescriptor),
-                                                            std::move(nodeEngine),
-                                                            compilerOptions->getNumSourceLocalBuffers(),
-                                                            std::move(successors));
+
+    if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
+        for (auto& entry : physicalStreamNameToSourceMap) {
+            if (entry.first == sourceDescriptor->getPhysicalSourceName()) {
+                NES_DEBUG("Reuse already existing physical stream " << sourceDescriptor->getPhysicalSourceName());
+                for (auto& successor : successors) {
+                    entry.second->getExecutableSuccessors().push_back(successor);
+                }
+                return entry.second;
+            }
+        }
+    }
+
+    DataSourcePtr newPtr = ConvertLogicalToPhysicalSource::createDataSource(operatorId,
+                                                                            std::move(sourceDescriptor),
+                                                                            std::move(nodeEngine),
+                                                                            compilerOptions->getNumSourceLocalBuffers(),
+                                                                            std::move(successors));
+    if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
+        physicalStreamNameToSourceMap[sourceDescriptor->getPhysicalSourceName()] = newPtr;
+    }
+
+    return newPtr;
 }
 
 }// namespace NES::QueryCompilation

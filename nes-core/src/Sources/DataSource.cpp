@@ -38,7 +38,7 @@
 #include <utility>
 namespace NES {
 
-std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {
+std::vector<Runtime::Execution::SuccessorExecutablePipeline>& DataSource::getExecutableSuccessors() {
     return executableSuccessors;
 }
 

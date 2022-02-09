@@ -149,6 +149,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
             if (physicalSource->getLogicalSourceName() == logicalSourceName
                 && physicalSource->getPhysicalSourceName() == physicalSourceName) {
                 sourceDescriptor = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSource);
+                sourceDescriptor->setPhysicalSourceName(physicalSourceName);
                 foundPhysicalSource = true;
                 break;
             }
