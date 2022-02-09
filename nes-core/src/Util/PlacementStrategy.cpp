@@ -27,6 +27,10 @@ PlacementStrategy::Value PlacementStrategy::getFromString(const std::string plac
         return PlacementStrategy::Manual;
     } else if (placementStrategy == "ILP") {
         return PlacementStrategy::ILP;
+    } else if (placementStrategy == "MlHeuristic") {
+        return PlacementStrategy::MlHeuristic;
+//    } else if (placementStrategy == "IFCOP") {
+//        return PlacementStrategy::IFCOP;
     } else {
         NES_THROW_RUNTIME_ERROR("PlacementStrategy not supported " + placementStrategy);
     }
@@ -39,6 +43,7 @@ std::string PlacementStrategy::toString(const Value placementStrategy) {
         case PlacementStrategy::IFCOP: return "IFCOP";
         case PlacementStrategy::ILP: return "ILP";
         case PlacementStrategy::Manual: return "Manual";
+        case PlacementStrategy::MlHeuristic: return "MlHeuristic";
     }
 }
 

@@ -28,7 +28,8 @@ class PlacementStrategy {
         BottomUp = 1,
         IFCOP = 2,
         ILP = 3,
-        Manual = 4
+        Manual = 4,
+        MlHeuristic = 4
         // FIXME: enable them with issue #755
         // LowLatency,
         //  HighThroughput,

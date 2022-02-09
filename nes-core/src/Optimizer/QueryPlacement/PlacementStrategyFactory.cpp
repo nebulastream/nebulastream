@@ -18,6 +18,7 @@
 #include <Optimizer/QueryPlacement/ManualPlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+#include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
 #include <Util/PlacementStrategy.hpp>
 #include <log4cxx/helpers/exception.h>
 
@@ -37,12 +38,14 @@ BasePlacementStrategyPtr PlacementStrategyFactory::getStrategy(PlacementStrategy
 
             // #2486        case PlacementStrategy::IFCOP:
             //            return IFCOPStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
-            // FIXME: enable them with issue #755
-            //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
-            //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
-            //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
-            //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
-            //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
+            case PlacementStrategy::MlHeuristic:
+            return MlHeuristicStrategy::create(globalExecutionPlan, topology, typeInferencePhase);
+        // FIXME: enable them with issue #755
+        //        case LowLatency: return LowLatencyStrategy::create(nesTopologyPlan);
+        //        case HighThroughput: return HighThroughputStrategy::create(nesTopologyPlan);
+        //        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create(nesTopologyPlan);
+        //        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create(nesTopologyPlan);
+        //        case HighAvailability: return HighAvailabilityStrategy::create(nesTopologyPlan);
         default: throw log4cxx::helpers::Exception("Unknown placement strategy type " + std::to_string(placementStrategy));
     }
 }

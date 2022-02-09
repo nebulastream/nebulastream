@@ -338,11 +338,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMlHeuristicStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("MlHeuristic",
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy(NES::PlacementStrategy::IFCOP,
                                                                               globalExecutionPlan,
                                                                               topology,
                                                                               typeInferencePhase,
-                                                                              streamCatalog);
+                                                                              z3Context);
 
     Query query = Query::from("iris")
                   .inferModel("models/iris.tflite",
