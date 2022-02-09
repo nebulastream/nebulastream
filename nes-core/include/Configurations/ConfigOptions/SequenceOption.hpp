@@ -28,7 +28,6 @@ template<class T>
 requires std::is_base_of_v<BaseOption, T>
 class SequenceOption : public BaseOption {
   public:
-
     /**
      * @brief Constructor to create a new option that sets a name, and description.
      * @param name of the option.
@@ -57,7 +56,7 @@ class SequenceOption : public BaseOption {
     [[nodiscard]] std::vector<T> getValues() const;
     [[nodiscard]] bool empty() const;
     template<class X>
-    void add(X value){
+    void add(X value) {
         auto option = T();
         option.setValue(value);
         options.push_back(option);
@@ -65,7 +64,7 @@ class SequenceOption : public BaseOption {
 
   protected:
     void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(const std::string& identifier, const std::string& value) override;
+    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 
   private:
     std::vector<T> options;
@@ -97,7 +96,7 @@ void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node) {
 }
 template<class T>
 requires std::is_base_of_v<BaseOption, T>
-void SequenceOption<T>::parseFromString(const std::string&, const std::string&) {
+void SequenceOption<T>::parseFromString(std::string, std::map<std::string, std::string>&) {
     throw ConfigurationException("Currently we cant set sequential option with command line parameters");
 }
 

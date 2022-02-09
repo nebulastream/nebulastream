@@ -45,7 +45,7 @@ requires std::is_enum<EnumType>::value class EnumOption : public TypedBaseOption
 
   protected:
     void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(const std::string& identifier, const std::string& value) override;
+    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 };
 
 template<class EnumType>
@@ -62,11 +62,18 @@ requires std::is_enum<EnumType>::value EnumOption<EnumType>
 
 template<class EnumType>
 requires std::is_enum<EnumType>::value void EnumOption<EnumType>::parseFromYAMLNode(Yaml::Node node) {
-    parseFromString("", node.As<std::string>());
+
+    if (!magic_enum::enum_contains<EnumType>(node.As<std::string>())) {
+        auto name = std::string(magic_enum::enum_names_to_string<EnumType>());
+        throw ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + name);
+    }
+    this->value = magic_enum::enum_cast<EnumType>(node.As<std::string>()).value();
 }
 
 template<class EnumType>
-requires std::is_enum<EnumType>::value void EnumOption<EnumType>::parseFromString(const std::string&, const std::string& value) {
+requires std::is_enum<EnumType>::value void
+EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+    auto value = inputParams[identifier];
     // Check if the value is a member of this enum type.
     if (!magic_enum::enum_contains<EnumType>(value)) {
         auto name = std::string(magic_enum::enum_names_to_string<EnumType>());

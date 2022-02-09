@@ -93,6 +93,7 @@ class WorkerConfiguration : public BaseConfiguration {
                 &queuePinList,
                 &numaAwareness,
                 &enableMonitoring,
+                &queryCompiler,
                 &physicalSources};
     }
 };

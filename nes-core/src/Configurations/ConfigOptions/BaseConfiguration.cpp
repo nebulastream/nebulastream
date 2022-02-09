@@ -29,7 +29,8 @@ void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
         auto identifier = (*entry).first;
         auto node = (*entry).second;
         if (!optionMap.contains(identifier)) {
-            throw ConfigurationException("Identifier: " + identifier + " is not known. Check if it exposed in the getOptions function.");
+            throw ConfigurationException("Identifier: " + identifier
+                                         + " is not known. Check if it exposed in the getOptions function.");
         }
         // check if config is empty
         if (!config.As<std::string>().empty() && config.As<std::string>() != "\n") {
@@ -39,28 +40,21 @@ void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
     }
 }
 
-void BaseConfiguration::parseFromString(const std::string& identifier, const std::string& value) {
+void BaseConfiguration::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
     auto optionMap = getOptionMap();
-    if (value.empty()) {
-        throw ConfigurationException("The value field in empty.");
+
+    if (!optionMap.contains(identifier)) {
+        throw ConfigurationException("Identifier " + identifier + " is not known.");
     }
 
-    if (identifier.find('.') != std::string::npos) {
-        // identifier contains a dot so it refers an nested value.
-        // get first identifier
-        auto index = std::string(identifier).find('.');
-        auto parentIdentifier = std::string(identifier).substr(0, index);
-        if (!optionMap.contains(parentIdentifier)) {
-            throw ConfigurationException("Identifier " + parentIdentifier + " is not known.");
-        }
-        auto childrenIdentifier = std::string(identifier).substr(index + 1, identifier.length());
-        optionMap[parentIdentifier]->parseFromString(childrenIdentifier, value);
-    } else {
-        if (!optionMap.contains(identifier)) {
-            throw ConfigurationException("Identifier " + identifier + " is not known.");
-        }
-        optionMap[identifier]->parseFromString(identifier, value);
-    }
+    optionMap[identifier]->parseFromString(identifier, inputParams);
+
+    // for (auto [childIdentifier, value] : inputParams) {
+    //     if (value.empty()) {
+    //         throw ConfigurationException("The value field in empty.");
+    //    }
+
+    //}
 }
 
 void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -73,6 +67,7 @@ void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& file
 }
 
 void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
+    std::map<std::string, std::map<std::string, std::string>> groupedIdentifiers;
     for (auto parm = inputParams.begin(); parm != inputParams.end(); ++parm) {
         auto identifier = parm->first;
         auto value = parm->second;
@@ -82,13 +77,24 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::
         }
         // remove the -- in the beginning
         identifier = identifier.substr(identifierStart.size());
-        parseFromString(identifier, value);
+        if (identifier.find('.') != std::string::npos) {
+            auto index = std::string(identifier).find('.');
+            auto parentIdentifier = std::string(identifier).substr(0, index);
+            auto childrenIdentifier = std::string(identifier).substr(index + 1, identifier.length());
+            groupedIdentifiers[parentIdentifier].insert({childrenIdentifier, value});
+        } else {
+            groupedIdentifiers[identifier].insert({identifier, value});
+        }
+    }
+
+    for (auto [identifier, values] : groupedIdentifiers) {
+        parseFromString(identifier, values);
     }
 }
 
 std::string BaseConfiguration::toString() {
     std::stringstream ss;
-    for(auto option: getOptions()){
+    for (auto option : getOptions()) {
         ss << option << "\n";
     }
     return ss.str();

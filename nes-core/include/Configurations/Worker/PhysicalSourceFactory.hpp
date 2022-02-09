@@ -25,7 +25,6 @@ namespace NES {
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
-
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
@@ -39,8 +38,8 @@ class PhysicalSourceFactory {
      * @param argc number of command line params
      * @return source config object
      */
-    static PhysicalSourcePtr createPhysicalSource(const std::map<std::string, std::string>& commandLineParams);
-    static PhysicalSourcePtr createFromString(std::string string);
+    static PhysicalSourcePtr createFromString(std::string identifier,
+                                              std::map<std::string, std::string>& inputParams);
 
     /**
      * @brief create physical stream config with yaml file
