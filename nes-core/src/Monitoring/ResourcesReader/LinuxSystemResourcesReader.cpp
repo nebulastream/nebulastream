@@ -13,15 +13,15 @@
 */
 #ifdef __linux__
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/StaticNesMetrics.hpp>
-#include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
+#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 
+#include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
 #include <Util/Logger.hpp>
 #include <chrono>
 #include <fstream>

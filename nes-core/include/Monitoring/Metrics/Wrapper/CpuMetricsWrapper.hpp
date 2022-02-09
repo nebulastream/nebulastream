@@ -1,9 +1,9 @@
 #ifndef NES_NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICSWRAPPER_HPP_
 #define NES_NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICSWRAPPER_HPP_
 
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+#include "Monitoring/MonitoringForwardRefs.hpp"
+#include "Runtime/RuntimeForwardRefs.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
 
 namespace NES {
 

@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-core
-        Metric.cpp
-        MetricType.cpp
+add_source_nes(
+        CpuMetricsWrapper.cpp
+        NetworkMetricsWrapper.cpp
 )
-
-add_subdirectory(Gauge)
-add_subdirectory(Wrapper)

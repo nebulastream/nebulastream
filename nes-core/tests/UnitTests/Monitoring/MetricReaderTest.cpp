@@ -25,7 +25,7 @@ limitations under the License.
 #include <Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp>
 #include <Util/Logger.hpp>
 
-#include <Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp>
+#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Gauge/StaticNesMetrics.hpp>
