@@ -15,10 +15,10 @@
 #ifndef NES_TESTS_UTIL_METRICVALIDATOR_HPP_
 #define NES_TESTS_UTIL_METRICVALIDATOR_HPP_
 
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
@@ -116,11 +116,11 @@ class MetricValidator {
         return check;
     };
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, CpuMetrics cpuMetrics) {
+    static bool isValid(AbstractSystemResourcesReaderPtr reader, CpuMetricsWrapper cpuMetrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-            NES_WARNING("MetricValidator: AbstractReader used for CpuMetrics. Returning true");
+            NES_WARNING("MetricValidator: AbstractReader used for CpuMetricsWrapper. Returning true");
             return true;
         }
 
@@ -129,8 +129,8 @@ class MetricValidator {
             check = false;
         }
         for (int i = 0; i < cpuMetrics.getNumCores(); i++) {
-            if (!(cpuMetrics.getValues(i).user > 0)) {
-                NES_ERROR("MetricValidator: Wrong cpuMetrics.getValues(i).user.");
+            if (!(cpuMetrics.getValue(i).user > 0)) {
+                NES_ERROR("MetricValidator: Wrong cpuMetrics.getValue(i).user.");
                 check = false;
             }
         }
@@ -141,11 +141,11 @@ class MetricValidator {
         return check;
     };
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, NetworkMetrics networkMetrics) {
+    static bool isValid(AbstractSystemResourcesReaderPtr reader, NetworkMetricsWrapper networkMetrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-            NES_WARNING("MetricValidator: AbstractReader used for NetworkMetrics. Returning true");
+            NES_WARNING("MetricValidator: AbstractReader used for NetworkMetricsWrapper. Returning true");
             return true;
         }
 

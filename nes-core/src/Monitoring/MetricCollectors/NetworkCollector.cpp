@@ -16,7 +16,6 @@
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/NetworkCollector.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
@@ -32,7 +31,7 @@ namespace NES {
 
     bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         try {
-            NetworkMetrics measuredVal = resourceReader->readNetworkStats();
+            NetworkMetricsWrapper measuredVal = resourceReader->readNetworkStats();
             writeToBuffer(measuredVal, tupleBuffer, 0);
         } catch (const std::exception& ex) {
             NES_ERROR("NetworkCollector: Error while collecting metrics " << ex.what());

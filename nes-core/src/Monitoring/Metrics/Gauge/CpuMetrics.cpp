@@ -12,101 +12,123 @@
     limitations under the License.
 */
 
+#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
-#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <Monitoring/Util/MetricUtils.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
 namespace NES {
 
-CpuMetrics::CpuMetrics(std::vector<CpuValues>&& arr) {
-    if (!arr.empty()) {
-        cpuValues = std::move(arr);
-    } else {
-        NES_THROW_RUNTIME_ERROR("CpuMetrics: Object cannot be allocated with less than 0 cores.");
-    }
-    NES_DEBUG("CpuMetrics: Allocating memory for " + std::to_string(arr.size()) + " metrics.");
+SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
+    SchemaPtr schema = Schema::create()
+                           ->addField(prefix + "core_num", BasicType::UINT64)
+                           ->addField(prefix + "user", BasicType::UINT64)
+                           ->addField(prefix + "nice", BasicType::UINT64)
+                           ->addField(prefix + "system", BasicType::UINT64)
+                           ->addField(prefix + "idle", BasicType::UINT64)
+                           ->addField(prefix + "iowait", BasicType::UINT64)
+                           ->addField(prefix + "irq", BasicType::UINT64)
+                           ->addField(prefix + "softirq", BasicType::UINT64)
+                           ->addField(prefix + "steal", BasicType::UINT64)
+                           ->addField(prefix + "guest", BasicType::UINT64)
+                           ->addField(prefix + "guestnice", BasicType::UINT64);
+    return schema;
 }
-
-CpuValues CpuMetrics::getValues(const unsigned int cpuCore) const { return cpuValues.at(cpuCore); }
 
 CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
-    //get index where the schema for CpuMetrics is starting
-    auto idx = schema->getIndex(prefix + "CORE_NO");
+    CpuMetrics output{};
+    //get index where the schema for CpuMetricsWrapper is starting
+    auto cpuMetricsSchema = CpuMetrics::getSchema(prefix);
+    auto firstFieldName = cpuMetricsSchema->get(0)->getName();
+    auto schema_idx = schema->getIndex(prefix + firstFieldName);
 
-    if (idx < schema->getSize() && buf.getNumberOfTuples() == 1 && Util::endsWith(schema->fields[idx]->getName(), "CORE_NO")) {
-        //if schema contains cpuMetrics parse the wrapper object
-        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-        auto numCores = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(idx, layout, buf)[0];
-
-        auto cpu = std::vector<CpuValues>(numCores);
-
-        for (int n = 0; n < numCores; n++) {
-            //for each core parse the according CpuValues
-            cpu[n] = CpuValues::fromBuffer(schema, buf, prefix + "CPU[" + std::to_string(n + 1) + "]_");
-        }
-        return CpuMetrics{std::move(cpu)};
+    if (buf.getNumberOfTuples() > 1) {
+        NES_THROW_RUNTIME_ERROR("CpuMetrics: Tuple size should be 1, but is larger " + std::to_string(buf.getNumberOfTuples()));
     }
-    NES_THROW_RUNTIME_ERROR("CpuMetrics: Prefix " + prefix + " could not be parsed from schema " + schema->toString());
-    throw 0;// just to make the compiler happy
+
+    if (!MetricUtils::validateFieldsInSchema(CpuMetrics::getSchema(""), schema, schema_idx)) {
+        NES_THROW_RUNTIME_ERROR("CpuMetrics: Incomplete number of fields in schema.");
+    }
+
+    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+
+    int cnt = 0;
+    output.core_num = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+    output.guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
+
+    return output;
 }
 
-web::json::value CpuMetrics::toJson() {
+std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
+    os << "core_num: " << values.core_num << "user: " << values.user << " nice: " << values.nice << " system: " << values.system
+       << " idle: " << values.idle << " iowait: " << values.iowait << " irq: " << values.irq << " softirq: " << values.softirq
+       << " steal: " << values.steal << " guest: " << values.guest << " guestnice: " << values.guestnice;
+    return os;
+}
+
+web::json::value CpuMetrics::toJson() const {
     web::json::value metricsJson{};
-
-    metricsJson["NUM_CORES"] = web::json::value::number(numCores);
-    metricsJson["TOTAL"] = total.toJson();
-
-    for (int n = 0; n < numCores; n++) {
-        metricsJson["CORE_" + std::to_string(n)] = cpuValues[n].toJson();
-    }
+    metricsJson["CORE_NUM"] = web::json::value::number(core_num);
+    metricsJson["USER"] = web::json::value::number(user);
+    metricsJson["NICE"] = web::json::value::number(nice);
+    metricsJson["SYSTEM"] = web::json::value::number(system);
+    metricsJson["IDLE"] = web::json::value::number(idle);
+    metricsJson["IOWAIT"] = web::json::value::number(iowait);
+    metricsJson["IRQ"] = web::json::value::number(irq);
+    metricsJson["SOFTIRQ"] = web::json::value::number(softirq);
+    metricsJson["STEAL"] = web::json::value::number(steal);
+    metricsJson["GUEST"] = web::json::value::number(guest);
+    metricsJson["GUESTNICE"] = web::json::value::number(guestnice);
 
     return metricsJson;
 }
 
-void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    uint64_t totalSize = byteOffset + sizeof(uint16_t) + sizeof(CpuValues) * (metrics.getNumCores() + 1);
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "CpuMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
-
-    auto coreNum = metrics.getNumCores() + 1;
-    memcpy(tbuffer + byteOffset, &coreNum, sizeof(uint16_t));
-    byteOffset += sizeof(uint16_t);
-
-    writeToBuffer(metrics.getTotal(), buf, byteOffset);
-    byteOffset += sizeof(CpuValues);
-
-    for (unsigned int i = 0; i < coreNum; i++) {
-        writeToBuffer(metrics.getValues(i), buf, byteOffset);
-        byteOffset += sizeof(CpuValues);
-    }
-
-    buf.setNumberOfTuples(1);
-}
-
 bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
-    if (cpuValues.size() != rhs.cpuValues.size()) {
-        return false;
-    }
-
-    for (auto i = static_cast<decltype(cpuValues)::size_type>(0); i < cpuValues.size(); ++i) {
-        if (cpuValues[i] != rhs.cpuValues[i]) {
-            return false;
-        }
-    }
+    return core_num == rhs.core_num && user == rhs.user && nice == rhs.nice && system == rhs.system && idle == rhs.idle
+        && iowait == rhs.iowait && irq == rhs.irq && softirq == rhs.softirq && steal == rhs.steal && guest == rhs.guest
+        && guestnice == rhs.guestnice;
 }
 
 bool CpuMetrics::operator!=(const CpuMetrics& rhs) const { return !(rhs == *this); }
+
+void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    auto* tbuffer = buf.getBuffer<uint8_t>();
+    NES_ASSERT(byteOffset + sizeof(CpuMetrics) <= buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");
+
+    memcpy(tbuffer + byteOffset, &metrics, sizeof(CpuMetrics));
+    buf.setNumberOfTuples(1);
+}
+
+void writeToBuffer(const std::vector<CpuMetrics>& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    auto totalSize = sizeof(CpuMetrics) * metrics.size();
+    NES_ASSERT(totalSize <= buf.getBufferSize(),
+               "CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+
+    for (unsigned int i = 0; i < metrics.size(); i++) {
+        writeToBuffer(metrics[i], buf, byteOffset);
+        byteOffset += sizeof(CpuMetrics);
+    }
+
+    buf.setNumberOfTuples(metrics.size());
+}
 
 }// namespace NES

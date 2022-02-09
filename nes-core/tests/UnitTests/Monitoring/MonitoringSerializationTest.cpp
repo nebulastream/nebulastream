@@ -17,10 +17,10 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
 #include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
 #include "Monitoring/MonitoringPlan.hpp"
@@ -66,7 +66,7 @@ class MonitoringSerializationTest : public Testing::NESBaseTest {
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
-        bufferSize = 4096 + (numCPU + 1) * sizeof(CpuValues) + sizeof(CpuMetrics);
+        bufferSize = 4096 + (numCPU + 1) * sizeof(CpuMetrics) + sizeof(CpuMetricsWrapper);
 
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
@@ -110,7 +110,7 @@ TEST_F(MonitoringSerializationTest, testSerializationStaticNesMetrics) {
 
 TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
     auto cpuStats = MetricUtils::cpuStats();
-    CpuMetrics measuredVal = cpuStats.measure();
+    CpuMetricsWrapper measuredVal = cpuStats.measure();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
     auto schema = getSchema(measuredVal, "");
@@ -119,7 +119,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
     NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, schema));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-    CpuMetrics deserVal = CpuMetrics::fromBuffer(schema, tupleBuffer, "");
+    CpuMetricsWrapper deserVal = CpuMetricsWrapper::fromBuffer(schema, tupleBuffer, "");
     EXPECT_EQ(measuredVal, deserVal);
 }
 
@@ -127,13 +127,13 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkValue) {
     auto networkStats = MetricUtils::networkStats();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
-    NetworkValues measuredVal = networkStats.measure().getNetworkValue(0);
+    NetworkMetrics measuredVal = networkStats.measure().getNetworkValue(0);
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
     NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, measuredVal.getSchema("")));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-    NetworkValues deserNw = NetworkValues::fromBuffer(NES::NetworkValues::getSchema(""), tupleBuffer, "");
+    NetworkMetrics deserNw = NetworkMetrics::fromBuffer(NES::NetworkMetrics::getSchema(""), tupleBuffer, "");
     EXPECT_EQ(measuredVal, deserNw);
 }
 
@@ -141,22 +141,22 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkMetrics) {
     auto networkStats = MetricUtils::networkStats();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
-    NetworkMetrics measuredVal = networkStats.measure();
+    NetworkMetricsWrapper measuredVal = networkStats.measure();
     auto schema = getSchema(measuredVal, "");
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
     NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, schema));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-    NetworkMetrics deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, "");
+    NetworkMetricsWrapper deserNw = NetworkMetricsWrapper::fromBuffer(schema, tupleBuffer, "");
     EXPECT_EQ(measuredVal, deserNw);
 }
 
 TEST_F(MonitoringSerializationTest, testSerializationGroups) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
-    Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
+    Gauge<CpuMetricsWrapper> cpuStats = MetricUtils::cpuStats();
+    Gauge<NetworkMetricsWrapper> networkStats = MetricUtils::networkStats();
     Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
     Gauge<MemoryMetrics> memStats = MetricUtils::memoryStats();
 
@@ -184,8 +184,8 @@ TEST_F(MonitoringSerializationTest, testSerializationGroups) {
 TEST_F(MonitoringSerializationTest, testDeserializationMetricValues) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
-    Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
+    Gauge<CpuMetricsWrapper> cpuStats = MetricUtils::cpuStats();
+    Gauge<NetworkMetricsWrapper> networkStats = MetricUtils::networkStats();
     Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
     Gauge<MemoryMetrics> memStats = MetricUtils::memoryStats();
 
@@ -212,12 +212,12 @@ TEST_F(MonitoringSerializationTest, testDeserializationMetricValues) {
     EXPECT_TRUE(deserMem != MemoryMetrics{});
     EXPECT_TRUE(deserMem.TOTAL_RAM == memStats.measure().TOTAL_RAM);
 
-    auto deserCpu = CpuMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::CPU_METRICS_DESC);
+    auto deserCpu = CpuMetricsWrapper::fromBuffer(schema, tupleBuffer, MonitoringPlan::CPU_METRICS_DESC);
     EXPECT_TRUE(deserCpu.getNumCores() == cpuStats.measure().getNumCores());
-    EXPECT_TRUE(deserCpu.getValues(1).user > 0);
+    EXPECT_TRUE(deserCpu.getValue(1).user > 0);
 
-    auto deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::NETWORK_METRICS_DESC);
-    EXPECT_TRUE(deserNw.getInterfaceNum() == networkStats.measure().getInterfaceNum());
+    auto deserNw = NetworkMetricsWrapper::fromBuffer(schema, tupleBuffer, MonitoringPlan::NETWORK_METRICS_DESC);
+    EXPECT_TRUE(deserNw.size() == networkStats.measure().size());
 
     auto deserDisk = DiskMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::DISK_METRICS_DESC);
     EXPECT_TRUE(deserDisk.fBlocks == diskStats.measure().fBlocks);

@@ -25,9 +25,9 @@ limitations under the License.
 #include <Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp>
 #include <Util/Logger.hpp>
 
-#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Gauge/StaticNesMetrics.hpp>
 #include <cpprest/json.h>
 
@@ -52,8 +52,8 @@ TEST_F(MetricReaderTest, testAbstractSystemResourcesReader) {
     auto resourcesReader = std::make_shared<AbstractSystemResourcesReader>();
     EXPECT_TRUE(resourcesReader->readRuntimeNesMetrics() == RuntimeNesMetrics{});
     EXPECT_TRUE(resourcesReader->readStaticNesMetrics() == StaticNesMetrics{});
-    EXPECT_TRUE(resourcesReader->readCpuStats() == CpuMetrics{});
-    EXPECT_TRUE(resourcesReader->readNetworkStats() == NetworkMetrics{});
+    EXPECT_TRUE(resourcesReader->readCpuStats() == CpuMetricsWrapper{});
+    EXPECT_TRUE(resourcesReader->readNetworkStats() == NetworkMetricsWrapper{});
     EXPECT_TRUE(resourcesReader->readMemoryStats() == MemoryMetrics{});
     EXPECT_TRUE(resourcesReader->readDiskStats() == DiskMetrics{});
     EXPECT_TRUE(resourcesReader->getWallTimeInNs() == 0);

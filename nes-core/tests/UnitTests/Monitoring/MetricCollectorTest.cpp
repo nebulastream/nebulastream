@@ -21,8 +21,8 @@
 #include <Util/Logger.hpp>
 
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
+#include <Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/CpuValues.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 
 namespace NES {
@@ -48,7 +48,7 @@ namespace NES {
 
             unsigned int numCPU = std::thread::hardware_concurrency();
             bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
-            bufferSize = 4096 + (numCPU + 1) * sizeof(CpuValues) + sizeof(CpuMetrics);
+            bufferSize = 4096 + (numCPU + 1) * sizeof(CpuMetrics) + sizeof(CpuMetricsWrapper);
         }
 
         /* Will be called before a test is executed. */

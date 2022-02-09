@@ -17,10 +17,10 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
 #include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
 #include "Monitoring/MonitoringPlan.hpp"

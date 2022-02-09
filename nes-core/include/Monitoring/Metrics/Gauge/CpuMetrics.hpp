@@ -12,49 +12,67 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
-#define NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
+#define NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_
 
-#include <Monitoring/Metrics/Gauge/CpuValues.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <string>
+#include <vector>
 
 namespace NES {
 
 /**
- * @brief Wrapper class to represent the metrics read from the OS about cpu data.
+ * @brief This class represents the metrics read from /proc/stat.
  */
 class CpuMetrics {
   public:
-    explicit CpuMetrics(std::vector<CpuValues>&& arr);
+    CpuMetrics() = default;
 
     /**
-     * @brief Returns the cpu metrics for a given core
-     * @param cpuCore core number
-     * @return the cpu metrics
-    */
-    [[nodiscard]] CpuValues getValues(unsigned int cpuCore) const;
-
-    /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
-     * @param schema
-     * @param buf
+     * @brief Returns the schema of the class with a given prefix.
      * @param prefix
-     * @return The object
-    */
-    static CpuMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
+     * @return the schema
+     */
+    static SchemaPtr getSchema(const std::string& prefix);
+
+    /**
+     * @brief Stream operator to convert the object to string
+     * @param os
+     * @param values
+     * @return the stream
+     */
+    friend std::ostream& operator<<(std::ostream& os, const CpuMetrics& values);
 
     /**
      * @brief Returns the metrics as json
      * @return Json containing the metrics
-    */
-    web::json::value toJson();
+     */
+    [[nodiscard]] web::json::value toJson() const;
+
+    /**
+     * @brief Parses a CpuMetricsWrapper objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+     */
+    static CpuMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     bool operator==(const CpuMetrics& rhs) const;
     bool operator!=(const CpuMetrics& rhs) const;
 
-  private:
-    std::vector<CpuValues> cpuValues;
+    uint64_t core_num;
+    uint64_t user;
+    uint64_t nice;
+    uint64_t system;
+    uint64_t idle;
+    uint64_t iowait;
+    uint64_t irq;
+    uint64_t softirq;
+    uint64_t steal;
+    uint64_t guest;
+    uint64_t guestnice;
 } __attribute__((packed));
 
 /**
@@ -64,17 +82,19 @@ class CpuMetrics {
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
-*/
+ */
 void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief Class specific getSchema() method
- * @param metric
- * @param prefix
- * @return the SchemaPtr
-*/
-SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix);
+ * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
+ * that should be added before each field description in the Schema.
+ * @param the CpuMetrics
+ * @param the schema
+ * @param the TupleBuffer
+ * @param the prefix as std::string
+ */
+void writeToBuffer(const std::vector<CpuMetrics>& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 
-#endif// NES_INCLUDE_MONITORING_METRICVALUES_CPUMETRICS_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_

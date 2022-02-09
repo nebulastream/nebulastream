@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
+#include <Monitoring/Metrics/Gauge/StaticNesMetrics.hpp>
 
-#include "API/Schema.hpp"
-#include "Common/DataTypes/FixedChar.hpp"
-#include "Monitoring/Util/MetricUtils.hpp"
-#include "Runtime/MemoryLayout/RowLayout.hpp"
-#include "Runtime/MemoryLayout/RowLayoutField.hpp"
-#include "Runtime/TupleBuffer.hpp"
-#include "SerializableDataType.pb.h"
-#include "Util/Logger.hpp"
-#include "Util/UtilityFunctions.hpp"
+#include <API/Schema.hpp>
+#include <Common/DataTypes/FixedChar.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
@@ -33,13 +32,6 @@ StaticNesMetrics::StaticNesMetrics()
     NES_DEBUG("StaticNesMetrics: Default ctor");
 }
 
-StaticNesMetrics::StaticNesMetrics(SerializableStaticNesMetrics metrics)
-    : totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()), totalCPUJiffies(metrics.totalcpujiffies()),
-      cpuPeriodUS(metrics.cpuperiodus()), cpuQuotaUS(metrics.cpuquotaus()), isMoving(metrics.ismoving()),
-      hasBattery(metrics.hasbattery()) {
-    NES_DEBUG("StaticNesMetrics: Creating StaticNesMetrics from Protobuf object");
-}
-
 StaticNesMetrics::StaticNesMetrics(bool isMoving, bool hasBattery)
     : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
       hasBattery(hasBattery) {
@@ -48,8 +40,6 @@ StaticNesMetrics::StaticNesMetrics(bool isMoving, bool hasBattery)
 }
 
 SchemaPtr StaticNesMetrics::getSchema(const std::string& prefix) {
-    DataTypePtr intNameField = std::make_shared<FixedChar>(20);
-
     SchemaPtr schema = Schema::create()
                            ->addField(prefix + "totalMemoryBytes", BasicType::UINT64)
 
@@ -88,17 +78,6 @@ StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::
     output.isMoving = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, layout, buf)[0];
     output.hasBattery = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, layout, buf)[0];
 
-    return output;
-}
-
-SerializableStaticNesMetricsPtr StaticNesMetrics::toProtobufSerializable() const {
-    SerializableStaticNesMetricsPtr output = std::make_shared<SerializableStaticNesMetrics>();
-    output->set_totalmemorybytes(totalMemoryBytes);
-    output->set_cpucorenum(cpuCoreNum);
-    output->set_totalcpujiffies(totalCPUJiffies);
-    output->set_cpuquotaus(cpuQuotaUS);
-    output->set_ismoving(isMoving);
-    output->set_hasbattery(hasBattery);
     return output;
 }
 

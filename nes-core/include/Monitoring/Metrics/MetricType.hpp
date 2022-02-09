@@ -17,6 +17,8 @@
 #ifndef NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_
 #define NES_INCLUDE_MONITORING_METRICS_METRIC_TYPE_HPP_
 
+#include <string>
+
 namespace NES {
 
 /**
@@ -29,11 +31,9 @@ namespace NES {
 */
 enum MetricType {
     CpuMetric,
-    CpuValue,
     DiskMetric,
     MemoryMetric,
     NetworkMetric,
-    NetworkValue,
     RuntimeMetric,
     StaticMetric,
     UnknownType
@@ -42,11 +42,9 @@ enum MetricType {
 std::string toString(MetricType type) {
     switch (type) {
         case MetricType::CpuMetric: return "cpu";
-        case MetricType::CpuValue: return "cpu_val";
         case MetricType::DiskMetric: return "disk";
         case MetricType::MemoryMetric: return "memory";
         case MetricType::NetworkMetric: return "network";
-        case MetricType::NetworkValue: return "network_val";
         case MetricType::RuntimeMetric: return "runtime";
         case MetricType::StaticMetric: return "static";
         default: return "unknown";

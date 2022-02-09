@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
-#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
@@ -26,13 +26,13 @@ limitations under the License.
 namespace NES {
     CpuCollector::CpuCollector()
         : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
-          schema(CpuValues::getSchema("")) {
+          schema(CpuMetrics::getSchema("")) {
         NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
     }
 
     bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
         try {
-            CpuMetrics measuredVal = resourceReader->readCpuStats();
+            CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();
             writeToBuffer(measuredVal, tupleBuffer, 0);
         } catch (const std::exception& ex) {
             NES_ERROR("CpuCollector: Error while collecting metrics " << ex.what());

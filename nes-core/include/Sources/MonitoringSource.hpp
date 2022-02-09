@@ -19,11 +19,9 @@
 #include <chrono>
 
 namespace NES {
-
 class MonitoringSource : public DefaultSource {
   public:
-    MonitoringSource(const MonitoringPlanPtr& monitoringPlan,
-                     MetricCatalogPtr metricCatalog,
+    MonitoringSource(const MetricCollectorPtr& metricCollector,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
                      uint64_t numbersOfBufferToProduce,
@@ -43,9 +41,7 @@ class MonitoringSource : public DefaultSource {
     std::string toString() const override;
 
   private:
-    MonitoringPlanPtr monitoringPlan;
-    MetricCatalogPtr metricCatalog;
-    MetricGroupPtr metricGroup;
+    MetricCollectorPtr metricCollector;
 };
 
 using MonitoringSourcePtr = std::shared_ptr<MonitoringSource>;
