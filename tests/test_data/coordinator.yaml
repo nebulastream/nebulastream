@@ -1,0 +1,59 @@
+# ~~~ Configurations for the NES Coordinator ~~~
+
+# ~~ IPs and Ports ~~
+# Set NES ip of the REST server
+restIp: 0.0.0.0
+
+# Set RPC IP address of NES Coordinator
+coordinatorIp: 127.0.0.1
+
+# Set RPC Server port of NES Coordinator
+rpcPort: 12346
+
+# Set port exposed for REST endpoints
+restPort: 8088
+# Set the data port of the network manager
+dataPort: 10001
+
+# ~~ Processing Configurations ~~
+# Set the number of computing slots in NES Coordinator
+numberOfSlots: 5000
+
+# The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
+logLevel: LOG_INFO
+
+# Number buffers in global buffer pool
+numberOfBuffersInGlobalBufferManager: 200000
+
+# Number buffers in task local buffer pool
+numberOfBuffersPerWorker: 1024
+
+# Number buffers in source local buffer pool
+numberOfBuffersInSourceLocalBufferPool: 124
+
+# Size of buffer to pass data through the system
+bufferSizeInBytes: 131072
+
+# Number of threads available for the worker node. Defines how many queries can run in parallel.
+numWorkerThreads: 1
+
+# The number of queries to be processed together
+#queryBatchSize: 1
+
+# The rule to be used for performing query merging
+#queryMergerRule: DefaultQueryMergerRule
+
+# Semantic Query Validation Feature
+#enableSemanticQueryValidation: false
+
+# Enable monitoring
+enableMonitoring: false
+
+# Selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]
+#memoryLayoutPolicy: FORCE_ROW_LAYOUT
+
+# Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule
+#performOnlySourceOperatorExpansion: false
+
+# Enable reconfiguration of running query plans
+enableQueryReconfiguration: false
