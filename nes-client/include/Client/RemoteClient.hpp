@@ -16,9 +16,9 @@
 #define NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
 
 #include <API/Query.hpp>
+#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Client/QueryConfig.hpp>
 #include <chrono>
-#include <cpprest/http_client.h>
 
 namespace NES {
 class Query;
@@ -122,7 +122,6 @@ class RemoteClient {
     const std::chrono::seconds requestTimeout;
 
     std::string getHostName();
-    web::json::value send(const web::http::method& method, const std::string& path, const std::string& message);
 };
 }// namespace NES
 
