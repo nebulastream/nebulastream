@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "API/AttributeField.hpp"
-#include "API/Schema.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"
-#include "Runtime/MemoryLayout/RowLayout.hpp"
-#include "Runtime/MemoryLayout/RowLayoutField.hpp"
-#include "Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp"
-#include "Util/Logger.hpp"
-#include "Util/UtilityFunctions.hpp"
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <Runtime/MemoryLayout/RowLayoutTupleBuffer.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 #include <cpprest/json.h>
 #include <cstring>
@@ -30,22 +30,18 @@ NetworkMetrics NetworkMetricsWrapper::getNetworkValue(uint64_t interfaceNo) cons
         NES_THROW_RUNTIME_ERROR("CPU: ArrayType index out of bound " + std::to_string(interfaceNo)
                                 + ">=" + std::to_string(size()));
     }
-    return networkValues.at(interfaceNo);
+    return networkMetrics.at(interfaceNo);
 }
 
-void NetworkMetricsWrapper::addNetworkValues(NetworkMetrics&& nwValue) {
-    networkValues.emplace_back(nwValue);
-}
+void NetworkMetricsWrapper::addNetworkMetrics(NetworkMetrics&& nwValue) { networkMetrics.emplace_back(nwValue); }
 
-uint64_t NetworkMetricsWrapper::size() const {
-    return networkValues.size();
-}
+uint64_t NetworkMetricsWrapper::size() const { return networkMetrics.size(); }
 
 std::vector<std::string> NetworkMetricsWrapper::getInterfaceNames() {
     std::vector<std::string> keys;
-    keys.reserve(networkValues.size());
+    keys.reserve(networkMetrics.size());
 
-    for (const auto& netVal : networkValues) {
+    for (const auto& netVal : networkMetrics) {
         keys.push_back(std::to_string(netVal.interfaceName));
     }
 
@@ -63,14 +59,17 @@ NetworkMetricsWrapper::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer&
     bool hasField = Util::endsWith(fieldName, schemaPrefix + "INTERFACE_NO");
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && hasField) {
-        NES_DEBUG("NetworkMetricsWrapper: Prefix found in schema " + schemaPrefix + "INTERFACE_NO with index " + std::to_string(i));
+        NES_DEBUG("NetworkMetricsWrapper: Prefix found in schema " + schemaPrefix + "INTERFACE_NO with index "
+                  + std::to_string(i));
 
         auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
         auto numInt = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i, layout, buf)[0];
 
         for (auto n{0UL}; n < numInt; ++n) {
-            NES_DEBUG("NetworkMetricsWrapper: Parsing buffer for interface " + schemaPrefix + "Intfs[" + std::to_string(n + 1) + "]_");
-            output.addNetworkValues(NetworkMetrics::fromBuffer(schema, buf, schemaPrefix + "Intfs[" + std::to_string(n + 1) + "]_"));
+            NES_DEBUG("NetworkMetricsWrapper: Parsing buffer for interface " + schemaPrefix + "Intfs[" + std::to_string(n + 1)
+                      + "]_");
+            output.addnetworkMetrics(
+                NetworkMetrics::fromBuffer(schema, buf, schemaPrefix + "Intfs[" + std::to_string(n + 1) + "]_"));
         }
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetricsWrapper: Metrics could not be parsed from schema " + schema->toString());
@@ -82,7 +81,7 @@ NetworkMetricsWrapper::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer&
 web::json::value NetworkMetricsWrapper::toJson() {
     web::json::value metricsJson{};
 
-    for (auto networkVal : networkValues) {
+    for (auto networkVal : networkMetrics) {
         metricsJson[networkVal.interfaceName] = networkVal.toJson();
     }
 
@@ -108,12 +107,12 @@ void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& b
 }
 
 bool NetworkMetricsWrapper::operator==(const NetworkMetricsWrapper& rhs) const {
-    if (networkValues.size() != rhs.networkValues.size()) {
+    if (networkMetrics.size() != rhs.networkMetrics.size()) {
         return false;
     }
 
-    for (auto i = static_cast<decltype(networkValues)::size_type>(0); i < networkValues.size(); ++i) {
-        if (networkValues[i] != rhs.networkValues[i]) {
+    for (auto i = static_cast<decltype(networkMetrics)::size_type>(0); i < networkMetrics.size(); ++i) {
+        if (networkMetrics[i] != rhs.networkMetrics[i]) {
             return false;
         }
     }

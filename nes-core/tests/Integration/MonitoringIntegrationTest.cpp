@@ -17,7 +17,7 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include "Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp"
+#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"

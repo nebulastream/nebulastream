@@ -14,7 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>

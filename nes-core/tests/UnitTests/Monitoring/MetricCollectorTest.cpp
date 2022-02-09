@@ -21,7 +21,7 @@
 #include <Util/Logger.hpp>
 
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
-#include <Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp>
+#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 
