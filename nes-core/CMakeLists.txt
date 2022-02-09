@@ -40,7 +40,7 @@ add_custom_command(
         -I "${PROTO_PATH}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
         "${PROTO_FILE_PATH}"
-        DEPENDS "${PROTO_FILE_PATH}")
+        DEPENDS "${PROTO_FILES}")
 
 # Add Library
 get_source_nes(nes_SOURCE_FILES)
