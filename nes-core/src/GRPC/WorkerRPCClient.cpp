@@ -12,18 +12,19 @@
     limitations under the License.
 */
 
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+
 namespace NES {
 
-WorkerRPCClientPtr WorkerRPCClient::create() { return std::shared_ptr<WorkerRPCClient>(); }
+WorkerRPCClient::WorkerRPCClient() {}
+
+WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPCClient>(WorkerRPCClient()); }
 
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
@@ -408,8 +409,8 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
     return result;
 }
 
-GrpcChannelPtr WorkerRPCClient::getChannel(const std::string& address) {
-    if (channelCache.find(address) != channelCache.end()) {
+GrpcChannelPtr WorkerRPCClient::getChannel(std::string address) {
+    if (!channelCache.empty() && channelCache.find(address) != channelCache.end()) {
         return channelCache[address];
     }
     GrpcChannelPtr grpcChannel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());

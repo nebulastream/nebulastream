@@ -199,14 +199,14 @@ class WorkerRPCClient {
     bool injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address);
 
   private:
-    WorkerRPCClient() = default;
+    WorkerRPCClient();
 
     /**
      * Get a grpc channel for input address
      * @param address : the address of the node
      * @return shared pointer to the channel
      */
-    GrpcChannelPtr getChannel(const std::string& address);
+    GrpcChannelPtr getChannel(std::string address);
 
     std::map<std::string, GrpcChannelPtr> channelCache;
 };
