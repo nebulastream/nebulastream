@@ -16,10 +16,10 @@
 #include <NesBaseTest.hpp>
 #include "../../../tests/util/MetricValidator.hpp"
 
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"
 #include "Monitoring/MonitoringPlan.hpp"
 #include <Monitoring/Util/MetricUtils.hpp>
 
@@ -51,8 +51,8 @@ class MonitoringStackTest : public testing::Test {
 };
 
 TEST_F(MonitoringStackTest, testMetric) {
-    CpuMetrics cpuStats = MetricUtils::cpuStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
+    CpuMetricsWrapper cpuStats = MetricUtils::cpuStats();
+    Gauge<NetworkMetricsWrapper> networkStats = MetricUtils::networkStats();
     Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
     Gauge<MemoryMetrics> memStats = MetricUtils::memoryStats();
 
@@ -76,13 +76,13 @@ TEST_F(MonitoringStackTest, testMetric) {
     metrics.emplace_back(cpuStats);
     Metric m2 = metrics[2];
     EXPECT_TRUE(getMetricType(m2) == MetricType::GaugeType);
-    Gauge<CpuMetrics> cpuMetrics = m2.getValue<Gauge<CpuMetrics>>();
+    Gauge<CpuMetricsWrapper> cpuMetrics = m2.getValue<Gauge<CpuMetrics>>();
     EXPECT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
 
     // test network stats
     metrics.emplace_back(networkStats);
     auto networkMetrics = metrics[3].getValue<Gauge<NetworkMetrics>>();
-    EXPECT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
+    EXPECT_TRUE(networkStats.measure().size() == networkMetrics.measure().size());
 
     // test disk stats
     metrics.emplace_back(diskStats);
@@ -98,8 +98,8 @@ TEST_F(MonitoringStackTest, testMetric) {
 TEST_F(MonitoringStackTest, testMetricGroup) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
-    Gauge<CpuMetrics> cpuStats = MetricUtils::cpuStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::networkStats();
+    Gauge<CpuMetricsWrapper> cpuStats = MetricUtils::cpuStats();
+    Gauge<NetworkMetricsWrapper> networkStats = MetricUtils::networkStats();
     Gauge<DiskMetrics> diskStats = MetricUtils::diskStats();
     Gauge<MemoryMetrics> memStats = MetricUtils::memoryStats();
 
@@ -117,14 +117,14 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     // test cpu stats
     const auto* cpuS = "cpuStats";
     metricGroup->add(cpuS, Metric{cpuStats});
-    Gauge<CpuMetrics> cpuMetrics = metricGroup->getAs<Gauge<CpuMetrics>>(cpuS);
+    Gauge<CpuMetricsWrapper> cpuMetrics = metricGroup->getAs<Gauge<CpuMetrics>>(cpuS);
     EXPECT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
 
     // test network stats
     const auto* networkS = "networkStats";
     metricGroup->add(networkS, Metric{networkStats});
     auto networkMetrics = metricGroup->getAs<Gauge<NetworkMetrics>>(networkS);
-    EXPECT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
+    EXPECT_TRUE(networkStats.measure().size() == networkMetrics.measure().size());
 
     // test disk stats
     const auto* diskS = "diskStats";

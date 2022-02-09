@@ -17,30 +17,35 @@ limitations under the License.
 #include <Monitoring/MonitoringCatalog.hpp>
 #include <Util/Logger.hpp>
 
+#include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
+#include <Monitoring/MetricCollectors/MemoryCollector.hpp>
+#include <Monitoring/MetricCollectors/NetworkCollector.hpp>
 
 namespace NES {
 
-    MonitoringCatalog::MonitoringCatalog(const std::unordered_map<MetricCollectorType, MetricCollectorPtr>& metricCollectors)
-        : metricMap(metricCollectors) {
-        NES_DEBUG("MonitoringCatalog: Init with collector map of size " << metricCollectors.size());
-    }
+MonitoringCatalog::MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors)
+    : metricMap(metricCollectors) {
+    NES_DEBUG("MonitoringCatalog: Init with collector map of size " << metricCollectors.size());
+}
 
-    MonitoringCatalogPtr
-    MonitoringCatalog::create(const std::unordered_map<MetricCollectorType, MetricCollectorPtr>& metricCollectors) {
-        return std::make_shared<MonitoringCatalog>(MonitoringCatalog(metricCollectors));
-    }
+MonitoringCatalogPtr MonitoringCatalog::create(const std::unordered_map<MetricType, MetricCollectorPtr>& metricCollectors) {
+    return std::make_shared<MonitoringCatalog>(MonitoringCatalog(metricCollectors));
+}
 
-    MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
-        NES_DEBUG("MonitoringCatalog: Init default catalog");
+MonitoringCatalogPtr MonitoringCatalog::defaultCatalog() {
+    NES_DEBUG("MonitoringCatalog: Init default catalog");
 
-        std::unordered_map<MetricCollectorType, MetricCollectorPtr> metrics(
-            {{MetricCollectorType::DISK_COLLECTOR, std::shared_ptr<MetricCollector>(new DiskCollector())}});
-        return create(metrics);
-    }
+    std::unordered_map<MetricType, MetricCollectorPtr> metrics(
+        {{MetricType::CpuMetric, std::shared_ptr<MetricCollector>(new CpuCollector())},
+         {MetricType::DiskMetric, std::shared_ptr<MetricCollector>(new DiskCollector())},
+         {MetricType::MemoryMetric, std::shared_ptr<MetricCollector>(new MemoryCollector())},
+         {MetricType::NetworkMetric, std::shared_ptr<MetricCollector>(new NetworkCollector())}});
+    return create(metrics);
+}
 
-    MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricCollectorType metricCollectorType) {
-        return metricMap.at(metricCollectorType);
-    }
+MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricCollectorType) {
+    return metricMap.at(metricCollectorType);
+}
 
 }// namespace NES

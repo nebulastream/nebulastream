@@ -13,10 +13,10 @@
 */
 
 #include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"
 #include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
 #include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
 
@@ -34,13 +34,13 @@ StaticNesMetrics AbstractSystemResourcesReader::readStaticNesMetrics() {
     return output;
 }
 
-CpuMetrics AbstractSystemResourcesReader::readCpuStats() {
-    CpuMetrics output{};
+CpuMetricsWrapper AbstractSystemResourcesReader::readCpuStats() {
+    CpuMetricsWrapper output{};
     return output;
 }
 
-NetworkMetrics AbstractSystemResourcesReader::readNetworkStats() {
-    NetworkMetrics output{};
+NetworkMetricsWrapper AbstractSystemResourcesReader::readNetworkStats() {
+    NetworkMetricsWrapper output{};
     return output;
 }
 

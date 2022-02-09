@@ -40,6 +40,9 @@ using MetricStorePtr = std::shared_ptr<MetricStore>;
 
 class MonitoringCatalog;
 using MonitoringCatalogPtr = std::shared_ptr<MonitoringCatalog>;
+
+class MonitoringManager;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 }// namespace NES
 
 namespace web::json {

@@ -12,25 +12,15 @@
     limitations under the License.
 */
 #ifdef __linux__
+#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/CpuMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/StaticNesMetrics.hpp>
 #include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
-#include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/CpuValues.hpp>
-#include <Monitoring/MetricValues/DiskMetrics.hpp>
-#include <Monitoring/MetricValues/MemoryMetrics.hpp>
-#include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <Monitoring/MetricValues/NetworkValues.hpp>
-#include <Monitoring/MetricValues/RuntimeNesMetrics.hpp>
-#include <Monitoring/MetricValues/StaticNesMetrics.hpp>
-
-#include "Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp"
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/CpuValues.hpp"
-#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkValues.hpp"
-#include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
 
 #include <Util/Logger.hpp>
 #include <chrono>
@@ -41,7 +31,6 @@
 #include <sys/sysinfo.h>
 #include <thread>
 #include <unistd.h>
-#include <unordered_map>
 #include <vector>
 
 namespace NES {
@@ -172,7 +161,7 @@ StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
         auto cpuStats = LinuxSystemResourcesReader::readCpuStats();
         auto totalStats = cpuStats.getTotal();
         output.totalCPUJiffies = totalStats.user + totalStats.system + totalStats.idle;
-        output.cpuCoreNum = LinuxSystemResourcesReader::readCpuStats().getNumCores();
+        output.cpuCoreNum = LinuxSystemResourcesReader::readCpuStats().size();
 
         if (access(metricLocations[1].c_str(), F_OK) != -1) {
             std::string periodLine;
@@ -182,7 +171,7 @@ StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
             output.cpuPeriodUS = std::stoll(periodStr);
         } else {
             NES_ERROR("LinuxSystemResourcesReader: File for cpu.cfs_period_us not available");
-           output.cpuPeriodUS = 0;
+            output.cpuPeriodUS = 0;
         }
 
         if (access(metricLocations[2].c_str(), F_OK) != -1) {
@@ -202,11 +191,11 @@ StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
     return output;
 }
 
-CpuMetrics LinuxSystemResourcesReader::readCpuStats() {
+CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats() {
     std::string metricLocation = "/proc/stat";
-    CpuValues totalCpu{};
+    CpuMetrics totalCpu{};
     unsigned int numCPU = std::thread::hardware_concurrency() + 1;
-    auto cpu = std::vector<CpuValues>(numCPU);
+    auto cpu = std::vector<CpuMetrics>(numCPU);
 
     if (access(metricLocation.c_str(), F_OK) == -1) {
         return AbstractSystemResourcesReader::readCpuStats();
@@ -233,7 +222,7 @@ CpuMetrics LinuxSystemResourcesReader::readCpuStats() {
                 int len = tokens[0].copy(name, tokens[0].size());
                 name[len] = '\0';
 
-                auto cpuStats = CpuValues();
+                auto cpuStats = CpuMetrics();
                 cpuStats.core_num = i;
                 cpuStats.user = std::stoul(tokens[1]);
                 cpuStats.nice = std::stoul(tokens[2]);
@@ -253,12 +242,12 @@ CpuMetrics LinuxSystemResourcesReader::readCpuStats() {
     } catch (const log4cxx::helpers::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error calling readCpuStats() " << e.what());
     }
-    return CpuMetrics{totalCpu, numCPU, std::move(cpu)};
+    return CpuMetricsWrapper{std::move(cpu)};
 }
 
-NetworkMetrics LinuxSystemResourcesReader::readNetworkStats() {
+NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats() {
     std::string metricLocation = "/proc/net/dev";
-    auto output = NetworkMetrics();
+    auto output = NetworkMetricsWrapper();
 
     if (access(metricLocation.c_str(), F_OK) == -1) {
         return AbstractSystemResourcesReader::readNetworkStats();
@@ -314,7 +303,7 @@ NetworkMetrics LinuxSystemResourcesReader::readNetworkStats() {
                    &tColls,
                    &tCarrier,
                    &tCompressed);
-            auto outputValue = NetworkValues();
+            auto outputValue = NetworkMetrics();
             // the name of the network interface
             // TODO: add proper handling of ifname as string (see issue #1725)
             outputValue.interfaceName = i++;

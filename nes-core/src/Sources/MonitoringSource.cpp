@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
-#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
-#include "Monitoring/MonitoringPlan.hpp"
+#include <Monitoring/MetricCollectors/MetricCollector.hpp>
+#include <Monitoring/MonitoringCatalog.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/MonitoringSource.hpp>
@@ -28,8 +27,7 @@
 
 namespace NES {
 
-MonitoringSource::MonitoringSource(const MonitoringPlanPtr& monitoringPlan,
-                                   MetricCatalogPtr metricCatalog,
+MonitoringSource::MonitoringSource(const MetricCollectorPtr& metricCollector,
                                    Runtime::BufferManagerPtr bufferManager,
                                    Runtime::QueryManagerPtr queryManager,
                                    const uint64_t numbersOfBufferToProduce,
@@ -45,8 +43,8 @@ MonitoringSource::MonitoringSource(const MonitoringPlanPtr& monitoringPlan,
                     operatorId,
                     numSourceLocalBuffers,
                     std::move(successors)),
-      monitoringPlan(monitoringPlan), metricGroup(monitoringPlan->createMetricGroup(std::move(metricCatalog))) {
-    schema = metricGroup->createSchema();
+      metricCollector(metricCollector) {
+    schema = metricCollector->getSchema();
     NES_INFO("MonitoringSources: Created with schema:\n" << schema->toString());
 }
 
@@ -56,13 +54,12 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData() {
     NES_DEBUG("MonitoringSource:" << this << " got buffer");
 
     NES_DEBUG("MonitoringSource: Filling buffer with 1 monitoring tuple.");
-    metricGroup->getSample(buf);
-
-    buf.setNumberOfTuples(1);
-    NES_DEBUG("MonitoringSource: Generated buffer with 1 tuple and size " << schema->getSchemaSizeInBytes());
+    metricCollector->fillBuffer(buf);
+    NES_DEBUG("MonitoringSource: Generated buffer with " << buf.getNumberOfTuples() << " tuple and size "
+                                                         << schema->getSchemaSizeInBytes());
 
     //update statistics
-    generatedTuples++;
+    generatedTuples += buf.getNumberOfTuples();
     generatedBuffers++;
 
     NES_DEBUG("MonitoringSource::Buffer content: " << Util::prettyPrintTupleBuffer(buf, schema));

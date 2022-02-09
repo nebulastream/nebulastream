@@ -22,47 +22,45 @@ limitations under the License.
 
 namespace NES {
 
-    class Metric;
-    using MetricPtr = std::shared_ptr<Metric>;
+class Metric;
+using MetricPtr = std::shared_ptr<Metric>;
 
-    class MetricCollector {
-      protected:
-        //  -- Constructors --
-        MetricCollector() = default;
-        MetricCollector(const MetricCollector&) = default;
-        MetricCollector(MetricCollector&&) = default;
-        //  -- Assignment --
-        MetricCollector& operator=(const MetricCollector&) = default;
-        MetricCollector& operator=(MetricCollector&&) = default;
+class MetricCollector {
+  protected:
+    //  -- Constructors --
+    MetricCollector() = default;
+    MetricCollector(const MetricCollector&) = default;
+    MetricCollector(MetricCollector&&) = default;
+    //  -- Assignment --
+    MetricCollector& operator=(const MetricCollector&) = default;
+    MetricCollector& operator=(MetricCollector&&) = default;
 
-      public:
-        //  -- Destructor --
-        virtual ~MetricCollector() = 0;
+  public:
+    //  -- Destructor --
+    virtual ~MetricCollector() = 0;
 
-        /**
+    /**
      * @brief Fill a buffer with a given metric.
      * @param tupleBuffer The tuple buffer
      * @return True if successful, else false
-     */
-        virtual bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) = 0;
+    */
+    virtual bool fillBuffer(Runtime::TupleBuffer& tupleBuffer) = 0;
 
-        /**
-     * @brief Fill a buffer with a given metric.
-     * @param tupleBuffer The tuple buffer
-     * @return True if successful, else false
-     */
-        virtual MetricPtr readMetric() = 0;
-
-        /**
+    /**
      * @brief Return the schema representing the metrics gathered by the collector.
      * @return The schema
+    */
+    virtual SchemaPtr getSchema() = 0;
+
+    /**
+     * @brief Fill a buffer with a given metric.
+     * @param tupleBuffer The tuple buffer
+     * @return True if successful, else false
      */
-        virtual SchemaPtr getSchema() = 0;
+    virtual MetricPtr readMetric() = 0;
+};
 
-
-    };
-
-    using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
+using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 
 }// namespace NES
 

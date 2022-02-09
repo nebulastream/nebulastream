@@ -18,9 +18,9 @@
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 
 namespace NES {
-class CpuMetrics;
+class CpuMetricsWrapper;
 class MemoryMetrics;
-class NetworkMetrics;
+class NetworkMetricsWrapper;
 class DiskMetrics;
 class RuntimeNesMetrics;
 class StaticNesMetrics;
@@ -51,7 +51,7 @@ class LinuxSystemResourcesReader : public AbstractSystemResourcesReader {
     * @return A map where for each CPU the according /proc/stat information are returned in the form
     * e.g., output["user1"] = 1234, where user is the metric and 1 the cpu core
     */
-    CpuMetrics readCpuStats() override;
+    CpuMetricsWrapper readCpuStats() override;
 
     /**
     * @brief This method reads memory information from sysinfo
@@ -72,7 +72,7 @@ class LinuxSystemResourcesReader : public AbstractSystemResourcesReader {
     * separate map
     * @return a map where each interface is mapping the according network statistics map.
     */
-    NetworkMetrics readNetworkStats() override;
+    NetworkMetricsWrapper readNetworkStats() override;
 
     /**
     * @return Returns the wall clock time of the system in nanoseconds.

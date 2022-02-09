@@ -27,24 +27,14 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
-
-class MonitoringPlan;
-using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
-
-class MonitoringManager;
-using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
  */
 class MonitoringService {
   public:
-    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology);
-    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
-
-    ~MonitoringService();
+    MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology);
+    MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring);
 
     /**
      * @brief Submitting a monitoring plan to all nodes which indicates which metrics have to be sampled.
@@ -59,14 +49,14 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    web::json::value requestMonitoringDataAsJson(uint64_t nodeId, Runtime::BufferManagerPtr bufferManager);
+    web::json::value requestMonitoringDataAsJson(uint64_t nodeId);
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    web::json::value requestMonitoringDataFromAllNodesAsJson(Runtime::BufferManagerPtr bufferManager);
+    web::json::value requestMonitoringDataFromAllNodesAsJson();
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
@@ -74,23 +64,6 @@ class MonitoringService {
      * @return a tuple with the schema and tuplebuffer
      */
     web::json::value requestNewestMonitoringDataFromMetricStoreAsJson();
-
-    /**
-     * @brief Requests from a remote worker node its monitoring data via prometheus node exporter.
-     * @param nodeId the NES ID of the node
-     * @param port of the prometheus node exporter port from the node
-     * @param the monitoring plan
-     * @return the metrics as plain string
-     */
-    std::string requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port);
-
-    /**
-     * @brief Requests from a remote worker node its monitoring data via prometheus node exporter. Warning: It assumes the default port 9100, otherwise
-     * use requestMonitoringDataViaPrometheusAsString(..)
-     * @param the monitoring plan
-     * @return the metrics as json
-     */
-    web::json::value requestMonitoringDataFromAllNodesViaPrometheusAsJson();
 
     /**
      * Getter for MonitoringManager

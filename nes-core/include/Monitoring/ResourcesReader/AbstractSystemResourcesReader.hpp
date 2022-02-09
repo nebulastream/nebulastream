@@ -21,9 +21,9 @@
 
 namespace NES {
 
-class CpuMetrics;
+class CpuMetricsWrapper;
 class MemoryMetrics;
-class NetworkMetrics;
+class NetworkMetricsWrapper;
 class DiskMetrics;
 class RuntimeNesMetrics;
 class StaticNesMetrics;
@@ -62,7 +62,7 @@ class AbstractSystemResourcesReader {
     * @return A map where for each CPU the according /proc/stat information are returned in the form
     * e.g., output["user1"] = 1234, where user is the metric and 1 the cpu core
     */
-    virtual CpuMetrics readCpuStats();
+    virtual CpuMetricsWrapper readCpuStats();
 
     /**
     * @brief This method reads memory information from sysinfo
@@ -83,7 +83,7 @@ class AbstractSystemResourcesReader {
     * separate map
     * @return a map where each interface is mapping the according network statistics map.
     */
-    virtual NetworkMetrics readNetworkStats();
+    virtual NetworkMetricsWrapper readNetworkStats();
 
     /**
      * @brief Getter for the wall clock time.

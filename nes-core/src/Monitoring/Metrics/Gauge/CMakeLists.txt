@@ -14,11 +14,10 @@
 
 add_source_files(nes-core
         CpuMetrics.cpp
-        CpuValues.cpp
+        CpuMetricsWrapper.cpp
         DiskMetrics.cpp
         MemoryMetrics.cpp
         NetworkMetrics.cpp
-        NetworkValues.cpp
         RuntimeNesMetrics.cpp
         StaticNesMetrics.cpp
 )

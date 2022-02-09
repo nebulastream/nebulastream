@@ -12,37 +12,34 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
-#define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
+#ifndef NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
+#define NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkValues.hpp>
 
 namespace NES {
 
 /**
- * @brief NetworkMetrics class, that is responsible for collecting and managing network metrics.
+ * @brief This class represents the metric values read from /proc/net/dev.
  */
 class NetworkMetrics {
-
   public:
-    NetworkMetrics();
-
-    [[nodiscard]] NetworkValues getNetworkValue(uint64_t interfaceNo) const;
-
-    std::vector<std::string> getInterfaceNames();
-
-    [[nodiscard]] uint64_t getInterfaceNum() const;
-
-    void addNetworkValues(NetworkValues&& nwValue);
+    NetworkMetrics() = default;
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
-     * @param schema The schema object, that will be extended with the new schema of the network metrics
-     * @param buf The buffer where to data is written into
-     * @param prefix A prefix that is appended to the schema fields
-     * @return The NetworkMetrics object
+     * @brief Returns the schema of the class with a given prefix.
+     * @param prefix
+     * @return the schema
+     */
+    static SchemaPtr getSchema(const std::string& prefix);
+
+    /**
+     * @brief Parses a CpuMetricsWrapper objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
      */
     static NetworkMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
@@ -50,35 +47,42 @@ class NetworkMetrics {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
      */
-    web::json::value toJson();
+    [[nodiscard]] web::json::value toJson() const;
 
-  private:
-    uint64_t interfaceNum{0};
-    std::vector<NetworkValues> networkValues;
-
-  public:
     bool operator==(const NetworkMetrics& rhs) const;
     bool operator!=(const NetworkMetrics& rhs) const;
-};
+
+    uint64_t interfaceName;
+
+    uint64_t rBytes;
+    uint64_t rPackets;
+    uint64_t rErrs;
+    uint64_t rDrop;
+    uint64_t rFifo;
+    uint64_t rFrame;
+    uint64_t rCompressed;
+    uint64_t rMulticast;
+
+    uint64_t tBytes;
+    uint64_t tPackets;
+    uint64_t tErrs;
+    uint64_t tDrop;
+    uint64_t tFifo;
+    uint64_t tColls;
+    uint64_t tCarrier;
+    uint64_t tCompressed;
+} __attribute__((packed));
 
 /**
  * @brief The serialize method to write NetworkMetrics into the given Schema and TupleBuffer. The prefix specifies a string
  * that should be added before each field description in the Schema.
- * @param the NetworkMetrics
+ * @param the CpuMetricsWrapper
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
 void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
-/**
- * @brief Class specific getSchema() method for NetworkMetrics
- * @param metric
- * @param prefix
- * @return the SchemaPtr
- */
-SchemaPtr getSchema(const NetworkMetrics& metric, const std::string& prefix);
-
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICVALUES_NETWORKMETRICS_HPP_
+#endif  // NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_

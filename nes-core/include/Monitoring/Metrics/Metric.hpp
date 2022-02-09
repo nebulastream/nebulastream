@@ -39,7 +39,7 @@ web::json::value asJson(const T&) {
 }
 
 /**
-* @brief Class specific serialize methods for basic types. The serialize method to write CpuMetrics into
+* @brief Class specific serialize methods for basic types. The serialize method to write CpuMetricsWrapper into
 * the given Schema and TupleBuffer. The prefix specifies a string
 * that should be added before each field description in the Schema.
 * @param the metric

@@ -20,9 +20,6 @@
 
 namespace NES {
 
-class SerializableStaticNesMetrics;
-using SerializableStaticNesMetricsPtr = std::shared_ptr<SerializableStaticNesMetrics>;
-
 /**
  * Class representing the static metrics within NES.
  */
@@ -38,13 +35,6 @@ class StaticNesMetrics {
     StaticNesMetrics(bool isMoving, bool hasBattery);
 
     /**
-     * Ctor for the static NES metrics.
-     * @param isMoving flag to indicate if the node is moving.
-     * @param hasBattery flag to indicate if the node runs on battery.
-     */
-    explicit StaticNesMetrics(SerializableStaticNesMetrics metrics);
-
-    /**
      * @brief Returns the schema of the class with a given prefix.
      * @param prefix
      * @return the schema
@@ -52,19 +42,13 @@ class StaticNesMetrics {
     static SchemaPtr getSchema(const std::string& prefix = "");
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @brief Parses a CpuMetricsWrapper objects from a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
      * @return The object
      */
     static StaticNesMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
-
-    /**
-     * @brief Returns the metric as protobuf class
-     * @return the SerializableStaticNesMetrics from Protobuf
-     */
-    [[nodiscard]] SerializableStaticNesMetricsPtr toProtobufSerializable() const;
 
     /**
      * @brief Returns the metrics as json
@@ -93,7 +77,7 @@ using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
 /**
  * @brief The serialize method to write StaticNesMetrics into the given Schema and TupleBuffer. The prefix specifies a string
  * that should be added before each field description in the Schema.
- * @param the CpuMetrics
+ * @param the CpuMetricsWrapper
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
