@@ -167,12 +167,13 @@ const std::string ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG = "enableSemanticQuery
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_IP_CONFIG = "localWorkerIp";
 const std::string PARENT_ID_CONFIG = "parentId";
-const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "queryCompilerCompilationStrategy";
-const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "queryCompilerPipeliningStrategy";
-const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "queryCompilerOutputBufferOptimizationLevel";
+const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "compilationStrategy";
+const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "pipeliningStrategy";
+const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "outputBufferOptimizationLevel";
 const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
 const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
+
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";

@@ -33,26 +33,26 @@ KafkaSourceTypePtr KafkaSourceType::create() { return std::make_shared<KafkaSour
 KafkaSourceType::KafkaSourceType(std::map<std::string, std::string> sourceConfigMap) : KafkaSourceType() {
     NES_INFO("KafkaSourceType: Init default Kafka source config object with values from command line args.");
 
-    if (sourceConfigMap.find("--" + Configurations::BROKERS_CONFIG) != sourceConfigMap.end()) {
-        brokers->setValue(sourceConfigMap.find("--" + Configurations::BROKERS_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::BROKERS_CONFIG) != sourceConfigMap.end()) {
+        brokers->setValue(sourceConfigMap.find(Configurations::BROKERS_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no brokers defined! Please define brokers.");
     }
-    if (sourceConfigMap.find("--" + Configurations::AUTO_COMMIT_CONFIG) != sourceConfigMap.end()) {
-        autoCommit->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::AUTO_COMMIT_CONFIG)->second));
+    if (sourceConfigMap.find(Configurations::AUTO_COMMIT_CONFIG) != sourceConfigMap.end()) {
+        autoCommit->setValue(std::stoi(sourceConfigMap.find(Configurations::AUTO_COMMIT_CONFIG)->second));
     }
-    if (sourceConfigMap.find("--" + Configurations::GROUP_ID_CONFIG) != sourceConfigMap.end()) {
-        groupId->setValue(sourceConfigMap.find("--" + Configurations::GROUP_ID_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::GROUP_ID_CONFIG) != sourceConfigMap.end()) {
+        groupId->setValue(sourceConfigMap.find(Configurations::GROUP_ID_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no groupId defined! Please define groupId.");
     }
-    if (sourceConfigMap.find("--" + Configurations::TOPIC_CONFIG) != sourceConfigMap.end()) {
-        topic->setValue(sourceConfigMap.find("--" + Configurations::TOPIC_CONFIG)->second);
+    if (sourceConfigMap.find(Configurations::TOPIC_CONFIG) != sourceConfigMap.end()) {
+        topic->setValue(sourceConfigMap.find(Configurations::TOPIC_CONFIG)->second);
     } else {
         NES_THROW_RUNTIME_ERROR("KafkaSourceConfig:: no topic defined! Please define topic.");
     }
-    if (sourceConfigMap.find("--" + Configurations::CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
-        connectionTimeout->setValue(std::stoi(sourceConfigMap.find("--" + Configurations::CONNECTION_TIMEOUT_CONFIG)->second));
+    if (sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG) != sourceConfigMap.end()) {
+        connectionTimeout->setValue(std::stoi(sourceConfigMap.find(Configurations::CONNECTION_TIMEOUT_CONFIG)->second));
     }
 }
 

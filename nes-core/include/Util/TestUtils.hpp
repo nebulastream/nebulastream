@@ -63,9 +63,9 @@ class TestUtils {
 
     [[nodiscard]] static std::string rpcPort(uint64_t rpcPort) { return "--" + RPC_PORT_CONFIG + "=" + std::to_string(rpcPort); }
 
-    [[nodiscard]] static std::string sourceType(std::string sourceType) { return "--" + SOURCE_TYPE_CONFIG + "=" + sourceType; }
+    [[nodiscard]] static std::string sourceType(std::string sourceType) { return "--physicalSources." + SOURCE_TYPE_CONFIG + "=" + sourceType; }
 
-    [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) { return "--" + FILE_PATH_CONFIG + "=" + filePath; }
+    [[nodiscard]] static std::string csvSourceFilePath(std::string filePath) { return "--physicalSources." + FILE_PATH_CONFIG + "=" + filePath; }
 
     [[nodiscard]] static std::string dataPort(uint64_t dataPort) {
         return "--" + DATA_PORT_CONFIG + "=" + std::to_string(dataPort);
@@ -76,11 +76,11 @@ class TestUtils {
     }
 
     [[nodiscard]] static std::string physicalStreamName(std::string physicalStreamName) {
-        return "--" + PHYSICAL_SOURCE_NAME_CONFIG + "=" + physicalStreamName;
+        return "--physicalSources." + PHYSICAL_SOURCE_NAME_CONFIG + "=" + physicalStreamName;
     }
 
     [[nodiscard]] static std::string logicalStreamName(std::string logicalStreamName) {
-        return "--" + LOGICAL_SOURCE_NAME_CONFIG + "=" + logicalStreamName;
+        return "--physicalSources." + LOGICAL_SOURCE_NAME_CONFIG + "=" + logicalStreamName;
     }
 
     [[nodiscard]] static std::string numberOfBuffersToProduce(uint64_t numberOfBuffersToProduce) {
@@ -88,7 +88,7 @@ class TestUtils {
     }
 
     [[nodiscard]] static std::string sourceFrequency(uint64_t sourceFrequency) {
-        return "--" + SOURCE_FREQUENCY_CONFIG + "=" + std::to_string(sourceFrequency);
+        return "--physicalSources." + SOURCE_FREQUENCY_CONFIG + "=" + std::to_string(sourceFrequency);
     }
 
     [[nodiscard]] static std::string restPort(uint64_t restPort) { return "--restPort=" + std::to_string(restPort); }
