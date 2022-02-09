@@ -13,17 +13,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#ifndef MLHEURISTIC_HPP
-#define MLHEURISTIC_HPP
+#ifndef NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTIC_HPP_
+#define NES_INCLUDE_OPTIMIZER_QUERYPLACEMENT_MLHEURISTIC_HPP_
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <iostream>
 
 namespace NES {
 
-class StreamCatalog;
-using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
+class SourceCatalog;
+using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -37,18 +36,22 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
   public:
     ~MlHeuristicStrategy() override = default;
 
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
+//    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
-    static std::unique_ptr<MlHeuristicStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                    TopologyPtr topology,
-                                                    TypeInferencePhasePtr typeInferencePhase,
-                                                    SourceCatalogPtr streamCatalog);
+    bool updateGlobalExecutionPlan(QueryId queryId,
+                                   FaultToleranceType faultToleranceType,
+                                   LineageType lineageType,
+                                   const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                   const std::vector<OperatorNodePtr>& pinnedDownStreamOperators) override;
+
+    static std::unique_ptr<BasePlacementStrategy>
+    create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, TypeInferencePhasePtr typeInferencePhase);
+
 
   private:
     explicit MlHeuristicStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
                               TopologyPtr topology,
-                              TypeInferencePhasePtr typeInferencePhase,
-                              SourceCatalogPtr streamCatalog);
+                              TypeInferencePhasePtr typeInferencePhase);
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
@@ -56,6 +59,15 @@ class MlHeuristicStrategy : public BasePlacementStrategy {
      * @throws exception if the operator can't be placed.
      */
     void placeQueryPlanOnTopology(const QueryPlanPtr& queryPlan);
+
+    void performOperatorPlacement(QueryId queryId,
+                                  const std::vector<OperatorNodePtr>& pinnedUpStreamOperators,
+                                  const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
+
+    void placeOperator(QueryId queryId,
+                       const OperatorNodePtr& operatorNode,
+                       TopologyNodePtr candidateTopologyNode,
+                       const std::vector<OperatorNodePtr>& pinnedDownStreamOperators);
 
     /**
      * @brief Try to place input operator on the input topology node
