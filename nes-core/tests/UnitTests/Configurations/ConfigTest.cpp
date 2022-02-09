@@ -61,8 +61,10 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile) {
               coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->numWorkerThreads.getValue(), coordinatorConfigPtr->numWorkerThreads.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(), coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
+              coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
+              coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.enableSemanticQueryValidation.getValue(),
               coordinatorConfigPtr->optimizer.enableSemanticQueryValidation.getDefaultValue());
 }
@@ -101,8 +103,10 @@ TEST_F(ConfigTest, testCoordinatorEmptyParamsConsoleInput) {
               coordinatorConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->bufferSizeInBytes.getValue(), coordinatorConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->numWorkerThreads.getValue(), coordinatorConfigPtr->numWorkerThreads.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(), coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryBatchSize.getValue(),
+              coordinatorConfigPtr->optimizer.queryBatchSize.getDefaultValue());
+    EXPECT_EQ(coordinatorConfigPtr->optimizer.queryMergerRule.getValue(),
+              coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->optimizer.enableSemanticQueryValidation.getValue(),
               coordinatorConfigPtr->optimizer.enableSemanticQueryValidation.getDefaultValue());
 }
@@ -165,9 +169,9 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
         "--numWorkerThreads=5",
         "--numberOfBuffersInGlobalBufferManager=2048",
         "--numberOfBuffersInSourceLocalBufferPool=128",
-        "--queryCompilerCompilationStrategy=FAST",
-        "--queryCompilerPipeliningStrategy=OPERATPR_AT_A_TIME",
-        "--queryCompilerOutputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
+        "--queryCompiler.compilationStrategy=FAST",
+        "--queryCompiler.pipeliningStrategy=OPERATPR_AT_A_TIME",
+        "--queryCompiler.OutputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
     };
     int argc = 8;
 
@@ -220,7 +224,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                       string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
     }
 
-    PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createPhysicalSource(commandLineParams);
+    PhysicalSourcePtr physicalSource1 = PhysicalSourceFactory::createFromString("", commandLineParams);
     EXPECT_EQ(physicalSource1->getLogicalSourceName(), "default");
     EXPECT_EQ(physicalSource1->getPhysicalSourceName(), "x");
     EXPECT_TRUE(physicalSource1->getPhysicalSourceType()->instanceOf<DefaultSourceType>());
@@ -248,7 +252,7 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
                                       string(argv1[i]).substr(string(argv1[i]).find('=') + 1, string(argv1[i]).length() - 1)));
     }
 
-    PhysicalSourcePtr physicalSource2 = PhysicalSourceFactory::createPhysicalSource(commandLineParams1);
+    PhysicalSourcePtr physicalSource2 = PhysicalSourceFactory::createFromString("", commandLineParams1);
     EXPECT_EQ(physicalSource2->getLogicalSourceName(), "default");
     EXPECT_EQ(physicalSource2->getPhysicalSourceName(), "x");
     EXPECT_TRUE(physicalSource2->getPhysicalSourceType()->instanceOf<KafkaSourceType>());

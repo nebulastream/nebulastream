@@ -15,6 +15,7 @@
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_SCALAROPTION_HPP_
 
 #include <Configurations/ConfigOptions/TypedBaseOption.hpp>
+#include <Exceptions/ConfigurationException.hpp>
 #include <ostream>
 namespace NES::Configurations {
 
@@ -52,7 +53,6 @@ class ScalarOption : public TypedBaseOption<T> {
     bool operator==(const BaseOption& other) override;
     bool operator==(const T& other);
 
-
     /**
      * @brief Operator to directly access the value of this option.
      * @return Returns an object of the option type T.
@@ -60,11 +60,11 @@ class ScalarOption : public TypedBaseOption<T> {
     operator T() { return this->value; }
 
     template<class X>
-    friend std::ostream& operator<<( std::ostream& os, const ScalarOption<X>& option);
+    friend std::ostream& operator<<(std::ostream& os, const ScalarOption<X>& option);
 
   protected:
     virtual void parseFromYAMLNode(Yaml::Node node) override;
-    void parseFromString(const std::string& identifier, const std::string& value) override;
+    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 
   private:
     template<class X>
@@ -78,7 +78,7 @@ class ScalarOption : public TypedBaseOption<T> {
 };
 
 template<class X>
-std::ostream& operator<<(std::ostream& os, const  ScalarOption<X>& option) {
+std::ostream& operator<<(std::ostream& os, const ScalarOption<X>& option) {
     os << "Config Object: \n";
     os << "Name: " << option.name << "\n";
     os << "Description: " << option.description << "\n";
@@ -116,7 +116,14 @@ void ScalarOption<T>::parseFromYAMLNode(Yaml::Node node) {
 }
 
 template<class T>
-void ScalarOption<T>::parseFromString(const std::string&, const std::string& value) {
+void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+    if (!inputParams.contains(this->getName())) {
+        throw ConfigurationException("Identifier " + identifier + " is not known.");
+    }
+    auto value = inputParams[this->getName()];
+    if (value.empty()) {
+        throw ConfigurationException("Identifier " + identifier + " is not known.");
+    }
     this->value = Yaml::impl::StringConverter<T>::Get(value);
 }
 

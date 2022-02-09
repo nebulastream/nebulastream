@@ -29,10 +29,8 @@ namespace NES {
 
 namespace Configurations {
 
-PhysicalSourcePtr PhysicalSourceFactory::createFromString(std::string) { return NES::PhysicalSourcePtr(); }
-
-
-PhysicalSourcePtr PhysicalSourceFactory::createPhysicalSource(const std::map<std::string, std::string>& commandLineParams) {
+PhysicalSourcePtr PhysicalSourceFactory::createFromString(std::string ,
+                                                          std::map<std::string, std::string>& commandLineParams) {
 
     std::string sourceType, logicalSourceName, physicalSourceName;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {

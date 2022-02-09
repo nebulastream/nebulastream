@@ -69,7 +69,8 @@ class BaseConfiguration : public BaseOption {
 
   protected:
     void parseFromYAMLNode(const Yaml::Node config) override;
-    void parseFromString(const std::string& identifier, const std::string& value) override;
+    void parseFromString(std::string identifier,
+                         std::map<std::string, std::string>& inputParams) override;
     virtual std::vector<Configurations::BaseOption*> getOptions() = 0;
     std::map<std::string, Configurations::BaseOption*> getOptionMap();
 };
