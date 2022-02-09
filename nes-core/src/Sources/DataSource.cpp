@@ -356,7 +356,7 @@ void DataSource::runningRoutineWithGatheringInterval() {
             running = false;
             wasGracefullyStopped = true;
         }
-        NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
+        NES_DEBUG("DataSource " << operatorId << ": eion " << cnt);
 
         // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
         if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {

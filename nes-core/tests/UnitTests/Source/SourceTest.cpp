@@ -2029,22 +2029,32 @@ TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
 
-    string query =
-        R"(Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
-        Milliseconds(1000))).sink(NullOutputSinkDescriptor::create());)";
+    string query1 =
+        R"(Query::from("input1").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());)";
+
+    string query2 =
+        R"(Query::from("input2").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());)";
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
-    auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    auto queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
+
+    auto queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     sleep(2);
     std::cout << "E2EBase: Remove query" << std::endl;
-    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
+    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId1), "no vaild stop quest");
+    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId2), "no vaild stop quest");
     std::cout << "E2EBase: wait for stop" << std::endl;
-    bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
+    bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog);
     if (!ret) {
-        NES_ERROR("query was not stopped within 30 sec");
+        NES_ERROR("query 1 was not stopped within 30 sec");
+    }
+    bool ret2 = NES::TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog);
+    if (!ret2) {
+        NES_ERROR("query 2 was not stopped within 30 sec");
     }
 
     std::cout << "E2EBase: Stop worker 1" << std::endl;
