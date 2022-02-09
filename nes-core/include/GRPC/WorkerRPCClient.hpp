@@ -20,6 +20,7 @@
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
 #include <grpcpp/grpcpp.h>
+#include <map>
 #include <string>
 #include <thread>
 
@@ -46,7 +47,12 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 
+using GrpcChannelPtr = std::shared_ptr<::grpc::Channel>;
+
 enum RpcClientModes { Register, Unregister, Start, Stop };
+
+class WorkerRPCClient;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 class WorkerRPCClient {
   public:
@@ -65,9 +71,11 @@ class WorkerRPCClient {
         std::unique_ptr<ClientAsyncResponseReader<ReplayType>> responseReader;
     };
 
-    WorkerRPCClient() = default;
-
-    void AsyncCompleteRpc();
+    /**
+     * Create shred pointer for the worker rpc
+     * @return pointer to the worker rpc
+     */
+    static WorkerRPCClientPtr create();
 
     /**
         * @brief register a query
@@ -75,7 +83,7 @@ class WorkerRPCClient {
         * @param query plan to register
         * @return true if succeeded, else false
         */
-    static bool registerQuery(const std::string& address, const QueryPlanPtr& queryPlan);
+    bool registerQuery(const std::string& address, const QueryPlanPtr& queryPlan);
 
     /**
     * @brief register a query asynchronously
@@ -83,21 +91,21 @@ class WorkerRPCClient {
     * @param query plan to register
     * @return true if succeeded, else false
     */
-    static bool registerQueryAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& cq);
+    bool registerQueryAsync(const std::string& address, const QueryPlanPtr& queryPlan, const CompletionQueuePtr& completionQueue);
 
     /**
      * @brief ungregisters a query
      * @param queryId to unregister query
      * @return true if succeeded, else false
      */
-    static bool unregisterQuery(const std::string& address, QueryId queryId);
+    bool unregisterQuery(const std::string& address, QueryId queryId);
 
     /**
      * @brief ungregisters a query asynchronously
      * @param queryId to unregister query
      * @return true if succeeded, else false
      */
-    static bool unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    bool unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
 
     /**
      * @brief method to start a already deployed query
@@ -105,7 +113,7 @@ class WorkerRPCClient {
      * @param queryId to start
      * @return bool indicating success
      */
-    static bool startQuery(const std::string& address, QueryId queryId);
+    bool startQuery(const std::string& address, QueryId queryId);
 
     /**
       * @brief method to start a already deployed query asynchronously
@@ -113,37 +121,37 @@ class WorkerRPCClient {
       * @param queryId to start
       * @return bool indicating success
       */
-    static bool startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    bool startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& completionQueue);
 
     /**
      * @brief method to stop a query
      * @param queryId to stop
      * @return bool indicating success
      */
-    static bool stopQuery(const std::string& address, QueryId queryId);
+    bool stopQuery(const std::string& address, QueryId queryId);
 
     /**
      * @brief method to stop a query asynchronously
      * @param queryId to stop
      * @return bool indicating success
      */
-    static bool stopQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq);
+    bool stopQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& completionQueue);
 
     /**
      * @brief Registers to a remote worker node its monitoring plan.
-     * @param ipAddress
-     * @param the monitoring plan
+     * @param address
+     * @param plan the monitoring plan
      * @return bool if successful
      */
-    static bool registerMonitoringPlan(const std::string& address, const MonitoringPlanPtr& plan);
+    bool registerMonitoringPlan(const std::string& address, const MonitoringPlanPtr& plan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
-     * @param ipAddress
-     * @param the buffer where the data will be written into
+     * @param address: the address of the worker node
+     * @param tupleBuffer the buffer where the data will be written into
      * @return true if successful, else false
      */
-    static bool requestMonitoringData(const std::string& address, Runtime::TupleBuffer& buf, uint64_t schemaSizeBytes);
+    bool requestMonitoringData(const std::string& address, Runtime::TupleBuffer& tupleBuffer, uint64_t schemaSizeBytes);
 
     /**
      * @brief Requests remote worker to start buffering data on a single NetworkSink identified by
@@ -154,7 +162,7 @@ class WorkerRPCClient {
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
-    static bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId);
+    bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId);
 
     /**
      * @brief requests a remote worker to reconfigure a NetworkSink so that the NetworkSink changes where it sends data to (changes downstream node)
@@ -166,7 +174,12 @@ class WorkerRPCClient {
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
-    static bool updateNetworkSink(const std::string& address, uint64_t newNodeId, const std::string& newHostname, uint32_t newPort, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId);
+    bool updateNetworkSink(const std::string& address,
+                           uint64_t newNodeId,
+                           const std::string& newHostname,
+                           uint32_t newPort,
+                           uint64_t querySubPlanId,
+                           uint64_t uniqueNetworkSinDescriptorId);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return
@@ -174,7 +187,7 @@ class WorkerRPCClient {
      * @param mode
      * @return true if all calls returned
      */
-    static bool checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
+    bool checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode);
 
     /**
      * @brief method to propagate new epoch timestamp to source
@@ -186,9 +199,17 @@ class WorkerRPCClient {
     bool injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address);
 
   private:
-};
-using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
+    WorkerRPCClient() = default;
 
+    /**
+     * Get a grpc channel for input address
+     * @param address : the address of the node
+     * @return shared pointer to the channel
+     */
+    GrpcChannelPtr getChannel(const std::string& address);
+
+    std::map<std::string, GrpcChannelPtr> channelCache;
+};
 }// namespace NES
 
-#endif  // NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#endif// NES_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_

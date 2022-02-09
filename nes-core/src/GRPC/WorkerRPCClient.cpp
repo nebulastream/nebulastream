@@ -14,9 +14,7 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
-#include <API/Schema.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include <GRPC/CoordinatorRPCServer.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
@@ -24,6 +22,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
+
+WorkerRPCClientPtr WorkerRPCClient::create() { return std::shared_ptr<WorkerRPCClient>(); }
 
 bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanPtr& queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
@@ -33,7 +33,6 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
-
     // serialize query plan.
     auto serializedQueryPlan = request.mutable_queryplan();
     QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, serializedQueryPlan);
@@ -42,8 +41,7 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
     RegisterQueryReply reply;
     ClientContext context;
 
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
     Status status = workerStub->RegisterQuery(&context, request, &reply);
 
     if (status.ok()) {
@@ -58,7 +56,8 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const QueryPlanP
 
 bool WorkerRPCClient::registerQueryAsync(const std::string& address,
                                          const QueryPlanPtr& queryPlan,
-                                         const CompletionQueuePtr& cq) {
+                                         const CompletionQueuePtr& completionQueue) {
+
     QueryId queryId = queryPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_DEBUG("WorkerRPCClient::registerQueryAsync address=" << address << " queryId=" << queryId
@@ -74,8 +73,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
     RegisterQueryReply reply;
     ClientContext context;
 
-    std::shared_ptr<::grpc::Channel> channel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(channel);
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
 
     // Call object to store rpc data
     auto* call = new AsyncClientCall<RegisterQueryReply>;
@@ -84,7 +82,7 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
     // an instance to store in "call" but does not actually start the RPC
     // Because we are using the asynchronous API, we need to hold on to
     // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncRegisterQuery(&call->context, request, cq.get());
+    call->responseReader = workerStub->PrepareAsyncRegisterQuery(&call->context, request, completionQueue.get());
 
     // StartCall initiates the RPC call
     call->responseReader->StartCall();
@@ -95,6 +93,275 @@ bool WorkerRPCClient::registerQueryAsync(const std::string& address,
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 
     return true;
+}
+
+bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
+    NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address=" << address << " queryId=" << queryId);
+
+    UnregisterQueryRequest request;
+    request.set_queryid(queryId);
+
+    UnregisterQueryReply reply;
+    ClientContext context;
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<UnregisterQueryReply>;
+
+    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
+    // an instance to store in "call" but does not actually start the RPC
+    // Because we are using the asynchronous API, we need to hold on to
+    // the "call" instance in order to get updates on the ongoing RPC.
+    call->responseReader = workerStub->PrepareAsyncUnregisterQuery(&call->context, request, cq.get());
+
+    // StartCall initiates the RPC call
+    call->responseReader->StartCall();
+
+    // Request that, upon completion of the RPC, "reply" be updated with the
+    // server's response; "status" with the indication of whether the operation
+    // was successful. Tag the request with the memory address of the call object.
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+
+    return true;
+}
+
+bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryId) {
+    NES_DEBUG("WorkerRPCClient::unregisterQuery address=" << address << " queryId=" << queryId);
+
+    UnregisterQueryRequest request;
+    request.set_queryid(queryId);
+
+    UnregisterQueryReply reply;
+    ClientContext context;
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+    Status status = workerStub->UnregisterQuery(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::unregisterQuery: status ok return success=" << reply.success());
+        return reply.success();
+    }
+    NES_DEBUG(" WorkerRPCClient::unregisterQuery "
+              "error="
+              << status.error_code() << ": " << status.error_message());
+    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::unregisterQuery");
+}
+
+bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
+    NES_DEBUG("WorkerRPCClient::startQuery address=" << address << " queryId=" << queryId);
+
+    StartQueryRequest request;
+    request.set_queryid(queryId);
+
+    StartQueryReply reply;
+    ClientContext context;
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+
+    Status status = workerStub->StartQuery(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::startQuery: status ok return success=" << reply.success());
+        return reply.success();
+    }
+    NES_DEBUG(" WorkerRPCClient::startQuery "
+              "error="
+              << status.error_code() << ": " << status.error_message());
+    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::startQuery");
+}
+
+bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& completionQueue) {
+    NES_DEBUG("WorkerRPCClient::startQueryAsync address=" << address << " queryId=" << queryId);
+
+    StartQueryRequest request;
+    request.set_queryid(queryId);
+
+    StartQueryReply reply;
+    ClientContext context;
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<StartQueryReply>;
+
+    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
+    // an instance to store in "call" but does not actually start the RPC
+    // Because we are using the asynchronous API, we need to hold on to
+    // the "call" instance in order to get updates on the ongoing RPC.
+    call->responseReader = workerStub->PrepareAsyncStartQuery(&call->context, request, completionQueue.get());
+
+    // StartCall initiates the RPC call
+    call->responseReader->StartCall();
+
+    // Request that, upon completion of the RPC, "reply" be updated with the
+    // server's response; "status" with the indication of whether the operation
+    // was successful. Tag the request with the memory address of the call object.
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+
+    return true;
+}
+
+bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId) {
+    NES_DEBUG("WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
+
+    StopQueryRequest request;
+    request.set_queryid(queryId);
+
+    StopQueryReply reply;
+    ClientContext context;
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+    Status status = workerStub->StopQuery(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::stopQuery: status ok return success=" << reply.success());
+        return reply.success();
+    }
+    NES_ERROR(" WorkerRPCClient::stopQuery "
+              "error="
+              << status.error_code() << ": " << status.error_message());
+    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::stopQuery");
+}
+
+bool WorkerRPCClient::stopQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& completionQueue) {
+    NES_DEBUG("WorkerRPCClient::stopQueryAsync address=" << address << " queryId=" << queryId);
+
+    StopQueryRequest request;
+    request.set_queryid(queryId);
+
+    StopQueryReply reply;
+    ClientContext context;
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<StopQueryReply>;
+
+    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
+    // an instance to store in "call" but does not actually start the RPC
+    // Because we are using the asynchronous API, we need to hold on to
+    // the "call" instance in order to get updates on the ongoing RPC.
+    call->responseReader = workerStub->PrepareAsyncStopQuery(&call->context, request, completionQueue.get());
+
+    // StartCall initiates the RPC call
+    call->responseReader->StartCall();
+
+    // Request that, upon completion of the RPC, "reply" be updated with the
+    // server's response; "status" with the indication of whether the operation
+    // was successful. Tag the request with the memory address of the call object.
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+
+    return true;
+}
+
+bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const MonitoringPlanPtr& plan) {
+    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
+
+    MonitoringRegistrationRequest request;
+    request.mutable_monitoringplan()->CopyFrom(plan->serialize());
+
+    ClientContext context;
+    MonitoringRegistrationReply reply;
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+    Status status = workerStub->RegisterMonitoring(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
+        return true;
+    }
+    NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
+                            + status.error_message());
+}
+
+bool WorkerRPCClient::requestMonitoringData(const std::string& address,
+                                            Runtime::TupleBuffer& tupleBuffer,
+                                            uint64_t schemaSizeBytes) {
+    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
+    MonitoringDataRequest request;
+    ClientContext context;
+    MonitoringDataReply reply;
+    reply.set_buffer(tupleBuffer.getBuffer<char>());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+    Status status = workerStub->GetMonitoringData(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
+        memcpy(tupleBuffer.getBuffer<char>(), reply.buffer().data(), schemaSizeBytes);
+        tupleBuffer.setNumberOfTuples(1);
+        reply.release_buffer();
+        return true;
+    }
+    // We need to release reply's buffer (in case we handle the exception).
+    reply.release_buffer();
+    NES_THROW_RUNTIME_ERROR("WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
+                                                                            << status.error_message());
+}
+
+bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address) {
+    EpochBarrierNotification request;
+    request.set_timestamp(timestamp);
+    request.set_queryid(queryId);
+    EpochBarrierReply reply;
+    ClientContext context;
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->InjectEpochBarrier(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
+        return true;
+    }
+    return false;
+}
+
+bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
+    NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);
+    BufferRequest request;
+    request.set_querysubplanid(querySubPlanId);
+    request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
+    BufferReply reply;
+    ClientContext context;
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+    Status status = workerStub->BeginBuffer(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_ERROR(" WorkerRPCClient::BeginBuffer "
+                  "error="
+                      << status.error_code() << ": " << status.error_message());
+        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::stopQuery");
+    }
+    return false;
+}
+
+bool WorkerRPCClient::updateNetworkSink(const std::string& address,
+                                        uint64_t newNodeId,
+                                        const std::string& newHostname,
+                                        uint32_t newPort,
+                                        uint64_t querySubPlanId,
+                                        uint64_t uniqueNetworkSinDescriptorId) {
+    UpdateNetworkSinkRequest request;
+    request.set_newnodeid(newNodeId);
+    request.set_newhostname(newHostname);
+    request.set_newport(newPort);
+    request.set_querysubplanid(querySubPlanId);
+    request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
+
+    UpdateNetworkSinkReply reply;
+    ClientContext context;
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(getChannel(address));
+    Status status = workerStub->UpdateNetworkSink(&context, request, &reply);
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::UpdateNetworkSinks: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks "
+                  "error="
+                  << status.error_code() << ": " << status.error_message());
+        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::updateNetworkSinks");
+    }
 }
 
 bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64_t>& queues, RpcClientModes mode) {
@@ -140,285 +407,13 @@ bool WorkerRPCClient::checkAsyncResult(const std::map<CompletionQueuePtr, uint64
     NES_DEBUG("checkAsyncResult for mode=" << mode << " succeed");
     return result;
 }
-bool WorkerRPCClient::unregisterQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address=" << address << " queryId=" << queryId);
 
-    UnregisterQueryRequest request;
-    request.set_queryid(queryId);
-
-    UnregisterQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
-    // Call object to store rpc data
-    auto* call = new AsyncClientCall<UnregisterQueryReply>;
-
-    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
-    // an instance to store in "call" but does not actually start the RPC
-    // Because we are using the asynchronous API, we need to hold on to
-    // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncUnregisterQuery(&call->context, request, cq.get());
-
-    // StartCall initiates the RPC call
-    call->responseReader->StartCall();
-
-    // Request that, upon completion of the RPC, "reply" be updated with the
-    // server's response; "status" with the indication of whether the operation
-    // was successful. Tag the request with the memory address of the call object.
-    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-
-    return true;
-}
-
-bool WorkerRPCClient::unregisterQuery(const std::string& address, QueryId queryId) {
-    NES_DEBUG("WorkerRPCClient::unregisterQuery address=" << address << " queryId=" << queryId);
-
-    UnregisterQueryRequest request;
-    request.set_queryid(queryId);
-
-    UnregisterQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->UnregisterQuery(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::unregisterQuery: status ok return success=" << reply.success());
-        return reply.success();
+GrpcChannelPtr WorkerRPCClient::getChannel(const std::string& address) {
+    if (channelCache.find(address) != channelCache.end()) {
+        return channelCache[address];
     }
-    NES_DEBUG(" WorkerRPCClient::unregisterQuery "
-              "error="
-              << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::unregisterQuery");
-}
-
-bool WorkerRPCClient::startQuery(const std::string& address, QueryId queryId) {
-    NES_DEBUG("WorkerRPCClient::startQuery address=" << address << " queryId=" << queryId);
-
-    StartQueryRequest request;
-    request.set_queryid(queryId);
-
-    StartQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
-    Status status = workerStub->StartQuery(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::startQuery: status ok return success=" << reply.success());
-        return reply.success();
-    }
-    NES_DEBUG(" WorkerRPCClient::startQuery "
-              "error="
-              << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::startQuery");
-}
-
-bool WorkerRPCClient::startQueryAsyn(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::startQueryAsync address=" << address << " queryId=" << queryId);
-
-    StartQueryRequest request;
-    request.set_queryid(queryId);
-
-    StartQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
-    // Call object to store rpc data
-    auto* call = new AsyncClientCall<StartQueryReply>;
-
-    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
-    // an instance to store in "call" but does not actually start the RPC
-    // Because we are using the asynchronous API, we need to hold on to
-    // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncStartQuery(&call->context, request, cq.get());
-
-    // StartCall initiates the RPC call
-    call->responseReader->StartCall();
-
-    // Request that, upon completion of the RPC, "reply" be updated with the
-    // server's response; "status" with the indication of whether the operation
-    // was successful. Tag the request with the memory address of the call object.
-    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-
-    return true;
-}
-
-bool WorkerRPCClient::stopQuery(const std::string& address, QueryId queryId) {
-    NES_DEBUG("WorkerRPCClient::stopQuery address=" << address << " queryId=" << queryId);
-
-    StopQueryRequest request;
-    request.set_queryid(queryId);
-
-    StopQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->StopQuery(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::stopQuery: status ok return success=" << reply.success());
-        return reply.success();
-    }
-    NES_ERROR(" WorkerRPCClient::stopQuery "
-              "error="
-              << status.error_code() << ": " << status.error_message());
-    throw log4cxx::helpers::Exception("Error while WorkerRPCClient::stopQuery");
-}
-
-bool WorkerRPCClient::stopQueryAsync(const std::string& address, QueryId queryId, const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::stopQueryAsync address=" << address << " queryId=" << queryId);
-
-    StopQueryRequest request;
-    request.set_queryid(queryId);
-
-    StopQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
-    // Call object to store rpc data
-    auto* call = new AsyncClientCall<StopQueryReply>;
-
-    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
-    // an instance to store in "call" but does not actually start the RPC
-    // Because we are using the asynchronous API, we need to hold on to
-    // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncStopQuery(&call->context, request, cq.get());
-
-    // StartCall initiates the RPC call
-    call->responseReader->StartCall();
-
-    // Request that, upon completion of the RPC, "reply" be updated with the
-    // server's response; "status" with the indication of whether the operation
-    // was successful. Tag the request with the memory address of the call object.
-    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-
-    return true;
-}
-
-bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const MonitoringPlanPtr& plan) {
-    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
-
-    MonitoringRegistrationRequest request;
-    request.mutable_monitoringplan()->CopyFrom(plan->serialize());
-
-    ClientContext context;
-    MonitoringRegistrationReply reply;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->RegisterMonitoring(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
-        return true;
-    }
-    NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
-                            + status.error_message());
-
-    return false;
-}
-
-bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime::TupleBuffer& buf, uint64_t schemaSizeBytes) {
-    NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
-    MonitoringDataRequest request;
-    ClientContext context;
-    MonitoringDataReply reply;
-    reply.set_buffer(buf.getBuffer<char>());
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->GetMonitoringData(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
-        memcpy(buf.getBuffer<char>(), reply.buffer().data(), schemaSizeBytes);
-        buf.setNumberOfTuples(1);
-        reply.release_buffer();
-        return true;
-    }
-    // We need to release reply's buffer (in case we handle the exception).
-    reply.release_buffer();
-    NES_THROW_RUNTIME_ERROR("WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
-                                                                            << status.error_message());
-
-    return false;
-}
-
-bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address) {
-    EpochBarrierNotification request;
-    request.set_timestamp(timestamp);
-    request.set_queryid(queryId);
-    EpochBarrierReply reply;
-    ClientContext context;
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->InjectEpochBarrier(&context, request, &reply);
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
-        return true;
-    }
-    return false;
-}
-
-bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
-    NES_DEBUG("WorkerRPCClient::buffering Data on address=" << address);
-    BufferRequest request;
-    request.set_querysubplanid(querySubPlanId);
-    request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
-    BufferReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->BeginBuffer(&context, request, &reply);
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
-        return reply.success();
-    } else {
-        NES_ERROR(" WorkerRPCClient::BeginBuffer "
-                  "error="
-                      << status.error_code() << ": " << status.error_message());
-        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::stopQuery");
-    }
-    return false;
-}
-
-
-bool WorkerRPCClient::updateNetworkSink(const std::string &address, uint64_t newNodeId, const std::string &newHostname,
-                                        uint32_t newPort, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
-    UpdateNetworkSinkRequest request;
-    request.set_newnodeid(newNodeId);
-    request.set_newhostname(newHostname);
-    request.set_newport(newPort);
-    request.set_querysubplanid(querySubPlanId);
-    request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
-
-    UpdateNetworkSinkReply reply;
-    ClientContext context;
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->UpdateNetworkSink(&context, request, &reply);
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::UpdateNetworkSinks: status ok return success=" << reply.success());
-        return reply.success();
-    } else {
-        NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks "
-                  "error="
-                      << status.error_code() << ": " << status.error_message());
-        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::updateNetworkSinks");
-    }
+    GrpcChannelPtr grpcChannel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    channelCache[address] = grpcChannel;
+    return grpcChannel;
 }
 }// namespace NES

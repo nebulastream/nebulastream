@@ -80,7 +80,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     log4cxx::MDC::put("threadName", "NesCoordinator");
     topology = Topology::create();
-    workerRpcClient = std::make_shared<WorkerRPCClient>();
+    workerRpcClient = WorkerRPCClient::create();
     monitoringService = std::make_shared<MonitoringService>(workerRpcClient, topology, enableMonitoring);
 
     // TODO make compiler backend configurable
