@@ -50,21 +50,21 @@ class RemoteClientTest : public testing::Test {
         crdConf->setRpcPort(rpcPort);
         crdConf->setRestPort(restPort);
         wrkConf->setCoordinatorPort(rpcPort);
-        NES_DEBUG("QueryDeploymentTest: Start coordinator");
+        NES_DEBUG("RemoteClientTest: Start coordinator");
         crd = std::make_shared<NesCoordinator>(crdConf);
         uint64_t port = crd->startCoordinator(false);
         EXPECT_NE(port, 0UL);
-        NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
+        NES_DEBUG("RemoteClientTest: Coordinator started successfully");
         TestUtils::waitForWorkers(restPort, 5, 0);
 
-        NES_DEBUG("QueryDeploymentTest: Start worker 1");
+        NES_DEBUG("RemoteClientTest: Start worker 1");
         wrkConf->setCoordinatorPort(port);
         wrkConf->setRpcPort(port + 10);
         wrkConf->setDataPort(port + 11);
         wrk = std::make_shared<NesWorker>(wrkConf);
         bool retStart1 = wrk->start(false, true);
         EXPECT_TRUE(retStart1);
-        NES_DEBUG("QueryDeploymentTest: Worker1 started successfully");
+        NES_DEBUG("RemoteClientTest: Worker1 started successfully");
         TestUtils::waitForWorkers(restPort, 5, 1);
 
         client = std::make_shared<Client::RemoteClient>("localhost", restPort);
@@ -116,7 +116,7 @@ TEST_F(RemoteClientTest, DeployQueryTest) {
  * @brief Test if deploying a query works properly
  * @result deployed query ID is valid
  */
-/*TEST_F(RemoteClientTest, SubmitQueryTest) {
+TEST_F(RemoteClientTest, SubmitQueryTest) {
     Query query = Query::from("default_logical");
     auto queryPlan = query.getQueryPlan();
     int64_t queryId = client->submitQuery(queryPlan);
@@ -126,13 +126,9 @@ TEST_F(RemoteClientTest, DeployQueryTest) {
     // Expect that the query id and query sub plan id from the deserialized query plan are valid
     EXPECT_FALSE(insertedQueryPlan->getQueryId() == INVALID_QUERY_ID);
     EXPECT_FALSE(insertedQueryPlan->getQuerySubPlanId() == INVALID_QUERY_SUB_PLAN_ID);
-    // Since the deserialization acquires the next queryId and querySubPlanId from the PlanIdGenerator, the deserialized Id should not be the same with the original Id
-    EXPECT_TRUE(insertedQueryPlan->getQueryId() != queryPlan->getQueryId());
-    EXPECT_TRUE(insertedQueryPlan->getQuerySubPlanId() != queryPlan->getQuerySubPlanId());
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
-}*/
+    stopQuery(queryId);
+}
 
 /**
  * @brief Test if retrieving the topology works properly
@@ -169,9 +165,9 @@ TEST_F(RemoteClientTest, StopQueryTest) {
 
     for (int i = 0; i < 5; i++) {
         sleep(2);
-        NES_INFO("client->stopQuery(queryId);" + to_string(crd->getQueryCatalog()->isQueryRunning(queryId)));
+        NES_INFO("StopQueryTest: client->stopQuery(queryId);" + to_string(crd->getQueryCatalog()->isQueryRunning(queryId)));
         client->stopQuery(queryId);
-        NES_INFO("client->stopQuery(queryId);--");
+        NES_INFO("StopQueryTest: client->stopQuery(queryId);--");
         if (!crd->getQueryCatalog()->isQueryRunning(queryId)) {
             return;
         }
