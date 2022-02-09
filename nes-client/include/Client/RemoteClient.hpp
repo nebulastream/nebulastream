@@ -32,51 +32,88 @@ using RemoteClientPtr = std::shared_ptr<RemoteClient>;
  */
 class RemoteClient {
   public:
-    /* @brief constructor of the client
-     * @param coordinator host e.g. 127.0.0.1
-     * @param coordinator REST port e.g. 8081
-     * @param request timeout
+    /**
+     * @brief constructor of the client
+     * @param string coordinator host e.g. 127.0.0.1
+     * @param uint16_t coordinator REST port e.g. 8081
+     * @param seconds request timeout
      */
     RemoteClient(const std::string& coordinatorHost = "127.0.0.1",
                  uint16_t coordinatorPort = 8081,
                  std::chrono::seconds requestTimeout = std::chrono::seconds(20));
 
-    /// @brief test if a connection to the coordinator can be established
+    /**
+     * @brief test if a connection to the coordinator can be established
+     * @return connection test successful
+     */
     bool testConnection();
 
-    /*
-     * @brief Deploy a query to the coordinator
-     * @param query plan to deploy
-     * @return query config
+    /**
+     * @brief deploy a new query
+     * @param Query query to deploy
+     * @param QueryConfig query config
+     * @return query id
      */
-    int64_t submitQuery(const Query& query, QueryConfig config = QueryConfig());
+    uint64_t submitQuery(const Query& query, QueryConfig config = QueryConfig());
 
-    /// @brief stop the query with the given queryId
-    /// @return stop was successfully
+    /**
+     * @brief stop the query with the given query id
+     * @param uint64_t query id
+     * @return stop was successfully
+     */
     bool stopQuery(uint64_t queryId);
 
-    /// @brief get a queries query plan
+    /**
+     * @brief get a queries query plan
+     * @param uint64_t query id
+     * @return query plan
+     */
     std::string getQueryPlan(uint64_t queryId);
 
-    /// @brief get a queries execution plan
+    /**
+     * @brief get a queries execution plan
+     * @param uint64_t query id
+     * @return execution plan
+     */
     std::string getQueryExecutionPlan(uint64_t queryId);
 
-    /// @brief get current topology
+    /**
+     * @brief get current topology
+     * @return topology
+     */
     std::string getTopology();
 
-    /// @brief get all registered queries
+    /**
+     * @brief get all registered queries
+     * @return query information
+     */
     std::string getQueries();
 
-    /// @brief get all registered queries in the given state
+    /**
+     * @brief get all registered queries in the given status
+     * @param QueryStatus query status, i.e. registered
+     * @return query information
+     */
     std::string getQueries(const QueryStatus& status);
 
-    /// @brief add a logical stream
+    /**
+     * @brief add a logical stream
+     * @param SchemaPtr schema of the new logical stream
+     * @param string name of the new logical stream
+     * @return successfully added
+     */
     bool addLogicalStream(const SchemaPtr, const std::string& streamName);
 
-    /// @brief get logical streams
+    /**
+     * @brief get logical streams
+     * @return logical streams
+     */
     std::string getLogicalStreams();
 
-    /// @brief get physical streams
+    /**
+     * @brief get physical streams
+     * @return physical streams
+     */
     std::string getPhysicalStreams();
 
   private:

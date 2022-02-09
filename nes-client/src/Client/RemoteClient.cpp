@@ -33,7 +33,7 @@ RemoteClient::RemoteClient(const std::string& coordinatorHost, uint16_t coordina
     }
 }
 
-int64_t RemoteClient::submitQuery(const Query& query, const QueryConfig config) {
+uint64_t RemoteClient::submitQuery(const Query& query, const QueryConfig config) {
     auto queryPlan = query.getQueryPlan();
     SubmitQueryRequest request;
     auto* serializedQueryPlan = request.mutable_queryplan();
