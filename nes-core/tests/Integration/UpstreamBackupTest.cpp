@@ -1,6 +1,4 @@
 /*
-    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -15,28 +13,22 @@
 */
 
 #include <gtest/gtest.h>
-
-#include <API/Schema.hpp>
 #include <Components/NesCoordinator.hpp>
-#include <Sinks/Mediums/FileSink.hpp>
 #include <Components/NesWorker.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Services/QueryService.hpp>
-#include <Sources/DataSource.hpp>
-#include <Util/GatheringMode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <gmock/gmock.h>
 #include <Sinks/Mediums/SinkMedium.hpp>
+
 using namespace std;
 
 namespace NES {
