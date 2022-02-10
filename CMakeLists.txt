@@ -175,7 +175,6 @@ if (NOT APPLE)
         add_link_options("-fuse-ld=lld")
     endif ()
 endif ()
-
 include(cmake/Sanitizers.cmake)
 
 if (ENABLE_IWYU)
@@ -474,12 +473,15 @@ if (LLVM_FOUND)
     message("-- LLVM binary dir ${LLVM_BINARY_DIR}")
     message("-- LLVM tool dir ${LLVM_TOOLS_INSTALL_DIR}")
     set(CLANG_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-13)
+    set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/lib/clang/${LLVM_PACKAGE_VERSION}/include/)
     set(CLANG_FORMAT_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-format)
 else ()
     message(FATAL_ERROR "Cannot find llvm")
 endif ()
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 message("-- LLVM version ${LLVM_ROOT_DIR}")
+
+
 
 # Set definition values.
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
