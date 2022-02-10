@@ -23,7 +23,20 @@
 namespace NES::Experimental {
 
 /**
- * @brief A chained hashmap that is backed by the buffer pool manager.
+ * @brief Implementation of a chained HashMap, which uses TupleBuffers as a storage backend.
+ * The implementation origins from Kersten et.al. https://github.com/TimoKersten/db-engine-paradigms and Leis et.al
+ * https://db.in.tum.de/~leis/papers/morsels.pdf.
+ *
+ * The HashMap is split in two memory areas,
+ *
+ * Entry Space:
+ * The entry space is fixed size and contains pointers into the storage space.
+ *
+ * Storage Space:
+ * The storage space contains individual key, value pairs.
+ *
+ * Furthermore, the HashMap supports different hash implementations.
+ *
  */
 class Hashmap {
   public:
@@ -50,13 +63,20 @@ class Hashmap {
         Entry(Entry* next, hash_t hash);
     };
 
-    explicit Hashmap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
+    /**
+     * @brief Constructor for a new HashMap with a specific keySize, valueSize, and a number of entries.
+     * @param bufferProvider that is used to allocate new memory buffers at runtime.
+     * @param keySize
+     * @param valueSize
+     * @param nrEntries
+     */
+    explicit Hashmap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
                      size_t keySize,
                      size_t valueSize,
                      size_t nrEntries);
 
     /**
-     * @brief Get the key for a specific entry
+     * @brief Calculates the
      * @param entry
      * @return
      */
