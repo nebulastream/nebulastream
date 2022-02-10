@@ -30,11 +30,11 @@ class ZmqSink : public SinkMedium {
     //TODO: remove internal flag once the new network stack is in place
     ZmqSink(SinkFormatPtr format,
             Runtime::QueryManagerPtr queryManager,
-            Runtime::NodeEnginePtr nodeEngine,
             const std::string& host,
             uint16_t port,
             bool internal,
-            QuerySubPlanId querySubPlanId);
+            QuerySubPlanId querySubPlanId,
+            ReplicationServicePtr replicationService);
     ~ZmqSink() override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;

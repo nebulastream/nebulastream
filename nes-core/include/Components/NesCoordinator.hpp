@@ -203,7 +203,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @param queryId: identifies what query sends punctuation
      * @return bool indicating success
      */
-    bool propagatePunctuation(uint64_t timestamp, uint64_t queryId);
+    bool distributePunctuation(uint64_t timestamp, uint64_t queryId);
 
     NesWorkerPtr getNesWorker();
 

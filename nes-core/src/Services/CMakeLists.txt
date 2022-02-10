@@ -19,4 +19,5 @@ add_source_files(nes-core
         StreamCatalogService.cpp
         TopologyManagerService.cpp
         MaintenanceService.cpp
+        ReplicationService.cpp
 )

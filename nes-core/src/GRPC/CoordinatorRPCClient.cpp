@@ -465,18 +465,5 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-bool CoordinatorRPCClient::propagatePunctuation(uint64_t timestamp, uint64_t queryId) {
-    PropagateTimestampNotification request;
-    request.set_timestamp(timestamp);
-    request.set_queryid(queryId);
-    PropagateTimestampReply reply;
-    ClientContext context;
-    Status status = coordinatorStub->PropagatePunctuation(&context, request, &reply);
-    if (status.ok()) {
-        NES_DEBUG("CoordinatorRPCClient::PropagatePunctuation: status ok");
-        return true;
-    }
-    return false;
-}
 
 }// namespace NES

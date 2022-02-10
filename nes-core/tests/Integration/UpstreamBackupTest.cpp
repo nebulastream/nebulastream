@@ -64,20 +64,13 @@ class UpstreamBackupTest : public testing::Test {
 };
 
 // testing w/ original running routine
-class MockNesCoordinator : public NesCoordinator {
+class MockReplicationService : public ReplicationService {
   public:
-    MockNesCoordinator(CoordinatorConfigurationPtr coordinatorConfig)
-        : NesCoordinator(coordinatorConfig){
+    MockReplicationService (NesCoordinatorPtr coordinatorPtr)
+        : ReplicationService(coordinatorPtr){
             // nop
         };
-    MOCK_METHOD(bool, propagatePunctuation, (uint64_t timestamp, uint64_t queryId));
-
-    uint64_t startCoordinator(bool blocking) { return NesCoordinator::startCoordinator(blocking); }
-    QueryServicePtr getQueryService() { return NesCoordinator::getQueryService(); }
-    QueryCatalogPtr getQueryCatalog() { return NesCoordinator::getQueryCatalog(); }
-    SourceCatalogPtr getStreamCatalog() { return NesCoordinator::getStreamCatalog(); }
-    GlobalQueryPlanPtr getGlobalQueryPlan() { return NesCoordinator::getGlobalQueryPlan(); }
-    StreamCatalogServicePtr getStreamCatalogService() const { return NesCoordinator::getStreamCatalogService(); }
+    MOCK_METHOD(bool, propagatePunctuation, (uint64_t timestamp, uint64_t queryId), (const));
 };
 
 /*
@@ -92,9 +85,9 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
     NES_INFO("UpstreamBackupTest: Start coordinator");
-    MockNesCoordinator crd(crdConf);
-    crd.getStreamCatalogService()->registerLogicalSource("window", window);
-    uint64_t port = crd.startCoordinator(/**blocking**/ false);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("UpstreamBackupTest: Coordinator started successfully");
 
@@ -121,13 +114,11 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     EXPECT_TRUE(retStart1);
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
 
-
-    QueryServicePtr queryService = crd.getQueryService();
-    QueryCatalogPtr queryCatalog = crd.getQueryCatalog();
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     std::string outputFilePath = "testUpstreamBackupTest.out";
     remove(outputFilePath.c_str());
-
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
@@ -145,22 +136,19 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
-
-    //create sink
-//    GlobalQueryPlanPtr globalQueryPlan = crd.getGlobalQueryPlan();
-//    auto vector = queryCatalog->getQueryCatalogEntry(queryId);
-//    auto logicalSinkOperators = queryCatalog->getQueryCatalogEntry(queryId)->getExecutedQueryPlan()->getSinkOperators();
-    auto plans = crd.getNodeEngine()->getDeployedQEPs();
-
-    auto sinks = plans[0]->getSinks();
-    for (auto& sink : sinks) {
+    auto replicationService = std::make_shared<MockReplicationService>(crd);
+    crd->getNodeEngine()->setReplicationService(replicationService);
+    //get sink
+    auto plans = crd->getNodeEngine()->getDeployedQEPs();
+    for (auto& plan : plans) {
+        auto sinks = plan.second->getSinks();
+        for (auto& sink : sinks) {
             sink->propagateEpoch(1644426604);
-        //should end calasdl propagate
-        //DataSinkPtr fileOutputSink =
-            //ConvertLogicalToPhysicalSink::createDataSink(sink->getId(), sink->getSinkDescriptor() , crd.getStreamCatalog()->getSchemaForLogicalStream("window"), wrk1->getNodeEngine(), globalQueryPlan->getSharedQueryPlan(queryId), 1);
-        //fileOutputSink->propagateEpoch(1644426604);
+        }
     }
-    EXPECT_CALL(crd, propagatePunctuation(1644426604, queryId))
+
+    //check if the method was called
+    EXPECT_CALL(*replicationService, propagatePunctuation(1644426604, queryId))
                                     .Times(1)
         .WillOnce(testing::Return(true));
 }

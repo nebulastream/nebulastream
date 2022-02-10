@@ -50,7 +50,6 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
-                       std::weak_ptr<NesWorker>&& nesWorker,
                        Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
@@ -59,8 +58,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
     : physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
       queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)),
       queryCompiler(std::move(queryCompiler)),
-      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)),
-      nesWorker(std::move(nesWorker)), materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
+      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker){
@@ -257,8 +255,6 @@ bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
 
 QueryManagerPtr NodeEngine::getQueryManager() { return queryManager; }
 
-std::weak_ptr<NesWorker> NodeEngine::getNesWorker() { return nesWorker; }
-
 bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO: add check if still queries are running
     //TODO @Steffen: does it make sense to have force stop still?
@@ -330,6 +326,11 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
     NES_ASSERT2_FMT(bufferManagerIndex < bufferManagers.size(), "invalid buffer manager index=" << bufferManagerIndex);
     return bufferManagers[bufferManagerIndex];
 }
+void NodeEngine::setReplicationService(ReplicationServicePtr replicationService) {
+    this->replicationService = replicationService;
+}
+
+ReplicationServicePtr NodeEngine::getReplicationService() { return replicationService; }
 
 StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
 

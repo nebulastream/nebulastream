@@ -356,7 +356,7 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     return false;
 }
 
-bool WorkerRPCClient::propagatePunctuation(uint64_t timestamp, uint64_t queryId, const std::string& address) {
+bool WorkerRPCClient::truncatePunctuation(uint64_t timestamp, uint64_t queryId, const std::string& address) {
     PropagateTimestampNotificationToWorker request;
     request.set_timestamp(timestamp);
     request.set_queryid(queryId);
@@ -365,7 +365,7 @@ bool WorkerRPCClient::propagatePunctuation(uint64_t timestamp, uint64_t queryId,
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->ReceivePunctuation(&context, request, &reply);
+    Status status = workerStub->TruncatePunctuation(&context, request, &reply);
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
         return true;

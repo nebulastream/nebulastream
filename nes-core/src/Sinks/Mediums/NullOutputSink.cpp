@@ -20,8 +20,8 @@
 #include <string>
 
 namespace NES {
-NullOutputSink::NullOutputSink(Runtime::QueryManagerPtr queryManager, Runtime::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId)
-    : SinkMedium(nullptr, std::move(queryManager), querySubPlanId, std::move(nodeEngine)) {}
+NullOutputSink::NullOutputSink(Runtime::QueryManagerPtr queryManager, ReplicationServicePtr replicationService, QuerySubPlanId querySubPlanId)
+    : SinkMedium(nullptr, std::move(queryManager), querySubPlanId, std::move(replicationService)) {}
 
 NullOutputSink::~NullOutputSink() = default;
 

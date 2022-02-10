@@ -21,6 +21,7 @@
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <mutex>
+#include "Services/ReplicationService.hpp"
 
 namespace NES {
 
@@ -45,7 +46,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**FF
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat, Runtime::QueryManagerPtr queryManager, QuerySubPlanId querySubPlanId, Runtime::NodeEnginePtr nodeEngine = nullptr);
+    explicit SinkMedium(SinkFormatPtr sinkFormat, Runtime::QueryManagerPtr queryManager, QuerySubPlanId querySubPlanId, ReplicationServicePtr replicationService = nullptr);
 
     /**
      * @brief virtual method to setup sink
@@ -118,9 +119,8 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**
      * @brief method sends current safe to trim timestamp to coordinator
      * @param timestamp to propagate
-     * @return success is the message was sent
      */
-    bool propagateEpoch(uint64_t timestamp) const;
+    void propagateEpoch(uint64_t timestamp) const;
 
     /**
       * @brief method to return the type of medium
@@ -149,7 +149,7 @@ class SinkMedium : public Runtime::Reconfigurable {
 
     Runtime::QueryManagerPtr queryManager;
     QuerySubPlanId querySubPlanId;
-    Runtime::NodeEnginePtr nodeEngine;
+    ReplicationServicePtr replicationService;
     std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarkProcessor;
 
     uint64_t sentBuffer{0};// TODO check thread safety

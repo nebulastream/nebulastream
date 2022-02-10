@@ -36,10 +36,10 @@ class FileSink : public SinkMedium {
      */
     explicit FileSink(SinkFormatPtr format,
                       Runtime::QueryManagerPtr queryManager,
-                      Runtime::NodeEnginePtr nodeEngine,
                       const std::string& filePath,
                       bool append,
-                      QuerySubPlanId querySubPlanId);
+                      QuerySubPlanId querySubPlanId,
+                      ReplicationServicePtr replicationService);
 
     /**
      * @brief dtor
