@@ -183,7 +183,7 @@ class WorkerRPCClient {
      * @param adsress: address of the source
      * @return bool indicating success
      */
-    bool propagatePunctuation(uint64_t timestamp, uint64_t queryId, const std::string& address);
+    bool truncatePunctuation(uint64_t timestamp, uint64_t queryId, const std::string& address);
 
   private:
 };

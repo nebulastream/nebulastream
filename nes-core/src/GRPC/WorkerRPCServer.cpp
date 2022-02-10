@@ -125,7 +125,7 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::ReceivePunctuation(ServerContext*,
+Status WorkerRPCServer::TruncatePunctuation(ServerContext*,
                                            const PropagateTimestampNotificationToWorker* request,
                                            PropagateTimestampReplyFromWorker* reply) {
     try {

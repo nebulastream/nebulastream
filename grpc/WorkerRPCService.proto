@@ -30,7 +30,7 @@ service WorkerRPCService {
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
 
-  rpc ReceivePunctuation (PropagateTimestampNotificationToWorker) returns (PropagateTimestampReplyFromWorker) {}
+  rpc TruncatePunctuation (PropagateTimestampNotificationToWorker) returns (PropagateTimestampReplyFromWorker) {}
 
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 

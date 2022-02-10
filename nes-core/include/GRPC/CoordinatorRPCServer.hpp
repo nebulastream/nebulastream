@@ -149,17 +149,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                               const QueryFailureNotification* request,
                               QueryFailureNotificationReply* reply) override;
 
-    /**
-     * @brief RPC Call to propagate timestamp
-     * @param context
-     * @param request that is sent from worker to the coordinator, contains timestamp
-     * @param reply that is sent back from the coordinator to the worker to confirm that notification was successful
-     * @return success
-     */
-    Status PropagatePunctuation(ServerContext* context,
-                                const PropagateTimestampNotification* request,
-                                PropagateTimestampReply* reply) override;
-
   private:
     TopologyManagerServicePtr topologyManagerService;
     StreamCatalogServicePtr streamCatalogService;

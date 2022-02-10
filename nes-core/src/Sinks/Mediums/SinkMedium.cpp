@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Components/NesWorker.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Services/ReplicationService.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -27,9 +28,8 @@ namespace NES {
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::QueryManagerPtr queryManager,
                        QuerySubPlanId querySubPlanId,
-                       Runtime::NodeEnginePtr nodeEngine)
-    : sinkFormat(std::move(sinkFormat)), queryManager(std::move(queryManager)), querySubPlanId(querySubPlanId),
-      nodeEngine(std::move(nodeEngine)) {
+                       ReplicationServicePtr replicationService)
+    : sinkFormat(std::move(sinkFormat)), queryManager(std::move(queryManager)), querySubPlanId(querySubPlanId), replicationService(std::move(replicationService)) {
     watermarkProcessor = std::make_shared<Windowing::MultiOriginWatermarkProcessor>(1);
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
@@ -58,14 +58,10 @@ std::string SinkMedium::getAppendAsString() const {
     return "OVERWRITE";
 }
 
-bool SinkMedium::propagateEpoch(uint64_t timestamp) const {
-    uint64_t queryId = this->nodeEngine->getDeployedQEPs().find(querySubPlanId)->second->getQueryId();
-    if (std::shared_ptr<NesWorker> nesWorker = this->nodeEngine->getNesWorker().lock()) {
-        nesWorker->propagatePunctuation(timestamp, queryId);
-        return true;
-    }
-    return false;
+void SinkMedium::propagateEpoch(uint64_t timestamp) const {
+    this->replicationService->propagatePunctuation(timestamp, querySubPlanId);
 }
+
 
     void SinkMedium::reconfigure(Runtime::ReconfigurationMessage & message, Runtime::WorkerContext & context) {
         Reconfigurable::reconfigure(message, context);

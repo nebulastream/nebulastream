@@ -23,6 +23,7 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Services/ReplicationService.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -73,7 +74,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
-                        std::weak_ptr<NesWorker>&&,
                         NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
@@ -302,6 +302,18 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     getDeployedQEPs() const;
 
     /**
+     * @brief Set replication service
+     * @param replicationService replication service
+     */
+    void setReplicationService(ReplicationServicePtr replicationService);
+
+    /**
+     * @brief Provide replication service
+     * @return replicationService replication service
+     */
+    ReplicationServicePtr getReplicationService();
+
+    /**
      * @brief Provide mapping of query id to sub plans
      * @return mapping of query id to sub plans
      */
@@ -319,8 +331,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
+    ReplicationServicePtr replicationService;
     Network::NetworkManagerPtr networkManager;
-    std::weak_ptr<NesWorker> nesWorker;
     NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::atomic<bool> isRunning{};
     mutable std::recursive_mutex engineMutex;

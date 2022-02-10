@@ -359,15 +359,6 @@ bool NesWorker::notifyQueryFailure(uint64_t queryId,
     return success;
 }
 
-bool NesWorker::propagatePunctuation(uint64_t timestamp, uint64_t queryId) {
-    bool con = waitForConnect();
-    NES_DEBUG("connected= " << con);
-    NES_ASSERT(con, "Connection failed");
-    bool success = coordinatorRpcClient->propagatePunctuation(timestamp, queryId);
-    NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
-    return success;
-}
-
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
 

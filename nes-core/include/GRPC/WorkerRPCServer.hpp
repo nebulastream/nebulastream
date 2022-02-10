@@ -50,7 +50,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
-    Status ReceivePunctuation(ServerContext* context,
+    Status TruncatePunctuation(ServerContext*,
                                 const PropagateTimestampNotificationToWorker* request,
                               PropagateTimestampReplyFromWorker* reply) override;
 

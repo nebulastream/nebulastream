@@ -141,14 +141,6 @@ class CoordinatorRPCClient {
      */
     bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
 
-    /**
-     * @brief method to propagate new epoch timestamp to coordinator
-     * @param timestamp: max timestamp of current epoch
-     * @param queryId: identifies what query sends punctuation
-     * @return bool indicating success
-     */
-    bool propagatePunctuation(uint64_t timestamp, uint64_t queryId);
-
   private:
     uint64_t workerId;
     std::string address;

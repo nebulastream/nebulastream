@@ -16,6 +16,7 @@
 #include <Network/NetworkSink.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <utility>
 
@@ -34,7 +35,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes)
-    : inherited0(std::make_shared<NesFormat>(schema, bufferManager), queryManager, querySubPlanId, nodeEngine),
+    : inherited0(std::make_shared<NesFormat>(schema, bufferManager), queryManager, querySubPlanId, nodeEngine->getReplicationService()),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId),
       networkManager(std::move(networkManager)), queryManager(queryManager), receiverLocation(destination),
       bufferManager(std::move(bufferManager)), bufferStorage(std::move(bufferStorage)), nesPartition(nesPartition),
