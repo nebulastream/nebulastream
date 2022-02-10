@@ -70,35 +70,35 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
         timer.start();
         NES_DEBUG("compile query with id: " << queryId << " subPlanId: " << subPlanId);
         auto logicalQueryPlan = request->getQueryPlan();
-        dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
+//        dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
         timer.snapshot("LogicalQueryPlan");
 
         auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
-        dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
+//        dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
         timer.snapshot("PhysicalQueryPlan");
 
         auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
-        dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
+//        dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
         timer.snapshot("AfterPipelinedQueryPlan");
 
         addScanAndEmitPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
+//        dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
         timer.snapshot("AfterAddScanAndEmitPhase");
 
         lowerPhysicalToGeneratableOperatorsPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
+//        dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
         timer.snapshot("GeneratableOperators");
 
         bufferOptimizationPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("6. BufferOptimizationPhase", pipelinedQueryPlan);
+//        dumpContext->dump("6. BufferOptimizationPhase", pipelinedQueryPlan);
         timer.snapshot("BufferOptimizationPhase");
 
         predicationOptimizationPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("7. PredicationOptimizationPhase", pipelinedQueryPlan);
+//        dumpContext->dump("7. PredicationOptimizationPhase", pipelinedQueryPlan);
         timer.snapshot("PredicationOptimizationPhase");
 
         codeGenerationPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("8. ExecutableOperatorPlan", pipelinedQueryPlan);
+//        dumpContext->dump("8. ExecutableOperatorPlan", pipelinedQueryPlan);
         timer.snapshot("ExecutableOperatorPlan");
         timer.pause();
         NES_INFO("DefaultQueryCompiler Runtime:\n" << timer);
