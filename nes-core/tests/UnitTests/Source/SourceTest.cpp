@@ -1625,7 +1625,7 @@ TEST_F(SourceTest, testGeneratorSourceGetType) {
                                        this->numSourceLocalBuffersDefault,
                                        GatheringMode::INGESTION_RATE_MODE,
                                        {std::make_shared<NullOutputSink>(this->nodeEngine, 1, 1, 1)});
-    ASSERT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE); // todo should this be SourceType::GENERATOR_SOURCE ?
+    ASSERT_EQ(genDataSource.getType(), SourceType::TEST_SOURCE);
 }
 
 TEST_F(SourceTest, testDefaultSourceGetType) {
