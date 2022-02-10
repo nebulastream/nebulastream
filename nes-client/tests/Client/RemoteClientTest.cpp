@@ -219,11 +219,11 @@ TEST_F(RemoteClientTest, GetLogicalStreamTest) {
  * @note we assume that default_logical is predefined
  */
 TEST_F(RemoteClientTest, GetPhysicalStreamTest) {
-    std::string physical_streams = client->getPhysicalStreams();
-    NES_DEBUG("GetPhysicalStreamTest " + physical_streams);
+    std::string physicaStreams = client->getPhysicalStreams();
+    NES_DEBUG("GetPhysicalStreamTest " + physicaStreams);
     // Check only for default stream
     std::string expect = "{\"default_logical\":\"id:INTEGER value:INTEGER";
-    EXPECT_TRUE(physical_streams.compare(0, expect.size() - 1, expect));
+    EXPECT_TRUE(physicaStreams.compare(0, expect.size() - 1, expect));
 }
 
 /**

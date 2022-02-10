@@ -102,7 +102,7 @@ class RemoteClient {
      * @param string name of the new logical stream
      * @return successfully added
      */
-    bool addLogicalStream(const SchemaPtr, const std::string& streamName);
+    bool addLogicalStream(const SchemaPtr schema, const std::string& streamName);
 
     /**
      * @brief get logical streams
