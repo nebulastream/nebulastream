@@ -68,12 +68,20 @@ class Hashmap {
      * @param bufferProvider that is used to allocate new memory buffers at runtime.
      * @param keySize
      * @param valueSize
-     * @param nrEntries
+     * @param nrOfKeys number of keys the HashMap should contain.
      */
     explicit Hashmap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
                      size_t keySize,
                      size_t valueSize,
-                     size_t nrEntries);
+                     uint64_t nrOfKeys);
+
+    /**
+     * @brief Sets the size for the HashMap. This function clears the current HashMap and initializes it with the new size.
+     * Thus we don't perform resizing and the current content is lost.
+     * @param nrOfKeys number of keys the HashMap should contain.
+     * @return
+     */
+    inline size_t setSize(uint64_t nrOfKeys);
 
     /**
      * @brief Calculates the
@@ -121,8 +129,7 @@ class Hashmap {
 
     template<typename K, bool useTags>
     Hashmap::Entry* findOrCreate(K key, hash_t hash);
-    /// Set size (no resize functionality)
-    inline size_t setSize(size_t nrEntries);
+
     /// Removes all elements from the hashtable
     inline void clear();
 
@@ -210,37 +217,6 @@ void inline Hashmap::insert_tagged(Entry* entry, hash_t hash) {
     entry->next = oldValue;
     entries[pos] = update(entries[pos], entry, hash);
     this->currentSize++;
-}
-
-size_t inline Hashmap::setSize(size_t nrEntries) {
-    currentSize = 0;
-    assert(nrEntries != 0);
-    if (entryBuffer.isValid()) {
-        entryBuffer.release();
-        entries = nullptr;
-        if (storageBuffers != nullptr) {
-            storageBuffers->clear();
-        }
-    }
-
-    const auto loadFactor = 0.7;
-    size_t exp = 64 - __builtin_clzll(nrEntries);
-    assert(exp < sizeof(hash_t) * 8);
-    if (((size_t) 1 << exp) < nrEntries / loadFactor)
-        exp++;
-    capacity = ((size_t) 1) << exp;
-    mask = capacity - 1;
-    auto buffer = bufferManager->getUnpooledBuffer(capacity * sizeof(Entry*));
-    if (!buffer.has_value()) {
-    }
-    this->entryBuffer = buffer.value();
-    entries = buffer->getBuffer<Entry*>();
-
-    if (storageBuffers == nullptr) {
-        storageBuffers = std::make_unique<std::vector<Runtime::TupleBuffer>>();
-    }
-
-    return capacity * loadFactor;
 }
 
 void inline Hashmap::clear() {
