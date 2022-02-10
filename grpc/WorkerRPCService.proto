@@ -102,6 +102,7 @@ message MonitoringDataReply {
 
 message PropagateTimestampNotificationToWorker{
   uint64 timestamp = 1;
+  uint64 queryId = 2;
 }
 
 message PropagateTimestampReplyFromWorker{

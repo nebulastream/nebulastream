@@ -18,6 +18,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
@@ -152,10 +153,10 @@ class NesWorker: public std::enable_shared_from_this<NesWorker>, public Exceptio
     /**
      * @brief method to propagate new epoch timestamp to coordinator
      * @param timestamp: max timestamp of current epoch
-     * @param querySubPlanId: identifies what query sends punctuation
+     * @param queryId: identifies what query sends punctuation
      * @return bool indicating success
      */
-    bool propagatePunctuation(uint64_t timestamp, QuerySubPlanId querySubPlanId);
+    bool propagatePunctuation(uint64_t timestamp, uint64_t queryId);
 
     uint64_t getWorkerId();
 

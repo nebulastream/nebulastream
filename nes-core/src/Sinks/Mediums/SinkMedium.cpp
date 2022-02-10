@@ -13,18 +13,23 @@
 */
 
 #include <API/Schema.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Components/NesWorker.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
 
 namespace NES {
 
-SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, Runtime::QueryManagerPtr queryManager, QuerySubPlanId querySubPlanId, Runtime::NodeEnginePtr nodeEngine)
-    : sinkFormat(std::move(sinkFormat)), queryManager(std::move(queryManager)), querySubPlanId(querySubPlanId), nodeEngine(std::move(nodeEngine)) {
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
+                       Runtime::QueryManagerPtr queryManager,
+                       QuerySubPlanId querySubPlanId,
+                       Runtime::NodeEnginePtr nodeEngine)
+    : sinkFormat(std::move(sinkFormat)), queryManager(std::move(queryManager)), querySubPlanId(querySubPlanId),
+      nodeEngine(std::move(nodeEngine)) {
     watermarkProcessor = std::make_shared<Windowing::MultiOriginWatermarkProcessor>(1);
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
@@ -54,27 +59,28 @@ std::string SinkMedium::getAppendAsString() const {
 }
 
 bool SinkMedium::propagateEpoch(uint64_t timestamp) const {
+    uint64_t queryId = this->nodeEngine->getDeployedQEPs().find(querySubPlanId)->second->getQueryId();
     if (std::shared_ptr<NesWorker> nesWorker = this->nodeEngine->getNesWorker().lock()) {
-        nesWorker->propagatePunctuation(timestamp, querySubPlanId);
+        nesWorker->propagatePunctuation(timestamp, queryId);
         return true;
     }
     return false;
 }
 
-void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context) {
-    Reconfigurable::reconfigure(message, context);
-}
-void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& message) {
-    Reconfigurable::postReconfigurationCallback(message);
-    switch (message.getType()) {
-        case Runtime::SoftEndOfStream:
-        case Runtime::HardEndOfStream: {
-            shutdown();
-            break;
-        }
-        default: {
-            break;
+    void SinkMedium::reconfigure(Runtime::ReconfigurationMessage & message, Runtime::WorkerContext & context) {
+        Reconfigurable::reconfigure(message, context);
+    }
+    void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage & message) {
+        Reconfigurable::postReconfigurationCallback(message);
+        switch (message.getType()) {
+            case Runtime::SoftEndOfStream:
+            case Runtime::HardEndOfStream: {
+                shutdown();
+                break;
+            }
+            default: {
+                break;
+            }
         }
     }
-}
 }// namespace NES

@@ -56,8 +56,9 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerWorker)
-    : physicalSources(std::move(physicalSources)), queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)), hardwareManager(std::move(hardwareManager)),
-      bufferManagers(std::move(bufferManagers)), queryCompiler(std::move(queryCompiler)),
+    : physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
+      queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)),
+      queryCompiler(std::move(queryCompiler)),
       partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)),
       nesWorker(std::move(nesWorker)), materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
@@ -256,6 +257,8 @@ bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
 
 QueryManagerPtr NodeEngine::getQueryManager() { return queryManager; }
 
+std::weak_ptr<NesWorker> NodeEngine::getNesWorker() { return nesWorker; }
+
 bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO: add check if still queries are running
     //TODO @Steffen: does it make sense to have force stop still?
@@ -341,6 +344,8 @@ HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManag
 Experimental::MaterializedView::MaterializedViewManagerPtr NodeEngine::getMaterializedViewManager() const {
     return materializedViewManager;
 }
+
+std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> NodeEngine::getDeployedQEPs() const { return deployedQEPs; }
 
 Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);
@@ -453,6 +458,10 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
 }
 
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
+
+std::map<QueryId, std::vector<QuerySubPlanId>> NodeEngine::getQueryIdToQuerySubPlanIds() const {
+    return this->queryIdToQuerySubPlanIds;
+}
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);

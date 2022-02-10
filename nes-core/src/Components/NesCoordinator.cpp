@@ -23,6 +23,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <REST/RestServer.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/QueryService.hpp>
@@ -41,6 +42,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Services/MaintenanceService.hpp>
 #include <Services/MonitoringService.hpp>
@@ -171,36 +173,33 @@ NesCoordinator::~NesCoordinator() {
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
 
-bool NesCoordinator::propagatePunctuation(uint64_t timestamp, QuerySubPlanId querySubPlanId) {
+bool NesCoordinator::propagatePunctuation(uint64_t timestamp, uint64_t queryId) {
     std::vector<SourceLogicalOperatorNodePtr> sources;
 
-    NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << timestamp << "to sources with querySubPlanId " << querySubPlanId);
-    for (auto& query : queryCatalog->getQueries(QueryStatus::Running)) {
-        auto executedQueryPlan = query.second->getExecutedQueryPlan();
-        if (executedQueryPlan->getQuerySubPlanId() == querySubPlanId) {
-            sources = executedQueryPlan->getSourceOperators();
-        }
-    }
+    NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << timestamp << "to sources with queryId " << queryId);
+    auto queryPlan = globalQueryPlan->getSharedQueryPlan(queryId)->getQueryPlan();
+    uint64_t curQueryId = queryPlan->getQueryId();
+    auto logicalSinkOperators = queryPlan->getSinkOperators();
     if (!sources.empty()) {
         for (auto& sourceOperator : sources) {
             SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
-            auto streamName = sourceDescriptor->getStreamName();
+            auto streamName = sourceDescriptor->getSchema()->getStreamNameQualifier();
             std::vector<TopologyNodePtr> sourceLocations = streamCatalog->getSourceNodesForLogicalStream(streamName);
             if (!sourceLocations.empty()) {
                  for (auto& sourceLocation : sourceLocations) {
                      auto coordinatorRpcClient = std::make_shared<WorkerRPCClient>();
-                     bool success = coordinatorRpcClient->propagatePunctuation(timestamp, sourceLocation->getIpAddress());
+                     bool success = coordinatorRpcClient->propagatePunctuation(timestamp, curQueryId, sourceLocation->getIpAddress());
                      NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
                      return success;
                  }
             }
             else {
-                NES_ERROR("NesCoordinator::propagatePunctuation: no physical sources found for the querySubPlanId " << querySubPlanId);
+                NES_ERROR("NesCoordinator::propagatePunctuation: no physical sources found for the queryId " << queryId);
             }
         }
     }
     else {
-        NES_ERROR("NesCoordinator::propagatePunctuation: no sources found for the querySubPlanId " << querySubPlanId);
+        NES_ERROR("NesCoordinator::propagatePunctuation: no sources found for the queryId " << queryId);
     }
     return false;
 }

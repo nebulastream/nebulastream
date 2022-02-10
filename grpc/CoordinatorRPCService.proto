@@ -156,7 +156,7 @@ message QueryFailureNotificationReply{
 
 message PropagateTimestampNotification{
   uint64 timestamp = 1;
-  uint64 querySubPlanId = 2;
+  uint64 queryId = 2;
 }
 
 message PropagateTimestampReply{

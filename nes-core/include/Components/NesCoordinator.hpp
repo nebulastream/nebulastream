@@ -108,7 +108,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief dtor
      * @return
      */
-    ~NesCoordinator() override;
+    virtual ~NesCoordinator() override;
 
     /**
      * @brief start rpc server: rest server, and one worker <
@@ -189,7 +189,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * getter for the streamCatalogService
      * @return
      */
-    StreamCatalogServicePtr getStreamCatalogService() const;
+    virtual StreamCatalogServicePtr getStreamCatalogService() const;
 
     /**
      * getter for the topologyManagerService
@@ -200,10 +200,10 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     /**
      * @brief method to propagate new epoch timestamp to source nodes
      * @param timestamp: max timestamp of current epoch
-     * @param querySubPlanId: identifies what query sends punctuation
+     * @param queryId: identifies what query sends punctuation
      * @return bool indicating success
      */
-    bool propagatePunctuation(uint64_t timestamp, QuerySubPlanId querySubPlanId);
+    bool propagatePunctuation(uint64_t timestamp, uint64_t queryId);
 
     NesWorkerPtr getNesWorker();
 

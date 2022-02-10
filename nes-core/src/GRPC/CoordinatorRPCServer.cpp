@@ -207,7 +207,7 @@ Status CoordinatorRPCServer::PropagatePunctuation(ServerContext*,
                             PropagateTimestampReply* reply) {
     try {
         NES_ERROR("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp "
-                  << request->timestamp() << "and querySubPlanId " << request->querysubplanid());
+                  << request->timestamp() << "and querySubPlanId " << request->queryid());
         reply->set_success(true);
         return Status::OK;
     } catch (std::exception& ex) {
