@@ -26,6 +26,40 @@ Hashmap::Hashmap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
     setSize(nrEntries);
 }
 
+size_t Hashmap::setSize(size_t nrEntries) {
+    assert(nrEntries != 0);
+
+    currentSize = 0;
+    if (entryBuffer.isValid()) {
+        entryBuffer.release();
+        entries = nullptr;
+        if (storageBuffers != nullptr) {
+            storageBuffers->clear();
+        }
+    }
+
+    const auto loadFactor = 0.7;
+    size_t exp = 64 - __builtin_clzll(nrEntries);
+    assert(exp < sizeof(hash_t) * 8);
+    if (((size_t) 1 << exp) < nrEntries / loadFactor) {
+        exp++;
+    }
+    capacity = ((size_t) 1) << exp;
+    mask = capacity - 1;
+    auto buffer = bufferManager->getUnpooledBuffer(capacity * sizeof(Entry*));
+    if (!buffer.has_value()) {
+        NES_FATAL_ERROR("No buffer available");
+    }
+    this->entryBuffer = buffer.value();
+    entries = buffer->getBuffer<Entry*>();
+
+    if (storageBuffers == nullptr) {
+        storageBuffers = std::make_unique<std::vector<Runtime::TupleBuffer>>();
+    }
+
+    return capacity * loadFactor;
+}
+
 std::unique_ptr<std::vector<Runtime::TupleBuffer>> Hashmap::extractEntries() { return std::move(storageBuffers); };
 std::unique_ptr<std::vector<Runtime::TupleBuffer>>& Hashmap::getEntries() { return storageBuffers; };
 Hashmap::Entry* Hashmap::allocateNewEntry() {

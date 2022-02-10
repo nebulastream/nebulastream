@@ -15,7 +15,6 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLESLICEAGGREGATIONTRIGGERACTION_HPP_
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>

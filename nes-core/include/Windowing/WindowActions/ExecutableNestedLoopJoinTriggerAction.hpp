@@ -19,7 +19,6 @@
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
