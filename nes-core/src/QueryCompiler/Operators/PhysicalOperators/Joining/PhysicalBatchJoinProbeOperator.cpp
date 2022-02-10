@@ -23,7 +23,7 @@
 #include <Windowing/WindowHandler/BatchJoinHandler.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 
-
+// todo jm delete as it is not used anymore
 class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::ExecutablePipelineStage {
     struct __attribute__((packed)) InputProbeTuple {
         int64_t probe$id;
