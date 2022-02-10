@@ -190,9 +190,9 @@ std::chrono::milliseconds KalmanFilter::getExponentialFrequency() {
      * diff is new - old, negative means new is small
      * so we don't need to cover it
      */
-//    if (errorDiff > 0.6) {
-//        return this->getExponentialDecayFrequency();
-//    } else
+    if (errorDiff > 0.6) {
+        return this->getExponentialDecayFrequency();
+    } else
     if (std::abs(errorDiff) <= 0.16) {
         return this->getExponentialGrowthFrequency();
     }
@@ -204,18 +204,24 @@ double KalmanFilter::getEstimationErrorDifference() {
 }
 
 std::chrono::milliseconds KalmanFilter::getExponentialDecayFrequency() {
-    auto newFreqCandidate = this->initialFreq.count() * std::pow((1 - .25), this->decreaseCounter); // y = y0 * ((1-b) ^ x)
-    ++this->decreaseCounter;
-    this->increaseCounter = 1;
-    this->gatheringInterval = std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
+    auto errorDiff = this->getEstimationErrorDifference();
+    if (errorDiff > 0.6) {
+        auto newFreqCandidate = this->initialFreq.count() * std::pow((1 - .25), this->decreaseCounter); // y = y0 * ((1-b) ^ x)
+        ++this->decreaseCounter;
+        this->increaseCounter = 1;
+        this->gatheringInterval = std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
+    }
     return this->gatheringInterval;
 }
 
 std::chrono::milliseconds KalmanFilter::getExponentialGrowthFrequency() {
-    auto newFreqCandidate = this->initialFreq.count() * std::pow((1 + .25), this->increaseCounter); // y = y0 * ((1+b) ^ x)
-    ++this->increaseCounter;
-    this->decreaseCounter = 1;
-    this->gatheringInterval = std::chrono::milliseconds((int) trunc(newFreqCandidate));
+    auto errorDiff = this->getEstimationErrorDifference();
+    if (std::abs(errorDiff) <= 0.16) {
+        auto newFreqCandidate = this->initialFreq.count() * std::pow((1 + .25), this->increaseCounter); // y = y0 * ((1+b) ^ x)
+        ++this->increaseCounter;
+        this->decreaseCounter = 1;
+        this->gatheringInterval = std::chrono::milliseconds((int) trunc(newFreqCandidate));
+    }
     return this->gatheringInterval;
 }
 
