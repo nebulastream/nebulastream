@@ -117,7 +117,6 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     outputFile.flush();
 
     //call propagate //TODO:Anastasiia
-    propagateEpoch(inputBuffer.getWatermark());
     return true;
 }
 

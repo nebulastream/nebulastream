@@ -342,37 +342,6 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");
 }
 
-bool NesCoordinator::distributePunctuation(uint64_t timestamp, uint64_t queryId) {
-    std::vector<SourceLogicalOperatorNodePtr> sources;
-
-    NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << timestamp << "to sources with queryId " << queryId);
-    auto queryPlan = globalQueryPlan->getSharedQueryPlan(queryId)->getQueryPlan();
-    uint64_t curQueryId = queryPlan->getQueryId();
-    auto logicalSinkOperators = queryPlan->getSinkOperators();
-    if (!sources.empty()) {
-        for (auto& sourceOperator : sources) {
-            SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
-            auto streamName = sourceDescriptor->getSchema()->getStreamNameQualifier();
-            std::vector<TopologyNodePtr> sourceLocations = streamCatalog->getSourceNodesForLogicalStream(streamName);
-            if (!sourceLocations.empty()) {
-                for (auto& sourceLocation : sourceLocations) {
-                    auto coordinatorRpcClient = std::make_shared<WorkerRPCClient>();
-                    bool success = coordinatorRpcClient->truncatePunctuation(timestamp, curQueryId, sourceLocation->getIpAddress());
-                    NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
-                    return success;
-                }
-            }
-            else {
-                NES_ERROR("NesCoordinator::propagatePunctuation: no physical sources found for the queryId " << queryId);
-            }
-        }
-    }
-    else {
-        NES_ERROR("NesCoordinator::propagatePunctuation: no sources found for the queryId " << queryId);
-    }
-    return false;
-}
-
 std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
     NES_INFO("NesCoordinator: Get query statistics for query Id " << queryId);
     return worker->getNodeEngine()->getQueryStatistics(queryId);
