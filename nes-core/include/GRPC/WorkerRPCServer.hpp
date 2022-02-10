@@ -52,7 +52,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status ReceivePunctuation(ServerContext* context,
                                 const PropagateTimestampNotificationToWorker* request,
-                                PropagateTimestampReplyFromWorker* reply) override;
+                              PropagateTimestampReplyFromWorker* reply) override;
 
     Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
 

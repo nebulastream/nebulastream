@@ -179,10 +179,11 @@ class WorkerRPCClient {
     /**
      * @brief method to propagate new epoch timestamp to source
      * @param timestamp: max timestamp of current epoch
+     * @param queryId: query id which sources belong to
      * @param adsress: address of the source
      * @return bool indicating success
      */
-    bool propagatePunctuation(uint64_t timestamp, const std::string& address);
+    bool propagatePunctuation(uint64_t timestamp, uint64_t queryId, const std::string& address);
 
   private:
 };

@@ -356,9 +356,10 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     return false;
 }
 
-bool WorkerRPCClient::propagatePunctuation(uint64_t timestamp, const std::string& address) {
+bool WorkerRPCClient::propagatePunctuation(uint64_t timestamp, uint64_t queryId, const std::string& address) {
     PropagateTimestampNotificationToWorker request;
     request.set_timestamp(timestamp);
+    request.set_queryid(queryId);
     PropagateTimestampReplyFromWorker reply;
     ClientContext context;
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());

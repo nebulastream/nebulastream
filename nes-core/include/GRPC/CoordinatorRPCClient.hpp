@@ -144,10 +144,10 @@ class CoordinatorRPCClient {
     /**
      * @brief method to propagate new epoch timestamp to coordinator
      * @param timestamp: max timestamp of current epoch
-     * @param querySubPlanId: identifies what query sends punctuation
+     * @param queryId: identifies what query sends punctuation
      * @return bool indicating success
      */
-    bool propagatePunctuation(uint64_t timestamp, QuerySubPlanId querySubPlanId);
+    bool propagatePunctuation(uint64_t timestamp, uint64_t queryId);
 
   private:
     uint64_t workerId;

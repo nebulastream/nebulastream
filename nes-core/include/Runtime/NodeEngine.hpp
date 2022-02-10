@@ -294,22 +294,35 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     const std::vector<PhysicalSourcePtr>& getPhysicalSources() const;
 
+    /**
+     * @brief Provide the deployed query execution plans
+     * @return map of query subplan ids to executable query plans
+     */
+    std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr>
+    getDeployedQEPs() const;
+
+    /**
+     * @brief Provide mapping of query id to sub plans
+     * @return mapping of query id to sub plans
+     */
+    std::map<QueryId, std::vector<QuerySubPlanId>> getQueryIdToQuerySubPlanIds() const;
+
   private:
     std::vector<PhysicalSourcePtr> physicalSources;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
-    QueryManagerPtr queryManager;
     HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;
+    QueryManagerPtr queryManager;
+    BufferStoragePtr bufferStorage;
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
     Network::NetworkManagerPtr networkManager;
+    std::weak_ptr<NesWorker> nesWorker;
     NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::atomic<bool> isRunning{};
-    BufferStoragePtr bufferStorage;
-    std::weak_ptr<NesWorker> nesWorker;
     mutable std::recursive_mutex engineMutex;
     [[maybe_unused]] uint64_t nodeEngineId;
     [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;
