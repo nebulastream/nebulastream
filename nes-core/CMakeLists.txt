@@ -53,7 +53,7 @@ add_library(nes SHARED ${NES_CORE_SOURCE_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADE
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 #target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/../")
-target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
+target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES} )
 target_link_libraries(nes PUBLIC nes-common nes-compiler)
 target_link_libraries(nes PUBLIC ${GRPC_LIBRARIES})
 
@@ -79,7 +79,7 @@ if (GRPC_LIBRARIES)
 endif ()
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
-target_link_libraries(nesCoordinator PUBLIC ${LIBRARIES} nes)
+target_link_libraries(nesCoordinator PUBLIC nes)
 target_include_directories(nesCoordinator PUBLIC "include")
 target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)
@@ -87,7 +87,7 @@ if (GRPC_LIBRARIES)
 endif ()
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
-target_link_libraries(nesWorker PUBLIC ${LIBRARIES} nes)
+target_link_libraries(nesWorker PUBLIC nes )
 target_include_directories(nesWorker PUBLIC "include")
 target_include_directories(nesWorker PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)
@@ -113,3 +113,7 @@ include(GNUInstallDirs)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/include/nebulastream
         COMPONENT nesHeaders
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(DIRECTORY ${CLANG_INCLUDE_DIR}
+        COMPONENT nesHeaders
+        DESTINATION ${CMAKE_INSTALL_BINDIR}/lib/clang/${LLVM_PACKAGE_VERSION}/include/)
