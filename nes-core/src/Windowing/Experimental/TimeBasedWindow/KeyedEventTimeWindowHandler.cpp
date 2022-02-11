@@ -134,7 +134,7 @@ void KeyedEventTimeWindowHandler::start(Runtime::Execution::PipelineExecutionCon
 void KeyedEventTimeWindowHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
     NES_DEBUG("stop KeyedEventTimeWindowHandler");
     activeCounter--;
-    bool current = true;
+//    bool current = true;
     if (activeCounter == 0) {
         NES_DEBUG("shutdown KeyedEventTimeWindowHandler");
         // todo fix shutdown, currently KeyedEventTimeWindowHandler is never destructed because operators have references.

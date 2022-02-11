@@ -265,6 +265,9 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     std::optional<GeographicalLocation> locationCoordinates;
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
+    uint64_t numberOfQueues;
+    uint64_t numberOfThreadsPerQueue;
+    std::string queryManagerMode;
     bool enableMonitoring;
     std::atomic<bool> isRunning{false};
     TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};

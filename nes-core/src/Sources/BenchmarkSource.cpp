@@ -13,7 +13,7 @@
 */
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include "Runtime/QueryManager/AbstractQueryManager.hpp"
+#include "Runtime/QueryManager/QueryManager.hpp"
 #include <Runtime/internal/apex_memmove.hpp>
 #ifdef HAS_AVX
 #include <Runtime/internal/rte_memory.h>

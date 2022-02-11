@@ -20,7 +20,7 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include "Runtime/QueryManager/AbstractQueryManager.hpp"
+#include "Runtime/QueryManager/QueryManager.hpp"
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <future>

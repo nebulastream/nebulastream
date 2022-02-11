@@ -15,7 +15,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include "Runtime/QueryManager/AbstractQueryManager.hpp"
+#include "Runtime/QueryManager/QueryManager.hpp"
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>

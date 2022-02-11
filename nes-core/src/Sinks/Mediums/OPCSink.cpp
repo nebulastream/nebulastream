@@ -19,7 +19,7 @@
 #include <sstream>
 #include <string>
 
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryManager/QueryManager.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 

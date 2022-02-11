@@ -24,7 +24,7 @@
 
 #include <API/InputQuery.hpp>
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryManager/QueryManager.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <memory>
 

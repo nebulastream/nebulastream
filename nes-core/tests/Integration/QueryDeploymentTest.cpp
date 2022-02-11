@@ -918,9 +918,9 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     auto physicalSource2 = PhysicalSource::create("stream2", "test_stream", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource2);
 
-    workerConfig1->sourcePinList = ("0,1");
-    workerConfig1->queuePinList = ("0,1");
-    workerConfig1->numWorkerThreads = (2);
+    workerConfig1->setSourcePinList("0,1");
+    //TODO add static mode here
+    workerConfig1->setNumWorkerThreads(2);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1110,9 +1110,9 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     auto physicalSource2 = PhysicalSource::create("stream2", "test_stream", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource2);
 
-    workerConfig1->sourcePinList = ("0,1");
-    workerConfig1->queuePinList = ("0,1");
-    workerConfig1->numWorkerThreads = (2);
+    workerConfig1->setSourcePinList("0,1");
+    //TODO:add static mode here
+    workerConfig1->setNumWorkerThreads(2);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);

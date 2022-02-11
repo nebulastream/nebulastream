@@ -67,30 +67,32 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this a
  * @Limitations:
  *    - statistics do not cover intermediate buffers
  */
-class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>, public Reconfigurable {
-    using inherited0 = NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>;
+class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager, false>, public Reconfigurable {
+    using inherited0 = NES::detail::virtual_enable_shared_from_this<QueryManager, false>;
     using inherited1 = Reconfigurable;
 
     enum QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
-    enum QueryMangerMode : uint8_t { Dynamic, Static, NumaAware };
+    enum QueryMangerMode : uint8_t { Dynamic, Static, NumaAware, Invalid };
 
   public:
-    AbstractQueryManager() = delete;
-    AbstractQueryManager(const AbstractQueryManager&) = delete;
-    AbstractQueryManager& operator=(const AbstractQueryManager&) = delete;
+    QueryManager() = delete;
+    QueryManager(const QueryManager&) = delete;
+    QueryManager& operator=(const QueryManager&) = delete;
 
     /**
      * @brief
      * @param bufferManager
      */
-    explicit AbstractQueryManager(std::vector<BufferManagerPtr> bufferManagers,
+    explicit QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                           uint64_t nodeEngineId,
                           uint16_t numThreads,
                           HardwareManagerPtr hardwareManager,
                           std::vector<uint64_t> workerToCoreMapping = {},
-                          std::vector<uint64_t> queuePinList = {});
+                          uint64_t numberOfQueues = 1,
+                          uint64_t numberOfThreadsPerQueue = 0,
+                          const std::string& queryManagerMode = "Dynamic");
 
-    ~AbstractQueryManager() NES_NOEXCEPT(false) override;
+    ~QueryManager() NES_NOEXCEPT(false) override;
 
     /**
      * @brief register a query by extracting sources, windows and sink and add them to
@@ -202,13 +204,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false);
 
-    /**
-     * @brief Outputs the first buffer manager of the query manager
-     * @return BufferManagerPtr
-     */
-    BufferManagerPtr getBufferManager(){
-        return bufferManagers[0];
-    }
+    BufferManagerPtr getBufferManager() { return bufferManagers[0]; }
 
   private:
     /**
@@ -252,12 +248,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     uint64_t getNumberOfTasksInWorkerQueue() const;
 
-    /**
-    * @brief maps querySubId to query id
-    * @return query id
-    */
-    uint64_t getQueryId(uint64_t querySubPlanId) const;
-
     size_t getCurrentTaskSum();
     uint64_t getNumberOfWorkerThreads();
 
@@ -296,13 +286,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
   private:
     uint64_t nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
-
+    std::vector<BufferManagerPtr> bufferManagers;
     ThreadPoolPtr threadPool{nullptr};
+    uint16_t numThreads;
+    //    std::map<uint64_t,uint64_t> numaRegionToThreadMap;
     QueryMangerMode mode;
-
-    std::map<uint64_t,uint64_t> numaRegionToThreadMap;
+    uint64_t numberOfQueues;
     uint64_t numberOfThreadsPerQueue;
-
+    HardwareManagerPtr hardwareManager;
     // TODO remove these unnecessary structures
     std::map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorMap;
@@ -314,25 +305,24 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     mutable std::mutex statisticsMutex;
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
-    std::vector<BufferManagerPtr> bufferManagers;
+
     Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 
-    uint16_t numThreads;
     std::vector<uint64_t> workerToCoreMapping;
     mutable std::recursive_mutex queryMutex;
-    HardwareManagerPtr hardwareManager;
-    uint64_t numberOfQueues;
-    std::vector<uint64_t> queuePinListMapping;
+
     std::vector<folly::MPMCQueue<Task>> taskQueues;
     std::atomic<QueryManagerStatus> queryManagerStatus{Created};
     std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
+    QueryMangerMode getModeFromString(const std::string mode);
+
 };
 
-using QueryManagerPtr = std::shared_ptr<AbstractQueryManager>;
+using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 }// namespace Runtime
 }// namespace NES
-#endif  // NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_
+#endif// NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_

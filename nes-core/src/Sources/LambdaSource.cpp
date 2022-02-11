@@ -17,7 +17,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include "Runtime/QueryManager/AbstractQueryManager.hpp"
+#include "Runtime/QueryManager/QueryManager.hpp"
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Util/UtilityFunctions.hpp>

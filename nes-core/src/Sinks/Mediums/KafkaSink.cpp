@@ -13,7 +13,7 @@
 */
 
 #ifdef ENABLE_KAFKA_BUILD
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryManager/QueryManager.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
 #include <Util/Logger.hpp>
 #include <chrono>

@@ -25,7 +25,7 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineFactory.hpp>
-#include "Runtime/QueryManager/AbstractQueryManager.hpp"
+#include "Runtime/QueryManager/QueryManager.hpp"
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/Experimental/SliceStore.hpp>

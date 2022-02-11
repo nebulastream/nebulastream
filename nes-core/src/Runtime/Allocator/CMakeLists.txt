@@ -10,9 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-if (CMAKE_USE_PAPI_PROFILER)
-    add_source_nes(
-            NesDefaultMemoryAllocator.cpp
-            NumaRegionMemoryAllocator.cpp
-    )
-endif ()
+add_source_nes(
+        NesDefaultMemoryAllocator.cpp
+        NumaRegionMemoryAllocator.cpp
+)

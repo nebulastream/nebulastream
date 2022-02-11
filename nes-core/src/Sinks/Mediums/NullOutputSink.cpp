@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Runtime/QueryManager/AbstractQueryManager.hpp"
+#include "Runtime/QueryManager/QueryManager.hpp"
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

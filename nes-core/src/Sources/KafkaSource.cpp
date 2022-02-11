@@ -15,7 +15,7 @@
 #ifdef ENABLE_KAFKA_BUILD
 
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryManager/QueryManager.hpp>
 #include <Sources/KafkaSource.hpp>
 #include <Util/Logger.hpp>
 #include <cstdint>

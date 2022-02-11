@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/QueryManager/QueryManager.hpp>
 #include <Sources/MQTTSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Parsers/JSONParser.hpp>

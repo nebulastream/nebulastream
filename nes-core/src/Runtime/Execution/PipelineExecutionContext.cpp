@@ -13,7 +13,7 @@
 */
 
 #include <Runtime/BufferManager.hpp>
-#include "Runtime/QueryManager/AbstractQueryManager.hpp"
+#include "Runtime/QueryManager/QueryManager.hpp"
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>

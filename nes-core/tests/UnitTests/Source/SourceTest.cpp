@@ -14,7 +14,7 @@
 
 #define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
 #include <Runtime/NodeEngineFactory.hpp>
-#include "Runtime/QueryManager/AbstractQueryManager.hpp"
+#include "Runtime/QueryManager/QueryManager.hpp"
 #include <cstring>
 #include <iostream>
 #include <limits>
