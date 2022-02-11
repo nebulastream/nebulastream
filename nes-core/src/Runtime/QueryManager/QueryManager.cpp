@@ -30,7 +30,6 @@
 #include <memory>
 #include <stack>
 #include <utility>
-#include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES::Runtime {
 
@@ -162,13 +161,15 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
         //            taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
         //        }
     } else if (mode == Static) {
+        NES_DEBUG("QueryManger: use static mode for numberOfQueues=" << numberOfQueues << " numThreads=" << numThreads
+                                                                     << " numberOfThreadsPerQueue=" << numberOfThreadsPerQueue);
         //create the actual task queues
         for (uint64_t i = 0; i < numberOfQueues; i++) {
             taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
-            numberOfThreadsPerQueue = 0;
-            NES_NOT_IMPLEMENTED();
         }
     } else if (mode == Dynamic) {
+        NES_DEBUG("QueryManger: use dynmic mode for numberOfQueues=" << numberOfQueues << " numThreads=" << numThreads
+                                                                     << " numberOfThreadsPerQueue=" << numberOfThreadsPerQueue);
         taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
     }
 
@@ -200,8 +201,11 @@ bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker) {
         if (mode == NumaAware) {
             NES_NOT_IMPLEMENTED();
         } else if (mode == Static) {
-            NES_NOT_IMPLEMENTED();
-            numberOfThreadsPerQueue = threadPool->getNumberOfThreads();
+            for (uint64_t queueId = 0; queueId < taskQueues.size(); queueId++) {
+                for (uint64_t threadId = 0; threadId < numberOfThreadsPerQueue; threadId++) {
+                    threadToQueueMapping.push_back(queueId);
+                }
+            }
         } else if (mode == Dynamic) {
             numberOfThreadsPerQueue = numThreads;
             for (uint32_t i = 0; i < numberOfThreadsPerQueue; i++) {
@@ -550,7 +554,8 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking) {
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
-              << queryExecutionPlanId << " blocking=" << blocking << " type " << task->getType());
+              << queryExecutionPlanId << " blocking=" << blocking << " type " << task->getType()
+              << " to queue=" << queryExecutionPlanId%taskQueues.size());
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
@@ -562,16 +567,18 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
                                                           std::vector<Execution::SuccessorExecutablePipeline>(),
                                                           true);
 
-    for (uint64_t queueId = 0; queueId < taskQueues.size(); queueId++) {
-        for (uint64_t threadId = 0; threadId < numberOfThreadsPerQueue; threadId++) {
-            taskQueues[queueId].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
-        }
-
-        if (blocking) {
-            task->postWait();
-            task->postReconfiguration();
-        }
+    //    for (uint64_t queueId = 0; queueId < taskQueues.size(); queueId++) {
+    for (uint64_t threadId = 0; threadId < numberOfThreadsPerQueue; threadId++) {
+//        taskQueues[queueId].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
+//TODO: Don't do this at home this is really ugly
+        taskQueues[queryExecutionPlanId%taskQueues.size()].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
     }
+
+    if (blocking) {
+        task->postWait();
+        task->postReconfiguration();
+    }
+    //    }
     return true;
 }
 
@@ -732,7 +739,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if (!(*nextPipeline)->isRunning()) {
             // we ignore task if the pipeline is not running anymore.
-            NES_WARNING("Pushed task for non running pipeline id=" << (*nextPipeline)->getPipelineId());
+            NES_WARNING("Pushed task for non running executable pipeline id=" << (*nextPipeline)->getPipelineId());
             return;
         }
         //NES_ASSERT2_FMT((*nextPipeline)->isRunning(),
@@ -741,15 +748,12 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
                                                                 << " queueId=" << queueId);
 
         taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
-    }
-    else if (auto sink = std::get_if<DataSinkPtr>(&executable)) {
+    } else if (auto sink = std::get_if<DataSinkPtr>(&executable)) {
         NES_DEBUG("QueryManager: added Task for Sink " << sink->get()->toString() << " inputBuffer " << buffer
-                                                                << " queueId=" << queueId);
+                                                       << " queueId=" << queueId);
 
         taskQueues[queueId].write(Task(executable, buffer, getNextTaskId()));
-    }
-    else
-    {
+    } else {
         NES_THROW_RUNTIME_ERROR("This should not happen");
     }
 }

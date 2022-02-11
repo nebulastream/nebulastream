@@ -18,7 +18,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <utility>
 
-#define ONLY_ONE_SOURCE_MODE
+//#define ONLY_ONE_SOURCE_MODE
 namespace NES::QueryCompilation {
 
 DataSourceProvider::DataSourceProvider(QueryCompilerOptionsPtr compilerOptions) : compilerOptions(std::move(compilerOptions)) {}

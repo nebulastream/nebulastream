@@ -29,11 +29,9 @@
 
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadNaming.hpp>
-#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #if defined(__linux__)
 #include <numa.h>
 #include <numaif.h>
-#endif
 #endif
 #include <utility>
 namespace NES {
@@ -50,8 +48,7 @@ DataSource::DataSource(SchemaPtr pSchema,
                        GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
-                       uint64_t taskQueueId
-                       )
+                       uint64_t taskQueueId)
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId)
@@ -137,10 +134,10 @@ bool DataSource::start() {
             std::cout << "source " << operatorId << " does not use affinity" << std::endl;
         }
 #endif
-
-#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-        taskQueueId = numa_node_of_cpu(cpu);
-#endif
+//
+//#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
+//        taskQueueId = numa_node_of_cpu(cpu);
+//#endif
         std::cout << "source " << operatorId << " pins to queue=" << taskQueueId << std::endl;
 
         prom.set_value(true);
