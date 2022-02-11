@@ -92,7 +92,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
     auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    auto keyField = windowDefinition->getKeys()[0];
+    auto keyField = windowDefinition->getKeys();
     auto allowedLateness = windowDefinition->getAllowedLateness();
     // For the final window computation we have to change copy aggregation function and manipulate the fields we want to aggregate.
     auto windowComputationAggregation = windowAggregation[0]->copy();
@@ -107,7 +107,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
 
     Windowing::LogicalWindowDefinitionPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-        windowDef = Windowing::LogicalWindowDefinition::create({keyField},
+        windowDef = Windowing::LogicalWindowDefinition::create(keyField,
                                                                {windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
@@ -150,7 +150,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef =
-                Windowing::LogicalWindowDefinition::create({keyField},
+                Windowing::LogicalWindowDefinition::create(keyField,
                                                            {sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
