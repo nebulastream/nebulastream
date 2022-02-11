@@ -62,10 +62,10 @@ StaticDataSourceType::StaticDataSourceType(const std::string& pathTableFile,
                                                         uint64_t taskQueueId) {
     // todo check validity of path
     SourceMode::Value sourceModeEnum = SourceMode::getFromString(sourceMode);
-    return std::make_shared<StaticDataSourceType>(StaticDataSourceType(pathTableFile,
+    return std::make_shared<StaticDataSourceType>(pathTableFile,
                                                                        numBuffersToProcess,
                                                                        sourceModeEnum,
-                                                                       taskQueueId));
+                                                                       taskQueueId);
 }
 
 SourceMode::Value StaticDataSourceType::getSourceMode() const { return sourceMode; }

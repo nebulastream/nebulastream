@@ -58,8 +58,6 @@ public:
 
     std::string getPathTableFile();
 
-
-  private:
     /**
      * @brief Create a StaticDataSourceType using a set of parameters
      * @param sourceType the type of the source

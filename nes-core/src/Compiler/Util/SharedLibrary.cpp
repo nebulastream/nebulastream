@@ -25,7 +25,6 @@ SharedLibrary::SharedLibrary(void* shareLib, std::string soAbsolutePath)
 }
 
 SharedLibrary::~SharedLibrary() {
-    NES_DEBUG("~SharedLibrary()");
     auto returnCode = dlclose(shareLib);
     if (returnCode != 0) {
         NES_ERROR("SharedLibrary: error during dlclose. error code:" << returnCode);
