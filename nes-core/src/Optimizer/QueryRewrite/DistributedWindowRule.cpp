@@ -67,13 +67,14 @@ void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodeP
     NES_DEBUG("DistributeWindowRule::apply: introduce centralized window operator for window " << windowOp << " "
                                                                                                << windowOp->toString());
     windowOp->getWindowDefinition()->setOriginId(windowOp->getId());
+    auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
     auto windowDef = windowOp->getWindowDefinition();
     // identify the number of origins by the number of sources.
     // TODO we should have a better way to invesigate the number of origins for a specific operator and maybe also give specifc ids.
-    auto sourceOptrs = windowOp->getNodesByType<SourceLogicalOperatorNode>();
-    auto origins = sourceOptrs.size();
-    windowDef->setNumberOfInputEdges(origins);
-    auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef);
+    //auto sourceOptrs = windowOp->getNodesByType<SourceLogicalOperatorNode>();
+    //auto origins = sourceOptrs.size();
+    //windowDef->setNumberOfInputEdges(origins);
+    //auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef);
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());
 
