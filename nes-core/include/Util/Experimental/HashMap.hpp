@@ -15,6 +15,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Experimental/CRC32Hash.hpp>
+#include <Util/Experimental/MurMurHash3.hpp>
 #include <Util/Experimental/Hash.hpp>
 #include <assert.h>
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_HASHMAP_HPP_
@@ -41,7 +42,7 @@ namespace NES::Experimental {
 class Hashmap {
   public:
 #ifdef __aarch64__
-    const auto hasher = Hash<CRC32Hash>();
+    const Hash<MurMurHash3> hasher = Hash<MurMurHash3>();
 #endif
 
 #ifdef __x86_64__
