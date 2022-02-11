@@ -118,7 +118,11 @@ void WindowLogicalOperatorNode::inferStringSignature() {
         signatureStream << "WINDOW(";
     }
     signatureStream << "WINDOW-TYPE: " << windowType->toString() << ",";
-   // signatureStream << "AGGREGATION: " << windowAggregation->toString() << ")";
+    signatureStream << "AGGREGATION: ";
+    for (auto& agg : windowAggregation) {
+        signatureStream << agg->toString() << ",";
+    }
+    signatureStream << ")";
     auto childSignature = children[0]->as<LogicalOperatorNode>()->getHashBasedSignature();
     signatureStream << "." << *childSignature.begin()->second.begin();
 
