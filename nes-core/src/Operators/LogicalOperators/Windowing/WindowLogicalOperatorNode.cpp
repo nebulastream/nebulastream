@@ -42,7 +42,9 @@ bool WindowLogicalOperatorNode::isIdentical(NodePtr const& rhs) const {
     return eq && idCmp && !typeInfer;
 }
 
-bool WindowLogicalOperatorNode::equal(NodePtr const& rhs) const { return rhs->instanceOf<WindowLogicalOperatorNode>(); }
+bool WindowLogicalOperatorNode::equal(NodePtr const& rhs) const {
+    return rhs->instanceOf<WindowLogicalOperatorNode>();
+}
 
 OperatorNodePtr WindowLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition, id);

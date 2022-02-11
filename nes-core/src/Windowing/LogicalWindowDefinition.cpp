@@ -136,12 +136,27 @@ bool LogicalWindowDefinition::equal(LogicalWindowDefinitionPtr otherWindowDefini
         return false;
     }
 
-    if (this->isKeyed() && this->getKeys() != otherWindowDefinition->getKeys()) {
+    if (this->getKeys().size() != otherWindowDefinition->getKeys().size()) {
         return false;
     }
 
-    return this->windowType->equal(otherWindowDefinition->getWindowType())
-        && this->windowAggregation == otherWindowDefinition->getWindowAggregation();
+    for (uint64_t i = 0; i < this->getKeys().size(); i++) {
+        if (!this->getKeys()[i]->equal(otherWindowDefinition->getKeys()[i])) {
+            return false;
+        };
+    }
+
+    if (this->getWindowAggregation().size() != otherWindowDefinition->getWindowAggregation().size()) {
+        return false;
+    }
+
+    for (uint64_t i = 0; i < this->getWindowAggregation().size(); i++) {
+        if (!this->getWindowAggregation()[i]->equal(otherWindowDefinition->getWindowAggregation()[i])) {
+            return false;
+        };
+    }
+
+    return this->windowType->equal(otherWindowDefinition->getWindowType());
 }
 
 }// namespace NES::Windowing
