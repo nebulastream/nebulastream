@@ -27,7 +27,7 @@ namespace NES::Client {
  */
 class QueryConfig {
   public:
-    QueryConfig(FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+    explicit QueryConfig(NES::FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                 LineageType lineageType = LineageType::NONE,
                 PlacementStrategy::Value placementType = PlacementStrategy::BottomUp);
 

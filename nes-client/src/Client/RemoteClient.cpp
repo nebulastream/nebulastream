@@ -14,6 +14,7 @@
 
 #include <API/Query.hpp>
 #include <Client/ClientException.hpp>
+#include <Client/QueryConfig.hpp>
 #include <Client/RemoteClient.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
@@ -21,6 +22,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger.hpp>
+#include <Util/PlacementStrategy.hpp>
 #include <cpprest/http_client.h>
 
 namespace NES::Client {
@@ -34,7 +36,7 @@ RemoteClient::RemoteClient(const std::string& coordinatorHost, uint16_t coordina
     }
 }
 
-uint64_t RemoteClient::submitQuery(const Query& query, const QueryConfig config) {
+uint64_t RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     auto queryPlan = query.getQueryPlan();
     SubmitQueryRequest request;
     auto* serializedQueryPlan = request.mutable_queryplan();

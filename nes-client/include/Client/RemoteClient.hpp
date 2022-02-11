@@ -24,9 +24,6 @@ namespace NES {
 class Query;
 }
 namespace NES::Client {
-class RemoteClient;
-using RemoteClientPtr = std::shared_ptr<RemoteClient>;
-
 /**
  * @brief Remote client to deploy queries over the REST API
  */
@@ -123,6 +120,7 @@ class RemoteClient {
 
     std::string getHostName();
 };
+using RemoteClientPtr = std::shared_ptr<RemoteClient>;
 }// namespace NES
 
 #endif//NES_INCLUDE_CLIENT_CPPCLIENT_HPP_
