@@ -81,7 +81,11 @@ class ZmqServer {
      */
     [[nodiscard]] uint16_t getServerPort() const { return currentPort.load(); }
 
-
+    /**
+     * @brief Retrieves the current server socket information
+     * @param hostname the hostname in use
+     * @param port the port in use
+     */
     void getServerSocketInfo(std::string& hostname, uint16_t& port);
 
   private:
