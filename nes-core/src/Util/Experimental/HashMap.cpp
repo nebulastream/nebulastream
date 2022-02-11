@@ -51,6 +51,8 @@ size_t Hashmap::setSize(size_t nrEntries) {
         NES_FATAL_ERROR("No buffer available");
     }
     this->entryBuffer = buffer.value();
+    // set entries to zero
+    memset(buffer->getBuffer(), 0, buffer->getBufferSize());
     entries = buffer->getBuffer<Entry*>();
 
     if (storageBuffers == nullptr) {
@@ -69,6 +71,8 @@ Hashmap::Entry* Hashmap::allocateNewEntry() {
             //     throw Compiler::CompilerException("BufferManager is empty. Size "
             //                                     + std::to_string(bufferManager->getNumOfPooledBuffers()));
         }
+        // set entries to zero
+        memset(buffer->getBuffer(), 0, buffer->getBufferSize());
         (*storageBuffers).emplace_back(buffer.value());
     }
     auto buffer = getBufferForEntry(currentSize);
