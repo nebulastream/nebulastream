@@ -143,5 +143,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     EXPECT_CALL(*replicationService, propagatePunctuation(1644426604, queryId))
                                     .Times(1)
         .WillOnce(testing::Return(true));
+
+    testing::Mock::AllowLeak(&replicationService);
 }
 }
