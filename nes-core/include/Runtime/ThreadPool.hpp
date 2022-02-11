@@ -102,7 +102,7 @@ class ThreadPool {
     const uint32_t numThreads;
     std::vector<std::thread> threads{};
     mutable std::recursive_mutex reconfigLock;
-    std::shared_ptr<QueryManager> queryManager;
+    std::shared_ptr<AbstractQueryManager> queryManager;
     std::vector<BufferManagerPtr> bufferManagers;
 
     uint64_t numberOfBuffersPerWorker;

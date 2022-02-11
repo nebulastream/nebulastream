@@ -14,7 +14,7 @@
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Runtime/WorkerContext.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/NesFormat.hpp>

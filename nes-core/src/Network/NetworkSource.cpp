@@ -17,7 +17,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>

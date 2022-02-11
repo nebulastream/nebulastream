@@ -13,7 +13,7 @@
 */
 
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Sources/BinarySource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger.hpp>

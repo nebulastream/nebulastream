@@ -18,6 +18,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <utility>
 
+#define ONLY_ONE_SOURCE_MODE
 namespace NES::QueryCompilation {
 
 DataSourceProvider::DataSourceProvider(QueryCompilerOptionsPtr compilerOptions) : compilerOptions(std::move(compilerOptions)) {}
@@ -31,6 +32,7 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
                                         Runtime::NodeEnginePtr nodeEngine,
                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) {
 
+#ifdef ONLY_ONE_SOURCE_MODE
     if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
         for (auto& entry : physicalStreamNameToSourceMap) {
             if (entry.first == sourceDescriptor->getPhysicalSourceName()) {
@@ -53,6 +55,14 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
     }
 
     return newPtr;
+#else
+    return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
+                                                            std::move(sourceDescriptor),
+                                                            std::move(nodeEngine),
+                                                            compilerOptions->getNumSourceLocalBuffers(),
+                                                            std::move(successors));
+#endif
+
 }
 
 }// namespace NES::QueryCompilation

@@ -16,7 +16,7 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>

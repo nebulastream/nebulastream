@@ -23,7 +23,7 @@
 #include <utility>
 #include <zmq.hpp>
 
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Util/Logger.hpp>
 
 namespace NES {

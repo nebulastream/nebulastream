@@ -14,7 +14,7 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkSource.hpp>
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>

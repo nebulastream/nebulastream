@@ -13,7 +13,7 @@
 */
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Runtime/internal/apex_memmove.hpp>
 #ifdef __x86_64__
 #include <Runtime/internal/rte_memory.h>

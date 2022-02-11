@@ -22,7 +22,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Runtime/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>

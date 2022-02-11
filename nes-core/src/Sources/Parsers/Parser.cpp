@@ -23,7 +23,7 @@
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

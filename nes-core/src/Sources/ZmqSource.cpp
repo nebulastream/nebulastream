@@ -13,7 +13,7 @@
 */
 
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/QueryManager.hpp>
+#include "Runtime/QueryManager/AbstractQueryManager.hpp"
 #include <Sources/ZmqSource.hpp>
 #include <Util/Logger.hpp>
 #include <cstdint>

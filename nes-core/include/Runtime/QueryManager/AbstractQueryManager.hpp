@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
-#define NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+#ifndef NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_
+#define NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_
 
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
@@ -48,10 +48,8 @@
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
 
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
-#endif
 
 namespace NES {
 namespace Runtime {
@@ -69,29 +67,30 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this a
  * @Limitations:
  *    - statistics do not cover intermediate buffers
  */
-class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager, false>, public Reconfigurable {
-    using inherited0 = NES::detail::virtual_enable_shared_from_this<QueryManager, false>;
+class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>, public Reconfigurable {
+    using inherited0 = NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>;
     using inherited1 = Reconfigurable;
 
     enum QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
+    enum QueryMangerMode : uint8_t { Dynamic, Static, NumaAware };
 
   public:
-    QueryManager() = delete;
-    QueryManager(const QueryManager&) = delete;
-    QueryManager& operator=(const QueryManager&) = delete;
+    AbstractQueryManager() = delete;
+    AbstractQueryManager(const AbstractQueryManager&) = delete;
+    AbstractQueryManager& operator=(const AbstractQueryManager&) = delete;
 
     /**
      * @brief
      * @param bufferManager
      */
-    explicit QueryManager(std::vector<BufferManagerPtr> bufferManagers,
+    explicit AbstractQueryManager(std::vector<BufferManagerPtr> bufferManagers,
                           uint64_t nodeEngineId,
                           uint16_t numThreads,
                           HardwareManagerPtr hardwareManager,
                           std::vector<uint64_t> workerToCoreMapping = {},
                           std::vector<uint64_t> queuePinList = {});
 
-    ~QueryManager() NES_NOEXCEPT(false) override;
+    ~AbstractQueryManager() NES_NOEXCEPT(false) override;
 
     /**
      * @brief register a query by extracting sources, windows and sink and add them to
@@ -115,11 +114,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @return an execution result
      *
      */
-#if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE) || defined(NES_USE_ONE_QUEUE_PER_QUERY)
     ExecutionResult processNextTask(bool running, WorkerContext& workerContext);
-#else
-    ExecutionResult processNextTask(std::atomic<bool>& running, WorkerContext& workerContext);
-#endif
 
     /**
      * @brief add work to the query manager, this methods is source-driven and is called
@@ -303,6 +298,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::atomic_uint64_t taskIdCounter = 0;
 
     ThreadPoolPtr threadPool{nullptr};
+    QueryMangerMode mode;
+
+    std::map<uint64_t,uint64_t> numaRegionToThreadMap;
+    uint64_t numberOfThreadsPerQueue;
 
     // TODO remove these unnecessary structures
     std::map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
@@ -324,19 +323,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     HardwareManagerPtr hardwareManager;
     uint64_t numberOfQueues;
     std::vector<uint64_t> queuePinListMapping;
-#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-    folly::MPMCQueue<Task> taskQueue;
-#elif defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
     std::vector<folly::MPMCQueue<Task>> taskQueues;
-    std::map<size_t, size_t> numaRegionToThreadMap;
-#elif defined(NES_USE_ONE_QUEUE_PER_QUERY)
-
-    std::vector<folly::MPMCQueue<Task>> taskQueues;
-#else
-    std::deque<Task> taskQueue;
-    mutable std::mutex workMutex;
-    std::condition_variable cv;
-#endif
     std::atomic<QueryManagerStatus> queryManagerStatus{Created};
     std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
 #ifdef ENABLE_PAPI_PROFILER
@@ -344,8 +331,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 #endif
 };
 
-using QueryManagerPtr = std::shared_ptr<QueryManager>;
+using QueryManagerPtr = std::shared_ptr<AbstractQueryManager>;
 
 }// namespace Runtime
 }// namespace NES
-#endif  // NES_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+#endif  // NES_INCLUDE_RUNTIME_ABSTRACTQUERYMANAGER_HPP_

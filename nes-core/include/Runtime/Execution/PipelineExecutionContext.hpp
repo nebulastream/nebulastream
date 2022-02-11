@@ -128,7 +128,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      */
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
 
-    std::weak_ptr<QueryManager> queryManager;
+    std::weak_ptr<AbstractQueryManager> queryManager;
 };
 
 }// namespace NES::Runtime::Execution
