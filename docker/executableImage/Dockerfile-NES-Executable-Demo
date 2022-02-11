@@ -1,0 +1,59 @@
+FROM nebulastream/nes-build-image:latest AS buildimg
+
+COPY ./ /nebulastream
+
+RUN mkdir -p /nebulastream/build && \
+    cd /nebulastream/build && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
+    make version && make -j4 && cpack && mv *.deb /nes.deb && \
+    rm -rf /nebulastream/build/nes-dependencies-v13-x64-linux-nes.7z
+
+FROM nebulastream/nes-build-image:latest AS execimg
+
+COPY --from=buildimg /nes.deb .
+COPY --from=buildimg /nebulastream/build/nes-dependencies-v13-x64-linux-nes/installed/x64-linux-nes/ /nebulastream/build/nes-dependencies-v13-x64-linux-nes/installed/x64-linux-nes/
+
+RUN dpkg -i /nes.deb && apt install iproute2 ifupdown net-tools --no-install-recommends -y -qq && \
+apt autoclean -y -qq && rm -rf /*.deb
+
+# Install prerequisites
+RUN apt-get update && apt-get install -y curl
+
+COPY ./docker/executableImage/resources/exdra.csv /opt/local/nebula-stream/exdra.csv
+COPY ./docker/executableImage/entrypoint-prepare-nes-package.sh /entrypoint-prepare-nes-package.sh
+COPY ./docker/executableImage/entrypoint-containernet.sh /entrypoint-containernet.sh
+COPY ./docker/executableImage/entrypoint-nes-executable-demo-city.sh /entrypoint.sh
+
+ENV restIp="0.0.0.0"
+ENV restPort=8081
+ENV coordinatorIp="127.0.0.1"
+ENV rpcPort="1200"
+ENV enableSemanticQueryValidation=false
+ENV type="CSVSource"
+ENV filePath="/opt/local/nebula-stream/exdra.csv"
+ENV numberOfBuffersToProduce=100
+ENV sourceFrequency=1
+ENV physicalSourceName="nesCityHospital"
+ENV logicalSourceName="nesCityHospital"
+ENV skipHeader=false
+ENV delimiter=","
+ENV logLevel="LOG_INFO"
+
+ENV coordinatorPort=1200
+ENV rpcPort=1215
+ENV dataPort=1415
+ENV physicalSourceName="nesCityHospital"
+ENV logicalSourceName="nesCityHospital"
+ENV url="tcp://localhost:1885"
+ENV clientId="client1"
+ENV userName="user"
+ENV topic="demoCityHospital_0"
+ENV inputFormat="JSON"
+ENV qos=1
+ENV cleanSession=true
+ENV flushIntervalMS=60
+ENV type="MQTTSource"
+ENV numWorkerThreads=3
+ENV enableMonitoring=true
+
+ENTRYPOINT ["/entrypoint.sh"]
