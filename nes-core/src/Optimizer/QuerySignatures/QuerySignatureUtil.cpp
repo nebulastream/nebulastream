@@ -589,7 +589,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(const z3::Co
     //Compute the expression for window key
     std::string windowKey;
     if (windowDefinition->isKeyed()) {
-        if (windowDefinition->getKeys().size() == 1) {
+        if (windowDefinition->getKeys().size() != 1) {
             NES_NOT_IMPLEMENTED();
         }
         FieldAccessExpressionNodePtr key = windowDefinition->getKeys()[0];
