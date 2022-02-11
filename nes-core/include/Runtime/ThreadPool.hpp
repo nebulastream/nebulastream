@@ -52,17 +52,6 @@ class ThreadPool {
      */
     ~ThreadPool();
 
-  private:
-    /**
-     * @brief start the Thread pool
-     * 1.) check if thread pool is already running,
-     *    - if yes, return false
-     *    - if not set to running to true
-     * 2.) spawn n threads and bind them to the running routine (routine that probes queue for runable tasks)
-     * @return indicate if start succeed
-     */
-    bool start();
-
   public:
     /**
        * @brief stop the Thread pool
@@ -79,6 +68,17 @@ class ThreadPool {
     bool isRunning() const { return running; }
 
   private:
+
+    /**
+     * @brief start the Thread pool
+     * 1.) check if thread pool is already running,
+     *    - if yes, return false
+     *    - if not set to running to true
+     * 2.) spawn n threads and bind them to the running routine (routine that probes queue for runable tasks)
+     * @return indicate if start succeed
+     */
+    bool start();
+
     /**
        * @brief running routine of threads, in this routine, threads repeatedly execute the following steps
        * 1.) Check if running is still true

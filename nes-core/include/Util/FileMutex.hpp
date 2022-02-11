@@ -19,24 +19,53 @@
 
 namespace NES::Util {
 
-    class FileMutex {
-      public:
-        explicit FileMutex(const std::string filePath);
+/**
+ * @brief This is a mutex that uses files to perform locking.
+ * It implements the Mutex named requirements
+ */
+class FileMutex {
+  public:
+    /**
+     * @brief Creates a FileMutex using a file specified as filePath
+     * @param filePath that path to a file
+     */
+    explicit FileMutex(const std::string filePath);
 
-        ~FileMutex();
+    /**
+     * @brief closes the internal file but does not release the mutex.
+     * The behavior is undefined if the mutex is owned by any thread or if any thread
+     * terminates while holding any ownership of the mutex.
+     */
+    ~FileMutex();
 
-        FileMutex& operator=(const FileMutex&) = delete;
+    FileMutex(const FileMutex&) = delete;
 
-        void lock();
+    FileMutex(FileMutex&&) = delete;
 
-        bool try_lock();
+    FileMutex& operator=(const FileMutex&) = delete;
 
-        void unlock();
+    FileMutex& operator=(FileMutex&&) = delete;
 
-      private:
-        int fd;
-        std::string fileName;
-    };
+    /**
+     * @brief lock the mutex
+     */
+    void lock();
+
+    /**
+     * @brief try locking the mutex
+     * @return true if locking is successful
+     */
+    bool try_lock();
+
+    /**
+     * @brief try unlocking the file
+     */
+    void unlock();
+
+  private:
+    int fd;
+    std::string fileName;
+};
 
 }// namespace NES::Util
 

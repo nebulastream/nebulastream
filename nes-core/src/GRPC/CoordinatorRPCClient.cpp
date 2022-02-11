@@ -28,19 +28,52 @@ namespace NES {
 
 namespace detail {
 
+/**
+ * @brief Listener to process an Rpc Execution
+ * @tparam ReturnType the return type of the rpc
+ * @tparam RequestType type of the object sent as request
+ * @tparam ReplyType type of the object expected as reply
+ */
 template<typename ReturnType, typename RequestType, typename ReplyType>
 class RpcExecutionListener {
-
   public:
+    /**
+     * @brief Executes the rpc call calling the right grpc method
+     * @return grpc invocation status code
+     */
     virtual grpc::Status rpcCall(const RequestType&, ReplyType*) = 0;
 
+    /**
+     * @brief called upon the successful completion of the rpc with a reply
+     * @return value to be returned on success
+     */
     virtual ReturnType onSuccess(const ReplyType&) = 0;
 
+    /**
+     * @brief called upon an error during the rpc
+     * @return true if a retry must be attempted
+     */
     virtual bool onPartialFailure(const grpc::Status&) = 0;
 
+    /**
+     * @brief called upon the unsuccessful completion of the rpc with a reply
+     * @return value to be returned on fail
+     */
     virtual ReturnType onFailure() = 0;
 };
 
+/**
+ * @brief This methods perform an rpc by sending a request and waiting for a reply.
+ * It may retry in the case of a failure.
+ * @tparam ReturnType the return type of the rpc
+ * @tparam RequestType type of the object sent as request
+ * @tparam ReplyType type of the object expected as reply
+ * @param request the request to send
+ * @param retryAttempts the number of retry attempts
+ * @param backOffTime waiting time between retrial
+ * @param listener the object that manages the rpc invocation
+ * @return a return object in the case of success or failure
+ */
 template<typename ReturnType, typename RequestType, typename ReplyType>
 [[nodiscard]] ReturnType processRpc(const RequestType& request,
                                     uint32_t retryAttempts,
@@ -62,6 +95,18 @@ template<typename ReturnType, typename RequestType, typename ReplyType>
     return listener.onFailure();
 }
 
+/**
+ * @brief This methods perform an rpc by sending a request and waiting for a reply.
+ * It may retry in the case of a failure.
+ * @tparam ReturnType the return type of the rpc
+ * @tparam RequestType type of the object sent as request
+ * @tparam ReplyType type of the object expected as reply
+ * @param request the request to send
+ * @param retryAttempts the number of retry attempts
+ * @param backOffTime waiting time between retrial
+ * @param func the call to the selected rpc
+ * @return a return object in the case of success or failure
+ */
 template<typename ReturnType, typename RequestType, typename ReplyType>
 [[nodiscard]] ReturnType processGenericRpc(const RequestType& request,
                                            uint32_t retryAttempts,
