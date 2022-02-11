@@ -68,16 +68,8 @@ void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodeP
                                                                                                << windowOp->toString());
     windowOp->getWindowDefinition()->setOriginId(windowOp->getId());
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
-    auto windowDef = windowOp->getWindowDefinition();
-    // identify the number of origins by the number of sources.
-    // TODO we should have a better way to invesigate the number of origins for a specific operator and maybe also give specifc ids.
-    //auto sourceOptrs = windowOp->getNodesByType<SourceLogicalOperatorNode>();
-    //auto origins = sourceOptrs.size();
-    //windowDef->setNumberOfInputEdges(origins);
-    //auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef);
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());
-
     NES_DEBUG("DistributeWindowRule::apply: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
     windowOp->replace(newWindowOp);
 }
@@ -100,10 +92,10 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
     auto triggerActionComplete = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     auto windowType = windowDefinition->getWindowType();
     auto windowAggregation = windowDefinition->getWindowAggregation();
-    auto keyField = windowDefinition->getKeys();
+    auto keyField = windowDefinition->getKeys()[0];
     auto allowedLateness = windowDefinition->getAllowedLateness();
     // For the final window computation we have to change copy aggregation function and manipulate the fields we want to aggregate.
-    auto windowComputationAggregation = windowAggregation;
+    auto windowComputationAggregation = windowAggregation[0]->copy();
     //    windowComputationAggregation->on()->as<FieldAccessExpressionNode>()->setFieldName("value");
 
     //TODO: @Ankit we have to change this depending on how you do the placement
@@ -115,8 +107,8 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
 
     Windowing::LogicalWindowDefinitionPtr windowDef;
     if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
-        windowDef = Windowing::LogicalWindowDefinition::create(keyField,
-                                                               windowComputationAggregation,
+        windowDef = Windowing::LogicalWindowDefinition::create({keyField},
+                                                               {windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
                                                                numberOfEdgesForFinalComputation,
@@ -125,7 +117,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
                                                                allowedLateness);
 
     } else {
-        windowDef = Windowing::LogicalWindowDefinition::create(windowComputationAggregation,
+        windowDef = Windowing::LogicalWindowDefinition::create({windowComputationAggregation},
                                                                windowType,
                                                                Windowing::DistributionCharacteristic::createCombiningWindowType(),
                                                                numberOfEdgesForFinalComputation,
@@ -153,13 +145,13 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
 
     //add merger
     UnaryOperatorNodePtr mergerAssigner;
-    if (finalComputationAssigner->getChildren().size() >= windowDistributionChildrenThreshold) {
-        auto sliceCombinerWindowAggregation = windowAggregation;
+    if (finalComputationAssigner->getChildren().size() >= windowDistributionCombinerThreshold) {
+        auto sliceCombinerWindowAggregation = windowAggregation[0]->copy();
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef =
-                Windowing::LogicalWindowDefinition::create(keyField,
-                                                           sliceCombinerWindowAggregation,
+                Windowing::LogicalWindowDefinition::create({keyField},
+                                                           {sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
                                                            numberOfEdgesForMerger,
@@ -169,7 +161,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
 
         } else {
             windowDef =
-                Windowing::LogicalWindowDefinition::create(sliceCombinerWindowAggregation,
+                Windowing::LogicalWindowDefinition::create({sliceCombinerWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
                                                            numberOfEdgesForMerger,
@@ -192,13 +184,13 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
         NES_DEBUG("DistributeWindowRule::apply: process child " << child->toString());
 
         // For the SliceCreation operator we have to change copy aggregation function and manipulate the fields we want to aggregate.
-        auto sliceCreationWindowAggregation = windowAggregation;
+        auto sliceCreationWindowAggregation = windowAggregation[0]->copy();
         auto triggerActionSlicing = Windowing::SliceAggregationTriggerActionDescriptor::create();
 
         if (logicalWindowOperator->getWindowDefinition()->isKeyed()) {
             windowDef =
-                Windowing::LogicalWindowDefinition::create(keyField,
-                                                           sliceCreationWindowAggregation,
+                Windowing::LogicalWindowDefinition::create({keyField},
+                                                           {sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
                                                            1,
@@ -207,7 +199,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
                                                            allowedLateness);
         } else {
             windowDef =
-                Windowing::LogicalWindowDefinition::create(sliceCreationWindowAggregation,
+                Windowing::LogicalWindowDefinition::create({sliceCreationWindowAggregation},
                                                            windowType,
                                                            Windowing::DistributionCharacteristic::createSlicingWindowType(),
                                                            1,
