@@ -19,7 +19,6 @@ namespace NES::Runtime {
 void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment) {
     void* tmp = nullptr;
     NES_ASSERT(posix_memalign(&tmp, alignment, bytes) == 0, "memory allocation failed with alignment");
-    memset(tmp, 0, bytes);
     return tmp;
 }
 
