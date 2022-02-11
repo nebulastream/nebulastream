@@ -44,7 +44,6 @@ CompiledExecutablePipelineStage::create(std::shared_ptr<Compiler::DynamicObject>
 
 CompiledExecutablePipelineStage::~CompiledExecutablePipelineStage() {
     // First we have to destroy the pipeline stage only afterwards we can remove the associated code.
-    NES_DEBUG("~CompiledExecutablePipelineStage()");
     this->executablePipelineStage.reset();
     this->dynamicObject.reset();
 }

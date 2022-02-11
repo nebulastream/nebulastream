@@ -55,7 +55,6 @@
 #include <string>
 #include <utility>
 #include <variant>
-#include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 
 namespace NES::QueryCompilation {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,
@@ -260,12 +259,14 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 }
 
 SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourcePtr physicalSource) {
-    NES_DEBUG("PhysicalStreamConfig: create Actual source descriptor with physical source: " << physicalSource->toString());
     auto logicalSourceName = physicalSource->getLogicalSourceName();
     auto physicalSourceName = physicalSource->getPhysicalSourceName();
     auto physicalSourceType = physicalSource->getPhysicalSourceType();
+    auto sourceType = physicalSourceType->getSourceType();
+    NES_DEBUG("PhysicalStreamConfig: create Actual source descriptor with physical source: " << physicalSource->toString() << " "
+                                                                                             << sourceType);
 
-    switch (physicalSourceType->getSourceType()) {
+    switch (sourceType) {
         case DEFAULT_SOURCE: {
             auto defaultSourceType = physicalSourceType->as<DefaultSourceType>();
             return DefaultSourceDescriptor::create(
@@ -320,8 +321,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         }
         case STATIC_DATA_SOURCE: {
             auto staticDataSourceType = physicalSourceType->as<Experimental::StaticDataSourceType>();
-            return Experimental::StaticDataSourceDescriptor::create(schema,
-                                                     staticDataSourceType->getPathTableFile());
+            return Experimental::StaticDataSourceDescriptor::create(schema, staticDataSourceType->getPathTableFile());
         }
         case LAMBDA_SOURCE: {
             auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
