@@ -12,16 +12,17 @@
     limitations under the License.
 */
 
-#include "Util/Logger.hpp"
+#include "../../nes-core/tests/util/NesBaseTest.hpp"
 #include "Util/TestUtils.hpp"
 #include "gtest/gtest.h"
 #include <API/Query.hpp>
+#include <Client/QueryConfig.hpp>
 #include <Client/RemoteClient.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include "../../nes-core/tests/util/NesBaseTest.hpp"
+#include <Util/Logger.hpp>
 
 #include <unistd.h>
 
@@ -49,14 +50,14 @@ class RemoteClientTest : public Testing::NESBaseTest {
         uint64_t port = crd->startCoordinator(false);
         EXPECT_NE(port, 0UL);
         NES_DEBUG("RemoteClientTest: Coordinator started successfully");
-        TestUtils::waitForWorkers(restPort, 5, 0);
+        TestUtils::waitForWorkers(*restPort, 5, 0);
 
         NES_DEBUG("RemoteClientTest: Start worker 1");
-        wrk = std::make_shared<NesWorker>(wrkConf);
+        wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool retStart1 = wrk->start(false, true);
         EXPECT_TRUE(retStart1);
         NES_DEBUG("RemoteClientTest: Worker1 started successfully");
-        TestUtils::waitForWorkers(restPort, 5, 1);
+        TestUtils::waitForWorkers(*restPort, 5, 1);
 
         client = std::make_shared<Client::RemoteClient>("localhost", *restPort);
     }

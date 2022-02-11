@@ -25,7 +25,7 @@
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
-
+#include "../../../nes-core/tests/util/NesBaseTest.hpp"
 namespace NES::Experimental {
 
 auto schema_customer = Schema::create()
@@ -64,7 +64,7 @@ struct __attribute__((packed)) record_nation {
 const std::string table_path_customer_l0200 = "./test_data/tpch_l0200_customer.tbl";
 const std::string table_path_nation_s0001 = "./test_data/tpch_s0001_nation.tbl";
 
-class StaticDataSourceIntegrationTest : public testing::Test {
+class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
   public:
     static void SetUpTestCase() {
         NES_INFO("Setup StaticDataSourceIntegrationTest test class.");
@@ -93,15 +93,6 @@ class StaticDataSourceIntegrationTest : public testing::Test {
             NES_ASSERT(num_lines==25, "The table file table_path_nation_s0001 does not contain exactly 25 lines.");
         }
     }
-
-    void SetUp() override {
-        //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-        // by assigning a different RPC port for each test case
-        rpcPort = rpcPort + 30;
-        restPort = restPort + 2;
-    }
-    uint64_t rpcPort = 4000;
-    uint64_t restPort = 8081;
 };
 
 
@@ -110,9 +101,9 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
+    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -127,20 +118,18 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
 
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
 
     PhysicalSourceTypePtr sourceType = StaticDataSourceType::create(table_path_customer_l0200, 0, "wrapBuffer", /* placeholder: */ 0);
     auto physicalSource = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType);
     wrkConf->addPhysicalSource(physicalSource);
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "testCustomerTableOut.csv";
+    std::string filePath = getTestResourceFolder() / "testCustomerTableOut.csv";
     remove(filePath.c_str());
 
     //register query
@@ -187,9 +176,9 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
+    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -204,20 +193,18 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
 
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
 
     PhysicalSourceTypePtr sourceType = StaticDataSourceType::create(table_path_nation_s0001, 0, "wrapBuffer", /* placeholder: */ 0);
     auto physicalSource = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType);
     wrkConf->addPhysicalSource(physicalSource);
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "testNationTableOut.csv";
+    std::string filePath = getTestResourceFolder() / "testNationTableOut.csv";
     remove(filePath.c_str());
 
     //register query
@@ -261,9 +248,9 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(rpcPort);
-    crdConf->setRestPort(restPort);
-    wrkConf->setCoordinatorPort(rpcPort);
+    crdConf->setRpcPort(*rpcCoordinatorPort);
+    crdConf->setRestPort(*restPort);
+    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -279,8 +266,6 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
 
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
 
     PhysicalSourceTypePtr sourceType1 = StaticDataSourceType::create(table_path_nation_s0001, 0, "wrapBuffer", /* placeholder: */ 0);
     auto physicalSource1 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType1);
@@ -290,13 +275,13 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     auto physicalSource2 = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType2);
     wrkConf->addPhysicalSource(physicalSource2);
 
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("StaticDataSourceIntegrationTest: Worker1 started successfully");
 
     // local fs
-    std::string filePath = "testTwoTableJoinOut.csv";
+    std::string filePath = getTestResourceFolder() / "testTwoTableJoinOut.csv";
     remove(filePath.c_str());
 
     //register query
