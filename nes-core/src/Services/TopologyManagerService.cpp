@@ -65,9 +65,9 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
     }
 
     if (coordinates.has_value()) {
-        auto c = coordinates.value();
-        NES_DEBUG("added node with geographical location: " << get<0>(c) << ", " << get<1>(c));
-        topology->setPhysicalNodePosition(newTopologyNode, c, true);
+        auto coordTuple = coordinates.value();
+        NES_DEBUG("added node with geographical location: " << get<0>(coordTuple) << ", " << get<1>(coordTuple));
+        topology->setPhysicalNodePosition(newTopologyNode, coordTuple, true);
     } else {
         NES_DEBUG("added node does not have a geographical location");
     }
@@ -188,7 +188,7 @@ TopologyNodePtr TopologyManagerService::findNodeWithId(uint64_t nodeId) { return
 
 uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNodeIdCounter; }
 
-//TODO add functions here, that do not only look circular, but make sure, that there are nodes found in every possible direction of furture movement
+//TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of furture movement
 
 std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> TopologyManagerService::getNodesInRange(std::tuple<double, double> center, double radius) {
     return topology->getNodesInRange(center, radius);

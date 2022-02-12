@@ -145,22 +145,22 @@ class TopologyNode : public Node {
     bool removeLinkProperty(const TopologyNodePtr& linkedNode);
 
     /**
-     * @brief get the geographical coordinates of a topology node
-     * @return The geographical coordinates of the node
+     * @brief get the geographical coordinates of this topology node
+     * @return The geographical coordinates of the node in the format <latitude, longitude>
      */
     std::optional<std::tuple<double, double>> getCoordinates();
 
     /**
      * @brief set the goegraphical coordinates of a topology node
-     * @param lat
-     * @param lng
+     * @param lat: geographical latitude in signed degrees [-90, 90]
+     * @param lng: geographical longitude in signed degrees [-180, 180]
      * @return true on success
      */
     bool setCoordinates(double lat, double lng);
 
     /**
-     * @brief set the goegraphical coordinates of a topology node
-     * @param coordinatesIn: a tuple with the coordinates
+     * @brief set the goegraphical coordinates of this topology node
+     * @param coordinatesIn: a tuple with the coordinates in the format <latitude, longitude>
      * @return true on success
      */
     bool setCoordinates(std::tuple<double, double> coordinatesIn);

@@ -151,9 +151,9 @@ class CoordinatorRPCClient {
     bool notifyEpochTermination(uint64_t timestamp, uint64_t queryId);
 
     /**
-     * @brief Method to get all field nodes within a certain range around a geographical point
-     * @param coord: center location as tuple of doubles, radius: radius in km to define query area
-     * @return list of node IDs and their corresponding coordinates
+     * @brief Method to get all field nodes (field nodes = non-mobile nodes with a specified geographical location) within a certain range around a geographical point
+     * @param coord: center location as a tuple in the format <latitude, longitude>, radius: radius in km to define query area
+     * @return list of node IDs and their corresponding coordinates as tuples in the format <latitude, longitude>
      */
     std::vector<std::pair<uint64_t, std::tuple<double, double>>> getNodeIdsInRange(std::tuple<double, double> coord, double radius);
 

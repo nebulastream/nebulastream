@@ -496,12 +496,11 @@ std::vector<std::pair<uint64_t, std::tuple<double, double>>> CoordinatorRPCClien
 
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
-    //TODO: does it make sense here to use a map instead of a vector?
-    std::vector<std::pair<uint64_t, std::tuple<double, double>>> retVec;
+    std::vector<std::pair<uint64_t, std::tuple<double, double>>> nodesInRange;
     for (NodeGeoInfo nodeInfo : *reply.mutable_nodes()) {
-        retVec.emplace_back(nodeInfo.id(), std::tuple(nodeInfo.coord().lat(), nodeInfo.coord().lng()));
+        nodesInRange.emplace_back(nodeInfo.id(), std::tuple(nodeInfo.coord().lat(), nodeInfo.coord().lng()));
     }
-    return retVec;
+    return nodesInRange;
 
 }
 bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {

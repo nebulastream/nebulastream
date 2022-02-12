@@ -392,7 +392,7 @@ bool NesWorker::setNodeLocationCoordinates(std::tuple<double, double> coordinate
     return true;
 }
 
-//TODO check first if the node is mobile and if it is, then return a value from the gps/csv interface
+//TODO #2475 check first if the node is mobile and if it is, then return a value from the gps/csv interface once the interface is implemented
 std::optional<std::tuple<double, double>> NesWorker::getNodeLocationCoordinates() {
     return locationCoordinates;
 }
@@ -406,7 +406,10 @@ std::optional<std::tuple<double, double>> NesWorker::locationStringToTuple(const
     ss >> lat;
     char seperator = 0;
     ss >> seperator;
-    //todo: throw error if separator is not ","
+    if (seperator!= ',') {
+        NES_WARNING("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
+        return {};
+    }
     double lng = NAN;
     ss >> lng;
 

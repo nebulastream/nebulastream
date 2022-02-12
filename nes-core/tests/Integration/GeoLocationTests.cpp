@@ -164,6 +164,9 @@ TEST_F(GeoLocationTests, createNodeWithLocation) {
     //moving node 3 to hamburg (more than 100km away
     topology->setPhysicalNodePosition(node3, std::make_tuple(53.559524264262194, 10.039384739854102));
 
+    //node 3 should not have any nodes within a radius of 100km
+    EXPECT_EQ(topology->getClosestNodeTo(node3, 100).has_value(), false);
+
     //because node 3 is in hamburg now, we will only get 2 nodes in a radius of 100km (node 2 itself and node 4)
     inRangeAtWorker = wrk2->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
@@ -171,6 +174,9 @@ TEST_F(GeoLocationTests, createNodeWithLocation) {
     //when looking within a radius of 500km we will find all nodes again
     inRangeAtWorker = wrk2->getNodeIdsInRange(500.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
+
+    //location far away from all the other nodes should not have any closest node
+    EXPECT_EQ(topology->getClosestNodeTo(std::make_tuple(-53.559524264262194, -10.039384739854102), 100).has_value(), false);
 
     NES_INFO("stopping worker");
     bool retStopWrk = wrk->stop(false);

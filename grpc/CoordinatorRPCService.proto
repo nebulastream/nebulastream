@@ -60,7 +60,7 @@ message RegisterNodeRequest {
   uint32 numberOfSlots = 4;
   NES.SerializableStaticNesMetrics monitoringData = 6;
   Coordinates coordinates = 7;
-  //TODO add this later, once getting hte neighbors works
+  //TODO #2474 also pass isMobile once it is implemented at Worker and Topology
   //bool isMobile = 8;
 }
 
