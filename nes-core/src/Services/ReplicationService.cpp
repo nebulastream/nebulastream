@@ -27,14 +27,15 @@
 
 namespace NES {
 
-ReplicationService::ReplicationService(NesCoordinatorPtr coordinatorPtr) : coordinatorPtr(std::move(coordinatorPtr)) {}
+ReplicationService::ReplicationService(NesCoordinatorPtr coordinatorPtr) : coordinatorPtr(std::move(coordinatorPtr)), currentEpochBarrier(0) {}
 
 ReplicationService::~ReplicationService() {};
 
-bool ReplicationService::propagatePunctuation(uint64_t timestamp, uint64_t querySubPlanId) const{
+bool ReplicationService::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
+    std::unique_lock lock(replicationServiceMutex);
     std::vector<SourceLogicalOperatorNodePtr> sources;
-    uint64_t queryId = this->coordinatorPtr->getNodeEngine()->getDeployedQEPs().find(querySubPlanId)->second->getQueryId();
-
+    this->currentEpochBarrier = timestamp;
+    uint64_t queryId = this->coordinatorPtr->getNodeEngine()->getQueryIdFromSubQueryId(querySubPlanId);
     NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << timestamp << "to sources with queryId " << queryId);
     auto queryPlan = this->coordinatorPtr->getGlobalQueryPlan()->getSharedQueryPlan(queryId)->getQueryPlan();
     uint64_t curQueryId = queryPlan->getQueryId();
@@ -46,9 +47,9 @@ bool ReplicationService::propagatePunctuation(uint64_t timestamp, uint64_t query
             std::vector<TopologyNodePtr> sourceLocations = this->coordinatorPtr->getStreamCatalog() ->getSourceNodesForLogicalStream(streamName);
             if (!sourceLocations.empty()) {
                 for (auto& sourceLocation : sourceLocations) {
-                    auto coordinatorRpcClient = std::make_shared<WorkerRPCClient>();
+                    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
                     bool success =
-                        coordinatorRpcClient->truncatePunctuation(timestamp, curQueryId, sourceLocation->getIpAddress());
+                        workerRpcClient->injectEpochBarrier(timestamp, curQueryId, sourceLocation->getIpAddress());
                     NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
                     return success;
                 }

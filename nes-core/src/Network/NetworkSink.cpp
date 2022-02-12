@@ -25,20 +25,14 @@ namespace NES::Network {
 NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
                          QuerySubPlanId querySubPlanId,
-                         NetworkManagerPtr networkManager,
                          const NodeLocation& destination,
                          NesPartition nesPartition,
-                         const Runtime::BufferManagerPtr& bufferManager,
-                         Runtime::QueryManagerPtr queryManager,
                          Runtime::NodeEnginePtr nodeEngine,
-                         Runtime::BufferStoragePtr bufferStorage,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes)
-    : inherited0(std::make_shared<NesFormat>(schema, bufferManager), queryManager, querySubPlanId, nodeEngine->getReplicationService()),
-      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId),
-      networkManager(std::move(networkManager)), queryManager(queryManager), receiverLocation(destination),
-      bufferManager(std::move(bufferManager)), bufferStorage(std::move(bufferStorage)), nesPartition(nesPartition),
+    : inherited0(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine->getQueryManager(), querySubPlanId, nodeEngine->getReplicationService()),
+      uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), receiverLocation(destination), nesPartition(nesPartition),
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << destination.createZmqURI());

@@ -217,11 +217,11 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     bool checkSupportedLayoutTypes(SchemaPtr& schema);
 
     /**
-     * @brief method receives current safe to trim timestamp
-     * @param timestamp current punctuation
+     * @brief method injects epoch barrier to the data stream
+     * @param timestamp current epoch timestamp
      * @return success is the message was sent
      */
-    virtual bool receiveEpoch(uint64_t timestamp, uint64_t queryId) const;
+    virtual bool injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const;
 
   protected:
     Runtime::QueryManagerPtr queryManager;

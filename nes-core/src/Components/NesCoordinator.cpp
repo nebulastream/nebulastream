@@ -235,7 +235,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     auto workerConfigCopy = workerConfig;
     worker = std::make_shared<NesWorker>(std::move(workerConfigCopy));
     worker->start(/**blocking*/ false, /**withConnect*/ true);
-    worker->getNodeEngine()->setReplicationService(std::make_shared<ReplicationService>(this->inherited0::shared_from_this()));
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");

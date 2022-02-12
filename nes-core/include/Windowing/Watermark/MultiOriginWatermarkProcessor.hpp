@@ -77,7 +77,7 @@ class MultiOriginWatermarkProcessor {
     // The watermark processor maintains a local watermark processor for each origin.
     std::map<uint64_t, std::unique_ptr<WatermarkProcessor>> localWatermarkProcessor;
 };
-
+using MultiOriginWatermarkProcessorPtr = std::unique_ptr<MultiOriginWatermarkProcessor>;
 }// namespace NES::Windowing
 
 #endif  // NES_INCLUDE_WINDOWING_WATERMARK_MULTIORIGINWATERMARKPROCESSOR_HPP_

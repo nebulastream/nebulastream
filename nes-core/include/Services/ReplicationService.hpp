@@ -31,10 +31,12 @@ class ReplicationService {
      * @param queryId: identifies what query sends punctuation
      * @return bool indicating success
      */
-    virtual bool propagatePunctuation(uint64_t timestamp, uint64_t queryId) const;
+    virtual bool notifyEpochTermination(uint64_t timestamp, uint64_t queryId);
 
   private:
+    mutable std::recursive_mutex replicationServiceMutex;
     NesCoordinatorPtr coordinatorPtr;
+    uint64_t currentEpochBarrier;
 };
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 }

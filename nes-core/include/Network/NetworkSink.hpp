@@ -42,13 +42,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     explicit NetworkSink(const SchemaPtr& schema,
                          uint64_t uniqueNetworkSinkDescriptorId,
                          QuerySubPlanId querySubPlanId,
-                         NetworkManagerPtr networkManager,
                          NodeLocation const& destination,
                          NesPartition nesPartition,
-                         const Runtime::BufferManagerPtr& bufferManager,
-                         Runtime::QueryManagerPtr queryManager,
                          Runtime::NodeEnginePtr nodeEngine,
-                         Runtime::BufferStoragePtr bufferStorage,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes);

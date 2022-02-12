@@ -20,6 +20,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Services/ReplicationService.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
 #include <vector>
@@ -149,14 +150,6 @@ class NesWorker: public std::enable_shared_from_this<NesWorker>, public Exceptio
      * @return true if Notification was successful, false otherwise
      */
     bool notifyQueryFailure(uint64_t queryId, uint64_t subQueryId, uint64_t workerId, uint64_t operatorId, std::string errorMsg);
-
-    /**
-     * @brief method to propagate new epoch timestamp to coordinator
-     * @param timestamp: max timestamp of current epoch
-     * @param queryId: identifies what query sends punctuation
-     * @return bool indicating success
-     */
-    bool propagatePunctuation(uint64_t timestamp, uint64_t queryId);
 
     uint64_t getWorkerId();
 

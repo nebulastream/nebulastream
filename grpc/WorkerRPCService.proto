@@ -30,7 +30,7 @@ service WorkerRPCService {
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
 
-  rpc TruncatePunctuation (PropagateTimestampNotificationToWorker) returns (PropagateTimestampReplyFromWorker) {}
+  rpc InjectEpochBarrier (EpochBarrierNotification) returns (EpochBarrierReply) {}
 
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 
@@ -100,12 +100,12 @@ message MonitoringDataReply {
   bytes buffer = 1;
 }
 
-message PropagateTimestampNotificationToWorker{
+message EpochBarrierNotification{
   uint64 timestamp = 1;
   uint64 queryId = 2;
 }
 
-message PropagateTimestampReplyFromWorker{
+message EpochBarrierReply{
   bool success = 1;
 }
 

@@ -108,7 +108,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief dtor
      * @return
      */
-    virtual ~NesCoordinator() override;
+    ~NesCoordinator() override;
 
     /**
      * @brief start rpc server: rest server, and one worker <
@@ -189,7 +189,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * getter for the streamCatalogService
      * @return
      */
-    virtual StreamCatalogServicePtr getStreamCatalogService() const;
+    StreamCatalogServicePtr getStreamCatalogService() const;
 
     /**
      * getter for the topologyManagerService

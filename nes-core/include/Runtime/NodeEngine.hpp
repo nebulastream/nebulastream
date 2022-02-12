@@ -74,6 +74,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
+                        ReplicationServicePtr&&,
                         NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
@@ -209,18 +210,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     uint64_t getNodeEngineId();
 
     /**
-    * @brief getter of nes worker
-    * @return NesWorker
-    */
-    std::weak_ptr<NesWorker> getNesWorker();
-
-    /**
-     * @brief getter of buffer manager
-     * @return bufferManager
-     */
-    QueryCompilation::QueryCompilerPtr getCompiler();
-
-    /**
      * @brief getter of network manager
      * @return network manager
      */
@@ -230,6 +219,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return return the status of a query
      */
     Execution::ExecutableQueryPlanStatus getQueryStatus(QueryId queryId);
+
+    /**
+     * @brief method to inject new epoch timestamp to data stream
+     * @param timestamp: max timestamp of current epoch
+     * @param queryId: identifies what query sends punctuation
+     */
+    void InjectEpochBarrier(uint64_t timestamp, uint64_t queryId) const;
 
     /**
     * @brief method to return the query statistics
@@ -295,29 +291,23 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     const std::vector<PhysicalSourcePtr>& getPhysicalSources() const;
 
     /**
-     * @brief Provide the deployed query execution plans
-     * @return map of query subplan ids to executable query plans
-     */
-    std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr>
-    getDeployedQEPs() const;
-
-    /**
-     * @brief Set replication service
-     * @param replicationService replication service
-     */
-    void setReplicationService(ReplicationServicePtr replicationService);
-
-    /**
      * @brief Provide replication service
      * @return replicationService replication service
      */
     ReplicationServicePtr getReplicationService();
 
     /**
-     * @brief Provide mapping of query id to sub plans
-     * @return mapping of query id to sub plans
+     * @brief maps querySubId t
+     * @return replicationService replication service
      */
-    std::map<QueryId, std::vector<QuerySubPlanId>> getQueryIdToQuerySubPlanIds() const;
+    uint64_t getQueryIdFromSubQueryId(uint64_t querySubPlanId) const;
+
+    /**
+     * @brief returns sinks for given query executable plan id
+     * @param QEPId query executable plan id
+     * @return vector of sinks
+     */
+    const std::vector<DataSinkPtr>& getSinksForQEPId(uint64_t QEPId) const;
 
   private:
     std::vector<PhysicalSourcePtr> physicalSources;

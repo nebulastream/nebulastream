@@ -518,8 +518,8 @@ void DataSource::runningRoutineAdaptive() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
-bool DataSource::receiveEpoch(uint64_t timestamp, uint64_t queryId) const {
-    NES_DEBUG("DataSource::receiveEpoch received timestamp " << timestamp << "with queryId " << queryId);
+bool DataSource::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const {
+    NES_DEBUG("DataSource::injectEpochBarrier received timestamp " << timestamp << "with queryId " << queryId);
     //TODO: send timestamp to BufferStorage and further downstream
     //truncate local
 

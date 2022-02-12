@@ -154,6 +154,10 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             NES_ERROR("Runtime: error while creating bufferStorage");
             throw log4cxx::helpers::Exception("Error while creating bufferStorage");
         }
+        if (!replicationService) {
+            NES_ERROR("Runtime: error while creating replicationService");
+            throw Exception("Error while creating replicationService");
+        }
         if (!materializedViewManager) {
             NES_ERROR("Runtime: error while creating materializedViewMananger");
             throw log4cxx::helpers::Exception("Error while creating materializedViewMananger");
@@ -185,6 +189,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             std::move(partitionManager),
             std::move(compiler),
             std::move(stateManager),
+            std::move(replicationService),
             std::move(materializedViewManager),
             nodeEngineId,
             numberOfBuffersInGlobalBufferManager,
