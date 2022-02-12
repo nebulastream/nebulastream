@@ -30,7 +30,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        QuerySubPlanId querySubPlanId,
                        ReplicationServicePtr replicationService)
     : sinkFormat(std::move(sinkFormat)), queryManager(std::move(queryManager)), querySubPlanId(querySubPlanId), replicationService(std::move(replicationService)) {
-    watermarkProcessor = std::make_shared<Windowing::MultiOriginWatermarkProcessor>(1);
+    watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(1);
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 
@@ -58,25 +58,24 @@ std::string SinkMedium::getAppendAsString() const {
     return "OVERWRITE";
 }
 
-void SinkMedium::propagateEpoch(uint64_t timestamp) const {
-    this->replicationService->propagatePunctuation(timestamp, querySubPlanId);
+void SinkMedium::notifyEpochTermination(uint64_t timestamp) const {
+    this->replicationService->notifyEpochTermination(timestamp, querySubPlanId);
 }
 
-
-    void SinkMedium::reconfigure(Runtime::ReconfigurationMessage & message, Runtime::WorkerContext & context) {
-        Reconfigurable::reconfigure(message, context);
-    }
-    void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage & message) {
-        Reconfigurable::postReconfigurationCallback(message);
-        switch (message.getType()) {
-            case Runtime::SoftEndOfStream:
-            case Runtime::HardEndOfStream: {
-                shutdown();
-                break;
-            }
-            default: {
-                break;
-            }
+void SinkMedium::reconfigure(Runtime::ReconfigurationMessage & message, Runtime::WorkerContext & context) {
+    Reconfigurable::reconfigure(message, context);
+}
+void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage & message) {
+    Reconfigurable::postReconfigurationCallback(message);
+    switch (message.getType()) {
+        case Runtime::SoftEndOfStream:
+        case Runtime::HardEndOfStream: {
+            shutdown();
+            break;
+        }
+        default: {
+            break;
         }
     }
+}
 }// namespace NES

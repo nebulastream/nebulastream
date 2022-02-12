@@ -356,16 +356,16 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, Runtime:
     return false;
 }
 
-bool WorkerRPCClient::truncatePunctuation(uint64_t timestamp, uint64_t queryId, const std::string& address) {
-    PropagateTimestampNotificationToWorker request;
+bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address) {
+    EpochBarrierNotification request;
     request.set_timestamp(timestamp);
     request.set_queryid(queryId);
-    PropagateTimestampReplyFromWorker reply;
+    EpochBarrierReply reply;
     ClientContext context;
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->TruncatePunctuation(&context, request, &reply);
+    Status status = workerStub->InjectEpochBarrier(&context, request, &reply);
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
         return true;

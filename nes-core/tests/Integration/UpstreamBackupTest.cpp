@@ -34,7 +34,7 @@ using namespace std;
 namespace NES {
 
 using namespace Configurations;
-
+static uint64_t timestamp = 1644426604;
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
@@ -129,21 +129,16 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     auto replicationService = std::make_shared<MockReplicationService>(crd);
-    crd->getNodeEngine()->setReplicationService(replicationService);
     //get sink
-    auto plans = crd->getNodeEngine()->getDeployedQEPs();
-    for (auto& plan : plans) {
-        auto sinks = plan.second->getSinks();
-        for (auto& sink : sinks) {
-            sink->propagateEpoch(1644426604);
-        }
+    auto sinks = crd->getNodeEngine()->getSinksForQEPId(2);
+    for (auto& sink : sinks) {
+        sink->notifyEpochTermination(timestamp);
     }
 
     //check if the method was called
-    EXPECT_CALL(*replicationService, propagatePunctuation(1644426604, queryId))
+    EXPECT_CALL(*replicationService, propagatePunctuation(timestamp, queryId))
                                     .Times(1)
         .WillOnce(testing::Return(true));
-
-    testing::Mock::AllowLeak(&replicationService);
+    delete(&replicationService);
 }
 }

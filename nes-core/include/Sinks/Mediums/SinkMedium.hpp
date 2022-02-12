@@ -117,10 +117,10 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::string getAppendAsString() const;
 
     /**
-     * @brief method sends current safe to trim timestamp to coordinator
-     * @param timestamp to propagate
+     * @brief method passes current safe to trim timestamp to coordinator via ReplicationService
+     * @param max epoch timestamp
      */
-    void propagateEpoch(uint64_t timestamp) const;
+    void notifyEpochTermination(uint64_t timestamp) const;
 
     /**
       * @brief method to return the type of medium
@@ -150,7 +150,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     Runtime::QueryManagerPtr queryManager;
     QuerySubPlanId querySubPlanId;
     ReplicationServicePtr replicationService;
-    std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarkProcessor;
+    Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
 
     uint64_t sentBuffer{0};// TODO check thread safety
     uint64_t sentTuples{0};// TODO check thread safety

@@ -41,7 +41,7 @@ class NodeEngineFactory {
      * @param config
      * @return
      */
-    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<PhysicalSourcePtr> physicalSources);
+    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<PhysicalSourcePtr> physicalSources, ReplicationServicePtr&& replicationService = nullptr);
 
     /**
     * @brief this creates a new Runtime

@@ -50,6 +50,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
+                       ReplicationServicePtr&& replicationService,
                        Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
@@ -58,7 +59,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
     : physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
       queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)),
       queryCompiler(std::move(queryCompiler)),
-      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
+      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), replicationService(std::move(replicationService)), materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker){
@@ -326,8 +327,15 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
     NES_ASSERT2_FMT(bufferManagerIndex < bufferManagers.size(), "invalid buffer manager index=" << bufferManagerIndex);
     return bufferManagers[bufferManagerIndex];
 }
-void NodeEngine::setReplicationService(ReplicationServicePtr replicationService) {
-    this->replicationService = replicationService;
+
+void NodeEngine::InjectEpochBarrier(uint64_t timestamp, uint64_t queryId) const{
+    std::vector<QuerySubPlanId> subQueryPlanIds = queryIdToQuerySubPlanIds.find(queryId)->second;
+    for (auto& subQueryPlanId : subQueryPlanIds) {
+        auto sources = deployedQEPs.find(subQueryPlanId)->second->getSources();
+        for (auto& source : sources) {
+            source->injectEpochBarrier(timestamp, queryId);
+        }
+    }
 }
 
 ReplicationServicePtr NodeEngine::getReplicationService() { return replicationService; }
@@ -345,8 +353,6 @@ HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManag
 Experimental::MaterializedView::MaterializedViewManagerPtr NodeEngine::getMaterializedViewManager() const {
     return materializedViewManager;
 }
-
-std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> NodeEngine::getDeployedQEPs() const { return deployedQEPs; }
 
 Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);
@@ -460,10 +466,6 @@ std::vector<QueryStatistics> NodeEngine::getQueryStatistics(bool withReset) {
 
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
-std::map<QueryId, std::vector<QuerySubPlanId>> NodeEngine::getQueryIdToQuerySubPlanIds() const {
-    return this->queryIdToQuerySubPlanIds;
-}
-
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
     std::cerr << "Runtime failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
@@ -487,6 +489,14 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 }
 
 const std::vector<PhysicalSourcePtr>& NodeEngine::getPhysicalSources() const { return physicalSources; }
+
+uint64_t NodeEngine::getQueryIdFromSubQueryId(uint64_t querySubPlanId) const {
+    return deployedQEPs.find(querySubPlanId)->second->getQueryId();
+}
+
+const std::vector<DataSinkPtr>& NodeEngine::getSinksForQEPId(uint64_t QEPId) const {
+    return deployedQEPs.find(QEPId)->second->getSinks();
+}
 
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases

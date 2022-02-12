@@ -46,8 +46,6 @@ service CoordinatorRPCService {
 
   // send a notification when a query fails to the coordinator
   rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
-
-  rpc PropagatePunctuation (PropagateTimestampNotification) returns (PropagateTimestampReply) {}
 }
 
 message RegisterNodeRequest {
@@ -151,14 +149,5 @@ message QueryFailureNotification{
 }
 
 message QueryFailureNotificationReply{
-  bool success = 1;
-}
-
-message PropagateTimestampNotification{
-  uint64 timestamp = 1;
-  uint64 queryId = 2;
-}
-
-message PropagateTimestampReply{
   bool success = 1;
 }

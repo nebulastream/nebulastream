@@ -13,7 +13,6 @@
 */
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
@@ -21,7 +20,6 @@
 #include <Monitoring/MonitoringAgent.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <utility>
 
 namespace NES {
@@ -125,21 +123,14 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::TruncatePunctuation(ServerContext*,
-                                           const PropagateTimestampNotificationToWorker* request,
-                                           PropagateTimestampReplyFromWorker* reply) {
+Status WorkerRPCServer::InjectEpochBarrier(ServerContext*,
+                                           const EpochBarrierNotification* request,
+                                           EpochBarrierReply* reply) {
     try {
         NES_ERROR("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp "
           << request->timestamp() << " and a queryId " << request->queryid());
         reply->set_success(true);
-        std::vector<QuerySubPlanId> subQueryPlanIds = nodeEngine->getQueryIdToQuerySubPlanIds().find(request->queryid())->second;
-        auto deployedQEPs = nodeEngine->getDeployedQEPs();
-        for (auto& subQueryPlanId : subQueryPlanIds) {
-            auto sources = deployedQEPs.find(subQueryPlanId)->second->getSources();
-            for (auto& source : sources) {
-                source->receiveEpoch(request->timestamp(), request->queryid());
-            }
-        }
+        nodeEngine->InjectEpochBarrier(request->timestamp(), request->queryid());
         return Status::OK;
     } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());
