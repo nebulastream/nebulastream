@@ -28,7 +28,7 @@
 namespace NES {
 
 //if no other values is supplied to the getClosestNodePosition() function, it will use this search radius to try to find a node
-const int STANDARD_SEARCH_RADIUS = 50;
+const int DEFAULT_SEARCH_RADIUS = 50;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
@@ -86,26 +86,26 @@ class Topology {
      * @param radius the maximum distance which the returned node can habe from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    TopologyNodePtr getClosestNodeTo(std::tuple<double, double> coordTuple, int radius = STANDARD_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(std::tuple<double, double> coordTuple, int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
-     * @brief returns the closest field node to a cartein node (which does not equal the node passed as an argument)
+     * @brief returns the closest field node to a certain node (which does not equal the node passed as an argument)
      * @param nodePtr: pointer to a field node
-     * @param radius the maximum distance which the returned node can habe from the specified node
+     * @param radius the maximum distance in kilometres which the returned node can have from the specified node
      * @return TopologyNodePtr to the closest field node unequal to nodePtr
      */
-    TopologyNodePtr getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = STANDARD_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
      * @brief get a list of all the nodes within a certain radius around a location
-     * @param center: a point on the map around which we look for nodes
-     * @param radius: the maximum distance of the returned nodes from center
-     * @return a vector of pairs containing node pointers and the corresponding locations
+     * @param center: a location in the format <latitude, longitude> around which we look for nodes
+     * @param radius: the maximum distance in kilometres of the returned nodes from center
+     * @return a vector of pairs containing node pointers and the corresponding locations in the format <latitude, longitude>
      */
     std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> getNodesInRange(std::tuple<double, double> center, double radius);
     /**
      *
-     * @return the amount of field nodes in the system
+     * @return the amount of field nodes (non mobile nodes with a known location) in the system
      */
     size_t getSizeOfPointIndex();
 
@@ -258,7 +258,7 @@ class Topology {
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
 
 #ifdef S2DEF
-    // a spatial index that stores pointers to all the field nodes
+    // a spatial index that stores pointers to all the field nodes (non mobile nodes with a known location)
     S2PointIndex<TopologyNodePtr> nodePointIndex;
 #endif
 };

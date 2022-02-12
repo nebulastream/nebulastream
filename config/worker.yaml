@@ -64,6 +64,12 @@ queryCompiler:
   # |REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]
   #queryCompilerOutputBufferOptimizationLevel: ALL
 
+# set the location of a node if it is a field node (format: "<lat>, <lng>")
+locationCoordinates: 1.344, 4.55
+
+# set node mobile or non mobile
+isMobile: false
+
 # ~~~ Physical Stream Configurations ~~~
 
 # A Physical Stream may be associated with multiple Instances of a logicalStreamName, a physicalStreamName and a SourceType

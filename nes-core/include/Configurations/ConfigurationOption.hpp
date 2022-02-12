@@ -230,7 +230,7 @@ const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
 const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 
-const std::string LOCATION_COORDINATES = "locationCoordinates";
+const std::string LOCATION_COORDINATES_CONFIG = "locationCoordinates";
 
 }// namespace Configurations
 }// namespace NES

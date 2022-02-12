@@ -102,13 +102,16 @@ bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, std::tuple<d
     return true;
 }
 
-TopologyNodePtr Topology::getClosestNodeTo(const std::tuple<double, double> coordTuple, int radius) {
+std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const std::tuple<double, double> coordTuple, int radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
     S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(std::get<0>(coordTuple), std::get<1>(coordTuple))));
-    TopologyNodePtr closest = query.FindClosestPoint(&target).data();
-    return closest;
+    S2ClosestPointQuery<TopologyNodePtr>::Result queryResult = query.FindClosestPoint(&target);
+    if (queryResult.is_empty()) {
+        return {};
+    }
+    return queryResult.data();
 #else
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
     NES_INFO("supplied values: " << std::get<0>(coordTuple) << radius);
@@ -116,13 +119,13 @@ TopologyNodePtr Topology::getClosestNodeTo(const std::tuple<double, double> coor
 #endif
 }
 
-TopologyNodePtr Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
+std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
 #ifdef S2DEF
     auto coordTupleOpt = nodePtr->getCoordinates();
 
     if (!coordTupleOpt.has_value()) {
         NES_WARNING("Trying to get the closest node to a node that does not have a location");
-        return {nullptr};
+        return {};
     }
 
     auto coordTuple = coordTupleOpt.value();
@@ -130,11 +133,22 @@ TopologyNodePtr Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int r
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
     S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(std::get<0>(coordTuple), std::get<1>(coordTuple))));
-    TopologyNodePtr closest = query.FindClosestPoint(&target).data();
+    auto queryResult = query.FindClosestPoint(&target);
+    //if we cannot find any node within the radius return an empty optional
+    if (queryResult.is_empty()) {
+        return {};
+    }
+    //if the closest node is different from the input node, return it
+    auto closest = queryResult.data();
     if (closest != nodePtr) {
         return closest;
     }
-    return query.FindClosestPoints(&target)[1].data();
+    //if the closest node is equal to our input node, we need to look for the second closest
+    auto closestPoints = query.FindClosestPoints(&target);
+    if (closestPoints.size() < 2) {
+        return {};
+    }
+    return closestPoints[1].data();
 
 #else
     NES_WARNING("Files were compiled without s2, cannot find closest nodes");
