@@ -52,13 +52,10 @@ message(STATUS "Found the following NES_CORE_SOURCE_FILES files: " ${NES_CORE_SO
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-#target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/../")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES} )
 target_link_libraries(nes PUBLIC nes-common nes-compiler)
 target_link_libraries(nes PUBLIC ${GRPC_LIBRARIES})
 
-# set all public headers for this target
-#target_public_headers(nes ${nes_HEADER_FILES})
 
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
 foreach(dir ${LIBA_INCLUDES})
@@ -73,7 +70,6 @@ add_custom_command(TARGET nes POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/include/ ${CMAKE_BINARY_DIR}/include/nebulastream)
 
-#add_dependencies(nes copy)
 if (GRPC_LIBRARIES)
     target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})
 endif ()
