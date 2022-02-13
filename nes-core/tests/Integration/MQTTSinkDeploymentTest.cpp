@@ -43,9 +43,9 @@ class MQTTSinkDeploymentTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         coConf = CoordinatorConfiguration::create();
         wrkConf = WorkerConfiguration::create();
-        coConf->setRpcPort(*rpcCoordinatorPort);
-        coConf->setRestPort(*restPort);
-        wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
+        coConf->rpcPort=(*rpcCoordinatorPort);
+        coConf->restPort = *restPort;
+        wrkConf->coordinatorPort = *rpcCoordinatorPort;
     }
 
     void TearDown() override {
@@ -70,7 +70,7 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     NES_INFO("MQTTSinkDeploymentTest: Coordinator started successfully");
 
     NES_INFO("MQTTSinkDeploymentTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

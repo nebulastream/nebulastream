@@ -56,8 +56,8 @@ class SeqOperatorTest : public Testing::NESBaseTest {
  */
 TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -75,13 +75,13 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("Win1", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -89,13 +89,13 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     auto physicalSource2 = PhysicalSource::create("Win2", "test_stream", csvSourceType2);
-    workerConfig2->addPhysicalSource(physicalSource2);
+    workerConfig2->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -146,8 +146,8 @@ TEST_F(SeqOperatorTest, testPatternOneSimpleSeq) {
  */
 TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -165,13 +165,13 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType1->setNumberOfBuffersToProduce(20);
     auto physicalSource1 = PhysicalSource::create("QnV1", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -179,13 +179,13 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType2->setNumberOfBuffersToProduce(20);
     auto physicalSource2 = PhysicalSource::create("QnV2", "test_stream", csvSourceType2);
-    workerConfig2->addPhysicalSource(physicalSource2);
+    workerConfig2->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -262,8 +262,8 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternOneSeq) {
  */
 TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -281,13 +281,13 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType1->setNumberOfBuffersToProduce(20);
     auto physicalSource1 = PhysicalSource::create("QnV1", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -295,13 +295,13 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType2->setNumberOfBuffersToProduce(20);
     auto physicalSource2 = PhysicalSource::create("QnV2", "test_stream", csvSourceType2);
-    workerConfig2->addPhysicalSource(physicalSource2);
+    workerConfig2->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -396,8 +396,8 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithSlidingWindow) {
  */
 TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -415,13 +415,13 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType1->setNumberOfBuffersToProduce(20);
     auto physicalSource1 = PhysicalSource::create("QnV1", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -429,13 +429,13 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->coordinatorPort = port;
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
     csvSourceType2->setNumberOfBuffersToProduce(20);
     auto physicalSource2 = PhysicalSource::create("QnV2", "test_stream", csvSourceType2);
-    workerConfig2->addPhysicalSource(physicalSource2);
+    workerConfig2->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -500,8 +500,8 @@ TEST_F(SeqOperatorTest, DISABLED_testPatternSeqWithEarlyTermination) {
 //TODO Ariane issue 2303
 TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("MultipleJoinsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -524,7 +524,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(6);
@@ -540,9 +540,9 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(6);
     csvSourceType3->setNumberOfBuffersToProduce(10);
     auto physicalSource3 = PhysicalSource::create("QnV2", "test_stream", csvSourceType3);
-    workerConfig1->addPhysicalSource(physicalSource1);
-    workerConfig1->addPhysicalSource(physicalSource2);
-    workerConfig1->addPhysicalSource(physicalSource3);
+    workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource2);
+    workerConfig1->physicalSources.add(physicalSource3);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -550,9 +550,9 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
 
     NES_DEBUG("MultipleJoinsTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->coordinatorPort = port;
 
-    workerConfig2->addPhysicalSource(physicalSource2);
+    workerConfig2->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);

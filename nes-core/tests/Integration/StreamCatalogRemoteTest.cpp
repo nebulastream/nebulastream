@@ -42,8 +42,8 @@ class StreamCatalogRemoteTest : public Testing::NESBaseTest {
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -52,13 +52,13 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
 
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("default_logical", "physical_test", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -81,8 +81,8 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToExistingLogicalStreamRemote) {
 
 TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -95,13 +95,13 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
 
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("testStream", "physical_test", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -124,8 +124,8 @@ TEST_F(StreamCatalogRemoteTest, addPhysicalToNewLogicalStreamRemote) {
 
 TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -138,13 +138,13 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
 
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("default_logical", "physical_test", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -169,8 +169,8 @@ TEST_F(StreamCatalogRemoteTest, removePhysicalFromNewLogicalStreamRemote) {
 
 TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("StreamCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -183,13 +183,13 @@ TEST_F(StreamCatalogRemoteTest, removeNotExistingStreamRemote) {
 
     NES_DEBUG("StreamCatalogRemoteTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(2);
     auto physicalSource1 = PhysicalSource::create("default_logical", "physical_test", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

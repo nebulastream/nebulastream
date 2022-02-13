@@ -54,11 +54,11 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
     auto defaultSource = DefaultSourceType::create();
     PhysicalSourcePtr srcConf = PhysicalSource::create("default_logical", "x1", defaultSource);
-    wrkConf->addPhysicalSource(srcConf);
+    wrkConf->physicalSources.add(srcConf);
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -66,7 +66,7 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     NES_INFO("QueryDeploymentTest: Coordinator started successfully");
 
     NES_INFO("QueryDeploymentTest: Start worker");
-    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);

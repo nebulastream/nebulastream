@@ -15,6 +15,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Network/NetworkChannel.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
@@ -35,6 +36,7 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include "../util/NesBaseTest.hpp"
 #include "../util/TestQuery.hpp"
 #include "../util/TestQueryCompiler.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -49,7 +51,6 @@
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <gtest/gtest.h>
-#include "../util/NesBaseTest.hpp"
 #include <random>
 #include <utility>
 
@@ -147,8 +148,16 @@ void fillBuffer(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& me
 TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
+    auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
+    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                   *dataPort1,
+                                                                   {physicalSource},
+                                                                   1,
+                                                                   bufferSize,
+                                                                   buffersManaged,
+                                                                   64,
+                                                                   64,
+                                                                   queryCompilerConfiguration);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -176,8 +185,16 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
 TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
+    auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
+    auto nodeEngine = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                   *dataPort1,
+                                                                   {physicalSource},
+                                                                   1,
+                                                                   bufferSize,
+                                                                   buffersManaged,
+                                                                   64,
+                                                                   64,
+                                                                   queryCompilerConfiguration);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -329,8 +346,13 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         void onChannelError(Network::Messages::ErrorMessage message) override { NodeEngine::onChannelError(message); }
     };
 
-    auto nodeEngine1 =
-        createMockedEngine<MockedNodeEngine>("127.0.0.1", *dataPort1, bufferSize, buffersManaged, completed, nesPartition, bufferCnt);
+    auto nodeEngine1 = createMockedEngine<MockedNodeEngine>("127.0.0.1",
+                                                            *dataPort1,
+                                                            bufferSize,
+                                                            buffersManaged,
+                                                            completed,
+                                                            nesPartition,
+                                                            bufferCnt);
     try {
         auto netManager = nodeEngine1->getNetworkManager();
 
@@ -358,8 +380,17 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
 
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-        auto nodeEngine2 =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort2, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
+        auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
+
+        auto nodeEngine2 = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
+                                                                        *dataPort2,
+                                                                        {physicalSource},
+                                                                        1,
+                                                                        bufferSize,
+                                                                        buffersManaged,
+                                                                        64,
+                                                                        64,
+                                                                        queryCompilerConfiguration);
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
@@ -421,6 +452,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     NesPartition nesPartition{1, 22, 33, 44};
+    auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
+
     auto nodeEngineSender = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                          *dataPort1,
                                                                          {physicalSource},
@@ -429,6 +462,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                                          buffersManaged,
                                                                          64,
                                                                          12,
+                                                                         queryCompilerConfiguration,
                                                                          NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto netManagerSender = nodeEngineSender->getNetworkManager();
     NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
@@ -440,6 +474,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                                            buffersManaged,
                                                                            64,
                                                                            12,
+                                                                           queryCompilerConfiguration,
                                                                            NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto netManagerReceiver = nodeEngineReceiver->getNetworkManager();
     NodeLocation nodeLocationReceiver = netManagerReceiver->getServerLocation();
@@ -629,6 +664,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                            ->addField("test$id", DataTypeFactory::createInt64())
                            ->addField("test$one", DataTypeFactory::createInt64())
                            ->addField("test$value", DataTypeFactory::createInt64());
+    auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
 
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
@@ -640,6 +676,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                                          buffersManaged,
                                                                          64,
                                                                          12,
+                                                                         queryCompilerConfiguration,
                                                                          NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto nodeEngineReceiver = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                            *dataPort2,
@@ -649,6 +686,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                                            buffersManaged,
                                                                            64,
                                                                            12,
+                                                                           queryCompilerConfiguration,
                                                                            NES::Runtime::NumaAwarenessFlag::DISABLED);
     // create NetworkSink
 

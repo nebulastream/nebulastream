@@ -104,9 +104,9 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
-    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
+    crdConf->rpcPort=(*rpcCoordinatorPort);
+    crdConf->restPort = *restPort;
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -120,12 +120,12 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
     streamCatalog->addLogicalStream("tpch_customer", schema_customer);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->coordinatorPort = port;
 
     PhysicalSourceTypePtr sourceType =
         StaticDataSourceType::create(table_path_customer_l0200, 0, "wrapBuffer", /* placeholder: */ 0);
     auto physicalSource = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType);
-    wrkConf->addPhysicalSource(physicalSource);
+    wrkConf->physicalSources.add(physicalSource);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -192,9 +192,9 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
-    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
+    crdConf->rpcPort=(*rpcCoordinatorPort);
+    crdConf->restPort = *restPort;
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -208,12 +208,12 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     streamCatalog->addLogicalStream("tpch_nation", schema_nation);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->coordinatorPort = port;
 
     PhysicalSourceTypePtr sourceType =
         StaticDataSourceType::create(table_path_nation_s0001, 0, "wrapBuffer", /* placeholder: */ 0);
     auto physicalSource = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType);
-    wrkConf->addPhysicalSource(physicalSource);
+    wrkConf->physicalSources.add(physicalSource);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -266,9 +266,9 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->setRpcPort(*rpcCoordinatorPort);
-    crdConf->setRestPort(*restPort);
-    wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
+    crdConf->rpcPort=(*rpcCoordinatorPort);
+    crdConf->restPort = *restPort;
+    wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -283,17 +283,17 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     streamCatalog->addLogicalStream("tpch_nation", schema_nation);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->coordinatorPort = port;
 
     PhysicalSourceTypePtr sourceType1 =
         StaticDataSourceType::create(table_path_nation_s0001, 0, "wrapBuffer", /* placeholder: */ 0);
     auto physicalSource1 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType1);
-    wrkConf->addPhysicalSource(physicalSource1);
+    wrkConf->physicalSources.add(physicalSource1);
 
     PhysicalSourceTypePtr sourceType2 =
         StaticDataSourceType::create(table_path_customer_l0200, 0, "wrapBuffer", /* placeholder: */ 0);
     auto physicalSource2 = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType2);
-    wrkConf->addPhysicalSource(physicalSource2);
+    wrkConf->physicalSources.add(physicalSource2);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);

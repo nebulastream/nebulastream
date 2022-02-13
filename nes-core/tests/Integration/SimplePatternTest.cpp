@@ -47,8 +47,8 @@ class SimplePatternTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         coConf = CoordinatorConfiguration::create();
 
-        coConf->setRpcPort(*rpcCoordinatorPort);
-        coConf->setRestPort(*restPort);
+        coConf->rpcPort=(*rpcCoordinatorPort);
+        coConf->restPort = *restPort;
     }
 
 
@@ -80,14 +80,14 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
-    worker1Configuration->setCoordinatorPort(port);
+    worker1Configuration->coordinatorPort=(port);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     //register physical stream
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream", csvSourceType1);
-    worker1Configuration->addPhysicalSource(conf70);
+    worker1Configuration->physicalSources.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -151,14 +151,14 @@ TEST_F(SimplePatternTest, testPatternWithIterationOperator) {
 
     NES_INFO("SimplePatternTest: Start worker 1 with physical source");
     auto worker1Configuration = WorkerConfiguration::create();
-    worker1Configuration->setCoordinatorPort(port);
+    worker1Configuration->coordinatorPort=(port);
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short_intID.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     //register physical stream
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV", "test_stream", csvSourceType1);
-    worker1Configuration->addPhysicalSource(conf70);
+    worker1Configuration->physicalSources.add(conf70);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(worker1Configuration));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

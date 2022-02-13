@@ -83,15 +83,15 @@ int main(int argc, char** argv) {
         workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
     }
 
-    NES::setLogLevel(NES::getDebugLevelFromString(workerConfiguration->getLogLevel()->getValue()));
+    NES::setLogLevel(NES::getDebugLevelFromString(workerConfiguration->logLevel.getValue()));
 
     NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
     NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
     Runtime::installGlobalErrorListener(nesWorker);
 
-    if (nesWorker->getWorkerConfiguration()->getParentId()->getValue() != 0) {
-        NES_INFO("start with dedicated parent=" << nesWorker->getWorkerConfiguration()->getParentId()->getValue());
-        nesWorker->setWithParent(nesWorker->getWorkerConfiguration()->getParentId()->getValue());
+    if (nesWorker->getWorkerConfiguration()->parentId.getValue() != 0) {
+        NES_INFO("start with dedicated parent=" << nesWorker->getWorkerConfiguration()->parentId.getValue());
+        nesWorker->setWithParent(nesWorker->getWorkerConfiguration()->parentId.getValue());
     }
     try {
         nesWorker->start(/**blocking*/ true, /**withConnect*/ true);//blocking call

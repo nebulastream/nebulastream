@@ -1658,8 +1658,8 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeIngestion) {
 
 TEST_F(SourceTest, testIngestionRateFromQuery) {
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
@@ -1670,8 +1670,8 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setBufferSizeInBytes(72);
+    wrkConf->coordinatorPort = port;
+    wrkConf->bufferSizeInBytes=(72);
 
     auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
@@ -1693,7 +1693,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
     auto lambdaSourceType = LambdaSourceType::create(std::move(func1), 22, 11, "ingestionrate");
     auto physicalSource = PhysicalSource::create("input1", "test_stream1", lambdaSourceType);
-    wrkConf->addPhysicalSource(physicalSource);
+    wrkConf->physicalSources.add(physicalSource);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
@@ -1878,8 +1878,8 @@ TEST_F(SourceTest, testMemorySource) {
 
 TEST_F(SourceTest, testTwoLambdaSources) {
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
     auto crd = std::make_shared<NES::NesCoordinator>(coordinatorConfig);
@@ -1891,7 +1891,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
 
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->coordinatorPort = port;
 
     auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
@@ -1931,8 +1931,8 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     auto physicalSource1 = PhysicalSource::create("input1", "test_stream1", lambdaSourceType1);
     auto lambdaSourceType2 = LambdaSourceType::create(std::move(func2), 3, 10, "ingestionrate");
     auto physicalSource2 = PhysicalSource::create("input2", "test_stream2", lambdaSourceType2);
-    wrkConf->addPhysicalSource(physicalSource1);
-    wrkConf->addPhysicalSource(physicalSource2);
+    wrkConf->physicalSources.add(physicalSource1);
+    wrkConf->physicalSources.add(physicalSource2);
     auto wrk1 = std::make_shared<NES::NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
@@ -1967,13 +1967,13 @@ TEST_F(SourceTest, testTwoLambdaSources) {
 
 TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumWorkerThreads(4);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numWorkerThreads=(4);
     //    coordinatorConfig->setNumberOfBuffersInGlobalBufferManager(3000);
     //    coordinatorConfig->setNumberOfBuffersInSourceLocalBufferPool(124);
     //    coordinatorConfig->setNumberOfBuffersPerWorker(124);
-    //    coordinatorConfig->setBufferSizeInBytes(524288);
+    //    coordinatorConfig->bufferSizeInBytes=(524288);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
 
@@ -1984,7 +1984,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     crd->getStreamCatalogService()->registerLogicalSource("input", input);
 
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->coordinatorPort = port;
 
     for (int64_t i = 0; i < 2; i++) {
         //        auto func_lamb_ptr = new std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>(lamb);
@@ -2012,7 +2012,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
 
         auto lambdaSourceType1 = LambdaSourceType::create(std::move(func), 30, 0, "frequency");
         auto physicalSource1 = PhysicalSource::create("input", "test_stream" + std::to_string(i), lambdaSourceType1);
-        wrkConf->addPhysicalSource(physicalSource1);
+        wrkConf->physicalSources.add(physicalSource1);
     }
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));

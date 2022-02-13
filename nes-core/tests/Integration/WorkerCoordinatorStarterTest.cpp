@@ -39,9 +39,9 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -51,7 +51,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->coordinatorPort = port;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
@@ -74,9 +74,9 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-        coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-        coordinatorConfig->setRestPort(*restPort);
-        workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
+        workerConfig->coordinatorPort = *rpcCoordinatorPort;
         cout << "iteration = " << i << endl;
         NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
         uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -84,7 +84,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
         cout << "coordinator started successfully" << endl;
 
         cout << "start worker" << endl;
-        workerConfig->setCoordinatorPort(port);
+        workerConfig->coordinatorPort = port;
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
         bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
         EXPECT_TRUE(retStart);
@@ -111,9 +111,9 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -122,7 +122,7 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->coordinatorPort = port;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart);
@@ -143,9 +143,9 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -154,7 +154,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->coordinatorPort = port;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
@@ -175,9 +175,9 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -186,7 +186,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->coordinatorPort = port;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
@@ -207,9 +207,9 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -218,7 +218,7 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->coordinatorPort = port;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);
@@ -243,9 +243,9 @@ TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -254,7 +254,7 @@ TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
     cout << "coordinator started successfully" << endl;
 
     cout << "start worker" << endl;
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->coordinatorPort = port;
     NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart);

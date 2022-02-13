@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <API/QueryAPI.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -709,7 +710,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                                                          NSOURCE_RETRIES);
         PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
         auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {streamConf}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
 
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
