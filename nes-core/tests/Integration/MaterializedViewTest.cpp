@@ -46,8 +46,8 @@ public:
 /// @brief tests if a query with materialized view sink starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("MaterializedViewTupleViewSinkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
@@ -64,8 +64,8 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumberOfSlots(12);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
@@ -73,7 +73,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     csvSourceType1->setSourceFrequency(1);
     csvSourceType1->setSkipHeader(true);
     auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -101,8 +101,8 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
 /// @brief tests if a query with materialized view source starts properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("MaterializedViewTupleBufferSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
@@ -115,15 +115,15 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumberOfSlots(12);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numberOfSlots = (12);
     // materialized view physical stream
     size_t viewId = 1;
     auto materializeViewSourceType = Configurations::Experimental::MaterializedView::MaterializedViewSourceType::create();
     materializeViewSourceType->setId(viewId);
     auto physicalSource1 = PhysicalSource::create("stream", "MV", materializeViewSourceType);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -155,8 +155,8 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSourceTest) {
 // @brief tests with two concurrent queries if writing and reading of MVs works properly
 TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("MaterializedViewTupleBufferSinkAndSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(false);
@@ -172,8 +172,8 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumberOfSlots(12);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numberOfSlots = (12);
     // materialized view physical stream
     size_t viewId = 1;
     auto materializeViewSourceType = Configurations::Experimental::MaterializedView::MaterializedViewSourceType::create();
@@ -186,8 +186,8 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     csvSourceType1->setSourceFrequency(1);
     csvSourceType1->setSkipHeader(true);
     auto physicalSource2 = PhysicalSource::create("stream", "test_stream", materializeViewSourceType);
-    workerConfig1->addPhysicalSource(physicalSource1);
-    workerConfig1->addPhysicalSource(physicalSource2);
+    workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

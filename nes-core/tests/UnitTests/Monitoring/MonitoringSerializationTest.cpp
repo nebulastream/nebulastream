@@ -68,9 +68,9 @@ class MonitoringSerializationTest : public Testing::NESBaseTest {
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
         bufferSize = 4096 + (numCPU + 1) * sizeof(CpuValues) + sizeof(CpuMetrics);
 
-        coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-        coordinatorConfig->setRestPort(*restPort);
-        wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
+        wrkConf->coordinatorPort = *rpcCoordinatorPort;
     }
 
 };

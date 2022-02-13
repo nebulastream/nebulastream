@@ -293,7 +293,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
             tuples[i].value = 1;
         }
 
-        //bufsetBufferSizeInBytes(sizeof(InputTuple));
+        //bufbufferSizeInBytes=(sizeof(InputTuple));
         buf.setNumberOfTuples(tupleCnt);
         return buf;
     }
@@ -343,7 +343,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
             tuples[i].value = 1;
         }
 
-        //bufsetBufferSizeInBytes(sizeof(InputTuple));
+        //bufbufferSizeInBytes=(sizeof(InputTuple));
         buf.setNumberOfTuples(tupleCnt);
         return buf;
     }

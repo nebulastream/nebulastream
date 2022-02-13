@@ -58,9 +58,9 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -69,11 +69,11 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->coordinatorPort = port;
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     auto windowStream = PhysicalSource::create("exdra", "test_stream", sourceConfig);
-    workerConfig->addPhysicalSource(windowStream);
+    workerConfig->physicalSources.add(windowStream);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -130,8 +130,8 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
  */
 TEST_F(WindowDeploymentTest, testYSBWindow) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -143,7 +143,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->coordinatorPort = port;
 
     auto ysbSchema = Schema::create()
                          ->addField("ysb$user_id", UINT64)
@@ -221,7 +221,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
 
     auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, "frequency");
     auto physicalSource = PhysicalSource::create("ysb", "YSB_phy", lambdaSourceType);
-    workerConfig->addPhysicalSource(physicalSource);
+    workerConfig->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -432,8 +432,8 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -442,9 +442,9 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     sourceConfig->setNumberOfBuffersToProduce(3);
 
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig1->addPhysicalSource(windowStream);
+    workerConfig1->physicalSources.add(windowStream);
 
     //register logical stream
     std::string testSchema =
@@ -465,8 +465,8 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
-    workerConfig2->addPhysicalSource(windowStream);
+    workerConfig2->coordinatorPort = *rpcCoordinatorPort;
+    workerConfig2->physicalSources.add(windowStream);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -834,11 +834,11 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
 
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     auto windowStream = PhysicalSource::create("window", "test_stream", sourceConfig);
-    workerConfig->addPhysicalSource(windowStream);
+    workerConfig->physicalSources.add(windowStream);
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     //creating schema
     std::string window =
@@ -851,7 +851,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
+    workerConfig->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -895,8 +895,8 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
 
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
 
     //register logical stream qnv
     std::string window =
@@ -910,14 +910,14 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(5);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -925,14 +925,14 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig2->coordinatorPort = *rpcCoordinatorPort;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType2->setSourceFrequency(5);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("window", "test_stream", csvSourceType2);
-    workerConfig2->addPhysicalSource(physicalSource2);
+    workerConfig2->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -988,11 +988,11 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
 
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
     auto windowStream = PhysicalSource::create("windowStream", "test_stream", sourceConfig);
-    workerConfig->addPhysicalSource(windowStream);
+    workerConfig->physicalSources.add(windowStream);
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
     //register logical stream qnv
     std::string window =
@@ -1056,12 +1056,12 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     sourceConfig->setNumberOfBuffersToProduce(3);
 
     auto windowStream = PhysicalSource::create("windowStream", "test_stream", sourceConfig);
-    workerConfig1->addPhysicalSource(windowStream);
+    workerConfig1->physicalSources.add(windowStream);
 
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
-    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+    workerConfig2->coordinatorPort = *rpcCoordinatorPort;
 
     //register logical stream qnv
     std::string window =
@@ -1074,14 +1074,14 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
-    workerConfig1->setCoordinatorPort(port);
+    workerConfig1->coordinatorPort = port;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
-    workerConfig2->setCoordinatorPort(port);
+    workerConfig2->coordinatorPort = port;
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -1183,8 +1183,8 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
  */
 TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
     //register logical stream qnv
     std::string window =
         R"(Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);)";
@@ -1197,7 +1197,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
@@ -1205,7 +1205,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     NES_INFO("WindowDeploymentTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig2->coordinatorPort = *rpcCoordinatorPort;
     // create source
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -1213,7 +1213,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
-    workerConfig2->addPhysicalSource(physicalSource1);
+    workerConfig2->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);//id=3
     wrk2->replaceParent(1, 2);
@@ -1222,7 +1222,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     NES_INFO("WindowDeploymentTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
-    workerConfig3->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig3->coordinatorPort = *rpcCoordinatorPort;
     // create source
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -1230,7 +1230,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("window", "test_stream", csvSourceType2);
-    workerConfig3->addPhysicalSource(physicalSource2);
+    workerConfig3->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     wrk3->replaceParent(1, 2);
@@ -1240,7 +1240,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     NES_INFO("WindowDeploymentTest: Start worker 4");
     WorkerConfigurationPtr workerConfig4 = WorkerConfiguration::create();
-    workerConfig4->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig4->coordinatorPort = *rpcCoordinatorPort;
     // create source
     CSVSourceTypePtr csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -1248,7 +1248,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(3);
     auto physicalSource3 = PhysicalSource::create("window", "test_stream", csvSourceType3);
-    workerConfig4->addPhysicalSource(physicalSource3);
+    workerConfig4->physicalSources.add(physicalSource3);
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(workerConfig4));
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     wrk4->replaceParent(1, 2);
@@ -1257,7 +1257,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     NES_INFO("WindowDeploymentTest: Start worker 5");
     WorkerConfigurationPtr workerConfig5 = WorkerConfiguration::create();
-    workerConfig5->setCoordinatorPort(*rpcCoordinatorPort);
+    workerConfig5->coordinatorPort = *rpcCoordinatorPort;
     // create source
     CSVSourceTypePtr csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
@@ -1265,7 +1265,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType4->setNumberOfBuffersToProduce(3);
     auto physicalSource4 = PhysicalSource::create("window", "test_stream", csvSourceType4);
-    workerConfig5->addPhysicalSource(physicalSource4);
+    workerConfig5->physicalSources.add(physicalSource4);
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(std::move(workerConfig5));
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     wrk5->replaceParent(1, 2);

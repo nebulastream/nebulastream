@@ -46,9 +46,9 @@ class MultiThreadedTest : public Testing::NESBaseTest {
 
 TEST_F(MultiThreadedTest, testFilterQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numWorkerThreads=numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -62,13 +62,13 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setNumberOfSlots(12);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig1->numberOfSlots = (12);
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
-    workerConfig2->setCoordinatorPort(port);
-    workerConfig2->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig2->setNumberOfSlots(12);
+    workerConfig2->coordinatorPort = port;
+    workerConfig2->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig2->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
@@ -76,7 +76,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     csvSourceType1->setNumberOfBuffersToProduce(210);
     csvSourceType1->setSkipHeader(false);
     auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -126,9 +126,9 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 
 TEST_F(MultiThreadedTest, testProjectQuery) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numWorkerThreads=numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -142,9 +142,9 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
 
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setNumberOfSlots(12);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
@@ -152,7 +152,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     csvSourceType1->setNumberOfBuffersToProduce(210);
     csvSourceType1->setSkipHeader(false);
     auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -203,9 +203,9 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
 
 TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numWorkerThreads=numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -219,9 +219,9 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
 
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setNumberOfSlots(12);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(1);
@@ -229,7 +229,7 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     csvSourceType1->setNumberOfBuffersToProduce(3);
     csvSourceType1->setSkipHeader(false);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -283,10 +283,10 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
  */
 TEST_F(MultiThreadedTest, testMultipleWindows) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumberOfSlots(12);
-    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numberOfSlots = (12);
+    coordinatorConfig->numWorkerThreads=numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -300,16 +300,16 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setNumberOfSlots(12);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     csvSourceType1->setSkipHeader(false);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -360,10 +360,10 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 
 TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumberOfSlots(12);
-    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numberOfSlots = (12);
+    coordinatorConfig->numWorkerThreads=numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -377,16 +377,16 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
 
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setNumberOfSlots(12);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig1->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setSourceFrequency(0);
     csvSourceType1->setSkipHeader(false);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
-    workerConfig1->addPhysicalSource(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -436,10 +436,10 @@ TEST_F(MultiThreadedTest, testMultipleWindowsCrashTest) {
  */
 TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumberOfSlots(16);
-    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numberOfSlots = (16);
+    coordinatorConfig->numWorkerThreads=numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -456,9 +456,9 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setNumberOfSlots(8);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig1->numberOfSlots = (8);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
@@ -471,8 +471,8 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     csvSourceType2->setSkipHeader(false);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
-    workerConfig1->addPhysicalSource(physicalSource1);
-    workerConfig1->addPhysicalSource(physicalSource2);
+    workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -523,10 +523,10 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
 
 TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumberOfSlots(16);
-    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numberOfSlots = (16);
+    coordinatorConfig->numWorkerThreads=numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -546,9 +546,9 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
 
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setNumberOfSlots(8);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig1->numberOfSlots = (8);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(1);
@@ -570,9 +570,9 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
-    workerConfig1->addPhysicalSource(physicalSource1);
-    workerConfig1->addPhysicalSource(physicalSource2);
-    workerConfig1->addPhysicalSource(physicalSource3);
+    workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource2);
+    workerConfig1->physicalSources.add(physicalSource3);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -629,10 +629,10 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
 
 TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setNumberOfSlots(16);
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    coordinatorConfig->numberOfSlots = (16);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numWorkerThreads=numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -655,9 +655,9 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
 
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setNumberOfSlots(8);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig1->numberOfSlots = (8);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(1);
@@ -686,10 +686,10 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
     auto physicalSource3 = PhysicalSource::create("window3", "test_stream", csvSourceType3);
     auto physicalSource4 = PhysicalSource::create("window4", "test_stream", csvSourceType4);
-    workerConfig1->addPhysicalSource(physicalSource1);
-    workerConfig1->addPhysicalSource(physicalSource2);
-    workerConfig1->addPhysicalSource(physicalSource3);
-    workerConfig1->addPhysicalSource(physicalSource4);
+    workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource2);
+    workerConfig1->physicalSources.add(physicalSource3);
+    workerConfig1->physicalSources.add(physicalSource4);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
@@ -784,10 +784,10 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
  */
 TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
-    coordinatorConfig->setNumberOfSlots(16);
-    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->numberOfSlots = (16);
+    coordinatorConfig->numWorkerThreads=numberOfCoordinatorThreads;
     NES_INFO("MultiThreadedTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
@@ -804,9 +804,9 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
 
     NES_DEBUG("MultiThreadedTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
-    workerConfig1->setCoordinatorPort(port);
-    workerConfig1->setNumWorkerThreads(numberOfWorkerThreads);
-    workerConfig1->setNumberOfSlots(8);
+    workerConfig1->coordinatorPort = port;
+    workerConfig1->numWorkerThreads=(numberOfWorkerThreads);
+    workerConfig1->numberOfSlots = (8);
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setSourceFrequency(0);
@@ -819,8 +819,8 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     csvSourceType2->setSkipHeader(false);
     auto physicalSource1 = PhysicalSource::create("window1", "test_stream", csvSourceType1);
     auto physicalSource2 = PhysicalSource::create("window2", "test_stream", csvSourceType2);
-    workerConfig1->addPhysicalSource(physicalSource1);
-    workerConfig1->addPhysicalSource(physicalSource2);
+    workerConfig1->physicalSources.add(physicalSource1);
+    workerConfig1->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

@@ -45,7 +45,7 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(const Configurations::WorkerConfigurationPtr& workerConfig)
+NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
     : workerConfig(std::move(workerConfig)), coordinatorIp(workerConfig->coordinatorIp.getValue()),
       localWorkerIp(workerConfig->localWorkerIp.getValue()), workerToCoreMapping(workerConfig->workerPinList.getValue()),
       queuePinList(workerConfig->queuePinList.getValue()), coordinatorPort(workerConfig->coordinatorPort.getValue()),

@@ -189,7 +189,7 @@ class TestHarness {
     TestHarness& attachWorkerWithMemorySourceToWorkerWithId(const std::string& logicalStreamName, uint32_t parentId) {
 
         auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->setParentId(parentId);
+        workerConfiguration->parentId=parentId;
         std::string physicalSourceName = getNextPhysicalSourceName();
         auto workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
@@ -224,8 +224,8 @@ class TestHarness {
         auto workerConfiguration = WorkerConfiguration::create();
         std::string physicalSourceName = getNextPhysicalSourceName();
         auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, csvSourceType);
-        workerConfiguration->addPhysicalSource(physicalSource);
-        workerConfiguration->setParentId(parentId);
+        workerConfiguration->physicalSources.add(physicalSource);
+        workerConfiguration->parentId=parentId;
         uint32_t workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration,
                                                                                      logicalSourceName,
@@ -255,7 +255,7 @@ class TestHarness {
     TestHarness& attachWorkerToWorkerWithId(uint32_t parentId) {
 
         auto workerConfiguration = WorkerConfiguration::create();
-        workerConfiguration->setParentId(parentId);
+        workerConfiguration->parentId=parentId;
         uint32_t workerId = getNextTopologyId();
         auto testHarnessWorkerConfiguration = TestHarnessWorkerConfiguration::create(workerConfiguration, workerId);
         testHarnessWorkerConfigurations.emplace_back(testHarnessWorkerConfiguration);
@@ -347,9 +347,9 @@ class TestHarness {
 
         //Start Coordinator
         auto coordinatorConfiguration = CoordinatorConfiguration::create();
-        coordinatorConfiguration->setCoordinatorIp(coordinatorIPAddress);
-        coordinatorConfiguration->setRestPort(restPort);
-        coordinatorConfiguration->setRpcPort(rpcPort);
+        coordinatorConfiguration->coordinatorIp=coordinatorIPAddress;
+        coordinatorConfiguration->restPort=restPort;
+        coordinatorConfiguration->rpcPort=rpcPort;
         nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
         auto coordinatorRPCPort = nesCoordinator->startCoordinator(/**blocking**/ false);
         //Add all logical sources
@@ -361,13 +361,13 @@ class TestHarness {
             auto workerConfiguration = workerConf->getWorkerConfiguration();
 
             //Set ports at runtime
-            workerConfiguration->setCoordinatorPort(coordinatorRPCPort);
-            workerConfiguration->setCoordinatorIp(coordinatorIPAddress);
+            workerConfiguration->coordinatorPort=coordinatorRPCPort;
+            workerConfiguration->coordinatorIp=coordinatorIPAddress;
 
             switch (workerConf->getSourceType()) {
                 case TestHarnessWorkerConfiguration::MemorySource: {
                     auto physicalSource = createPhysicalSourceOfMemoryType(workerConf);
-                    workerConfiguration->addPhysicalSource(physicalSource);
+                    workerConfiguration->physicalSources.add(physicalSource);
                     break;
                 }
                 default: break;
@@ -377,7 +377,7 @@ class TestHarness {
             nesWorker->start(/**blocking**/ false, /**withConnect**/ true);
 
             //We are assuming that coordinator has a node id 1
-            nesWorker->replaceParent(1, nesWorker->getWorkerConfiguration()->getParentId()->getValue());
+            nesWorker->replaceParent(1, nesWorker->getWorkerConfiguration()->parentId.getValue());
 
             //Add Nes Worker to the configuration.
             //Note: this is required to stop the NesWorker at the end of the test

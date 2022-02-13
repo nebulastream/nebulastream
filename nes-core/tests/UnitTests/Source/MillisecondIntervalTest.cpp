@@ -100,11 +100,11 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
         this->nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
 
         coordinatorConfig = CoordinatorConfiguration::create();
-        coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-        coordinatorConfig->setRestPort(*restPort);
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
 
         wrkConf = WorkerConfiguration::create();
-        wrkConf->setCoordinatorPort(*rpcCoordinatorPort);
+        wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
         path_to_file = std::string(TEST_DATA_DIRECTORY) + "ysb-tuples-100-campaign-100.csv";
 
@@ -254,8 +254,8 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
 
 TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
 
-    coordinatorConfig->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    coordinatorConfig->clear();
+    wrkConf->clear();
 
     NES_INFO("MillisecondIntervalTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -267,11 +267,11 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 
     NES_INFO("MillisecondIntervalTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
+    wrkConf->coordinatorPort = port;
     auto defaultSourceType = DefaultSourceType::create();
     defaultSourceType->setNumberOfBuffersToProduce(3);
     auto physicalSource = PhysicalSource::create("testStream", "x1", defaultSourceType);
-    wrkConf->addPhysicalSource(physicalSource);
+    wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

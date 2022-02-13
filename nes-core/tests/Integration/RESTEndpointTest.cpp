@@ -50,8 +50,8 @@ class RESTEndpointTest : public Testing::NESBaseTest {
     NesCoordinatorPtr createAndStartCoordinator() const {
         NES_INFO("RESTEndpointTest: Start coordinator");
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-        coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-        coordinatorConfig->setRestPort(*restPort);
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
         auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
         EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
         NES_INFO("RESTEndpointTest: Coordinator started successfully");
@@ -66,8 +66,8 @@ class RESTEndpointTest : public Testing::NESBaseTest {
     NesWorkerPtr createAndStartWorkerWithSourceConfig(uint8_t id, PhysicalSourcePtr sourceConfig) {
         NES_INFO("RESTEndpointTest: Start worker " << id);
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-        workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
-        workerConfig->addPhysicalSource(sourceConfig);
+        workerConfig->coordinatorPort = *rpcCoordinatorPort;
+        workerConfig->physicalSources.add(sourceConfig);
         NesWorkerPtr worker = std::make_shared<NesWorker>(std::move(workerConfig));
         EXPECT_TRUE(worker->start(/**blocking**/ false, /**withConnect**/ true));
         NES_INFO("RESTEndpointTest: Worker " << id << " started successfully");
@@ -79,7 +79,7 @@ class RESTEndpointTest : public Testing::NESBaseTest {
     NesWorkerPtr createAndStartWorker(uint8_t id = 1) {
         NES_INFO("RESTEndpointTest: Start worker " << id);
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-        workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+        workerConfig->coordinatorPort = *rpcCoordinatorPort;
         NesWorkerPtr worker = std::make_shared<NesWorker>(std::move(workerConfig));
         EXPECT_TRUE(worker->start(/**blocking**/ false, /**withConnect**/ true));
         NES_INFO("RESTEndpointTest: Worker " << id << " started successfully");
@@ -216,7 +216,7 @@ TEST_F(RESTEndpointTest, DISABLED_testPostExecuteQueryExWithNonEmptyQuery) {
     //    PhysicalSourcePtr conf = PhysicalSourceType::create(sourceConfig);
     //    SourceCatalogEntryPtr sce = std::make_shared<SourceCatalogEntry>(conf, physicalNode);
     //    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
-    //    sourceCatalog->addPhysicalSource("default_logical", sce);
+    //    sourceCatalog->physicalSources.add("default_logical", sce);
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
