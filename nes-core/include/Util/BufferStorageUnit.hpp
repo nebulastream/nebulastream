@@ -12,45 +12,38 @@
     limitations under the License.
 */
 
+#include <queue>
+#include <unordered_map>
+
 #ifndef NES_INCLUDE_UTIL_BUFFERSTORAGEUNIT_HPP_
 #define NES_INCLUDE_UTIL_BUFFERSTORAGEUNIT_HPP_
 
 namespace NES::Runtime {
+
+using TupleBufferPriorityQueue =
+    std::priority_queue<TupleBufferPtr, std::vector<TupleBufferPtr>, std::greater<TupleBufferPtr>>;
+
 /**
  * @brief The Buffer Storage Unit class encapsulates a pair<tuple id, pointer to the tuple>
  */
 class BufferStorageUnit {
   public:
     /**
-     * @brief Constructor, which creates new buffer storage unit out of pair buffer sequnce number and a tiple buffer pointer
-     * @param sequenceNumber pair <sequence number, origin id>
-     * @param tupleBuffer pointer to the tuple buffer with a given sequence number
+     * @brief Constructor, which creates map of nes partition id to sorted queue of tuple buffers
      * @return buffer storage unit
      */
-    BufferStorageUnit(const NES::BufferSequenceNumber& sequenceNumber, const NES::Runtime::TupleBuffer& tupleBuffer)
-        : sequenceNumber(sequenceNumber), tupleBuffer(tupleBuffer){};
+    BufferStorageUnit(uint64_t nesPartitionId, TupleBufferPriorityQueue queue) {
+        nesPartitionToTupleBufferQueueMapping.at(nesPartitionId) = std::move(queue);
+    }
 
     /**
-     * @brief Getter for a sequence number of a buffer storage unit
-     * @return sequence number
+     * @brief Getter for map of nes partition to tuple buffers
+     * @return map of nes partition to tuple buffers
      */
-    const NES::BufferSequenceNumber& getSequenceNumber() const { return sequenceNumber; }
-
-    /**
-     * @brief Getter for a tuple buffer pointer
-     * @return tuple buffer pointer
-     */
-    const NES::Runtime::TupleBuffer& getTupleBuffer() const { return tupleBuffer; }
+    std::unordered_map<uint64_t, TupleBufferPriorityQueue> getNesPartitionToTupleBufferQueueMapping() const { return nesPartitionToTupleBufferQueueMapping; }
 
   private:
-    NES::BufferSequenceNumber sequenceNumber;
-    NES::Runtime::TupleBuffer tupleBuffer;
-    friend bool operator<(const std::shared_ptr<BufferStorageUnit>& lhs, const std::shared_ptr<BufferStorageUnit>& rhs) {
-        return lhs->sequenceNumber < rhs->sequenceNumber;
-    }
-    friend bool operator>(const std::shared_ptr<BufferStorageUnit>& lhs, const std::shared_ptr<BufferStorageUnit>& rhs) {
-        return lhs->sequenceNumber > rhs->sequenceNumber;
-    }
+    std::unordered_map<uint64_t, TupleBufferPriorityQueue> nesPartitionToTupleBufferQueueMapping;
 };
 
 using BufferStorageUnitPtr = std::shared_ptr<BufferStorageUnit>;

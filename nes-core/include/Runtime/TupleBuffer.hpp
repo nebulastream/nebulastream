@@ -246,7 +246,14 @@ class TupleBuffer {
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
+    friend bool operator<(const std::shared_ptr<TupleBuffer>& lhs, const std::shared_ptr<TupleBuffer>& rhs) {
+        return lhs->controlBlock->getWatermark() < rhs->controlBlock->getWatermark();
+    }
+    friend bool operator>(const std::shared_ptr<TupleBuffer>& lhs, const std::shared_ptr<TupleBuffer>& rhs) {
+        return lhs->controlBlock->getWatermark() > rhs->controlBlock->getWatermark();
+    }
 };
 
+using TupleBufferPtr = std::shared_ptr<TupleBuffer>;
 }// namespace NES::Runtime
 #endif  // NES_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_

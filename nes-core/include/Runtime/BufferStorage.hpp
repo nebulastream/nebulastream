@@ -24,9 +24,6 @@
 
 namespace NES::Runtime {
 
-using BufferStoragePriorityQueue =
-    std::priority_queue<BufferStorageUnitPtr, std::vector<BufferStorageUnitPtr>, std::greater<BufferStorageUnitPtr>>;
-
 /**
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
  */
@@ -39,19 +36,20 @@ class BufferStorage : public AbstractBufferStorage {
     BufferStorage() = default;
 
     /**
-     * @brief Inserts a pair id, buffer link to the buffer storage queue
-     * @param id id of the buffer
+     * @brief Inserts a tuple buffer for a given nes partition id and query id
+     * @param queryId id of the pipeline
+     * @param nesPartitionId destination id
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    void insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) override;
+    void insertBuffer(uint64_t queryId, uint64_t nesPartitionId, NES::Runtime::TupleBufferPtr bufferPtr) override;
 
     /**
-     * @brief Deletes all pair<id,buffer> link which sequence number smaller than passed
-     * sequence number from the buffer storage queue with the same origin id
-     * @param id id of the buffer
+     * @brief Deletes all tuple buffers which watermark timestamp is smaller than the given timestamp
+     * @param queryId id of current query
+     * @param timestamp max timestamp of current epoch
      * @return true in case of a success trimming
      */
-    bool trimBuffer(BufferSequenceNumber id) override;
+    bool trimBuffer(uint64_t queryId, uint64_t timestamp) override;
 
     /**
      * @brief Return current storage size
@@ -60,21 +58,23 @@ class BufferStorage : public AbstractBufferStorage {
     size_t getStorageSize() const override;
 
     /**
-     * @brief Return the size of queue with a given origin Id
-     * @param queueId the id of the queue
+     * @brief Return the size of queue with a given queue id and nes partition id
+     * @param queryId id of the pipeline
+     * @param nesPartitionId destination id
      * @return Given queue size
      */
-    size_t getStorageSizeForQueue(uint64_t queueId) const;
+    size_t getQueueSizeForGivenQueryAndNesPartition(uint64_t queryId, uint64_t nesPartitionId) const;
 
     /**
      * @brief Return top element of the queue
-     * @param queueId the id of the queue
+     * @param queryId id of the pipeline
+     * @param nesPartitionId destination id
      * @return buffer storage unit
      */
-    BufferStorageUnitPtr getTopElementFromQueue(uint64_t queueId) const;
+    NES::Runtime::TupleBufferPtr getTopElementFromQueue(uint64_t queryId, uint64_t nesPartitionId) const;
 
   private:
-    std::unordered_map<uint64_t, BufferStoragePriorityQueue> buffers;
+    std::unordered_map<uint64_t, BufferStorageUnitPtr> buffers;
     mutable std::mutex mutex;
 };
 
