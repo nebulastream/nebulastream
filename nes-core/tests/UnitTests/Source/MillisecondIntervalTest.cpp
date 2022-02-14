@@ -260,7 +260,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     NES_INFO("MillisecondIntervalTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0u);
+    ASSERT_NE(port, 0u);
     //register logical stream
     std::string testSchema = "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
     crd->getStreamCatalogService()->registerLogicalSource("testStream", testSchema);
