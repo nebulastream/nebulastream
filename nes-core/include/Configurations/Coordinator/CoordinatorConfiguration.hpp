@@ -35,35 +35,103 @@ class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 
 /**
- * @brief ConfigOptions for Coordinator
+ * @brief Configuration options for the Coordinator.
  */
 class CoordinatorConfiguration : public BaseConfiguration {
   public:
+    /**
+     * @brief IP of the REST server.
+     */
     StringOption restIp = {REST_IP_CONFIG, "127.0.0.1", "NES ip of the REST server."};
-    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator."};
-    UIntOption rpcPort = {RPC_PORT_CONFIG, 4000, "RPC server port of the NES Coordinator"};
+
+    /**
+     * @brief Port of the REST server.
+     */
     UIntOption restPort = {REST_PORT_CONFIG, 8081, "Port exposed for rest endpoints"};
-    UIntOption dataPort = {DATA_PORT_CONFIG, 4001, "NES data server port"};
-    UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for NES Coordinator"};
+
+    /**
+     * @brief IP of the Coordinator.
+     */
+    StringOption coordinatorIp = {COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator."};
+
+    /**
+     * @brief Port for the RPC server of the Coordinator.
+     * This is used to receive control messages.
+     */
+    UIntOption rpcPort = {RPC_PORT_CONFIG, 4000, "RPC server port of the Coordinator"};
+
+    /**
+     * @brief Port of the Data server of the Coordinator.
+     * This is used to receive data at the coordinator.
+     */
+    UIntOption dataPort = {DATA_PORT_CONFIG, 4001, "Data server port of the Coordinator"};
+
+    /**
+     * @brief The current log level. Controls the detail of log messages.
+     */
     EnumOption<DebugLevel> logLevel = {LOG_LEVEL_CONFIG,
                                        LOG_DEBUG,
                                        "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
+
+    /**
+     * @brief Number of Slots define the amount of computing resources that are usable at the coordinator.
+     * This enables the restriction of the amount of concurrently deployed queries and operators.
+     */
+    UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for NES Coordinator"};
+
+    /**
+     * @brief Configures the number of worker threads.
+     */
+    UIntOption numWorkerThreads = {NUM_WORKER_THREADS_CONFIG, 1, "Number of worker threads."};
+
+    /**
+     * @brief The number of buffers in the global buffer manager.
+     * Controls how much memory is consumed by the system.
+     */
     UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
                                                        1024,
                                                        "Number buffers in global buffer pool."};
+    /**
+     * @brief Indicates how many buffers a single worker thread can allocate.
+     */
     UIntOption numberOfBuffersPerWorker = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG, 128, "Number buffers in task local buffer pool."};
+
+    /**
+     * @brief Indicates how many buffers a single data source can allocate.
+     * This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
+     */
     UIntOption numberOfBuffersInSourceLocalBufferPool = {NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
                                                          64,
                                                          "Number buffers in source local buffer pool."};
-    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes."};
-    UIntOption numWorkerThreads = {NUM_WORKER_THREADS_CONFIG, 1, "Number of worker threads."};
-    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
-    BoolOption enableQueryReconfiguration = {
-        PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
-        false,
-        "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)"};
 
+    /**
+     * @brief Configures the buffer size of individual TupleBuffers in bytes.
+     * This property has to be the same over a whole deployment.
+     */
+    UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, 4096, "BufferSizeInBytes."};
+
+    /**
+     * @brief Indicates if the monitoring stack is enables.
+     */
+    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, false, "Enable monitoring"};
+
+    /**
+     * @brief Enable reconfiguration of running query plans.
+     */
+    BoolOption enableQueryReconfiguration = {
+        ENABLE_QUERY_RECONFIGURATION,
+        false,
+        "Enable reconfiguration of running query plans. (Default: false)"};
+
+    /**
+     * @brief Configures different properties for the query optimizer.
+     */
     OptimizerConfiguration optimizer = {OPTIMIZER_CONFIG, "Defines the configuration for the optimizer."};
+
+    /**
+     * @brief Allows the configuration of logical sources at the coordinator.
+     * @deprecated This is currently only used for testing and will be removed.
+     */
     std::vector<LogicalSourcePtr> logicalSources;
 
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }

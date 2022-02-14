@@ -40,20 +40,6 @@ enum class QueryMergerRule {
     HybridCompleteQueryMergerRule
 };
 
-static const std::map<std::string, QueryMergerRule> stringToMergerRuleEnum{
-    {"SyntaxBasedCompleteQueryMergerRule", QueryMergerRule::SyntaxBasedCompleteQueryMergerRule},
-    {"SyntaxBasedPartialQueryMergerRule", QueryMergerRule::SyntaxBasedPartialQueryMergerRule},
-    {"Z3SignatureBasedCompleteQueryMergerRule", QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule},
-    {"Z3SignatureBasedPartialQueryMergerRule", QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule},
-    {"Z3SignatureBasedPartialQueryMergerBottomUpRule", QueryMergerRule::Z3SignatureBasedPartialQueryMergerBottomUpRule},
-    {"HashSignatureBasedCompleteQueryMergerRule", QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule},
-    {"ImprovedStringSignatureBasedCompleteQueryMergerRule", QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule},
-    {"ImprovedStringSignatureBasedPartialQueryMergerRule", QueryMergerRule::ImprovedStringSignatureBasedPartialQueryMergerRule},
-    {"StringSignatureBasedPartialQueryMergerRule", QueryMergerRule::StringSignatureBasedPartialQueryMergerRule},
-    {"DefaultQueryMergerRule", QueryMergerRule::DefaultQueryMergerRule},
-    {"HybridCompleteQueryMergerRule", QueryMergerRule::HybridCompleteQueryMergerRule},
-};
-
 class QueryMergerPhase;
 using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 

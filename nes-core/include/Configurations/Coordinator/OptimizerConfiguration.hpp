@@ -61,7 +61,7 @@ class OptimizerConfiguration : public BaseConfiguration {
                                                               "The rule to be used for performing query merging"};
 
     /**
-     * @brief Enable semantic query validation feature
+     * @brief Enable semantic query validation.
      */
     BoolOption enableSemanticQueryValidation = {ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG,
                                                 false,
@@ -69,9 +69,9 @@ class OptimizerConfiguration : public BaseConfiguration {
 
     /**
      * @brief Indicates the memory layout policy and allows the engine to prefer a row or columnar layout.
-     * Valid options are:
-     * FORCE_ROW_LAYOUT
-     * FORCE_COLUMN_LAYOUT
+     * Depending on the concrete workload different memory layouts can be beneficial. Valid options are:
+     * FORCE_ROW_LAYOUT -> Enforces a row layout between all operators.
+     * FORCE_COLUMN_LAYOUT -> Enforces a column layout between all operators.
      */
     EnumOption<Optimizer::MemoryLayoutSelectionPhase::MemoryLayoutPolicy> memoryLayoutPolicy = {
         MEMORY_LAYOUT_POLICY_CONFIG,
@@ -79,7 +79,7 @@ class OptimizerConfiguration : public BaseConfiguration {
         "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]"};
 
     /**
-     * @brief Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)
+     * @brief Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule.
      */
     BoolOption performOnlySourceOperatorExpansion = {
         PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
