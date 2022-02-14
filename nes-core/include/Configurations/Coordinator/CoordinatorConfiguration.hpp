@@ -41,9 +41,9 @@ class CoordinatorConfiguration : public BaseConfiguration {
   public:
     StringOption restIp = {REST_IP_CONFIG, "127.0.0.1", "NES ip of the REST server."};
     StringOption coordinatorIp = {COORDINATOR_IP_CONFIG, "127.0.0.1", "RPC IP address of NES Coordinator."};
-    UIntOption rpcPort = {RPC_PORT_CONFIG, 4000, "RPC server port of the NES Coordinator"};
-    UIntOption restPort = {REST_PORT_CONFIG, 8081, "Port exposed for rest endpoints"};
-    UIntOption dataPort = {DATA_PORT_CONFIG, 3001, "NES data server port"};
+    UIntOption rpcPort = {RPC_PORT_CONFIG, 0, "RPC server port of the NES Coordinator"};
+    UIntOption restPort = {REST_PORT_CONFIG, 0, "Port exposed for rest endpoints"};
+    UIntOption dataPort = {DATA_PORT_CONFIG, 0, "NES data server port"};
     UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for NES Coordinator"};
     EnumOption<DebugLevel> logLevel = {LOG_LEVEL_CONFIG,
                                        LOG_DEBUG,
