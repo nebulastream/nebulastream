@@ -105,6 +105,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
     uint64_t generatedTuplesThisPass = buffer.getCapacity();
 
     uint64_t tupleCount = 0;
+    currentPositionInFile = 0;
     while (tupleCount < generatedTuplesThisPass) {
         buffer[tupleCount][0].write<uint64_t>(100);
         buffer[tupleCount][1].write<uint64_t>(100);
