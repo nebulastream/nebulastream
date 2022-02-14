@@ -24,7 +24,6 @@ FileBuilder FileBuilder::create(const std::string&) {
                           "#include <Common/ExecutableType/Array.hpp>\n"
                           "#include <QueryCompiler/Operators/PhysicalOperators/CEP/CEPOperatorHandler/CEPOperatorHandler.hpp>\n"
                           "#include <cstdint>\n"
-                          "#include <utility>\n" // for std::make_pair
                           "#include <string.h>\n"
                           "#include <State/StateVariable.hpp>\n"
                           "#include <Windowing/LogicalWindowDefinition.hpp>\n"
