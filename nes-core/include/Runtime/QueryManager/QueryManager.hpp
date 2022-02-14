@@ -302,6 +302,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
 
     std::map<QueryId, uint64_t> queryToTaskQueueIdMap;
+    uint64_t currentTaskQueueId = 0;
 
     std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 

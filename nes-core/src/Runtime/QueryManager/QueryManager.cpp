@@ -292,12 +292,16 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
         NES_DEBUG("QueryManager: Source " << sourceOperatorId << " not found. Creating new element with with qep " << qep);
         sourceIdToExecutableQueryPlanMap[sourceOperatorId] = qep;
 //        queryToStatisticsMap.insert(qep->getQuerySubPlanId(),std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
-        NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair 1=" << qep->getQueryId() << " 2=" <<qep->getQuerySubPlanId());
-        queryToStatisticsMap[qep->getQuerySubPlanId()] = std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId());
-
         queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorId);
     }
 
+    NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId() << " subplanId=" <<qep->getQuerySubPlanId());
+    queryToStatisticsMap[qep->getQuerySubPlanId()] = std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId());
+
+
+    //currently we asume all queues have same number of threads so we can do this.
+    queryToTaskQueueIdMap[qep->getQueryId()] = currentTaskQueueId++;
+    NES_DEBUG("queryToTaskQueueIdMap add for=" << qep->getQueryId() << " queue=" << currentTaskQueueId -1);
     return true;
 }
 
@@ -555,7 +559,14 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
-    new (buffer.getBuffer()) ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
+    if(mode == Dynamic)
+    {
+        new (buffer.getBuffer()) ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
+    }
+    else
+    {
+        new (buffer.getBuffer()) ReconfigurationMessage(message, numberOfThreadsPerQueue, blocking);// memcpy using copy ctor
+    }
     return addReconfigurationMessage(queryId, queryExecutionPlanId, std::move(buffer), blocking);
 }
 
@@ -830,16 +841,21 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     std::unique_lock lock(workMutex);
 #endif
     // todo also support data sinks
-    uint64_t qepId = -1;
+    uint64_t querySubPlanId = -1;
+    uint64_t queryId = -1;
     auto executable = task.getExecutable();
     if (auto* sink = std::get_if<DataSinkPtr>(&executable)) {
-        qepId = (*sink)->getParentPlanId();
+        querySubPlanId = (*sink)->getParentPlanId();
+        queryId = (*sink)->getQueryId();
+        NES_DEBUG("QueryManager::completedWork: task for sink");
     } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
-        qepId = (*executablePipeline)->getQuerySubPlanId();
+        querySubPlanId = (*executablePipeline)->getQuerySubPlanId();
+        queryId = (*executablePipeline)->getQueryId();
+        NES_DEBUG("QueryManager::completedWork: task for exec pipeline isreconfig=" << (*executablePipeline)->isReconfiguration());
     }
 
-    if (queryToStatisticsMap.contains(qepId)) {
-        auto statistics = queryToStatisticsMap.find(qepId);
+    if (queryToStatisticsMap.contains(querySubPlanId)) {
+        auto statistics = queryToStatisticsMap.find(querySubPlanId);
 
         statistics->second->incProcessedTasks();
         statistics->second->incProcessedBuffers();
@@ -869,7 +885,7 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
         {
             NES_DEBUG("first elem=" << elem.first << " queyId=" << elem.second->getQueryId() << " subquery=" << elem.second->getSubQueryId());
         }
-        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing qepId=" << qepId);
+        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing queryId=" << queryId << " subPlanId=" << querySubPlanId);
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
     }
 #endif
