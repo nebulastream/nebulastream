@@ -30,17 +30,19 @@ class AbstractBufferStorage {
 
     /**
      * @brief Inserts a pair id, buffer link to the buffer storage
-     * @param id id of the buffer
+     * @param queryId id of current query
+     * @param nesPartitionId destination id
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    virtual void insertBuffer(BufferSequenceNumber id, NES::Runtime::TupleBuffer bufferPtr) = 0;
+    virtual void insertBuffer(uint64_t queryId, uint64_t nesPartitionId, NES::Runtime::TupleBufferPtr bufferPtr) = 0;
 
     /**
      * @brief Deletes q pair<id,buffer> from buffer storage
-     * @param id id of the buffer
+     * @param queryId id of current query
+     * @param timestamp max timestamp of current epoch
      * @return true in case of a success trimming
      */
-    virtual bool trimBuffer(BufferSequenceNumber id) = 0;
+    virtual bool trimBuffer(uint64_t queryId, uint64_t timestamp) = 0;
 
     /**
      * @brief Return current storage size
