@@ -25,13 +25,13 @@
 namespace NES::Runtime::Execution {
 ExecutablePipeline::ExecutablePipeline(uint64_t pipelineId,
                                        QueryId queryId,
-                                       QuerySubPlanId qepId,
+                                       QuerySubPlanId querySubPlanId,
                                        PipelineExecutionContextPtr pipelineExecutionContext,
                                        ExecutablePipelineStagePtr executablePipelineStage,
                                        uint32_t numOfProducingPipelines,
                                        std::vector<SuccessorExecutablePipeline> successorPipelines,
                                        bool reconfiguration)
-    : pipelineId(pipelineId), queryId(queryId), querySubPlanId(qepId),
+    : pipelineId(pipelineId), queryId(queryId), querySubPlanId(querySubPlanId),
       executablePipelineStage(std::move(executablePipelineStage)), pipelineContext(std::move(pipelineExecutionContext)),
       reconfiguration(reconfiguration),
       pipelineStatus(reconfiguration ? PipelineStatus::PipelineRunning : PipelineStatus::PipelineCreated),
