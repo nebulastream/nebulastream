@@ -151,7 +151,7 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
  * OR operator in combination with additional map and filter
  */
 //FIXME: please enable after fixing #2436
-TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
+TEST_F(OrOperatorTest, testPatternOrMap) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -169,8 +169,8 @@ TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    csvSourceType1->setNumberOfTuplesToProducePerBuffer(5);
-    csvSourceType1->setNumberOfBuffersToProduce(40);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(40);
+    csvSourceType1->setNumberOfBuffersToProduce(2);
     //register physical stream R2000070
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
     worker1Configuration->physicalSources.add(conf70);
@@ -186,8 +186,8 @@ TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
     //Add Physical source
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    csvSourceType2->setNumberOfTuplesToProducePerBuffer(5);
-    csvSourceType2->setNumberOfBuffersToProduce(40);
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(35);
+    csvSourceType2->setNumberOfBuffersToProduce(2);
     //register physical stream R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
     worker2Configuration->physicalSources.add(conf73);
@@ -227,7 +227,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternOrMap) {
     NES_DEBUG("contents=" << content);
     size_t n = std::count(content.begin(), content.end(), '\n');
     NES_DEBUG("TUPLE NUMBER=" << n);
-    size_t expResult = 208L;
+    size_t expResult = 130L;
 
     EXPECT_EQ(n, expResult);
 
