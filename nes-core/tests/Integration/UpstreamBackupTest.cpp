@@ -28,13 +28,15 @@
 #include <iostream>
 #include <gmock/gmock.h>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
 namespace NES {
 
 using namespace Configurations;
-static uint64_t timestamp = 1644426604;
+static int timestamp = 1644426604;
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
@@ -53,16 +55,6 @@ class UpstreamBackupTest : public testing::Test {
     void TearDown() override { std::cout << "Tear down UpstreamBackupTest class." << std::endl; }
 
     std::string ipAddress = "127.0.0.1";
-};
-
-// testing w/ original running routine
-class MockReplicationService : public ReplicationService {
-  public:
-    MockReplicationService (NesCoordinatorPtr coordinatorPtr)
-        : ReplicationService(coordinatorPtr){
-            // nop
-        };
-    MOCK_METHOD(bool, propagatePunctuation, (uint64_t timestamp, uint64_t queryId), (const));
 };
 
 /*
@@ -128,17 +120,18 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
-    auto replicationService = std::make_shared<MockReplicationService>(crd);
     //get sink
     auto sinks = crd->getNodeEngine()->getSinksForQEPId(2);
     for (auto& sink : sinks) {
         sink->notifyEpochTermination(timestamp);
     }
 
+    auto currentTimestamp = crd->getReplicationService()->getcurrentEpochBarrierForGivenQueryAndEpoch(queryId, 0);
+    while (currentTimestamp == -1) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));;
+    }
+
     //check if the method was called
-    EXPECT_CALL(*replicationService, propagatePunctuation(timestamp, queryId))
-                                    .Times(1)
-        .WillOnce(testing::Return(true));
-    delete(&replicationService);
+    EXPECT_TRUE(currentTimestamp == timestamp);
 }
 }

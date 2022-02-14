@@ -102,8 +102,8 @@ class TestSink : public SinkMedium {
   public:
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-    TestSink(const SchemaPtr& schema, Runtime::QueryManagerPtr queryManager, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), queryManager, 0) {
+    TestSink(const SchemaPtr& schema, Runtime::NodeEnginePtr nodeEngine, const Runtime::BufferManagerPtr& bufferManager)
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0) {
         // nop
     }
 
@@ -519,7 +519,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
             });
 
         auto testSink =
-            std::make_shared<TestSink>(schema, nodeEngineReceiver->getQueryManager(), nodeEngineReceiver->getBufferManager());
+            std::make_shared<TestSink>(schema, nodeEngineReceiver, nodeEngineReceiver->getBufferManager());
         finalSinks.emplace_back(testSink);
         auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
@@ -764,14 +764,14 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
         SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
         explicit TestSinkEvent(const SchemaPtr& schema,
-                               Runtime::QueryManagerPtr queryManager,
+                               Runtime::NodeEnginePtr nodeEngine,
                                const Runtime::BufferManagerPtr& bufferManager)
-            : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), queryManager, 0) {
+            : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0) {
             // nop
         }
 
         bool writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef context) override {
-            auto parentPlan = queryManager->getQueryExecutionPlan(querySubPlanId);
+            auto parentPlan = nodeEngine->getQueryManager()->getQueryExecutionPlan(querySubPlanId);
             for (auto& dataSources : parentPlan->getSources()) {
                 auto senderChannel = context.getEventOnlyNetworkChannel(dataSources->getOperatorId());
                 senderChannel->sendEvent<detail::TestEvent>(Runtime::EventType::kCustomEvent, 123);
@@ -803,7 +803,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
     };
 
     auto testSink =
-        std::make_shared<TestSinkEvent>(schema, nodeEngineReceiver->getQueryManager(), nodeEngineReceiver->getBufferManager());
+        std::make_shared<TestSinkEvent>(schema, nodeEngineReceiver, nodeEngineReceiver->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);

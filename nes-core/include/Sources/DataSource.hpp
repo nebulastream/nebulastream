@@ -218,10 +218,11 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
     /**
      * @brief method injects epoch barrier to the data stream
-     * @param timestamp current epoch timestamp
+     * @param epochBarrier current epoch barrier
+     * @param queryId currect query id
      * @return success is the message was sent
      */
-    virtual bool injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const;
+    virtual bool injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) const;
 
   protected:
     Runtime::QueryManagerPtr queryManager;

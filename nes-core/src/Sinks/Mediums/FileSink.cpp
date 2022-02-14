@@ -25,12 +25,11 @@ namespace NES {
 SinkMediumTypes FileSink::getSinkMediumType() { return FILE_SINK; }
 
 FileSink::FileSink(SinkFormatPtr format,
-                   Runtime::QueryManagerPtr queryManager,
+                   Runtime::NodeEnginePtr nodeEngine,
                    const std::string& filePath,
                    bool append,
-                   QuerySubPlanId querySubPlanId,
-                   ReplicationServicePtr replicationService)
-    : SinkMedium(std::move(format), std::move(queryManager), querySubPlanId, std::move(replicationService)) {
+                   QuerySubPlanId querySubPlanId)
+    : SinkMedium(std::move(format), std::move(nodeEngine), querySubPlanId) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {
@@ -116,7 +115,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     }
     outputFile.flush();
 
-    //call propagate //TODO:Anastasiia
+    //TODO: call propagate timestamp
     return true;
 }
 

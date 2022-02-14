@@ -359,6 +359,15 @@ bool NesWorker::notifyQueryFailure(uint64_t queryId,
     return success;
 }
 
+bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
+    bool con = waitForConnect();
+    NES_DEBUG("connected= " << con);
+    NES_ASSERT(con, "Connection failed");
+    bool success = coordinatorRpcClient->notifyEpochTermination(timestamp, querySubPlanId);
+    NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
+    return success;
+}
+
 TopologyNodeId NesWorker::getTopologyNodeId() const { return topologyNodeId; }
 
 

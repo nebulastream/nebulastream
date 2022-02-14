@@ -27,16 +27,33 @@
 
 namespace NES {
 
-ReplicationService::ReplicationService(NesCoordinatorPtr coordinatorPtr) : coordinatorPtr(std::move(coordinatorPtr)), currentEpochBarrier(0) {}
+ReplicationService::ReplicationService(NesCoordinatorPtr coordinatorPtr) : coordinatorPtr(std::move(coordinatorPtr)) {}
 
-ReplicationService::~ReplicationService() {};
+int ReplicationService::getcurrentEpochBarrierForGivenQueryAndEpoch(uint64_t queryId, uint64_t epoch) const {
+    std::unique_lock lock(replicationServiceMutex);
+    auto pairEpochTimestamp = this->queryIdToCurrentEpochBarrierMap.at(queryId);
+    if (pairEpochTimestamp.first == epoch) {
+        return pairEpochTimestamp.second;
+    }
+    else {
+        return -1;
+    }
+}
 
-bool ReplicationService::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
+bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t querySubPlanId) {
     std::unique_lock lock(replicationServiceMutex);
     std::vector<SourceLogicalOperatorNodePtr> sources;
-    this->currentEpochBarrier = timestamp;
     uint64_t queryId = this->coordinatorPtr->getNodeEngine()->getQueryIdFromSubQueryId(querySubPlanId);
-    NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << timestamp << "to sources with queryId " << queryId);
+    auto iterator = queryIdToCurrentEpochBarrierMap.find(queryId);
+    std::pair<uint64_t, uint64_t> newPairEpochTimestamp;
+    if (iterator != queryIdToCurrentEpochBarrierMap.end()) {
+        newPairEpochTimestamp = std::pair(iterator->first + 1, epochBarrier);
+    }
+    else {
+        newPairEpochTimestamp = std::pair(0, epochBarrier);
+    }
+    queryIdToCurrentEpochBarrierMap[queryId] = newPairEpochTimestamp;
+    NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << epochBarrier << "to sources with queryId " << queryId);
     auto queryPlan = this->coordinatorPtr->getGlobalQueryPlan()->getSharedQueryPlan(queryId)->getQueryPlan();
     uint64_t curQueryId = queryPlan->getQueryId();
     auto logicalSinkOperators = queryPlan->getSinkOperators();
@@ -49,7 +66,7 @@ bool ReplicationService::notifyEpochTermination(uint64_t timestamp, uint64_t que
                 for (auto& sourceLocation : sourceLocations) {
                     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
                     bool success =
-                        workerRpcClient->injectEpochBarrier(timestamp, curQueryId, sourceLocation->getIpAddress());
+                        workerRpcClient->injectEpochBarrier(epochBarrier, curQueryId, sourceLocation->getIpAddress());
                     NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
                     return success;
                 }

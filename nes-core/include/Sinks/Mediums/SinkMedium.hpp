@@ -21,7 +21,6 @@
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <mutex>
-#include "Services/ReplicationService.hpp"
 
 namespace NES {
 
@@ -46,7 +45,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     /**FF
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat, Runtime::QueryManagerPtr queryManager, QuerySubPlanId querySubPlanId, ReplicationServicePtr replicationService = nullptr);
+    explicit SinkMedium(SinkFormatPtr sinkFormat, Runtime::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId);
 
     /**
      * @brief virtual method to setup sink
@@ -117,10 +116,11 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::string getAppendAsString() const;
 
     /**
-     * @brief method passes current safe to trim timestamp to coordinator via ReplicationService
-     * @param max epoch timestamp
+     * @brief method passes current safe to trim timestamp to coordinator via RPC
+     * @param epochBarrier max epoch timestamp
+     * @return success
      */
-    void notifyEpochTermination(uint64_t timestamp) const;
+    bool notifyEpochTermination(uint64_t epochBarrier) const;
 
     /**
       * @brief method to return the type of medium
@@ -147,9 +147,8 @@ class SinkMedium : public Runtime::Reconfigurable {
         false};// TODO think if this is really necessary here.. this looks something a file sink may require but it's not general for all sinks
     std::atomic_bool schemaWritten{false};// TODO same here
 
-    Runtime::QueryManagerPtr queryManager;
+    Runtime::NodeEnginePtr nodeEngine;
     QuerySubPlanId querySubPlanId;
-    ReplicationServicePtr replicationService;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
 
     uint64_t sentBuffer{0};// TODO check thread safety

@@ -18,6 +18,7 @@
 #include <CoordinatorRPCService.grpc.pb.h>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Services/ReplicationService.hpp>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -47,7 +48,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param streamCatalogService : the instance of the steam catalog service
      * @param monitoringService: the instance of monitoring service
      */
-    explicit CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService, StreamCatalogServicePtr streamCatalogService, MonitoringManagerPtr monitoringService);
+    explicit CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService, StreamCatalogServicePtr streamCatalogService, MonitoringManagerPtr monitoringService, ReplicationServicePtr replicationService);
 
     /**
      * @brief RPC Call to register a node
@@ -149,10 +150,22 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
                               const QueryFailureNotification* request,
                               QueryFailureNotificationReply* reply) override;
 
+    /**
+      * @brief RPC Call to propagate timestamp
+      * @param context
+      * @param request that is sent from worker to the coordinator, contains timestamp and queryId
+      * @param reply that is sent back from the coordinator to the worker to confirm that notification was successful
+      * @return success
+      */
+    Status NotifyEpochTermination(ServerContext* context,
+                                const EpochBarrierPropagationNotification* request,
+                                EpochBarrierPropagationReply* reply) override;
+
   private:
     TopologyManagerServicePtr topologyManagerService;
     StreamCatalogServicePtr streamCatalogService;
     MonitoringManagerPtr monitoringManager;
+    ReplicationServicePtr replicationService;
 };
 }// namespace NES
 

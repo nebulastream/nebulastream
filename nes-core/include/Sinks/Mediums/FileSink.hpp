@@ -35,11 +35,10 @@ class FileSink : public SinkMedium {
      * @param modus of writting (overwrite or append)
      */
     explicit FileSink(SinkFormatPtr format,
-                      Runtime::QueryManagerPtr queryManager,
+                      Runtime::NodeEnginePtr nodeEngine,
                       const std::string& filePath,
                       bool append,
-                      QuerySubPlanId querySubPlanId,
-                      ReplicationServicePtr replicationService);
+                      QuerySubPlanId querySubPlanId);
 
     /**
      * @brief dtor

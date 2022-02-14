@@ -39,9 +39,10 @@ class NodeEngineFactory {
      * @param hostname the ip address for the network manager
      * @param port the port for the network manager
      * @param config
+     * @param nesWorker weak pointer to the nes worker where the node engine is created
      * @return
      */
-    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<PhysicalSourcePtr> physicalSources, ReplicationServicePtr&& replicationService = nullptr);
+    static NodeEnginePtr createDefaultNodeEngine(const std::string& hostname, uint16_t port, std::vector<PhysicalSourcePtr> physicalSources, std::weak_ptr<NesWorker>&& nesWorker = std::weak_ptr<NesWorker>());
 
     /**
     * @brief this creates a new Runtime
@@ -50,6 +51,7 @@ class NodeEngineFactory {
     * @param numThreads the number of worker threads for this nodeEngine
     * @param bufferSize the buffer size for the buffer manager
     * @param numBuffers the number of buffers for the buffer manager
+    * @param nesWorker weak pointer to the nes worker where the node engine is created
     * @return
     */
     static NodeEnginePtr createNodeEngine(const std::string& hostname,

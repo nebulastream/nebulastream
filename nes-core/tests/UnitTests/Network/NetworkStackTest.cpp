@@ -97,8 +97,8 @@ class TestSink : public SinkMedium {
   public:
     SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
-    TestSink(const SchemaPtr& schema, Runtime::QueryManagerPtr queryManager, const Runtime::BufferManagerPtr& bufferManager)
-        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), queryManager, 0){};
+    TestSink(const SchemaPtr& schema, Runtime::NodeEnginePtr nodeEngine, const Runtime::BufferManagerPtr& bufferManager)
+        : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, 0){};
 
     bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) override {
         std::unique_lock lock(m);

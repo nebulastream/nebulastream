@@ -37,7 +37,7 @@ namespace NES::Runtime {
 
 NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& hostname,
                                                          uint16_t port,
-                                                         std::vector<PhysicalSourcePtr> physicalSources, NesWorkerPtr&& nesWorker) {
+                                                         std::vector<PhysicalSourcePtr> physicalSources, std::weak_ptr<NesWorker>&& nesWorker) {
     return createNodeEngine(hostname,
                             port,
                             std::move(physicalSources),
@@ -60,6 +60,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
                                                   const uint64_t numberOfBuffersPerWorker,
+                                                  std::weak_ptr<NesWorker>&& nesWorker,
                                                   std::weak_ptr<NesWorker>&& nesWorker,
                                                   const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
                                                   NumaAwarenessFlag enableNumaAwareness,
@@ -154,10 +155,6 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             NES_ERROR("Runtime: error while creating bufferStorage");
             throw log4cxx::helpers::Exception("Error while creating bufferStorage");
         }
-        if (!replicationService) {
-            NES_ERROR("Runtime: error while creating replicationService");
-            throw Exception("Error while creating replicationService");
-        }
         if (!materializedViewManager) {
             NES_ERROR("Runtime: error while creating materializedViewMananger");
             throw log4cxx::helpers::Exception("Error while creating materializedViewMananger");
@@ -189,7 +186,7 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
             std::move(partitionManager),
             std::move(compiler),
             std::move(stateManager),
-            std::move(replicationService),
+            std::move(nesWorker),
             std::move(materializedViewManager),
             nodeEngineId,
             numberOfBuffersInGlobalBufferManager,
