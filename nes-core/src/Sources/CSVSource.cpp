@@ -102,55 +102,10 @@ std::string CSVSource::toString() const {
 }
 
 void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
-    NES_DEBUG("CSVSource::fillBuffer: start at pos=" << currentPositionInFile << " fileSize=" << fileSize);
-    if (this->fileEnded) {
-        NES_WARNING("CSVSource::fillBuffer: but file has already ended");
-        buffer.setNumberOfTuples(0);
-        return;
-    }
-    input.seekg(currentPositionInFile, std::ifstream::beg);
+    uint64_t generatedTuplesThisPass = buffer.getCapacity();
 
-    uint64_t generatedTuplesThisPass = 0;
-    //fill buffer maximally
-    if (numberOfTuplesToProducePerBuffer == 0) {
-        generatedTuplesThisPass = buffer.getCapacity();
-    } else {
-        generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
-        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
-    }
-    NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generatedTuplesThisPass << " of size=" << tupleSize);
-
-    std::string line;
     uint64_t tupleCount = 0;
-
-    if (skipHeader && currentPositionInFile == 0) {
-        NES_DEBUG("CSVSource: Skipping header");
-        std::getline(input, line);
-        currentPositionInFile = input.tellg();
-    }
-
     while (tupleCount < generatedTuplesThisPass) {
-        //        if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1) {
-        //            NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " fileSize=" << fileSize);
-        //            input.clear();
-        //            input.seekg(0, std::ifstream::beg);
-        //            if (!this->loopOnFile) {
-        //                NES_DEBUG("CSVSource::fillBuffer: break because file ended");
-        //                this->fileEnded = true;
-        //                break;
-        //            }
-        //            if (this->skipHeader) {
-        //                NES_DEBUG("CSVSource: Skipping header");
-        //                std::getline(input, line);
-        //                currentPositionInFile = input.tellg();
-        //            }
-        //        }
-        //
-        //        std::getline(input, line);
-        //        NES_TRACE("CSVSource line=" << tupleCount << " val=" << line);
-        //        // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
-        //
-        //        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema);
         buffer[tupleCount][0].write<uint64_t>(100);
         buffer[tupleCount][1].write<uint64_t>(100);
         buffer[tupleCount][2].write<uint64_t>(100);
@@ -160,13 +115,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& buffer) {
         buffer[tupleCount][6].write<uint64_t>(100);
         tupleCount++;
     }//end of while
-
-    //    currentPositionInFile = input.tellg();
     buffer.setNumberOfTuples(tupleCount);
-    //    generatedTuples += tupleCount;
-    //    generatedBuffers++;
-    NES_DEBUG("CSVSource::fillBuffer: reading finished read " << tupleCount << " tuples at posInFile=" << currentPositionInFile);
-    NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }
