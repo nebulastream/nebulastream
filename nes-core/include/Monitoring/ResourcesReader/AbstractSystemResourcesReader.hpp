@@ -20,13 +20,12 @@
 #include <unordered_map>
 
 namespace NES {
-
 class CpuMetricsWrapper;
 class MemoryMetrics;
 class NetworkMetricsWrapper;
 class DiskMetrics;
-class RuntimeNesMetrics;
-class StaticNesMetrics;
+class RegistrationMetrics;
+class RuntimeMetrics;
 
 /**
 * @brief This is an abstract class so derived classes can collect basic system information
@@ -46,15 +45,15 @@ class AbstractSystemResourcesReader {
 
     /**
     * @brief This methods reads runtime system metrics that are used within NES (e.g., memory usage, cpu load).
-    * @return A RuntimeNesMetrics object containing the metrics.
+    * @return A RuntimeMetrics object containing the metrics.
     */
-    virtual RuntimeNesMetrics readRuntimeNesMetrics();
+    virtual RuntimeMetrics readRuntimeNesMetrics();
 
     /**
     * @brief This methods reads system metrics that are used within NES (e.g., totalMemoryBytes, core num.).
-    * @return A StaticNesMetrics object containing the metrics.
+    * @return A NodeRegistrationMetrics object containing the metrics.
     */
-    virtual StaticNesMetrics readStaticNesMetrics();
+    virtual RegistrationMetrics readRegistrationMetrics();
 
     /**
     * @brief This method reads CPU information from /proc/stat.

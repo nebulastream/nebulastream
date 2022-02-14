@@ -318,7 +318,7 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->RegisterMonitoring(&context, request, &reply);
+    Status status = workerStub->RegisterMonitoringPlan(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");

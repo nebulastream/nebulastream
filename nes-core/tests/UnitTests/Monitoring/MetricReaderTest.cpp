@@ -22,13 +22,13 @@ limitations under the License.
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
 #include <Util/Logger.hpp>
 
-#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
+#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp>
-#include <Monitoring/Metrics/Gauge/StaticNesMetrics.hpp>
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <cpprest/json.h>
 
 namespace NES {
@@ -50,8 +50,8 @@ class MetricReaderTest : public testing::Test {
 
 TEST_F(MetricReaderTest, testAbstractSystemResourcesReader) {
     auto resourcesReader = std::make_shared<AbstractSystemResourcesReader>();
-    EXPECT_TRUE(resourcesReader->readRuntimeNesMetrics() == RuntimeNesMetrics{});
-    EXPECT_TRUE(resourcesReader->readStaticNesMetrics() == StaticNesMetrics{});
+    EXPECT_TRUE(resourcesReader->readRuntimeNesMetrics() == RuntimeMetrics{});
+    EXPECT_TRUE(resourcesReader->readRegistrationMetrics() == RegistrationMetrics{});
     EXPECT_TRUE(resourcesReader->readCpuStats() == CpuMetricsWrapper{});
     EXPECT_TRUE(resourcesReader->readNetworkStats() == NetworkMetricsWrapper{});
     EXPECT_TRUE(resourcesReader->readMemoryStats() == MemoryMetrics{});
@@ -66,7 +66,7 @@ TEST_F(MetricReaderTest, testRuntimeNesMetrics) {
 }
 
 TEST_F(MetricReaderTest, testStaticNesMetrics) {
-    auto staticMetrics = resourcesReader->readStaticNesMetrics();
+    auto staticMetrics = resourcesReader->readRegistrationMetrics();
     NES_DEBUG("MonitoringStackTest: Static metrics=" << staticMetrics.toJson());
     EXPECT_TRUE(MetricValidator::isValid(resourcesReader, staticMetrics));
 }

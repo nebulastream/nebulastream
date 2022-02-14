@@ -16,31 +16,33 @@
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/NetworkCollector.hpp>
+#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
-    NetworkCollector::NetworkCollector()
-        : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
-          schema(NetworkMetrics::getSchema("")) {
-        NES_INFO("NetworkCollector: Init NetworkCollector with schema " << schema->toString());
+NetworkCollector::NetworkCollector()
+    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+      schema(NetworkMetrics::getSchema("")) {
+    NES_INFO("NetworkCollector: Init NetworkCollector with schema " << schema->toString());
+}
+
+bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
+    try {
+        NetworkMetricsWrapper measuredVal = resourceReader->readNetworkStats();
+        writeToBuffer(measuredVal, tupleBuffer, 0);
+    } catch (const std::exception& ex) {
+        NES_ERROR("NetworkCollector: Error while collecting metrics " << ex.what());
+        return false;
     }
+    return true;
+}
 
-    bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
-        try {
-            NetworkMetricsWrapper measuredVal = resourceReader->readNetworkStats();
-            writeToBuffer(measuredVal, tupleBuffer, 0);
-        } catch (const std::exception& ex) {
-            NES_ERROR("NetworkCollector: Error while collecting metrics " << ex.what());
-            return false;
-        }
-        return true;
-    }
+SchemaPtr NetworkCollector::getSchema() { return schema; }
 
-    SchemaPtr NetworkCollector::getSchema() { return schema; }
-
-    MetricPtr NetworkCollector::readMetric() { return std::make_shared<Metric>(resourceReader->readNetworkStats()); }
+MetricPtr NetworkCollector::readMetric() { return std::make_shared<Metric>(resourceReader->readNetworkStats()); }
 }// namespace NES

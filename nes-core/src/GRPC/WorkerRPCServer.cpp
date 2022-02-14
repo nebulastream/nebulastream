@@ -14,10 +14,11 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
-#include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <cpprest/json.h>
 #include <utility>
 
 namespace NES {
@@ -87,34 +88,30 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     return Status::CANCELLED;
 }
 
-Status
-WorkerRPCServer::RegisterMonitoring(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) {
+Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
+                                               const MonitoringRegistrationRequest* request,
+                                               MonitoringRegistrationReply*) {
     try {
-        NES_DEBUG("WorkerRPCServer::RegisterMonitoring: Got request");
-        MonitoringPlanPtr plan = MonitoringPlan::create(request->monitoringplan());
-        auto schema = monitoringAgent->registerMonitoringPlan(plan);
-        if (schema) {
-            return Status::OK;
+        NES_DEBUG("WorkerRPCServer::RegisterMonitoringPlan: Got request");
+        std::set<MetricType> types;
+        for (auto type : request->metrictypes()) {
+            types.insert((MetricType) type);
         }
-        return Status::CANCELLED;
-
+        MonitoringPlanPtr plan = MonitoringPlan::create(types);
+        monitoringAgent->setMonitoringPlan(plan);
+        return Status::OK;
     } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: Registering monitoring plan failed: " << ex.what());
-        return Status::CANCELLED;
     }
+    return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
     try {
         NES_DEBUG("WorkerRPCServer::GetMonitoringData: Got request");
-        auto buf = nodeEngine->getBufferManager()->getUnpooledBuffer(monitoringAgent->getSchema()->getSchemaSizeInBytes());
-        if (buf.has_value()) {
-            monitoringAgent->getMetricsFromPlan(buf.value());
-            // add buffer to the reply object
-            reply->set_buffer(buf.value().getBuffer(), monitoringAgent->getSchema()->getSchemaSizeInBytes());
-            return Status::OK;
-        }
-        NES_THROW_RUNTIME_ERROR("WorkerRPCServer: Error getting unpooled buffer.");
+        auto metrics = monitoringAgent->getMetricsAsJson().serialize();
+        reply->set_metricsasjson(metrics);
+        return Status::OK;
     } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: Requesting monitoring data failed: " << ex.what());
     }
@@ -141,7 +138,7 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
 
     uint64_t querySubPlanId = request->querysubplanid();
     uint64_t uniqueNetworkSinkDescriptorId = request->uniquenetworksinkdescriptorid();
-    bool success = nodeEngine->bufferData(querySubPlanId,uniqueNetworkSinkDescriptorId);
+    bool success = nodeEngine->bufferData(querySubPlanId, uniqueNetworkSinkDescriptorId);
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
@@ -152,8 +149,8 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
         return Status::CANCELLED;
     }
 }
-Status WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request,
-                                           UpdateNetworkSinkReply* reply) {
+Status
+WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) {
     NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request received");
     uint64_t querySubPlanId = request->querysubplanid();
     uint64_t uniqueNetworkSinkDescriptorId = request->uniquenetworksinkdescriptorid();
@@ -161,7 +158,7 @@ Status WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSin
     std::string newHostname = request->newhostname();
     uint32_t newPort = request->newport();
 
-    bool success = nodeEngine->updateNetworkSink(newNodeId,newHostname,newPort,querySubPlanId,uniqueNetworkSinkDescriptorId);
+    bool success = nodeEngine->updateNetworkSink(newNodeId, newHostname, newPort, querySubPlanId, uniqueNetworkSinkDescriptorId);
     if (success) {
         NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
         reply->set_success(true);

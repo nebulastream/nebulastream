@@ -18,12 +18,6 @@
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 
 namespace NES {
-class CpuMetricsWrapper;
-class MemoryMetrics;
-class NetworkMetricsWrapper;
-class DiskMetrics;
-class RuntimeNesMetrics;
-class StaticNesMetrics;
 
 /**
 * @brief This is a static utility class to collect basic system information on a Linux operating System
@@ -35,15 +29,15 @@ class LinuxSystemResourcesReader : public AbstractSystemResourcesReader {
 
     /**
     * @brief This methods reads runtime system metrics that are used within NES (e.g., memory usage, cpu load).
-    * @return A RuntimeNesMetrics object containing the metrics.
+    * @return A RuntimeMetrics object containing the metrics.
     */
-    RuntimeNesMetrics readRuntimeNesMetrics() override;
+    RuntimeMetrics readRuntimeNesMetrics() override;
 
     /**
     * @brief This methods reads static system metrics that are used within NES (e.g., totalMemoryBytes, core num.).
-    * @return A StaticNesMetrics object containing the metrics.
+    * @return A NodeRegistrationMetrics object containing the metrics.
     */
-    StaticNesMetrics readStaticNesMetrics() override;
+    RegistrationMetrics readRegistrationMetrics() override;
 
     /**
     * @brief This method reads CPU information from /proc/stat.

@@ -12,6 +12,7 @@ namespace NES {
  */
 class CpuMetricsWrapper {
   public:
+    CpuMetricsWrapper() = default;
     CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
 
     /**
@@ -55,7 +56,7 @@ class CpuMetricsWrapper {
  * @param the TupleBuffer
  * @param the prefix as std::string
 */
-void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method
@@ -63,7 +64,7 @@ void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_
  * @param prefix
  * @return the SchemaPtr
 */
-SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix);
+SchemaPtr getSchema(const CpuMetricsWrapper& metrics, const std::string& prefix);
 
 }// namespace NES
 

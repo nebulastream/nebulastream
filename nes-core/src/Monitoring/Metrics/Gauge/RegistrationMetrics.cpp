@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/Gauge/StaticNesMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
+#include <CoordinatorRPCService.pb.h>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
@@ -27,19 +28,29 @@
 
 namespace NES {
 
-StaticNesMetrics::StaticNesMetrics()
+RegistrationMetrics::RegistrationMetrics()
     : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(false), hasBattery(false) {
-    NES_DEBUG("StaticNesMetrics: Default ctor");
+    NES_DEBUG("RegistrationMetrics: Default ctor");
 }
 
-StaticNesMetrics::StaticNesMetrics(bool isMoving, bool hasBattery)
+RegistrationMetrics::RegistrationMetrics(bool isMoving, bool hasBattery)
     : totalMemoryBytes(0), cpuCoreNum(0), totalCPUJiffies(0), cpuPeriodUS(0), cpuQuotaUS(0), isMoving(isMoving),
       hasBattery(hasBattery) {
-    NES_DEBUG("StaticNesMetrics: Init with flag moving:" + std::to_string(isMoving)
+    NES_DEBUG("RegistrationMetrics: Init with flag moving:" + std::to_string(isMoving)
               + ", hasBattery:" + std::to_string(hasBattery));
 }
 
-SchemaPtr StaticNesMetrics::getSchema(const std::string& prefix) {
+RegistrationMetrics::RegistrationMetrics(SerializableRegistrationMetrics metrics) {
+    totalMemoryBytes = metrics.totalmemorybytes();
+    cpuCoreNum = metrics.cpucorenum();
+    totalCPUJiffies = metrics.totalcpujiffies();
+    cpuPeriodUS = metrics.cpuperiodus();
+    cpuQuotaUS = metrics.cpuquotaus();
+    isMoving = metrics.ismoving();
+    hasBattery = metrics.hasbattery();
+}
+
+SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
     SchemaPtr schema = Schema::create()
                            ->addField(prefix + "totalMemoryBytes", BasicType::UINT64)
 
@@ -54,17 +65,18 @@ SchemaPtr StaticNesMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
-    StaticNesMetrics output{};
+RegistrationMetrics
+RegistrationMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
+    RegistrationMetrics output{};
     auto i = schema->getIndex(prefix + "totalMemoryBytes");
 
     if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("StaticNesMetrics: Tuple size should be 1, but is larger "
+        NES_THROW_RUNTIME_ERROR("RegistrationMetrics: Tuple size should be 1, but is larger "
                                 + std::to_string(buf.getNumberOfTuples()));
     }
 
-    if (!MetricUtils::validateFieldsInSchema(StaticNesMetrics::getSchema(""), schema, i)) {
-        NES_THROW_RUNTIME_ERROR("StaticNesMetrics: Incomplete number of fields in schema.");
+    if (!MetricUtils::validateFieldsInSchema(RegistrationMetrics::getSchema(""), schema, i)) {
+        NES_THROW_RUNTIME_ERROR("RegistrationMetrics: Incomplete number of fields in schema.");
     }
 
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
@@ -81,7 +93,7 @@ StaticNesMetrics StaticNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::
     return output;
 }
 
-web::json::value StaticNesMetrics::toJson() const {
+web::json::value RegistrationMetrics::toJson() const {
     web::json::value metricsJson{};
 
     metricsJson["TotalMemory"] = web::json::value::number(totalMemoryBytes);
@@ -97,25 +109,37 @@ web::json::value StaticNesMetrics::toJson() const {
     return metricsJson;
 }
 
-bool StaticNesMetrics::operator==(const StaticNesMetrics& rhs) const {
+SerializableRegistrationMetricsPtr RegistrationMetrics::serialize() const {
+    auto output = std::make_shared<SerializableRegistrationMetrics>();
+    output->set_ismoving(isMoving);
+    output->set_hasbattery(hasBattery);
+    output->set_totalmemorybytes(totalMemoryBytes);
+    output->set_totalcpujiffies(totalCPUJiffies);
+    output->set_cpucorenum(cpuCoreNum);
+    output->set_cpuperiodus(cpuPeriodUS);
+    output->set_cpuquotaus(cpuQuotaUS);
+    return output;
+}
+
+bool RegistrationMetrics::operator==(const RegistrationMetrics& rhs) const {
     return totalMemoryBytes == rhs.totalMemoryBytes && cpuCoreNum == rhs.cpuCoreNum && totalCPUJiffies == rhs.totalCPUJiffies
         && cpuPeriodUS == rhs.cpuPeriodUS && cpuQuotaUS == rhs.cpuQuotaUS && isMoving == rhs.isMoving
         && hasBattery == rhs.hasBattery;
 }
 
-bool StaticNesMetrics::operator!=(const StaticNesMetrics& rhs) const { return !(rhs == *this); }
+bool RegistrationMetrics::operator!=(const RegistrationMetrics& rhs) const { return !(rhs == *this); }
 
-void writeToBuffer(const StaticNesMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(const RegistrationMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(StaticNesMetrics) <= buf.getBufferSize(),
-               "RuntimeNesMetrics: Content does not fit in TupleBuffer");
-    NES_ASSERT(sizeof(StaticNesMetrics) == StaticNesMetrics::getSchema("")->getSchemaSizeInBytes(),
-               sizeof(StaticNesMetrics) << "!=" << StaticNesMetrics::getSchema("")->getSchemaSizeInBytes());
+    NES_ASSERT(byteOffset + sizeof(RegistrationMetrics) <= buf.getBufferSize(),
+               "RuntimeMetrics: Content does not fit in TupleBuffer");
+    NES_ASSERT(sizeof(RegistrationMetrics) == RegistrationMetrics::getSchema("")->getSchemaSizeInBytes(),
+               sizeof(RegistrationMetrics) << "!=" << RegistrationMetrics::getSchema("")->getSchemaSizeInBytes());
 
-    memcpy(tbuffer + byteOffset, &metric, sizeof(StaticNesMetrics));
+    memcpy(tbuffer + byteOffset, &metric, sizeof(RegistrationMetrics));
     buf.setNumberOfTuples(1);
 }
 
-SchemaPtr getSchema(const StaticNesMetrics&, const std::string& prefix) { return StaticNesMetrics::getSchema(prefix); }
+SchemaPtr getSchema(const RegistrationMetrics&, const std::string& prefix) { return RegistrationMetrics::getSchema(prefix); }
 
 }// namespace NES

@@ -14,10 +14,9 @@
 
 add_source_files(nes-core
         CpuMetrics.cpp
-        ../Wrapper/CpuMetricsWrapper.cpp
         DiskMetrics.cpp
         MemoryMetrics.cpp
         NetworkMetrics.cpp
-        RuntimeNesMetrics.cpp
-        StaticNesMetrics.cpp
+        RuntimeMetrics.cpp
+        RegistrationMetrics.cpp
 )

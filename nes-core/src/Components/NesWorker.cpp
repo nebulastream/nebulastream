@@ -13,6 +13,7 @@
 */
 
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Common/GeographicalLocation.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -20,11 +21,9 @@
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
-#include "Monitoring/Metrics/Gauge/MetricValueType.hpp"
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
-#include "Monitoring/MonitoringPlan.hpp"
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -34,7 +33,6 @@
 #include <csignal>
 #include <future>
 #include <utility>
-#include <Common/GeographicalLocation.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -57,8 +55,8 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
       bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
       locationCoordinates(getGeoLocOptionFromString(workerConfig->locationCoordinates.getValue())),
-      queryCompilerConfiguration(workerConfig->queryCompiler),
-      enableNumaAwareness(workerConfig->numaAwareness.getValue()), enableMonitoring(workerConfig->enableMonitoring.getValue()) {
+      queryCompilerConfiguration(workerConfig->queryCompiler), enableNumaAwareness(workerConfig->numaAwareness.getValue()),
+      enableMonitoring(workerConfig->enableMonitoring.getValue()) {
     log4cxx::MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
     NES_ASSERT2_FMT(coordinatorPort > 0, "Cannot use 0 as coordinator port");
@@ -154,7 +152,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     rpcAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
-    NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address=" << rpcAddress << ":" << localWorkerRpcPort.load());
+    NES_DEBUG("NesWorker: request startWorkerRPCServer for accepting messages for address=" << rpcAddress << ":"
+                                                                                            << localWorkerRpcPort.load());
     std::shared_ptr<std::promise<int>> promRPC = std::make_shared<std::promise<int>>();
 
     rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
@@ -164,7 +163,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }));
     localWorkerRpcPort.store(promRPC->get_future().get());
     rpcAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort.load());
-    NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address=" << rpcAddress << ":" << localWorkerRpcPort.load());
+    NES_DEBUG("NesWorker: startWorkerRPCServer ready for accepting messages for address=" << rpcAddress << ":"
+                                                                                          << localWorkerRpcPort.load());
 
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect");
@@ -243,17 +243,16 @@ bool NesWorker::connect() {
 
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
     std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
-    auto staticStats = monitoringAgent->getStaticNesMetrics();
+    auto registrationMetrics = monitoringAgent->getRegistrationMetrics();
 
     NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
 
-    bool successPRCRegister =
-        coordinatorRpcClient->registerNode(localWorkerIp,
-                                           localWorkerRpcPort.load(),
-                                           nodeEngine->getNetworkManager()->getServerDataPort(),
-                                           numberOfSlots,
-                                           staticStats,
-                                           locationCoordinates);
+    bool successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
+                                                                 localWorkerRpcPort.load(),
+                                                                 nodeEngine->getNetworkManager()->getServerDataPort(),
+                                                                 numberOfSlots,
+                                                                 registrationMetrics,
+                                                                 locationCoordinates);
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {
@@ -438,6 +437,5 @@ void NesWorker::onFatalException(const std::shared_ptr<std::exception> exception
     detail::createCoreDump();
 #endif
 }
-
 
 }// namespace NES

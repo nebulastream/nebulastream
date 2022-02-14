@@ -23,7 +23,7 @@ MetricStore::MetricStore(MetricStoreStrategy storeType) : storeType(storeType) {
     NES_DEBUG("MetricStore: Init with store type " << storeType);
 }
 
-void MetricStore::addMetric(uint64_t nodeId, const std::vector<MetricPtr>& metrics) {
+void MetricStore::addMetrics(uint64_t nodeId, const std::vector<MetricPtr>& metrics) {
     std::unordered_map<MetricType, MetricPtr> metricEntry;
     for (const auto& metric : metrics) {
         metricEntry.insert({getMetricType(metric), metric});
@@ -48,9 +48,9 @@ bool MetricStore::removeMetrics(uint64_t nodeId) {
     return false;
 }
 
-bool MetricStore::hasMetric(uint64_t nodeId) { return storedMetrics.contains(nodeId); }
+bool MetricStore::hasMetrics(uint64_t nodeId) { return storedMetrics.contains(nodeId); }
 
-std::vector<MetricPtr> MetricStore::getNewestMetric(uint64_t nodeId) {
+std::vector<MetricPtr> MetricStore::getNewestMetrics(uint64_t nodeId) {
     using MetricMap = std::unordered_map<MetricType, MetricPtr>;
     auto metricMap = storedMetrics.at(nodeId);
     std::vector<MetricPtr> output;

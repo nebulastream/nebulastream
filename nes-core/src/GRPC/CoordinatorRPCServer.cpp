@@ -13,11 +13,12 @@
 */
 
 #include <GRPC/CoordinatorRPCServer.hpp>
-#include "Monitoring/Metrics/Gauge/GroupedMetricValues.hpp"
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
 
 using namespace NES;
 
@@ -44,9 +45,10 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                            request->numberofslots());
     }
 
-    auto groupedMetrics = std::make_shared<GroupedMetricValues>();
-    groupedMetrics->staticNesMetrics = std::make_unique<StaticNesMetrics>(StaticNesMetrics(request->monitoringdata()));
-    monitoringManager->receiveMonitoringData(id, groupedMetrics);
+    auto registrationMetrics = Metric{RegistrationMetrics(request->registrationmetrics())};
+    auto metricPtr = std::shared_ptr<Metric>(&registrationMetrics);
+    std::vector<MetricPtr> metrics = std::vector<MetricPtr>{metricPtr};
+    monitoringManager->addMonitoringData(id, metrics);
 
     if (id != 0) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);

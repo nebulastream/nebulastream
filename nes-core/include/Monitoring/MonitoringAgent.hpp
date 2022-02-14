@@ -24,6 +24,10 @@
 
 namespace NES {
 
+class NesWorker;
+using NesWorkerPtr = std::shared_ptr<NesWorker>;
+class RegistrationMetrics;
+
 /**
 * @brief The MonitoringAgent which is responsible for collecting metrics on a local level.
 */
@@ -67,13 +71,19 @@ class MonitoringAgent {
      * @brief Getter for the MonitoringPlan
      * @return Ptr to the MonitoringPlan
     */
-    MonitoringPlanPtr getMonitoringPlan() const;
+    [[nodiscard]] MonitoringPlanPtr getMonitoringPlan() const;
 
     /**
-     * @brief
+     * @brief set the monitoring plan
      * @param monitoringPlan
     */
     void setMonitoringPlan(MonitoringPlanPtr monitoringPlan);
+
+    /**
+     * @brief Return the metrics required for node registration.
+     * @return the metrics
+     */
+    RegistrationMetrics getRegistrationMetrics();
 
   private:
     MonitoringPlanPtr monitoringPlan;

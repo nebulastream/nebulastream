@@ -15,7 +15,7 @@
 #include "API/AttributeField.hpp"
 #include "API/Schema.hpp"
 #include "Common/DataTypes/FixedChar.hpp"
-#include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/RuntimeMetrics.hpp"
 #include "Monitoring/Util/MetricUtils.hpp"
 #include "Runtime/MemoryLayout/RowLayout.hpp"
 #include "Runtime/MemoryLayout/RowLayoutField.hpp"
@@ -27,13 +27,13 @@
 
 namespace NES {
 
-RuntimeNesMetrics::RuntimeNesMetrics()
+RuntimeMetrics::RuntimeMetrics()
     : wallTimeNs(0), memoryUsageInBytes(0), cpuLoadInJiffies(0), blkioBytesRead(0), blkioBytesWritten(0), batteryStatusInPercent(0), latCoord(0),
       longCoord(0) {
-    NES_DEBUG("RuntimeNesMetrics: Default ctor");
+    NES_DEBUG("RuntimeMetrics: Default ctor");
 }
 
-SchemaPtr RuntimeNesMetrics::getSchema(const std::string& prefix) {
+SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) {
     DataTypePtr intNameField = std::make_shared<FixedChar>(20);
 
     SchemaPtr schema = Schema::create()
@@ -49,17 +49,17 @@ SchemaPtr RuntimeNesMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
-    RuntimeNesMetrics output{};
+RuntimeMetrics RuntimeMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
+    RuntimeMetrics output{};
     auto i = schema->getIndex(prefix + "wallTimeNs");
 
     if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("RuntimeNesMetrics: Tuple size should be 1, but is larger "
+        NES_THROW_RUNTIME_ERROR("RuntimeMetrics: Tuple size should be 1, but is larger "
                                 + std::to_string(buf.getNumberOfTuples()));
     }
 
-    if (!MetricUtils::validateFieldsInSchema(RuntimeNesMetrics::getSchema(""), schema, i)) {
-        NES_THROW_RUNTIME_ERROR("RuntimeNesMetrics: Incomplete number of fields in schema.");
+    if (!MetricUtils::validateFieldsInSchema(RuntimeMetrics::getSchema(""), schema, i)) {
+        NES_THROW_RUNTIME_ERROR("RuntimeMetrics: Incomplete number of fields in schema.");
     }
 
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
@@ -76,7 +76,7 @@ RuntimeNesMetrics RuntimeNesMetrics::fromBuffer(const SchemaPtr& schema, Runtime
     return output;
 }
 
-web::json::value RuntimeNesMetrics::toJson() const {
+web::json::value RuntimeMetrics::toJson() const {
     web::json::value metricsJson{};
 
     metricsJson["WallClockNs"] = web::json::value::number(wallTimeNs);
@@ -91,26 +91,26 @@ web::json::value RuntimeNesMetrics::toJson() const {
     return metricsJson;
 }
 
-bool RuntimeNesMetrics::operator==(const RuntimeNesMetrics& rhs) const {
+bool RuntimeMetrics::operator==(const RuntimeMetrics& rhs) const {
     return wallTimeNs == rhs.wallTimeNs && memoryUsageInBytes == rhs.memoryUsageInBytes
         && cpuLoadInJiffies == rhs.cpuLoadInJiffies && blkioBytesRead == rhs.blkioBytesRead
         && blkioBytesWritten == rhs.blkioBytesWritten && batteryStatusInPercent == rhs.batteryStatusInPercent
         && latCoord == rhs.latCoord && longCoord == rhs.longCoord;
 }
 
-bool RuntimeNesMetrics::operator!=(const RuntimeNesMetrics& rhs) const { return !(rhs == *this); }
+bool RuntimeMetrics::operator!=(const RuntimeMetrics& rhs) const { return !(rhs == *this); }
 
-void writeToBuffer(const RuntimeNesMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+void writeToBuffer(const RuntimeMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(RuntimeNesMetrics) <= buf.getBufferSize(),
-               "RuntimeNesMetrics: Content does not fit in TupleBuffer");
-    NES_ASSERT(sizeof(RuntimeNesMetrics) == RuntimeNesMetrics::getSchema("")->getSchemaSizeInBytes(),
-               sizeof(RuntimeNesMetrics) << "!=" << RuntimeNesMetrics::getSchema("")->getSchemaSizeInBytes());
+    NES_ASSERT(byteOffset + sizeof(RuntimeMetrics) <= buf.getBufferSize(),
+               "RuntimeMetrics: Content does not fit in TupleBuffer");
+    NES_ASSERT(sizeof(RuntimeMetrics) == RuntimeMetrics::getSchema("")->getSchemaSizeInBytes(),
+               sizeof(RuntimeMetrics) << "!=" << RuntimeMetrics::getSchema("")->getSchemaSizeInBytes());
 
-    memcpy(tbuffer + byteOffset, &metric, sizeof(RuntimeNesMetrics));
+    memcpy(tbuffer + byteOffset, &metric, sizeof(RuntimeMetrics));
     buf.setNumberOfTuples(1);
 }
 
-SchemaPtr getSchema(const RuntimeNesMetrics&, const std::string& prefix) { return RuntimeNesMetrics::getSchema(prefix); }
+SchemaPtr getSchema(const RuntimeMetrics&, const std::string& prefix) { return RuntimeMetrics::getSchema(prefix); }
 
 }// namespace NES

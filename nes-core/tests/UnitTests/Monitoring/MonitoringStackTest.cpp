@@ -23,8 +23,8 @@
 #include "Monitoring/MonitoringPlan.hpp"
 #include <Monitoring/Util/MetricUtils.hpp>
 
-#include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/RuntimeMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/RegistrationMetrics.hpp"
 #include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
 #include <Util/Logger.hpp>
 #include <cpprest/json.h>

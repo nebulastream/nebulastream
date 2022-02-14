@@ -116,12 +116,12 @@ web::json::value MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId)
 }
 
 std::vector<MetricPtr> MonitoringManager::getMonitoringDataFromMetricStore(uint64_t nodeId) {
-    return metricStore->getNewestMetric(nodeId);
+    return metricStore->getNewestMetrics(nodeId);
 }
 
 void MonitoringManager::addMonitoringData(uint64_t nodeId, std::vector<MetricPtr> metrics) {
     NES_DEBUG("MonitoringManager: Adding metrics for node " << nodeId);
-    metricStore->addMetric(nodeId, std::move(metrics));
+    metricStore->addMetrics(nodeId, std::move(metrics));
 }
 
 void MonitoringManager::removeMonitoringNode(uint64_t nodeId) {
@@ -144,7 +144,7 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
     }
 }
 
-bool MonitoringManager::registerMonitoringLogical(StreamCatalogPtr streamCatalog) {
+bool MonitoringManager::registerMonitoringLogical(StreamCatalogPtr) {
     // Check if logical stream already exists
     /**
     if (enableMonitoring) {

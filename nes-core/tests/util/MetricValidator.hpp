@@ -15,12 +15,12 @@
 #ifndef NES_TESTS_UTIL_METRICVALIDATOR_HPP_
 #define NES_TESTS_UTIL_METRICVALIDATOR_HPP_
 
-#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
-#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"
-#include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
+#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 #include <Monitoring/ResourcesReader/LinuxSystemResourcesReader.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
@@ -34,7 +34,7 @@ namespace NES {
  */
 class MetricValidator {
   public:
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, RuntimeNesMetrics metrics) {
+    static bool isValid(AbstractSystemResourcesReaderPtr reader, RuntimeMetrics metrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
@@ -77,11 +77,11 @@ class MetricValidator {
         return check;
     };
 
-    static bool isValid(AbstractSystemResourcesReaderPtr reader, StaticNesMetrics metrics) {
+    static bool isValid(AbstractSystemResourcesReaderPtr reader, RegistrationMetrics metrics) {
         bool check = true;
 
         if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
-            NES_WARNING("MetricValidator: AbstractReader used for StaticNesMetrics. Returning true");
+            NES_WARNING("MetricValidator: AbstractReader used for NodeRegistrationMetrics. Returning true");
             return true;
         }
 
@@ -124,11 +124,11 @@ class MetricValidator {
             return true;
         }
 
-        if (!(cpuMetrics.getNumCores() > 0)) {
+        if (cpuMetrics.size() <= 0) {
             NES_ERROR("MetricValidator: Wrong getNumCores.");
             check = false;
         }
-        for (int i = 0; i < cpuMetrics.getNumCores(); i++) {
+        for (uint64_t i = 0; i < cpuMetrics.size(); i++) {
             if (!(cpuMetrics.getValue(i).user > 0)) {
                 NES_ERROR("MetricValidator: Wrong cpuMetrics.getValue(i).user.");
                 check = false;
