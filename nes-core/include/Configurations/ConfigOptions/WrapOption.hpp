@@ -45,6 +45,7 @@ class WrapOption : public TypedBaseOption<Type> {
      * @param description of the option.
      */
     WrapOption(const std::string& name, const std::string& description);
+    std::string toString() override;
 
   protected:
     virtual void parseFromYAMLNode(Yaml::Node node) override;
@@ -72,6 +73,12 @@ template<class Type,class Factory>
 requires IsFactory<Type, Factory>
 void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node) {
     this->value = Factory::createFromYaml(node);
+}
+
+template<class Type, class Factory>
+requires IsFactory<Type, Factory>
+std::string Configurations::WrapOption<Type, Factory>::toString() {
+    return "";
 }
 
 }// namespace NES::Configurations

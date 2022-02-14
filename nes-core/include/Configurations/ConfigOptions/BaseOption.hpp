@@ -57,6 +57,12 @@ class BaseOption {
      */
     std::string getDescription();
 
+    /**
+     * @brief To string method for the option.
+     * @return string
+     */
+    virtual std::string toString() = 0;
+
   protected:
     friend class BaseConfiguration;
 
@@ -72,8 +78,7 @@ class BaseOption {
      * @param identifier of the children option if the option is nested.
      * @param value of the option as a string
      */
-    virtual void parseFromString(std::string identifier,
-                                 std::map<std::string, std::string>& inputParams) = 0;
+    virtual void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) = 0;
 
     std::string name;
     std::string description;

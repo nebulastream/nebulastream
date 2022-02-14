@@ -19,8 +19,8 @@
 #include <string>
 #include <type_traits>
 
+using namespace magic_enum::ostream_operators;
 namespace NES::Configurations {
-
 /**
  * @brief This class defines an option, which has only the member of an enum as possible values.
  * @tparam EnumType
@@ -42,6 +42,7 @@ requires std::is_enum<EnumType>::value class EnumOption : public TypedBaseOption
      * @return Reference to this option.
      */
     EnumOption<EnumType>& operator=(const EnumType& value);
+    std::string toString() override;
 
   protected:
     void parseFromYAMLNode(Yaml::Node node) override;
@@ -80,6 +81,12 @@ EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std::stri
         throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + name);
     }
     this->value = magic_enum::enum_cast<EnumType>(value).value();
+}
+
+template<class EnumType>
+requires std::is_enum<EnumType>::value
+    std::string EnumOption<EnumType>::toString() {
+    return "";
 }
 
 }// namespace NES::Configurations

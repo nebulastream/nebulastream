@@ -17,6 +17,7 @@
 #include <Configurations/ConfigOptions/BaseOption.hpp>
 #include <Exceptions/ConfigurationException.hpp>
 #include <vector>
+#include "TypedBaseOption.hpp"
 namespace NES::Configurations {
 
 /**
@@ -62,6 +63,8 @@ class SequenceOption : public BaseOption {
         options.push_back(option);
     };
 
+    std::string toString() override;
+
   protected:
     void parseFromYAMLNode(Yaml::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
@@ -69,6 +72,7 @@ class SequenceOption : public BaseOption {
   private:
     std::vector<T> options;
 };
+
 
 template<class T>
 requires std::is_base_of_v<BaseOption, T> SequenceOption<T>::SequenceOption(const std::string& name,
@@ -116,6 +120,16 @@ const { return options; }
 template<class T>
 requires std::is_base_of_v<BaseOption, T>
 bool SequenceOption<T>::empty() const { return options.empty(); }
+
+template<class T>
+requires std::is_base_of_v<BaseOption, T>
+std::string SequenceOption<T>::toString() {
+    std::stringstream os;
+    os << "Config Object: \n";
+    os << "Name: " << name << "\n";
+    os << "Description: " << description << "\n";
+    return os.str();
+}
 
 }// namespace NES::Configurations
 

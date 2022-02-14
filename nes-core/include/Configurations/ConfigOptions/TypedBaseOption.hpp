@@ -108,6 +108,8 @@ void TypedBaseOption<T>::clear() {
     this->value = defaultValue;
 }
 
+
+
 }// namespace NES::Configurations
 
 #endif//NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_TYPEDBASEOPTION_HPP_

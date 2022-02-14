@@ -15,7 +15,6 @@
 #ifndef NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #define NES_INCLUDE_RUNTIME_NODEENGINEFACTORY_HPP_
 #include <Runtime/RuntimeForwardRefs.hpp>
-
 #include <vector>
 
 namespace NES {
