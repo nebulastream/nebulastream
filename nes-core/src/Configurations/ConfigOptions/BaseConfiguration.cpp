@@ -52,13 +52,6 @@ void BaseConfiguration::parseFromString(std::string identifier, std::map<std::st
     }else{
         optionMap[identifier]->parseFromString(identifier, inputParams);
     }
-
-    // for (auto [childIdentifier, value] : inputParams) {
-    //     if (value.empty()) {
-    //         throw ConfigurationException("The value field in empty.");
-    //    }
-
-    //}
 }
 
 void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -79,7 +72,6 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::
         if (identifier.starts_with(identifierStart)) {
             // remove the -- in the beginning
             identifier = identifier.substr(identifierStart.size());
-            // throw ConfigurationException("Identifier " + identifier + " is not malformed. All commands should start with a --.");
         }
 
         if (identifier.find('.') != std::string::npos) {

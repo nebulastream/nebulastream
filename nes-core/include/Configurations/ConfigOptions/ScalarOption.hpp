@@ -61,6 +61,7 @@ class ScalarOption : public TypedBaseOption<T> {
 
     template<class X>
     friend std::ostream& operator<<(std::ostream& os, const ScalarOption<X>& option);
+    std::string toString() override;
 
   protected:
     virtual void parseFromYAMLNode(Yaml::Node node) override;
@@ -76,6 +77,17 @@ class ScalarOption : public TypedBaseOption<T> {
      */
     ScalarOption() : TypedBaseOption<T>() {}
 };
+
+template<class T>
+std::string ScalarOption<T>::toString() {
+    std::stringstream os;
+    os << "Config Object: \n";
+    os << "Name: " << this->name << "\n";
+    os << "Description: " << this->description << "\n";
+    os << "Value: " << this->value << "\n";
+    os << "Default Value: " << this->defaultValue << "\n";
+    return os.str();
+}
 
 template<class X>
 std::ostream& operator<<(std::ostream& os, const ScalarOption<X>& option) {
