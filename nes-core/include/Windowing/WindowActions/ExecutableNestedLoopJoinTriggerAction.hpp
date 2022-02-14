@@ -83,18 +83,19 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                                    << " check key=" << rightHashTable.first
                                                                    << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
-                    if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::INNER_JOIN
-                        && leftHashTable.first == rightHashTable.first) {
+                    if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::INNER_JOIN){
+                        if (leftHashTable.first == rightHashTable.first) {
 
-                        NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: found join pair for key "
-                                                                           << leftHashTable.first);
-                        numberOfFlushedRecords += joinWindows(leftHashTable.first,
-                                                              leftHashTable.second,
-                                                              rightHashTable.second,
-                                                              tupleBuffer,
-                                                              currentWatermark,
-                                                              lastWatermark,
-                                                              workerContext);
+                            NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: found join pair for key "
+                                                                               << leftHashTable.first);
+                            numberOfFlushedRecords += joinWindows(leftHashTable.first,
+                                                                  leftHashTable.second,
+                                                                  rightHashTable.second,
+                                                                  tupleBuffer,
+                                                                  currentWatermark,
+                                                                  lastWatermark,
+                                                                  workerContext);
+                        }
                     }
 
                     else if (joinDefinition->getJoinType() == LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT) {
