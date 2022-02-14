@@ -43,15 +43,16 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
     NES_ASSERT(querySubPlan, "Invalid query sub-plan");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
-        return createTextPrintSink(schema, querySubPlan->getQuerySubPlanId(), nodeEngine, std::cout);
+        return createTextPrintSink(schema, querySubPlan->getQueryId(), querySubPlan->getQuerySubPlanId(), nodeEngine, std::cout);
     }
     if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink" << schema->toString());
-        return createNullOutputSink(querySubPlan->getQuerySubPlanId(), nodeEngine);
+        return createNullOutputSink(querySubPlan->getQueryId(), querySubPlan->getQuerySubPlanId(), nodeEngine);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
         return createBinaryZmqSink(schema,
+                                   querySubPlan->getQueryId(),
                                    querySubPlan->getQuerySubPlanId(),
                                    nodeEngine,
                                    zmqSinkDescriptor->getHost(),
@@ -110,18 +111,21 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
             "ConvertLogicalToPhysicalSink: Creating Binary file sink for format=" << fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT") {
             return createCSVFileSink(schema,
+                                     querySubPlan->getQueryId(),
                                      querySubPlan->getQuerySubPlanId(),
                                      nodeEngine,
                                      fileSinkDescriptor->getFileName(),
                                      fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
             return createBinaryNESFileSink(schema,
+                                           querySubPlan->getQueryId(),
                                            querySubPlan->getQuerySubPlanId(),
                                            nodeEngine,
                                            fileSinkDescriptor->getFileName(),
                                            fileSinkDescriptor->getAppend());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "TEXT_FORMAT") {
             return createTextFileSink(schema,
+                                      querySubPlan->getQueryId(),
                                       querySubPlan->getQuerySubPlanId(),
                                       nodeEngine,
                                       fileSinkDescriptor->getFileName(),
@@ -135,6 +139,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
         return createNetworkSink(schema,
                                  networkSinkDescriptor->getUniqueNetworkSinkDescriptorId(),
+                                 querySubPlan->getQueryId(),
                                  querySubPlan->getQuerySubPlanId(),
                                  networkSinkDescriptor->getNodeLocation(),
                                  networkSinkDescriptor->getNesPartition(),
@@ -147,6 +152,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
         auto materializedViewSinkDescriptor = sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
         return Experimental::MaterializedView::createMaterializedViewSink(schema,
                                           nodeEngine,
+                                          querySubPlan->getQueryId(),
                                           querySubPlan->getQuerySubPlanId(),
                                           materializedViewSinkDescriptor->getViewId());
     } else {

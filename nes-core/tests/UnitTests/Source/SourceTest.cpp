@@ -504,7 +504,7 @@ class SourceTest : public Testing::NESBaseTest {
     std::shared_ptr<Runtime::Execution::ExecutablePipeline>
     createExecutablePipeline(std::shared_ptr<MockedExecutablePipeline> executableStage, std::shared_ptr<SinkMedium> sink) {
         auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(), sink);
-        return Runtime::Execution::ExecutablePipeline::create(0, this->queryId, context, executableStage, 1, {sink});
+        return Runtime::Execution::ExecutablePipeline::create(0, this->queryId, this->queryId, context, executableStage, 1, {sink});
     }
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
@@ -693,7 +693,7 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-freq-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0,  0, this->nodeEngine, "source-test-freq-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -734,7 +734,7 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-ingest-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-ingest-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -779,7 +779,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -824,7 +824,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -871,7 +871,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroIniti
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
-    auto sink = createCSVFileSink(this->schema, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
+    auto sink = createCSVFileSink(this->schema, 0, 0, this->nodeEngine, "source-test-kf-routine.csv", false);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream

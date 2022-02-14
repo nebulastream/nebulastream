@@ -196,11 +196,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param queryExecutionPlanId: the local QEP to reconfigure
+     * @param queryId: the local QEP to reconfigure
+     * @param queryExecutionPlanId: the local sub QEP to reconfigure
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId,
+    bool addReconfigurationMessage(QueryId queryId, QuerySubPlanId queryExecutionPlanId,
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false);
 
@@ -212,11 +213,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param queryExecutionPlanId: the local QEP to reconfigure
+     * @param queryId: the local QEP to reconfigure
+     * @param queryExecutionPlanId: the local szb QEP to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false);
+    bool addReconfigurationMessage(QueryId queryId, QuerySubPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false);
 
   public:
     /**
@@ -299,12 +301,13 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorMap;
     std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
 
+    std::map<QueryId, uint64_t> queryToTaskQueueIdMap;
+
     std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
-
 
     Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 

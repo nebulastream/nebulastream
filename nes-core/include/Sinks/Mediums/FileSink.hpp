@@ -38,6 +38,7 @@ class FileSink : public SinkMedium {
                       Runtime::NodeEnginePtr nodeEngine,
                       const std::string& filePath,
                       bool append,
+                      QueryId queryId,
                       QuerySubPlanId querySubPlanId);
 
     /**

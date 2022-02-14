@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include "Runtime/QueryManager/QueryManager.hpp"
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include "Runtime/QueryManager/QueryManager.hpp"
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -24,14 +24,16 @@
 
 namespace NES::Runtime::Execution {
 ExecutablePipeline::ExecutablePipeline(uint64_t pipelineId,
+                                       QueryId queryId,
                                        QuerySubPlanId qepId,
                                        PipelineExecutionContextPtr pipelineExecutionContext,
                                        ExecutablePipelineStagePtr executablePipelineStage,
                                        uint32_t numOfProducingPipelines,
                                        std::vector<SuccessorExecutablePipeline> successorPipelines,
                                        bool reconfiguration)
-    : pipelineId(pipelineId), querySubPlanId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
-      pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration),
+    : pipelineId(pipelineId), queryId(queryId), querySubPlanId(qepId),
+      executablePipelineStage(std::move(executablePipelineStage)), pipelineContext(std::move(pipelineExecutionContext)),
+      reconfiguration(reconfiguration),
       pipelineStatus(reconfiguration ? PipelineStatus::PipelineRunning : PipelineStatus::PipelineCreated),
       activeProducers(numOfProducingPipelines), successorPipelines(std::move(successorPipelines)) {
     // nop
@@ -69,7 +71,8 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
     uint32_t localStateVariableId = 0;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineRunning)) {
         auto queryManager = pipelineContext->getQueryManager();
-        auto newReconf = ReconfigurationMessage(querySubPlanId,
+        auto newReconf = ReconfigurationMessage(queryId,
+                                                querySubPlanId,
                                                 Initialize,
                                                 shared_from_this(),
                                                 std::make_any<uint32_t>(activeProducers.load()));
@@ -77,7 +80,7 @@ bool ExecutablePipeline::start(const StateManagerPtr& stateManager) {
             operatorHandler->start(pipelineContext, stateManager, localStateVariableId);
             localStateVariableId++;
         }
-        queryManager->addReconfigurationMessage(querySubPlanId, newReconf, true);
+        queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, true);
         executablePipelineStage->start(*pipelineContext.get());
         return true;
     }
@@ -104,9 +107,12 @@ uint64_t ExecutablePipeline::getPipelineId() const { return pipelineId; }
 
 QuerySubPlanId ExecutablePipeline::getQuerySubPlanId() const { return querySubPlanId; }
 
+QueryId ExecutablePipeline::getQueryId() const { return queryId; }
+
 bool ExecutablePipeline::isReconfiguration() const { return reconfiguration; }
 
 ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
+                                                 QueryId queryId,
                                                  QuerySubPlanId querySubPlanId,
                                                  const PipelineExecutionContextPtr& pipelineExecutionContext,
                                                  const ExecutablePipelineStagePtr& executablePipelineStage,
@@ -120,6 +126,7 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint64_t pipelineId,
                     "Pipeline context is null for " << pipelineId << "within the following query sub plan: " << querySubPlanId);
 
     return std::make_shared<ExecutablePipeline>(pipelineId,
+                                                queryId,
                                                 querySubPlanId,
                                                 pipelineExecutionContext,
                                                 executablePipelineStage,
@@ -197,20 +204,21 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
                         hasOnlySinksAsSuccessors &= false;
                         auto queryManager = pipelineContext->getQueryManager();
-                        auto newReconf = ReconfigurationMessage(querySubPlanId,
+                        auto newReconf = ReconfigurationMessage(queryId,
+                                                                querySubPlanId,
                                                                 task.getType(),
                                                                 *pipe,
                                                                 std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
-                        queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
-                        NES_TRACE("Going to reconfigure next pipeline belonging to subplanId: "
+                        queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
+                        NES_TRACE("Going to reconfigure next pipeline belonging to queryid=" << queryId << " subplanId: "
                                   << querySubPlanId << " stage id: " << (*pipe)->getPipelineId()
                                   << " got EndOfStream  with nextPipeline");
                     } else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline)) {
                         hasOnlySinksAsSuccessors &= true;
                         auto queryManager = pipelineContext->getQueryManager();
-                        auto newReconf = ReconfigurationMessage(querySubPlanId, task.getType(), *sink);
-                        queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
-                        NES_TRACE("Going to reconfigure next pipeline belonging to subplanId: "
+                        auto newReconf = ReconfigurationMessage(queryId,querySubPlanId, task.getType(), *sink);
+                        queryManager->addReconfigurationMessage(queryId,querySubPlanId, newReconf, false);
+                        NES_TRACE("Going to reconfigure next pipeline belonging to queryId" << queryId << " subplanId: "
                                   << querySubPlanId << " sink id: " << (*sink)->toString()
                                   << " got EndOfStream  with nextPipeline");
                     }
@@ -220,9 +228,9 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                     auto queryManager = pipelineContext->getQueryManager();
                     NES_ASSERT2_FMT(!targetQep.expired(),
                                     "Invalid qep for reconfig of subplanId: " << querySubPlanId << " stage id: " << pipelineId);
-                    auto newReconf = ReconfigurationMessage(querySubPlanId, task.getType(), targetQep.lock());
-                    queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
-                    NES_TRACE("Going to triggering reconfig whole plan belonging to subplanId: "
+                    auto newReconf = ReconfigurationMessage(queryId, querySubPlanId, task.getType(), targetQep.lock());
+                    queryManager->addReconfigurationMessage(queryId, querySubPlanId, newReconf, false);
+                    NES_TRACE("Going to triggering reconfig whole plan belonging to queryId=" << queryId << " subplanId: "
                               << querySubPlanId << " stage id: " << pipelineId << " got EndOfStream on last pipeline");
                 }
 
