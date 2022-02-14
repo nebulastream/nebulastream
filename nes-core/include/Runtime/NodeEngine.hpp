@@ -74,7 +74,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         Network::PartitionManagerPtr&&,
                         QueryCompilation::QueryCompilerPtr&&,
                         StateManagerPtr&&,
-                        ReplicationServicePtr&&,
+                        std::weak_ptr<NesWorker>&&,
                         NES::Experimental::MaterializedView::MaterializedViewManagerPtr&&,
                         uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager,
@@ -216,6 +216,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::NetworkManagerPtr getNetworkManager();
 
     /**
+     * @brief getter of nes worker
+     * @return NesWorker
+     */
+    std::weak_ptr<NesWorker> getNesWorker();
+
+    /**
      * @return return the status of a query
      */
     Execution::ExecutableQueryPlanStatus getQueryStatus(QueryId queryId);
@@ -225,7 +231,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param timestamp: max timestamp of current epoch
      * @param queryId: identifies what query sends punctuation
      */
-    void InjectEpochBarrier(uint64_t timestamp, uint64_t queryId) const;
+    void injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const;
 
     /**
     * @brief method to return the query statistics
@@ -322,6 +328,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
     ReplicationServicePtr replicationService;
+    std::weak_ptr<NesWorker> nesWorker;
     Network::NetworkManagerPtr networkManager;
     NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;
     std::atomic<bool> isRunning{};

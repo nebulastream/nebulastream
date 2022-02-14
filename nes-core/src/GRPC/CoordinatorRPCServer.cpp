@@ -23,9 +23,10 @@ using namespace NES;
 
 CoordinatorRPCServer::CoordinatorRPCServer(TopologyManagerServicePtr topologyManagerService,
                                            StreamCatalogServicePtr streamCatalogService,
-                                           MonitoringManagerPtr monitoringManager)
+                                           MonitoringManagerPtr monitoringManager,
+                                           ReplicationServicePtr replicationService)
     : topologyManagerService(topologyManagerService), streamCatalogService(streamCatalogService),
-      monitoringManager(monitoringManager){};
+      monitoringManager(monitoringManager), replicationService(replicationService){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
@@ -198,6 +199,21 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
         return Status::OK;
     } catch (std::exception& ex) {
         NES_ERROR("CoordinatorRPCServer: received broken failure message: " << ex.what());
+        return Status::CANCELLED;
+    }
+}
+
+Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
+                              const EpochBarrierPropagationNotification* request,
+                              EpochBarrierPropagationReply* reply) {
+    try {
+        NES_ERROR("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp "
+                  << request->timestamp() << "and querySubPlanId " << request->queryid());
+        this->replicationService->notifyEpochTermination(request->timestamp(), request->queryid());
+        reply->set_success(true);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("CoordinatorRPCServer: received broken punctuation message: " << ex.what());
         return Status::CANCELLED;
     }
 }

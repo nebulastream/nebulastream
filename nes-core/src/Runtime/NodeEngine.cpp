@@ -50,7 +50,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
                        Network::PartitionManagerPtr&& partitionManager,
                        QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager,
-                       ReplicationServicePtr&& replicationService,
+                       std::weak_ptr<NesWorker>&& nesWorker,
                        Experimental::MaterializedView::MaterializedViewManagerPtr&& materializedViewManager,
                        uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager,
@@ -59,7 +59,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourcePtr> physicalSources,
     : physicalSources(std::move(physicalSources)), hardwareManager(std::move(hardwareManager)), bufferManagers(std::move(bufferManagers)),
       queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)),
       queryCompiler(std::move(queryCompiler)),
-      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), replicationService(std::move(replicationService)), materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
+      partitionManager(std::move(partitionManager)), stateManager(std::move(stateManager)), nesWorker(std::move(nesWorker)), materializedViewManager(std::move(materializedViewManager)), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
       numberOfBuffersPerWorker(numberOfBuffersPerWorker){
@@ -328,9 +328,10 @@ BufferManagerPtr NodeEngine::getBufferManager(uint32_t bufferManagerIndex) const
     return bufferManagers[bufferManagerIndex];
 }
 
-void NodeEngine::InjectEpochBarrier(uint64_t timestamp, uint64_t queryId) const{
+void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const{
     std::vector<QuerySubPlanId> subQueryPlanIds = queryIdToQuerySubPlanIds.find(queryId)->second;
     for (auto& subQueryPlanId : subQueryPlanIds) {
+        NES_DEBUG("NodeEngine:: Find sources for subQueryPlanId " << subQueryPlanId);
         auto sources = deployedQEPs.find(subQueryPlanId)->second->getSources();
         for (auto& source : sources) {
             source->injectEpochBarrier(timestamp, queryId);
@@ -347,6 +348,8 @@ BufferStoragePtr NodeEngine::getBufferStorage() { return bufferStorage; }
 uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
 
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
+
+std::weak_ptr<NesWorker> NodeEngine::getNesWorker() { return nesWorker; }
 
 HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManager; }
 

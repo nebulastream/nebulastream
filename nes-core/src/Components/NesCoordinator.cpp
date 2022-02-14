@@ -41,7 +41,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Services/MaintenanceService.hpp>
 #include <Services/MonitoringService.hpp>
@@ -52,7 +51,6 @@
 #include <Util/ThreadNaming.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <grpcpp/health_check_service_interface.h>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 
 using grpc::Server;
@@ -232,6 +230,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->enableMonitoring = enableMonitoring;
     }
 
+    replicationService = std::make_shared<ReplicationService>(this->inherited0::shared_from_this());
     auto workerConfigCopy = workerConfig;
     worker = std::make_shared<NesWorker>(std::move(workerConfigCopy));
     worker->start(/**blocking*/ false, /**withConnect*/ true);
@@ -329,7 +328,7 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     NES_ASSERT(streamCatalogService, "null streamCatalogService");
     NES_ASSERT(topologyManagerService, "null topologyManagerService");
 
-    CoordinatorRPCServer service(topologyManagerService, streamCatalogService, monitoringService->getMonitoringManager());
+    CoordinatorRPCServer service(topologyManagerService, streamCatalogService, monitoringService->getMonitoringManager(), replicationService);
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());

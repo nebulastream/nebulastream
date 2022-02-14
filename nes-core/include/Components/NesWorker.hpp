@@ -155,6 +155,14 @@ class NesWorker: public std::enable_shared_from_this<NesWorker>, public Exceptio
 
     const Configurations::WorkerConfigurationPtr& getWorkerConfiguration() const;
 
+    /**
+      * @brief method to propagate new epoch timestamp to coordinator
+      * @param timestamp: max timestamp of current epoch
+      * @param queryId: identifies what query sends punctuation
+      * @return bool indicating success
+      */
+    bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId);
+
   private:
     /**
      * @brief method to register physical stream with the coordinator
@@ -184,7 +192,6 @@ class NesWorker: public std::enable_shared_from_this<NesWorker>, public Exceptio
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;
-
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;

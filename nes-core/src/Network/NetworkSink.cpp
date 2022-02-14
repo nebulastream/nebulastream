@@ -31,7 +31,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          size_t numOfProducers,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes)
-    : inherited0(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine->getQueryManager(), querySubPlanId, nodeEngine->getReplicationService()),
+    : inherited0(std::make_shared<NesFormat>(schema, bufferManager), nodeEngine, querySubPlanId),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), receiverLocation(destination), nesPartition(nesPartition),
       numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");

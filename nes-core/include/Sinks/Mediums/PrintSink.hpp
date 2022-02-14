@@ -35,9 +35,8 @@ class PrintSink : public SinkMedium {
      * @Note the default output will be written to cout
      */
     PrintSink(SinkFormatPtr format,
-              Runtime::QueryManagerPtr queryManager,
+              Runtime::NodeEnginePtr nodeEngine,
               QuerySubPlanId querySubPlanId,
-              ReplicationServicePtr replicationService,
               std::ostream& pOutputStream = std::cout);
 
     /**

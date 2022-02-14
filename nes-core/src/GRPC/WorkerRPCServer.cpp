@@ -130,7 +130,7 @@ Status WorkerRPCServer::InjectEpochBarrier(ServerContext*,
         NES_ERROR("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp "
           << request->timestamp() << " and a queryId " << request->queryid());
         reply->set_success(true);
-        nodeEngine->InjectEpochBarrier(request->timestamp(), request->queryid());
+        nodeEngine->injectEpochBarrier(request->timestamp(), request->queryid());
         return Status::OK;
     } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());

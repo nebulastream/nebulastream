@@ -518,9 +518,9 @@ void DataSource::runningRoutineAdaptive() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
-bool DataSource::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const {
-    NES_DEBUG("DataSource::injectEpochBarrier received timestamp " << timestamp << "with queryId " << queryId);
-    //TODO: send timestamp to BufferStorage and further downstream
+bool DataSource::injectEpochBarrier(uint64_t epochBarrier, uint64_t queryId) const {
+    NES_DEBUG("DataSource::injectEpochBarrier received timestamp " << epochBarrier << "with queryId " << queryId);
+    //TODO: send timestamp to BufferStorage and further downstream issue #2511
     //truncate local
 
     //create reconfig task

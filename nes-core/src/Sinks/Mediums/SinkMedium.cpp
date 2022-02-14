@@ -15,7 +15,6 @@
 #include <API/Schema.hpp>
 #include <Components/NesWorker.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Services/ReplicationService.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -26,10 +25,9 @@
 namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
-                       Runtime::QueryManagerPtr queryManager,
-                       QuerySubPlanId querySubPlanId,
-                       ReplicationServicePtr replicationService)
-    : sinkFormat(std::move(sinkFormat)), queryManager(std::move(queryManager)), querySubPlanId(querySubPlanId), replicationService(std::move(replicationService)) {
+                       Runtime::NodeEnginePtr nodeEngine,
+                       QuerySubPlanId querySubPlanId)
+    : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), querySubPlanId(querySubPlanId) {
     watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(1);
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
@@ -58,8 +56,12 @@ std::string SinkMedium::getAppendAsString() const {
     return "OVERWRITE";
 }
 
-void SinkMedium::notifyEpochTermination(uint64_t timestamp) const {
-    this->replicationService->notifyEpochTermination(timestamp, querySubPlanId);
+bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
+    if (std::shared_ptr<NesWorker> nesWorker = this->nodeEngine->getNesWorker().lock()) {
+        nesWorker->notifyEpochTermination(epochBarrier, querySubPlanId);
+        return true;
+    }
+    return false;
 }
 
 void SinkMedium::reconfigure(Runtime::ReconfigurationMessage & message, Runtime::WorkerContext & context) {
