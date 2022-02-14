@@ -79,14 +79,16 @@ class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::Execut
             int64_t tmp_probe$one = inputTuples[recordIndex].probe$one;
             int64_t tmp_probe$value = inputTuples[recordIndex].probe$value;
 
-            auto rangeJoinable = hashTable->equal_range(tmp_probe$id);
 
-            for (auto it = rangeJoinable.first; it != rangeJoinable.second; ++it) {
+            InputBuildTuple joinPartner;
+            if (hashTable->find(tmp_probe$id, joinPartner)) {
+
+                /* buffer emit */
                 resultTuples[numberOfResultTuples].probe$id = tmp_probe$id;
                 resultTuples[numberOfResultTuples].probe$one = tmp_probe$one;
                 resultTuples[numberOfResultTuples].probe$value = tmp_probe$value;
-                resultTuples[numberOfResultTuples].build$id = it->second.build$id;
-                resultTuples[numberOfResultTuples].build$value = it->second.build$value;
+                resultTuples[numberOfResultTuples].build$id = joinPartner.build$id;
+                resultTuples[numberOfResultTuples].build$value = joinPartner.build$value;
 
                 ++numberOfResultTuples;
 
@@ -100,7 +102,31 @@ class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::Execut
                     resultTuples=(ResultTuple*)resultTupleBuffer.getBuffer();
 
                 }
+
             }
+
+//            auto rangeJoinable = hashTable->equal_range(tmp_probe$id);
+//
+//            for (auto it = rangeJoinable.first; it != rangeJoinable.second; ++it) {
+//                resultTuples[numberOfResultTuples].probe$id = tmp_probe$id;
+//                resultTuples[numberOfResultTuples].probe$one = tmp_probe$one;
+//                resultTuples[numberOfResultTuples].probe$value = tmp_probe$value;
+//                resultTuples[numberOfResultTuples].build$id = it->second.build$id;
+//                resultTuples[numberOfResultTuples].build$value = it->second.build$value;
+//
+//                ++numberOfResultTuples;
+//
+//                if(numberOfResultTuples>=maxTuple){
+//                    resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
+//                    resultTupleBuffer.setOriginId(inputTupleBuffer.getOriginId());
+//                    resultTupleBuffer.setWatermark(inputTupleBuffer.getWatermark());
+//                    pipelineExecutionContext.emitBuffer(resultTupleBuffer, workerContext);
+//                    numberOfResultTuples=0;
+//                    resultTupleBuffer=workerContext.allocateTupleBuffer();
+//                    resultTuples=(ResultTuple*)resultTupleBuffer.getBuffer();
+//
+//                }
+//            }
         };
 
         resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);

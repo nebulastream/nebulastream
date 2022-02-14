@@ -611,7 +611,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //
 //            for (uint64_t recordIndex = 0; recordIndex < numberOfTuples; ++recordIndex) {
 //                int64_t build$id2_buildKey = inputTuples[recordIndex].build$id2;
-//                hashTable->insert(std::pair<int64_t, InputTuple>(build$id2_buildKey, inputTuples[recordIndex]));
+//                hashTable->insert(build$id2_buildKey, inputTuples[recordIndex]);
 //            };
 //            return ret;
 //        }
@@ -654,9 +654,12 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //            /* variable declarations */
 //            ExecutionResult ret = ExecutionResult::Ok;
 //            int64_t numberOfResultTuples = 0;
+//
 //            /* statements section */
 //            InputTuple *inputTuples = (InputTuple *) inputTupleBuffer.getBuffer();
 //            uint64_t numberOfTuples = inputTupleBuffer.getNumberOfTuples();
+//            InputTupleBuild joinPartner;
+//
 //            auto batchJoinOperatorHandler = pipelineExecutionContext.getOperatorHandler<Join::BatchJoinOperatorHandler>(0);
 //            auto batchJoinHandler = batchJoinOperatorHandler->getBatchJoinHandler<NES::Join::BatchJoinHandler, int64_t, InputTupleBuild>();
 //            auto hashTable = batchJoinHandler->getHashTable();
@@ -665,17 +668,13 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //            int64_t maxTuple = resultTupleBuffer.getBufferSize() / 40;
 //
 //            for (uint64_t recordIndex = 0; recordIndex < numberOfTuples; ++recordIndex) {
-//                int64_t probe$id1_probeKey = inputTuples[recordIndex].probe$id1;
-//                auto joinableRange = hashTable->equal_range(probe$id1_probeKey);
-//
-//                for (auto it = joinableRange.first; it != joinableRange.second; ++it) {
-//                    resultTuples[numberOfResultTuples].build$id2 = it->second.build$id2;
-//                    resultTuples[numberOfResultTuples].build$value = it->second.build$value;
+//                if (hashTable->find(inputTuples[recordIndex].probe$id1, joinPartner)) {
+//                    resultTuples[numberOfResultTuples].build$id2 = joinPartner.build$id2;
+//                    resultTuples[numberOfResultTuples].build$value = joinPartner.build$value;
 //                    resultTuples[numberOfResultTuples].probe$id1 = inputTuples[recordIndex].probe$id1;
 //                    resultTuples[numberOfResultTuples].probe$one = inputTuples[recordIndex].probe$one;
 //                    resultTuples[numberOfResultTuples].probe$value = inputTuples[recordIndex].probe$value;
 //                    ++numberOfResultTuples;
-//
 //                    if (numberOfResultTuples >= maxTuple) {
 //                        resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
 //                        resultTupleBuffer.setOriginId(inputTupleBuffer.getOriginId());
@@ -684,8 +683,11 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //                        numberOfResultTuples = 0;
 //                        resultTupleBuffer = workerContext.allocateTupleBuffer();
 //                        resultTuples = (ResultTuple *) resultTupleBuffer.getBuffer();
+//
 //                    };
+//
 //                };
+//
 //            };
 //            resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
 //            resultTupleBuffer.setWatermark(inputTupleBuffer.getWatermark());
@@ -805,7 +807,7 @@ TEST_F(QueryExecutionTest, batchJoinQuery) {
     auto resultBuffer1 = testSink->get(0);
     auto resultBuffer2 = testSink->get(1);
     auto resultBuffer3 = testSink->get(2);
-    // The output buffers should contain 3 and 1 tuple;
+    // The output buffers should contain 3, 102 and 8 tuple;
     EXPECT_EQ(resultBuffer1.getNumberOfTuples(), 3UL);
     EXPECT_EQ(resultBuffer2.getNumberOfTuples(), 102UL); // 102 is max a buffer can hold
     EXPECT_EQ(resultBuffer3.getNumberOfTuples(), 8UL); // 8 tuples that couldn't fit in buffer 2

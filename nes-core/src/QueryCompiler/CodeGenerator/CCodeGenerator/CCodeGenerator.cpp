@@ -2762,30 +2762,12 @@ bool CCodeGenerator::generateCodeForBatchJoinBuild(Join::LogicalBatchJoinDefinit
     auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(joinKeyReference);
     context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
 
-/*
-    TODO jm will need something like this for concurrency
-    // auto lock = std::unique_lock(stateVariable->mutex());
-    auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
-    auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
-    auto stateMutex = FunctionCallStatement("mutex");
-    uniqueLockCtor.addParameter(
-        std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
-    context->code->currentCodeInsertionPoint->addStatement(
-        std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
-*/
-
     // insert tuple into hashTable
-    // "hashTable->insert({key, inputTuples[recordIndex]});"
-
-    auto currentTupleStatement = VarRef(code->varDeclarationInputTuples)[VarRef(code->varDeclarationRecordIndex)];
-    auto keyType = tf->createDataType(batchJoinDef->getBuildJoinKey()->getStamp());
-    auto makePairCall = call("std::pair<" + keyType->getCode()->code_ +
-            ", " + structNameBuildTuple + ">");
-    makePairCall->addParameter(VarRef(keyVariableDeclaration));
-    makePairCall->addParameter(currentTupleStatement);
-
+    // "hashTable->insert(key, inputTuples[recordIndex]);"
     auto insertCall = call("insert");
-    insertCall->addParameter(makePairCall);
+    auto currentTupleStatement = VarRef(code->varDeclarationInputTuples)[VarRef(code->varDeclarationRecordIndex)];
+    insertCall->addParameter(VarRef(keyVariableDeclaration));
+    insertCall->addParameter(currentTupleStatement);
     context->code->currentCodeInsertionPoint->addStatement(
             VarRef(hashTableVarDeclaration).accessPtr(insertCall).copy());
 
@@ -2802,11 +2784,6 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinit
     NES_DEBUG("batch join input=" << context->inputSchema->toString()
                             << " out=" << batchJoinDef->getOutputSchema()->toString());
 
-    auto tf = getTypeFactory();
-    const std::string structNameBuildTuple = "InputTupleBuild";
-    auto buildTypeStruct = getStructDeclarationFromSchema(structNameBuildTuple, batchJoinDef->getBuildSchema());
-    context->code->structDeclarationInputTuples.emplace_back(buildTypeStruct);
-
     NES_ASSERT(batchJoinDef, "invalid join definition");
     NES_ASSERT(!batchJoinDef->getBuildJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
     NES_ASSERT(!batchJoinDef->getProbeJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
@@ -2817,9 +2794,21 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinit
     NES_ASSERT(batchJoinDef->getProbeSchema() != nullptr && !batchJoinDef->getProbeSchema()->fields.empty(),
                "right join type is undefined");
 
+    auto tf = getTypeFactory();
     auto code = context->code;
 
-    // auto batchJoinHandler = pipelineExecutionContext.getBatchJoinHandler<int64_t, InputTupleBuild>();
+    // define the build struct (instants of this struct are stored in the hash table)
+    const std::string structNameBuildTuple = "InputTupleBuild";
+    auto buildTypeStruct = getStructDeclarationFromSchema(structNameBuildTuple, batchJoinDef->getBuildSchema());
+    context->code->structDeclarationInputTuples.emplace_back(buildTypeStruct);
+
+    // create a variable to be filled by the cuckoohash_map::find() function
+    // "InputTupleBuild joinPartner;"
+    auto joinPartnerVariableDeclaration =
+            VariableDeclaration::create(tf->createUserDefinedType(buildTypeStruct), "joinPartner");
+    code->variableInitStmts.emplace_back(VarDeclStatement(joinPartnerVariableDeclaration).copy());
+
+    // "auto batchJoinHandler = pipelineExecutionContext.getBatchJoinHandler<int64_t, InputTupleBuild>();"
     auto batchJoinHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinHandler");
     auto operatorHandlerIndex = context->registerOperatorHandler(batchJoinOperatorHandler);
     auto batchJoinOperatorHandlerDeclaration =
@@ -2842,85 +2831,31 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinit
     /**
     * within the loop
     */
-    // Read key value from record
-    // int64_t key = inputTuplesProbe[recordIndex].key;
+    // Check validity of join key in record handler
+    // (should be "inputTuplesProbe[recordIndex].key")
     auto recordHandler = context->getRecordHandler();
-    auto joinKeyFieldName = batchJoinDef->getProbeJoinKey()->getFieldName();// right side = probe side
-    auto keyVariableDeclaration =
-            VariableDeclaration::create(tf->createDataType(batchJoinDef->getProbeJoinKey()->getStamp()), joinKeyFieldName + "_probeKey");
-
+    auto joinKeyFieldName = batchJoinDef->getProbeJoinKey()->getFieldName();
     NES_ASSERT2_FMT(recordHandler->hasAttribute(joinKeyFieldName),
                     "join key is not defined on input tuple << " << joinKeyFieldName);
-
     auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
 
-    auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration).assign(joinKeyReference);
-    context->code->currentCodeInsertionPoint->addStatement(keyVariableAttributeStatement.copy());
+    // if a join partner for current tuple can be found proceed to emit
+    // "if (hashTable->find(inputTuples[recordIndex].key, joinPartner)) { ... }" <- find function return a boolean true on success
+    auto findJoinPartnerCall = FunctionCallStatement("find");
+    findJoinPartnerCall.addParameter(joinKeyReference);
+    findJoinPartnerCall.addParameter(VarRef(joinPartnerVariableDeclaration));
+    auto findJoinPartnerStatement = VarRef(hashTableVarDeclaration).accessPtr(findJoinPartnerCall);
+    auto ifJoinPartnerFoundStatement = IF(findJoinPartnerStatement);
+    code->currentCodeInsertionPoint->addStatement(ifJoinPartnerFoundStatement.createCopy());
+    code->currentCodeInsertionPoint = ifJoinPartnerFoundStatement.getCompoundStatement();
 
-    // get range (pair of iterators) of joinable tuples from hashTable by unordered_multimap::equal_range() function
-    // "auto rangeJoinable = hashTable->equal_range(key);"
-    auto joinableRangeVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinableRange");
-    auto getJoinableRangeStateVariable = FunctionCallStatement("equal_range");
-    getJoinableRangeStateVariable.addParameter(VarRef(keyVariableDeclaration));
-    auto joinableRangeVariableStatement =
-            VarDeclStatement(joinableRangeVariableDeclaration).assign(VarRef(hashTableVarDeclaration).accessPtr(getJoinableRangeStateVariable));
-    context->code->currentCodeInsertionPoint->addStatement(joinableRangeVariableStatement.copy());
-
-
-    // nested for loop over joinableRange of hashTable.
-    // "for (auto it = joinableRange.first; it != joinableRange.second; ++it) { ... }"
-    auto iteratorVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "it");
-    auto firstVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "first");
-    auto secondVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "second");
-
-    auto iteratorVarDeclStatement =
-            VarDeclStatement(iteratorVarDeclaration).assign(VarRef(joinableRangeVariableDeclaration).accessRef(VarRef(firstVarDeclaration)));
-    auto conditionStatement = (VarRef(iteratorVarDeclaration) !=
-            VarRef(joinableRangeVariableDeclaration).accessRef(VarRef(secondVarDeclaration))).copy();
-    auto advanceStatement = (++VarRef(iteratorVarDeclaration)).copy();
-
-    auto hashTableLoop = FOR(iteratorVarDeclStatement.copy(), conditionStatement, advanceStatement);
-    context->code->currentCodeInsertionPoint->addStatement(hashTableLoop.createCopy());
-    context->code->currentCodeInsertionPoint = hashTableLoop.getCompoundStatement();
-
-    auto zeroStatement = ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(uint64_t(0))));
-
-
-    for (const AttributeFieldPtr& field : batchJoinDef->getBuildSchema()->fields) { // todo jm Left/Right stream type do not consistently allign with Build/Probe
+    // register all fields of "InputTupleBuild joinPartner" in operator handler for use in emit
+    for (const AttributeFieldPtr& field : batchJoinDef->getBuildSchema()->fields) {
         auto fieldVarDeclaration = VariableDeclaration::create(field->getDataType(), field->getName());
-        auto hashTableAccessStatement = VarRef(iteratorVarDeclaration)
-                                        .accessPtr(VarRef(secondVarDeclaration))
-                                        .accessRef(VarRef(fieldVarDeclaration));
-        recordHandler->registerAttribute(field->getName(), hashTableAccessStatement.copy());
+        auto joinPartnerAccessStatement = VarRef(joinPartnerVariableDeclaration)
+                .accessRef(VarRef(fieldVarDeclaration));
+        recordHandler->registerAttribute(field->getName(), joinPartnerAccessStatement.copy());
     }
-
-    return true;
-
-
-    // access window slice state from state variable via key
-    // auto windowState = key_value_handle.value();
-    auto windowStateVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowState");
-    auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
-
-    auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
-                                            .assign(VarRef(joinableRangeVariableDeclaration).accessRef(getValueFromKeyHandle));
-    context->code->currentCodeInsertionPoint->addStatement(windowStateVariableStatement.copy());
-
-
-    // insert tuple into hashTable
-    // "hashTable->insert({key, inputTuples[recordIndex]});"
-
-    auto currentTupleStatement = VarRef(code->varDeclarationInputTuples)[VarRef(code->varDeclarationRecordIndex)];
-    auto keyType = tf->createDataType(batchJoinDef->getBuildJoinKey()->getStamp());
-    auto makePairCall = call("std::pair<" + keyType->getCode()->code_ + // we include the <utility> header (only) for this
-            ", " + structNameBuildTuple + ">");
-    makePairCall->addParameter(VarRef(keyVariableDeclaration));
-    makePairCall->addParameter(currentTupleStatement);
-
-    auto insertCall = call("insert");
-    insertCall->addParameter(makePairCall);
-    context->code->currentCodeInsertionPoint->addStatement(
-            VarRef(hashTableVarDeclaration).accessPtr(insertCall).copy());
 
     NES_DEBUG("CCodeGenerator: Generate code for" << context->pipelineName << ": "
                                                   << " with code=" << context->code);

@@ -49,7 +49,7 @@ class CustomPipelineStageBatchJoinBuild : public NES::Runtime::Execution::Execut
         for (uint64_t recordIndex = 0; recordIndex < numberOfTuples;
         ++recordIndex) {
             uint64_t tmp_build$id = inputTuples[recordIndex].build$id1;
-            hashTable->insert({tmp_build$id, inputTuples[recordIndex]});
+            hashTable->insert(tmp_build$id, inputTuples[recordIndex]);
         };
 
         return ret;
