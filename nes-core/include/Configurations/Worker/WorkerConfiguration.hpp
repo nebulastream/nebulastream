@@ -46,8 +46,8 @@ class WorkerConfiguration : public BaseConfiguration {
         4000,
         "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
         "to be the same as rpcPort in Coordinator."};
-    UIntOption rpcPort = {RPC_PORT_CONFIG, 4000, "RPC server port of the NES Worker."};
-    UIntOption dataPort = {DATA_PORT_CONFIG, 4001, "Data port of the NES Worker."};
+    UIntOption rpcPort = {RPC_PORT_CONFIG, 0, "RPC server port of the NES Worker."};
+    UIntOption dataPort = {DATA_PORT_CONFIG, 0, "Data port of the NES Worker."};
     UIntOption numberOfSlots = {NUMBER_OF_SLOTS_CONFIG, UINT16_MAX, "Number of computing slots for the NES Worker."};
     UIntOption numWorkerThreads = {"numWorkerThreads", 1, "Number of worker threads."};
 
