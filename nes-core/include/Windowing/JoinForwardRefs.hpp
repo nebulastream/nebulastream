@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_
 #define NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_
 #include <memory>
-#include <unordered_map>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 
 namespace NES::Join {
 class LogicalJoinDefinition;
@@ -33,9 +33,9 @@ using AbstractJoinHandlerPtr = std::shared_ptr<AbstractJoinHandler>;
 class AbstractBatchJoinHandler;
 using AbstractBatchJoinHandlerPtr = std::shared_ptr<AbstractBatchJoinHandler>;
 
-// todo jm is this a good place
+// todo jm is this a good place ?
 template<class KeyType, class InputTypeBuild>
-using HashTable = std::unordered_multimap<KeyType, InputTypeBuild>;
+using HashTable = cuckoohash_map<KeyType, InputTypeBuild>;
 template<class KeyType, class InputTypeBuild>
 using HashTablePtr = std::shared_ptr<HashTable<KeyType, InputTypeBuild>>;
 

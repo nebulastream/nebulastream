@@ -16,7 +16,6 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinBuildOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
-#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 

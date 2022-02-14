@@ -26,6 +26,7 @@
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 
 
 namespace NES::Join {
