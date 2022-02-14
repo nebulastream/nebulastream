@@ -18,7 +18,7 @@
 #include <exception>
 #include <stdexcept>
 #include <string>
-#include <experimental/source_location>
+#include <Util/SourceLocation.hpp>
 namespace NES {
 
 /**
@@ -36,7 +36,7 @@ class NesRuntimeException : virtual public std::exception {
      *  @param stacktrace Error stacktrace
      */
     explicit NesRuntimeException(std::string msg, std::string&& stacktrace,
-                                 std::experimental::source_location location = std::experimental::source_location::current());
+                                 std::source_location location = std::source_location::current());
 
     /** Constructor
     *  @param msg The error message
