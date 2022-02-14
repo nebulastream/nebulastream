@@ -27,12 +27,10 @@ using grpc::ClientContext;
 using grpc::Status;
 
 namespace NES {
-
-class StaticNesMetrics;
-using StaticNesMetricsPtr = std::shared_ptr<StaticNesMetrics>;
-
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
+
+class RegistrationMetrics;
 
 /**
  * @brief This class provides utility to interact with NES coordinator over RPC interface.
@@ -112,13 +110,14 @@ class CoordinatorRPCClient {
      * @param numberOfSlots: processing slots capacity
      * @param staticNesMetrics: metrics to report
      * @param coordinates: the fixed geographical location of a non mobile node if it is known
+     * @param registrationMetrics: metrics to report
      * @return bool indicating success
      */
     bool registerNode(const std::string& ipAddress,
                       int64_t grpcPort,
                       int64_t dataPort,
                       int16_t numberOfSlots,
-                      std::optional<StaticNesMetricsPtr> staticNesMetrics,
+                      RegistrationMetrics registrationMetrics,
                       std::optional<GeographicalLocation> coordinates);
 
     /**

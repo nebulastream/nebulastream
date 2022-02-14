@@ -68,7 +68,7 @@ NetworkMetricsWrapper::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer&
         for (auto n{0UL}; n < numInt; ++n) {
             NES_DEBUG("NetworkMetricsWrapper: Parsing buffer for interface " + schemaPrefix + "Intfs[" + std::to_string(n + 1)
                       + "]_");
-            output.addnetworkMetrics(
+            output.addNetworkMetrics(
                 NetworkMetrics::fromBuffer(schema, buf, schemaPrefix + "Intfs[" + std::to_string(n + 1) + "]_"));
         }
     } else {
@@ -105,6 +105,8 @@ void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& b
 
     buf.setNumberOfTuples(1);
 }
+
+SchemaPtr getSchema(const NetworkMetricsWrapper&, const std::string& prefix) { return NetworkMetrics::getSchema(prefix); }
 
 bool NetworkMetricsWrapper::operator==(const NetworkMetricsWrapper& rhs) const {
     if (networkMetrics.size() != rhs.networkMetrics.size()) {

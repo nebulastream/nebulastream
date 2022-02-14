@@ -38,14 +38,14 @@ class MetricStore {
      * @param nodeId
      * @param metrics
     */
-    void addMetric(uint64_t nodeId, const std::vector<MetricPtr>& metrics);
+    void addMetrics(uint64_t nodeId, const std::vector<MetricPtr>& metrics);
 
     /**
      * @brief Get most recent metric in store
      * @param nodeId
      * @return the metric
     */
-    std::vector<MetricPtr> getNewestMetric(uint64_t nodeId);
+    std::vector<MetricPtr> getNewestMetrics(uint64_t nodeId);
 
     /**
      * @brief remove a given metric
@@ -58,7 +58,7 @@ class MetricStore {
      * @param nodeId
      * @return True if exists, else false
     */
-    bool hasMetric(uint64_t nodeId);
+    bool hasMetrics(uint64_t nodeId);
 
   private:
     MetricStoreStrategy storeType;

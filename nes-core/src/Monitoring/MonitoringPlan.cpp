@@ -62,7 +62,7 @@ std::string MonitoringPlan::toString() const {
             case MetricType::RuntimeMetric: {
                 output << "runtimeMetrics(True);";
             };
-            case MetricType::StaticMetric: {
+            case MetricType::RegistrationMetric: {
                 output << "staticMetrics(True);";
             };
             default: {

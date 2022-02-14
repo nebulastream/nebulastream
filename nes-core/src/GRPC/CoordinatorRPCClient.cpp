@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CoordinatorRPCClient.hpp>
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <filesystem>
@@ -379,7 +379,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t grpcPort,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
-                                        std::optional<StaticNesMetricsPtr> staticNesMetrics,
+                                        RegistrationMetrics registrationMetrics,
                                         std::optional<GeographicalLocation> coordinates) {
 
     RegisterNodeRequest request;
@@ -387,13 +387,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     request.set_grpcport(grpcPort);
     request.set_dataport(dataPort);
     request.set_numberofslots(numberOfSlots);
-
-    if (staticNesMetrics.has_value()) {
-        request.mutable_monitoringdata()->Swap(staticNesMetrics.value()->toProtobufSerializable().get());
-    } else {
-        NES_WARNING("CoordinatorRPCClient: Registering node without monitoring data.");
-    }
-
+    request.mutable_registrationmetrics()->Swap(registrationMetrics.serialize().get());
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     if (coordinates.has_value()) {
         NES_DEBUG("Registered node is a field node");

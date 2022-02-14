@@ -16,8 +16,9 @@
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/StaticNesMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 
@@ -36,8 +37,8 @@
 namespace NES {
 LinuxSystemResourcesReader::LinuxSystemResourcesReader() { readerType = SystemResourcesReaderType::LinuxReader; }
 
-RuntimeNesMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
-    RuntimeNesMetrics output{};
+RuntimeMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
+    RuntimeMetrics output{};
     output.wallTimeNs = LinuxSystemResourcesReader::getWallTimeInNs();
 
     std::vector<std::string> metricLocations{"/sys/fs/cgroup/memory/memory.usage_in_bytes",
@@ -127,8 +128,8 @@ RuntimeNesMetrics LinuxSystemResourcesReader::readRuntimeNesMetrics() {
     return output;
 }
 
-StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
-    StaticNesMetrics output{false, false};
+RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics() {
+    RegistrationMetrics output;
 
     std::vector<std::string> metricLocations{"/sys/fs/cgroup/memory/memory.limit_in_bytes",
                                              "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us",
@@ -161,7 +162,7 @@ StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
         auto cpuStats = LinuxSystemResourcesReader::readCpuStats();
         auto totalStats = cpuStats.getTotal();
         output.totalCPUJiffies = totalStats.user + totalStats.system + totalStats.idle;
-        output.cpuCoreNum = LinuxSystemResourcesReader::readCpuStats().size();
+        output.cpuCoreNum = LinuxSystemResourcesReader::readCpuStats().size()-1;
 
         if (access(metricLocations[1].c_str(), F_OK) != -1) {
             std::string periodLine;
@@ -184,7 +185,6 @@ StaticNesMetrics LinuxSystemResourcesReader::readStaticNesMetrics() {
             NES_ERROR("LinuxSystemResourcesReader: File for cpu.cfs_quota_us not available");
             output.cpuQuotaUS = 0;
         }
-
     } catch (const log4cxx::helpers::RuntimeException& e) {
         NES_ERROR("LinuxSystemResourcesReader: Error reading static cpu metrics " << e.what());
     }
@@ -329,7 +329,7 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats() {
             outputValue.tCompressed = tCompressed;
 
             // extension of the wrapper class object
-            output.addNetworkValues(std::move(outputValue));
+            output.addNetworkMetrics(std::move(outputValue));
         }
         fclose(fp);
 

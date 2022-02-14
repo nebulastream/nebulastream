@@ -37,7 +37,7 @@ class MetricCollector {
 
   public:
     //  -- Destructor --
-    virtual ~MetricCollector() = 0;
+    virtual ~MetricCollector() = default;
 
     /**
      * @brief Fill a buffer with a given metric.

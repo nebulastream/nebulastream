@@ -11,3 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Monitoring/Metrics/MetricType.hpp>
+
+namespace NES {
+
+std::string toString(MetricType type) {
+    switch (type) {
+        case MetricType::CpuMetric: return "cpu";
+        case MetricType::DiskMetric: return "disk";
+        case MetricType::MemoryMetric: return "memory";
+        case MetricType::NetworkMetric: return "network";
+        case MetricType::RuntimeMetric: return "runtime";
+        case MetricType::RegistrationMetric: return "static";
+        default: return "unknown";
+    }
+};
+
+}// namespace NES

@@ -29,27 +29,9 @@ namespace NES {
 * Meter that measures an interval between two points in time
 * Unknown is used for all kind of metrics that are not defined during creation, e.g. in case basic types are used
 */
-enum MetricType {
-    CpuMetric,
-    DiskMetric,
-    MemoryMetric,
-    NetworkMetric,
-    RuntimeMetric,
-    StaticMetric,
-    UnknownType
-};
+enum MetricType { CpuMetric, DiskMetric, MemoryMetric, NetworkMetric, RuntimeMetric, RegistrationMetric, UnknownType };
 
-std::string toString(MetricType type) {
-    switch (type) {
-        case MetricType::CpuMetric: return "cpu";
-        case MetricType::DiskMetric: return "disk";
-        case MetricType::MemoryMetric: return "memory";
-        case MetricType::NetworkMetric: return "network";
-        case MetricType::RuntimeMetric: return "runtime";
-        case MetricType::StaticMetric: return "static";
-        default: return "unknown";
-    }
-}
+std::string toString(MetricType type);
 
 }// namespace NES
 

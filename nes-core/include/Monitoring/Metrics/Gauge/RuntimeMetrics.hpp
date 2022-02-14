@@ -23,9 +23,9 @@ namespace NES {
 /**
  * @brief Wrapper class to represent the metrics read from the OS about cpu data.
  */
-class RuntimeNesMetrics {
+class RuntimeMetrics {
   public:
-    RuntimeNesMetrics();
+    RuntimeMetrics();
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -35,13 +35,13 @@ class RuntimeNesMetrics {
     static SchemaPtr getSchema(const std::string& prefix = "");
 
     /**
-     * @brief Parses a RuntimeNesMetrics objects based on a given Schema and TupleBuffer.
+     * @brief Parses a RuntimeMetrics objects based on a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
-     * @return The parsed RuntimeNesMetrics object
+     * @return The parsed RuntimeMetrics object
      */
-    static RuntimeNesMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
+    static RuntimeMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     /**
      * @brief Returns the metrics as json
@@ -49,8 +49,8 @@ class RuntimeNesMetrics {
      */
     [[nodiscard]] web::json::value toJson() const;
 
-    bool operator==(const RuntimeNesMetrics& rhs) const;
-    bool operator!=(const RuntimeNesMetrics& rhs) const;
+    bool operator==(const RuntimeMetrics& rhs) const;
+    bool operator!=(const RuntimeMetrics& rhs) const;
 
     uint64_t wallTimeNs;
     uint64_t memoryUsageInBytes;
@@ -62,7 +62,7 @@ class RuntimeNesMetrics {
     uint64_t longCoord;
 } __attribute__((packed));
 
-using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeNesMetrics>;
+using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeMetrics>;
 
 /**
  * @brief The serialize method to write runtime metrics of NES into the given Schema and TupleBuffer. The prefix specifies a string
@@ -72,7 +72,7 @@ using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeNesMetrics>;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const RuntimeNesMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method for the runtime metrics
@@ -80,7 +80,7 @@ void writeToBuffer(const RuntimeNesMetrics& metrics, Runtime::TupleBuffer& buf, 
  * @param prefix
  * @return the SchemaPtr
  */
-SchemaPtr getSchema(const RuntimeNesMetrics& metrics, const std::string& prefix);
+SchemaPtr getSchema(const RuntimeMetrics& metrics, const std::string& prefix);
 
 }// namespace NES
 

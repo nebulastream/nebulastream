@@ -33,8 +33,8 @@
 
 #include "Monitoring/Storage/MetricStore.hpp"
 #include "Monitoring/Metrics/Gauge/GroupedMetricValues.hpp"
-#include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/RuntimeMetrics.hpp"
+#include "Monitoring/Metrics/Gauge/RegistrationMetrics.hpp"
 #include <cpprest/json.h>
 #include <memory>
 
@@ -79,14 +79,14 @@ TEST_F(MonitoringSerializationTest, testSerializationRuntimeNesMetrics) {
     auto rutimeStats = MetricUtils::runtimeNesStats();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
-    RuntimeNesMetrics measuredVal = rutimeStats.measure();
+    RuntimeMetrics measuredVal = rutimeStats.measure();
     auto schema = getSchema(measuredVal, "");
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
     NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, schema));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-    RuntimeNesMetrics deserVal = RuntimeNesMetrics::fromBuffer(schema, tupleBuffer, "");
+    RuntimeMetrics deserVal = RuntimeMetrics::fromBuffer(schema, tupleBuffer, "");
 
     EXPECT_EQ(measuredVal, deserVal);
 }
@@ -95,7 +95,7 @@ TEST_F(MonitoringSerializationTest, testSerializationStaticNesMetrics) {
     auto staticStats = MetricUtils::staticNesStats();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
 
-    StaticNesMetrics measuredVal = staticStats.measure();
+    RegistrationMetrics measuredVal = staticStats.measure();
     auto schema = getSchema(measuredVal, "");
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
@@ -103,7 +103,7 @@ TEST_F(MonitoringSerializationTest, testSerializationStaticNesMetrics) {
     NES_DEBUG(Util::prettyPrintTupleBuffer(tupleBuffer, schema));
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-    StaticNesMetrics deserVal = StaticNesMetrics::fromBuffer(schema, tupleBuffer, "");
+    RegistrationMetrics deserVal = RegistrationMetrics::fromBuffer(schema, tupleBuffer, "");
 
     EXPECT_EQ(measuredVal, deserVal);
 }
@@ -260,11 +260,11 @@ TEST_F(MonitoringSerializationTest, testMetricStore) {
 
     const uint64_t noMetrics = 10;
     for (uint64_t i = 0; i < noMetrics; i++) {
-        metricStoreAlways->addMetric(i, parsedValues);
-        metricStoreAlways->addMetric(i, parsedValues);
+        metricStoreAlways->addMetrics(i, parsedValues);
+        metricStoreAlways->addMetrics(i, parsedValues);
 
-        metricStoreNewest->addMetric(i, parsedValues);
-        metricStoreNewest->addMetric(i, parsedValues);
+        metricStoreNewest->addMetrics(i, parsedValues);
+        metricStoreNewest->addMetrics(i, parsedValues);
     }
 
     for (uint64_t i = 0; i < noMetrics; i++) {

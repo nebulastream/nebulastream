@@ -12,25 +12,24 @@
     limitations under the License.
 */
 
-#include "Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp"
-#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
-#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"
-#include "Monitoring/Metrics/Gauge/RuntimeNesMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/StaticNesMetrics.hpp"
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RuntimeMetrics.hpp>
+#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
+#include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 
 namespace NES {
-AbstractSystemResourcesReader::AbstractSystemResourcesReader(): readerType(AbstractReader) {
-}
+AbstractSystemResourcesReader::AbstractSystemResourcesReader() : readerType(AbstractReader) {}
 
-RuntimeNesMetrics AbstractSystemResourcesReader::readRuntimeNesMetrics() {
-    RuntimeNesMetrics output{};
+RuntimeMetrics AbstractSystemResourcesReader::readRuntimeNesMetrics() {
+    RuntimeMetrics output{};
     return output;
 }
 
-StaticNesMetrics AbstractSystemResourcesReader::readStaticNesMetrics() {
-    StaticNesMetrics output{};
+RegistrationMetrics AbstractSystemResourcesReader::readRegistrationMetrics() {
+    RegistrationMetrics output;
     return output;
 }
 

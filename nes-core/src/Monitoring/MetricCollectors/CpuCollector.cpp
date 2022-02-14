@@ -16,33 +16,33 @@ limitations under the License.
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
-#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
 #include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Util/Logger.hpp>
 
 namespace NES {
-    CpuCollector::CpuCollector()
-        : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
-          schema(CpuMetrics::getSchema("")) {
-        NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
+CpuCollector::CpuCollector()
+    : MetricCollector(), resourceReader(SystemResourcesReaderFactory::getSystemResourcesReader()),
+      schema(CpuMetrics::getSchema("")) {
+    NES_INFO("CpuCollector: Init CpuCollector with schema " << schema->toString());
+}
+
+bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
+    try {
+        CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();
+        writeToBuffer(measuredVal, tupleBuffer, 0);
+    } catch (const std::exception& ex) {
+        NES_ERROR("CpuCollector: Error while collecting metrics " << ex.what());
+        return false;
     }
+    return true;
+}
 
-    bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
-        try {
-            CpuMetricsWrapper measuredVal = resourceReader->readCpuStats();
-            writeToBuffer(measuredVal, tupleBuffer, 0);
-        } catch (const std::exception& ex) {
-            NES_ERROR("CpuCollector: Error while collecting metrics " << ex.what());
-            return false;
-        }
-        return true;
-    }
+SchemaPtr CpuCollector::getSchema() { return schema; }
 
-    SchemaPtr CpuCollector::getSchema() { return schema; }
-
-    MetricPtr CpuCollector::readMetric() { return std::make_shared<Metric>(resourceReader->readCpuStats()); }
+MetricPtr CpuCollector::readMetric() { return std::make_shared<Metric>(resourceReader->readCpuStats()); }
 
 }// namespace NES

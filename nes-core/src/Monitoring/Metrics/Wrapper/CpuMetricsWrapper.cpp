@@ -88,6 +88,8 @@ void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, 
     buf.setNumberOfTuples(metrics.size());
 }
 
+SchemaPtr getSchema(const CpuMetricsWrapper&, const std::string& prefix) { return CpuMetrics::getSchema(prefix); }
+
 bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
     if (cpuMetrics.size() != rhs.size()) {
         return false;

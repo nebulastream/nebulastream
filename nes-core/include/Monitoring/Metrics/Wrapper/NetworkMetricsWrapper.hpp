@@ -59,6 +59,14 @@ class NetworkMetricsWrapper {
 */
 void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
+/**
+ * @brief Class specific getSchema() method
+ * @param metric
+ * @param prefix
+ * @return the SchemaPtr
+*/
+SchemaPtr getSchema(const NetworkMetricsWrapper& metrics, const std::string& prefix);
+
 }// namespace NES
 
 #endif//NES_NES_CORE_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP
