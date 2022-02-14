@@ -50,12 +50,11 @@ DataSource::DataSource(SchemaPtr pSchema,
                        GatheringMode::Value gatheringMode,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
-                       uint64_t taskQueueId
-                       )
+                       uint64_t taskQueueId)
     : queryManager(std::move(queryManager)), localBufferManager(std::move(bufferManager)),
       executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(std::move(pSchema)),
-      numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId)
-      {
+      numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode), sourceAffinity(sourceAffinity),
+      taskQueueId(taskQueueId) {
     this->kFilter.setDefaultValues();
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
@@ -71,9 +70,9 @@ void DataSource::emitWorkFromSource(Runtime::TupleBuffer& buffer) {
     // set the origin id for this source
     buffer.setOriginId(operatorId);
     // set the creation timestamp
-//    buffer.setCreationTimestamp(
-//        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-//            .count());
+    //    buffer.setCreationTimestamp(
+    //        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+    //            .count());
     // Set the sequence number of this buffer.
     // A data source generates a monotonic increasing sequence number
     maxSequenceNumber++;
@@ -129,7 +128,8 @@ bool DataSource::start() {
                 if (ret != 0) {
                     NES_ERROR("Error calling set pthread_getaffinity_np: " << rc);
                 }
-                std::cout << "source " << operatorId << " pins to core=" << sourceAffinity;// << " on numaNode=" << numaNode << " ";
+                std::cout << "source " << operatorId
+                          << " pins to core=" << sourceAffinity;// << " on numaNode=" << numaNode << " ";
                 printf("setted affinity after assignment: %08lx\n", cur_mask);
             }
         } else {
