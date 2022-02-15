@@ -20,13 +20,13 @@ Hashmap::Entry::Entry(Entry* next, hash_t hash) : next(next), hash(hash) {}
 Hashmap::Hashmap(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
                  size_t keySize,
                  size_t valueSize,
-                 size_t nrEntries)
+                 uint64_t nrEntries)
     : entrySize(headerSize + keySize + valueSize), keyOffset(headerSize), valueOffset(keyOffset + keySize),
       entriesPerBuffer(bufferManager->getBufferSize() / entrySize), bufferManager(bufferManager) {
     setSize(nrEntries);
 }
 
-size_t Hashmap::setSize(size_t nrEntries) {
+uint64_t Hashmap::setSize(uint64_t nrEntries) {
     assert(nrEntries != 0);
 
     currentSize = 0;
