@@ -22,22 +22,16 @@
 namespace NES::Optimizer {
 
 TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(SourceCatalogPtr streamCatalog,
-                                                                               bool performOnlySourceOperatorExpansion,
-                                                                               uint64_t windowDistributionChildrenThreshold,
-                                                                               uint64_t windowDistributionCombinerThreshold) {
+                                                                               Configurations::OptimizerConfiguration configuration) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(
         TopologySpecificQueryRewritePhase(std::move(streamCatalog),
-                                          performOnlySourceOperatorExpansion,
-                                          windowDistributionChildrenThreshold,
-                                          windowDistributionCombinerThreshold));
+                                          configuration));
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(SourceCatalogPtr streamCatalog,
-                                                                     bool performOnlySourceOperatorExpansion,
-                                                                     uint64_t windowDistributionChildrenThreshold,
-                                                                     uint64_t windowDistributionCombinerThreshold) {
-    logicalSourceExpansionRule = LogicalSourceExpansionRule::create(std::move(streamCatalog), performOnlySourceOperatorExpansion);
-    distributeWindowRule = DistributeWindowRule::create(windowDistributionChildrenThreshold, windowDistributionCombinerThreshold);
+                                                                     Configurations::OptimizerConfiguration configuration) {
+    logicalSourceExpansionRule = LogicalSourceExpansionRule::create(std::move(streamCatalog), configuration.performOnlySourceOperatorExpansion);
+    distributeWindowRule = DistributeWindowRule::create(configuration);
     distributeJoinRule = DistributeJoinRule::create();
 }
 

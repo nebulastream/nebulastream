@@ -16,6 +16,7 @@
 #define NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 
 namespace NES {
 class QueryPlan;
@@ -97,20 +98,21 @@ class DistributeWindowRule : public BaseRewriteRule {
      * @param windowDistributionCombinerThreshold The number of child nodes from which on we will introduce combiner
      * @return DistributeWindowRulePtr
      */
-    static DistributeWindowRulePtr create(uint64_t windowDistributionChildrenThreshold,
-                                          uint64_t windowDistributionCombinerThreshold);
+    static DistributeWindowRulePtr create(Configurations::OptimizerConfiguration configuration);
     virtual ~DistributeWindowRule() = default;
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
-    explicit DistributeWindowRule(uint64_t windowDistributionChildrenThreshold, uint64_t windowDistributionCombinerThreshold);
+    explicit DistributeWindowRule(Configurations::OptimizerConfiguration configuration);
     void createCentralWindowOperator(const WindowOperatorNodePtr& windowOp);
     void createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator, const QueryPlanPtr& queryPlan);
 
+    bool performDistributedWindowOptimization;
     // The number of child nodes from which on we will replace a central window operator with a distributed window operator.
     uint64_t windowDistributionChildrenThreshold;
     // The number of child nodes from which on we will introduce combiner
     uint64_t windowDistributionCombinerThreshold;
+
 };
 }// namespace NES::Optimizer
 #endif  // NES_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEWINDOWRULE_HPP_
