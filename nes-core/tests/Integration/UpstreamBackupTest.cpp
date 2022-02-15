@@ -72,7 +72,6 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     crd->getStreamCatalogService()->registerLogicalSource("window", window);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0UL);
     NES_INFO("UpstreamBackupTest: Coordinator started successfully");
 
     //Setup Worker 1
@@ -93,7 +92,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     // register physical stream with 4 buffers, each contains 3 tuples (12 tuples in total)
     // window-out-of-order.csv contains 12 rows
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig1);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
@@ -128,7 +127,9 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     auto currentTimestamp = crd->getReplicationService()->getcurrentEpochBarrierForGivenQueryAndEpoch(queryId, 0);
     while (currentTimestamp == -1) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));;
+        NES_INFO("UpstreamBackupTest: current timestamp: " << currentTimestamp);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        currentTimestamp = crd->getReplicationService()->getcurrentEpochBarrierForGivenQueryAndEpoch(queryId, 0);
     }
 
     //check if the method was called
