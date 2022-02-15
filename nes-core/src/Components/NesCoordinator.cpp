@@ -229,8 +229,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->numberOfBuffersInGlobalBufferManager = numberOfBuffersInGlobalBufferManager;
         workerConfig->enableMonitoring = enableMonitoring;
     }
-
-    replicationService = std::make_shared<ReplicationService>(this->inherited0::shared_from_this());
     auto workerConfigCopy = workerConfig;
     worker = std::make_shared<NesWorker>(std::move(workerConfigCopy));
     worker->start(/**blocking*/ false, /**withConnect*/ true);
@@ -327,8 +325,8 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     grpc::ServerBuilder builder;
     NES_ASSERT(streamCatalogService, "null streamCatalogService");
     NES_ASSERT(topologyManagerService, "null topologyManagerService");
-
-    CoordinatorRPCServer service(topologyManagerService, streamCatalogService, monitoringService->getMonitoringManager(), replicationService);
+    this->replicationService = std::make_shared<ReplicationService>(this->inherited0::shared_from_this());
+    CoordinatorRPCServer service(topologyManagerService, streamCatalogService, monitoringService->getMonitoringManager(), this->replicationService);
 
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
