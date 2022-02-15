@@ -11,17 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <Configurations/ConfigOptions/BaseOption.hpp>
-
+#include <Configurations/ConfigurationException.hpp>
+#include <Util/Logger.hpp>
 namespace NES::Configurations {
 
-BaseOption::BaseOption(const std::string& name, const std::string& description) : name(name), description(description){};
+ConfigurationException::ConfigurationException(const std::string& message, std::string&& stacktrace, std::source_location location)
+    : RuntimeException(message, std::move(stacktrace), location) {
 
-bool BaseOption::operator==(const BaseOption& other) { return name == other.name && description == other.description; };
-
-std::string BaseOption::getName() { return name; }
-
-std::string BaseOption::getDescription() { return description; }
-
-}// namespace NES::Configurations
+}
+}// namespace NES

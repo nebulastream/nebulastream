@@ -18,12 +18,12 @@
 #include <Exceptions/RuntimeException.hpp>
 #include <Util/Logger.hpp>
 #include <string>
-namespace NES::Exceptions {
+namespace NES::Configurations {
 
 /**
  * @brief This exception is thrown when an error occurs during configuration processing.
  */
-class ConfigurationException : public RuntimeException {
+class ConfigurationException : public Exceptions::RuntimeException {
   public:
     /**
      * @brief Construct a configuration exception from a message and include the current stack trace.

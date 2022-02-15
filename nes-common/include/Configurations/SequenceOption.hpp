@@ -14,8 +14,8 @@
 #ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_SEQUENCEOPTION_HPP_
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_SEQUENCEOPTION_HPP_
 
-#include <Configurations/ConfigOptions/BaseOption.hpp>
-#include <Exceptions/ConfigurationException.hpp>
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
 #include <vector>
 #include "TypedBaseOption.hpp"
 namespace NES::Configurations {
@@ -95,7 +95,7 @@ void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node) {
             options.push_back(option);
         }
     } else {
-        throw Exceptions::ConfigurationException("YAML node should be a sequence but it was a " + node.As<std::string>());
+        throw ConfigurationException("YAML node should be a sequence but it was a " + node.As<std::string>());
     }
 }
 template<class T>

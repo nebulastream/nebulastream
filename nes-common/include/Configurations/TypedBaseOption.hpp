@@ -13,7 +13,7 @@
 */
 #ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_TYPEDBASEOPTION_HPP_
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_TYPEDBASEOPTION_HPP_
-#include <Configurations/ConfigOptions/BaseOption.hpp>
+#include <Configurations/BaseOption.hpp>
 namespace NES::Configurations {
 
 /**

@@ -14,7 +14,7 @@
 #ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_WRAPOPTION_HPP_
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_WRAPOPTION_HPP_
 
-#include <Configurations/ConfigOptions/TypedBaseOption.hpp>
+#include <Configurations/TypedBaseOption.hpp>
 
 namespace NES::Configurations {
 

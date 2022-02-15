@@ -14,12 +14,12 @@
 
 #ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATION_HPP_
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGURATION_HPP_
-#include <Configurations/ConfigOptions/BaseOption.hpp>
-#include <Configurations/ConfigOptions/EnumOption.hpp>
-#include <Configurations/ConfigOptions/ScalarOption.hpp>
-#include <Configurations/ConfigOptions/SequenceOption.hpp>
-#include <Configurations/ConfigOptions/WrapOption.hpp>
-#include <Exceptions/ConfigurationException.hpp>
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/EnumOption.hpp>
+#include <Configurations/ScalarOption.hpp>
+#include <Configurations/SequenceOption.hpp>
+#include <Configurations/WrapOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <string>

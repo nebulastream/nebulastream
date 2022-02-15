@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_source_files(nes-core
+        ConfigurationException.cpp
         BaseOption.cpp
         TypedBaseOption.cpp
         ScalarOption.cpp
