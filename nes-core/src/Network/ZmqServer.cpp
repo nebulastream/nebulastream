@@ -24,6 +24,36 @@
 
 namespace NES::Network {
 
+static constexpr auto MAX_ZMQ_SOCKET = 2 * 65536;
+
+namespace detail {
+
+class UlimitNumFdChanger {
+  public:
+    explicit UlimitNumFdChanger() {
+        struct rlimit limit;
+        NES_ASSERT(getrlimit(RLIMIT_NOFILE, &limit) == 0, "Cannot retrieve ulimit");
+        oldSoftNumFileLimit = limit.rlim_cur;
+        oldHardNumFileLimit = limit.rlim_max;
+        limit.rlim_cur = MAX_ZMQ_SOCKET;
+        limit.rlim_max = MAX_ZMQ_SOCKET;
+        NES_ASSERT(setrlimit(RLIMIT_NOFILE, &limit) == 0, "Cannot set ulimit");
+    }
+
+    ~UlimitNumFdChanger() {
+        struct rlimit limit;
+        limit.rlim_cur = oldSoftNumFileLimit;
+        limit.rlim_max = oldHardNumFileLimit;
+        NES_ASSERT(setrlimit(RLIMIT_NOFILE, &limit) == 0, "Cannot set ulimit");
+    }
+
+  private:
+    int oldSoftNumFileLimit;
+    int oldHardNumFileLimit;
+};
+static UlimitNumFdChanger ulimitChanger;
+}
+
 ZmqServer::ZmqServer(std::string hostname,
                      uint16_t requestedPort,
                      uint16_t numNetworkThreads,
@@ -44,7 +74,8 @@ bool ZmqServer::start() {
     std::shared_ptr<std::promise<bool>> startPromise = std::make_shared<std::promise<bool>>();
     uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
     uint16_t numHandlerThreads = numNetworkThreads / 2;
-    zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
+    zmqContext = std::make_shared<zmq::context_t>(numZmqThreads, MAX_ZMQ_SOCKET);
+    NES_ASSERT(MAX_ZMQ_SOCKET == zmqContext->get(zmq::ctxopt::max_sockets), "Cannot set max num of sockets");
     routerThread = std::make_unique<std::thread>([this, numHandlerThreads, startPromise]() {
         setThreadName("zmq-router");
         routerLoop(numHandlerThreads, startPromise);

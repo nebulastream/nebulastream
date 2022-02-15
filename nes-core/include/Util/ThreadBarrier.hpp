@@ -68,5 +68,6 @@ class ThreadBarrier {
     std::mutex mutex;
     std::condition_variable cvar;
 };
+using ThreadBarrierPtr = std::shared_ptr<ThreadBarrier>;
 }// namespace NES
 #endif  // NES_INCLUDE_UTIL_THREADBARRIER_HPP_
