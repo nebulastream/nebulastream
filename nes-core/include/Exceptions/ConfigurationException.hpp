@@ -30,7 +30,7 @@ class ConfigurationException : public NesRuntimeException {
      * @param message The exception message.
      */
     explicit ConfigurationException(
-        const std::string& message, std::string&& stacktrace= NES::Runtime::collectAndPrintStacktrace(), std::experimental::source_location location = std::experimental::source_location::current());
+        const std::string& message, std::string&& stacktrace= NES::Runtime::collectAndPrintStacktrace(), std::source_location location = std::source_location::current());
 };
 
 }// namespace NES
