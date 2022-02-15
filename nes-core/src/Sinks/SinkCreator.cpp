@@ -197,7 +197,7 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                            bool asynchronousClient) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<MQTTSink>(format,
-                                      nodeEngine->getQueryManager(),
+                                      nodeEngine,
                                       querySubPlanId,
                                       address,
                                       clientId,
