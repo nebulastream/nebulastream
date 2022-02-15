@@ -95,7 +95,7 @@ void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node) {
             options.push_back(option);
         }
     } else {
-        throw ConfigurationException("YAML node should be a sequence but it was a " + node.As<std::string>());
+        throw Exceptions::ConfigurationException("YAML node should be a sequence but it was a " + node.As<std::string>());
     }
 }
 template<class T>

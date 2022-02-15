@@ -16,6 +16,7 @@
 #define NES_INCLUDE_COMPONENTS_NESWORKER_HPP_
 
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Exceptions/ErrorListener.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Topology/TopologyNodeId.hpp>
@@ -36,7 +37,7 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
-class NesWorker : public ErrorListener {
+class NesWorker : public Exceptions::ErrorListener {
   public:
     /**
      * @brief default constructor which creates a sensor node

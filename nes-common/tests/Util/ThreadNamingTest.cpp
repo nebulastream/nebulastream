@@ -16,7 +16,6 @@
 #include <Util/ThreadNaming.hpp>
 #include <cstring>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
 #include <unistd.h>
 #ifdef _POSIX_THREADS
 #define HAS_POSIX_THREAD

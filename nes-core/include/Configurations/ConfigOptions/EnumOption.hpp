@@ -66,7 +66,7 @@ requires std::is_enum<EnumType>::value void EnumOption<EnumType>::parseFromYAMLN
 
     if (!magic_enum::enum_contains<EnumType>(node.As<std::string>())) {
         auto name = std::string(magic_enum::enum_names_to_string<EnumType>());
-        throw ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + name);
+        throw Exceptions::ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + name);
     }
     this->value = magic_enum::enum_cast<EnumType>(node.As<std::string>()).value();
 }
@@ -78,7 +78,7 @@ EnumOption<EnumType>::parseFromString(std::string identifier, std::map<std::stri
     // Check if the value is a member of this enum type.
     if (!magic_enum::enum_contains<EnumType>(value)) {
         auto name = std::string(magic_enum::enum_names_to_string<EnumType>());
-        throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + name);
+        throw Exceptions::ConfigurationException("Enum for " + value + " was not found. Valid options are " + name);
     }
     this->value = magic_enum::enum_cast<EnumType>(value).value();
 }

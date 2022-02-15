@@ -115,9 +115,6 @@ std::string joinedExpectedOutput10 =
     "|100|\n"
     "+----------------------------------------------------+";
 
-namespace Runtime {
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener);
-}
 template<typename MockedNodeEngine>
 std::shared_ptr<MockedNodeEngine>
 createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize = 8192, uint64_t numBuffers = 1024) {

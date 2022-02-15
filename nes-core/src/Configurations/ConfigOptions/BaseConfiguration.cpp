@@ -23,18 +23,18 @@ BaseConfiguration::BaseConfiguration(const std::string& name, const std::string&
 void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config) {
     auto optionMap = getOptionMap();
     if (!config.IsMap()) {
-        throw ConfigurationException("Malformed YAML configuration file");
+        throw Exceptions::ConfigurationException("Malformed YAML configuration file");
     }
     for (auto entry = config.Begin(); entry != config.End(); entry++) {
         auto identifier = (*entry).first;
         auto node = (*entry).second;
         if (!optionMap.contains(identifier)) {
-            throw ConfigurationException("Identifier: " + identifier
+            throw Exceptions::ConfigurationException("Identifier: " + identifier
                                          + " is not known. Check if it exposed in the getOptions function.");
         }
         // check if config is empty
         if (!config.As<std::string>().empty() && config.As<std::string>() != "\n") {
-            throw ConfigurationException("Value for " + identifier + " is empty.");
+            throw Exceptions::ConfigurationException("Value for " + identifier + " is empty.");
         }
         optionMap[identifier]->parseFromYAMLNode(node);
     }
@@ -44,7 +44,7 @@ void BaseConfiguration::parseFromString(std::string identifier, std::map<std::st
     auto optionMap = getOptionMap();
 
     if (!optionMap.contains(identifier)) {
-        throw ConfigurationException("Identifier " + identifier + " is not known.");
+        throw Exceptions::ConfigurationException("Identifier " + identifier + " is not known.");
     }
     auto option = optionMap[identifier];
     if(dynamic_cast<BaseConfiguration*>(option)){

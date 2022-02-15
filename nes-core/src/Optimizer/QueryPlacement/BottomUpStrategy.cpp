@@ -59,7 +59,7 @@ bool BottomUpStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
         // 4. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
-    } catch (Exception& ex) {
+    } catch (log4cxx::helpers::Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
 }
@@ -88,7 +88,7 @@ void BottomUpStrategy::performOperatorPlacement(QueryId queryId,
             if (candidateTopologyNode->getAvailableResources() == 0
                 && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) {
                 NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
-                throw Exception(
+                throw log4cxx::helpers::Exception(
                     "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
             }
             placeOperator(queryId, pinnedUpStreamOperator, candidateTopologyNode, pinnedDownStreamOperators);
@@ -133,7 +133,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
                     "BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator, operatorId: "
                     << operatorNode->getId());
                 topology->print();
-                throw Exception("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
+                throw log4cxx::helpers::Exception("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
             }
 
             if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
@@ -146,7 +146,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
                 } else {
                     NES_ERROR("BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                               "placed.");
-                    throw Exception(
+                    throw log4cxx::helpers::Exception(
 
                         "BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                         "placed.");
@@ -221,7 +221,7 @@ void BottomUpStrategy::placeOperator(QueryId queryId,
         NES_TRACE("BottomUpStrategy: Add the query plan to the candidate execution node.");
         if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
             NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query.");
-            throw Exception("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query.");
+            throw log4cxx::helpers::Exception("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query.");
         }
         NES_TRACE("BottomUpStrategy: Update the global execution plan with candidate execution node");
         globalExecutionPlan->addExecutionNode(candidateExecutionNode);

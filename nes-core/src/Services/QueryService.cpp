@@ -154,7 +154,7 @@ uint64_t QueryService::addQueryRequest(const QueryPlanPtr& queryPlan,
             return queryPlan->getQueryId();
         }
     } catch (...) {
-        throw Exception("QueryService: unable to create query catalog entry");
+        throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
     }
     throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
 }
@@ -177,7 +177,7 @@ uint64_t QueryService::addQueryRequest(const std::string& queryString,
             return queryPlan->getQueryId();
         }
     } catch (...) {
-        throw Exception("QueryService: unable to create query catalog entry");
+        throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
     }
     throw log4cxx::helpers::Exception("QueryService: unable to create query catalog entry");
 }

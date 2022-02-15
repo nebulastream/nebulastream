@@ -14,10 +14,6 @@
 add_source_files(nes-core
         UtilityFunctions.cpp
         TimeMeasurement.cpp
-        Logger.cpp
-        FileMutex.cpp
-        StacktraceLoader.cpp
-        ThreadNaming.cpp
         BufferSequenceNumber.cpp
         TestUtils.cpp
         FaultToleranceType.cpp
