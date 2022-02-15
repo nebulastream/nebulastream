@@ -14,11 +14,11 @@
 
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
+#include <Monitoring/Util/MetricUtils.hpp>
 #include <Services/TopologyManagerService.hpp>
 #include <Util/Logger.hpp>
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
 
 using namespace NES;
 
@@ -45,7 +45,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                            request->numberofslots());
     }
 
-    auto registrationMetrics = Metric{RegistrationMetrics(request->registrationmetrics())};
+    auto registrationMetrics = Metric{RegistrationMetrics(request->registrationmetrics()), MetricType::RuntimeMetric};
     auto metricPtr = std::shared_ptr<Metric>(&registrationMetrics);
     std::vector<MetricPtr> metrics = std::vector<MetricPtr>{metricPtr};
     monitoringManager->addMonitoringData(id, metrics);

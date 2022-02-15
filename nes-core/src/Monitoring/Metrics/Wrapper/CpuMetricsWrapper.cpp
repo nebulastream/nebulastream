@@ -35,30 +35,33 @@ CpuMetricsWrapper::CpuMetricsWrapper(std::vector<CpuMetrics>&& arr) {
 
 CpuMetrics CpuMetricsWrapper::getValue(const unsigned int cpuCore) const { return cpuMetrics.at(cpuCore); }
 
-CpuMetricsWrapper
-CpuMetricsWrapper::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& schemaPrefix) {
-    //get index where the schema for CpuMetricsWrapper is starting
-    std::vector<CpuMetrics> output;
-    auto cpuMetricsSchema = CpuMetrics::getSchema(schemaPrefix);
-    auto firstFieldName = cpuMetricsSchema->get(0)->getName();
-    auto idx = schema->getIndex(schemaPrefix + firstFieldName);
+void CpuMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
+    auto totalSize = sizeof(CpuMetrics) * size();
+    NES_ASSERT(totalSize <= buf.getBufferSize(),
+               "CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
-    if (idx < schema->getSize() && buf.getNumberOfTuples() == 1
-        && Util::endsWith(schema->fields[idx]->getName(), firstFieldName)) {
-        //if schema contains cpuMetrics parse the wrapper object
-        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-        auto numCores = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(idx, layout, buf)[0];
-
-        auto cpu = std::vector<CpuMetrics>(numCores);
-
-        for (int n = 0; n < numCores; n++) {
-            //for each core parse the according CpuMetrics
-            output.emplace_back(CpuMetrics::fromBuffer(schema, buf, schemaPrefix + "CPU[" + std::to_string(n + 1) + "]_"));
-        }
-        return output;
+    for (unsigned int i = 0; i < size(); i++) {
+        NES::writeToBuffer(getValue(i), buf, byteOffset);
+        byteOffset += sizeof(CpuMetrics);
     }
-    NES_THROW_RUNTIME_ERROR("CpuMetricsWrapper: Prefix " + schemaPrefix + " could not be parsed from schema "
-                            + schema->toString());
+    buf.setNumberOfTuples(size());
+}
+
+void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    auto schema = CpuMetrics::getSchema("");
+    auto cpuList = std::vector<CpuMetrics>(buf.getNumberOfTuples());
+    NES_DEBUG("CpuMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
+
+    uint64_t offset = byteOffset;
+    for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
+        //for each core parse the according CpuMetrics
+        CpuMetrics metrics{};
+        NES::readFromBuffer(metrics, buf, offset);
+        cpuList.emplace_back(metrics);
+        offset += schema->getSchemaSizeInBytes();
+    }
+    cpuMetrics = std::move(cpuList);
 }
 
 web::json::value CpuMetricsWrapper::toJson() {
@@ -73,22 +76,6 @@ web::json::value CpuMetricsWrapper::toJson() {
     }
     return metricsJson;
 }
-
-void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    auto totalSize = sizeof(CpuMetrics) * metrics.size();
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
-
-    for (unsigned int i = 0; i < metrics.size(); i++) {
-        writeToBuffer(metrics.getValue(i), buf, byteOffset);
-        byteOffset += sizeof(CpuMetrics);
-    }
-
-    buf.setNumberOfTuples(metrics.size());
-}
-
-SchemaPtr getSchema(const CpuMetricsWrapper&, const std::string& prefix) { return CpuMetrics::getSchema(prefix); }
 
 bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
     if (cpuMetrics.size() != rhs.size()) {
@@ -108,5 +95,15 @@ bool CpuMetricsWrapper::operator!=(const CpuMetricsWrapper& rhs) const { return 
 uint64_t CpuMetricsWrapper::size() const { return cpuMetrics.size(); }
 
 CpuMetrics CpuMetricsWrapper::getTotal() const { return getValue(0); }
+
+void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.writeToBuffer(buf, byteOffset);
+}
+
+void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    wrapper.readFromBuffer(buf, byteOffset);
+}
+
+SchemaPtr getSchema(const CpuMetricsWrapper&, const std::string& prefix) { return CpuMetrics::getSchema(prefix); }
 
 }// namespace NES

@@ -26,7 +26,7 @@ MetricStore::MetricStore(MetricStoreStrategy storeType) : storeType(storeType) {
 void MetricStore::addMetrics(uint64_t nodeId, const std::vector<MetricPtr>& metrics) {
     std::unordered_map<MetricType, MetricPtr> metricEntry;
     for (const auto& metric : metrics) {
-        metricEntry.insert({getMetricType(metric), metric});
+        metricEntry.insert({metric->getMetricType(), metric});
     }
 
     if (storeType == MetricStoreStrategy::NEWEST) {

@@ -86,5 +86,4 @@ bool DiskMetrics::operator==(const DiskMetrics& rhs) const {
 }
 
 bool DiskMetrics::operator!=(const DiskMetrics& rhs) const { return !(rhs == *this); }
-
 }// namespace NES

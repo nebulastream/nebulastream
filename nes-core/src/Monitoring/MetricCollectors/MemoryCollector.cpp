@@ -43,6 +43,8 @@ bool MemoryCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr MemoryCollector::getSchema() { return schema; }
 
-MetricPtr MemoryCollector::readMetric() { return std::make_shared<Metric>(resourceReader->readMemoryStats()); }
+MetricPtr MemoryCollector::readMetric() {
+    return std::make_shared<Metric>(resourceReader->readMemoryStats(), MetricType::MemoryMetric);
+}
 
 }// namespace NES

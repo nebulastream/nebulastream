@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Monitoring/Metrics/Metric.hpp>
 #include "Monitoring/MonitoringPlan.hpp"
+#include <Monitoring/Metrics/Metric.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>
@@ -31,6 +31,8 @@ void writeToBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t byteOffs
 void writeToBuffer(const std::string& metric, Runtime::TupleBuffer&, uint64_t) {
     NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " + metric);
 }
+
+void readFromBuffer(uint64_t, Runtime::TupleBuffer&, uint64_t) { NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible"); }
 
 SchemaPtr getSchema(uint64_t, const std::string& prefix) { return Schema::create()->addField(prefix + "uint64", UINT64); }
 

@@ -28,11 +28,6 @@ class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
 
 template<typename T>
-MetricType getMetricType(const T&) {
-    return UnknownType;
-}
-
-template<typename T>
 web::json::value asJson(const T&) {
     web::json::value metricsJson{};
     return metricsJson;
@@ -57,6 +52,12 @@ SchemaPtr getSchema(uint64_t metric, const std::string& prefix);
 SchemaPtr getSchema(const std::string& metric, const std::string& prefix);
 
 /**
+ * @brief class specific readFromBuffer()
+ * @return the value
+ */
+void readFromBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t offset);
+
+/**
 * @brief The metric class is a conceptual superclass that represents all metrics in NES.
 * Currently existing metrics are Counter, GaugeCollectors, Histogram and Meter.
 */
@@ -68,7 +69,7 @@ class Metric {
      * @dev too broad to make non-explicit.
     */
     template<typename T>
-    explicit Metric(T x) : self(std::make_unique<Model<T>>(std::move(x))) {}
+    explicit Metric(T x, MetricType type) : self(std::make_unique<Model<T>>(std::move(x))), type(type) {}
     ~Metric() = default;
 
     /**
@@ -100,7 +101,7 @@ class Metric {
      * @param the metric
      * @return the type of the metric
     */
-    friend MetricType getMetricType(const Metric& metric) { return metric.self->getType(); }
+    MetricType getMetricType() { return type; }
 
     /**
      * @brief This method returns the value of the metric as a JSON.
@@ -120,10 +121,14 @@ class Metric {
     }
 
     /**
-     * @brief Returns the schema of the metric.
-     * @return the schema
+     * @brief This method returns the type of the stored metric. Note that the according function needs to be
+     * defined, otherwise it will be categorized as UnknownType
+     * @param the metric
+     * @return the type of the metric
     */
-    friend SchemaPtr getSchema(const Metric& x, const std::string& prefix) { return x.self->getSchemaConcept(prefix); };
+    friend void readFromBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+        return x.self->readFromBufferConcept(buf, byteOffset);
+    }
 
   private:
     /**
@@ -133,7 +138,10 @@ class Metric {
         ConceptT() = default;
         virtual ~ConceptT() = default;
         [[nodiscard]] virtual std::unique_ptr<ConceptT> copy() const = 0;
-        [[nodiscard]] virtual MetricType getType() const = 0;
+
+        /**
+         * @brief Returns the values of a metric as JSON.
+         */
         [[nodiscard]] virtual web::json::value toJson() const = 0;
 
         /**
@@ -141,6 +149,14 @@ class Metric {
         */
         virtual void writeToBufferConcept(Runtime::TupleBuffer&, uint64_t byteOffset) = 0;
 
+        /**
+         * @brief The deserialize concept to enable polymorphism across different metrics to make them deserializable.
+        */
+        virtual void readFromBufferConcept(Runtime::TupleBuffer&, uint64_t byteOffset) = 0;
+
+        /**
+         * @brief Return the schema of a metric
+         */
         virtual SchemaPtr getSchemaConcept(const std::string& prefix) = 0;
     };
 
@@ -150,11 +166,9 @@ class Metric {
     */
     template<typename T>
     struct Model final : ConceptT {
-        explicit Model(T x) : data(std::move(x)), type(MetricType::UnknownType){};
+        explicit Model(T x) : data(std::move(x)){};
 
         [[nodiscard]] std::unique_ptr<ConceptT> copy() const override { return std::make_unique<Model>(*this); }
-
-        [[nodiscard]] MetricType getType() const override { return getMetricType(data); }
 
         [[nodiscard]] web::json::value toJson() const override { return asJson(data); }
 
@@ -162,13 +176,17 @@ class Metric {
             writeToBuffer(data, buf, byteOffset);
         }
 
+        void readFromBufferConcept(Runtime::TupleBuffer& buf, uint64_t byteOffset) override {
+            readFromBuffer(data, buf, byteOffset);
+        }
+
         SchemaPtr getSchemaConcept(const std::string& prefix) override { return getSchema(data, prefix); };
 
         T data;
-        MetricType type;
     };
 
     std::unique_ptr<ConceptT> self;
+    MetricType type;
 };
 
 }// namespace NES

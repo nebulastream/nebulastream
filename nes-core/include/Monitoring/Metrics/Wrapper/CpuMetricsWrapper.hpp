@@ -1,9 +1,9 @@
 #ifndef NES_NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICSWRAPPER_HPP_
 #define NES_NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICSWRAPPER_HPP_
 
+#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
 #include "Monitoring/MonitoringForwardRefs.hpp"
 #include "Runtime/RuntimeForwardRefs.hpp"
-#include "Monitoring/Metrics/Gauge/CpuMetrics.hpp"
 
 namespace NES {
 
@@ -13,7 +13,25 @@ namespace NES {
 class CpuMetricsWrapper {
   public:
     CpuMetricsWrapper() = default;
-    CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
+    explicit CpuMetricsWrapper(std::vector<CpuMetrics>&& arr);
+
+    /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+
+    /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
     /**
      * @brief Returns the cpu metrics for a given core
@@ -23,16 +41,15 @@ class CpuMetricsWrapper {
     [[nodiscard]] CpuMetrics getValue(const unsigned int cpuCore) const;
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
-     * @param schema
-     * @param buf
-     * @param prefix
-     * @return The object
-    */
-    CpuMetricsWrapper fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& schemaPrefix);
-
+     * @brief The number of CPU metrics contained in the wrapper. The number is not equivalent to the number of cores.
+     * @return Number of CPU metrics
+     */
     uint64_t size() const;
 
+    /**
+     * @brief The summarized stats over all CPU metrics. This metric is equivalent to the 0th element of the list.
+     * @return CPUMetrics
+     */
     CpuMetrics getTotal() const;
 
     /**
@@ -47,6 +64,15 @@ class CpuMetricsWrapper {
   private:
     std::vector<CpuMetrics> cpuMetrics;
 } __attribute__((packed));
+
+/**
+ * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+ * @param schema
+ * @param buf
+ * @param prefix
+ * @return The object
+*/
+void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
