@@ -69,6 +69,12 @@ class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<Co
      */
     std::shared_ptr<ColumnLayoutTupleBuffer> bind(const TupleBuffer& tupleBuffer);
 
+    /**
+     * Get the column offset vector
+     * @return columnOffset
+     */
+    const std::vector<uint64_t>& getColumnOffsets() const;
+
   private:
     std::vector<uint64_t> columnOffsets;
 };
