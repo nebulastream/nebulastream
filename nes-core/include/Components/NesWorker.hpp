@@ -40,7 +40,9 @@ using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
-class NesWorker: public std::enable_shared_from_this<NesWorker>, public Exceptions::ErrorListener {
+class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, public Exceptions::ErrorListener {
+    using inherited0 = detail::virtual_enable_shared_from_this<NesWorker>;
+    using inherited1 = ErrorListener;
   public:
     /**
      * @brief default constructor which creates a sensor node

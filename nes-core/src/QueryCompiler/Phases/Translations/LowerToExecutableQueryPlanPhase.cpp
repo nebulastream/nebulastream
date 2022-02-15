@@ -320,8 +320,8 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                                                      benchmarkSourceType->getTaskQueueId());
         }
         case STATIC_DATA_SOURCE: {
-            auto staticDataSourceType = physicalSourceType->as<Experimental::StaticDataSourceType>();
-            return Experimental::StaticDataSourceDescriptor::create(schema, staticDataSourceType->getPathTableFile());
+            auto staticDataSourceType = physicalSourceType->as<NES::Experimental::StaticDataSourceType>();
+            return NES::Experimental::StaticDataSourceDescriptor::create(schema, staticDataSourceType->getPathTableFile());
         }
         case LAMBDA_SOURCE: {
             auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
