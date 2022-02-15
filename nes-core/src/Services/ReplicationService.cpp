@@ -41,7 +41,6 @@ int ReplicationService::getcurrentEpochBarrierForGivenQueryAndEpoch(uint64_t que
 }
 
 bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t querySubPlanId) const {
-    std::unique_lock lock(replicationServiceMutex);
     std::vector<SourceLogicalOperatorNodePtr> sources;
     uint64_t queryId = this->coordinatorPtr->getNodeEngine()->getQueryIdFromSubQueryId(querySubPlanId);
     auto iterator = queryIdToCurrentEpochBarrierMap.find(queryId);
