@@ -369,7 +369,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
         auto nodeEngine2 =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort2, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64);
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort2, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
@@ -452,39 +452,45 @@ class TestSourceWithLatch : public DefaultSource {
 }// namespace detail
 
 TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
-    auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
 
-    auto numQueries = 25;
-    auto numThreads = 4;
+    auto numQueries = 10;
+    auto numThreads = 8;
     SchemaPtr schema = Schema::create()
                            ->addField("test$id", DataTypeFactory::createInt64())
                            ->addField("test$one", DataTypeFactory::createInt64())
                            ->addField("test$value", DataTypeFactory::createInt64());
 
     auto defaultSourceType = DefaultSourceType::create();
-    auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
-    NesPartition nesPartition{1, 22, 33, 44};
+    std::vector<PhysicalSourcePtr> physicalSources;
+    for (auto i = 0; i < numQueries; ++i) {
+        auto str = std::to_string(i);
+        auto physicalSource = PhysicalSource::create("default_logical"s + str, "default"s + str, defaultSourceType);
+        physicalSources.emplace_back(physicalSource);
+    }
+
+    auto latch = std::make_shared<ThreadBarrier>(numQueries);
+
     auto nodeEngineSender = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                         *dataPort1,
+                                                                         31337,
                                                                          physicalSources,
                                                                          numThreads,
                                                                          bufferSize,
                                                                          buffersManaged,
                                                                          64,
                                                                          12,
-                                                                         queryCompilerConfiguration,
+                                                                         Configurations::QueryCompilerConfiguration(),
                                                                          NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto netManagerSender = nodeEngineSender->getNetworkManager();
     NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
     auto nodeEngineReceiver = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
-                                                                           *dataPort2,
+                                                                           31338,
                                                                            physicalSources,
                                                                            numThreads,
                                                                            bufferSize,
                                                                            buffersManaged,
                                                                            64,
                                                                            12,
-                                                                           queryCompilerConfiguration,
+                                                                           Configurations::QueryCompilerConfiguration(),
                                                                            NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto netManagerReceiver = nodeEngineReceiver->getNetworkManager();
     NodeLocation nodeLocationReceiver = netManagerReceiver->getServerLocation();
@@ -596,6 +602,8 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     ASSERT_TRUE(nodeEngineSender->stop());
     ASSERT_TRUE(nodeEngineReceiver->stop());
 }
+
+
 namespace detail {
 struct TestEvent {
     explicit TestEvent(Runtime::EventType ev, uint32_t test) : ev(ev), test(test) {}
