@@ -54,6 +54,7 @@ int main(int argc, const char* argv[]) {
                 string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
         }
 
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
         auto configPath = commandLineParams.find("--configPath");
         if (configPath != commandLineParams.end()) {
             coordinatorConfig->overwriteConfigWithYAMLFileInput(configPath->second);
