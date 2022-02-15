@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
 #define NES_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
 
-#include <Configurations/ConfigOptions/BaseConfiguration.hpp>
+#include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Util/Logger.hpp>

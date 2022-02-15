@@ -14,8 +14,8 @@
 #ifndef NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_SCALAROPTION_HPP_
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_CONFIGOPTIONS_SCALAROPTION_HPP_
 
-#include <Configurations/ConfigOptions/TypedBaseOption.hpp>
-#include <Exceptions/ConfigurationException.hpp>
+#include <Configurations/TypedBaseOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
 #include <ostream>
 namespace NES::Configurations {
 
@@ -130,11 +130,11 @@ void ScalarOption<T>::parseFromYAMLNode(Yaml::Node node) {
 template<class T>
 void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
     if (!inputParams.contains(this->getName())) {
-        throw Exceptions::ConfigurationException("Identifier " + identifier + " is not known.");
+        throw ConfigurationException("Identifier " + identifier + " is not known.");
     }
     auto value = inputParams[this->getName()];
     if (value.empty()) {
-        throw Exceptions::ConfigurationException("Identifier " + identifier + " is not known.");
+        throw ConfigurationException("Identifier " + identifier + " is not known.");
     }
     this->value = Yaml::impl::StringConverter<T>::Get(value);
 }

@@ -11,12 +11,4 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Exceptions/ConfigurationException.hpp>
-#include <Util/Logger.hpp>
-namespace NES::Exceptions {
-
-ConfigurationException::ConfigurationException(const std::string& message, std::string&& stacktrace, std::source_location location)
-    : RuntimeException(message, std::move(stacktrace), location) {
-
-}
-}// namespace NES
+#include <Configurations/SequenceOption.hpp>
