@@ -66,7 +66,7 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     for (const auto& pinnedOperator : downStreamPinnedOperators) {
         auto value = pinnedOperator->getProperty(PINNED_NODE_ID);
         if (!value.has_value()) {
-            throw Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
+            throw log4cxx::helpers::Exception("LogicalSourceExpansionRule: Unable to find pinned node identifier for the logical operator "
                             + pinnedOperator->toString());
         }
         auto nodeId = std::any_cast<uint64_t>(value);
@@ -83,7 +83,7 @@ void BasePlacementStrategy::performPathSelection(std::vector<OperatorNodePtr> up
     std::vector<TopologyNodePtr> selectedTopologyForPlacement =
         topology->findPathBetween(upstreamTopologyNodes, downstreamTopologyNodes);
     if (selectedTopologyForPlacement.empty()) {
-        throw Exception("BasePlacementStrategy: Could not find the path for placement.");
+        throw log4cxx::helpers::Exception("BasePlacementStrategy: Could not find the path for placement.");
     }
 
     //4. Map nodes in the selected topology by their ids.
@@ -395,7 +395,7 @@ void BasePlacementStrategy::placeNetworkOperator(QueryId queryId,
                                                   return downStreamQuerySubPlanId == querySubPlan->getQuerySubPlanId();
                                               });
                     if (found == querySubPlans.end()) {
-                        throw Exception("BasePlacementStrategy::placeNetworkOperator: Parent plan not found in execution node.");
+                        throw log4cxx::helpers::Exception("BasePlacementStrategy::placeNetworkOperator: Parent plan not found in execution node.");
                     }
                     querySubPlans.erase(found);
                     downStreamExecutionNode->updateQuerySubPlans(queryId, querySubPlans);

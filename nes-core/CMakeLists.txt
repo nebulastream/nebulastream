@@ -44,6 +44,7 @@ add_custom_command(
 
 # Add Library
 get_source(nes-core NES_CORE_SOURCE_FILES)
+message(STATUS "Found the following NES_CORE_SOURCE_FILES files: " ${NES_CORE_SOURCE_FILES})
 add_library(nes SHARED ${NES_CORE_SOURCE_FILES} ${OUTPUT_SOURCES} ${OUTPUT_HEADERS})
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")

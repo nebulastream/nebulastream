@@ -130,11 +130,11 @@ void ScalarOption<T>::parseFromYAMLNode(Yaml::Node node) {
 template<class T>
 void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
     if (!inputParams.contains(this->getName())) {
-        throw ConfigurationException("Identifier " + identifier + " is not known.");
+        throw Exceptions::ConfigurationException("Identifier " + identifier + " is not known.");
     }
     auto value = inputParams[this->getName()];
     if (value.empty()) {
-        throw ConfigurationException("Identifier " + identifier + " is not known.");
+        throw Exceptions::ConfigurationException("Identifier " + identifier + " is not known.");
     }
     this->value = Yaml::impl::StringConverter<T>::Get(value);
 }

@@ -22,6 +22,7 @@
  *
  ********************************************************/
 
+#include <Exceptions/SignalHandling.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigurationOption.hpp>
@@ -50,10 +51,6 @@ const string logo = "/********************************************************\n
                     " *\n"
                     " ********************************************************/";
 
-namespace NES::Runtime {
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-}// namespace NES::Runtime
 
 int main(int argc, char** argv) {
     std::cout << logo << std::endl;
@@ -87,7 +84,7 @@ int main(int argc, char** argv) {
 
     NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
     NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
-    Runtime::installGlobalErrorListener(nesWorker);
+    Exceptions::installGlobalErrorListener(nesWorker);
 
     if (nesWorker->getWorkerConfiguration()->parentId.getValue() != 0) {
         NES_INFO("start with dedicated parent=" << nesWorker->getWorkerConfiguration()->parentId.getValue());

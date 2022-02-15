@@ -19,7 +19,7 @@
 namespace NES::Exceptions {
 
 RuntimeException::RuntimeException(std::string msg, std::string&& stacktrace, const std::source_location location) : errorMessage(std::move(msg)) {
-    auto spiLocation = spi::LocationInfo(location.file_name(), location.function_name(), location.line());
+    auto spiLocation = log4cxx::spi::LocationInfo(location.file_name(), location.function_name(), location.line());
     NESLogger::getInstance()->error(errorMessage, spiLocation);
     errorMessage.append(":: callstack:\n");
     errorMessage.append(stacktrace);

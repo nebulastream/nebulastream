@@ -63,7 +63,7 @@ bool TopDownStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
         // 4. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
-    } catch (Exception& ex) {
+    } catch (log4cxx::helpers::Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
 }
@@ -90,7 +90,7 @@ void TopDownStrategy::performOperatorPlacement(QueryId queryId,
             if (candidateTopologyNode->getAvailableResources() == 0
                 && !operatorToExecutionNodeMap.contains(pinnedDownStreamOperator->getId())) {
                 NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
-                throw Exception(
+                throw log4cxx::helpers::Exception(
                     "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
             }
             placeOperator(queryId, pinnedDownStreamOperator, candidateTopologyNode, pinnedUpStreamOperators);
@@ -133,7 +133,7 @@ void TopDownStrategy::placeOperator(QueryId queryId,
             if (!candidateTopologyNode) {
                 NES_ERROR("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
                           << operatorNode->toString());
-                throw Exception("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
+                throw log4cxx::helpers::Exception("TopDownStrategy: Unable to find the candidate topology node for placing Nary operator "
                                 + operatorNode->toString());
             }
 
@@ -147,13 +147,13 @@ void TopDownStrategy::placeOperator(QueryId queryId,
                 } else {
                     NES_ERROR("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be "
                               "placed.");
-                    throw Exception("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
+                    throw log4cxx::helpers::Exception("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
                                     "to be placed.");
                 }
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
-                    throw Exception("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
+                    throw log4cxx::helpers::Exception("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
                 }
             }
         }
@@ -176,7 +176,7 @@ void TopDownStrategy::placeOperator(QueryId queryId,
 
         if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("TopDownStrategy: No node available for further placement of operators");
-            throw Exception("TopDownStrategy: No node available for further placement of operators");
+            throw log4cxx::helpers::Exception("TopDownStrategy: No node available for further placement of operators");
         }
 
         //Pin the operator to the candidate node and mark as placed
@@ -192,7 +192,7 @@ void TopDownStrategy::placeOperator(QueryId queryId,
         NES_TRACE("TopDownStrategy: Add the query plan to the candidate execution node.");
         if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
             NES_ERROR("TopDownStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
-            throw Exception("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query "
+            throw log4cxx::helpers::Exception("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query "
                             + std::to_string(queryId));
         }
         NES_TRACE("TopDownStrategy: Update the global execution plan with candidate execution node");
@@ -344,7 +344,7 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForChildOperators(
         NES_ERROR(
             "TopDownStrategy::getTopologyNodesForChildOperators: Unable to find the upStreamOperators operators to the candidate "
             "operator");
-        throw Exception(
+        throw log4cxx::helpers::Exception(
             "TopDownStrategy::getTopologyNodesForChildOperators: Unable to find the upStreamOperators operators to the "
             "candidate operator");
     }
