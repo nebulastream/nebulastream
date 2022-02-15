@@ -18,6 +18,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Util/Logger.hpp>
+#include <filesystem>
 #include <iostream>
 
 using namespace NES;
@@ -43,7 +44,10 @@ int main(int argc, char** argv) {
     try {
         std::cout << logo << std::endl;
         std::cout << worker << "v" << NES_VERSION << std::endl;
-        NES::setupLogging("nesWorkerStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+
+        std::string logPath = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesWorker.log";
+        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
+
         WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
 
         std::map<string, string> commandLineParams;

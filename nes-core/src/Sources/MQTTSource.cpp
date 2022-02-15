@@ -217,7 +217,6 @@ bool MQTTSource::fillBuffer(Runtime::MemoryLayouts::DynamicTupleBuffer& tupleBuf
 }
 
 bool MQTTSource::connect() {
-    NES_INFO("...................................... URL ........................." << toString());
     if (!connected) {
         NES_DEBUG("MQTTSource was !connect now connect " << this << ": connected");
         // connect with user name and password

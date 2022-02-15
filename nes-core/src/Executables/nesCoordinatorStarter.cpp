@@ -17,6 +17,7 @@
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <Version/version.hpp>
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <vector>
@@ -41,8 +42,10 @@ int main(int argc, const char* argv[]) {
     try {
         std::cout << logo << std::endl;
         std::cout << coordinator << " v" << NES_VERSION << std::endl;
-        NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
-        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+
+        std::string logPath =
+            std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesCoordinator.log";
+        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
 
         map<string, string> commandLineParams;
         for (int i = 1; i < argc; ++i) {
