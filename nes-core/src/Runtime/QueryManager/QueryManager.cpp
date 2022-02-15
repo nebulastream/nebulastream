@@ -165,6 +165,7 @@ QueryManager::QueryManager(std::vector<BufferManagerPtr> bufferManagers,
                                                                      << " numberOfThreadsPerQueue=" << numberOfThreadsPerQueue);
         NES_ASSERT(numberOfQueues * numberOfThreadsPerQueue == numThreads, "number of queues and threads have to match");
 
+        std::cout << "spawn " << numberOfQueues << " queues for static" << std::endl;
         //create the actual task queues
         for (uint64_t i = 0; i < numberOfQueues; i++) {
             taskQueues.push_back(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY));
