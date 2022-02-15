@@ -311,8 +311,8 @@ TEST_F(NodeEngineTest, teststartDeployStop) {
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
-    pipeline->completedPromise.get_future().get();
     EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    pipeline->completedPromise.get_future().get();
     EXPECT_TRUE(engine->stop());
 
     testOutput(getTestResourceFolder() / "test.out");
