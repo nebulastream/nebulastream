@@ -16,6 +16,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <unordered_map>
 #include <utility>
+#include <mutex>
 
 namespace NES {
 
@@ -35,7 +36,7 @@ class ReplicationService {
      * @param queryId: identifies what query sends punctuation
      * @return bool indicating success
      */
-    bool notifyEpochTermination(uint64_t epochBarrier, uint64_t queryId);
+    bool notifyEpochTermination(uint64_t epochBarrier, uint64_t queryId) const;
 
     /**
      * @brief getter of current epoch barrier for a given query id
@@ -47,7 +48,7 @@ class ReplicationService {
   private:
     mutable std::recursive_mutex replicationServiceMutex;
     NesCoordinatorPtr coordinatorPtr;
-    std::unordered_map<uint64_t, std::pair<uint64_t, uint64_t>> queryIdToCurrentEpochBarrierMap;
+    mutable std::unordered_map<uint64_t, std::pair<uint64_t, uint64_t>> queryIdToCurrentEpochBarrierMap;
 };
 using ReplicationServicePtr = std::shared_ptr<ReplicationService>;
 }

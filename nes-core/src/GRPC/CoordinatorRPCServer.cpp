@@ -207,7 +207,7 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
                               const EpochBarrierPropagationNotification* request,
                               EpochBarrierPropagationReply* reply) {
     try {
-        NES_ERROR("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp "
+        NES_INFO("CoordinatorRPCServer::propagatePunctuation: received punctuation with timestamp "
                   << request->timestamp() << "and querySubPlanId " << request->queryid());
         this->replicationService->notifyEpochTermination(request->timestamp(), request->queryid());
         reply->set_success(true);
