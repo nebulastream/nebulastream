@@ -15,7 +15,7 @@ add_source_files(nes-core
         AbstractSystemResourcesReader.cpp
 )
 if (NOT APPLE)
-    add_source_nes(
+    add_source_files(nes-core
             LinuxSystemResourcesReader.cpp
     )
 endif()
