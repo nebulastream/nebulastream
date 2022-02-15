@@ -46,7 +46,7 @@ void BufferManager::destroy() {
     if (isDestroyed.compare_exchange_strong(expected, true)) {
         std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex, localBufferPoolsMutex);
         auto success = true;
-        NES_DEBUG("Shutting down Buffer Manager " << this);
+        NES_DEBUG("Shutting down Buffer Manager");
         for (auto& localPool : localBufferPools) {
             localPool->destroy();
         }
@@ -87,7 +87,7 @@ void BufferManager::destroy() {
             }
         }
         unpooledBuffers.clear();
-        NES_DEBUG("Shutting down Buffer Manager completed " << this);
+        NES_DEBUG("Shutting down Buffer Manager completed");
         memoryResource->deallocate(basePointer, allocatedAreaSize);
     }
 }

@@ -78,7 +78,7 @@ bool PartitionManager::registerSubpartitionConsumer(NesPartition partition,
                                                  partition,
                                                  PartitionConsumerEntry(std::move(senderLocation), std::move(emitterPtr)));
     }
-    NES_DEBUG("PartitionManager: Registering " << partition.toString() << "=" << (*it).second.count());
+    NES_DEBUG("PartitionManager: Registering Subpartition Consumer " << partition.toString() << "=" << (*it).second.count());
     return (*it).second.count() == 1;
 }
 
@@ -96,9 +96,9 @@ bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition) {
     }
 
     it->second.unpin();
-    NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << it->second.count() << ")");
+    NES_INFO("PartitionManager: Unregistering Consumer " << partition.toString() << "; newCnt(" << it->second.count() << ")");
     if (it->second.count() == 1) {
-        NES_DEBUG("PartitionManager: ; " << partition.toString() << ", counter is at 1.");
+        NES_DEBUG("PartitionManager: " << partition.toString() << ", counter is at 1.");
         return true;
     }
     return false;

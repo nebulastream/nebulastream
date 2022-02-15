@@ -36,6 +36,7 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include "../../util/NesBaseTest.hpp"
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -48,7 +49,6 @@
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
 #include <random>
 #include <utility>
 
@@ -241,6 +241,94 @@ TEST_F(NetworkStackTest, startCloseChannel) {
         t.join();
     } catch (...) {
         ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(true, true);
+}
+
+TEST_F(NetworkStackTest, startCloseMaxChannel) {
+    try {
+        // start zmqServer
+        std::promise<bool> completed;
+        std::promise<bool> connectionsReady;
+
+        class InternalListener : public Network::ExchangeProtocolListener {
+          public:
+            explicit InternalListener(std::promise<bool>& p, uint32_t maxExpectedConnections)
+                : completed(p), numReceivedEoS(0), maxExpectedConnections(maxExpectedConnections) {}
+
+            void onDataBuffer(NesPartition, TupleBuffer&) override {}
+            void onEndOfStream(Messages::EndOfStreamMessage) override {
+                if (numReceivedEoS.fetch_add(1) == (maxExpectedConnections - 1)) {
+                    completed.set_value(true);
+                }
+            }
+            void onServerError(Messages::ErrorMessage) override {}
+            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+            void onChannelError(Messages::ErrorMessage) override {}
+
+          private:
+            std::promise<bool>& completed;
+            std::atomic<uint32_t> numReceivedEoS;
+            const uint32_t maxExpectedConnections;
+        };
+
+        constexpr auto maxExpectedConnections = 1000;
+        auto partMgr = std::make_shared<PartitionManager>();
+        auto buffMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        auto ep = ExchangeProtocol(partMgr, std::make_shared<InternalListener>(completed, maxExpectedConnections));
+        auto netManagerReceiver = NetworkManager::create(0, "127.0.0.1", *freeDataPort, std::move(ep), buffMgr, 8);
+
+        auto dummyProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
+        auto senderPort = getAvailablePort();
+        auto netManagerSender = NetworkManager::create(0, "127.0.0.1", *senderPort, std::move(dummyProtocol), buffMgr, 2);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+
+        std::thread t([&netManagerReceiver, &netManagerSender, &completed, &connectionsReady] {
+            // register the incoming channel
+
+            for (auto i = 0; i < maxExpectedConnections; ++i) {
+                auto nesPartition = NesPartition(i, 0, 0, 0);
+                ASSERT_TRUE(netManagerReceiver->registerSubpartitionConsumer(nesPartition,
+                                                                             netManagerSender->getServerLocation(),
+                                                                     std::make_shared<DataEmitterImpl>()));
+            }
+
+            auto v1 = completed.get_future().get();
+            auto v2 = connectionsReady.get_future().get();
+            ASSERT_TRUE(v1 && v2);
+            for (auto i = 0; i < maxExpectedConnections; ++i) {
+                auto nesPartition = NesPartition(i, 0, 0, 0);
+                (netManagerReceiver->unregisterSubpartitionConsumer(nesPartition));
+            }
+        });
+
+        NodeLocation nodeLocation(0, "127.0.0.1", *freeDataPort);
+        std::vector<NetworkChannelPtr> channels;
+
+        for (auto i = 0; i < maxExpectedConnections; ++i) {
+            auto nesPartition = NesPartition(i, 0, 0, 0);
+            channels.emplace_back(
+                netManagerSender->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 3));
+            if (!channels.back()) {
+                break;
+            }
+        }
+        ASSERT_EQ(maxExpectedConnections, channels.size());
+
+
+        int i = 0;
+        for (auto&& senderChannel : channels) {
+            auto nesPartition = NesPartition(i++, 0, 0, 0);
+            senderChannel->close();
+            netManagerSender->unregisterSubpartitionProducer(nesPartition);
+        }
+        connectionsReady.set_value(true);
+        t.join();
+    } catch (...) {
+        FAIL();
     }
     ASSERT_EQ(true, true);
 }
