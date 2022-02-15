@@ -24,12 +24,14 @@
 
 namespace NES::Network {
 
+/// max number of tcp sockets
 static constexpr auto MAX_ZMQ_SOCKET = 2 * 65536;
 
 namespace detail {
 
 class UlimitNumFdChanger {
   public:
+    /// change ulimit to allow number of higher zmq socket
     explicit UlimitNumFdChanger() {
         struct rlimit limit;
         NES_ASSERT(getrlimit(RLIMIT_NOFILE, &limit) == 0, "Cannot retrieve ulimit");
@@ -40,6 +42,7 @@ class UlimitNumFdChanger {
         NES_ASSERT(setrlimit(RLIMIT_NOFILE, &limit) == 0, "Cannot set ulimit");
     }
 
+    /// restore ulimit to previous values
     ~UlimitNumFdChanger() {
         struct rlimit limit;
         limit.rlim_cur = oldSoftNumFileLimit;
