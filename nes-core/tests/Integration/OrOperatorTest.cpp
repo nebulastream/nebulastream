@@ -150,7 +150,6 @@ TEST_F(OrOperatorTest, testPatternOneOr) {
 /* 2.Test
  * OR operator in combination with additional map and filter
  */
-//FIXME: please enable after fixing #2436
 TEST_F(OrOperatorTest, testPatternOrMap) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
