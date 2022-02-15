@@ -247,6 +247,9 @@ void DataSource::close() {
 }
 
 void DataSource::runningRoutine() {
+    // TODO delete this startup delay
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
     try {
         if (gatheringMode == GatheringMode::INTERVAL_MODE) {
             runningRoutineWithGatheringInterval();
