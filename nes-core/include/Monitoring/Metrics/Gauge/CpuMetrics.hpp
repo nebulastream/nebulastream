@@ -37,6 +37,24 @@ class CpuMetrics {
     static SchemaPtr getSchema(const std::string& prefix);
 
     /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+
+    /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
+
+    /**
      * @brief Stream operator to convert the object to string
      * @param os
      * @param values
@@ -49,15 +67,6 @@ class CpuMetrics {
      * @return Json containing the metrics
      */
     [[nodiscard]] web::json::value toJson() const;
-
-    /**
-     * @brief Parses a CpuMetricsWrapper objects from a given Schema and TupleBuffer.
-     * @param schema
-     * @param buf
-     * @param prefix
-     * @return The object
-     */
-    static CpuMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
 
     bool operator==(const CpuMetrics& rhs) const;
     bool operator!=(const CpuMetrics& rhs) const;
@@ -86,14 +95,13 @@ class CpuMetrics {
 void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
- * that should be added before each field description in the Schema.
- * @param the CpuMetrics
- * @param the schema
- * @param the TupleBuffer
- * @param the prefix as std::string
- */
-void writeToBuffer(const std::vector<CpuMetrics>& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+ * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+ * @param schema
+ * @param buf
+ * @param prefix
+ * @return The object
+*/
+void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 

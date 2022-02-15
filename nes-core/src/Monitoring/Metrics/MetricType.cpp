@@ -23,7 +23,9 @@ std::string toString(MetricType type) {
         case MetricType::MemoryMetric: return "memory";
         case MetricType::NetworkMetric: return "network";
         case MetricType::RuntimeMetric: return "runtime";
-        case MetricType::RegistrationMetric: return "static";
+        case MetricType::RegistrationMetric: return "registration";
+        case MetricType::WrappedCpuMetrics: return "wrapped_cpu";
+        case MetricType::WrappedNetworkMetrics: return "wrapped_network";
         default: return "unknown";
     }
 };

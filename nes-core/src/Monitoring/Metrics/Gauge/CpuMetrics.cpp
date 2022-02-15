@@ -44,37 +44,30 @@ SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-CpuMetrics CpuMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
-    CpuMetrics output{};
+void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
+    auto* tbuffer = buf.getBuffer<uint8_t>();
+    NES_ASSERT(byteOffset + sizeof(CpuMetrics) <= buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");
+
+    memcpy(tbuffer + byteOffset, this, sizeof(CpuMetrics));
+}
+
+void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
     //get index where the schema for CpuMetricsWrapper is starting
-    auto cpuMetricsSchema = CpuMetrics::getSchema(prefix);
-    auto firstFieldName = cpuMetricsSchema->get(0)->getName();
-    auto schema_idx = schema->getIndex(prefix + firstFieldName);
-
-    if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("CpuMetrics: Tuple size should be 1, but is larger " + std::to_string(buf.getNumberOfTuples()));
-    }
-
-    if (!MetricUtils::validateFieldsInSchema(CpuMetrics::getSchema(""), schema, schema_idx)) {
-        NES_THROW_RUNTIME_ERROR("CpuMetrics: Incomplete number of fields in schema.");
-    }
-
+    auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
     int cnt = 0;
-    output.core_num = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-    output.guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(schema_idx + cnt++, layout, buf)[0];
-
-    return output;
+    core_num = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
 }
 
 std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {
@@ -110,25 +103,11 @@ bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
 bool CpuMetrics::operator!=(const CpuMetrics& rhs) const { return !(rhs == *this); }
 
 void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(CpuMetrics) <= buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");
-
-    memcpy(tbuffer + byteOffset, &metrics, sizeof(CpuMetrics));
-    buf.setNumberOfTuples(1);
+    metrics.writeToBuffer(buf, byteOffset);
 }
 
-void writeToBuffer(const std::vector<CpuMetrics>& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    auto totalSize = sizeof(CpuMetrics) * metrics.size();
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
-
-    for (unsigned int i = 0; i < metrics.size(); i++) {
-        writeToBuffer(metrics[i], buf, byteOffset);
-        byteOffset += sizeof(CpuMetrics);
-    }
-
-    buf.setNumberOfTuples(metrics.size());
+void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.readFromBuffer(buf, byteOffset);
 }
 
 }// namespace NES

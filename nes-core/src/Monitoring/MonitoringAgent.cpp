@@ -83,7 +83,7 @@ web::json::value MonitoringAgent::getMetricsAsJson() {
         for (auto type : monitoringPlan->getMetricTypes()) {
             auto collector = catalog->getMetricCollector(type);
             MetricPtr metric = collector->readMetric();
-            metricsJson[toString(getMetricType(metric))] = asJson(metric);
+            metricsJson[toString(metric->getMetricType())] = asJson(metric);
         }
     }
     return metricsJson;

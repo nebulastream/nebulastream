@@ -41,7 +41,7 @@ web::json::value MetricUtils::toJson(std::vector<MetricPtr> metrics) {
     web::json::value metricsJson{};
     for (const auto& metric : metrics) {
         auto jMetric = asJson(metric);
-        metricsJson[toString(getMetricType(metric))] = jMetric;
+        metricsJson[toString(metric->getMetricType())] = jMetric;
     }
     return metricsJson;
 }
