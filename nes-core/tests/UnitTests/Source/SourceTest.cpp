@@ -2043,6 +2043,8 @@ TEST_F(SourceTest, testTwoLambdaSourcesWithSamePhysicalName) {
     auto queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
+    queryCatalog->printQueries();
+
     sleep(2);
     std::cout << "E2EBase: Remove query" << std::endl;
     NES_ASSERT(queryService->validateAndQueueStopRequest(queryId1), "no vaild stop quest");
