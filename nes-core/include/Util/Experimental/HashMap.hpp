@@ -82,7 +82,7 @@ class Hashmap {
      * @param nrOfKeys number of keys the HashMap should contain.
      * @return
      */
-    inline size_t setSize(uint64_t nrOfKeys);
+    uint64_t setSize(uint64_t nrOfKeys);
 
     /**
      * @brief Calculates the
