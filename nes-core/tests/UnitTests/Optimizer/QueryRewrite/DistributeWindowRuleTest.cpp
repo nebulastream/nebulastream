@@ -18,8 +18,8 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -46,12 +46,19 @@ class DistributeWindowRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
+    Optimizer::DistributeWindowRulePtr distributeWindowRule;
 
     /* Will be called before a test is executed. */
     void SetUp() override {
         NES::setupLogging("DistributeWindowRuleTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup DistributeWindowRuleTest test case.");
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
+        // enable distributed window optimization
+        auto optimizerConfiguration = Configurations::OptimizerConfiguration();
+        optimizerConfiguration.performDistributedWindowOptimization = true;
+        optimizerConfiguration.distributedWindowChildThreshold = 2;
+        optimizerConfiguration.distributedWindowCombinerThreshold = 4;
+        distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
     }
 
     /* Will be called before a test is executed. */
@@ -132,7 +139,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
 
     std::cout << " plan before=" << queryPlan->toString() << std::endl;
     // Execute
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
+
     const QueryPlanPtr updatedPlan = distributeWindowRule->apply(queryPlan);
 
     std::cout << " plan after=" << queryPlan->toString() << std::endl;
@@ -161,7 +168,6 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 
     std::cout << " plan before window distr=" << queryPlan->toString() << std::endl;
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     updatedPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
 
@@ -194,7 +200,6 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 
     std::cout << " plan before window distr=" << queryPlan->toString() << std::endl;
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     updatedPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
 

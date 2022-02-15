@@ -75,6 +75,12 @@ class QueryExecutionTest : public testing::Test {
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
         nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
+        // enable distributed window optimization
+        auto optimizerConfiguration = Configurations::OptimizerConfiguration();
+        optimizerConfiguration.performDistributedWindowOptimization = true;
+        optimizerConfiguration.distributedWindowChildThreshold = 2;
+        optimizerConfiguration.distributedWindowCombinerThreshold = 4;
+        distributeWindowRule = Optimizer::DistributeWindowRule::create(optimizerConfiguration);
     }
 
     /* Will be called before a test is executed. */
@@ -89,6 +95,7 @@ class QueryExecutionTest : public testing::Test {
     SchemaPtr testSchema;
     SchemaPtr windowSchema;
     Runtime::NodeEnginePtr nodeEngine;
+    Optimizer::DistributeWindowRulePtr distributeWindowRule;
 };
 
 /**
@@ -541,7 +548,6 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
@@ -609,7 +615,6 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
@@ -702,7 +707,6 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
@@ -789,7 +793,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     //    std::cout << " plan=" << queryPlan->toString() << std::endl;
@@ -863,7 +866,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     std::cout << " plan=" << queryPlan->toString() << std::endl;
@@ -950,7 +952,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create(2, 4);
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     std::cout << " plan=" << queryPlan->toString() << std::endl;

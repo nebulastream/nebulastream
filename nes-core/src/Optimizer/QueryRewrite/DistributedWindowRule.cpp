@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
@@ -26,20 +27,29 @@
 
 namespace NES::Optimizer {
 
-DistributeWindowRule::DistributeWindowRule(uint64_t windowDistributionChildrenThreshold,
-                                           uint64_t windowDistributionCombinerThreshold)
-    : windowDistributionChildrenThreshold(windowDistributionChildrenThreshold),
-      windowDistributionCombinerThreshold(windowDistributionCombinerThreshold){};
+DistributeWindowRule::DistributeWindowRule(Configurations::OptimizerConfiguration configuration)
+    : performDistributedWindowOptimization(configuration.performDistributedWindowOptimization),
+      windowDistributionChildrenThreshold(configuration.distributedWindowChildThreshold),
+      windowDistributionCombinerThreshold(configuration.distributedWindowCombinerThreshold) {
+    if (performDistributedWindowOptimization) {
+        NES_DEBUG("Create DistributeWindowRule with distributedWindowChildThreshold: " << windowDistributionChildrenThreshold
+                                                                                       << " distributedWindowCombinerThreshold: "
+                                                                                       << windowDistributionCombinerThreshold);
+    } else {
+        NES_DEBUG("Disable DistributeWindowRule");
+    }
+};
 
-DistributeWindowRulePtr DistributeWindowRule::create(uint64_t windowDistributionChildrenThreshold,
-                                                     uint64_t windowDistributionCombinerThreshold) {
-    return std::make_shared<DistributeWindowRule>(
-        DistributeWindowRule(windowDistributionChildrenThreshold, windowDistributionCombinerThreshold));
+DistributeWindowRulePtr DistributeWindowRule::create(Configurations::OptimizerConfiguration configuration) {
+    return std::make_shared<DistributeWindowRule>(DistributeWindowRule(configuration));
 }
 
 QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("DistributeWindowRule: Apply DistributeWindowRule.");
-    NES_DEBUG("DistributeWindowRule::apply: plan before replace " << queryPlan->toString());
+    NES_INFO("DistributeWindowRule::apply: plan before replace " << queryPlan->toString());
+    if (!performDistributedWindowOptimization) {
+        return queryPlan;
+    }
     auto windowOps = queryPlan->getOperatorByType<WindowLogicalOperatorNode>();
     if (!windowOps.empty()) {
         /**

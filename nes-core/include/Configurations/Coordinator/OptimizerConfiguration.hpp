@@ -80,6 +80,29 @@ class OptimizerConfiguration : public BaseConfiguration {
         "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)"};
 
     /**
+     * @brief Indicates if the distributed window optimization rule should be enabled.
+     * This optimization, will enable the distribution of window aggregation across multiple nodes.
+     * To this end, the optimizer will create pre-aggregation operators that are located close to the data source.
+     */
+    BoolOption performDistributedWindowOptimization = {PERFORM_DISTRIBUTED_WINDOW_OPTIMIZATION,
+                                                       true,
+                                                       "Enables the distribution of window aggregations."};
+
+    /**
+     * @brief Indicated the number of child operators from, which a window operator is distributed.
+     */
+    IntOption distributedWindowChildThreshold = {DISTRIBUTED_WINDOW_OPTIMIZATION_CHILD_THRESHOLD,
+                                                 2,
+                                                 "Threshold for the distribution of window aggregations."};
+
+    /**
+     * @brief Indicated the number of child nodes from which on we will introduce combine operator between the pre-aggregation operator and the final aggregation.
+     */
+    IntOption distributedWindowCombinerThreshold = {DISTRIBUTED_WINDOW_OPTIMIZATION_COMBINER_THRESHOLD,
+                                                    4,
+                                                    "Threshold for the insertion of pre-aggregation operators."};
+
+    /**
      * @brief Perform advance semantic validation on the incoming queries.
      * @warning This option is set to false by default as currently not all operators are supported by Z3 based signature generator.
      * Because of this, in some cases, enabling this check may result in a crash or incorrect behavior.
@@ -94,6 +117,10 @@ class OptimizerConfiguration : public BaseConfiguration {
         return {&queryBatchSize,
                 &queryMergerRule,
                 &memoryLayoutPolicy,
+                &performOnlySourceOperatorExpansion,
+                &performDistributedWindowOptimization,
+                &distributedWindowChildThreshold,
+                &distributedWindowCombinerThreshold,
                 &performOnlySourceOperatorExpansion,
                 &performAdvanceSemanticValidation};
     }

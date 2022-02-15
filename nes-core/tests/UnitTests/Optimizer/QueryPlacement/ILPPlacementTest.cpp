@@ -259,7 +259,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingFilterQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP, false, 2, 4);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -320,7 +320,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingMapQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP, false, 2, 4);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -382,7 +382,7 @@ TEST_F(ILPPlacementTest, DISABLED_testPlacingQueryWithILPStrategy) {
         assignOperatorPropertiesRecursive(sink->as<LogicalOperatorNode>());
     }
 
-    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP, false, 2, 4);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP, Configurations::OptimizerConfiguration());
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 

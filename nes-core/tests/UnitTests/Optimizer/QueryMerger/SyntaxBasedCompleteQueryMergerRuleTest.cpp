@@ -642,7 +642,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     queryPlan1 = rewriteRule->execute(queryPlan1);
     queryPlan2 = rewriteRule->execute(queryPlan2);
 
-    auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false, 2, 4);
+    auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 
@@ -696,7 +696,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     queryPlan1 = rewriteRule->execute(queryPlan1);
     queryPlan2 = rewriteRule->execute(queryPlan2);
 
-    auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, false, 2, 4);
+    auto topoSpecificRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog, Configurations::OptimizerConfiguration());
     queryPlan1 = topoSpecificRewrite->execute(queryPlan1);
     queryPlan2 = topoSpecificRewrite->execute(queryPlan2);
 

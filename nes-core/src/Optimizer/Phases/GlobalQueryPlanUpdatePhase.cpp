@@ -50,7 +50,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
 
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     topologySpecificQueryRewritePhase =
-        TopologySpecificQueryRewritePhase::create(streamCatalog, optimizerConfiguration.performOnlySourceOperatorExpansion.getValue());
+        TopologySpecificQueryRewritePhase::create(streamCatalog, optimizerConfiguration);
     signatureInferencePhase = SignatureInferencePhase::create(this->z3Context, optimizerConfiguration.queryMergerRule);
     setMemoryLayoutPhase = MemoryLayoutSelectionPhase::create(optimizerConfiguration.memoryLayoutPolicy);
 }
