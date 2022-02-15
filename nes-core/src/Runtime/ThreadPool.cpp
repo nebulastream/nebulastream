@@ -127,7 +127,7 @@ bool ThreadPool::start() {
                   NES_ERROR("Error calling pthread_setaffinity_np: " << rc);
               } else {
                   NES_WARNING("worker " << i << " pins to core=" << workerPinningPositionList[i]);
-                  std::cout << "worker " << i << " pins to core=" << workerPinningPositionList[i] << " and queue=" << queueIdx<< std::endl;
+                  std::cout << "worker " << i << " pins to core=" << workerPinningPositionList[i] << " and queue=" << queueIdx << std::endl;
               }
           }
 
