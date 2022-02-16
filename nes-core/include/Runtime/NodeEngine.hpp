@@ -309,11 +309,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     uint64_t getQueryIdFromSubQueryId(uint64_t querySubPlanId) const;
 
     /**
-     * @brief returns sinks for given query executable plan id
-     * @param QEPId query executable plan id
-     * @return vector of sinks
+     * @brief finds executable query plan for a given sub query id
+     * @param querySubPlanId query sub plan id
+     * @return executable query plan
      */
-    const std::vector<DataSinkPtr>& getSinksForQEPId(uint64_t QEPId) const;
+    Execution::ExecutableQueryPlanPtr getExecutableQueryPlanForSubQueryId(uint64_t querySubPlanId) const;
 
   private:
     std::vector<PhysicalSourcePtr> physicalSources;

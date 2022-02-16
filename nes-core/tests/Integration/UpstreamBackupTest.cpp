@@ -108,7 +108,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
 
     //get sink
-    auto sinks = crd->getNodeEngine()->getSinksForQEPId(2);
+    auto sinks = crd->getNodeEngine()->getExecutableQueryPlanForSubQueryId(2)->getSinks();
     for (auto& sink : sinks) {
         sink->notifyEpochTermination(timestamp);
     }
@@ -122,5 +122,18 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     //check if the method was called
     EXPECT_TRUE(currentTimestamp == timestamp);
+
+    NES_INFO("AssignWatermarkTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("AssignWatermarkTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("AssignWatermarkTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("AssignWatermarkTest: Test finished");
 }
 }

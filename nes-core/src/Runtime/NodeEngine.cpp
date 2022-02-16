@@ -497,8 +497,8 @@ uint64_t NodeEngine::getQueryIdFromSubQueryId(uint64_t querySubPlanId) const {
     return deployedQEPs.find(querySubPlanId)->second->getQueryId();
 }
 
-const std::vector<DataSinkPtr>& NodeEngine::getSinksForQEPId(uint64_t QEPId) const {
-    return deployedQEPs.find(QEPId)->second->getSinks();
+Execution::ExecutableQueryPlanPtr NodeEngine::getExecutableQueryPlanForSubQueryId(uint64_t querySubPlanId) const {
+    return deployedQEPs.at(querySubPlanId);
 }
 
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {

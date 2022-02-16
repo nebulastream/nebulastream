@@ -41,8 +41,9 @@ int ReplicationService::getcurrentEpochBarrierForGivenQueryAndEpoch(uint64_t que
 }
 
 bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t querySubPlanId) const {
-    std::vector<SourceLogicalOperatorNodePtr> sources;
-    uint64_t queryId = this->coordinatorPtr->getNodeEngine()->getQueryIdFromSubQueryId(querySubPlanId);
+    std::unique_lock lock(replicationServiceMutex);
+    auto nodeEngine = this->coordinatorPtr->getNodeEngine();
+    uint64_t queryId = nodeEngine->getQueryIdFromSubQueryId(querySubPlanId);
     auto iterator = queryIdToCurrentEpochBarrierMap.find(queryId);
     std::pair<uint64_t, uint64_t> newPairEpochTimestamp;
     if (iterator != queryIdToCurrentEpochBarrierMap.end()) {
@@ -54,6 +55,7 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
     queryIdToCurrentEpochBarrierMap[queryId] = newPairEpochTimestamp;
     NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << epochBarrier << "to sources with queryId " << queryId);
     auto queryPlan = this->coordinatorPtr->getGlobalQueryPlan()->getSharedQueryPlan(queryId)->getQueryPlan();
+    std::vector<SourceLogicalOperatorNodePtr> sources = queryPlan->getSourceOperators();
     uint64_t curQueryId = queryPlan->getQueryId();
     auto logicalSinkOperators = queryPlan->getSinkOperators();
     if (!sources.empty()) {
