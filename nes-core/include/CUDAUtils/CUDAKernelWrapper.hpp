@@ -31,6 +31,8 @@ class CUDAKernelWrapper {
      * @brief Allocate GPU memory to store the input and output of the kernel program. Must be called before kernel execution in
      * the execute() method.
      * @param kernelCode source code of the kernel
+     * @param bufferSize size of the gpu buffer pool to be allocated
+     * @param headers header to use in the kernel (e.g., defined in a .jit file)
      */
     void setup(const char* const kernelCode, uint64_t bufferSize, jitify::detail::vector<std::string> headers = 0) {
         gpuBufferSize = bufferSize;
@@ -45,6 +47,8 @@ class CUDAKernelWrapper {
     /**
      * @brief execute the kernel program
      * @param hostInputBuffer input buffer in the host memory. The kernel reads from this buffer and copy back the output to this buffer.
+     * @param numberOfTuples number of tuple to be processed in this kernel call
+     * @param kernelName name of the kernel function
      */
     void execute(InputRecord* hostInputBuffer, uint64_t numberOfTuples, std::string kernelName) {
         if (gpuBufferSize < numberOfTuples * sizeof(InputRecord)) {
