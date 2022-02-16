@@ -35,6 +35,7 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 
 add_library(nes-tests SHARED "util/NesBaseTest.cpp")
 target_include_directories(nes-tests PUBLIC ${GTEST_INCLUDE_DIRS} "../include")
+target_include_directories(nes-tests  PUBLIC "${CMAKE_BINARY_DIR}")
 target_link_libraries(nes-tests PUBLIC ${GTEST_LIBRARIES} nes)
 
 
@@ -153,44 +154,44 @@ add_test(NAME state-manager-tests COMMAND state-manager-tests)
 
 ### ZMQ Data Source Sink Tests ###
 add_executable(zmq-tests "UnitTests/Source/ZMQTest.cpp")
-target_link_libraries(zmq-tests nes-test)
+target_link_libraries(zmq-tests nes-tests)
 add_test(NAME zmq-tests COMMAND zmq-tests)
 
 ### Source Tests ###
 add_executable(source-tests "UnitTests/Source/SourceTest.cpp")
-target_link_libraries(source-tests nes-test)
+target_link_libraries(source-tests nes-tests)
 add_test(NAME source-tests COMMAND source-tests)
 
 ### Sink Tests ###
 add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
-target_link_libraries(sink-tests  nes-test)
+target_link_libraries(sink-tests nes-tests)
 add_test(NAME sink-tests COMMAND sink-tests)
 
 ### Kafka Tests ###
 if (NES_USE_KAFKA)
     add_executable(kafka-tests "UnitTests/Source/KafkaTest.cpp")
     message("libraies: ${LIBRARIES}")
-    target_link_libraries(kafka-tests  nes-test)
+    target_link_libraries(kafka-tests  nes-tests)
     add_test(NAME kafka-tests COMMAND kafka-tests)
 endif (NES_USE_KAFKA)
 
 ### OPC Tests ###
 if (NES_USE_OPC)
     add_executable(opc-source-tests "UnitTests/Source/OPCSourceTest.cpp" UnitTests/Source/OPCSourceTest.cpp)
-    target_link_libraries(opc-source-tests  nes-test)
+    target_link_libraries(opc-source-tests  nes-tests)
     add_test(NAME opc-source-tests COMMAND opc-source-tests)
     add_executable(opc-sink-tests "UnitTests/Sink/OPCSinkTest.cpp" UnitTests/Sink/OPCSinkTest.cpp)
-    target_link_libraries(opc-sink-tests  nes-test)
+    target_link_libraries(opc-sink-tests  nes-tests)
     add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
 endif (NES_USE_OPC)
 
 ### MQTT Tests ###
 if (NES_USE_MQTT)
     add_executable(mqtt-source-tests "UnitTests/Source/MQTTSourceTest.cpp" UnitTests/Source/MQTTSourceTest.cpp)
-    add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
-    target_link_libraries(mqtt-source-tests nes-test)
-    target_link_libraries(mqtt-sink-tests nes-test)
+    target_link_libraries(mqtt-source-tests nes-tests)
     add_test(NAME mqtt-source-tests COMMAND mqtt-source-tests)
+    add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
+    target_link_libraries(mqtt-sink-tests nes-tests)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
 
@@ -425,7 +426,7 @@ add_test(NAME semantic-query-validation-test COMMAND semantic-query-validation-t
 
 ### Operator To FOL Util Test ###
 add_executable(query-signature-util-tests "UnitTests/Optimizer/Utils/QuerySignatureUtilTests.cpp")
-target_link_libraries(query-signature-util-tests nes-test)
+target_link_libraries(query-signature-util-tests nes-tests)
 add_test(NAME query-signature-util-tests COMMAND query-signature-util-tests)
 
 ### Z3 Signature Inference Phase Test ###
