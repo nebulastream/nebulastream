@@ -42,38 +42,52 @@ static int timestamp = 1644426604;
 
 class UpstreamBackupTest : public Testing::NESBaseTest {
   public:
+    std::string ipAddress = "127.0.0.1";
+    CoordinatorConfigurationPtr coordinatorConfig;
+    WorkerConfigurationPtr workerConfig;
+    CSVSourceTypePtr csvSourceType;
+    SchemaPtr inputSchema;
+
     static void SetUpTestCase() {
         NES::setupLogging("UpstreamBackupTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup UpstreamBackupTest test class.");
     }
-    std::string ipAddress = "127.0.0.1";
+
+    void SetUp() override {
+        Testing::NESBaseTest::SetUp();
+        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig = CoordinatorConfiguration::create();
+        coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
+        coordinatorConfig->setRestPort(*restPort);
+
+        workerConfig = WorkerConfiguration::create();
+        workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+
+        csvSourceType = CSVSourceType::create();
+        csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
+        csvSourceType->setNumberOfBuffersToProduce(10);
+
+        inputSchema = Schema::create()
+                          ->addField("value", DataTypeFactory::createUInt64())
+                          ->addField("id", DataTypeFactory::createUInt64())
+                          ->addField("timestamp", DataTypeFactory::createUInt64());
+    }
 };
 
 /*
  * @brief test message passing between sink-coordinator-sources
  */
 TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
-    std::string window = R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))
-                                            ->addField(createField("timestamp", UINT64));)";
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig = CoordinatorConfiguration::create();
-    coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-    coordinatorConfig->setRestPort(*restPort);
     NES_INFO("UpstreamBackupTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    crd->getStreamCatalogService()->registerLogicalSource("window", window);
+    crd->getStreamCatalogService()->registerLogicalSource("window", inputSchema);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("UpstreamBackupTest: Coordinator started successfully");
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-    workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
-    CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-    csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
-    csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
-    csvSourceType->setNumberOfBuffersToProduce(10);
     auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceType);
     workerConfig->addPhysicalSource(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));

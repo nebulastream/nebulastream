@@ -784,12 +784,16 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             netManager->unregisterSubpartitionConsumer(nesPartition);
         });
 
+        PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
+        auto nodeEngine =
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
+
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
                                                          0,
                                                          nodeLocation,
                                                          nesPartition,
-                                                         nullptr,
+                                                         nodeEngine,
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES);
