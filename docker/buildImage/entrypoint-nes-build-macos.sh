@@ -44,29 +44,29 @@ then
         echo "Optional Build Failed"
         exit 0
       fi
-    else
-      cd ./tests
-      ln -s ../nesCoordinator .
-      ln -s ../nesWorker .
-      # If build was successful we execute the tests
-      # timeout after 70 minutes
-      # We don't want to rely on the github-action timeout, because
-      # this would fail the job in any case.
-      timeout 70m make test_debug
-      errorCode=$?
-      if [ $errorCode -ne 0 ];
-      then
-        cd ..
-        rm -rf ./build
-        if [ "$RequireTest" == "true" ];
-        then
-          echo "Required Tests Failed"          
-          exit $errorCode
-        else
-          echo "Optional Tests Failed"
-          exit 0
-        fi
-      fi
+#    else
+#      cd ./tests
+#      ln -s ../nesCoordinator .
+#      ln -s ../nesWorker .
+#      # If build was successful we execute the tests
+#      # timeout after 70 minutes
+#      # We don't want to rely on the github-action timeout, because
+#      # this would fail the job in any case.
+#      timeout 70m make test_debug
+#      errorCode=$?
+#      if [ $errorCode -ne 0 ];
+#      then
+#        cd ..
+#        rm -rf ./build
+#        if [ "$RequireTest" == "true" ];
+#        then
+#          echo "Required Tests Failed"
+#          exit $errorCode
+#        else
+#          echo "Optional Tests Failed"
+#          exit 0
+#        fi
+#      fi
     fi
 else
     exec $@
