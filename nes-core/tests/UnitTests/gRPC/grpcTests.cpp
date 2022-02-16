@@ -103,4 +103,49 @@ TEST_F(grpcTests, testGrpcNotifyQueryFailure) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
+
+/**
+* Test if errors are transferred from Worker to Coordinator.
+*/
+TEST_F(grpcTests, testGrpcSendErrorNotification) {
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    auto defaultSource = DefaultSourceType::create();
+    PhysicalSourcePtr srcConf = PhysicalSource::create("default_logical", "x1", defaultSource);
+    wrkConf->addPhysicalSource(srcConf);
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf);
+    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart);
+    NES_INFO("QueryDeploymentTest: Worker started successfully");
+
+    uint64_t workerId = wrk->getWorkerId();
+    std::string errormsg = "Something went wrong.";
+    bool successOfTransferringErrors = wrk->sendErrors(workerId, errormsg);
+    EXPECT_TRUE(successOfTransferringErrors);
+
+    // stop coordinator and worker
+    NES_INFO("QueryDeploymentTest: Stop worker");
+    bool retStopWrk = wrk->stop(true);
+    EXPECT_TRUE(retStopWrk);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+}
+
 }// namespace NES
