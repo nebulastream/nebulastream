@@ -31,7 +31,7 @@ TopologyManagerService::TopologyManagerService(TopologyPtr topology) : topology(
 }
 
 uint64_t
-TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<std::tuple<double, double>> coordinates) {
+TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<GeographicalLocation> coordinates) {
     NES_TRACE("TopologyManagerService: Register Node address=" << address << " numberOfSlots=" << numberOfSlots);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
@@ -65,9 +65,9 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
     }
 
     if (coordinates.has_value()) {
-        auto coordTuple = coordinates.value();
-        NES_DEBUG("added node with geographical location: " << get<0>(coordTuple) << ", " << get<1>(coordTuple));
-        topology->setPhysicalNodePosition(newTopologyNode, coordTuple, true);
+        auto geoLoc = coordinates.value();
+        NES_DEBUG("added node with geographical location: " << geoLoc.getLatitude() << ", " << geoLoc.getLongitude());
+        topology->setPhysicalNodePosition(newTopologyNode, geoLoc, true);
     } else {
         NES_DEBUG("added node does not have a geographical location");
     }
@@ -77,10 +77,21 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
     return id;
 }
 
+//todo: do this via standard param in header
+/*
 uint64_t
 TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots) {
     return registerNode(address, grpcPort, dataPort, numberOfSlots, std::optional<std::tuple<double, double>>());
 }
+ */
+
+/*
+uint64_t TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<GeographicalLocation> geoLoc) {
+    geoLoc.value_or()
+    return registerNode(address, grpcPort, dataPort, numberOfSlots, std::make_tuple(geoLoc.getLatitude(), geoLoc.getLongitude()));
+}
+ */
+
 
 bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
     NES_DEBUG("TopologyManagerService::UnregisterNode: try to disconnect sensor with id " << nodeId);
@@ -190,19 +201,19 @@ uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNode
 
 //TODO #2498 add functions here, that do not only search in a circular area, but make sure, that there are nodes found in every possible direction of furture movement
 
-std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> TopologyManagerService::getNodesInRange(std::tuple<double, double> center, double radius) {
+std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> TopologyManagerService::getNodesInRange(GeographicalLocation center, double radius) {
     return topology->getNodesInRange(center, radius);
 }
 
 
-std::vector<std::pair<uint64_t , std::tuple<double, double>>> TopologyManagerService::getNodesIdsInRange(std::tuple<double, double> center, double radius) {
+std::vector<std::pair<uint64_t , GeographicalLocation>> TopologyManagerService::getNodesIdsInRange(GeographicalLocation center, double radius) {
    auto list = getNodesInRange(center, radius);
-   std::vector<std::pair<uint64_t, std::tuple<double, double>>> retList{};
-   retList.reserve(list.size());
+   std::vector<std::pair<uint64_t, GeographicalLocation>> nodeIDsInRange{};
+   nodeIDsInRange.reserve(list.size());
 for (auto elem : list) {
-       retList.emplace_back(std::pair(elem.first->getId(), elem.second));
+    nodeIDsInRange.emplace_back(std::pair(elem.first->getId(), elem.second));
    }
-   return retList;
+   return nodeIDsInRange;
 }
 
 }// namespace NES

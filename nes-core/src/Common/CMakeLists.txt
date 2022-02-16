@@ -14,3 +14,7 @@
 add_subdirectory(DataTypes)
 add_subdirectory(ValueTypes)
 add_subdirectory(PhysicalTypes)
+
+add_source_nes(
+        GeographicalLocation.cpp
+)

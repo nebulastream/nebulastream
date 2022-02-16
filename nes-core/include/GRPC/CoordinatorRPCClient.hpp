@@ -20,6 +20,7 @@
 #include <grpcpp/grpcpp.h>
 #include <optional>
 #include <string>
+#include <Common/GeographicalLocation.hpp>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -117,7 +118,7 @@ class CoordinatorRPCClient {
                       int64_t dataPort,
                       int16_t numberOfSlots,
                       std::optional<StaticNesMetricsPtr> staticNesMetrics,
-                      std::optional<std::tuple<double, double>> coordinates);
+                      std::optional<GeographicalLocation> coordinates);
 
     /**
    * @brief method to unregister a node after the connection is established
@@ -155,7 +156,7 @@ class CoordinatorRPCClient {
      * @param coord: center location as a tuple in the format <latitude, longitude>, radius: radius in km to define query area
      * @return list of node IDs and their corresponding coordinates as tuples in the format <latitude, longitude>
      */
-    std::vector<std::pair<uint64_t, std::tuple<double, double>>> getNodeIdsInRange(std::tuple<double, double> coord, double radius);
+    std::vector<std::pair<uint64_t, GeographicalLocation>> getNodeIdsInRange(GeographicalLocation coord, double radius);
 
   private:
     uint64_t workerId;

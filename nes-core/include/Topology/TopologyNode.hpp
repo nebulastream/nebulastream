@@ -19,6 +19,7 @@
 #include <Topology/LinkProperty.hpp>
 #include <any>
 #include <optional>
+#include "Common/GeographicalLocation.hpp"
 
 namespace NES {
 class TopologyNode;
@@ -148,7 +149,7 @@ class TopologyNode : public Node {
      * @brief get the geographical coordinates of this topology node
      * @return The geographical coordinates of the node in the format <latitude, longitude>
      */
-    std::optional<std::tuple<double, double>> getCoordinates();
+    std::optional<GeographicalLocation> getCoordinates();
 
     /**
      * @brief set the goegraphical coordinates of a topology node
@@ -163,7 +164,7 @@ class TopologyNode : public Node {
      * @param coordinatesIn: a tuple with the coordinates in the format <latitude, longitude>
      * @return true on success
      */
-    bool setCoordinates(std::tuple<double, double> coordinatesIn);
+    bool setCoordinates(GeographicalLocation geoLoc);
 
   private:
     uint64_t id;
@@ -173,7 +174,7 @@ class TopologyNode : public Node {
     uint16_t resources;
     uint16_t usedResources;
     bool maintenanceFlag;
-    std::optional<std::tuple<double, double>> coordinates;
+    std::optional<GeographicalLocation> coordinates;
 
     /**
      * @brief A field to store a map of node properties
