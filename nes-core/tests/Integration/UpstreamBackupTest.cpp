@@ -17,6 +17,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
