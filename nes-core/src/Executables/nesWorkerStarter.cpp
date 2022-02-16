@@ -45,17 +45,23 @@ int main(int argc, char** argv) {
         std::cout << logo << std::endl;
         std::cout << worker << "v" << NES_VERSION << std::endl;
 
-        std::string logPath = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesWorker.log";
-        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
-
         WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
-
         std::map<string, string> commandLineParams;
         for (int i = 1; i < argc; ++i) {
             commandLineParams.insert(
                 std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
                                           string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
         }
+
+        std::string logPath;
+        auto logPathEntry = commandLineParams.find("--logPath");
+        if (logPathEntry != commandLineParams.end()) {
+            logPath = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesWorker.log";
+        } else {
+            logPath = logPathEntry->second + std::filesystem::path::preferred_separator + "nesWorker.log";
+        }
+
+        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
 
         auto workerConfigPath = commandLineParams.find("--configPath");
         //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
@@ -68,8 +74,6 @@ int main(int argc, char** argv) {
         if (argc >= 1 && !commandLineParams.contains("--configPath")) {
             workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
         }
-
-        NES::setLogLevel(workerConfiguration->logLevel.getValue());
 
         NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
         NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));

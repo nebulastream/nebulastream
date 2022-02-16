@@ -43,16 +43,22 @@ int main(int argc, const char* argv[]) {
         std::cout << logo << std::endl;
         std::cout << coordinator << " v" << NES_VERSION << std::endl;
 
-        std::string logPath =
-            std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesCoordinator.log";
-        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
-
         map<string, string> commandLineParams;
         for (int i = 1; i < argc; ++i) {
             commandLineParams.insert(std::make_pair<string, string>(
                 string(argv[i]).substr(0, string(argv[i]).find('=')),
                 string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
         }
+
+        std::string logPath;
+        auto logPathEntry = commandLineParams.find("--logPath");
+        if (logPathEntry != commandLineParams.end()) {
+            logPath = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesCoordinator.log";
+        } else {
+            logPath = logPathEntry->second + std::filesystem::path::preferred_separator + "nesCoordinator.log";
+        }
+
+        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
 
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
         auto configPath = commandLineParams.find("--configPath");
