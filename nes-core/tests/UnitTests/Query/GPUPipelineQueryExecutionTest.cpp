@@ -23,7 +23,6 @@
 #include "GPUInputRecord.cuh.jit"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <CUDAUtils/CUDAKernelWrapper.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -36,6 +35,7 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/GPURuntime/CUDAKernelWrapper.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
