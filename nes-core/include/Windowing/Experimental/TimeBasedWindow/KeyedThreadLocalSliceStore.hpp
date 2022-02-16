@@ -33,6 +33,7 @@ using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 
 /**
  * @brief A Slice store, which stores slices for a specific thread.
+ * As the slice store is only using by a single thread, we dont have to protect its functions for concurrent accesses.
  */
 class KeyedThreadLocalSliceStore {
   public:
