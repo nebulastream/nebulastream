@@ -412,10 +412,16 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
         }
         bool onPartialFailure(const Status& status) override {
             NES_ERROR(" CoordinatorRPCClient::registerNode error=" << status.error_code() << ": " << status.error_message());
-            if (status.error_code() == grpc::UNIMPLEMENTED) {
-                return true;// partial failure ok to continue
+            switch (status.error_code()) {
+                case grpc::UNIMPLEMENTED:
+                case grpc::UNAVAILABLE: {
+                    return true;// partial failure ok to continue
+                }
+                default: {
+                    return false;// partial failure not ok to continue
+                }
             }
-            return false;// partial failure not ok to continue
+
         }
         bool onFailure() override { return false; }
     };
