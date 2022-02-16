@@ -175,6 +175,16 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /**
+* @brief this method checks if the object is null
+* @return pointer to the object
+*/
+template <typename T>
+std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, const std::string& errorMessage) {
+    NES_ASSERT(ptr, errorMessage);
+    return ptr;
+}
+
+/**
  * @brief function to replace all string occurrences
  * @param data input string will be replaced in-place
  * @param toSearch search string
