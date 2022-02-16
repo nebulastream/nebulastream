@@ -21,6 +21,7 @@
 #include <mutex>
 #include <optional>
 #include <vector>
+#include "Common/GeographicalLocation.hpp"
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif
@@ -77,16 +78,15 @@ class Topology {
      * non field nodes to become field nodes
      * @return true if successful
      */
-    bool setPhysicalNodePosition(const TopologyNodePtr& node, std::tuple<double, double> coordinates, bool init = false);
+    bool setPhysicalNodePosition(const TopologyNodePtr& node, GeographicalLocation geoLoc, bool init = false);
 
-    //TODO: make these functions also return optional?
     /**
      * @brief returns the closest field node to a certain geographical location
      * @param coordTuple coordinates of a location on the map
      * @param radius the maximum distance which the returned node can habe from the specified location
      * @return TopologyNodePtr to the closest field node
      */
-    std::optional<TopologyNodePtr> getClosestNodeTo(std::tuple<double, double> coordTuple, int radius = DEFAULT_SEARCH_RADIUS);
+    std::optional<TopologyNodePtr> getClosestNodeTo(const GeographicalLocation& geoLoc, int radius = DEFAULT_SEARCH_RADIUS);
 
     /**
      * @brief returns the closest field node to a certain node (which does not equal the node passed as an argument)
@@ -102,7 +102,7 @@ class Topology {
      * @param radius: the maximum distance in kilometres of the returned nodes from center
      * @return a vector of pairs containing node pointers and the corresponding locations in the format <latitude, longitude>
      */
-    std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> getNodesInRange(std::tuple<double, double> center, double radius);
+    std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> getNodesInRange(GeographicalLocation center, double radius);
     /**
      *
      * @return the amount of field nodes (non mobile nodes with a known location) in the system

@@ -20,6 +20,7 @@
 #include <mutex>
 #include <vector>
 #include <optional>
+#include "Common/GeographicalLocation.hpp"
 #ifdef S2DEF
 #include <s2/base/integral_types.h>
 #endif
@@ -47,7 +48,9 @@ class TopologyManagerService {
      * @param coordinates: an optional containing either the node location in the format <latitude, longitude> if the node is a field node, or nullopt_t for non field nodes
      * @return id of node
      */
-    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<std::tuple<double, double>> coordinates);
+    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<GeographicalLocation> geoLoc = std::optional<GeographicalLocation>());
+
+   // uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<GeographicalLocation> geoLoc);
 
     /**
      * @brief registers a non field node (a field without a fixed location which is recorded as part of the topology,
@@ -57,7 +60,7 @@ class TopologyManagerService {
      * @param nodeProperties of the to be added sensor
      * @return id of node
      */
-    uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots);
+    //uint64_t registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots);
 
     /**
     * @brief unregister an existing node
@@ -97,7 +100,7 @@ class TopologyManagerService {
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing a pointer to the topology node and the nodes location in the format <latitude, longitude>
      */
-    std::vector<std::pair<TopologyNodePtr, std::tuple<double, double>>> getNodesInRange(std::tuple<double, double> center, double radius) ;
+    std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> getNodesInRange(GeographicalLocation center, double radius) ;
 
     /**
      * @brief query for the ids of field nodes within a certain radius around a geographical location
@@ -105,7 +108,7 @@ class TopologyManagerService {
      * @param radius: radius in kilometres, all field nodes within this radius around the center will be returned
      * @return vector of pairs containing node ids and the corresponding location in the format <latitude, longitude>
      */
-    std::vector<std::pair<uint64_t , std::tuple<double, double>>> getNodesIdsInRange(std::tuple<double, double> center, double radius);
+    std::vector<std::pair<uint64_t , GeographicalLocation>> getNodesIdsInRange(GeographicalLocation center, double radius);
 
   private:
     TopologyPtr topology;

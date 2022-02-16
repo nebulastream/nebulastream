@@ -27,6 +27,7 @@
 #include <memory>
 #include <s2/s2point.h>
 #include <optional>
+#include <Common/GeographicalLocation.hpp>
 
 namespace grpc {
 class Server;
@@ -144,18 +145,12 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
      */
     bool hasLocation();
 
-    /**
-     * @brief checks if the tuple represents valid coordinates (abs(lat) < 90 and abs(lng) < 180)
-     * @param coordinates: tuple in the format <latitude, longitude>
-     * @return true if input was valid geocoordinates
-     */
-    static bool checkValidityOfCoordinates(std::tuple<double, double> coordinates);
 
     /**
      * @brief returns a tuple with the coordinates of the node if a location was set
      * @return tuple in the format <latitude, longitude>
      */
-    std::optional<std::tuple<double, double>> getNodeLocationCoordinates();
+    std::optional<GeographicalLocation> getNodeLocationCoordinates();
 
     /**
      * @brief convert a geo-coordinate string to a tuple of doubles
@@ -163,7 +158,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
      * @return std::optional containing a tuple in the format <latitude, longitude> or std::nullopt_t
      * if the supplied string is not a valid coordinate pair
      */
-    static std::optional<std::tuple<double, double>> locationStringToTuple(const std::string& coordinates);
+    static std::optional<GeographicalLocation> getGeoLocOptionFromString(const std::string& coordinates);
 
 
     /**
@@ -171,14 +166,14 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
      * @param coord: center location as tuple in the format <latitude, longitude>, radius: radius in km to define query area
      * @return list of node IDs and their corresponding coordinates in the format <latitude, longitude>
      */
-    std::vector<std::pair<uint64_t, std::tuple<double, double>>> getNodeIdsInRange(std::tuple<double, double> coord, double radius);
+    std::vector<std::pair<uint64_t, GeographicalLocation>> getNodeIdsInRange(GeographicalLocation coord, double radius);
 
     /**
      * @brief Method to get all field nodes within a certain range around the location of this node
      * @param radius = radius in km to define query area
      * @return list of node IDs and their corresponding coordinates in the format <latitude, longitude>
      */
-    std::vector<std::pair<uint64_t, std::tuple<double, double>>> getNodeIdsInRange(double radius);
+    std::vector<std::pair<uint64_t, GeographicalLocation>> getNodeIdsInRange(double radius);
 
     /**
      * @brief Method to check if a worker is still running
@@ -234,7 +229,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
      * @brief method to set the coordinates from a tuple in the format <latitude, longitude>. it does not update the topology and is meant for initialization
      * @return success of operation
      */
-    bool setNodeLocationCoordinates(std::tuple<double, double> coordinates);
+    bool setNodeLocationCoordinates(const GeographicalLocation& geoLoc);
 
 
     void onFatalError(int signalNumber, std::string callstack);
@@ -265,7 +260,7 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     uint32_t numberOfBuffersPerWorker;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
-    std::optional<std::tuple<double, double>> locationCoordinates;
+    std::optional<GeographicalLocation> locationCoordinates;
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration;
     bool enableNumaAwareness{false};
     bool enableMonitoring;

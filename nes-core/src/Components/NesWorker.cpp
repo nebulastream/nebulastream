@@ -34,6 +34,7 @@
 #include <csignal>
 #include <future>
 #include <utility>
+#include <Common/GeographicalLocation.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -377,55 +378,31 @@ bool NesWorker::hasLocation() {
     return locationCoordinates.has_value();
 }
 
-bool NesWorker::checkValidityOfCoordinates(std::tuple<double, double> coordinates) {
-    return !(std::abs(std::get<0>(coordinates)) > 90 || std::abs(std::get<1>(coordinates)) > 180);
-}
 
-bool NesWorker::setNodeLocationCoordinates(std::tuple<double, double> coordinates) {
-
-    //check if coordinates are valid degrees
-    if (!checkValidityOfCoordinates(coordinates)) {
-        return false;
-    }
-
-    locationCoordinates = coordinates;
+bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
+    locationCoordinates = geoLoc;
     return true;
 }
 
 //TODO #2475 check first if the node is mobile and if it is, then return a value from the gps/csv interface once the interface is implemented
-std::optional<std::tuple<double, double>> NesWorker::getNodeLocationCoordinates() {
+std::optional<GeographicalLocation> NesWorker::getNodeLocationCoordinates() {
     return locationCoordinates;
 }
 
-std::optional<std::tuple<double, double>> NesWorker::locationStringToTuple(const std::string& coordinates) {
-    if (coordinates.empty()) {
-        return {};
-    }
-    std::stringstream ss(coordinates);
-    double lat = NAN;
-    ss >> lat;
-    char seperator = 0;
-    ss >> seperator;
-    if (seperator!= ',') {
-        NES_WARNING("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
-        return {};
-    }
-    double lng = NAN;
-    ss >> lng;
-
-     std::tuple<double, double> loc = std::make_tuple(lat, lng);
-     if (!checkValidityOfCoordinates(loc)) {
-         NES_WARNING("invalid coordinates supplied. Node will be created as non field node");
-         return {};
-     }
-     return loc;
+//std::optional<std::tuple<double, double>> NesWorker::getGeoLocOptionFromString(const std::string& coordinates) {
+std::optional<GeographicalLocation> NesWorker::getGeoLocOptionFromString(const std::string& coordinates) {
+        try {
+            return GeographicalLocation::fromString(coordinates);
+        } catch (std::exception) {
+            return {};
+        }
 }
 
-std::vector<std::pair<uint64_t, std::tuple<double, double>>> NesWorker::getNodeIdsInRange(std::tuple<double, double> coord, double radius){
+std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(GeographicalLocation coord, double radius){
     return coordinatorRpcClient->getNodeIdsInRange(coord, radius);
 }
 
-std::vector<std::pair<uint64_t, std::tuple<double, double>>> NesWorker::getNodeIdsInRange(double radius){
+std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(double radius){
     auto coord = getNodeLocationCoordinates();
     if (coord.has_value()) {
         return getNodeIdsInRange(coord.value(), radius);

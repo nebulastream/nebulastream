@@ -15,6 +15,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
 #include <utility>
+#include "Common/GeographicalLocation.hpp"
 
 namespace NES {
 
@@ -123,16 +124,16 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     linkProperties.erase(linkedNode);
     return true;
 }
-std::optional<std::tuple<double, double>> TopologyNode::getCoordinates() {
+std::optional<GeographicalLocation> TopologyNode::getCoordinates() {
     return coordinates;
 }
 
 bool TopologyNode::setCoordinates(double lat, double lng) {
-    return setCoordinates(std::make_tuple(lat, lng));
+    return setCoordinates(GeographicalLocation(lat, lng));
 }
 
-bool TopologyNode::setCoordinates(std::tuple<double, double> coordinatesIn) {
-    coordinates = coordinatesIn;
+bool TopologyNode::setCoordinates(GeographicalLocation geoLoc) {
+    coordinates = geoLoc;
     return true;
 }
 }// namespace NES

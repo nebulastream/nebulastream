@@ -23,6 +23,7 @@
 #include <fstream>
 #include <optional>
 #include <string>
+#include <Common/GeographicalLocation.hpp>
 
 namespace NES {
 
@@ -379,7 +380,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
                                         int64_t dataPort,
                                         int16_t numberOfSlots,
                                         std::optional<StaticNesMetricsPtr> staticNesMetrics,
-                                        std::optional<std::tuple<double, double>> coordinates) {
+                                        std::optional<GeographicalLocation> coordinates) {
 
     RegisterNodeRequest request;
     request.set_address(ipAddress);
@@ -396,11 +397,7 @@ bool CoordinatorRPCClient::registerNode(const std::string& ipAddress,
     NES_TRACE("CoordinatorRPCClient::RegisterNodeRequest request=" << request.DebugString());
     if (coordinates.has_value()) {
         NES_DEBUG("Registered node is a field node");
-        auto cIn = coordinates.value();
-        auto coordinates = new Coordinates;
-        coordinates->set_lat(get<0>(cIn));
-        coordinates->set_lng(get<1>(cIn));
-        request.set_allocated_coordinates(coordinates);
+        request.set_allocated_coordinates(coordinates.value());
     } else {
         NES_DEBUG("Registered node is an inner (non field) node");
     }
@@ -483,22 +480,19 @@ bool CoordinatorRPCClient::notifyQueryFailure(uint64_t queryId,
     return detail::processRpc(request, rpcRetryAttemps, rpcBackoff, listener);
 }
 
-std::vector<std::pair<uint64_t, std::tuple<double, double>>> CoordinatorRPCClient::getNodeIdsInRange(std::tuple<double, double> coord,
+std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::getNodeIdsInRange(GeographicalLocation coord,
                                                                                           double radius) {
     GetNodesInRangeRequest request;
-    Coordinates* co = new Coordinates;
-    co->set_lat(get<0>(coord));
-    co->set_lng(get<1>(coord));
-    request.set_allocated_coord(co);
+    request.set_allocated_coord(coord);
     request.set_radius(radius);
     GetNodesInRangeReply reply;
     ClientContext context;
 
     Status status = coordinatorStub->GetNodesInRange(&context, request, &reply);
 
-    std::vector<std::pair<uint64_t, std::tuple<double, double>>> nodesInRange;
+    std::vector<std::pair<uint64_t, GeographicalLocation>> nodesInRange;
     for (NodeGeoInfo nodeInfo : *reply.mutable_nodes()) {
-        nodesInRange.emplace_back(nodeInfo.id(), std::tuple(nodeInfo.coord().lat(), nodeInfo.coord().lng()));
+        nodesInRange.emplace_back(nodeInfo.id(), nodeInfo.coord());
     }
     return nodesInRange;
 

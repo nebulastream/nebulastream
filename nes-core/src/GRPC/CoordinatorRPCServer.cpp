@@ -29,21 +29,20 @@ CoordinatorRPCServer::CoordinatorRPCServer(TopologyManagerServicePtr topologyMan
       monitoringManager(monitoringManager), replicationService(replicationService){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
-    std::optional<std::tuple<double, double>> coordOpt;
+    uint64_t id;
     if (request->has_coordinates()) {
-        const auto& coordIn = request->coordinates();
-        coordOpt = std::make_tuple(coordIn.lat(), coordIn.lng());
-
+        NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
+        id = topologyManagerService->registerNode(request->address(),
+                                                           request->grpcport(),
+                                                           request->dataport(),
+                                                           request->numberofslots(),
+                                                           request->coordinates());
     } else {
-        coordOpt = std::optional<std::tuple<double, double>>();
+        id = topologyManagerService->registerNode(request->address(),
+                                                           request->grpcport(),
+                                                           request->dataport(),
+                                                           request->numberofslots());
     }
-
-    NES_DEBUG("TopologyManagerService::RegisterNode: request =" << request);
-    uint64_t id = topologyManagerService->registerNode(request->address(),
-                                                       request->grpcport(),
-                                                       request->dataport(),
-                                                       request->numberofslots(),
-                                                       coordOpt);
 
     auto groupedMetrics = std::make_shared<GroupedMetricValues>();
     groupedMetrics->staticNesMetrics = std::make_unique<StaticNesMetrics>(StaticNesMetrics(request->monitoringdata()));
@@ -230,16 +229,12 @@ Status CoordinatorRPCServer::NotifyEpochTermination(ServerContext*,
 
 Status CoordinatorRPCServer::GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) {
 
-    auto middlePoint = std::make_tuple(request->coord().lat(), request->coord().lng());
-    std::vector<std::pair<uint64_t , std::tuple<double, double>>> resultVec = topologyManagerService->getNodesIdsInRange(middlePoint, request->radius());
+    std::vector<std::pair<uint64_t , GeographicalLocation>> inRange = topologyManagerService->getNodesIdsInRange(request->coord(), request->radius());
 
-    for (auto elem : resultVec) {
+    for (auto elem : inRange) {
         NodeGeoInfo* nodeInfo = reply->add_nodes();
         nodeInfo->set_id(elem.first);
-        Coordinates coord;
-        auto coordTuple = elem.second;
-        coord.set_lat(std::get<0>(coordTuple));
-        coord.set_lng(std::get<1>(coordTuple));
+        nodeInfo->set_allocated_coord(elem.second);
     }
     return Status::OK;
 }
