@@ -117,7 +117,7 @@ bool ThreadPool::start() {
                          "Not enough worker positions for pinning are provided");
               uint64_t
                   maxPosition = *std::max_element(workerPinningPositionList.begin(), workerPinningPositionList.end());
-              NES_ASSERT(maxPosition < std::thread::hardware_concurrency(), "pinning position is out of cpu range maxPosition=" << maxPosition);
+              NES_ASSERT(maxPosition < std::thread::hardware_concurrency(), "pinning position thread is out of cpu range maxPosition=" << maxPosition);
               //pin core
               cpu_set_t cpuset;
               CPU_ZERO(&cpuset);
