@@ -23,6 +23,7 @@
 #include "GPUInputRecord.cuh.jit"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
+#include <CUDAUtils/CUDAKernelWrapper.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -44,7 +45,6 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Util/CUDAKernelWrapper.hpp>
 #include <Util/Logger.hpp>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -224,7 +224,7 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
 class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
   public:
     uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
-        // Prepare a simple CUDA kernel which adds 42 to the record.value and then write it to the result
+        // Prepare a simple CUDA kernel which adds 42 to the record and then write it to the result
         const char* const ColumnLayoutKernel_cu = "ColumnLayoutKernel_cu.cu\n"
                                                   "#include \"nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\"\n"
                                                   "__global__ void additionKernelColumnLayout(const int64_t* recordValue, "
