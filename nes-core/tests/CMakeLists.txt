@@ -33,10 +33,10 @@ message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/test_data")
 #-------------------------------##############----------------------------------
 #------------------------------- # Nes Utils for Test Suite --------------------------------
 
-add_library(nes-tests "util/NesBaseTest.cpp")
+add_library(nes-tests SHARED "util/NesBaseTest.cpp")
 target_include_directories(nes-tests PUBLIC ${GTEST_INCLUDE_DIRS} "../include")
-target_link_libraries(nes-tests ${GTEST_LIBRARIES} nes)
-set(GTEST_LIBRARIES nes-tests)
+target_link_libraries(nes-tests PUBLIC ${GTEST_LIBRARIES} nes)
+
 
 #-------------------------------##############----------------------------------
 #------------------------------- # Unit Test Suite --------------------------------
@@ -188,8 +188,8 @@ endif (NES_USE_OPC)
 if (NES_USE_MQTT)
     add_executable(mqtt-source-tests "UnitTests/Source/MQTTSourceTest.cpp" UnitTests/Source/MQTTSourceTest.cpp)
     add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
-    target_link_libraries(mqtt-source-tests  nes-test)
-    target_link_libraries(mqtt-sink-tests  nes-test)
+    target_link_libraries(mqtt-source-tests nes-test)
+    target_link_libraries(mqtt-sink-tests nes-test)
     add_test(NAME mqtt-source-tests COMMAND mqtt-source-tests)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
