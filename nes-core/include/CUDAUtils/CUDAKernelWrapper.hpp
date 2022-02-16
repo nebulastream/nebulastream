@@ -14,7 +14,7 @@
 #ifndef NES_CUDAKERNELWRAPPER_HPP
 #define NES_CUDAKERNELWRAPPER_HPP
 
-#include <Util/jitify/jitify.hpp>
+#include <CUDAUtils/jitify/jitify.hpp>
 #include <cuda.h>
 #include <cuda_runtime.h>
 /**
