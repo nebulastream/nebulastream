@@ -82,19 +82,16 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
     queryPlan->setFaultToleranceType(faultTolerance);
     queryPlan->setLineageType(lineage);
 
-    // Execute only if the semantic validation flag is enabled
-    if (true) {
-        NES_INFO("QueryService: Executing Semantic validation");
-        try {
-            // Checking semantic validity
-            semanticQueryValidation->validate(query);
-        } catch (const std::exception& exc) {
-            // If semantically invalid, we record the query to the catalog as failed
-            NES_ERROR("QueryService: Semantic Query Validation: " + std::string(exc.what()));
-            queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
-            queryCatalog->setQueryFailureReason(queryId, exc.what());
-            throw InvalidQueryException(exc.what());
-        }
+    NES_INFO("QueryService: Executing Semantic validation");
+    try {
+        // Checking semantic validity
+        semanticQueryValidation->validate(query);
+    } catch (const std::exception& exc) {
+        // If semantically invalid, we record the query to the catalog as failed
+        NES_ERROR("QueryService: Semantic Query Validation: " + std::string(exc.what()));
+        queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
+        queryCatalog->setQueryFailureReason(queryId, exc.what());
+        throw InvalidQueryException(exc.what());
     }
 
     NES_INFO("QueryService: Queuing the query for the execution");
