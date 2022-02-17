@@ -26,8 +26,10 @@ namespace NES::Windowing::Experimental {
 class KeyedSlice;
 using KeyedSliceSharedPtr = std::shared_ptr<KeyedSlice>;
 
+/**
+ * @brief The global slice store that contains the final slice.
+ */
 class KeyedGlobalSliceStore {
-
   public:
     /**
      * @brief Add a new slice to the slice store

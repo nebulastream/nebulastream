@@ -32,7 +32,9 @@ FORCE_INLINE uint32_t fmix32(uint32_t h) {
 #define ROTL32(x, y) rotl32(x, y)
 #define ROTL64(x, y) rotl64(x, y)
 
-// 32-bit hashes
+/**
+ * @brief MurMurHash3 implementation origins from Kersten et.al. https://github.com/TimoKersten/db-engine-paradigms.
+ */
 class MurMurHash3 : public Hash<MurMurHash3> {
   public:
     inline auto hashKey(uint32_t k, hash_t seed) const {

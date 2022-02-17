@@ -53,24 +53,10 @@ namespace WindowOperatorBuilder {
 WindowedQuery::WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType)
     : originalQuery(originalQuery), windowType(std::move(windowType)) {}
 
-//KeyedWindowedQuery keyBy(ExpressionItem onKey);
-/*KeyedWindowedQuery WindowedQuery::byKey(ExpressionItem onKey) const {
-    return KeyedWindowedQuery(originalQuery, windowType, {onKey.getExpressionNode()});
-}
-
-KeyedWindowedQuery WindowedQuery::byKey(std::initializer_list<ExpressionItem> onKey) const {
-
-    std::vector<ExpressionNodePtr> keys;
-    for (auto keyItem : onKey) {
-        keys.emplace_back(keyItem.getExpressionNode());
-    }
-    return KeyedWindowedQuery(originalQuery, windowType, keys);
-}*/
-
 KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery,
                                        Windowing::WindowTypePtr windowType,
-                                       std::vector<ExpressionNodePtr> onKey)
-    : originalQuery(originalQuery), windowType(std::move(windowType)), onKey(onKey) {}
+                                       std::vector<ExpressionNodePtr> keys)
+    : originalQuery(originalQuery), windowType(std::move(windowType)), keys(keys) {}
 
 }//namespace WindowOperatorBuilder
 

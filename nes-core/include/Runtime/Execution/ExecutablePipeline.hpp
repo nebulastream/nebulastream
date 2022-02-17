@@ -54,8 +54,6 @@ class ExecutablePipeline : public Reconfigurable {
                                 std::vector<SuccessorExecutablePipeline> successorPipelines,
                                 bool reconfiguration);
 
-    ~ExecutablePipeline() { NES_DEBUG("~ExecutablePipeline querySubPlanId: " << querySubPlanId << " pipelineId:" << pipelineId); }
-
     /**
      * @brief Factory method to create a new executable pipeline.
      * @param pipelineId The Id of this pipeline

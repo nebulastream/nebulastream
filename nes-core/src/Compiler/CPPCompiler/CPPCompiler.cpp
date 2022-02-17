@@ -124,8 +124,7 @@ std::string CPPCompiler::getLanguage() const { return "cpp"; }
 CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
     Timer timer("CPPCompiler");
     timer.start();
-   // std::string fileName = (std::filesystem::temp_directory_path() / request->getName());
-    std::string fileName = (std::filesystem::current_path() / request->getName());
+    std::string fileName = (std::filesystem::temp_directory_path() / request->getName());
     auto sourceFileName = fileName + ".cpp";
     auto libraryFileName = fileName +
 #ifdef __linux__

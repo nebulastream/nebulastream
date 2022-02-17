@@ -19,7 +19,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableAvgAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
-#include "QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp"
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 

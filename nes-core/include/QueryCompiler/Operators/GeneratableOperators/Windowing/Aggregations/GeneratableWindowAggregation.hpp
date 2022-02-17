@@ -45,20 +45,29 @@ class GeneratableWindowAggregation {
                                     BinaryOperatorStatement partialValueRef,
                                     RecordHandlerPtr recordHandler) = 0;
 
+    /**
+     * @brief Generate code for combine function to combine multiple pre-aggregates to each other
+     * @param currentCode
+     * @param partialValueRef1
+     * @param partialValueRef2
+     */
     virtual void
     compileCombine(CompoundStatementPtr currentCode, VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) = 0;
 
+    /**
+     * @brief Generate code to lower a partial pre-aggregation to the final aggregate value.
+     * @param partialValue
+     * @return ExpressionStatementPtr
+     */
     virtual ExpressionStatementPtr lower(ExpressionStatementPtr partialValue){
         return partialValue;
     };
 
     virtual ~GeneratableWindowAggregation() noexcept = default;
 
-    virtual NES::QueryCompilation::VariableDeclarationPtr getPartialAggregate() { return partialAggregate; };
+    virtual NES::QueryCompilation::VariableDeclarationPtr getPartialAggregate();
 
-    Windowing::WindowAggregationDescriptorPtr getAggregationDescriptor(){
-        return aggregationDescriptor;
-    }
+    Windowing::WindowAggregationDescriptorPtr getAggregationDescriptor();
 
 
   protected:

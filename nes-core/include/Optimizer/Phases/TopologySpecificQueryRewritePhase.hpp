@@ -42,10 +42,16 @@ class DistributeJoinRule;
 using DistributeJoinRulePtr = std::shared_ptr<DistributeJoinRule>;
 
 /**
- * @brief This phase is responsible for re-writing the query plan based on the topology information
+ * @brief This phase is responsible for re-writing the query plan based on the topology information.
  */
 class TopologySpecificQueryRewritePhase {
   public:
+    /**
+     * @brief Create the TopologySpecificQueryRewritePhase with a specific optimizer configuration
+     * @param streamCatalog the catalog of all registered streams
+     * @param configuration for the optimizer
+     * @return TopologySpecificQueryRewritePhasePtr
+     */
     static TopologySpecificQueryRewritePhasePtr create(SourceCatalogPtr streamCatalog, Configurations::OptimizerConfiguration configuration);
 
     /**

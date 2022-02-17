@@ -39,7 +39,12 @@ class GeneratableMaxAggregation : public GeneratableWindowAggregation {
     void compileLiftCombine(CompoundStatementPtr currentCode,
                             BinaryOperatorStatement partialRef,
                             RecordHandlerPtr recordHandler) override;
-
+   /**
+     * @brief Generate code for combine function to combine multiple pre-aggregates to each other
+     * @param currentCode
+     * @param partialValueRef1
+     * @param partialValueRef2
+     */
     void compileCombine(CompoundStatementPtr currentCode,
                         VarRefStatement partialValueRef1, VarRefStatement partialValueRef2) override;
 };

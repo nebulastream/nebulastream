@@ -32,4 +32,12 @@ GeneratableWindowAggregation::GeneratableWindowAggregation(Windowing::WindowAggr
     }
 }
 
+Windowing::WindowAggregationDescriptorPtr GeneratableWindowAggregation::getAggregationDescriptor() {
+    return aggregationDescriptor;
+}
+
+NES::QueryCompilation::VariableDeclarationPtr GeneratableWindowAggregation::getPartialAggregate() {
+    return partialAggregate;
+}
+
 }// namespace NES::QueryCompilation::GeneratableOperators

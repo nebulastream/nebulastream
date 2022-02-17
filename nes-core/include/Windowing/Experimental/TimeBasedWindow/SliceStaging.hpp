@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_SLICESTAGING_HPP_
 #define NES_INCLUDE_WINDOWING_EXPERIMENTAL_TIMEBASEDWINDOW_SLICESTAGING_HPP_
 #include <Exceptions/WindowProcessingException.hpp>
@@ -22,6 +21,11 @@
 
 namespace NES::Windowing::Experimental {
 
+/**
+ * @brief The slice staging area is used as an area for the merging of the local slices.
+ * Whenever a thread local slice store received a watermark it is assigning all slices that end before the particular slice to the stating area.
+ * As multiple threads can concurrently append slices, we synchronize assessses.
+ */
 class SliceStaging {
   public:
     class Partition {
@@ -30,6 +34,12 @@ class SliceStaging {
         uint64_t addedSlices = 0;
     };
 
+    /**
+     * @brief Appends the state of a slice to the staging area.
+     * @param sliceIndex index of the slice
+     * @param entries the entries of the slice.
+     * @return returns the number of threads already appended a slice to the staging area.
+     */
     std::tuple<uint64_t, uint64_t> addToSlice(uint64_t sliceIndex, std::unique_ptr<std::vector<Runtime::TupleBuffer>> entries) {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
         if (!slicePartitionMap.contains(sliceIndex)) {
@@ -41,9 +51,14 @@ class SliceStaging {
         }
         partition->addedSlices++;
 
-        return {partition->addedSlices,  partition->buffers.size()};
+        return {partition->addedSlices, partition->buffers.size()};
     }
 
+    /**
+     * @brief Extracts a partition from the staging area.
+     * @param sliceIndex
+     * @return
+     */
     std::unique_ptr<Partition> erasePartition(uint64_t sliceIndex) {
         const std::lock_guard<std::mutex> lock(sliceStagingMutex);
         if (!slicePartitionMap.contains(sliceIndex)) {
@@ -55,13 +70,13 @@ class SliceStaging {
         return value;
     }
 
-
-   void triggerPreaggregatedSlice(uint64_t sequenceNumber, uint64_t sliceIndex, KeyedSlicePtr slice);
-
-   void clear(){
-       const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-       slicePartitionMap.clear();
-   }
+    /**
+     * @brief Clears all elements in the staging area.
+     */
+    void clear() {
+        const std::lock_guard<std::mutex> lock(sliceStagingMutex);
+        slicePartitionMap.clear();
+    }
 
   private:
     std::mutex sliceStagingMutex;

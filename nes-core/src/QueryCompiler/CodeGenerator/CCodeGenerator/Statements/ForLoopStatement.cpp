@@ -26,10 +26,10 @@ namespace NES::QueryCompilation {
 ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
                                    ExpressionStatementPtr condition,
                                    ExpressionStatementPtr advance,
-                                   std::vector<StatementPtr> loop_body)
+                                   std::vector<StatementPtr> loopBody)
     : varDeclaration(std::move(varDeclaration)), condition(std::move(condition)), advance(std::move(advance)),
       body(std::make_shared<CompoundStatement>()) {
-    for (auto const& stmt : loop_body) {
+    for (auto const& stmt : loopBody) {
         if (stmt) {
             body->addStatement(stmt);
         }
@@ -38,10 +38,10 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
 
 ForLoopStatement::ForLoopStatement(ExpressionStatementPtr condition,
                                    ExpressionStatementPtr advance,
-                                   std::vector<StatementPtr> loop_body)
+                                   std::vector<StatementPtr> loopBody)
     : varDeclaration(nullptr), condition(std::move(condition)), advance(std::move(advance)),
       body(std::make_shared<CompoundStatement>()) {
-    for (auto const& stmt : loop_body) {
+    for (auto const& stmt : loopBody) {
         if (stmt) {
             body->addStatement(stmt);
         }

@@ -41,21 +41,57 @@ class KeyedThreadLocalSliceStore {
                                         uint64_t sliceSize,
                                         uint64_t numberOfPreallocatedSlices);
 
+    /**
+     * @brief Finds a slice by a specific time stamp.
+     * @param ts timestamp
+     * @return KeyedSlicePtr
+     */
     inline KeyedSlicePtr& findSliceByTs(uint64_t ts) {
         auto logicalSliceIndex = ts / sliceSize;
         return getSlice(logicalSliceIndex);
     }
 
+    /**
+     * @brief Returns an slice by a specific slice index.
+     * @param sliceIndex
+     * @return KeyedSlicePtr
+     */
     inline const KeyedSlicePtr& operator[](uint64_t sliceIndex) { return getSlice(sliceIndex); }
 
+    /**
+     * @brief Returns the currently minimal slice index.
+     * @return uint64_t
+     */
     inline uint64_t getFirstIndex() { return firstIndex; }
 
+    /**
+     * @brief Returns the currently maximal slice index.
+     * @return uint64_t
+     */
     inline uint64_t getLastIndex() { return lastIndex; }
 
+    /**
+     * @brief Deletes the slice with the smalles slice index.
+     */
     void dropFirstSlice();
+
+    /**
+     * @brief Returns the last watermark.
+     * @return uint64_t
+     */
     uint64_t getLastWatermark();
+
+    /**
+     * @brief Sets the last watermark
+     * @param watermarkTs
+     */
     void setLastWatermark(uint64_t watermarkTs);
-    void setFirstSliceIndex(uint64_t i);
+
+    /**
+     * @brief Sets the first slice index.
+     * @param slice index
+     */
+    void setFirstSliceIndex(uint64_t sliceIndex);
 
   private:
     /**

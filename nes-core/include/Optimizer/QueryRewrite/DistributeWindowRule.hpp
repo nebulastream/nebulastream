@@ -88,10 +88,6 @@ using DistributeWindowRulePtr = std::shared_ptr<DistributeWindowRule>;
 */
 class DistributeWindowRule : public BaseRewriteRule {
   public:
-    static const uint64_t CHILD_NODE_THRESHOLD = 2;
-
-    // The number of child nodes from which on we will introduce combinerr
-    static const uint64_t CHILD_NODE_THRESHOLD_COMBINER = 4;
     /**
      * @brief Creates a new DistributeWindowRule with specific thresholds that influence when the rule is applied.
      * @param windowDistributionChildrenThreshold The number of child nodes from which on we will replace a central window operator with a distributed window operator.
