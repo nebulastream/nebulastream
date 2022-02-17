@@ -83,7 +83,7 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
     queryPlan->setLineageType(lineage);
 
     // Execute only if the semantic validation flag is enabled
-    if (optimizerConfiguration.enableSemanticQueryValidation) {
+    if (true) {
         NES_INFO("QueryService: Executing Semantic validation");
         try {
             // Checking semantic validity

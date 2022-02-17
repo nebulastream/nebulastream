@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignature.hpp>
+#include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
 

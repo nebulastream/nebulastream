@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Exceptions/SignatureComputationException.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -25,11 +26,11 @@
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/ExpressionToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
-#include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
+#include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
+#include <Optimizer/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignature.hpp>
+#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
+#include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -103,7 +104,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
         auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
         return createQuerySignatureForJoin(context, joinOperator);
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
+    throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(const z3::ContextPtr& context,

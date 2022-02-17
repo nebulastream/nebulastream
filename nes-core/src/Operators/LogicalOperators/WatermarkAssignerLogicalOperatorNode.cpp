@@ -13,7 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Windowing/Watermark/WatermarkStrategy.hpp>
 #include <Windowing/Watermark/WatermarkStrategyDescriptor.hpp>
 

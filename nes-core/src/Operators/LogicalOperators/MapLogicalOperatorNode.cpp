@@ -16,7 +16,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 
 namespace NES {
 

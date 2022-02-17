@@ -16,7 +16,7 @@
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

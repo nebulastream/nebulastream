@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Util/Logger.hpp>
+#include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {

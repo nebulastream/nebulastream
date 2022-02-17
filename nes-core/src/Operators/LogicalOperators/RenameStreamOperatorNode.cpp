@@ -16,7 +16,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

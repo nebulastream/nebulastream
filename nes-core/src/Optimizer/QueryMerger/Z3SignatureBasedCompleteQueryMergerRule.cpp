@@ -15,9 +15,9 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
-#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
+#include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
