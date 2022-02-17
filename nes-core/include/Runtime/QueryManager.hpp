@@ -207,6 +207,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false);
 
+    /**
+     * @brief Outputs the first buffer manager of the query manager
+     * @return BufferManagerPtr
+     */
     BufferManagerPtr getBufferManager(){
         return bufferManagers[0];
     }
