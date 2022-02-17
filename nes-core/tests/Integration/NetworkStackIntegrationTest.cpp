@@ -150,7 +150,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSource) {
     auto defaultSourceType = DefaultSourceType::create();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, nullptr, queryCompilerConfiguration);
+        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, queryCompilerConfiguration);
     auto netManager = nodeEngine->getNetworkManager();
 
     NesPartition nesPartition{1, 22, 33, 44};
@@ -180,7 +180,7 @@ TEST_F(NetworkStackIntegrationTest, testStartStopNetworkSrcSink) {
     auto queryCompilerConfiguration = Configurations::QueryCompilerConfiguration();
     auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
     auto nodeEngine =
-        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, nullptr, queryCompilerConfiguration);
+        Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, queryCompilerConfiguration);
     NodeLocation nodeLocation{0, "127.0.0.1", 31337};
     NesPartition nesPartition{1, 22, 33, 44};
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
@@ -365,7 +365,7 @@ TEST_F(NetworkStackIntegrationTest, testNetworkSourceSink) {
         auto defaultSourceType = DefaultSourceType::create();
         auto physicalSource = PhysicalSource::create("default_logical", "default", defaultSourceType);
         auto nodeEngine2 =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, nullptr, Configurations::QueryCompilerConfiguration());
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", *dataPort1, {physicalSource}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
@@ -471,9 +471,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                                          buffersManaged,
                                                                          64,
                                                                          12,
-                                                                         nullptr,
-                                                                         Configurations::QueryCompilerConfiguration(),
-                                                                         NES::Runtime::NumaAwarenessFlag::DISABLED);
+                                                                         Configurations::QueryCompilerConfiguration());
     auto netManagerSender = nodeEngineSender->getNetworkManager();
     NodeLocation nodeLocationSender = netManagerSender->getServerLocation();
     auto nodeEngineReceiver = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
@@ -484,9 +482,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                                            buffersManaged,
                                                                            64,
                                                                            12,
-                                                                           nullptr,
-                                                                           Configurations::QueryCompilerConfiguration(),
-                                                                           NES::Runtime::NumaAwarenessFlag::DISABLED);
+                                                                           Configurations::QueryCompilerConfiguration());
     auto netManagerReceiver = nodeEngineReceiver->getNetworkManager();
     NodeLocation nodeLocationReceiver = netManagerReceiver->getServerLocation();
 
@@ -554,7 +550,6 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
     auto networkSink = std::make_shared<NetworkSink>(schema,
                                                      i,
                                                      subPlanId,
-                                                     netManagerSender,
                                                      nodeLocationReceiver,
                                                      nesPartition,
                                                      nodeEngineSender,
@@ -708,9 +703,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                                          buffersManaged,
                                                                          64,
                                                                          12,
-                                                                         nullptr,
-                                                                         queryCompilerConfiguration,
-                                                                         NES::Runtime::NumaAwarenessFlag::DISABLED);
+                                                                         queryCompilerConfiguration);
     auto nodeEngineReceiver = Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1",
                                                                            *dataPort2,
                                                                            {physicalSource},
@@ -719,9 +712,7 @@ TEST_F(NetworkStackIntegrationTest, testSendEventBackward) {
                                                                            buffersManaged,
                                                                            64,
                                                                            12,
-                                                                           nullptr,
-                                                                           queryCompilerConfiguration,
-                                                                           NES::Runtime::NumaAwarenessFlag::DISABLED);
+                                                                           queryCompilerConfiguration);
     // create NetworkSink
 
     class TestNetworkSink : public NetworkSink {

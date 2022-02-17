@@ -58,11 +58,11 @@ class UpstreamBackupTest : public Testing::NESBaseTest {
         Testing::NESBaseTest::SetUp();
         coordinatorConfig = CoordinatorConfiguration::create();
         coordinatorConfig = CoordinatorConfiguration::create();
-        coordinatorConfig->setRpcPort(*rpcCoordinatorPort);
-        coordinatorConfig->setRestPort(*restPort);
+        coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+        coordinatorConfig->restPort = *restPort;
 
         workerConfig = WorkerConfiguration::create();
-        workerConfig->setCoordinatorPort(*rpcCoordinatorPort);
+        workerConfig->coordinatorPort = *rpcCoordinatorPort;
 
         csvSourceType = CSVSourceType::create();
         csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-out-of-order.csv");
@@ -90,7 +90,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
     auto physicalSource1 = PhysicalSource::create("window", "x1", csvSourceType);
-    workerConfig->addPhysicalSource(physicalSource1);
+    workerConfig->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
