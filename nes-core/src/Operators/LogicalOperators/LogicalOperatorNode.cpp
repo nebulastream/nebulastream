@@ -13,8 +13,8 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignature.hpp>
+#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <utility>
 
 namespace NES {

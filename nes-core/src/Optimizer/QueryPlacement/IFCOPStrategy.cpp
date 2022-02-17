@@ -122,7 +122,7 @@ PlacementMatrix IFCOPStrategy::getPlacementCandidate(NES::QueryPlanPtr queryPlan
     //    for (auto srcOp : queryPlan->getSourceOperators()) {
     //        LogicalOperatorNodePtr currentOperator = srcOp;
     //        for (auto topologyNode :
-    //             streamCatalog->getSourceNodesForLogicalStream(srcOp->getSourceDescriptor()->getLogicalSourceName())) {
+    //             sourceCatalog->getSourceNodesForLogicalStream(srcOp->getSourceDescriptor()->getLogicalSourceName())) {
     //            TopologyNodePtr currentTopologyNodePtr = topologyNode;
     //
     //            topoIdx = matrixMapping[std::make_pair(currentTopologyNodePtr->getId(), currentOperator->getId())].first;

@@ -286,7 +286,7 @@ std::string RemoteClient::getQueries(const QueryStatus& status) {
 
 std::string RemoteClient::getPhysicalStreams() {
     auto restMethod = web::http::methods::GET;
-    auto path = "streamCatalog/allPhysicalStream";
+    auto path = "sourceCatalog/allPhysicalStream";
     auto message = "";
 
     web::json::value jsonReturn;

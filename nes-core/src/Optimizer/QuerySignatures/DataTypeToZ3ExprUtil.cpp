@@ -21,8 +21,8 @@
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
+#include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
+#include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>
 #include <z3++.h>

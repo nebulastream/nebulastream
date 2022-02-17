@@ -30,9 +30,9 @@
 #include <Nodes/Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/ExpressionToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
+#include <Optimizer/QuerySignatures/DataTypeToZ3ExprUtil.hpp>
+#include <Optimizer/QuerySignatures/ExpressionToZ3ExprUtil.hpp>
+#include <Optimizer/QuerySignatures/Z3ExprAndFieldMap.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {

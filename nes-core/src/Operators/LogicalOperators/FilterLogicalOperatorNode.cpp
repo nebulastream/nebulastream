@@ -13,7 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

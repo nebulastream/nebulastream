@@ -26,4 +26,5 @@ add_source_files(nes-core
         QueryUndeploymentException.cpp
         TypeInferenceException.cpp
         UdfException.cpp
+        SignatureComputationException.cpp
 )

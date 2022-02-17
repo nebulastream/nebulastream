@@ -15,15 +15,17 @@
 #include <API/Query.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/SignatureComputationException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/QuerySignatures/QuerySignature.hpp>
+#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <cstring>
+#include <iterator>
 #include <utility>
 #include <z3++.h>
 
@@ -37,13 +39,7 @@ SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPt
 
 void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
 
-    // Creating a z3 context for the signature inference and the z3 solver
-    z3::ContextPtr context = std::make_shared<z3::context>();
-
     auto queryPlan = inputQuery->getQueryPlan();
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto signatureInferencePhase =
-        Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
 
     // Checking if the logical source can be found in the source catalog
     logicalSourceValidityCheck(queryPlan, streamCatalog);
@@ -51,6 +47,7 @@ void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
     physicalSourceValidityCheck(queryPlan, streamCatalog);
 
     try {
+        auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
         typeInferencePhase->execute(queryPlan);
     } catch (std::exception& e) {
         std::string errorMessage = e.what();
@@ -63,6 +60,10 @@ void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
     }
 
     try {
+        // Creating a z3 context for the signature inference and the z3 solver
+        z3::ContextPtr context = std::make_shared<z3::context>();
+        auto signatureInferencePhase =
+            Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
         z3::solver solver(*context);
         signatureInferencePhase->execute(queryPlan);
         auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -81,6 +82,8 @@ void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
                 createExceptionForPredicate(predicateStr);
             }
         }
+    } catch (SignatureComputationException& ex) {
+        NES_WARNING("Unable to compute signature due to " << ex.what());
     } catch (std::exception& e) {
         std::string errorMessage = e.what();
         throw InvalidQueryException(errorMessage + "\n");
@@ -162,12 +165,13 @@ void SemanticQueryValidation::physicalSourceValidityCheck(const QueryPlanPtr& qu
     if (!invalidLogicalSourceNames.empty()) {
         std::stringstream invalidSources;
         invalidSources << "[";
-        for (const auto& sourceName : invalidLogicalSourceNames) {
-            invalidSources << sourceName;
-        }
+        std::copy(invalidLogicalSourceNames.begin(),
+                  invalidLogicalSourceNames.end() - 1,
+                  std::ostream_iterator<std::string>(invalidSources, ","));
+        invalidSources << invalidLogicalSourceNames.back();
         invalidSources << "]";
-        throw InvalidQueryException("Following logical source(s) are found to have no corresponding physical source defined : "
-                                    + invalidSources.str());
+        throw InvalidQueryException("Logical source(s) " + invalidSources.str()
+                                    + " are found to have no physical source(s) defined.");
     }
 }
 

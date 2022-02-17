@@ -13,7 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/QuerySignatures/QuerySignature.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlanChangeLog.hpp>
