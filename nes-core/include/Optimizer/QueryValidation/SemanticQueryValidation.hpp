@@ -39,44 +39,63 @@ class SemanticQueryValidation {
     SourceCatalogPtr streamCatalog;
 
     /**
-     * @brief Checks if the stream source in the provided QueryPlan is valid
+     * @brief Checks if the logical source in the provided QueryPlan is valid
+     * @param queryPlan: query plan to check
+     * @param sourceCatalog: source catalog
      */
-    static void sourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const SourceCatalogPtr& streamCatalog);
+    static void logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const SourceCatalogPtr& sourceCatalog);
+
+    /**
+     * @brief Checks if the physical source for the provided QueryPlan is present
+     * @param queryPlan: query plan to check
+     * @param sourceCatalog: source catalog
+     */
+    static void physicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const SourceCatalogPtr& sourceCatalog);
 
     /**
      * @brief Throws InvalidQueryException with formatted exception message
+     * @param predicateString: predicate string
      */
-    void handleException(std::string& predicateString);
+    void createExceptionForPredicate(std::string& predicateString);
 
     /**
      * @brief Deletes a substring from a string
+     * @param mainStr: main string
+     * @param toErase: string to erase
      */
     static void eraseAllSubStr(std::string& mainStr, const std::string& toErase);
 
     /**
-     * @brief Replaces all occurances of a substring in a string
+     * @brief Replaces all occurrences of a substring in a string
+     * @param data: data to search in
+     * @param toSearch: data to search
+     * @param replaceStr: replace the string
      */
     static void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
 
   public:
+
     /**
      * @brief Checks the semantic validity of a Query object
+     * @param inputQuery: query to check
      */
-    void checkSatisfiability(const QueryPtr& inputQuery);
+    void validate(const QueryPtr& inputQuery);
 
     /**
      * @brief Constructor for the SemanticQueryValidation class
+     * @param sourceCatalog: source catalog
      */
-    explicit SemanticQueryValidation(SourceCatalogPtr streamCatalog);
+    explicit SemanticQueryValidation(SourceCatalogPtr sourceCatalog);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
+     * @param sourceCatalog: source catalog
      */
-    static SemanticQueryValidationPtr create(const SourceCatalogPtr& scp);
+    static SemanticQueryValidationPtr create(const SourceCatalogPtr& sourceCatalog);
 };
 
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 
 }// namespace NES::Optimizer
 
-#endif  // NES_INCLUDE_OPTIMIZER_QUERYVALIDATION_SEMANTICQUERYVALIDATION_HPP_
+#endif// NES_INCLUDE_OPTIMIZER_QUERYVALIDATION_SEMANTICQUERYVALIDATION_HPP_

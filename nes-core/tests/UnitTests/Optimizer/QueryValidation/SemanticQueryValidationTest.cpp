@@ -50,7 +50,7 @@ class SemanticQueryValidationTest : public testing::Test {
         auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
         QueryPtr filterQuery = queryParsingService->createQueryFromCodeString(queryString);
         filterQuery->sink(FileSinkDescriptor::create(""));
-        semanticQueryValidation->checkSatisfiability(filterQuery);
+        semanticQueryValidation->validate(filterQuery);
     }
 
     void TestForException(std::string queryString) { EXPECT_THROW(CallValidation(queryString), InvalidQueryException); }
@@ -118,7 +118,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
 
     filterQuery->sink(FileSinkDescriptor::create(""));
 
-    semanticQueryValidation->checkSatisfiability(filterQuery);
+    semanticQueryValidation->validate(filterQuery);
 }
 
 // Test a query with contradicting filters over multiple programmatically added filter operators
@@ -137,12 +137,12 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
 
     filterQuery->sink(FileSinkDescriptor::create(""));
 
-    EXPECT_THROW(semanticQueryValidation->checkSatisfiability(filterQuery), InvalidQueryException);
+    EXPECT_THROW(semanticQueryValidation->validate(filterQuery), InvalidQueryException);
 }
 
-// Test a query with an invalid logical stream name
-TEST_F(SemanticQueryValidationTest, invalidLogicalStreamTest) {
-    NES_INFO("Invalid logical stream");
+// Test a query with an invalid logical source name
+TEST_F(SemanticQueryValidationTest, invalidLogicalSourceTest) {
+    NES_INFO("Invalid logical source test");
 
     std::string queryString =
         R"(Query::from("nonexistent_logical").filter(Attribute("id") > 100).filter(Attribute("value") < 10); )";
@@ -174,8 +174,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_validAsOperatorTest) {
 }
 
 // Test a query with a, invalid "as" operator
-// This test is disabled, because the signature inference breaks when using this operator
-TEST_F(SemanticQueryValidationTest, DISABLED_invalidAsOperatorTest) {
+TEST_F(SemanticQueryValidationTest, invalidAsOperatorTest) {
     NES_INFO("Invalid as operator test");
 
     SourceCatalogPtr streamCatalogPtr = std::make_shared<SourceCatalog>(queryParsingService);
@@ -187,7 +186,6 @@ TEST_F(SemanticQueryValidationTest, DISABLED_invalidAsOperatorTest) {
 }
 
 // Test a query with a valid "project" operator
-// This test is disabled, because the signature inference breaks when using this operator
 TEST_F(SemanticQueryValidationTest, DISABLED_validProjectionTest) {
     NES_INFO("Valid projection test");
 
@@ -200,12 +198,11 @@ TEST_F(SemanticQueryValidationTest, DISABLED_validProjectionTest) {
                      .map(Attribute("value") = Attribute("value") + 2)
                      .sink(FileSinkDescriptor::create(""));
 
-    semanticQueryValidation->checkSatisfiability(std::make_shared<Query>(query));
+    semanticQueryValidation->validate(std::make_shared<Query>(query));
 }
 
 // Test a query with an invalid "project" operator
-// This test is disabled, because the signature inference breaks when using this operator
-TEST_F(SemanticQueryValidationTest, DISABLED_invalidProjectionTest) {
+TEST_F(SemanticQueryValidationTest, invalidProjectionTest) {
     NES_INFO("Invalid projection test");
 
     SourceCatalogPtr streamCatalogPtr = std::make_shared<SourceCatalog>(queryParsingService);
@@ -217,7 +214,23 @@ TEST_F(SemanticQueryValidationTest, DISABLED_invalidProjectionTest) {
                      .filter(Attribute("id") < 42)
                      .sink(FileSinkDescriptor::create(""));
 
-    EXPECT_THROW(semanticQueryValidation->checkSatisfiability(std::make_shared<Query>(query)), InvalidQueryException);
+    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)), InvalidQueryException);
+}
+
+// Test a query with an invalid logical source having to physical source defined
+TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
+    NES_INFO("Invalid projection test");
+
+    SourceCatalogPtr streamCatalogPtr = std::make_shared<SourceCatalog>(queryParsingService);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
+
+    auto query = Query::from("default_logical")
+                     .map(Attribute("value") = Attribute("value") + 2)
+                     .project(Attribute("id").as("new_id"), Attribute("value"))
+                     .filter(Attribute("id") < 42)
+                     .sink(FileSinkDescriptor::create(""));
+
+    EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)), InvalidQueryException);
 }
 
 }// namespace NES

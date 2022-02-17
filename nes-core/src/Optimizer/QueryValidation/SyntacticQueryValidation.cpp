@@ -35,7 +35,7 @@ void SyntacticQueryValidation::checkValidity(const std::string& inputQuery) {
     }
 }
 
-NES::QueryPtr SyntacticQueryValidation::checkValidityAndGetQuery(const std::string& inputQuery) {
+NES::QueryPtr SyntacticQueryValidation::validate(const std::string& inputQuery) {
     NES::QueryPtr query;
     try {
         // Compiling the query string to an object
