@@ -16,18 +16,17 @@
 #define NES_INCLUDE_EXCEPTIONS_WINDOW_PROCESSING_EXCEPTION_HPP_
 
 #include <Exceptions/NesRuntimeException.hpp>
-
 #include <string>
 
 namespace NES {
 
 /**
- * @brief This exception is thrown when an error occurs during UDF processing.
+ * @brief This exception is thrown when an error occurs during window processing.
  */
 class WindowProcessingException : public NesRuntimeException {
   public:
     /**
-     * @brief Construct a UDF exception from a message and include the current stack trace.
+     * @brief Construct a WindowProcessingException exception from a message.
      * @param message The exception message.
      */
     explicit WindowProcessingException(const std::string& message);

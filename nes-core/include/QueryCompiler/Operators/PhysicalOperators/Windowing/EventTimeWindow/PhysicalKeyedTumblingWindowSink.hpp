@@ -24,6 +24,9 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
+/**
+ * @brief The keyed tumbling window sink directly emits the final aggregates for a merged slice.
+ */
 class PhysicalKeyedTumblingWindowSink : public PhysicalUnaryOperator{
   public:
     PhysicalKeyedTumblingWindowSink(

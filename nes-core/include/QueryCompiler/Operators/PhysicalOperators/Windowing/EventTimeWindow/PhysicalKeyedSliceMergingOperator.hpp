@@ -23,6 +23,10 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
+/**
+ * @brief The slice merging operator receives pre aggregated keyed slices and merges them together.
+ * Finally, it appends them to the global slice store.
+ */
 class PhysicalKeyedSliceMergingOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
     PhysicalKeyedSliceMergingOperator(
