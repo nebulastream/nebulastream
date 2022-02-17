@@ -61,13 +61,6 @@ class OptimizerConfiguration : public BaseConfiguration {
                                                               "The rule to be used for performing query merging"};
 
     /**
-     * @brief Enable semantic query validation.
-     */
-    BoolOption enableSemanticQueryValidation = {ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG,
-                                                false,
-                                                "Enable semantic query validation feature"};
-
-    /**
      * @brief Indicates the memory layout policy and allows the engine to prefer a row or columnar layout.
      * Depending on the concrete workload different memory layouts can be beneficial. Valid options are:
      * FORCE_ROW_LAYOUT -> Enforces a row layout between all operators.
@@ -90,7 +83,6 @@ class OptimizerConfiguration : public BaseConfiguration {
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&queryBatchSize,
                 &queryMergerRule,
-                &enableSemanticQueryValidation,
                 &memoryLayoutPolicy,
                 &performOnlySourceOperatorExpansion};
     }

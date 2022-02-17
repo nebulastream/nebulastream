@@ -161,7 +161,6 @@ const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOpe
 const std::string ENABLE_QUERY_RECONFIGURATION = "enableQueryReconfiguration";
 const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
 const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
-const std::string ENABLE_SEMANTIC_QUERY_VALIDATION_CONFIG = "enableSemanticQueryValidation";
 
 
 //Worker Configuration Names
