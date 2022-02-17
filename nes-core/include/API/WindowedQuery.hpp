@@ -38,6 +38,9 @@ namespace WindowOperatorBuilder {
 class WindowedQuery;
 class KeyedWindowedQuery;
 
+/**
+ * @brief A fragment of the query, which is windowed according to a window type and specific keys.
+ */
 class KeyedWindowedQuery {
   public:
     /**
@@ -45,7 +48,7 @@ class KeyedWindowedQuery {
     * @param originalQuery
     * @param windowType
     */
-    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::vector<ExpressionNodePtr> onKey);
+    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::vector<ExpressionNodePtr> keys);
 
     /**
     * @brief: Applies a set of aggregation functions to the window and returns a query object.
@@ -56,15 +59,18 @@ class KeyedWindowedQuery {
     [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
         std::vector<Windowing::WindowAggregationPtr> windowAggregations;
         (windowAggregations.push_back(std::forward<Windowing::WindowAggregationPtr>(aggregations)), ...);
-        return originalQuery.windowByKey(onKey, windowType, windowAggregations);
+        return originalQuery.windowByKey(keys, windowType, windowAggregations);
     }
 
   private:
     Query& originalQuery;
     Windowing::WindowTypePtr windowType;
-    std::vector<ExpressionNodePtr> onKey;
+    std::vector<ExpressionNodePtr> keys;
 };
 
+/**
+ * @brief A fragment of the query, which is windowed according to a window type.
+ */
 class WindowedQuery {
   public:
     /**
@@ -75,7 +81,7 @@ class WindowedQuery {
     WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType);
 
     /**
-    * @brief: Sets the Attributes for the keyBy Operation. For example `byKey(Attribute("x"), Attribute("y")))`
+    * @brief: Sets attributes for the keyBy Operation. For example `byKey(Attribute("x"), Attribute("y")))`
     * Creates a KeyedWindowedQuery object.
     * @param onKeys list of keys
     * @return KeyedWindowedQuery

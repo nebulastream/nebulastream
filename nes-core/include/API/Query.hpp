@@ -307,7 +307,7 @@ class Query {
     /**
      * @brief: Create watermark assginer operator.
      * @param onField filed to retrieve the timestamp for watermark.
-     * @param delay timestamp delay of the watermark.
+     * @param delay timestamp delay of tanuraghazrahe watermark.
      * @return query.
      */
     Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
@@ -421,7 +421,14 @@ class Query {
      */
     Query& window(Windowing::WindowTypePtr const& windowType, std::vector<Windowing::WindowAggregationPtr> aggregation);
 
-    Query& windowByKey(std::vector<ExpressionNodePtr> onKey,
+    /**
+      * @brief: Creates a keyed window aggregation.
+      * @param keys keys.
+      * @param windowType Window definition.
+      * @param aggregations Window aggregation functions.
+      * @return query.
+      */
+    Query& windowByKey(std::vector<ExpressionNodePtr> keys,
                        Windowing::WindowTypePtr const& windowType,
                        std::vector<Windowing::WindowAggregationPtr> aggregation);
 };

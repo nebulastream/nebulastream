@@ -33,6 +33,10 @@ class CRC32Hash : public Hash<CRC32Hash> {
 
 #include <x86intrin.h>
 
+/**
+ * @brief CRC32Hash implementation origins from Kersten et.al. https://github.com/TimoKersten/db-engine-paradigms.
+ * @note Currently the implementation only supports __x86_64__ as it relies on _mm_crc32 intrinsics.
+ */
 class CRC32Hash : public Hash<CRC32Hash> {
   public:
     inline auto hashKey(uint64_t k, hash_t seed) const {

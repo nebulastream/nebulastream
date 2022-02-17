@@ -17,6 +17,9 @@
 #include <Util/Experimental/Hash.hpp>
 namespace NES::Experimental {
 
+/**
+ * @brief MurMurHash implementation origins from Kersten et.al. https://github.com/TimoKersten/db-engine-paradigms.
+ */
 class MurMurHash : public Hash<MurMurHash> {
   public:
     inline hash_t hashKey(uint64_t k) const { return hashKey(k, 0); }

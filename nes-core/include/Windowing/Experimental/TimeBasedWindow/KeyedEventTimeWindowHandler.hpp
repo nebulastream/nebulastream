@@ -46,6 +46,9 @@ class WindowTriggerTask {
     uint64_t endSlice;
 };
 
+/**
+ * @brief The KeyedEventTimeWindowHandler implements a thread local strategy to compute window aggregates for tumbling and sliding windows.
+ */
 class KeyedEventTimeWindowHandler : public Runtime::Execution::OperatorHandler,
                                     public detail::virtual_enable_shared_from_this<KeyedEventTimeWindowHandler, false> {
     using inherited0 = detail::virtual_enable_shared_from_this<KeyedEventTimeWindowHandler, false>;

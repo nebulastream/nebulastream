@@ -24,10 +24,10 @@ class ForLoopStatement : public Statement {
     ForLoopStatement(DeclarationPtr varDeclaration,
                      ExpressionStatementPtr condition,
                      ExpressionStatementPtr advance,
-                     std::vector<StatementPtr> loop_body = std::vector<StatementPtr>());
+                     std::vector<StatementPtr> loopBody = std::vector<StatementPtr>());
     ForLoopStatement(ExpressionStatementPtr condition,
                      ExpressionStatementPtr advance,
-                     std::vector<StatementPtr> loop_body = std::vector<StatementPtr>());
+                     std::vector<StatementPtr> loopBody = std::vector<StatementPtr>());
 
     ~ForLoopStatement() noexcept override = default;
 
