@@ -29,13 +29,13 @@
 
 namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {}
+SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog) : streamCatalog(std::move(sourceCatalog)) {}
 
-SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& scp) {
-    return std::make_shared<SemanticQueryValidation>(scp);
+SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& sourceCatalog) {
+    return std::make_shared<SemanticQueryValidation>(sourceCatalog);
 }
 
-void SemanticQueryValidation::checkSatisfiability(const QueryPtr& inputQuery) {
+void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
 
     // Creating a z3 context for the signature inference and the z3 solver
     z3::ContextPtr context = std::make_shared<z3::context>();
@@ -45,42 +45,49 @@ void SemanticQueryValidation::checkSatisfiability(const QueryPtr& inputQuery) {
     auto signatureInferencePhase =
         Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
 
-    // Checking if the stream source can be found in the stream catalog
-    sourceValidityCheck(queryPlan, streamCatalog);
+    // Checking if the logical source can be found in the source catalog
+    logicalSourceValidityCheck(queryPlan, streamCatalog);
+    // Checking if the physical source can be found in the source catalog
+    physicalSourceValidityCheck(queryPlan, streamCatalog);
 
     try {
         typeInferencePhase->execute(queryPlan);
-        signatureInferencePhase->execute(queryPlan);
     } catch (std::exception& e) {
         std::string errorMessage = e.what();
 
         // Handling nonexistend field
         if (errorMessage.find("FieldAccessExpression:") != std::string::npos) {
-            throw InvalidQueryException("SemanticQueryValidation: " + errorMessage + "\n");
+            throw InvalidQueryException(errorMessage + "\n");
         }
-        throw InvalidQueryException("SemanticQueryValidation: " + errorMessage + "\n");
+        throw InvalidQueryException(errorMessage + "\n");
     }
 
-    z3::solver solver(*context);
-    auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
+    try {
+        z3::solver solver(*context);
+        signatureInferencePhase->execute(queryPlan);
+        auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
 
-    // Looping through all filter operators of the Query, checking for contradicting conditions.
-    for (const auto& filterOp : filterOperators) {
-        Optimizer::QuerySignaturePtr qsp = filterOp->getZ3Signature();
+        // Looping through all filter operators of the Query, checking for contradicting conditions.
+        for (const auto& filterOp : filterOperators) {
+            Optimizer::QuerySignaturePtr qsp = filterOp->getZ3Signature();
 
-        // Adding the conditions to the z3 SMT solver
-        z3::ExprPtr conditions = qsp->getConditions();
-        solver.add(*(qsp->getConditions()));
+            // Adding the conditions to the z3 SMT solver
+            z3::ExprPtr conditions = qsp->getConditions();
+            solver.add(*(qsp->getConditions()));
 
-        // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
-        if (solver.check() == z3::unsat) {
-            auto predicateStr = filterOp->getPredicate()->toString();
-            handleException(predicateStr);
+            // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
+            if (solver.check() == z3::unsat) {
+                auto predicateStr = filterOp->getPredicate()->toString();
+                createExceptionForPredicate(predicateStr);
+            }
         }
+    } catch (std::exception& e) {
+        std::string errorMessage = e.what();
+        throw InvalidQueryException(errorMessage + "\n");
     }
 }
 
-void SemanticQueryValidation::handleException(std::string& predicateString) {
+void SemanticQueryValidation::createExceptionForPredicate(std::string& predicateString) {
 
     // Removing unnecessary data from the error messages for better readability
     eraseAllSubStr(predicateString, "[INTEGER]");
@@ -101,8 +108,7 @@ void SemanticQueryValidation::handleException(std::string& predicateString) {
         eraseAllSubStr(predicateString, logicalStream.first);
     }
 
-    throw InvalidQueryException("SemanticQueryValidation: Unsatisfiable Query due to filter condition:\n" + predicateString
-                                + "\n");
+    throw InvalidQueryException("Unsatisfiable Query due to filter condition:\n" + predicateString + "\n");
 }
 
 void SemanticQueryValidation::eraseAllSubStr(std::string& mainStr, const std::string& toErase) {
@@ -120,7 +126,8 @@ void SemanticQueryValidation::findAndReplaceAll(std::string& data, const std::st
     }
 }
 
-void SemanticQueryValidation::sourceValidityCheck(const NES::QueryPlanPtr& queryPlan, const SourceCatalogPtr& streamCatalog) {
+void SemanticQueryValidation::logicalSourceValidityCheck(const NES::QueryPlanPtr& queryPlan,
+                                                         const SourceCatalogPtr& sourceCatalog) {
 
     // Getting the source operators from the query plan
     auto sourceOperators = queryPlan->getSourceOperators();
@@ -133,11 +140,34 @@ void SemanticQueryValidation::sourceValidityCheck(const NES::QueryPlanPtr& query
             auto streamName = sourceDescriptor->getLogicalSourceName();
 
             // Making sure that all logical stream sources are present in the stream catalog
-            if (!streamCatalog->containsLogicalSource(streamName)) {
-                throw InvalidQueryException("SemanticQueryValidation: The logical stream " + streamName
-                                            + " could not be found in the SourceCatalog\n");
+            if (!sourceCatalog->containsLogicalSource(streamName)) {
+                throw InvalidQueryException("The logical source '" + streamName + "' can not be found in the SourceCatalog\n");
             }
         }
+    }
+}
+
+void SemanticQueryValidation::physicalSourceValidityCheck(const QueryPlanPtr& queryPlan, const SourceCatalogPtr& sourceCatalog) {
+    //Identify the source operators
+    auto sourceOperators = queryPlan->getSourceOperators();
+    std::vector<std::string> invalidLogicalSourceNames;
+    for (auto sourceOperator : sourceOperators) {
+        auto logicalSourceName = sourceOperator->getSourceDescriptor()->getLogicalSourceName();
+        if (sourceCatalog->getPhysicalSources(logicalSourceName).empty()) {
+            invalidLogicalSourceNames.emplace_back(logicalSourceName);
+        }
+    }
+
+    //If there are invalid logical sources then report them
+    if (!invalidLogicalSourceNames.empty()) {
+        std::stringstream invalidSources;
+        invalidSources << "[";
+        for (const auto& sourceName : invalidLogicalSourceNames) {
+            invalidSources << sourceName;
+        }
+        invalidSources << "]";
+        throw InvalidQueryException("Following logical source(s) are found to have no corresponding physical source defined : "
+                                    + invalidSources.str());
     }
 }
 

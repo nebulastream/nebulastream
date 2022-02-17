@@ -59,7 +59,7 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
     try {
         // Checking the syntactic validity and compiling the query string to an object
         NES_INFO("QueryService: check validation of a query");
-        query = syntacticQueryValidation->checkValidityAndGetQuery(queryString);
+        query = syntacticQueryValidation->validate(queryString);
     } catch (const std::exception& exc) {
         NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
         // On compilation error we record the query to the catalog as failed
@@ -87,7 +87,7 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
         NES_INFO("QueryService: Executing Semantic validation");
         try {
             // Checking semantic validity
-            semanticQueryValidation->checkSatisfiability(query);
+            semanticQueryValidation->validate(query);
         } catch (const std::exception& exc) {
             // If semantically invalid, we record the query to the catalog as failed
             NES_ERROR("QueryService: Semantic Query Validation: " + std::string(exc.what()));

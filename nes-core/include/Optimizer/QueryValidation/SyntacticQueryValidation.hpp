@@ -52,7 +52,7 @@ class SyntacticQueryValidation {
     /**
      * @brief Checks the syntactic validity of a Query string and returns the created Query object
      */
-    QueryPtr checkValidityAndGetQuery(const std::string& inputQuery);
+    QueryPtr validate(const std::string& inputQuery);
 
   private:
     QueryParsingServicePtr queryParsingService;
