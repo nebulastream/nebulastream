@@ -46,8 +46,8 @@ NodeEnginePtr NodeEngineFactory::createDefaultNodeEngine(const std::string& host
                             1024,
                             128,
                             12,
-                            std::move(nesWorker),
                             Configurations::QueryCompilerConfiguration(),
+                            std::move(nesWorker),
                             NumaAwarenessFlag::DISABLED,
                             "");
 }
@@ -60,9 +60,8 @@ NodeEnginePtr NodeEngineFactory::createNodeEngine(const std::string& hostname,
                                                   const uint64_t numberOfBuffersInGlobalBufferManager,
                                                   const uint64_t numberOfBuffersInSourceLocalBufferPool,
                                                   const uint64_t numberOfBuffersPerWorker,
-                                                  std::weak_ptr<NesWorker>&& nesWorker,
-                                                  std::weak_ptr<NesWorker>&& nesWorker,
                                                   const Configurations::QueryCompilerConfiguration queryCompilerConfiguration,
+                                                  std::weak_ptr<NesWorker>&& nesWorker,
                                                   NumaAwarenessFlag enableNumaAwareness,
                                                   const std::string& workerToCodeMapping,
                                                   const std::string& queuePinList) {

@@ -88,9 +88,7 @@ class CodeGenerationTest : public testing::Test {
                                                                   1024,
                                                                   12,
                                                                   12,
-                                                                  nullptr,
-                                                                  Configurations::QueryCompilerConfiguration(),
-                                                                  NES::Runtime::NumaAwarenessFlag::DISABLED);
+                                                                  Configurations::QueryCompilerConfiguration());
     }
 
     /* Will be called before a test is executed. */

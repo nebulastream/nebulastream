@@ -786,7 +786,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
 
         PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
         auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, {streamConf}, 1, bufferSize, buffersManaged, 64, 64, Configurations::QueryCompilerConfiguration());
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
@@ -797,10 +797,6 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                                                          1,
                                                          NSOURCE_RETRY_WAIT,
                                                          NSOURCE_RETRIES);
-        PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
-        auto nodeEngine =
-            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 0, 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64, std::weak_ptr<NesWorker>(nullptr), Configurations::QueryCompilerConfiguration());
-
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
