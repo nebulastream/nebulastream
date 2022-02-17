@@ -25,6 +25,9 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
+/**
+ * @brief The keyed slicing window sink uses the global slice store to compute the final aggregate for a sliding window.
+ */
 class PhysicalKeyedSlidingWindowSink : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
     PhysicalKeyedSlidingWindowSink(

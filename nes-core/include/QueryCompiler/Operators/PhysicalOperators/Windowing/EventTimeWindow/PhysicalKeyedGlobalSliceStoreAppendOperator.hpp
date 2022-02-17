@@ -24,6 +24,9 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
+/**
+ * @brief Appends the final slices to the global slice store.
+ */
 class PhysicalKeyedGlobalSliceStoreAppendOperator : public PhysicalUnaryOperator , public AbstractEmitOperator {
   public:
     PhysicalKeyedGlobalSliceStoreAppendOperator(

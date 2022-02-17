@@ -24,6 +24,10 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
+/**
+ * @brief The keyed thread local pre aggregation operator, receives an input stream and creates on each processing thread an local pre aggregate.
+ * If it receives a watermark the thread local slice is merges by the slice merging operator.
+ */
 class PhysicalKeyedThreadLocalPreAggregationOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     PhysicalKeyedThreadLocalPreAggregationOperator(
