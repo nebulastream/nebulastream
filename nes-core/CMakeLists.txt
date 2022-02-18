@@ -50,7 +50,7 @@ target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/../")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
-target_link_libraries(nes PUBLIC nes-common)
+target_link_libraries(nes PUBLIC nes-common nes-compiler)
 target_link_libraries(nes PUBLIC ${GRPC_LIBRARIES})
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
