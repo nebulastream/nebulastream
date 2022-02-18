@@ -15,6 +15,7 @@
 #define NES_NES_CORE_INCLUDE_CONFIGURATIONS_COORDINATOR_OPTIMIZERCONFIGURATION_HPP_
 
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/ConfigurationOption.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <iostream>
@@ -22,7 +23,6 @@
 #include <string>
 #include <thread>
 #include <utility>
-#include <Configurations/ConfigurationOption.hpp>
 
 namespace NES {
 
@@ -79,12 +79,21 @@ class OptimizerConfiguration : public BaseConfiguration {
         false,
         "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)"};
 
+    /**
+     * @brief Perform advance semantic validation on the incoming queries.
+     */
+    BoolOption performAdvanceSemanticValidation = {
+        PERFORM_ADVANCE_SEMANTIC_VALIDATION,
+        false,
+        "Perform advance semantic validation on the incoming queries. (Default: false)"};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
         return {&queryBatchSize,
                 &queryMergerRule,
                 &memoryLayoutPolicy,
-                &performOnlySourceOperatorExpansion};
+                &performOnlySourceOperatorExpansion,
+                &performAdvanceSemanticValidation};
     }
 };
 

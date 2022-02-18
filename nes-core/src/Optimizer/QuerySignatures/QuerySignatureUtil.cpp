@@ -48,63 +48,67 @@ namespace NES::Optimizer {
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::ContextPtr& context,
                                                                       const OperatorNodePtr& operatorNode) {
 
-    NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
-
-    auto children = operatorNode->getChildren();
-    if (operatorNode->isUnaryOperator()) {
-        if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have children : " + operatorNode->toString());
-        } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>() && children.empty()) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have empty children set : " + operatorNode->toString());
-        } else if (!(operatorNode->instanceOf<SourceLogicalOperatorNode>() || operatorNode->instanceOf<SinkLogicalOperatorNode>())
-                   && children.size() != 1) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can have only one children : " + operatorNode->toString()
-                                    + " found : " + std::to_string(children.size()));
+    try {
+        NES_DEBUG("QuerySignatureUtil: Creating query signature for operator " << operatorNode->toString());
+        auto children = operatorNode->getChildren();
+        if (operatorNode->isUnaryOperator()) {
+            if (operatorNode->instanceOf<SourceLogicalOperatorNode>() && !children.empty()) {
+                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have children : " + operatorNode->toString());
+            } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>() && children.empty()) {
+                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Source can't have empty children set : " + operatorNode->toString());
+            } else if (!(operatorNode->instanceOf<SourceLogicalOperatorNode>()
+                         || operatorNode->instanceOf<SinkLogicalOperatorNode>())
+                       && children.size() != 1) {
+                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unary operator can have only one children : "
+                                        + operatorNode->toString() + " found : " + std::to_string(children.size()));
+            }
+        } else if (operatorNode->isBinaryOperator() && children.size() != 2) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Binary operator can't have empty or only one children : "
+                                    + operatorNode->toString());
         }
-    } else if (operatorNode->isBinaryOperator() && children.size() != 2) {
-        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Binary operator can't have empty or only one children : "
-                                + operatorNode->toString());
-    }
 
-    if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
-        NES_TRACE("QuerySignatureUtil: Computing Signature for Source operator");
-        SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
-        return createQuerySignatureForSource(context, sourceOperator);
+        if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Source operator");
+            SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
+            return createQuerySignatureForSource(context, sourceOperator);
+        }
+        if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
+            NES_ASSERT(!children.empty(), "Sink operator should have atleast one children.");
+            return children[0]->as<LogicalOperatorNode>()->getZ3Signature();
+        } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
+            auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
+            return createQuerySignatureForFilter(context, filterOperator);
+        } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
+            auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
+            return createQuerySignatureForUnion(context, unionOperator);
+        } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Map operator");
+            auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
+            return createQuerySignatureForMap(context, mapOperator);
+        } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for window operator");
+            auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
+            return createQuerySignatureForWindow(context, windowOperator);
+        } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
+            auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
+            return createQuerySignatureForProject(projectOperator);
+        } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for watermark operator");
+            auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
+            return createQuerySignatureForWatermark(context, watermarkAssignerOperator);
+        } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
+            NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
+            auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
+            return createQuerySignatureForJoin(context, joinOperator);
+        }
+        throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
+    } catch (const std::exception& ex) {
+        throw SignatureComputationException(ex.what());
     }
-    if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
-        NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
-        NES_ASSERT(!children.empty(), "Sink operator should have atleast one children.");
-        return children[0]->as<LogicalOperatorNode>()->getZ3Signature();
-    } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
-        NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
-        auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
-        return createQuerySignatureForFilter(context, filterOperator);
-    } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
-        NES_TRACE("QuerySignatureUtil: Computing Signature for Merge operator");
-        auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
-        return createQuerySignatureForUnion(context, unionOperator);
-    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
-        NES_TRACE("QuerySignatureUtil: Computing Signature for Map operator");
-        auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
-        return createQuerySignatureForMap(context, mapOperator);
-    } else if (operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
-        NES_TRACE("QuerySignatureUtil: Computing Signature for window operator");
-        auto windowOperator = operatorNode->as<WindowLogicalOperatorNode>();
-        return createQuerySignatureForWindow(context, windowOperator);
-    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
-        NES_TRACE("QuerySignatureUtil: Computing Signature for Project operator");
-        auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
-        return createQuerySignatureForProject(projectOperator);
-    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
-        NES_TRACE("QuerySignatureUtil: Computing Signature for watermark operator");
-        auto watermarkAssignerOperator = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
-        return createQuerySignatureForWatermark(context, watermarkAssignerOperator);
-    } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-        NES_TRACE("QuerySignatureUtil: Computing Signature for join operator");
-        auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
-        return createQuerySignatureForJoin(context, joinOperator);
-    }
-    throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(const z3::ContextPtr& context,

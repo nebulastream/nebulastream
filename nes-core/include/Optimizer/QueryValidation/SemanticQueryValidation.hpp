@@ -37,6 +37,7 @@ using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 class SemanticQueryValidation {
   private:
     SourceCatalogPtr streamCatalog;
+    bool advanceChecks;
 
     /**
      * @brief Checks if the logical source in the provided QueryPlan is valid
@@ -74,7 +75,6 @@ class SemanticQueryValidation {
     static void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
 
   public:
-
     /**
      * @brief Checks the semantic validity of a Query object
      * @param inputQuery: query to check
@@ -84,14 +84,22 @@ class SemanticQueryValidation {
     /**
      * @brief Constructor for the SemanticQueryValidation class
      * @param sourceCatalog: source catalog
+     * @param advanceChecks: perform advance check
      */
-    explicit SemanticQueryValidation(SourceCatalogPtr sourceCatalog);
+    explicit SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks);
 
     /**
      * @brief Creates an instance of SemanticQueryValidation
      * @param sourceCatalog: source catalog
+     * @param advanceChecks: perform advance check
      */
-    static SemanticQueryValidationPtr create(const SourceCatalogPtr& sourceCatalog);
+    static SemanticQueryValidationPtr create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks);
+
+    /**
+     * Performs advance semantic validation of the queries. For example, checking if the filters in the query are semantically valid.
+     * @param queryPlan: query plan on which the semantic validation is to be applied
+     */
+    void advanceSemanticQueryValidation(QueryPlanPtr& queryPlan);
 };
 
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
