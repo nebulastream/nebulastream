@@ -34,5 +34,9 @@ ENV logicalSourceName="exdra"
 ENV skipHeader=false
 ENV delimiter=","
 ENV logLevel="LOG_INFO"
+ENV workerConf="--coordinatorPort=$coordinatorPort --physicalSources.type=$type --physicalSources.filePath=$filePath \
+                                                        --physicalSources.numberOfBuffersToProduce=$numberOfBuffersToProduce --sourceFrequency=$sourceFrequency \
+                                                        --physicalSources.physicalSourceName=$physicalSourceName --physicalSources.logicalSourceName=$logicalSourceName \
+                                                        --physicalSources.skipHeader=$skipHeader --physicalSources.delimiter=$delimiter --logLevel=$logLevel"
 
 ENTRYPOINT ["/entrypoint.sh"]

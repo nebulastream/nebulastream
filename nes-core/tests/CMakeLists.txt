@@ -427,7 +427,7 @@ target_link_libraries(semantic-query-validation-test nes-tests)
 add_test(NAME semantic-query-validation-test COMMAND semantic-query-validation-test)
 
 ### Operator To FOL Util Test ###
-add_executable(query-signature-util-tests "UnitTests/Optimizer/Utils/QuerySignatureUtilTests.cpp")
+add_executable(query-signature-util-tests "UnitTests/Optimizer/QuerySignatures/QuerySignatureUtilTests.cpp")
 target_link_libraries(query-signature-util-tests nes-tests)
 add_test(NAME query-signature-util-tests COMMAND query-signature-util-tests)
 
