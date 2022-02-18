@@ -21,7 +21,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"//
+#include <NesBaseTest.hpp>//
 
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>

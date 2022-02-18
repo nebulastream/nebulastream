@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include "gtest/gtest.h"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>

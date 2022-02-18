@@ -52,8 +52,7 @@
 #include <Common/ExecutableType/Array.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 
 using namespace NES::Windowing;
 namespace NES {

@@ -25,7 +25,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <ostream>
 
 inline constexpr auto zmqPort = static_cast<uint16_t>(11195u);// XXX: 666555;

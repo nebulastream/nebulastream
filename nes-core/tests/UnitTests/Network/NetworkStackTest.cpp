@@ -36,7 +36,7 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>

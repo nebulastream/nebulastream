@@ -14,7 +14,7 @@
 #include <Runtime/InMemoryLineageManager.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <thread>
 
 namespace NES {

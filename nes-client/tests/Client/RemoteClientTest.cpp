@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "../../nes-core/tests/util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include "Util/TestUtils.hpp"
 #include "gtest/gtest.h"
 #include <API/Query.hpp>

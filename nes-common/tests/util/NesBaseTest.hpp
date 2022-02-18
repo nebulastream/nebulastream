@@ -16,6 +16,13 @@
 
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <typeinfo>
+
+#define ASSERT_INSTANCE_OF(node, instance)                                                                                       \
+    if (!(node)->instanceOf<instance>()) {                                                                                       \
+        auto message = (node)->toString() + " is not of instance " + std::string(typeid(instance).name());                       \
+        GTEST_FATAL_FAILURE_(message.c_str());                                                                                   \
+    }
 
 namespace NES {
 namespace Testing {

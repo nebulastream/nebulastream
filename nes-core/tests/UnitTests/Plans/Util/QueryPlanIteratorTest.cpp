@@ -33,7 +33,7 @@
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <gtest/gtest.h>
-#include "../../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;

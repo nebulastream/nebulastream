@@ -13,7 +13,7 @@
 */
 
 #include "gtest/gtest.h"
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>

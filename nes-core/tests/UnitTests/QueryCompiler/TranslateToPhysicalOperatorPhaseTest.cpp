@@ -27,7 +27,7 @@
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Plans/Query/QueryPlan.hpp>

@@ -15,8 +15,17 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 
+#-------------------------------##############----------------------------------
+#------------------------------- # Nes Utils for Test Suite --------------------------------
+
+add_library(nes-tests-util SHARED "util/NesBaseTest.cpp")
+message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(nes-tests-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/util/")
+target_link_libraries(nes-tests-util PUBLIC ${GTEST_LIBRARIES} nes-common)
+
+
 ### Thread Naming Test ###
-add_executable(thread-naming-tests "Util/ThreadNamingTest.cpp")
+add_executable(thread-naming-tests "UnitTests/Util/ThreadNamingTest.cpp")
 target_link_libraries(thread-naming-tests nes-common ${GTEST_LIBRARIES})
 add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
 

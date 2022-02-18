@@ -15,7 +15,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferStorage.hpp>
 #include <Util/Logger.hpp>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <thread>
 namespace NES {
 const size_t buffersInserted = 21;

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include "../../../nes-core/tests/util/NesBaseTest.hpp"
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -20,6 +19,7 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <NesBaseTest.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -28,7 +28,6 @@
 #include <iostream>
 namespace NES::Experimental {
 
-;
 struct __attribute__((packed)) record_customer {
     uint64_t C_CUSTKEY;
     char C_NAME[25 + 1];
@@ -104,7 +103,7 @@ TEST_F(StaticDataSourceIntegrationTest, testCustomerTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->rpcPort=(*rpcCoordinatorPort);
+    crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
@@ -192,7 +191,7 @@ TEST_F(StaticDataSourceIntegrationTest, testNationTable) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->rpcPort=(*rpcCoordinatorPort);
+    crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 
@@ -266,7 +265,7 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableJoin) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
-    crdConf->rpcPort=(*rpcCoordinatorPort);
+    crdConf->rpcPort = (*rpcCoordinatorPort);
     crdConf->restPort = *restPort;
     wrkConf->coordinatorPort = *rpcCoordinatorPort;
 

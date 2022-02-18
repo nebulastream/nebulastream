@@ -13,7 +13,7 @@
 */
 #ifdef ENABLE_MQTT_BUILD
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>

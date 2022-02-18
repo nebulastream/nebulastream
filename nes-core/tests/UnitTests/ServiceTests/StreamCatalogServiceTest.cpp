@@ -24,7 +24,7 @@
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <string>
 
 using namespace std;

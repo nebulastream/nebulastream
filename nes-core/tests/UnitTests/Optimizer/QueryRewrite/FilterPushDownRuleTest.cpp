@@ -14,7 +14,7 @@
 
 // clang-format off
 #include <gtest/gtest.h>
-#include "../../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 // clang-format on
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>

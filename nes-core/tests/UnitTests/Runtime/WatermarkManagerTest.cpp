@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <atomic>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <random>
 #include <thread>
