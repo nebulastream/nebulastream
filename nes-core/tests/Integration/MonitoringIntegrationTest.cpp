@@ -12,18 +12,15 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include "../util/NesBaseTest.hpp"
+#include <gtest/gtest.h>
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include "Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp"
-#include "Monitoring/Metrics/Gauge/DiskMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/MemoryMetrics.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetricsWrapper.hpp"
-#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
-#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
-#include "Monitoring/MonitoringPlan.hpp"
+#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
 
 #include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
@@ -34,7 +31,6 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include "Monitoring/Metrics/Gauge/GroupedMetricValues.hpp"
 #include <Services/MonitoringService.hpp>
 #include <cpprest/json.h>
 #include <cstdint>
@@ -66,12 +62,12 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->enableMonitoring=(true);
+    coordinatorConfig->enableMonitoring = (true);
     coordinatorConfig->restPort = *restPort;
-    wrkConf1->coordinatorPort=(*rpcCoordinatorPort);
-    wrkConf1->enableMonitoring=(true);
-    wrkConf2->coordinatorPort=(*rpcCoordinatorPort);
-    wrkConf2->enableMonitoring=(true);
+    wrkConf1->coordinatorPort = (*rpcCoordinatorPort);
+    wrkConf1->enableMonitoring = (true);
+    wrkConf2->coordinatorPort = (*rpcCoordinatorPort);
+    wrkConf2->enableMonitoring = (true);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -149,12 +145,12 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
-    coordinatorConfig->enableMonitoring=(true);
+    coordinatorConfig->enableMonitoring = (true);
     coordinatorConfig->restPort = *restPort;
-    wrkConf1->coordinatorPort=(*rpcCoordinatorPort);
-    wrkConf1->enableMonitoring=(true);
-    wrkConf2->coordinatorPort=(*rpcCoordinatorPort);
-    wrkConf2->enableMonitoring=(true);
+    wrkConf1->coordinatorPort = (*rpcCoordinatorPort);
+    wrkConf1->enableMonitoring = (true);
+    wrkConf2->coordinatorPort = (*rpcCoordinatorPort);
+    wrkConf2->enableMonitoring = (true);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -237,11 +233,11 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDis
 
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->enableMonitoring=(monitoring);
-    wrkConf1->coordinatorPort=(*rpcCoordinatorPort);
-    wrkConf1->enableMonitoring=(monitoring);
-    wrkConf2->coordinatorPort=(*rpcCoordinatorPort);
-    wrkConf2->enableMonitoring=(monitoring);
+    coordinatorConfig->enableMonitoring = (monitoring);
+    wrkConf1->coordinatorPort = (*rpcCoordinatorPort);
+    wrkConf1->enableMonitoring = (monitoring);
+    wrkConf2->coordinatorPort = (*rpcCoordinatorPort);
+    wrkConf2->enableMonitoring = (monitoring);
 
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
