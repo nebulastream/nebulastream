@@ -13,12 +13,11 @@
 */
 
 #include <Exceptions/WindowProcessingException.hpp>
-#include <Runtime/internal/backward.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
 
 WindowProcessingException::WindowProcessingException(const std::string& message)
-    : NesRuntimeException(message, NES::Runtime::collectAndPrintStacktrace()) {
+    : RuntimeException(message, NES::collectAndPrintStacktrace()) {
     NES_ERROR(message);
 }
 }// namespace NES

@@ -15,7 +15,7 @@
 #ifndef NES_INCLUDE_EXCEPTIONS_WINDOW_PROCESSING_EXCEPTION_HPP_
 #define NES_INCLUDE_EXCEPTIONS_WINDOW_PROCESSING_EXCEPTION_HPP_
 
-#include <Exceptions/NesRuntimeException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <string>
 
 namespace NES {
@@ -23,7 +23,7 @@ namespace NES {
 /**
  * @brief This exception is thrown when an error occurs during window processing.
  */
-class WindowProcessingException : public NesRuntimeException {
+class WindowProcessingException : public Exceptions::RuntimeException {
   public:
     /**
      * @brief Construct a WindowProcessingException exception from a message.
