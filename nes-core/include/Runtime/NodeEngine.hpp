@@ -23,7 +23,6 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Services/ReplicationService.hpp>
 #include <Runtime/MaterializedViewManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
@@ -247,6 +246,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     */
     std::vector<QueryStatistics> getQueryStatistics(bool withReset = false);
 
+    /**
+    * @brief maps querySubId to query id
+    * @return query id
+    */
+    uint64_t getQueryId(uint64_t querySubPlanId) const;
+
     Network::PartitionManagerPtr getPartitionManager();
 
     /**
@@ -297,23 +302,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     const std::vector<PhysicalSourcePtr>& getPhysicalSources() const;
 
     /**
-     * @brief Provide replication service
-     * @return replicationService replication service
-     */
-    ReplicationServicePtr getReplicationService();
-
-    /**
-     * @brief maps querySubId t
-     * @return replicationService replication service
-     */
-    uint64_t getQueryIdFromSubQueryId(uint64_t querySubPlanId) const;
-
-    /**
      * @brief finds executable query plan for a given sub query id
      * @param querySubPlanId query sub plan id
      * @return executable query plan
      */
-    Execution::ExecutableQueryPlanPtr getExecutableQueryPlanForSubQueryId(uint64_t querySubPlanId) const;
+    std::shared_ptr<const Execution::ExecutableQueryPlan> getExecutableQueryPlan(uint64_t querySubPlanId) const;
 
   private:
     std::vector<PhysicalSourcePtr> physicalSources;
@@ -327,7 +320,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     QueryCompilation::QueryCompilerPtr queryCompiler;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
-    ReplicationServicePtr replicationService;
     std::weak_ptr<NesWorker> nesWorker;
     Network::NetworkManagerPtr networkManager;
     NES::Experimental::MaterializedView::MaterializedViewManagerPtr materializedViewManager;

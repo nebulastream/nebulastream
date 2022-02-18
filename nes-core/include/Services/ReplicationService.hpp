@@ -43,9 +43,12 @@ class ReplicationService {
      * @param queryId current query id
      * @return current epoch barrier
      */
-    int getcurrentEpochBarrierForGivenQueryAndEpoch(uint64_t queryId, uint64_t epoch) const;
+    int getCurrentEpochBarrier(uint64_t queryId, uint64_t epoch) const;
 
   private:
+    void saveEpochBarrier(uint64_t queryId, uint64_t epoch) const;
+    std::vector<SourceLogicalOperatorNodePtr> getLogicalSources(uint64_t queryId) const;
+    std::vector<TopologyNodePtr> getPhysicalSources(SourceLogicalOperatorNodePtr logicalSource) const;
     mutable std::recursive_mutex replicationServiceMutex;
     NesCoordinatorPtr coordinatorPtr;
     mutable std::unordered_map<uint64_t, std::pair<uint64_t, uint64_t>> queryIdToCurrentEpochBarrierMap;
