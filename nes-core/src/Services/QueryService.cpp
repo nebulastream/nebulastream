@@ -43,7 +43,8 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog,
       optimizerConfiguration(optimizerConfiguration) {
     NES_DEBUG("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(std::move(queryParsingService));
-    semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalog);
+    semanticQueryValidation =
+        Optimizer::SemanticQueryValidation::create(streamCatalog, optimizerConfiguration.performAdvanceSemanticValidation);
 }
 
 uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString,

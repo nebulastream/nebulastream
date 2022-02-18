@@ -31,10 +31,11 @@
 
 namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog) : streamCatalog(std::move(sourceCatalog)) {}
+SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks)
+    : streamCatalog(std::move(sourceCatalog)), advanceChecks(advanceChecks) {}
 
-SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& sourceCatalog) {
-    return std::make_shared<SemanticQueryValidation>(sourceCatalog);
+SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks) {
+    return std::make_shared<SemanticQueryValidation>(sourceCatalog, advanceChecks);
 }
 
 void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
@@ -59,23 +60,29 @@ void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
         throw InvalidQueryException(errorMessage + "\n");
     }
 
+    if (advanceChecks) {
+        advanceSemanticQueryValidation(queryPlan);
+    }
+}
+
+void SemanticQueryValidation::advanceSemanticQueryValidation(QueryPlanPtr& queryPlan) {
     try {
         // Creating a z3 context for the signature inference and the z3 solver
         z3::ContextPtr context = std::make_shared<z3::context>();
         auto signatureInferencePhase =
-            Optimizer::SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+            SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
         z3::solver solver(*context);
         signatureInferencePhase->execute(queryPlan);
         auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
 
         // Looping through all filter operators of the Query, checking for contradicting conditions.
         for (const auto& filterOp : filterOperators) {
-            Optimizer::QuerySignaturePtr qsp = filterOp->getZ3Signature();
+            QuerySignaturePtr qsp = filterOp->getZ3Signature();
 
             // Adding the conditions to the z3 SMT solver
             z3::ExprPtr conditions = qsp->getConditions();
             solver.add(*(qsp->getConditions()));
-
+            NES_INFO(solver);
             // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
             if (solver.check() == z3::unsat) {
                 auto predicateStr = filterOp->getPredicate()->toString();
@@ -99,17 +106,17 @@ void SemanticQueryValidation::createExceptionForPredicate(std::string& predicate
     eraseAllSubStr(predicateString, "FieldAccessNode");
     eraseAllSubStr(predicateString, "ConstantValue");
     eraseAllSubStr(predicateString, "BasicValue");
-    eraseAllSubStr(predicateString, "$");
+    //    eraseAllSubStr(predicateString, "$");
 
     // Adding whitespace between bool operators for better readability
     findAndReplaceAll(predicateString, "&&", " && ");
     findAndReplaceAll(predicateString, "||", " || ");
 
     // Removing logical stream names for better readability
-    auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
-    for (const auto& logicalStream : allLogicalStreams) {
-        eraseAllSubStr(predicateString, logicalStream.first);
-    }
+    //    auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
+    //    for (const auto& logicalStream : allLogicalStreams) {
+    //        eraseAllSubStr(predicateString, logicalStream.first);
+    //    }
 
     throw InvalidQueryException("Unsatisfiable Query due to filter condition:\n" + predicateString + "\n");
 }
