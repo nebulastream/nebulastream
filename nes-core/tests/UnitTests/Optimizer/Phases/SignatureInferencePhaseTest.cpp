@@ -24,8 +24,8 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignature.hpp>
+#include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
