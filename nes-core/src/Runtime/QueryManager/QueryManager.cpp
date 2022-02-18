@@ -292,17 +292,18 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
 
         NES_DEBUG("QueryManager: Source " << sourceOperatorId << " not found. Creating new element with with qep " << qep);
         sourceIdToExecutableQueryPlanMap[sourceOperatorId] = qep;
-//        queryToStatisticsMap.insert(qep->getQuerySubPlanId(),std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
+        //        queryToStatisticsMap.insert(qep->getQuerySubPlanId(),std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
         queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorId);
     }
 
-    NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId() << " subplanId=" <<qep->getQuerySubPlanId());
-    queryToStatisticsMap[qep->getQuerySubPlanId()] = std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId());
-
+    NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId()
+                                              << " subplanId=" << qep->getQuerySubPlanId());
+    queryToStatisticsMap[qep->getQuerySubPlanId()] =
+        std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId());
 
     //currently we asume all queues have same number of threads so we can do this.
     queryToTaskQueueIdMap[qep->getQueryId()] = currentTaskQueueId++;
-    NES_DEBUG("queryToTaskQueueIdMap add for=" << qep->getQueryId() << " queue=" << currentTaskQueueId -1);
+    NES_DEBUG("queryToTaskQueueIdMap add for=" << qep->getQueryId() << " queue=" << currentTaskQueueId - 1);
     return true;
 }
 
@@ -560,12 +561,10 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
-    if(mode == Dynamic)
-    {
-        new (buffer.getBuffer()) ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
-    }
-    else
-    {
+    if (mode == Dynamic) {
+        new (buffer.getBuffer())
+            ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
+    } else {
         new (buffer.getBuffer()) ReconfigurationMessage(message, numberOfThreadsPerQueue, blocking);// memcpy using copy ctor
     }
     return addReconfigurationMessage(queryId, queryExecutionPlanId, std::move(buffer), blocking);
@@ -591,13 +590,12 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
                                                           std::vector<Execution::SuccessorExecutablePipeline>(),
                                                           true);
 
-    for (uint64_t threadId = 0; threadId < numberOfThreadsPerQueue; threadId++) {
-        if(mode == Dynamic)
-        {
+    if (mode == Dynamic) {
+        for (uint64_t threadId = 0; threadId < threadPool->getNumberOfThreads(); threadId++) {
             taskQueues[0].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
-        else
-        {
+    } else {
+        for (uint64_t threadId = 0; threadId < numberOfThreadsPerQueue; threadId++) {
             taskQueues[queryToTaskQueueIdMap[queryId]].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
     }
@@ -852,7 +850,8 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     } else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         querySubPlanId = (*executablePipeline)->getQuerySubPlanId();
         queryId = (*executablePipeline)->getQueryId();
-        NES_DEBUG("QueryManager::completedWork: task for exec pipeline isreconfig=" << (*executablePipeline)->isReconfiguration());
+        NES_DEBUG(
+            "QueryManager::completedWork: task for exec pipeline isreconfig=" << (*executablePipeline)->isReconfiguration());
     }
 
     if (queryToStatisticsMap.contains(querySubPlanId)) {
@@ -882,11 +881,12 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
 #endif
         statistics->second->incProcessedTuple(task.getNumberOfInputTuples());
     } else {
-        for(auto&elem: queryToStatisticsMap)
-        {
-            NES_DEBUG("first elem=" << elem.first << " queyId=" << elem.second->getQueryId() << " subquery=" << elem.second->getSubQueryId());
+        for (auto& elem : queryToStatisticsMap) {
+            NES_DEBUG("first elem=" << elem.first << " queyId=" << elem.second->getQueryId()
+                                    << " subquery=" << elem.second->getSubQueryId());
         }
-        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing queryId=" << queryId << " subPlanId=" << querySubPlanId);
+        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing queryId=" << queryId << " subPlanId="
+                                                                                                     << querySubPlanId);
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
     }
 #endif
@@ -914,33 +914,33 @@ std::string QueryManager::getQueryManagerStatistics() {
     std::unique_lock lock(statisticsMutex);
     std::stringstream ss;
     ss << "QueryManager Statistics:";
-//    for (auto& [qepId, qep] : runningQEPs) {
-//        auto stats = queryToStatisticsMap.find(qep->getQuerySubPlanId());
-//        ss << "Query=" << qepId;
-//        ss << "\t processedTasks =" << stats->getProcessedTasks();
-//        ss << "\t processedTuple =" << stats->getProcessedTuple();
-//        ss << "\t processedBuffers =" << stats->getProcessedBuffers();
-//        ss << "\t processedWatermarks =" << stats->getProcessedWatermarks();
-//
-//        ss << "Source Statistics:";
-//        for (const auto& source : qep->getSources()) {
-//            ss << "Source:" << source;
-//            ss << "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers();
-//            ss << "\t Generated Tuples=" << source->getNumberOfGeneratedTuples();
-//        }
-//        for (const auto& sink : qep->getSinks()) {
-//            ss << "Sink:" << sink;
-//            ss << "\t Written Buffers=" << sink->getNumberOfWrittenOutBuffers();
-//            ss << "\t Written Tuples=" << sink->getNumberOfWrittenOutTuples();
-//        }
-//    }
+    //    for (auto& [qepId, qep] : runningQEPs) {
+    //        auto stats = queryToStatisticsMap.find(qep->getQuerySubPlanId());
+    //        ss << "Query=" << qepId;
+    //        ss << "\t processedTasks =" << stats->getProcessedTasks();
+    //        ss << "\t processedTuple =" << stats->getProcessedTuple();
+    //        ss << "\t processedBuffers =" << stats->getProcessedBuffers();
+    //        ss << "\t processedWatermarks =" << stats->getProcessedWatermarks();
+    //
+    //        ss << "Source Statistics:";
+    //        for (const auto& source : qep->getSources()) {
+    //            ss << "Source:" << source;
+    //            ss << "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers();
+    //            ss << "\t Generated Tuples=" << source->getNumberOfGeneratedTuples();
+    //        }
+    //        for (const auto& sink : qep->getSinks()) {
+    //            ss << "Sink:" << sink;
+    //            ss << "\t Written Buffers=" << sink->getNumberOfWrittenOutBuffers();
+    //            ss << "\t Written Tuples=" << sink->getNumberOfWrittenOutTuples();
+    //        }
+    //    }
     return ss.str();
 }
 
 QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
     std::unique_lock lock(statisticsMutex);
     NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
-//    return queryToStatisticsMap.find(qepId);
+    //    return queryToStatisticsMap.find(qepId);
     return queryToStatisticsMap[qepId];
 }
 
