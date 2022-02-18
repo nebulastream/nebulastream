@@ -21,7 +21,7 @@ COPY ./docker/executableImage/entrypoint-prepare-nes-package.sh /entrypoint-prep
 COPY ./docker/executableImage/entrypoint-containernet.sh /entrypoint-containernet.sh
 COPY ./docker/executableImage/entrypoint-nes-executable.sh /entrypoint.sh
 
-ENV coordinatorCLIConf = "--coordinatorIp=127.0.0.1 --rpcPort=12346 --restIp=0.0.0.0 --restPort=8081 --logLevel=LOG_INFO"
+ENV coordinatorCLIConf="--coordinatorIp=127.0.0.1 --rpcPort=12346 --restIp=0.0.0.0 --restPort=8081 --logLevel=LOG_INFO"
 ENV workerCLIConf="--coordinatorPort=12346 --logLevel=LOG_INFO --physicalSources.type=CSVSource --physicalSources.filePath=/opt/local/nebula-stream/exdra.csv --physicalSources.numberOfBuffersToProduce=100 --physicalSources.sourceFrequency=1 --physicalSources.physicalSourceName=exdra_worker_1 --physicalSources.logicalSourceName=exdra --physicalSources.skipHeader=false --physicalSources.delimiter=,"
 
 ENTRYPOINT ["/entrypoint.sh"]
