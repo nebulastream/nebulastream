@@ -35,24 +35,25 @@ SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
+void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto* tbuffer = buf.getBuffer<uint8_t>();
+    auto byteOffset = tupleIndex * sizeof(DiskMetrics);
     NES_ASSERT(byteOffset + sizeof(DiskMetrics) <= buf.getBufferSize(), "DiskMetrics: Content does not fit in TupleBuffer");
     memcpy(tbuffer + byteOffset, this, sizeof(DiskMetrics));
-    buf.setNumberOfTuples(buf.getNumberOfTuples()+1);
+    buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     //get index where the schema for CpuMetricsWrapper is starting
     auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
     int cnt = 0;
 
-    fBsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    fFrsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    fBlocks = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    fBfree = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    fBavail = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    fBsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    fFrsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    fBlocks = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    fBfree = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    fBavail = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
 }
 
 web::json::value DiskMetrics::toJson() const {
@@ -72,12 +73,12 @@ bool DiskMetrics::operator==(const DiskMetrics& rhs) const {
 
 bool DiskMetrics::operator!=(const DiskMetrics& rhs) const { return !(rhs == *this); }
 
-void writeToBuffer(const DiskMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metric.writeToBuffer(buf, byteOffset);
+void writeToBuffer(const DiskMetrics& metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metric.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metrics.readFromBuffer(buf, byteOffset);
+void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metrics.readFromBuffer(buf, tupleIndex);
 }
 
 }// namespace NES

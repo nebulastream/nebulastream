@@ -21,7 +21,7 @@ class NetworkMetricsWrapper {
      * @param prefix
      * @return The object
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
@@ -30,7 +30,7 @@ class NetworkMetricsWrapper {
      * @param prefix
      * @return The object
     */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
     /**
      * @brief Returns the Network metrics for a given core
@@ -66,7 +66,7 @@ class NetworkMetricsWrapper {
  * @param the TupleBuffer
  * @param the prefix as std::string
 */
-void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
@@ -75,7 +75,7 @@ void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& b
  * @param prefix
  * @return The object
 */
-void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 }// namespace NES
 

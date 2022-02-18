@@ -41,7 +41,7 @@ class RuntimeMetrics {
      * @param prefix
      * @return The object
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a metrics objects from a given Schema and TupleBuffer.
@@ -50,7 +50,7 @@ class RuntimeMetrics {
      * @param prefix
      * @return The object
     */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
     /**
      * @brief Returns the metrics as json
@@ -80,7 +80,7 @@ using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeMetrics>;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses a metrics objects from a given Schema and TupleBuffer.
@@ -89,7 +89,7 @@ void writeToBuffer(const RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uin
  * @param prefix
  * @return The object
 */
-void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 }// namespace NES
 

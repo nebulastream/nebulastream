@@ -44,30 +44,31 @@ SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
+void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto* tbuffer = buf.getBuffer<uint8_t>();
+    auto byteOffset = tupleIndex * sizeof(CpuMetrics);
     NES_ASSERT(byteOffset + sizeof(CpuMetrics) <= buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");
     memcpy(tbuffer + byteOffset, this, sizeof(CpuMetrics));
-    buf.setNumberOfTuples(buf.getNumberOfTuples()+1);
+    buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     //get index where the schema is starting
     auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
     int cnt = 0;
-    core_num = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    core_num = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    user = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    nice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    system = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    idle = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    iowait = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    irq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    softirq = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    steal = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    guest = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    guestnice = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
 }
 
 std::ostream& operator<<(std::ostream& os, const CpuMetrics& values) {

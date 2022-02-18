@@ -61,32 +61,33 @@ SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
+void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto* tbuffer = buf.getBuffer<uint8_t>();
+    auto byteOffset = tupleIndex * sizeof(RegistrationMetrics);
     NES_ASSERT(byteOffset + sizeof(RegistrationMetrics) <= buf.getBufferSize(),
                "RuntimeMetrics: Content does not fit in TupleBuffer");
     NES_ASSERT(sizeof(RegistrationMetrics) == RegistrationMetrics::getSchema("")->getSchemaSizeInBytes(),
                sizeof(RegistrationMetrics) << "!=" << RegistrationMetrics::getSchema("")->getSchemaSizeInBytes());
 
     memcpy(tbuffer + byteOffset, this, sizeof(RegistrationMetrics));
-    buf.setNumberOfTuples(buf.getNumberOfTuples()+1);
+    buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     //get index where the schema is starting
     auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
     int cnt = 0;
 
-    totalMemoryBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    totalMemoryBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
 
-    cpuCoreNum = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    totalCPUJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    cpuPeriodUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    cpuQuotaUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    cpuCoreNum = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    totalCPUJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    cpuPeriodUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    cpuQuotaUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(cnt++, layout, buf)[tupleIndex];
 
-    isMoving = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(byteOffset + cnt++, layout, buf)[0];
-    hasBattery = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(byteOffset + cnt++, layout, buf)[0];
+    isMoving = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(cnt++, layout, buf)[tupleIndex];
+    hasBattery = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(cnt++, layout, buf)[tupleIndex];
 }
 
 web::json::value RegistrationMetrics::toJson() const {
@@ -125,12 +126,12 @@ bool RegistrationMetrics::operator==(const RegistrationMetrics& rhs) const {
 
 bool RegistrationMetrics::operator!=(const RegistrationMetrics& rhs) const { return !(rhs == *this); }
 
-void writeToBuffer(const RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metrics.writeToBuffer(buf, byteOffset);
+void writeToBuffer(const RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metrics.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metrics.readFromBuffer(buf, byteOffset);
+void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metrics.readFromBuffer(buf, tupleIndex);
 }
 
 }// namespace NES

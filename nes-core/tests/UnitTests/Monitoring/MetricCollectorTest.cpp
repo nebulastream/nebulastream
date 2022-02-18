@@ -29,6 +29,7 @@
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 
 namespace NES {
 
@@ -60,22 +61,68 @@ class MetricCollectorTest : public testing::Test {
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
-TEST_F(MetricCollectorTest, testCpuCollector) {
+TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
+    auto networkCollector = NetworkCollector();
+    MetricPtr NetworkMetric = networkCollector.readMetric();
+    EXPECT_EQ(NetworkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
+
+    NetworkMetricsWrapper wrappedMetric = NetworkMetric->getValue<NetworkMetricsWrapper>();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+    wrappedMetric.writeToBuffer(tupleBuffer, 0);
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
+
+    NetworkMetricsWrapper parsedMetric{};
+    readFromBuffer(parsedMetric, tupleBuffer, 0);
+    EXPECT_EQ(wrappedMetric, parsedMetric);
+}
+
+TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
+    auto networkCollector = NetworkCollector();
+    MetricPtr networkMetric = networkCollector.readMetric();
+    EXPECT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
+
+    NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
+    NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
+
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+    totalMetrics.writeToBuffer(tupleBuffer, 0);
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+
+    NetworkMetrics parsedMetric{};
+    readFromBuffer(parsedMetric, tupleBuffer, 0);
+    EXPECT_EQ(totalMetrics, parsedMetric);
+}
+
+TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
     auto cpuCollector = CpuCollector();
     MetricPtr cpuMetric = cpuCollector.readMetric();
     EXPECT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
 
-    CpuMetricsWrapper typedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
+    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
+    auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
+    wrappedMetric.writeToBuffer(tupleBuffer, 0);
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
+
+    CpuMetricsWrapper parsedMetric{};
+    readFromBuffer(parsedMetric, tupleBuffer, 0);
+    EXPECT_EQ(wrappedMetric, parsedMetric);
+}
+
+TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
+    auto cpuCollector = CpuCollector();
+    MetricPtr cpuMetric = cpuCollector.readMetric();
+    EXPECT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
+
+    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
+    CpuMetrics totalMetrics = wrappedMetric.getValue(0);
 
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
-    auto success = cpuCollector.fillBuffer(tupleBuffer);
+    totalMetrics.writeToBuffer(tupleBuffer, 0);
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == typedMetric.size());
-
-    CpuMetricsWrapper parsedMetric;
+    CpuMetrics parsedMetric;
     readFromBuffer(parsedMetric, tupleBuffer, 0);
-    EXPECT_EQ(typedMetric, parsedMetric);
+    EXPECT_EQ(totalMetrics, parsedMetric);
 }
 
 TEST_F(MetricCollectorTest, testDiskCollector) {
