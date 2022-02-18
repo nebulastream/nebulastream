@@ -37,7 +37,7 @@ class CpuMetrics {
     static SchemaPtr getSchema(const std::string& prefix);
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
@@ -46,7 +46,7 @@ class CpuMetrics {
     void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
 
     /**
-     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
@@ -85,8 +85,7 @@ class CpuMetrics {
 } __attribute__((packed));
 
 /**
- * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
- * that should be added before each field description in the Schema.
+ * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
  * @param the CpuMetrics
  * @param the schema
  * @param the TupleBuffer
@@ -95,7 +94,7 @@ class CpuMetrics {
 void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+ * @brief Parses a metrics objects from a given Schema and TupleBuffer.
  * @param schema
  * @param buf
  * @param prefix

@@ -35,13 +35,22 @@ class MemoryMetrics {
     static SchemaPtr getSchema(const std::string& prefix = "");
 
     /**
-     * @brief Parses a MemoryMetrics objects from a given Schema and TupleBuffer.
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
-     * @return The MemoryMetrics object
-     */
-    static MemoryMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
+     * @return The object
+    */
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+
+    /**
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
     /**
      * @brief Returns the metrics as json
@@ -67,11 +76,11 @@ class MemoryMetrics {
     uint64_t LOADS_5MIN;
     uint64_t LOADS_15MIN;
 } __attribute__((packed));
+using MemoryMetricsPtr = std::shared_ptr<MemoryMetrics>;
 
 /**
- * @brief The serialize method to write MemoryMetrics into the given Schema and TupleBuffer. The prefix specifies a string
- * that should be added before each field description in the Schema.
- * @param the MemoryMetrics
+ * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
+ * @param the CpuMetrics
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
@@ -79,14 +88,14 @@ class MemoryMetrics {
 void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief Class specific getSchema() method
- * @param metric
+ * @brief Parses a metrics objects from a given Schema and TupleBuffer.
+ * @param schema
+ * @param buf
  * @param prefix
- * @return the SchemaPtr
- */
-SchemaPtr getSchema(const MemoryMetrics& metric, const std::string& prefix);
+ * @return The object
+*/
+void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
-using MemoryMetricsPtr = std::shared_ptr<MemoryMetrics>;
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_

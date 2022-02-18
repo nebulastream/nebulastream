@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
 #include "API/AttributeField.hpp"
 #include "API/Schema.hpp"
 #include "Common/DataTypes/FixedChar.hpp"
-#include "Monitoring/Metrics/Gauge/NetworkMetrics.hpp"
 #include "Monitoring/Util/MetricUtils.hpp"
 #include "Runtime/MemoryLayout/RowLayout.hpp"
 #include "Runtime/MemoryLayout/RowLayoutField.hpp"
@@ -53,40 +53,37 @@ SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-NetworkMetrics NetworkMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
-    NetworkMetrics output{};
-    auto i = schema->getIndex(prefix);
+void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
+    auto* tbuffer = buf.getBuffer<uint8_t>();
+    NES_ASSERT(byteOffset + sizeof(NetworkMetrics) <= buf.getBufferSize(), "NetworkMetrics: Content does not fit in TupleBuffer");
+    memcpy(tbuffer + byteOffset, this, sizeof(NetworkMetrics));
+    buf.setNumberOfTuples(buf.getNumberOfTuples()+1);
+}
 
-    if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("NetworkMetrics: Tuple size should be 1, but is larger "
-                                + std::to_string(buf.getNumberOfTuples()));
-    }
-
-    if (!MetricUtils::validateFieldsInSchema(NetworkMetrics::getSchema(""), schema, i)) {
-        NES_THROW_RUNTIME_ERROR("NetworkMetrics: Incomplete number of fields in schema.");
-    }
+void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    //get index where the schema is starting
+    auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
-    output.interfaceName = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.rBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.rPackets = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.rErrs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.rDrop = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.rFifo = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.rFrame = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.rCompressed = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.rMulticast = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
+    int cnt = 0;
+    interfaceName = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    rBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    rPackets = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    rErrs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    rDrop = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    rFifo = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    rFrame = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    rCompressed = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    rMulticast = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
 
-    output.tBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.tPackets = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.tErrs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.tDrop = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.tFifo = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.tColls = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.tCarrier = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.tCompressed = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i, layout, buf)[0];
-
-    return output;
+    tBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    tPackets = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    tErrs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    tDrop = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    tFifo = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    tColls = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    tCarrier = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    tCompressed = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
 }
 
 web::json::value NetworkMetrics::toJson() const {
@@ -113,14 +110,6 @@ web::json::value NetworkMetrics::toJson() const {
     return metricsJson;
 }
 
-void writeToBuffer(const NetworkMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(NetworkMetrics) <= buf.getBufferSize(), "NetworkMetrics: Content does not fit in TupleBuffer");
-
-    memcpy(tbuffer + byteOffset, &metric, sizeof(NetworkMetrics));
-    buf.setNumberOfTuples(1);
-}
-
 bool NetworkMetrics::operator==(const NetworkMetrics& rhs) const {
     return interfaceName == rhs.interfaceName && rBytes == rhs.rBytes && rPackets == rhs.rPackets && rErrs == rhs.rErrs
         && rDrop == rhs.rDrop && rFifo == rhs.rFifo && rFrame == rhs.rFrame && rCompressed == rhs.rCompressed
@@ -129,5 +118,13 @@ bool NetworkMetrics::operator==(const NetworkMetrics& rhs) const {
         && tCompressed == rhs.tCompressed;
 }
 bool NetworkMetrics::operator!=(const NetworkMetrics& rhs) const { return !(rhs == *this); }
+
+void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.writeToBuffer(buf, byteOffset);
+}
+
+void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.readFromBuffer(buf, byteOffset);
+}
 
 }// namespace NES

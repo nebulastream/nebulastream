@@ -46,12 +46,6 @@ void writeToBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t byteOffs
 void writeToBuffer(const std::string& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
-* @brief class specific getSchema() methods
-*/
-SchemaPtr getSchema(uint64_t metric, const std::string& prefix);
-SchemaPtr getSchema(const std::string& metric, const std::string& prefix);
-
-/**
  * @brief class specific readFromBuffer()
  * @return the value
  */
@@ -153,11 +147,6 @@ class Metric {
          * @brief The deserialize concept to enable polymorphism across different metrics to make them deserializable.
         */
         virtual void readFromBufferConcept(Runtime::TupleBuffer&, uint64_t byteOffset) = 0;
-
-        /**
-         * @brief Return the schema of a metric
-         */
-        virtual SchemaPtr getSchemaConcept(const std::string& prefix) = 0;
     };
 
     /**
@@ -179,8 +168,6 @@ class Metric {
         void readFromBufferConcept(Runtime::TupleBuffer& buf, uint64_t byteOffset) override {
             readFromBuffer(data, buf, byteOffset);
         }
-
-        SchemaPtr getSchemaConcept(const std::string& prefix) override { return getSchema(data, prefix); };
 
         T data;
     };

@@ -30,7 +30,7 @@ class RegistrationMetrics {
   public:
     RegistrationMetrics();
     RegistrationMetrics(bool isMoving, bool hasBattery);
-    explicit RegistrationMetrics(SerializableRegistrationMetrics metrics);
+    explicit RegistrationMetrics(const SerializableRegistrationMetrics& metrics);
 
     /**
      * @brief Returns the schema of the class with a given prefix.
@@ -40,13 +40,22 @@ class RegistrationMetrics {
     static SchemaPtr getSchema(const std::string& prefix = "");
 
     /**
-     * @brief Parses a CpuMetricsWrapper objects from a given Schema and TupleBuffer.
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
      * @return The object
-     */
-    static RegistrationMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
+    */
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+
+    /**
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
     /**
      * @brief Returns the metrics as json
@@ -66,7 +75,8 @@ class RegistrationMetrics {
     uint64_t totalMemoryBytes;
 
     uint32_t cpuCoreNum;
-    uint64_t totalCPUJiffies;//user+idle+system (Note: This value can change everytime it is read via AbstractSystemResourcesReader)
+    uint64_t
+        totalCPUJiffies;//user+idle+system (Note: This value can change everytime it is read via AbstractSystemResourcesReader)
 
     // Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
     int64_t cpuPeriodUS;//the CPU CFS scheduler period in microseconds
@@ -79,9 +89,8 @@ class RegistrationMetrics {
 using RegistrationMetricsPtr = std::shared_ptr<RegistrationMetrics>;
 
 /**
- * @brief The serialize method to write NodeRegistrationMetrics into the given Schema and TupleBuffer. The prefix specifies a string
- * that should be added before each field description in the Schema.
- * @param the CpuMetricsWrapper
+ * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
+ * @param the CpuMetrics
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
@@ -89,13 +98,14 @@ using RegistrationMetricsPtr = std::shared_ptr<RegistrationMetrics>;
 void writeToBuffer(const RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief Class specific getSchema() method
- * @param metric
+ * @brief Parses a metrics objects from a given Schema and TupleBuffer.
+ * @param schema
+ * @param buf
  * @param prefix
- * @return the SchemaPtr
- */
-SchemaPtr getSchema(const RegistrationMetrics& metrics, const std::string& prefix);
+ * @return The object
+*/
+void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICVALUES_STATICNESMETRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICVALUES_STATICNESMETRICS_HPP_

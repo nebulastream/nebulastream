@@ -35,13 +35,22 @@ class RuntimeMetrics {
     static SchemaPtr getSchema(const std::string& prefix = "");
 
     /**
-     * @brief Parses a RuntimeMetrics objects based on a given Schema and TupleBuffer.
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
-     * @return The parsed RuntimeMetrics object
-     */
-    static RuntimeMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
+     * @return The object
+    */
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+
+    /**
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
     /**
      * @brief Returns the metrics as json
@@ -65,9 +74,8 @@ class RuntimeMetrics {
 using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeMetrics>;
 
 /**
- * @brief The serialize method to write runtime metrics of NES into the given Schema and TupleBuffer. The prefix specifies a string
- * that should be added before each field description in the Schema.
- * @param the runtime metrics
+ * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
+ * @param the CpuMetrics
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
@@ -75,13 +83,14 @@ using RuntimeNesMetricsPtr = std::shared_ptr<RuntimeMetrics>;
 void writeToBuffer(const RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief Class specific getSchema() method for the runtime metrics
- * @param metric
+ * @brief Parses a metrics objects from a given Schema and TupleBuffer.
+ * @param schema
+ * @param buf
  * @param prefix
- * @return the SchemaPtr
- */
-SchemaPtr getSchema(const RuntimeMetrics& metrics, const std::string& prefix);
+ * @return The object
+*/
+void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICVALUES_RUNTIMENESMETRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICVALUES_RUNTIMENESMETRICS_HPP_

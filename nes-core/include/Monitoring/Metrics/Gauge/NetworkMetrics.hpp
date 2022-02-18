@@ -35,13 +35,22 @@ class NetworkMetrics {
     static SchemaPtr getSchema(const std::string& prefix);
 
     /**
-     * @brief Parses a CpuMetricsWrapper objects from a given Schema and TupleBuffer.
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
      * @return The object
-     */
-    static NetworkMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
+    */
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+
+    /**
+     * @brief Parses a metrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
     /**
      * @brief Returns the metrics as json
@@ -74,14 +83,22 @@ class NetworkMetrics {
 } __attribute__((packed));
 
 /**
- * @brief The serialize method to write NetworkMetrics into the given Schema and TupleBuffer. The prefix specifies a string
- * that should be added before each field description in the Schema.
- * @param the CpuMetricsWrapper
+ * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
+ * @param the CpuMetrics
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
 void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+
+/**
+ * @brief Parses a metrics objects from a given Schema and TupleBuffer.
+ * @param schema
+ * @param buf
+ * @param prefix
+ * @return The object
+*/
+void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 

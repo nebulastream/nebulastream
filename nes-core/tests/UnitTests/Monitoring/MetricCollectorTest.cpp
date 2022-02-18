@@ -26,9 +26,9 @@
 #include <Monitoring/MetricCollectors/NetworkCollector.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 
 namespace NES {
 
@@ -60,10 +60,6 @@ class MetricCollectorTest : public testing::Test {
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
-TEST_F(MetricCollectorTest, testbla) {
-    std::cout << " Bla " << std::endl;
-}
-
 TEST_F(MetricCollectorTest, testCpuCollector) {
     auto cpuCollector = CpuCollector();
     MetricPtr cpuMetric = cpuCollector.readMetric();
@@ -77,8 +73,9 @@ TEST_F(MetricCollectorTest, testCpuCollector) {
     EXPECT_TRUE(success);
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == typedMetric.size());
 
-    CpuMetricsWrapper parsedMetric = CpuMetricsWrapper::fromBuffer(CpuMetrics::getSchema(""), tupleBuffer, "");
-    //EXPECT_EQ(typedMetric, parsedMetric);
+    CpuMetricsWrapper parsedMetric;
+    readFromBuffer(parsedMetric, tupleBuffer, 0);
+    EXPECT_EQ(typedMetric, parsedMetric);
 }
 
 TEST_F(MetricCollectorTest, testDiskCollector) {
@@ -93,7 +90,8 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
     EXPECT_TRUE(success);
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-    DiskMetrics parsedMetric = DiskMetrics::fromBuffer(DiskMetrics::getSchema(""), tupleBuffer, "");
+    DiskMetrics parsedMetric{};
+    readFromBuffer(parsedMetric, tupleBuffer, 0);
     EXPECT_EQ(typedMetric, parsedMetric);
 }
 
@@ -109,7 +107,8 @@ TEST_F(MetricCollectorTest, testMemoryCollector) {
     EXPECT_TRUE(success);
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
-    MemoryMetrics parsedMetric = MemoryMetrics::fromBuffer(MemoryMetrics::getSchema(""), tupleBuffer, "");
+    MemoryMetrics parsedMetric{};
+    readFromBuffer(parsedMetric, tupleBuffer, 0);
     EXPECT_EQ(typedMetric, parsedMetric);
 }
 

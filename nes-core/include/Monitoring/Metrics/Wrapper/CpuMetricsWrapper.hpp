@@ -38,19 +38,19 @@ class CpuMetricsWrapper {
      * @param cpuCore core number
      * @return the cpu metrics
     */
-    [[nodiscard]] CpuMetrics getValue(const unsigned int cpuCore) const;
+    [[nodiscard]] CpuMetrics getValue(unsigned int cpuCore) const;
 
     /**
      * @brief The number of CPU metrics contained in the wrapper. The number is not equivalent to the number of cores.
      * @return Number of CPU metrics
      */
-    uint64_t size() const;
+    [[nodiscard]] uint64_t size() const;
 
     /**
      * @brief The summarized stats over all CPU metrics. This metric is equivalent to the 0th element of the list.
      * @return CPUMetrics
      */
-    CpuMetrics getTotal() const;
+    [[nodiscard]] CpuMetrics getTotal() const;
 
     /**
      * @brief Returns the metrics as json
@@ -64,16 +64,6 @@ class CpuMetricsWrapper {
   private:
     std::vector<CpuMetrics> cpuMetrics;
 } __attribute__((packed));
-
-/**
- * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
- * @param schema
- * @param buf
- * @param prefix
- * @return The object
-*/
-void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t byteOffset);
-
 /**
  * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
  * that should be added before each field description in the Schema.
@@ -85,13 +75,13 @@ void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint6
 void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief Class specific getSchema() method
- * @param metric
+ * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+ * @param schema
+ * @param buf
  * @param prefix
- * @return the SchemaPtr
+ * @return The object
 */
-SchemaPtr getSchema(const CpuMetricsWrapper& metrics, const std::string& prefix);
-
+void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 }// namespace NES
 
 #endif//NES_NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICSWRAPPER_HPP_

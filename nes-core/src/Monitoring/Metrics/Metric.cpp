@@ -32,12 +32,8 @@ void writeToBuffer(const std::string& metric, Runtime::TupleBuffer&, uint64_t) {
     NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " + metric);
 }
 
-void readFromBuffer(uint64_t, Runtime::TupleBuffer&, uint64_t) { NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible"); }
-
-SchemaPtr getSchema(uint64_t, const std::string& prefix) { return Schema::create()->addField(prefix + "uint64", UINT64); }
-
-SchemaPtr getSchema(const std::string& metric, const std::string& prefix) {
-    NES_THROW_RUNTIME_ERROR("Metric: Schema for std::string not possible for metric " + metric + "and prefix " + prefix);
+void readFromBuffer(uint64_t, Runtime::TupleBuffer&, uint64_t) {
+    NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible");
 }
 
 }// namespace NES

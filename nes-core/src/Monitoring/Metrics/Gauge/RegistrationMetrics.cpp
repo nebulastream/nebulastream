@@ -17,7 +17,6 @@
 #include <API/Schema.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <CoordinatorRPCService.pb.h>
-#include <Monitoring/Util/MetricUtils.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -40,14 +39,11 @@ RegistrationMetrics::RegistrationMetrics(bool isMoving, bool hasBattery)
               + ", hasBattery:" + std::to_string(hasBattery));
 }
 
-RegistrationMetrics::RegistrationMetrics(SerializableRegistrationMetrics metrics) {
-    totalMemoryBytes = metrics.totalmemorybytes();
-    cpuCoreNum = metrics.cpucorenum();
-    totalCPUJiffies = metrics.totalcpujiffies();
-    cpuPeriodUS = metrics.cpuperiodus();
-    cpuQuotaUS = metrics.cpuquotaus();
-    isMoving = metrics.ismoving();
-    hasBattery = metrics.hasbattery();
+RegistrationMetrics::RegistrationMetrics(const SerializableRegistrationMetrics& metrics)
+    : totalMemoryBytes(metrics.totalmemorybytes()), cpuCoreNum(metrics.cpucorenum()), totalCPUJiffies(metrics.totalcpujiffies()),
+      cpuPeriodUS(metrics.cpuperiodus()), cpuQuotaUS(metrics.cpuquotaus()), isMoving(metrics.ismoving()),
+      hasBattery(metrics.hasbattery()) {
+    NES_DEBUG("RegistrationMetrics: Creating from serializable object.");
 }
 
 SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
@@ -65,32 +61,32 @@ SchemaPtr RegistrationMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-RegistrationMetrics
-RegistrationMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
-    RegistrationMetrics output{};
-    auto i = schema->getIndex(prefix + "totalMemoryBytes");
+void RegistrationMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
+    auto* tbuffer = buf.getBuffer<uint8_t>();
+    NES_ASSERT(byteOffset + sizeof(RegistrationMetrics) <= buf.getBufferSize(),
+               "RuntimeMetrics: Content does not fit in TupleBuffer");
+    NES_ASSERT(sizeof(RegistrationMetrics) == RegistrationMetrics::getSchema("")->getSchemaSizeInBytes(),
+               sizeof(RegistrationMetrics) << "!=" << RegistrationMetrics::getSchema("")->getSchemaSizeInBytes());
 
-    if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("RegistrationMetrics: Tuple size should be 1, but is larger "
-                                + std::to_string(buf.getNumberOfTuples()));
-    }
+    memcpy(tbuffer + byteOffset, this, sizeof(RegistrationMetrics));
+    buf.setNumberOfTuples(buf.getNumberOfTuples()+1);
+}
 
-    if (!MetricUtils::validateFieldsInSchema(RegistrationMetrics::getSchema(""), schema, i)) {
-        NES_THROW_RUNTIME_ERROR("RegistrationMetrics: Incomplete number of fields in schema.");
-    }
-
+void RegistrationMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    //get index where the schema is starting
+    auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-    output.totalMemoryBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
+    int cnt = 0;
 
-    output.cpuCoreNum = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(i++, layout, buf)[0];
-    output.totalCPUJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.cpuPeriodUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(i++, layout, buf)[0];
-    output.cpuQuotaUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(i++, layout, buf)[0];
+    totalMemoryBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
 
-    output.isMoving = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, layout, buf)[0];
-    output.hasBattery = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(i++, layout, buf)[0];
+    cpuCoreNum = Runtime::MemoryLayouts::RowLayoutField<uint16_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    totalCPUJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    cpuPeriodUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    cpuQuotaUS = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
 
-    return output;
+    isMoving = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(byteOffset + cnt++, layout, buf)[0];
+    hasBattery = Runtime::MemoryLayouts::RowLayoutField<bool, true>::create(byteOffset + cnt++, layout, buf)[0];
 }
 
 web::json::value RegistrationMetrics::toJson() const {
@@ -129,17 +125,12 @@ bool RegistrationMetrics::operator==(const RegistrationMetrics& rhs) const {
 
 bool RegistrationMetrics::operator!=(const RegistrationMetrics& rhs) const { return !(rhs == *this); }
 
-void writeToBuffer(const RegistrationMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(RegistrationMetrics) <= buf.getBufferSize(),
-               "RuntimeMetrics: Content does not fit in TupleBuffer");
-    NES_ASSERT(sizeof(RegistrationMetrics) == RegistrationMetrics::getSchema("")->getSchemaSizeInBytes(),
-               sizeof(RegistrationMetrics) << "!=" << RegistrationMetrics::getSchema("")->getSchemaSizeInBytes());
-
-    memcpy(tbuffer + byteOffset, &metric, sizeof(RegistrationMetrics));
-    buf.setNumberOfTuples(1);
+void writeToBuffer(const RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.writeToBuffer(buf, byteOffset);
 }
 
-SchemaPtr getSchema(const RegistrationMetrics&, const std::string& prefix) { return RegistrationMetrics::getSchema(prefix); }
+void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.readFromBuffer(buf, byteOffset);
+}
 
 }// namespace NES

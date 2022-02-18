@@ -25,6 +25,35 @@
 
 namespace NES {
 
+void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
+    auto totalSize = sizeof(NetworkMetrics) * size();
+    NES_ASSERT(totalSize <= buf.getBufferSize(),
+               "CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+
+    for (unsigned int i = 0; i < size(); i++) {
+        NES::writeToBuffer(getNetworkValue(i), buf, byteOffset);
+        byteOffset += sizeof(NetworkMetrics);
+    }
+    buf.setNumberOfTuples(size());
+}
+
+void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    auto schema = NetworkMetrics::getSchema("");
+    auto netList = std::vector<NetworkMetrics>(buf.getNumberOfTuples());
+    NES_DEBUG("CpuMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
+
+    uint64_t offset = byteOffset;
+    for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
+        //for each core parse the according metrics
+        NetworkMetrics metrics{};
+        NES::readFromBuffer(metrics, buf, offset);
+        netList.emplace_back(metrics);
+        offset += schema->getSchemaSizeInBytes();
+    }
+    networkMetrics = std::move(netList);
+}
+
 NetworkMetrics NetworkMetricsWrapper::getNetworkValue(uint64_t interfaceNo) const {
     if (interfaceNo >= size()) {
         NES_THROW_RUNTIME_ERROR("CPU: ArrayType index out of bound " + std::to_string(interfaceNo)
@@ -48,36 +77,6 @@ std::vector<std::string> NetworkMetricsWrapper::getInterfaceNames() {
     return keys;
 }
 
-NetworkMetricsWrapper
-NetworkMetricsWrapper::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& schemaPrefix) {
-    auto output = NetworkMetricsWrapper();
-    auto networkMetricsSchema = NetworkMetrics::getSchema(schemaPrefix);
-    auto firstFieldName = networkMetricsSchema->get(0)->getName();
-
-    auto i = schema->getIndex(schemaPrefix + firstFieldName);
-    auto fieldName = schema->fields[i]->getName();
-    bool hasField = Util::endsWith(fieldName, schemaPrefix + "INTERFACE_NO");
-
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && hasField) {
-        NES_DEBUG("NetworkMetricsWrapper: Prefix found in schema " + schemaPrefix + "INTERFACE_NO with index "
-                  + std::to_string(i));
-
-        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-        auto numInt = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i, layout, buf)[0];
-
-        for (auto n{0UL}; n < numInt; ++n) {
-            NES_DEBUG("NetworkMetricsWrapper: Parsing buffer for interface " + schemaPrefix + "Intfs[" + std::to_string(n + 1)
-                      + "]_");
-            output.addNetworkMetrics(
-                NetworkMetrics::fromBuffer(schema, buf, schemaPrefix + "Intfs[" + std::to_string(n + 1) + "]_"));
-        }
-    } else {
-        NES_THROW_RUNTIME_ERROR("NetworkMetricsWrapper: Metrics could not be parsed from schema " + schema->toString());
-    }
-
-    return output;
-}
-
 web::json::value NetworkMetricsWrapper::toJson() {
     web::json::value metricsJson{};
 
@@ -87,26 +86,6 @@ web::json::value NetworkMetricsWrapper::toJson() {
 
     return metricsJson;
 }
-
-void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    uint64_t intNum = metrics.size();
-
-    uint64_t totalSize = byteOffset + sizeof(uint64_t) + sizeof(NetworkMetrics) * intNum;
-    NES_ASSERT(totalSize <= buf.getBufferSize(), "NetworkMetricsWrapper: Content does not fit in TupleBuffer");
-
-    memcpy(tbuffer + byteOffset, &intNum, sizeof(uint64_t));
-    byteOffset += sizeof(uint64_t);
-
-    for (uint64_t i = 0; i < intNum; i++) {
-        writeToBuffer(metrics.getNetworkValue(i), buf, byteOffset);
-        byteOffset += sizeof(NetworkMetrics);
-    }
-
-    buf.setNumberOfTuples(1);
-}
-
-SchemaPtr getSchema(const NetworkMetricsWrapper&, const std::string& prefix) { return NetworkMetrics::getSchema(prefix); }
 
 bool NetworkMetricsWrapper::operator==(const NetworkMetricsWrapper& rhs) const {
     if (networkMetrics.size() != rhs.networkMetrics.size()) {
@@ -122,5 +101,13 @@ bool NetworkMetricsWrapper::operator==(const NetworkMetricsWrapper& rhs) const {
 }
 
 bool NetworkMetricsWrapper::operator!=(const NetworkMetricsWrapper& rhs) const { return !(rhs == *this); }
+
+void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.writeToBuffer(buf, byteOffset);
+}
+
+void readFromBuffer(NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.readFromBuffer(buf, byteOffset);
+}
 
 }// namespace NES
