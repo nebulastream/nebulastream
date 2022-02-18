@@ -5,7 +5,7 @@ enableMonitoring: false
 logLevel: LOG_WARNING
 
 optimizerConfig:
-  enableSemanticQueryValidation: false
+  advanceSemanticValidation: false
   memoryLayoutPolicy: FORCE_COLUMN_LAYOUT
 
 logicalSources:
