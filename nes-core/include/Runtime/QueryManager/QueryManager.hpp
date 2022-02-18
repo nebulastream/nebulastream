@@ -308,6 +308,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
+    mutable std::mutex addReconfigurationMessageMutex;
 //    cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
     std::map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 

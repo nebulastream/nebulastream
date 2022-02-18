@@ -583,6 +583,7 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
                                              QuerySubPlanId queryExecutionPlanId,
                                              TupleBuffer&& buffer,
                                              bool blocking) {
+    std::unique_lock queryLock(addReconfigurationMessageMutex);
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << task->getType()
