@@ -256,7 +256,6 @@ void QueryManager::destroy() {
     expected = Stopped;
     if (queryManagerStatus.compare_exchange_strong(expected, Destroyed)) {
         {
-
             std::scoped_lock locks(queryMutex, statisticsMutex);
             for (uint32_t i = 0; i < taskQueues.size(); i++) {
                 NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size() << " id=" << i
@@ -467,12 +466,22 @@ void QueryManager::poisonWorkers() {
                                                           std::vector<Execution::SuccessorExecutablePipeline>(),
                                                           true);
 
-    for (auto u{0ul}; u < taskQueues.size(); ++u) {
-        for (auto i{0ul}; i < numberOfThreadsPerQueue; ++i) {
-            NES_DEBUG("Add poision for queue=" << u << " and thread=" << i);
-            taskQueues[u].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
+    if (mode == Static) {
+        for (auto u{0ul}; u < taskQueues.size(); ++u) {
+            for (auto i{0ul}; i < numberOfThreadsPerQueue; ++i) {
+                NES_DEBUG("Add poision for queue=" << u << " and thread=" << i);
+                taskQueues[u].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
+            }
         }
     }
+    else
+    {
+        for (auto u{0ul}; u < threadPool->getNumberOfThreads(); ++u) {
+                NES_DEBUG("Add poision for queue=" << u);
+                taskQueues[u].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
+            }
+    }
+
 }
 
 bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool graceful) {
