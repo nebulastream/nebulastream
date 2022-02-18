@@ -49,8 +49,8 @@ optimizer:
   # The rule to be used for performing query merging
   #queryMergerRule: DefaultQueryMergerRule
 
-  # Semantic Query Validation Feature
-  #enableSemanticQueryValidation: false
+  # Advance Semantic Query Validation Feature
+  #advanceSemanticValidation: false
 
   # Selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]
   #memoryLayoutPolicy: FORCE_ROW_LAYOUT
