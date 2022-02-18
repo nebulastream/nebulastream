@@ -42,14 +42,14 @@ web::json::value asJson(const T&) {
 * @param the TupleBuffer
 * @param the prefix as std::string
 */
-void writeToBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t byteOffset);
-void writeToBuffer(const std::string& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void writeToBuffer(const std::string& metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief class specific readFromBuffer()
  * @return the value
  */
-void readFromBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t offset);
+void readFromBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
 * @brief The metric class is a conceptual superclass that represents all metrics in NES.
@@ -110,8 +110,8 @@ class Metric {
      * @param the metric
      * @return the type of the metric
     */
-    friend void writeToBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-        x.self->writeToBufferConcept(buf, byteOffset);
+    friend void writeToBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+        x.self->writeToBufferConcept(buf, tupleIndex);
     }
 
     /**
@@ -120,8 +120,8 @@ class Metric {
      * @param the metric
      * @return the type of the metric
     */
-    friend void readFromBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-        return x.self->readFromBufferConcept(buf, byteOffset);
+    friend void readFromBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+        return x.self->readFromBufferConcept(buf, tupleIndex);
     }
 
   private:
@@ -141,12 +141,12 @@ class Metric {
         /**
          * @brief The serialize concept to enable polymorphism across different metrics to make them serializable.
         */
-        virtual void writeToBufferConcept(Runtime::TupleBuffer&, uint64_t byteOffset) = 0;
+        virtual void writeToBufferConcept(Runtime::TupleBuffer&, uint64_t tupleIndex) = 0;
 
         /**
          * @brief The deserialize concept to enable polymorphism across different metrics to make them deserializable.
         */
-        virtual void readFromBufferConcept(Runtime::TupleBuffer&, uint64_t byteOffset) = 0;
+        virtual void readFromBufferConcept(Runtime::TupleBuffer&, uint64_t tupleIndex) = 0;
     };
 
     /**
@@ -161,12 +161,12 @@ class Metric {
 
         [[nodiscard]] web::json::value toJson() const override { return asJson(data); }
 
-        void writeToBufferConcept(Runtime::TupleBuffer& buf, uint64_t byteOffset) override {
-            writeToBuffer(data, buf, byteOffset);
+        void writeToBufferConcept(Runtime::TupleBuffer& buf, uint64_t tupleIndex) override {
+            writeToBuffer(data, buf, tupleIndex);
         }
 
-        void readFromBufferConcept(Runtime::TupleBuffer& buf, uint64_t byteOffset) override {
-            readFromBuffer(data, buf, byteOffset);
+        void readFromBufferConcept(Runtime::TupleBuffer& buf, uint64_t tupleIndex) override {
+            readFromBuffer(data, buf, tupleIndex);
         }
 
         T data;

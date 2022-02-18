@@ -50,7 +50,7 @@ class NetworkMetrics {
      * @param prefix
      * @return The object
     */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
     /**
      * @brief Returns the metrics as json
@@ -89,7 +89,7 @@ class NetworkMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses a metrics objects from a given Schema and TupleBuffer.
@@ -98,7 +98,7 @@ void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uin
  * @param prefix
  * @return The object
 */
-void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 }// namespace NES
 

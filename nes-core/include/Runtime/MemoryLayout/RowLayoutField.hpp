@@ -84,7 +84,7 @@ template<class T, bool boundaryChecks>
 inline RowLayoutField<T, boundaryChecks>
 RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer) {
     if (boundaryChecks && fieldIndex >= layout->getFieldOffSets().size()) {
-        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds!" << layout->getFieldOffSets().size() << " >= " << fieldIndex);
+        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layout->getFieldOffSets().size() << " >= " << fieldIndex);
     }
 
     // via pointer arithmetic gets the starting field address

@@ -22,7 +22,7 @@ class CpuMetricsWrapper {
      * @param prefix
      * @return The object
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
@@ -31,7 +31,7 @@ class CpuMetricsWrapper {
      * @param prefix
      * @return The object
     */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
     /**
      * @brief Returns the cpu metrics for a given core
@@ -72,7 +72,7 @@ class CpuMetricsWrapper {
  * @param the TupleBuffer
  * @param the prefix as std::string
 */
-void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
@@ -81,7 +81,7 @@ void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, 
  * @param prefix
  * @return The object
 */
-void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 }// namespace NES
 
 #endif//NES_NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICSWRAPPER_HPP_

@@ -25,33 +25,30 @@
 
 namespace NES {
 
-void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
-    auto totalSize = sizeof(NetworkMetrics) * size();
+void NetworkMetricsWrapper::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
+    auto schema = NetworkMetrics::getSchema("");
+    auto totalSize = schema->getSchemaSizeInBytes() * size();
     NES_ASSERT(totalSize <= buf.getBufferSize(),
                "CpuMetricsWrapper: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
                    + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     for (unsigned int i = 0; i < size(); i++) {
-        NES::writeToBuffer(getNetworkValue(i), buf, byteOffset);
-        byteOffset += sizeof(NetworkMetrics);
+        getNetworkValue(i).writeToBuffer(buf, tupleIndex + i);
     }
-    buf.setNumberOfTuples(size());
 }
 
-void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     auto schema = NetworkMetrics::getSchema("");
-    auto netList = std::vector<NetworkMetrics>(buf.getNumberOfTuples());
+    auto interfaceList = std::vector<NetworkMetrics>();
     NES_DEBUG("CpuMetricsWrapper: Parsing buffer with number of tuples " << buf.getNumberOfTuples());
 
-    uint64_t offset = byteOffset;
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++) {
-        //for each core parse the according metrics
+        //for each core parse the according CpuMetrics
         NetworkMetrics metrics{};
-        NES::readFromBuffer(metrics, buf, offset);
-        netList.emplace_back(metrics);
-        offset += schema->getSchemaSizeInBytes();
+        NES::readFromBuffer(metrics, buf, tupleIndex + n);
+        interfaceList.emplace_back(metrics);
     }
-    networkMetrics = std::move(netList);
+    networkMetrics = std::move(interfaceList);
 }
 
 NetworkMetrics NetworkMetricsWrapper::getNetworkValue(uint64_t interfaceNo) const {
@@ -102,12 +99,12 @@ bool NetworkMetricsWrapper::operator==(const NetworkMetricsWrapper& rhs) const {
 
 bool NetworkMetricsWrapper::operator!=(const NetworkMetricsWrapper& rhs) const { return !(rhs == *this); }
 
-void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metrics.writeToBuffer(buf, byteOffset);
+void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metrics.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metrics.readFromBuffer(buf, byteOffset);
+void readFromBuffer(NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metrics.readFromBuffer(buf, tupleIndex);
 }
 
 }// namespace NES

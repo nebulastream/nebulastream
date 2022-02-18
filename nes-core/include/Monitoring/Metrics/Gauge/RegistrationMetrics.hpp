@@ -46,7 +46,7 @@ class RegistrationMetrics {
      * @param prefix
      * @return The object
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a metrics objects from a given Schema and TupleBuffer.
@@ -55,7 +55,7 @@ class RegistrationMetrics {
      * @param prefix
      * @return The object
     */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
     /**
      * @brief Returns the metrics as json
@@ -95,7 +95,7 @@ using RegistrationMetricsPtr = std::shared_ptr<RegistrationMetrics>;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses a metrics objects from a given Schema and TupleBuffer.
@@ -104,7 +104,7 @@ void writeToBuffer(const RegistrationMetrics& metrics, Runtime::TupleBuffer& buf
  * @param prefix
  * @return The object
 */
-void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 }// namespace NES
 

@@ -48,8 +48,9 @@ SchemaPtr RuntimeMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void RuntimeMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
+void RuntimeMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
     auto* tbuffer = buf.getBuffer<uint8_t>();
+    auto byteOffset = tupleIndex * sizeof(RuntimeMetrics);
     NES_ASSERT(byteOffset + sizeof(RuntimeMetrics) <= buf.getBufferSize(), "RuntimeMetrics: Content does not fit in TupleBuffer");
     NES_ASSERT(sizeof(RuntimeMetrics) == RuntimeMetrics::getSchema("")->getSchemaSizeInBytes(),
                sizeof(RuntimeMetrics) << "!=" << RuntimeMetrics::getSchema("")->getSchemaSizeInBytes());
@@ -58,21 +59,21 @@ void RuntimeMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffse
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void RuntimeMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+void RuntimeMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     //get index where the schema is starting
     auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
     int cnt = 0;
 
-    wallTimeNs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    memoryUsageInBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    cpuLoadInJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    blkioBytesRead = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    blkioBytesWritten = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    batteryStatusInPercent = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    latCoord = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
-    longCoord = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    wallTimeNs = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    memoryUsageInBytes = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    cpuLoadInJiffies = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    blkioBytesRead = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    blkioBytesWritten = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    batteryStatusInPercent = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    latCoord = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
+    longCoord = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(cnt++, layout, buf)[tupleIndex];
 }
 
 web::json::value RuntimeMetrics::toJson() const {
@@ -99,12 +100,12 @@ bool RuntimeMetrics::operator==(const RuntimeMetrics& rhs) const {
 
 bool RuntimeMetrics::operator!=(const RuntimeMetrics& rhs) const { return !(rhs == *this); }
 
-void writeToBuffer(const RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metrics.writeToBuffer(buf, byteOffset);
+void writeToBuffer(const RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metrics.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    metrics.readFromBuffer(buf, byteOffset);
+void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    metrics.readFromBuffer(buf, tupleIndex);
 }
 
 }// namespace NES

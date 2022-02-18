@@ -20,16 +20,12 @@
 
 namespace NES {
 
-void writeToBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBuffer<uint8_t>();
-    NES_ASSERT(byteOffset + sizeof(uint64_t) < buf.getBufferSize(), "Metric: Content does not fit in TupleBuffer");
-
-    memcpy(tbuffer + byteOffset, &metric, sizeof(uint64_t));
-    buf.setNumberOfTuples(1);
+void writeToBuffer(uint64_t metric, Runtime::TupleBuffer&, uint64_t) {
+    NES_THROW_RUNTIME_ERROR("Metric: Serialization for uint64_t not possible for metric " << metric);
 }
 
 void writeToBuffer(const std::string& metric, Runtime::TupleBuffer&, uint64_t) {
-    NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " + metric);
+    NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " << metric);
 }
 
 void readFromBuffer(uint64_t, Runtime::TupleBuffer&, uint64_t) {

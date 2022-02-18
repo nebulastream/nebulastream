@@ -41,7 +41,7 @@ class MemoryMetrics {
      * @param prefix
      * @return The object
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a metrics objects from a given Schema and TupleBuffer.
@@ -50,7 +50,7 @@ class MemoryMetrics {
      * @param prefix
      * @return The object
     */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
     /**
      * @brief Returns the metrics as json
@@ -85,7 +85,7 @@ using MemoryMetricsPtr = std::shared_ptr<MemoryMetrics>;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses a metrics objects from a given Schema and TupleBuffer.
@@ -94,7 +94,7 @@ void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint
  * @param prefix
  * @return The object
 */
-void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 }// namespace NES
 

@@ -41,7 +41,7 @@ class DiskMetrics {
      * @param prefix
      * @return The object
     */
-    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const;
 
     /**
      * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
@@ -50,7 +50,7 @@ class DiskMetrics {
      * @param prefix
      * @return The object
     */
-    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
     /**
      * @brief Returns the metrics as json
@@ -77,7 +77,7 @@ using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 /**
  * @brief Parses metrics objects from a given Schema and TupleBuffer.
@@ -86,7 +86,7 @@ void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64
  * @param prefix
  * @return The object
 */
-void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
 }// namespace NES
 
