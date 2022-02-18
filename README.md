@@ -18,4 +18,14 @@ Visit our wiki at http://iotdb.dfki.de/doku.php
     - [Code Style](https://github.com/nebulastream/code-style) 
     - [Glossary](https://github.com/nebulastream/nebulastream/wiki/Glossary) 
 
+  
+## Components:
 
+The codebase is structured in the following components:
+
+| Component    | Description                                                                                                                 |
+|--------------|-----------------------------------------------------------------------------------------------------------------------------|
+| nes-common   | This component contains some base functionality that is used across all other components, e.g., for logging and exceptions. |
+| nes-compiler | This component contains functionalities to compile source code or intermediate representations to executable binaries.      |
+| nes-core     | This component contains the main aspects of the overall system.                                                             |
+| nes-client   | This component contains the C++ client to interact with NebulaStream from C++ applications.                                 |
