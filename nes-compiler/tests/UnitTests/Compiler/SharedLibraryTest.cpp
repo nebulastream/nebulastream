@@ -13,9 +13,7 @@
 */
 #include <Compiler/Util/SharedLibrary.hpp>
 #include <Util/Logger.hpp>
-#include <cstring>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 
 namespace NES::Compiler {
 class SharedLibraryTest : public testing::Test {
