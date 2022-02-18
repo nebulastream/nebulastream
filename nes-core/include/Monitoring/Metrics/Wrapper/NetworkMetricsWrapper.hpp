@@ -15,6 +15,24 @@ class NetworkMetricsWrapper {
     NetworkMetricsWrapper() = default;
 
     /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+
+    /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
+
+    /**
      * @brief Returns the Network metrics for a given core
      * @param NetworkCore core number
      * @return the Network metrics
@@ -26,15 +44,6 @@ class NetworkMetricsWrapper {
     [[nodiscard]] uint64_t size() const;
 
     std::vector<std::string> getInterfaceNames();
-
-    /**
-     * @brief Parses a NetworkMetrics objects from a given Schema and TupleBuffer.
-     * @param schema
-     * @param buf
-     * @param prefix
-     * @return The object
-    */
-    NetworkMetricsWrapper fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& schemaPrefix);
 
     /**
      * @brief Returns the metrics as json
@@ -50,9 +59,9 @@ class NetworkMetricsWrapper {
 } __attribute__((packed));
 
 /**
- * @brief The serialize method to write NetworkMetrics into the given Schema and TupleBuffer. The prefix specifies a string
+ * @brief The serialize method to write CpuMetrics into the given Schema and TupleBuffer. The prefix specifies a string
  * that should be added before each field description in the Schema.
- * @param the NetworkMetrics
+ * @param the CpuMetrics
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
@@ -60,12 +69,13 @@ class NetworkMetricsWrapper {
 void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief Class specific getSchema() method
- * @param metric
+ * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+ * @param schema
+ * @param buf
  * @param prefix
- * @return the SchemaPtr
+ * @return The object
 */
-SchemaPtr getSchema(const NetworkMetricsWrapper& metrics, const std::string& prefix);
+void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 

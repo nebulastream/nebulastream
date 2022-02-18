@@ -35,37 +35,24 @@ SchemaPtr DiskMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void writeToBuffer(const DiskMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+void DiskMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(DiskMetrics) <= buf.getBufferSize(), "DiskMetrics: Content does not fit in TupleBuffer");
-
-    memcpy(tbuffer + byteOffset, &metric, sizeof(DiskMetrics));
-    buf.setNumberOfTuples(1);
+    memcpy(tbuffer + byteOffset, this, sizeof(DiskMetrics));
+    buf.setNumberOfTuples(buf.getNumberOfTuples()+1);
 }
 
-DiskMetrics DiskMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
-    DiskMetrics output{};
-    auto i = schema->getIndex(prefix);
-
-    if (i >= schema->getSize()) {
-        NES_THROW_RUNTIME_ERROR("DiskMetrics: Prefix " + prefix + " could not be found in schema:\n" + schema->toString());
-    }
-    if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("DiskMetrics: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
-    }
-    if (!(Util::endsWith(schema->fields[i]->getName(), "F_BSIZE")
-          && Util::endsWith(schema->fields[i + 4]->getName(), "F_BAVAIL"))) {
-        NES_THROW_RUNTIME_ERROR("DiskMetrics: Missing fields in schema.");
-    }
-
+void DiskMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    //get index where the schema for CpuMetricsWrapper is starting
+    auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-    output.fBsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.fFrsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.fBlocks = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.fBfree = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.fBavail = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
+    int cnt = 0;
 
-    return output;
+    fBsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    fFrsize = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    fBlocks = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    fBfree = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    fBavail = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
 }
 
 web::json::value DiskMetrics::toJson() const {
@@ -78,12 +65,19 @@ web::json::value DiskMetrics::toJson() const {
     return metricsJson;
 }
 
-SchemaPtr getSchema(const DiskMetrics&, const std::string& prefix) { return DiskMetrics::getSchema(prefix); }
-
 bool DiskMetrics::operator==(const DiskMetrics& rhs) const {
     return fBavail == rhs.fBavail && fBfree == rhs.fBfree && fBlocks == rhs.fBlocks && fBsize == rhs.fBsize
         && fFrsize == rhs.fFrsize;
 }
 
 bool DiskMetrics::operator!=(const DiskMetrics& rhs) const { return !(rhs == *this); }
+
+void writeToBuffer(const DiskMetrics& metric, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metric.writeToBuffer(buf, byteOffset);
+}
+
+void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.readFromBuffer(buf, byteOffset);
+}
+
 }// namespace NES

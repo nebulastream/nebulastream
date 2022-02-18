@@ -35,13 +35,22 @@ class DiskMetrics {
     static SchemaPtr getSchema(const std::string& prefix);
 
     /**
-     * @brief Parses a DiskMetrics objects from a given Schema and TupleBuffer.
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
      * @param schema
      * @param buf
      * @param prefix
      * @return The object
-     */
-    static DiskMetrics fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix);
+    */
+    void writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const;
+
+    /**
+     * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.
+     * @param schema
+     * @param buf
+     * @param prefix
+     * @return The object
+    */
+    void readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
     /**
      * @brief Returns the metrics as json
@@ -62,9 +71,8 @@ class DiskMetrics {
 using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
 
 /**
- * @brief The serialize method to write DiskMetrics into the given Schema and TupleBuffer. The prefix specifies a string
- * that should be added before each field description in the Schema.
- * @param the DiskMetrics
+ * @brief The serialize method to write metrics into the given Schema and TupleBuffer.
+ * @param the metrics
  * @param the schema
  * @param the TupleBuffer
  * @param the prefix as std::string
@@ -72,12 +80,14 @@ using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
 void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
- * @brief Class specific getSchema() method for DiskMetrics
- * @param metric
+ * @brief Parses metrics objects from a given Schema and TupleBuffer.
+ * @param schema
+ * @param buf
  * @param prefix
- * @return the SchemaPtr
- */
-SchemaPtr getSchema(const DiskMetrics& metric, const std::string& prefix);
+ * @return The object
+*/
+void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
+
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_METRICVALUES_DISKMETRICS_HPP_
+#endif// NES_INCLUDE_MONITORING_METRICVALUES_DISKMETRICS_HPP_

@@ -44,45 +44,32 @@ SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
     return schema;
 }
 
-void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(MemoryMetrics) <= buf.getBufferSize(), "MemoryMetrics: Content does not fit in TupleBuffer");
-
-    memcpy(tbuffer + byteOffset, &metrics, sizeof(MemoryMetrics));
-    buf.setNumberOfTuples(1);
+    memcpy(tbuffer + byteOffset, this, sizeof(MemoryMetrics));
+    buf.setNumberOfTuples(buf.getNumberOfTuples()+1);
 }
 
-MemoryMetrics MemoryMetrics::fromBuffer(const SchemaPtr& schema, Runtime::TupleBuffer& buf, const std::string& prefix) {
-    MemoryMetrics output{};
-    auto i = schema->getIndex(prefix + "TOTAL_RAM");
-
-    if (buf.getNumberOfTuples() > 1) {
-        NES_THROW_RUNTIME_ERROR("MemoryMetrics: Tuple size should be 1, but is larger "
-                                + std::to_string(buf.getNumberOfTuples()));
-    }
-
-    if (!MetricUtils::validateFieldsInSchema(MemoryMetrics::getSchema(""), schema, i)) {
-        NES_THROW_RUNTIME_ERROR("MemoryMetrics: Incomplete number of fields in schema.");
-    }
-
-    //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
+void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    //get index where the schema is starting
+    auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
-    output.TOTAL_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.TOTAL_SWAP = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.FREE_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.SHARED_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.BUFFER_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.FREE_SWAP = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.TOTAL_HIGH = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.FREE_HIGH = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.PROCS = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.MEM_UNIT = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.LOADS_1MIN = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.LOADS_5MIN = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-    output.LOADS_15MIN = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(i++, layout, buf)[0];
-
-    return output;
+    int cnt = 0;
+    TOTAL_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    TOTAL_SWAP = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    FREE_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    SHARED_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    BUFFER_RAM = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    FREE_SWAP = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    TOTAL_HIGH = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    FREE_HIGH = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    PROCS = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    MEM_UNIT = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    LOADS_1MIN = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    LOADS_5MIN = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
+    LOADS_15MIN = Runtime::MemoryLayouts::RowLayoutField<uint64_t, true>::create(byteOffset + cnt++, layout, buf)[0];
 }
 
 SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
@@ -112,6 +99,14 @@ web::json::value MemoryMetrics::toJson() const {
     metricsJson["LOADS_5MIN"] = web::json::value::number(LOADS_5MIN);
     metricsJson["LOADS_15MIN"] = web::json::value::number(LOADS_15MIN);
     return metricsJson;
+}
+
+void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.writeToBuffer(buf, byteOffset);
+}
+
+void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset) {
+    metrics.readFromBuffer(buf, byteOffset);
 }
 
 }// namespace NES

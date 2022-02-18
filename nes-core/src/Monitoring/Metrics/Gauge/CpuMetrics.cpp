@@ -47,12 +47,12 @@ SchemaPtr CpuMetrics::getSchema(const std::string& prefix) {
 void CpuMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) const {
     auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(CpuMetrics) <= buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");
-
     memcpy(tbuffer + byteOffset, this, sizeof(CpuMetrics));
+    buf.setNumberOfTuples(buf.getNumberOfTuples()+1);
 }
 
 void CpuMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t byteOffset) {
-    //get index where the schema for CpuMetricsWrapper is starting
+    //get index where the schema is starting
     auto schema = getSchema("");
     auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
 
