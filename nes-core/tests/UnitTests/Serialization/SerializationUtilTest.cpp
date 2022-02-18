@@ -69,7 +69,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <iostream>
 
 #include <API/Windowing.hpp>

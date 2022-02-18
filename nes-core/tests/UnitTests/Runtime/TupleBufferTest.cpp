@@ -22,7 +22,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;

@@ -13,22 +13,16 @@
 */
 
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/ExecutableType/Array.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutTupleBuffer.hpp>
 #include <Runtime/MemoryLayout/DynamicTupleBuffer.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-
-#include <gtest/gtest.h>
-#include "../../../util/NesBaseTest.hpp"
-
 #include <cstdlib>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
 

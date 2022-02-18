@@ -19,7 +19,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 
 namespace NES {
 

@@ -49,7 +49,7 @@
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;

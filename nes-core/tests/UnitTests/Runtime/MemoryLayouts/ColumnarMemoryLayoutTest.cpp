@@ -23,7 +23,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 #include <gtest/gtest.h>
-#include "../../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 
 #include <cstdlib>
 #include <iostream>

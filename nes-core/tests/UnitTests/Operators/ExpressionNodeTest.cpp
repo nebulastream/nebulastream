@@ -26,7 +26,7 @@
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <iostream>
 #include <memory>
 #include <stdint.h>

@@ -22,7 +22,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <iostream>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <API/Schema.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>

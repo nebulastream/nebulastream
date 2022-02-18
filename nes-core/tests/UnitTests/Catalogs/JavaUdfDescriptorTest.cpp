@@ -13,7 +13,7 @@
 */
 
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 
 using namespace std::string_literals;
 

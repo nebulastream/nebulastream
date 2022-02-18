@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "../../util/NESTest.hpp"
+#include <NesBaseTest.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -31,7 +31,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;

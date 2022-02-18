@@ -15,7 +15,7 @@
 #include <Common/ExecutableType/Array.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <type_traits>
 
 namespace NES {

@@ -29,7 +29,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "../../util/NesBaseTest.hpp"
+#include <NesBaseTest.hpp>
 #include <iostream>
 
 using namespace std;
