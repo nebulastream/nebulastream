@@ -17,11 +17,9 @@ set -e
 
 if [ $# -eq 0 ]
 then
-    /opt/local/nebula-stream/nesCoordinator --coordinatorIp=$coordinatorIp --rpcPort=$coordinatorPort --restIp=$restIp --restPort=$restPort \
-                                            --logLevel=$logLevel &
+    /opt/local/nebula-stream/nesCoordinator $coordinatorCLIConf &
     sleep 5s
-    echo $workerConf
-    /opt/local/nebula-stream/nesWorker $workerConf
+    /opt/local/nebula-stream/nesWorker $workerCLIConf
 else
     exec $@
 fi
