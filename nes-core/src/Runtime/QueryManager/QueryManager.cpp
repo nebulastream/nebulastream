@@ -478,7 +478,7 @@ void QueryManager::poisonWorkers() {
     {
         for (auto u{0ul}; u < threadPool->getNumberOfThreads(); ++u) {
                 NES_DEBUG("Add poision for queue=" << u);
-                taskQueues[u].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
+                taskQueues[0].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
             }
     }
 
@@ -583,7 +583,7 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
                                              QuerySubPlanId queryExecutionPlanId,
                                              TupleBuffer&& buffer,
                                              bool blocking) {
-    std::unique_lock queryLock(addReconfigurationMessageMutex);
+    std::unique_lock reconfLock(addReconfigurationMessageMutex);
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << task->getType()
@@ -609,7 +609,7 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
             taskQueues[queryToTaskQueueIdMap[queryId]].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
     }
-
+    reconfLock.unlock();
     if (blocking) {
         task->postWait();
         task->postReconfiguration();
