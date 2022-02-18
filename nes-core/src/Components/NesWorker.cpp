@@ -359,11 +359,11 @@ bool NesWorker::notifyQueryFailure(uint64_t queryId,
     return success;
 }
 
-bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
+bool NesWorker::notifyEpochTermination(uint64_t timestamp, uint64_t queryId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "Connection failed");
-    bool success = coordinatorRpcClient->notifyEpochTermination(timestamp, querySubPlanId);
+    bool success = coordinatorRpcClient->notifyEpochTermination(timestamp, queryId);
     NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
     return success;
 }

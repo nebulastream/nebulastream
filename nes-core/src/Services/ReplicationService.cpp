@@ -29,7 +29,7 @@ namespace NES {
 
 ReplicationService::ReplicationService(NesCoordinatorPtr coordinatorPtr) : coordinatorPtr(std::move(coordinatorPtr)) {}
 
-int ReplicationService::getcurrentEpochBarrierForGivenQueryAndEpoch(uint64_t queryId, uint64_t epoch) const {
+int ReplicationService::getCurrentEpochBarrier(uint64_t queryId, uint64_t epoch) const {
     std::unique_lock lock(replicationServiceMutex);
     auto pairEpochTimestamp = this->queryIdToCurrentEpochBarrierMap.at(queryId);
     if (pairEpochTimestamp.first == epoch) {
@@ -40,12 +40,9 @@ int ReplicationService::getcurrentEpochBarrierForGivenQueryAndEpoch(uint64_t que
     }
 }
 
-bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t querySubPlanId) const {
-    std::unique_lock lock(replicationServiceMutex);
-    auto nodeEngine = this->coordinatorPtr->getNodeEngine();
-    uint64_t queryId = nodeEngine->getQueryIdFromSubQueryId(querySubPlanId);
-    auto iterator = queryIdToCurrentEpochBarrierMap.find(queryId);
+void ReplicationService::saveEpochBarrier(uint64_t queryId, uint64_t epochBarrier) const {
     std::pair<uint64_t, uint64_t> newPairEpochTimestamp;
+    auto iterator = queryIdToCurrentEpochBarrierMap.find(queryId);
     if (iterator != queryIdToCurrentEpochBarrierMap.end()) {
         newPairEpochTimestamp = std::pair(iterator->first + 1, epochBarrier);
     }
@@ -53,30 +50,48 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
         newPairEpochTimestamp = std::pair(0, epochBarrier);
     }
     queryIdToCurrentEpochBarrierMap[queryId] = newPairEpochTimestamp;
-    NES_DEBUG("NesCoordinator::propagatePunctuation send timestamp " << epochBarrier << "to sources with queryId " << queryId);
-    auto queryPlan = this->coordinatorPtr->getGlobalQueryPlan()->getSharedQueryPlan(queryId)->getQueryPlan();
-    std::vector<SourceLogicalOperatorNodePtr> sources = queryPlan->getSourceOperators();
-    uint64_t curQueryId = queryPlan->getQueryId();
-    auto logicalSinkOperators = queryPlan->getSinkOperators();
+}
+
+std::vector<SourceLogicalOperatorNodePtr> ReplicationService::getLogicalSources(uint64_t queryId) const {
+    auto globalQueryPlan = this->coordinatorPtr->getGlobalQueryPlan();
+    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(queryId);
+    if (!sharedQueryPlan) {
+        return  sharedQueryPlan->getQueryPlan()->getSourceOperators();
+    }
+    NES_ERROR("ReplicationService: no shared query plan found for the queryId " << queryId);
+    return {};
+}
+
+std::vector<TopologyNodePtr> ReplicationService::getPhysicalSources(SourceLogicalOperatorNodePtr logicalSource) const {
+    SourceDescriptorPtr sourceDescriptor = logicalSource->getSourceDescriptor();
+    auto streamName = sourceDescriptor->getSchema()->getStreamNameQualifier();
+    return this->coordinatorPtr->getStreamCatalog()->getSourceNodesForLogicalStream(streamName);
+}
+
+bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t queryId) const {
+    std::unique_lock lock(replicationServiceMutex);
+    this->saveEpochBarrier(queryId, epochBarrier);
+    NES_DEBUG("ReplicationService: send timestamp " << epochBarrier << "to sources with queryId " << queryId);
+    std::vector<SourceLogicalOperatorNodePtr> sources = getLogicalSources(queryId);
     if (!sources.empty()) {
         for (auto& sourceOperator : sources) {
-            SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
-            auto streamName = sourceDescriptor->getSchema()->getStreamNameQualifier();
-            std::vector<TopologyNodePtr> sourceLocations = this->coordinatorPtr->getStreamCatalog() ->getSourceNodesForLogicalStream(streamName);
+            std::vector<TopologyNodePtr> sourceLocations = getPhysicalSources(sourceOperator);
             if (!sourceLocations.empty()) {
+                bool success = false;
                 for (auto& sourceLocation : sourceLocations) {
                     auto workerRpcClient = std::make_shared<WorkerRPCClient>();
-                    bool success =
-                        workerRpcClient->injectEpochBarrier(epochBarrier, curQueryId, sourceLocation->getIpAddress());
-                    NES_DEBUG("NesWorker::propagatePunctuation success=" << success);
-                    return success;
+                    success =
+                        workerRpcClient->injectEpochBarrier(epochBarrier, queryId, sourceLocation->getIpAddress());
+                    NES_ASSERT(success, false);
+                    NES_DEBUG("ReplicationService: success=" << success);
                 }
+                return success;
             } else {
-                NES_ERROR("NesCoordinator::propagatePunctuation: no physical sources found for the queryId " << queryId);
+                NES_ERROR("ReplicationService: no physical sources found for the queryId " << queryId);
             }
         }
     } else {
-        NES_ERROR("NesCoordinator::propagatePunctuation: no sources found for the queryId " << queryId);
+        NES_ERROR("ReplicationService: no sources found for the queryId " << queryId);
     }
     return false;
 }

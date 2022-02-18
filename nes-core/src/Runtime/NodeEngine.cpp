@@ -339,8 +339,6 @@ void NodeEngine::injectEpochBarrier(uint64_t timestamp, uint64_t queryId) const{
     }
 }
 
-ReplicationServicePtr NodeEngine::getReplicationService() { return replicationService; }
-
 StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
 
 BufferStoragePtr NodeEngine::getBufferStorage() { return bufferStorage; }
@@ -493,12 +491,22 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 
 const std::vector<PhysicalSourcePtr>& NodeEngine::getPhysicalSources() const { return physicalSources; }
 
-uint64_t NodeEngine::getQueryIdFromSubQueryId(uint64_t querySubPlanId) const {
-    return deployedQEPs.find(querySubPlanId)->second->getQueryId();
+std::shared_ptr<const Execution::ExecutableQueryPlan> NodeEngine::getExecutableQueryPlan(uint64_t querySubPlanId) const {
+    std::unique_lock lock(engineMutex);
+    auto iterator = deployedQEPs.find(querySubPlanId);
+    if (iterator != deployedQEPs.end()) {
+        return iterator->second;
+    }
+    return nullptr;
 }
 
-Execution::ExecutableQueryPlanPtr NodeEngine::getExecutableQueryPlanForSubQueryId(uint64_t querySubPlanId) const {
-    return deployedQEPs.at(querySubPlanId);
+uint64_t NodeEngine::getQueryId(uint64_t querySubPlanId) const {
+    std::unique_lock lock(engineMutex);
+    auto iterator = deployedQEPs.find(querySubPlanId);
+    if (iterator != deployedQEPs.end()) {
+        return iterator->second->getQueryId();
+    }
+    return -1;
 }
 
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
