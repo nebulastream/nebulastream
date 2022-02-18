@@ -18,6 +18,9 @@
 #include <stdexcept>
 
 namespace NES {
+/**
+ * This exception is thrown when signature computation of an operator fails
+ */
 class SignatureComputationException : public std::runtime_error {
   public:
     explicit SignatureComputationException(const std::string& message);
