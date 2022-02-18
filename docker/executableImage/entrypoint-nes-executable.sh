@@ -20,10 +20,8 @@ then
     /opt/local/nebula-stream/nesCoordinator --coordinatorIp=$coordinatorIp --rpcPort=$coordinatorPort --restIp=$restIp --restPort=$restPort \
                                             --logLevel=$logLevel &
     sleep 5s
-    /opt/local/nebula-stream/nesWorker --coordinatorPort=$coordinatorPort --type=$type --physicalSources.filePath=$filePath \
-                                        --physicalSources.numberOfBuffersToProduce=$numberOfBuffersToProduce --sourceFrequency=$sourceFrequency \
-                                        --physicalSources.physicalSourceName=$physicalSourceName --physicalSources.logicalSourceName=$logicalSourceName \
-                                        --physicalSources.skipHeader=$skipHeader --physicalSources.delimiter=$delimiter --logLevel=$logLevel
+    echo $workerConf
+    /opt/local/nebula-stream/nesWorker $workerConf
 else
     exec $@
 fi
