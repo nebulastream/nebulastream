@@ -42,9 +42,9 @@ TEST(SharedLibraryTest, loadSharedLibERROR) { EXPECT_ANY_THROW(SharedLibrary::lo
 TEST(SharedLibraryTest, loadSymbleERROR) {
     using FunctionType = uint64_t (*)();
 #ifdef __linux__
-    auto sharedLib = SharedLibrary::load("libnes.so");
+    auto sharedLib = SharedLibrary::load("libnes-compiler.so");
 #elif defined(__APPLE__)
-    auto sharedLib = SharedLibrary::load("libnes.dylib");
+    auto sharedLib = SharedLibrary::load("libnes-compiler.dylib");
 #else
 #error "Unknown error"
 #endif
