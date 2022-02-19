@@ -158,7 +158,7 @@ TEST_F(GeoLocationTests, createNodeWithLocation) {
     EXPECT_EQ(node2->getCoordinates().value(), GeographicalLocation(52.51094383152051, 13.463078966025266));
     EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 3);
     NES_INFO("NEIGHBORS");
-    auto inRange = topology->getNodesInRange(std::make_tuple(52.53736960143897, 13.299134894776092), 50.0);
+    auto inRange = topology->getNodesInRange(GeographicalLocation(52.53736960143897, 13.299134894776092), 50.0);
     EXPECT_EQ(inRange.size(), (size_t) 3);
     auto inRangeAtWorker = wrk2->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
@@ -172,11 +172,15 @@ TEST_F(GeoLocationTests, createNodeWithLocation) {
     inRangeAtWorker = wrk2->getNodeIdsInRange(100.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
     EXPECT_EQ(inRangeAtWorker.at(1).first, wrk4->getWorkerId());
-    EXPECT_EQ(inRangeAtWorker.at(1).second, wrk4->getNodeLocationCoordinates().value());
+    EXPECT_EQ(inRangeAtWorker.at(1).second, wrk4->getCurrentOrPermanentGeoLoc().value());
 
     //when looking within a radius of 500km we will find all nodes again
     inRangeAtWorker = wrk2->getNodeIdsInRange(500.0);
     EXPECT_EQ(inRangeAtWorker.size(), (size_t) 3);
+    //if we remove one of the other nodes, there should be one node less in the radius of 500 km
+    topology->removePhysicalNode(topology->findNodeWithId(wrk3->getWorkerId()));
+    inRangeAtWorker = wrk2->getNodeIdsInRange(500.0);
+    EXPECT_EQ(inRangeAtWorker.size(), (size_t) 2);
 
     //location far away from all the other nodes should not have any closest node
     EXPECT_EQ(topology->getClosestNodeTo(GeographicalLocation(-53.559524264262194, -10.039384739854102), 100).has_value(), false);

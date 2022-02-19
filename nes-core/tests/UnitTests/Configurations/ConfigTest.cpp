@@ -154,7 +154,7 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource) {
         EXPECT_TRUE(physicalSource.getValue()->getPhysicalSourceType()->instanceOf<DefaultSourceType>()
                     || physicalSource.getValue()->getPhysicalSourceType()->instanceOf<MQTTSourceType>());
     }
-    EXPECT_EQ(workerConfigPtr->getLocationCoordinates()->getValue(), workerConfigPtr->getLocationCoordinates()->getDefaultValue());
+    EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), workerConfigPtr->locationCoordinates.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
@@ -173,8 +173,8 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
         "--physicalSources.numberOfBuffersToProduce=5",
         "--physicalSources.rowLayout=false",
         "--physicalSources.physicalSourceName=x",
-        "--physicalSources.logicalSourceName=default"
-        "--locationCoordinates='23.88,-3.4'",
+        "--physicalSources.logicalSourceName=default",
+        "--locationCoordinates='23.88,-3.4'"
     };
     int argc = 14;
 
@@ -260,7 +260,7 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
               workerConfigPtr->queryCompiler.pipeliningStrategy.getDefaultValue());
     EXPECT_NE(workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getValue(),
               workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->getLocationCoordinates()->getValue(), workerConfigPtr->getLocationCoordinates()->getDefaultValue());
+    EXPECT_NE(workerConfigPtr->locationCoordinates.getValue(), workerConfigPtr->locationCoordinates.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {

@@ -77,22 +77,6 @@ TopologyManagerService::registerNode(const std::string& address, int64_t grpcPor
     return id;
 }
 
-//todo: do this via standard param in header
-/*
-uint64_t
-TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots) {
-    return registerNode(address, grpcPort, dataPort, numberOfSlots, std::optional<std::tuple<double, double>>());
-}
- */
-
-/*
-uint64_t TopologyManagerService::registerNode(const std::string& address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots, std::optional<GeographicalLocation> geoLoc) {
-    geoLoc.value_or()
-    return registerNode(address, grpcPort, dataPort, numberOfSlots, std::make_tuple(geoLoc.getLatitude(), geoLoc.getLongitude()));
-}
- */
-
-
 bool TopologyManagerService::unregisterNode(uint64_t nodeId) {
     NES_DEBUG("TopologyManagerService::UnregisterNode: try to disconnect sensor with id " << nodeId);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
@@ -204,7 +188,6 @@ uint64_t TopologyManagerService::getNextTopologyNodeId() { return ++topologyNode
 std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> TopologyManagerService::getNodesInRange(GeographicalLocation center, double radius) {
     return topology->getNodesInRange(center, radius);
 }
-
 
 std::vector<std::pair<uint64_t , GeographicalLocation>> TopologyManagerService::getNodesIdsInRange(GeographicalLocation center, double radius) {
    auto list = getNodesInRange(center, radius);

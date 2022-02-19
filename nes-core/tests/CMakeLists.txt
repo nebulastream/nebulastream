@@ -686,7 +686,7 @@ if (USE_S2)
     add_executable(geoLocationTests "Integration/GeoLocationTests.cpp")
     target_link_libraries(geoLocationTests nes ${GTEST_LIBRARIES} s2)
     target_include_directories(geoLocationTests PUBLIC "/usr/local/include/s2")
-    add_test(NAME geoLocationTests COMMAND GeoLocationTests)
+    add_test(NAME geoLocationTests COMMAND geoLocationTests)
 endif ()
 
 #------------------------------- # E2E Test Suite --------------------------------

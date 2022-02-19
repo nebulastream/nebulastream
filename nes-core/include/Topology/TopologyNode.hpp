@@ -146,8 +146,14 @@ class TopologyNode : public Node {
     bool removeLinkProperty(const TopologyNodePtr& linkedNode);
 
     /**
+     * @brief indicates if the node has a location
+     * @return true if a location is set
+     */
+    bool hasLocation();
+
+    /**
      * @brief get the geographical coordinates of this topology node
-     * @return The geographical coordinates of the node in the format <latitude, longitude>
+     * @return The geographical coordinates of the node
      */
     std::optional<GeographicalLocation> getCoordinates();
 
@@ -160,8 +166,8 @@ class TopologyNode : public Node {
     bool setCoordinates(double lat, double lng);
 
     /**
-     * @brief set the goegraphical coordinates of this topology node
-     * @param coordinatesIn: a tuple with the coordinates in the format <latitude, longitude>
+     * @brief set the geographical coordinates of this topology node
+     * @param geoLoc: the Geographical location of the node
      * @return true on success
      */
     bool setCoordinates(GeographicalLocation geoLoc);

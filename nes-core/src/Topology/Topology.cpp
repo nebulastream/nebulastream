@@ -65,6 +65,9 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
+        if (rootNode->hasLocation()) {
+            removeNodeFromSpatialIndex(rootNode);
+        }
         indexOnNodeIds.erase(idOfNodeToRemove);
         NES_DEBUG("Topology: Successfully removed the node.");
         return true;
@@ -103,6 +106,24 @@ bool Topology::setPhysicalNodePosition(const TopologyNodePtr& node, Geographical
     return true;
 }
 
+bool Topology::removeNodeFromSpatialIndex(const TopologyNodePtr& node) {
+#ifdef S2DEF
+    auto geoLocOpt = node->getCoordinates();
+    if(!geoLocOpt.has_value()) {
+        NES_WARNING("trying to remove node from spatial index but the node does not have a location set");
+        return false;
+    }
+    auto geoLoc = geoLocOpt.value();
+    S2Point point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude()));
+    nodePointIndex.Remove(point, node);
+    return true;
+#else
+    NES_WARNING("Files were compiled without s2. Nothing can be removed from the spatial index because it does not exist");
+    NES_INFO("node id: " << node->getId());
+    return {};
+#endif
+}
+
 std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const GeographicalLocation& geoLoc, int radius) {
 #ifdef S2DEF
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
@@ -115,26 +136,25 @@ std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const GeographicalLoca
     return queryResult.data();
 #else
     NES_WARNING("Files were compiled without s2. Nothing inserted into spatial index");
-    NES_INFO("supplied values: " << std::get<0>(coordTuple) << radius);
+    NES_INFO("supplied values: " << geoLoc.getLatitude() << ", " << geoLoc.getLongitude() << " radius:" << radius);
     return {};
 #endif
 }
 
 std::optional<TopologyNodePtr> Topology::getClosestNodeTo(const TopologyNodePtr& nodePtr, int radius) {
 #ifdef S2DEF
-    auto coordTupleOpt = nodePtr->getCoordinates();
+    auto GeoLocOpt = nodePtr->getCoordinates();
 
-    if (!coordTupleOpt.has_value()) {
+    if (!GeoLocOpt.has_value()) {
         NES_WARNING("Trying to get the closest node to a node that does not have a location");
         return {};
     }
 
-    //todo rename this because it is not a tuple anymore
-    auto coordTuple = coordTupleOpt.value();
+    auto geoLoc = GeoLocOpt.value();
 
     S2ClosestPointQuery<TopologyNodePtr> query(&nodePointIndex);
     query.mutable_options()->set_max_distance(S1Angle::Radians(S2Earth::KmToRadians(radius)));
-    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(coordTuple.getLatitude(), coordTuple.getLongitude())));
+    S2ClosestPointQuery<TopologyNodePtr>::PointTarget target(S2Point(S2LatLng::FromDegrees(geoLoc.getLatitude(), geoLoc.getLongitude())));
     auto queryResult = query.FindClosestPoint(&target);
     //if we cannot find any node within the radius return an empty optional
     if (queryResult.is_empty()) {
@@ -175,7 +195,7 @@ std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> Topology::getNodes
 
 #else
     NES_WARNING("Files were compiled without s2, cannot find closest nodes");
-    NES_INFO(radius << std::get<0>(center));
+    NES_INFO("supplied values: " << center.getLatitude() << ", " << center.getLongitude() << "radius: " << radius);
     return {};
 #endif
 }

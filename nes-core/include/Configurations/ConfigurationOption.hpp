@@ -178,6 +178,7 @@ const std::string QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG = "windowingStrategy"
 const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
 const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
 const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
+const std::string LOCATION_COORDINATES_CONFIG = "locationCoordinates";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
@@ -230,7 +231,6 @@ const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
 const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 
-const std::string LOCATION_COORDINATES_CONFIG = "locationCoordinates";
 
 }// namespace Configurations
 }// namespace NES

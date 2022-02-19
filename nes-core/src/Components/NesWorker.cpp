@@ -55,8 +55,9 @@ NesWorker::NesWorker(Configurations::WorkerConfigurationPtr&& workerConfig)
       numberOfBuffersInGlobalBufferManager(workerConfig->numberOfBuffersInGlobalBufferManager.getValue()),
       numberOfBuffersPerWorker(workerConfig->numberOfBuffersPerWorker.getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->numberOfBuffersInSourceLocalBufferPool.getValue()),
-      bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()), queryCompilerConfiguration(workerConfig->queryCompiler),
-      locationCoordinates(locationStringToTuple(workerConfig->getLocationCoordinates()->getValue())),
+      bufferSizeInBytes(workerConfig->bufferSizeInBytes.getValue()),
+      locationCoordinates(getGeoLocOptionFromString(workerConfig->locationCoordinates.getValue())),
+      queryCompilerConfiguration(workerConfig->queryCompiler),
       enableNumaAwareness(workerConfig->numaAwareness.getValue()), enableMonitoring(workerConfig->enableMonitoring.getValue()) {
     log4cxx::MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
@@ -252,7 +253,7 @@ bool NesWorker::connect() {
                                            nodeEngine->getNetworkManager()->getServerDataPort(),
                                            numberOfSlots,
                                            staticStats,
-                                           getNodeLocationCoordinates());
+                                           locationCoordinates);
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
     topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {
@@ -385,7 +386,8 @@ bool NesWorker::setNodeLocationCoordinates(const GeographicalLocation& geoLoc) {
 }
 
 //TODO #2475 check first if the node is mobile and if it is, then return a value from the gps/csv interface once the interface is implemented
-std::optional<GeographicalLocation> NesWorker::getNodeLocationCoordinates() {
+//TODO #2475 also add another function that will only return a position if the node is a mobile node
+std::optional<GeographicalLocation> NesWorker::getCurrentOrPermanentGeoLoc() {
     return locationCoordinates;
 }
 
@@ -393,7 +395,9 @@ std::optional<GeographicalLocation> NesWorker::getNodeLocationCoordinates() {
 std::optional<GeographicalLocation> NesWorker::getGeoLocOptionFromString(const std::string& coordinates) {
         try {
             return GeographicalLocation::fromString(coordinates);
-        } catch (std::exception) {
+        } catch (std::exception& e) {
+            NES_WARNING("could not retrieve location from string: " << e.what());
+            NES_WARNING("empty optional will be returned as location");
             return {};
         }
 }
@@ -403,7 +407,7 @@ std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRa
 }
 
 std::vector<std::pair<uint64_t, GeographicalLocation>> NesWorker::getNodeIdsInRange(double radius){
-    auto coord = getNodeLocationCoordinates();
+    auto coord = getCurrentOrPermanentGeoLoc();
     if (coord.has_value()) {
         return getNodeIdsInRange(coord.value(), radius);
     }
