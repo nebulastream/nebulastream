@@ -166,8 +166,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     /**
      * @brief RPC Call to get a list of field nodes within a defined radius around a geographical location
      * @param context: the server context
-     * @param request that is sent from worker to the coordinator containing the center of the query area and the radius
-     * @param reply that is sent back from the coordinator to the worker containing the ids of all nodes in the defined area and their corresponding locations
+     * @param request: that is sent from worker to the coordinator containing the center of the query area and the radius
+     * @param reply: that is sent back from the coordinator to the worker containing the ids of all nodes in the defined area and their corresponding locations
      * @return success
      */
     Status GetNodesInRange(ServerContext*, const GetNodesInRangeRequest* request, GetNodesInRangeReply* reply) override;

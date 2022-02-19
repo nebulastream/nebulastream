@@ -72,7 +72,7 @@ class Topology {
     /**
      * @brief This method sets the location of a new node (making it a field node) or updates the position of an existing field node
      * @param node: a pointer to the topology node
-     * @param coordinates: the (new) location of the field node
+     * @param geoLoc: the (new) location of the field node
      * @param init: defines if the method is called as part of node creation or later on. trying to set a location for a node
      * without existing coordinates will result in failure if the init flag is not set, thus preventing the updating of
      * non field nodes to become field nodes
@@ -81,9 +81,16 @@ class Topology {
     bool setPhysicalNodePosition(const TopologyNodePtr& node, GeographicalLocation geoLoc, bool init = false);
 
     /**
+     * @brief removes a node from the spatial index. This method is called if a node with a location is unregistered
+     * @param node: a pointer to the topology node whose entry is to be removed from the spatial index
+     * @returns true on success, false if the node in question does not have a location
+     */
+     bool removeNodeFromSpatialIndex(const TopologyNodePtr& node);
+
+    /**
      * @brief returns the closest field node to a certain geographical location
-     * @param coordTuple coordinates of a location on the map
-     * @param radius the maximum distance which the returned node can habe from the specified location
+     * @param geoLoc: coordinates of a location on the map
+     * @param radius: the maximum distance which the returned node can have from the specified location
      * @return TopologyNodePtr to the closest field node
      */
     std::optional<TopologyNodePtr> getClosestNodeTo(const GeographicalLocation& geoLoc, int radius = DEFAULT_SEARCH_RADIUS);
@@ -98,13 +105,13 @@ class Topology {
 
     /**
      * @brief get a list of all the nodes within a certain radius around a location
-     * @param center: a location in the format <latitude, longitude> around which we look for nodes
+     * @param center: a location around which we look for nodes
      * @param radius: the maximum distance in kilometres of the returned nodes from center
-     * @return a vector of pairs containing node pointers and the corresponding locations in the format <latitude, longitude>
+     * @return a vector of pairs containing node pointers and the corresponding locations
      */
     std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> getNodesInRange(GeographicalLocation center, double radius);
+
     /**
-     *
      * @return the amount of field nodes (non mobile nodes with a known location) in the system
      */
     size_t getSizeOfPointIndex();

@@ -141,21 +141,22 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
 
     /**
      * @brief check if a location was set for this Node
-     *
      */
     bool hasLocation();
 
 
     /**
-     * @brief returns a tuple with the coordinates of the node if a location was set
-     * @return tuple in the format <latitude, longitude>
+     * @brief returns an optional containing a GeographicalLocation object if the node has a fixed location or
+     * containing a nullopt_t if the node does not have a location
+     * @return optional containing the GeographicalLocation
      */
-    std::optional<GeographicalLocation> getNodeLocationCoordinates();
+    std::optional<GeographicalLocation> getCurrentOrPermanentGeoLoc();
 
     /**
-     * @brief convert a geo-coordinate string to a tuple of doubles
+     * @brief convert a geo-coordinate string to an optional containing a GeographicalLocation or nullopt_t if the input
+     * is malformated or does not contain valid coordinates
      * @param coordinates: string of the format "<latitude>, <longitude>"
-     * @return std::optional containing a tuple in the format <latitude, longitude> or std::nullopt_t
+     * @return std::optional containing a GeographicalLocation object or std::nullopt_t
      * if the supplied string is not a valid coordinate pair
      */
     static std::optional<GeographicalLocation> getGeoLocOptionFromString(const std::string& coordinates);
@@ -163,15 +164,16 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
 
     /**
      * @brief Method to get all field nodes within a certain range around a geographical point
-     * @param coord: center location as tuple in the format <latitude, longitude>, radius: radius in km to define query area
-     * @return list of node IDs and their corresponding coordinates in the format <latitude, longitude>
+     * @param coord: GeographicalLocation representing the center of the query area
+     * @param radius: radius in km to define query area
+     * @return list of node IDs and their corresponding GeographicalLocations
      */
     std::vector<std::pair<uint64_t, GeographicalLocation>> getNodeIdsInRange(GeographicalLocation coord, double radius);
 
     /**
      * @brief Method to get all field nodes within a certain range around the location of this node
      * @param radius = radius in km to define query area
-     * @return list of node IDs and their corresponding coordinates in the format <latitude, longitude>
+     * @return list of node IDs and their corresponding GeographicalLocations
      */
     std::vector<std::pair<uint64_t, GeographicalLocation>> getNodeIdsInRange(double radius);
 
@@ -226,7 +228,8 @@ class NesWorker: public detail::virtual_enable_shared_from_this<NesWorker>, publ
     void handleRpcs(WorkerRPCServer& service);
 
     /**
-     * @brief method to set the coordinates from a tuple in the format <latitude, longitude>. it does not update the topology and is meant for initialization
+     * @brief method to set the Nodes Location. it does not update the topology and is meant for initialization
+     * @param geoLoc: The new fixed GeographicalLocation to be set
      * @return success of operation
      */
     bool setNodeLocationCoordinates(const GeographicalLocation& geoLoc);

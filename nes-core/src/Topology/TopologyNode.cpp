@@ -124,6 +124,11 @@ bool TopologyNode::removeLinkProperty(const TopologyNodePtr& linkedNode) {
     linkProperties.erase(linkedNode);
     return true;
 }
+
+bool TopologyNode::hasLocation() {
+    return coordinates.has_value();
+}
+
 std::optional<GeographicalLocation> TopologyNode::getCoordinates() {
     return coordinates;
 }

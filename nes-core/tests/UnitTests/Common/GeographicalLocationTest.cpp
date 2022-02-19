@@ -20,7 +20,7 @@
 namespace NES {
 
 
-class ConfigTest : public testing::Test {
+class GeographicalLocationTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("GeoLoc.log", NES::LOG_DEBUG);
@@ -29,13 +29,10 @@ class ConfigTest : public testing::Test {
 
     void SetUp() override {}
 
-    static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down GeographilcalLocationUnitTest test class."); }
 };
 
-/**
- * @brief This test starts two workers and a coordinator and submit the same query but will output the results in different files
- */
-TEST_F(ConfigTest, testExceptionHandling) {
+TEST_F(GeographicalLocationTest, testExceptionHandling) {
     EXPECT_THROW(GeographicalLocation(200, 0), NES::CoordinatesOutOfRangeException);
     EXPECT_THROW(GeographicalLocation::fromString("200, 0"), NES::CoordinatesOutOfRangeException);
     EXPECT_THROW(GeographicalLocation::fromString("200. 0"), NES::InvalidCoordinateFormatException);

@@ -111,6 +111,7 @@ class CoordinatorRPCClient {
      * @param dataPort: the data port of the node
      * @param numberOfSlots: processing slots capacity
      * @param staticNesMetrics: metrics to report
+     * @param coordinates: the fixed geographical location of a non mobile node if it is known
      * @return bool indicating success
      */
     bool registerNode(const std::string& ipAddress,
@@ -153,8 +154,9 @@ class CoordinatorRPCClient {
 
     /**
      * @brief Method to get all field nodes (field nodes = non-mobile nodes with a specified geographical location) within a certain range around a geographical point
-     * @param coord: center location as a tuple in the format <latitude, longitude>, radius: radius in km to define query area
-     * @return list of node IDs and their corresponding coordinates as tuples in the format <latitude, longitude>
+     * @param coord: center of the query area
+     * @param radius: radius in km to define query area
+     * @return list of node IDs and their corresponding coordinates as GeographicalLocation objects
      */
     std::vector<std::pair<uint64_t, GeographicalLocation>> getNodeIdsInRange(GeographicalLocation coord, double radius);
 
