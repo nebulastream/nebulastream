@@ -14,140 +14,110 @@
 
 #include <iostream>
 
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <Common/GeographicalLocation.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
+#include "../util/NesBaseTest.hpp"
 
-using std::cout;
-using std::endl;
-#define DEBUG_OUTPUT
+using namespace std;
 namespace NES {
 
-//FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
-// by assigning a different RPC port for each test case
-// TODO use grpc async queue to fix this issue - I am currently increasing the rpc port by 30 on every test! this is very bad!
-uint64_t rpcPort = 4000;
-uint64_t restPort = 8081;
+using namespace Configurations;
 
-class GeoLocationTests : public testing::Test {
-
+class GeoLocationTests : public Testing::NESBaseTest {
   public:
-    // set the default numberOfSlots to the number of processor
-    const uint16_t processorCount = std::thread::hardware_concurrency();
-    std::string ipAddress = "127.0.0.1";
-    uint16_t coordinatorNumberOfSlots = 12;
-    uint16_t workerNumberOfSlots = 6;
-    std::string location = "52.53736960143897, 13.299134894776092";
+    static void SetUpTestCase() {
+        NES::setupLogging("GeoLocationTests.log", NES::LOG_DEBUG);
+        NES_INFO("Setup GeoLocationTests test class.");
+    }
+
+
+    std::string location2 = "52.53736960143897, 13.299134894776092";
     std::string location3 = "52.52025049345923, 13.327886280405611";
     std::string location4 = "52.49846981391786, 13.514464421192917";
 
-
-    static void SetUpTestCase() {
-        NES::setupLogging("UpdateTopologyRemoteTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup UpdateTopologyRemoteTest test class.");
-    }
-
-    void SetUp() override { rpcPort = rpcPort + 30; }
-
-    static void TearDownTestCase() { std::cout << "Tear down UpdateTopologyRemoteTest test class." << std::endl; }
+    static void TearDownTestCase() { NES_INFO("Tear down GeoLocationTests class."); }
 };
 
-TEST_F(GeoLocationTests, createNodeWithLocation) {
+TEST_F(GeoLocationTests, testFieldNodes) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-    WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
-
-    coordinatorConfig->setRpcPort(rpcPort);
-    coordinatorConfig->setRestPort(restPort);
-    coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
-    workerConfig->setNumberOfSlots(workerNumberOfSlots);
-    workerConfig->setCoordinatorPort(rpcPort);
-
-    coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
-
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0ull);
-    NES_INFO("coordinator started successfully");
+    EXPECT_NE(port, 0UL);
+    cout << "coordinator started successfully" << endl;
 
-    NES_INFO("start worker");
-    uint64_t node1RpcPort = port + 10;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(node1RpcPort);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig);
-    bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart);
-    NES_INFO("worker started successfully");
+    cout << "start worker 1" << endl;
+    WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
+    wrkConf1->coordinatorPort=(port);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart1);
+
+    cout << "start worker 2" << endl;
+    WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
+    wrkConf2->coordinatorPort=(port);
+    wrkConf2->locationCoordinates = location2;
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(wrkConf2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart2);
+
+    cout << "start worker 3" << endl;
+    WorkerConfigurationPtr wrkConf3 = WorkerConfiguration::create();
+    wrkConf3->coordinatorPort=(port);
+    wrkConf3->locationCoordinates = location3;
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(wrkConf3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart3);
+
+    cout << "start worker 4" << endl;
+    WorkerConfigurationPtr wrkConf4 = WorkerConfiguration::create();
+    wrkConf4->coordinatorPort=(port);
+    wrkConf4->locationCoordinates = location4;
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(std::move(wrkConf4));
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart4);
+
+    cout << "worker1 started successfully" << endl;
+    bool retConWrk1 = wrk1->connect();
+    EXPECT_TRUE(retConWrk1);
+    cout << "worker 1 started connected " << endl;
 
     TopologyPtr topology = crd->getTopology();
     EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 0);
 
-    uint64_t node2RpcPort = port + 20;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(node2RpcPort);
-    workerConfig->setDataPort(port + 21);
-    workerConfig->setLocationCoordinates(location);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig);
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("worker started successfully");
+    bool retConWrk2 = wrk2->connect();
+    EXPECT_TRUE(retConWrk2);
+    cout << "worker 2 started connected " << endl;
 
     EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 1);
 
-    uint64_t node3RpcPort = port + 30;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(node3RpcPort);
-    workerConfig->setDataPort(port + 31);
-    workerConfig->setLocationCoordinates(location3);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig);
-    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart3);
-    NES_INFO("worker started successfully");
-
+    bool retConWrk3 = wrk3->connect();
+    EXPECT_TRUE(retConWrk3);
+    cout << "worker 3 started connected " << endl;
 
     EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 2);
 
-    uint64_t node4RpcPort = port + 40;
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(node4RpcPort);
-    workerConfig->setDataPort(port + 41);
-    workerConfig->setLocationCoordinates(location4);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig);
-    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart4);
-    NES_INFO("worker started successfully");
-
+    bool retConWrk4 = wrk4->connect();
+    EXPECT_TRUE(retConWrk4);
+    cout << "worker 4 started connected " << endl;
 
     EXPECT_EQ(topology->getSizeOfPointIndex(), (size_t) 3);
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
-    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
 
-    TopologyNodePtr rootNode = topology->getRoot();
-    EXPECT_TRUE(rootNode->getGrpcPort() == port + 1);
-    EXPECT_TRUE(rootNode->getChildren().size() == 4);
-    EXPECT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfSlots);
-    TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
-    EXPECT_TRUE(node1->getGrpcPort() == node1RpcPort);
-    EXPECT_TRUE(node1->getAvailableResources() == workerNumberOfSlots);
-    TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
-    EXPECT_TRUE(node2->getGrpcPort() == node2RpcPort);
-    EXPECT_TRUE(node2->getAvailableResources() == workerNumberOfSlots);
+    TopologyNodePtr node1 = topology->findNodeWithId(wrk1->getWorkerId());
+    TopologyNodePtr node2 = topology->findNodeWithId(wrk2->getWorkerId());
+    TopologyNodePtr node3 = topology->findNodeWithId(wrk3->getWorkerId());
+    TopologyNodePtr node4 = topology->findNodeWithId(wrk4->getWorkerId());
 
-    TopologyNodePtr node3 = rootNode->getChildren()[2]->as<TopologyNode>();
-    EXPECT_TRUE(node3->getGrpcPort() == node3RpcPort);
-    EXPECT_TRUE(node3->getAvailableResources() == workerNumberOfSlots);
-
-    TopologyNodePtr node4 = rootNode->getChildren()[3]->as<TopologyNode>();
-    EXPECT_TRUE(node4->getGrpcPort() == node4RpcPort);
-    EXPECT_TRUE(node4->getAvailableResources() == workerNumberOfSlots);
 
     //checking coordinates
     EXPECT_EQ(node2->getCoordinates().value(), GeographicalLocation(52.53736960143897, 13.299134894776092));
@@ -185,26 +155,20 @@ TEST_F(GeoLocationTests, createNodeWithLocation) {
     //location far away from all the other nodes should not have any closest node
     EXPECT_EQ(topology->getClosestNodeTo(GeographicalLocation(-53.559524264262194, -10.039384739854102), 100).has_value(), false);
 
-    NES_INFO("stopping worker");
-    bool retStopWrk = wrk->stop(false);
-    EXPECT_TRUE(retStopWrk);
-
-    NES_INFO("stopping worker 2");
-    bool retStopWrk2 = wrk2->stop(false);
-    EXPECT_TRUE(retStopWrk2);
-
-
-    NES_INFO("stopping worker 2");
-    bool retStopWrk3 = wrk3->stop(false);
-    EXPECT_TRUE(retStopWrk3);
-
-    NES_INFO("stopping worker 2");
-    bool retStopWrk4 = wrk4->stop(false);
-    EXPECT_TRUE(retStopWrk4);
-
-    NES_INFO("stopping coordinator");
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    bool retStopWrk2 = wrk2->stop(false);
+    EXPECT_TRUE(retStopWrk2);
+
+    bool retStopWrk3 = wrk3->stop(false);
+    EXPECT_TRUE(retStopWrk3);
+
+    bool retStopWrk4 = wrk4->stop(false);
+    EXPECT_TRUE(retStopWrk4);
 }
-}
+
+}// namespace NES
