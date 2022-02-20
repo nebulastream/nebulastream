@@ -65,8 +65,8 @@ bool Topology::removePhysicalNode(const TopologyNodePtr& nodeToRemove) {
 
     bool success = rootNode->remove(nodeToRemove);
     if (success) {
-        if (rootNode->hasLocation()) {
-            removeNodeFromSpatialIndex(rootNode);
+        if (nodeToRemove->hasLocation()) {
+            removeNodeFromSpatialIndex(nodeToRemove);
         }
         indexOnNodeIds.erase(idOfNodeToRemove);
         NES_DEBUG("Topology: Successfully removed the node.");
