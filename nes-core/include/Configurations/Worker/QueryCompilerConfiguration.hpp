@@ -64,9 +64,18 @@ class QueryCompilerConfiguration : public BaseConfiguration {
         "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"
         "REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]. "};
 
+    /**
+     * @brief Sets the strategy for local window computations.
+     */
+    EnumOption<QueryCompilation::QueryCompilerOptions::WindowingStrategy> windowingStrategy = {
+        QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG,
+        QueryCompilation::QueryCompilerOptions::WindowingStrategy::DEFAULT,
+        "Indicates the windowingStrategy "
+        "[DEFAULT|THREAD_LOCAL]. "};
+
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&compilationStrategy, &pipeliningStrategy, &outputBufferOptimizationLevel};
+        return {&compilationStrategy, &pipeliningStrategy, &outputBufferOptimizationLevel, &windowingStrategy};
     }
 };
 

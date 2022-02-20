@@ -212,6 +212,8 @@ NodeEngineFactory::createQueryCompilationOptions(const Configurations::QueryComp
     // set output buffer optimization level
     queryCompilationOptions->setOutputBufferOptimizationLevel(queryCompilerConfiguration.outputBufferOptimizationLevel);
 
+    // sets the windowing strategy
+    queryCompilationOptions->setWindowingStrategy(queryCompilerConfiguration.windowingStrategy);
     return queryCompilationOptions;
 }
 
