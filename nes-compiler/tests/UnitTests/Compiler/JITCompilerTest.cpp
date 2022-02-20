@@ -13,6 +13,7 @@
 */
 
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
+#include <Compiler/ClangCompiler/NesJIT.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/DynamicObject.hpp>
@@ -85,6 +86,25 @@ TEST_F(JITCompilerTest, compileCppCode) {
     auto mulRes = mulFunction(10, 10);
     ASSERT_EQ(mulRes, 100);
     NES_DEBUG("CompilationTime:" << compilationResult.getCompilationTime());
+}
+
+std::string getSimpleBufferFunction() {
+    return R"(
+int add42(int a)
+{
+  return a+42;
+}
+)";
+}
+
+TEST_F(JITCompilerTest, nesJitTest) {
+    auto* demoJIT = new NESJIT(true);
+    demoJIT->loadModuleFromBuffer(getSimpleBufferFunction(), "add42", 0);
+    llvm::JITTargetAddress add42Address = demoJIT->lookup();
+    typedef int (*BasicArithmeticFunction)(int);
+    auto add = (BasicArithmeticFunction) add42Address;
+    int add_result = add(3);
+    assert(add_result == 45);
 }
 
 }// namespace NES::Compiler
