@@ -130,7 +130,7 @@ Runtime::RuntimeEventListenerPtr PartitionManager::getEventListener(NesPartition
 
 void PartitionManager::clear() {
     std::scoped_lock lock(producerPartitionsMutex, consumerPartitionsMutex);
-    NES_INFO("PartitionManager: Running sanity check on partitions with refCnt > 0");
+    NES_DEBUG("PartitionManager: Running sanity check on partitions with refCnt > 0");
     for (auto&& [partition, metadata] : producerPartitions) {
         NES_ASSERT2_FMT(metadata.count() == 0,
                         "PartitionManager: Producer Partition " << partition << " is still alive: " << metadata.count());
@@ -139,7 +139,7 @@ void PartitionManager::clear() {
         NES_ASSERT2_FMT(metadata.count() == 0,
                         "PartitionManager: Consumer Partition " << partition << " is still alive: " << metadata.count());
     }
-    NES_INFO("PartitionManager: Clearing registered partitions");
+    NES_DEBUG("PartitionManager: Clearing registered partitions");
     producerPartitions.clear();
     consumerPartitions.clear();
 }

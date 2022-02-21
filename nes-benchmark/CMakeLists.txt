@@ -53,5 +53,3 @@ add_nes_benchmarks(ysb-kafka-data-generator "src/DataGeneration/YSBKafkaDataGene
 
 # Adding benchmark tests
 add_subdirectory(test)
-
-message(STATUS "Done building benchmarks")
