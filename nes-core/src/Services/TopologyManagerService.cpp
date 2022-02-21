@@ -190,13 +190,13 @@ std::vector<std::pair<TopologyNodePtr, GeographicalLocation>> TopologyManagerSer
 }
 
 std::vector<std::pair<uint64_t , GeographicalLocation>> TopologyManagerService::getNodesIdsInRange(GeographicalLocation center, double radius) {
-   auto list = getNodesInRange(center, radius);
-   std::vector<std::pair<uint64_t, GeographicalLocation>> nodeIDsInRange{};
-   nodeIDsInRange.reserve(list.size());
-for (auto elem : list) {
-    nodeIDsInRange.emplace_back(std::pair(elem.first->getId(), elem.second));
-   }
-   return nodeIDsInRange;
+    auto list = getNodesInRange(center, radius);
+    std::vector<std::pair<uint64_t, GeographicalLocation>> nodeIDsInRange{};
+    nodeIDsInRange.reserve(list.size());
+    for (auto elem : list) {
+        nodeIDsInRange.emplace_back(std::pair(elem.first->getId(), elem.second));
+    }
+    return nodeIDsInRange;
 }
 
 }// namespace NES

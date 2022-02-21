@@ -20,7 +20,7 @@
 #include <mutex>
 #include <vector>
 #include <optional>
-#include "Common/GeographicalLocation.hpp"
+#include <Common/GeographicalLocation.hpp>
 #ifdef S2DEF
 #include <s2/base/integral_types.h>
 #endif
