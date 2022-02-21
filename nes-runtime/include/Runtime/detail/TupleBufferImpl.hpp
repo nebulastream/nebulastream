@@ -55,8 +55,8 @@ namespace detail {
 
 class MemorySegment;
 
-#define PLACEHOLDER_LIKELY   /* XXX: replace with [[likely]] when using C++ 2a */
-#define PLACEHOLDER_UNLIKELY /* XXX: replace with [[unlikely]] when using C++ 2a */
+#define PLACEHOLDER_LIKELY(cond) (cond) [[likely]]
+#define PLACEHOLDER_UNLIKELY(cond) (cond) [[unlikely]]
 
 /**
  * @brief This class provides a convenient way to track the reference counter as well metadata for its owning
