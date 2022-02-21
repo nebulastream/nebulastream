@@ -21,7 +21,7 @@ namespace NES::Windowing::Experimental {
 std::tuple<uint64_t, uint64_t>
 KeyedGlobalSliceStore::addSlice(uint64_t sequenceNumber, uint64_t sliceIndex, KeyedSliceSharedPtr slice) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    assert(!sliceMap.contains(sliceIndex));
+    NES_ASSERT(!sliceMap.contains(sliceIndex), "Slice is not contained");
     sliceMap[sliceIndex] = slice;
     auto lastMaxSliceIndex = sliceAddSequenceLog.getCurrentWatermark();
     sliceAddSequenceLog.updateWatermark(sliceIndex, sequenceNumber);
@@ -31,7 +31,7 @@ KeyedGlobalSliceStore::addSlice(uint64_t sequenceNumber, uint64_t sliceIndex, Ke
 
 KeyedSliceSharedPtr KeyedGlobalSliceStore::getSlice(uint64_t sliceIndex) {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
-    assert(sliceMap.contains(sliceIndex));
+    NES_ASSERT(sliceMap.contains(sliceIndex),"slice is not contained");
     return sliceMap[sliceIndex];
 }
 
