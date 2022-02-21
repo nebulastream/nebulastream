@@ -36,7 +36,7 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class MetricCollectorTest : public testing::Test {
+class MonitoringSerializationTest : public testing::Test {
   public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
@@ -61,7 +61,7 @@ class MetricCollectorTest : public testing::Test {
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
-TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
+TEST_F(MonitoringSerializationTest, testNetworkCollectorWrappedMetrics) {
     auto networkCollector = NetworkCollector();
     MetricPtr NetworkMetric = networkCollector.readMetric();
     EXPECT_EQ(NetworkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
@@ -76,7 +76,7 @@ TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
     EXPECT_EQ(wrappedMetric, parsedMetric);
 }
 
-TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
+TEST_F(MonitoringSerializationTest, testNetworkCollectorSingleMetrics) {
     auto networkCollector = NetworkCollector();
     MetricPtr networkMetric = networkCollector.readMetric();
     EXPECT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
@@ -93,7 +93,7 @@ TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
     EXPECT_EQ(totalMetrics, parsedMetric);
 }
 
-TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
+TEST_F(MonitoringSerializationTest, testCpuCollectorWrappedMetrics) {
     auto cpuCollector = CpuCollector();
     MetricPtr cpuMetric = cpuCollector.readMetric();
     EXPECT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
@@ -108,7 +108,7 @@ TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
     EXPECT_EQ(wrappedMetric, parsedMetric);
 }
 
-TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
+TEST_F(MonitoringSerializationTest, testCpuCollectorSingleMetrics) {
     auto cpuCollector = CpuCollector();
     MetricPtr cpuMetric = cpuCollector.readMetric();
     EXPECT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
@@ -125,7 +125,7 @@ TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
     EXPECT_EQ(totalMetrics, parsedMetric);
 }
 
-TEST_F(MetricCollectorTest, testDiskCollector) {
+TEST_F(MonitoringSerializationTest, testDiskCollector) {
     auto diskCollector = DiskCollector();
     MetricPtr diskMetric = diskCollector.readMetric();
     DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
@@ -142,7 +142,7 @@ TEST_F(MetricCollectorTest, testDiskCollector) {
     EXPECT_EQ(typedMetric, parsedMetric);
 }
 
-TEST_F(MetricCollectorTest, testMemoryCollector) {
+TEST_F(MonitoringSerializationTest, testMemoryCollector) {
     auto memoryCollector = MemoryCollector();
     MetricPtr memoryMetric = memoryCollector.readMetric();
     MemoryMetrics typedMetric = memoryMetric->getValue<MemoryMetrics>();
