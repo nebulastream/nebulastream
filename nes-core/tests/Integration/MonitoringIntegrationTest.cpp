@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include "../util/NesBaseTest.hpp"
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -21,6 +21,8 @@
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 
 #include <Runtime/BufferManager.hpp>
 #include <Topology/Topology.hpp>
@@ -96,13 +98,11 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     cout << "worker 2 connected " << endl;
 
     // requesting the monitoring data
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
-    auto schema = plan->createSchema();
-    EXPECT_TRUE(schema->getSize() > 1);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
-    auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson(bufferManager);
+    auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
     NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
     EXPECT_EQ(jsons.size(), nodeNumber);
@@ -179,10 +179,8 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
     cout << "worker 2 connected " << endl;
 
     // requesting the monitoring data
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
-    auto schema = plan->createSchema();
-    EXPECT_TRUE(schema->getSize() > 1);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
@@ -266,10 +264,8 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDis
     cout << "worker 2 connected " << endl;
 
     // requesting the monitoring data
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
-    auto schema = plan->createSchema();
-    EXPECT_TRUE(schema->getSize() > 1);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
@@ -278,7 +274,7 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDis
     EXPECT_EQ(jsons.size(), nodeNumber);
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
-    auto emptyStaticNesMetrics = StaticNesMetrics{};
+    auto emptyStaticNesMetrics = RegistrationMetrics{};
 
     for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
