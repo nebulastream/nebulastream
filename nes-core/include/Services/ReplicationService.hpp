@@ -20,6 +20,8 @@
 
 namespace NES {
 
+using EpochId = int;
+
 /**
  * @brief: This class is located at the coordinator side and responsible for notifying all sources that participate in the query about current
  * epoch barrier. It saves current  For the given query id it finds logical sources and maps them to the physical ones. For every physical source it creates
@@ -43,12 +45,31 @@ class ReplicationService {
      * @param queryId current query id
      * @return current epoch barrier
      */
-    int getCurrentEpochBarrier(uint64_t queryId, uint64_t epoch) const;
+    EpochId getCurrentEpochBarrier(uint64_t queryId, uint64_t epoch) const;
 
   private:
+
+    /**
+     * @brief saves current epoch barrier for a given query id and epoch
+     * @param queryId current query id
+     * @param epoch current epoch of the given query
+     */
     void saveEpochBarrier(uint64_t queryId, uint64_t epoch) const;
+
+    /**
+     * @brief finds logical sources for a given query id
+     * @param queryId current query id
+     * @return vector of logical sources
+     */
     std::vector<SourceLogicalOperatorNodePtr> getLogicalSources(uint64_t queryId) const;
+
+    /**
+     * @brief maps a logical source to a vector of physical sources
+     * @param logicalSource one of the logical sources of a query
+     * @return vector of physical sources
+     */
     std::vector<TopologyNodePtr> getPhysicalSources(SourceLogicalOperatorNodePtr logicalSource) const;
+
     mutable std::recursive_mutex replicationServiceMutex;
     NesCoordinatorPtr coordinatorPtr;
     mutable std::unordered_map<uint64_t, std::pair<uint64_t, uint64_t>> queryIdToCurrentEpochBarrierMap;

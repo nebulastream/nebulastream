@@ -31,9 +31,11 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
-#include <Components/NesWorker.hpp>
 
 namespace NES {
+
+class NesWorker;
+using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -245,12 +247,6 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return vector of queryStatistics
     */
     std::vector<QueryStatistics> getQueryStatistics(bool withReset = false);
-
-    /**
-    * @brief maps querySubId to query id
-    * @return query id
-    */
-    uint64_t getQueryId(uint64_t querySubPlanId) const;
 
     Network::PartitionManagerPtr getPartitionManager();
 

@@ -249,6 +249,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     uint64_t getNumberOfTasksInWorkerQueue() const;
 
+    /**
+    * @brief maps querySubId to query id
+    * @return query id
+    */
+    uint64_t getQueryId(uint64_t querySubPlanId) const;
+
     size_t getCurrentTaskSum();
 
   private:
