@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 #include <gtest/gtest.h>
+#include <NesBaseTest.hpp>
 
 #include "../../../tests/util/MetricValidator.hpp"
 
@@ -33,7 +34,7 @@ limitations under the License.
 
 namespace NES {
 
-class MetricReaderTest : public testing::Test {
+class MetricReaderTest : public Testing::NESBaseTest {
   public:
     AbstractSystemResourcesReaderPtr resourcesReader;
 

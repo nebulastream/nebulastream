@@ -15,7 +15,6 @@
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/GeographicalLocation.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
@@ -23,6 +22,7 @@
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <Network/NetworkManager.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Network/NetworkManager.hpp>
