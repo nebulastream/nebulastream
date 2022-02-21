@@ -112,7 +112,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
 
     QueryId queryId =
         queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    //todo will be removed once the new window source is in place
+
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
@@ -135,17 +135,17 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     //check if the method was called
     EXPECT_TRUE(currentTimestamp == timestamp);
 
-    NES_INFO("AssignWatermarkTest: Remove query");
+    NES_INFO("UpstreamBackupTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_INFO("AssignWatermarkTest: Stop worker 1");
+    NES_INFO("UpstreamBackupTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("AssignWatermarkTest: Stop Coordinator");
+    NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
-    NES_INFO("AssignWatermarkTest: Test finished");
+    NES_INFO("UpstreamBackupTest: Test finished");
 }
 }
