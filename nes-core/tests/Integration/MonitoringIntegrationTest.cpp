@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <NesBaseTest.hpp>
+#include <gtest/gtest.h>
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -113,6 +113,7 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
+        NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
 
         EXPECT_TRUE(json.has_field("disk"));
         EXPECT_EQ(json["disk"].size(), 5U);

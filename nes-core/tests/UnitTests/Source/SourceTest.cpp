@@ -28,11 +28,9 @@
 #include <Util/Logger.hpp>
 #include <Util/SourceMode.hpp>
 
-#include "Monitoring/Metrics/Gauge/GroupedMetricValues.hpp"
-#include "Monitoring/Metrics/Gauge/MetricValueType.hpp"
-#include "Monitoring/Metrics/Gauge/MetricCatalog.hpp"
-#include "Monitoring/Metrics/Gauge/MetricGroup.hpp"
-#include "Monitoring/MonitoringPlan.hpp"
+#include "../../../tests/util/MetricValidator.hpp"
+#include <Monitoring/MetricCollectors/DiskCollector.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -51,10 +49,13 @@
 #include <Sources/MonitoringSource.hpp>
 #include <Util/TestUtils.hpp>
 
+#include <Monitoring/MetricCollectors/MetricCollector.hpp>
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
+#include <NesBaseTest.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <NesBaseTest.hpp>
 
 namespace NES {
 
@@ -378,11 +379,12 @@ class MonitoringSourceProxy : public MonitoringSource {
                           Runtime::QueryManagerPtr queryManager,
                           const uint64_t numbersOfBufferToProduce,
                           uint64_t gatheringInterval,
+                          uint64_t numbersOfBufferToProduce,
+                          uint64_t frequency,
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
-                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-        : MonitoringSource(monitoringPlan,
-                           metricCatalog,
+                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {})
+        : MonitoringSource(metricCollector,
                            bufferManager,
                            queryManager,
                            numbersOfBufferToProduce,
@@ -1671,7 +1673,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigurationPtr wrkConf = NES::WorkerConfiguration::create();
     wrkConf->coordinatorPort = port;
-    wrkConf->bufferSizeInBytes=(72);
+    wrkConf->bufferSizeInBytes = (72);
 
     auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct Record {
@@ -1799,12 +1801,12 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
 
 TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
+    auto testCollector = std::make_shared<DiskCollector>();
 
     uint64_t numBuffers = 2;
-    MonitoringSourceProxy monitoringDataSource(plan,
-                                               MetricCatalog::NesMetrics(),
+    MonitoringSourceProxy monitoringDataSource(testCollector,
                                                this->nodeEngine->getBufferManager(),
                                                this->nodeEngine->getQueryManager(),
                                                numBuffers,
@@ -1817,12 +1819,12 @@ TEST_F(SourceTest, testMonitoringSourceInitAndGetType) {
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
+    auto testCollector = std::make_shared<DiskCollector>();
 
     uint64_t numBuffers = 2;
-    MonitoringSourceProxy monitoringDataSource(plan,
-                                               MetricCatalog::NesMetrics(),
+    MonitoringSourceProxy monitoringDataSource(testCollector,
                                                this->nodeEngine->getBufferManager(),
                                                this->nodeEngine->getQueryManager(),
                                                numBuffers,
@@ -1830,6 +1832,7 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
                                                this->operatorId,
                                                this->numSourceLocalBuffersDefault,
                                                {});
+
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();
     auto buf = monitoringDataSource.receiveData();
@@ -1837,20 +1840,20 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataOnce) {
     ASSERT_EQ(buf->getNumberOfTuples(), 1u);
     ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedTuples(), 1u);
     ASSERT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), 1u);
-    GroupedMetricValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), buf.value());
-    EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
-    EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
-    EXPECT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
+
+    DiskMetrics parsedValues{};
+    parsedValues.readFromBuffer(buf.value(), 0);
+    ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
 }
 
 TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
     // create metrics and plan for MonitoringSource
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto metrics = std::set<MetricType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
+    auto testCollector = std::make_shared<DiskCollector>();
 
     uint64_t numBuffers = 2;
-    MonitoringSourceProxy monitoringDataSource(plan,
-                                               MetricCatalog::NesMetrics(),
+    MonitoringSourceProxy monitoringDataSource(testCollector,
                                                this->nodeEngine->getBufferManager(),
                                                this->nodeEngine->getQueryManager(),
                                                numBuffers,
@@ -1858,14 +1861,14 @@ TEST_F(SourceTest, testMonitoringSourceReceiveDataMultipleTimes) {
                                                this->operatorId,
                                                this->numSourceLocalBuffersDefault,
                                                {});
+
     // open starts the bufferManager, otherwise receiveData will fail
     monitoringDataSource.open();
     while (monitoringDataSource.getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = monitoringDataSource.receiveData();
-        GroupedMetricValues parsedValues = plan->fromBuffer(monitoringDataSource.getSchema(), optBuf.value());
-        EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
-        EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
-        EXPECT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
+        DiskMetrics parsedValues{};
+        parsedValues.readFromBuffer(optBuf.value(), 0);
+        ASSERT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), parsedValues));
     }
 
     EXPECT_EQ(monitoringDataSource.getNumberOfGeneratedBuffers(), numBuffers);
@@ -1969,7 +1972,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     NES::CoordinatorConfigurationPtr coordinatorConfig = NES::CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    coordinatorConfig->numWorkerThreads=(4);
+    coordinatorConfig->numWorkerThreads = (4);
     //    coordinatorConfig->setNumberOfBuffersInGlobalBufferManager(3000);
     //    coordinatorConfig->setNumberOfBuffersInSourceLocalBufferPool(124);
     //    coordinatorConfig->setNumberOfBuffersPerWorker(124);
