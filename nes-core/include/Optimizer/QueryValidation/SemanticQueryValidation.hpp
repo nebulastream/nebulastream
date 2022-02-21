@@ -35,9 +35,35 @@ using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
  * @brief This class is responsible for Semantic Query Validation
  */
 class SemanticQueryValidation {
+
+  public:
+    /**
+     * @brief Checks the semantic validity of a Query object
+     * @param inputQuery: query to check
+     */
+    void validate(const QueryPtr& inputQuery);
+
+    /**
+     * @brief Constructor for the SemanticQueryValidation class
+     * @param sourceCatalog: source catalog
+     * @param advanceChecks: perform advance check
+     */
+    explicit SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks);
+
+    /**
+     * @brief Creates an instance of SemanticQueryValidation
+     * @param sourceCatalog: source catalog
+     * @param advanceChecks: perform advance check
+     */
+    static SemanticQueryValidationPtr create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks);
+
+    /**
+     * Performs advance semantic validation of the queries. For example, checking if the filters in the query are semantically valid.
+     * @param queryPlan: query plan on which the semantic validation is to be applied
+     */
+    void advanceSemanticQueryValidation(QueryPlanPtr& queryPlan);
+
   private:
-    SourceCatalogPtr streamCatalog;
-    bool advanceChecks;
 
     /**
      * @brief Checks if the logical source in the provided QueryPlan is valid
@@ -74,32 +100,8 @@ class SemanticQueryValidation {
      */
     static void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
 
-  public:
-    /**
-     * @brief Checks the semantic validity of a Query object
-     * @param inputQuery: query to check
-     */
-    void validate(const QueryPtr& inputQuery);
-
-    /**
-     * @brief Constructor for the SemanticQueryValidation class
-     * @param sourceCatalog: source catalog
-     * @param advanceChecks: perform advance check
-     */
-    explicit SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks);
-
-    /**
-     * @brief Creates an instance of SemanticQueryValidation
-     * @param sourceCatalog: source catalog
-     * @param advanceChecks: perform advance check
-     */
-    static SemanticQueryValidationPtr create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks);
-
-    /**
-     * Performs advance semantic validation of the queries. For example, checking if the filters in the query are semantically valid.
-     * @param queryPlan: query plan on which the semantic validation is to be applied
-     */
-    void advanceSemanticQueryValidation(QueryPlanPtr& queryPlan);
+    SourceCatalogPtr streamCatalog;
+    bool performAdvanceChecks;
 };
 
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;

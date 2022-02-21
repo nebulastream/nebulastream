@@ -81,6 +81,8 @@ class OptimizerConfiguration : public BaseConfiguration {
 
     /**
      * @brief Perform advance semantic validation on the incoming queries.
+     * @warning This option is set to false by default as currently not all operators are supported by Z3 based signature generator.
+     * Because of this, in some cases, enabling this check may result in a crash or incorrect behavior.
      */
     BoolOption performAdvanceSemanticValidation = {
         PERFORM_ADVANCE_SEMANTIC_VALIDATION,

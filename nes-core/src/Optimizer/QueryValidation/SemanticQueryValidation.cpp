@@ -32,7 +32,7 @@
 namespace NES::Optimizer {
 
 SemanticQueryValidation::SemanticQueryValidation(SourceCatalogPtr sourceCatalog, bool advanceChecks)
-    : streamCatalog(std::move(sourceCatalog)), advanceChecks(advanceChecks) {}
+    : streamCatalog(std::move(sourceCatalog)), performAdvanceChecks(advanceChecks) {}
 
 SemanticQueryValidationPtr SemanticQueryValidation::create(const SourceCatalogPtr& sourceCatalog, bool advanceChecks) {
     return std::make_shared<SemanticQueryValidation>(sourceCatalog, advanceChecks);
@@ -60,7 +60,7 @@ void SemanticQueryValidation::validate(const QueryPtr& inputQuery) {
         throw InvalidQueryException(errorMessage + "\n");
     }
 
-    if (advanceChecks) {
+    if (performAdvanceChecks) {
         advanceSemanticQueryValidation(queryPlan);
     }
 }
