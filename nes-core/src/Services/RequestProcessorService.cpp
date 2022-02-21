@@ -101,7 +101,7 @@ void RequestProcessorService::start() {
 
                 for (const auto& queryRequest : nesRequests) {
                     auto queryId = queryRequest->getQueryId();
-                    if (queryId == 100) {
+                    if (queryId == 4000) {
                         readyForPlacementAndDeployment = true;
                         break;
                     }
