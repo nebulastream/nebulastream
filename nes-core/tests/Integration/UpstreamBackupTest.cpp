@@ -13,7 +13,6 @@
 */
 
 #include <gtest/gtest.h>
-#include "../util/NesBaseTest.hpp"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -24,13 +23,11 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <iostream>
-#include <gmock/gmock.h>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <NesBaseTest.hpp>
 #include <chrono>
 #include <thread>
 
