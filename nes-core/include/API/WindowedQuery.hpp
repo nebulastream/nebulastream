@@ -58,7 +58,7 @@ class KeyedWindowedQuery {
     template<class... WindowAggregations>
     [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
         std::vector<Windowing::WindowAggregationPtr> windowAggregations;
-        (windowAggregations.push_back(std::forward<Windowing::WindowAggregationPtr>(aggregations)), ...);
+        (windowAggregations.emplace_back(std::forward<Windowing::WindowAggregationPtr>(aggregations)), ...);
         return originalQuery.windowByKey(keys, windowType, windowAggregations);
     }
 
@@ -89,7 +89,7 @@ class WindowedQuery {
     template<class... ExpressionItems>
     [[nodiscard]] KeyedWindowedQuery byKey(ExpressionItems... onKeys) {
         std::vector<ExpressionNodePtr> keyExpressions;
-        (keyExpressions.push_back(std::forward<ExpressionItems>(onKeys).getExpressionNode()), ...);
+        (keyExpressions.emplace_back(std::forward<ExpressionItems>(onKeys).getExpressionNode()), ...);
         return KeyedWindowedQuery(originalQuery, windowType, keyExpressions);
     };
 
@@ -101,7 +101,7 @@ class WindowedQuery {
     template<class... WindowAggregations>
     [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
         std::vector<Windowing::WindowAggregationPtr> windowAggregations;
-        (windowAggregations.push_back(std::forward<Windowing::WindowAggregationPtr>(aggregations)), ...);
+        (windowAggregations.emplace_back(std::forward<Windowing::WindowAggregationPtr>(aggregations)), ...);
         return originalQuery.window(windowType, windowAggregations);
     }
 
