@@ -115,6 +115,7 @@ class RequestProcessorService {
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     z3::ContextPtr z3Context;
+    bool readyForPlacementAndDeployment;
 };
 }// namespace NES
 #endif// NES_INCLUDE_SERVICES_REQUESTPROCESSORSERVICE_HPP_

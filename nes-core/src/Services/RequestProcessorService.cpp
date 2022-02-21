@@ -56,7 +56,7 @@ RequestProcessorService::RequestProcessorService(const GlobalExecutionPlanPtr& g
                                                  const Configurations::OptimizerConfiguration optimizerConfiguration,
                                                  bool queryReconfiguration)
     : queryProcessorRunning(true), queryReconfiguration(queryReconfiguration), queryCatalog(queryCatalog),
-      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
+      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan), readyForPlacementAndDeployment(false) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
@@ -99,7 +99,6 @@ void RequestProcessorService::start() {
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                 globalQueryPlanUpdatePhase->execute(nesRequests);
 
-                bool readyForPlacementAndDeployment = false;
                 for (const auto& queryRequest : nesRequests) {
                     auto queryId = queryRequest->getQueryId();
                     if (queryId == 1) {
