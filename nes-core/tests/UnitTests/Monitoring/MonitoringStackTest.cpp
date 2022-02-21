@@ -34,22 +34,22 @@ limitations under the License.
 
 namespace NES {
 
-class MetricReaderTest : public Testing::NESBaseTest {
+class MonitoringStackTest : public Testing::NESBaseTest {
   public:
     AbstractSystemResourcesReaderPtr resourcesReader;
 
     static void SetUpTestCase() {
-        NES::setupLogging("MetricReaderTest.log", NES::LOG_DEBUG);
-        NES_INFO("MetricReaderTest: Setup MetricReaderTest test class.");
+        NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
+        NES_INFO("MonitoringStackTest: Setup MonitoringStackTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "MetricReaderTest: Tear down MetricReaderTest class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest class." << std::endl; }
 
     /* Will be called before a  test is executed. */
     void SetUp() override { resourcesReader = SystemResourcesReaderFactory::getSystemResourcesReader(); }
 };
 
-TEST_F(MetricReaderTest, testAbstractSystemResourcesReader) {
+TEST_F(MonitoringStackTest, testAbstractSystemResourcesReader) {
     auto resourcesReader = std::make_shared<AbstractSystemResourcesReader>();
     EXPECT_TRUE(resourcesReader->readRuntimeNesMetrics() == RuntimeMetrics{});
     EXPECT_TRUE(resourcesReader->readRegistrationMetrics() == RegistrationMetrics{});
@@ -60,37 +60,37 @@ TEST_F(MetricReaderTest, testAbstractSystemResourcesReader) {
     EXPECT_TRUE(resourcesReader->getWallTimeInNs() == 0);
 }
 
-TEST_F(MetricReaderTest, testRuntimeNesMetrics) {
+TEST_F(MonitoringStackTest, testRuntimeNesMetrics) {
     auto runtimeMetrics = resourcesReader->readRuntimeNesMetrics();
     NES_DEBUG("MonitoringStackTest: Runtime metrics=" << runtimeMetrics.toJson());
     EXPECT_TRUE(MetricValidator::isValid(resourcesReader, runtimeMetrics));
 }
 
-TEST_F(MetricReaderTest, testStaticNesMetrics) {
+TEST_F(MonitoringStackTest, testStaticNesMetrics) {
     auto staticMetrics = resourcesReader->readRegistrationMetrics();
     NES_DEBUG("MonitoringStackTest: Static metrics=" << staticMetrics.toJson());
     EXPECT_TRUE(MetricValidator::isValid(resourcesReader, staticMetrics));
 }
 
-TEST_F(MetricReaderTest, testCPUStats) {
+TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuMetrics = resourcesReader->readCpuStats();
     NES_DEBUG("MonitoringStackTest: CPU metrics=" << cpuMetrics.toJson());
     EXPECT_TRUE(MetricValidator::isValid(resourcesReader, cpuMetrics));
 }
 
-TEST_F(MetricReaderTest, testMemoryStats) {
+TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memMetrics = resourcesReader->readMemoryStats();
     NES_DEBUG("MonitoringStackTest: Static metrics=" << memMetrics.toJson());
     EXPECT_TRUE(MetricValidator::isValid(resourcesReader, memMetrics));
 }
 
-TEST_F(MetricReaderTest, testDiskStats) {
+TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskMetrics = resourcesReader->readDiskStats();
     NES_DEBUG("MonitoringStackTest: Static metrics=" << diskMetrics.toJson());
     EXPECT_TRUE(MetricValidator::isValid(resourcesReader, diskMetrics));
 }
 
-TEST_F(MetricReaderTest, testNetworkStats) {
+TEST_F(MonitoringStackTest, testNetworkStats) {
     auto networkMetrics = resourcesReader->readNetworkStats();
     NES_DEBUG("MonitoringStackTest: Static metrics=" << networkMetrics.toJson());
     EXPECT_TRUE(MetricValidator::isValid(resourcesReader, networkMetrics));
