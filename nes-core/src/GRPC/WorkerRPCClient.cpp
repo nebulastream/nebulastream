@@ -310,7 +310,7 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
 
     MonitoringRegistrationRequest request;
-    for (auto metric: plan->getMetricTypes()) {
+    for (auto metric : plan->getMetricTypes()) {
         request.mutable_metrictypes()->Add(metric);
     }
     ClientContext context;
