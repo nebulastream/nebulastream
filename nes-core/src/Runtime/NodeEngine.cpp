@@ -500,15 +500,6 @@ std::shared_ptr<const Execution::ExecutableQueryPlan> NodeEngine::getExecutableQ
     return nullptr;
 }
 
-uint64_t NodeEngine::getQueryId(uint64_t querySubPlanId) const {
-    std::unique_lock lock(engineMutex);
-    auto iterator = deployedQEPs.find(querySubPlanId);
-    if (iterator != deployedQEPs.end()) {
-        return iterator->second->getQueryId();
-    }
-    return -1;
-}
-
 bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetworkSinkDescriptorId) {
     //TODO: #2412 add error handling/return false in some cases
     NES_DEBUG("NodeEngine: Received request to buffer Data on network Sink");

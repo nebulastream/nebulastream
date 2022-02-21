@@ -582,6 +582,16 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
 #endif
 }
 
+
+uint64_t QueryManager::getQueryId(uint64_t querySubPlanId) const {
+    std::unique_lock lock(statisticsMutex);
+    auto iterator = runningQEPs.find(querySubPlanId);
+    if (iterator != runningQEPs.end()) {
+        return iterator->second->getQueryId();
+    }
+    return -1;
+}
+
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId,
                                              const ReconfigurationMessage& message,
                                              bool blocking) {

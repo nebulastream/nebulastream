@@ -99,7 +99,7 @@ TEST_F(UpstreamBackupTest, testMessagePassingSinkCoordinatorSources) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-    std::string outputFilePath = getTestResourceFolder() / "testWatermarkAssignmentCentralTumblingWindow.out";
+    std::string outputFilePath = getTestResourceFolder() / "testUpstreamBackup.out";
     remove(outputFilePath.c_str());
 
     // The query contains a watermark assignment with 50 ms allowed lateness

@@ -57,13 +57,11 @@ std::string SinkMedium::getAppendAsString() const {
 }
 
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
-    uint64_t queryId = nodeEngine->getQueryId(querySubPlanId);
-    if (queryId < 0) {
-        NES_ERROR("SinkMedium: no queryId found for querySubPlanId" << querySubPlanId);
-    }
-    else {
-        if (std::shared_ptr<NesWorker> nesWorker = this->nodeEngine->getNesWorker().lock()) {
-            nesWorker->notifyEpochTermination(epochBarrier, queryId);
+    uint64_t queryId = nodeEngine->getQueryManager()->getQueryId(querySubPlanId);
+    NES_ASSERT(queryId < 0, "SinkMedium: no queryId found for querySubPlanId");
+    if (std::shared_ptr<NesWorker> nesWorker = this->nodeEngine->getNesWorker().lock()) {
+        bool success = nesWorker->notifyEpochTermination(epochBarrier, queryId);
+        if (success) {
             return true;
         }
     }
