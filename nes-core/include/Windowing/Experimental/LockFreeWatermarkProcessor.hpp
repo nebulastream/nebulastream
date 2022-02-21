@@ -13,6 +13,7 @@
 */
 
 #include <Util/libcuckoo/cuckoohash_map.hh>
+#include <Util/Logger.hpp>
 #include <algorithm>
 #include <assert.h>
 #include <atomic>
@@ -58,7 +59,7 @@ class LockFreeWatermarkProcessor {
      */
     uint64_t updateWatermark(uint64_t ts, uint64_t sequenceNumber) {
         // A new sequence number has to be greater than the currentWatermarkTuple.sequenceNumber.
-        assert(sequenceNumber > currentSequenceNumber);
+        NES_ASSERT(sequenceNumber > currentSequenceNumber, "sequence number invalid");
         // If the diff between the sequence number and the current sequence number is >= logSize we have to wait till the log has enough space.
         // Otherwise, we would override content.
         uint64_t current = currentSequenceNumber.load();
