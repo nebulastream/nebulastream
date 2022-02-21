@@ -38,7 +38,6 @@ class GeoLocationTests : public Testing::NESBaseTest {
         NES_INFO("Setup GeoLocationTests test class.");
     }
 
-
     std::string location2 = "52.53736960143897, 13.299134894776092";
     std::string location3 = "52.52025049345923, 13.327886280405611";
     std::string location4 = "52.49846981391786, 13.514464421192917";

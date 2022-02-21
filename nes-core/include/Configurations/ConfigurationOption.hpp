@@ -231,7 +231,6 @@ const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
 const std::string MATERIALIZED_VIEW_ID_CONFIG = "materializedViewId";
 
-
 }// namespace Configurations
 }// namespace NES
 

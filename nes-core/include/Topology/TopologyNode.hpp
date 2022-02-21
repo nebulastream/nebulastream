@@ -163,7 +163,7 @@ class TopologyNode : public Node {
      * @param lng: geographical longitude in signed degrees [-180, 180]
      * @return true on success
      */
-    bool setCoordinates(double lat, double lng);
+    bool setCoordinates(double latitude, double longitude);
 
     /**
      * @brief set the geographical coordinates of this topology node

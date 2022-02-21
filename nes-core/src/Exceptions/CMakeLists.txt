@@ -28,4 +28,6 @@ add_source_files(nes-core
         UdfException.cpp
         SignatureComputationException.cpp
         WindowProcessingException.cpp
+        CoordinatesOutOfRangeException.cpp
+        InvalidCoordinateFormatException.cpp
 )

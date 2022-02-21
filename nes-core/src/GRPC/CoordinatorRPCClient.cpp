@@ -495,7 +495,6 @@ std::vector<std::pair<uint64_t, GeographicalLocation>> CoordinatorRPCClient::get
         nodesInRange.emplace_back(nodeInfo.id(), nodeInfo.coord());
     }
     return nodesInRange;
-
 }
 bool CoordinatorRPCClient::notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) {
     EpochBarrierPropagationNotification request;

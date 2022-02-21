@@ -76,13 +76,5 @@ bool GeographicalLocation::checkValidityOfCoordinates(double latitude, double lo
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
 
-
-const char * CoordinatesOutOfRangeException::what () const noexcept {
-    return "Invalid latitude or longitude";
-}
-
-const char* InvalidCoordinateFormatException::what() const noexcept {
-    return "The provided string is not of the format \"<lat>, <lng>\"";
-}
 }
 

@@ -14,6 +14,8 @@
 #ifndef NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
 #define NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
 #include <CoordinatorRPCService.grpc.pb.h>
+#include <Exceptions/CoordinatesOutOfRangeException.h>
+#include <Exceptions/InvalidCoordinateFormatException.h>
 
 namespace NES {
 
@@ -98,20 +100,6 @@ class GeographicalLocation {
   private:
     double latitude;
     double longitude;
-};
-
-/**
- * @brief an exception indicating that the entered latitude is not in range [-90, 90] or the longitude is not in range [-180, 180]
- */
-struct CoordinatesOutOfRangeException : public std::exception {
-    const char* what () const noexcept;
-};
-
-/**
- * @brief an exception idicating that the entered string is not of the format "<double>, <double>"
- */
-struct InvalidCoordinateFormatException : public std::exception {
-    const char* what () const noexcept;
 };
 
 }

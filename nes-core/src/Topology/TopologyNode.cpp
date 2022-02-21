@@ -15,7 +15,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <algorithm>
 #include <utility>
-#include "Common/GeographicalLocation.hpp"
+#include <Common/GeographicalLocation.hpp>
 
 namespace NES {
 
@@ -133,8 +133,8 @@ std::optional<GeographicalLocation> TopologyNode::getCoordinates() {
     return coordinates;
 }
 
-bool TopologyNode::setCoordinates(double lat, double lng) {
-    return setCoordinates(GeographicalLocation(lat, lng));
+bool TopologyNode::setCoordinates(double latitude, double longitude) {
+    return setCoordinates(GeographicalLocation(latitude, longitude));
 }
 
 bool TopologyNode::setCoordinates(GeographicalLocation geoLoc) {
