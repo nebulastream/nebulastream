@@ -13,6 +13,7 @@
 */
 
 #include "../util/NesBaseTest.hpp"
+#include "Exceptions/InvalidQueryException.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -340,7 +341,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
                                   .attachWorkerWithMemorySourceToCoordinator("test");
 
     for (uint32_t i = 0; i < 10; ++i) {
-        testHarness = testHarness.pushElement<Test>({1, i}, 2); // fills record store of source with id 0-9
+        testHarness = testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-9
     }
 
     testHarness.validate().setupTopology();
@@ -758,19 +759,9 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("default_logical").project(Attribute("asd")).sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId =
-        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
-    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-    auto queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
-    if (!queryCatalogEntry) {
-        FAIL();
-    }
-    NES_TRACE("TestUtils: Query " << queryId << " is now in status " << queryCatalogEntry->getQueryStatusAsString());
-    bool isQueryRunning = queryCatalogEntry->getQueryStatus() == QueryStatus::Running;
-    if (isQueryRunning) {
-        FAIL();
-    }
+    EXPECT_THROW(queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY),
+                 InvalidQueryException);
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -794,7 +785,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 
     NES_INFO("QueryDeploymentTest: Start worker 1");
     auto wrkConf1 = WorkerConfiguration::create();
-    wrkConf1->coordinatorPort=(port);
+    wrkConf1->coordinatorPort = (port);
     auto defaultSource1 = DefaultSourceType::create();
     auto physicalSource1 = PhysicalSource::create("default_logical", "x1", defaultSource1);
     wrkConf1->physicalSources.add(physicalSource1);
@@ -805,7 +796,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 
     NES_INFO("QueryDeploymentTest: Start worker 2");
     auto wrkConf2 = WorkerConfiguration::create();
-    wrkConf2->coordinatorPort=(port);
+    wrkConf2->coordinatorPort = (port);
     auto defaultSource2 = DefaultSourceType::create();
     auto physicalSource2 = PhysicalSource::create("default_logical", "x2", defaultSource2);
     wrkConf2->physicalSources.add(physicalSource2);
@@ -927,9 +918,9 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     auto physicalSource2 = PhysicalSource::create("stream2", "test_stream", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource2);
 
-    workerConfig1->sourcePinList=("0,1");
-    workerConfig1->queuePinList=("0,1");
-    workerConfig1->numWorkerThreads=(2);
+    workerConfig1->sourcePinList = ("0,1");
+    workerConfig1->queuePinList = ("0,1");
+    workerConfig1->numWorkerThreads = (2);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1024,8 +1015,8 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithoutList) {
     auto physicalSource2 = PhysicalSource::create("stream2", "test_stream", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource2);
 
-    workerConfig1->sourcePinList=("0,1");
-    workerConfig1->numWorkerThreads=(2);
+    workerConfig1->sourcePinList = ("0,1");
+    workerConfig1->numWorkerThreads = (2);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -1119,9 +1110,9 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     auto physicalSource2 = PhysicalSource::create("stream2", "test_stream", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource2);
 
-    workerConfig1->sourcePinList=("0,1");
-    workerConfig1->queuePinList=("0,1");
-    workerConfig1->numWorkerThreads=(2);
+    workerConfig1->sourcePinList = ("0,1");
+    workerConfig1->queuePinList = ("0,1");
+    workerConfig1->numWorkerThreads = (2);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
