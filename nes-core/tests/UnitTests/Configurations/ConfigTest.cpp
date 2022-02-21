@@ -208,6 +208,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput) {
               workerConfigPtr->queryCompiler.pipeliningStrategy.getDefaultValue());
     EXPECT_NE(workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getValue(),
               workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->locationCoordinates.getValue(), workerConfigPtr->locationCoordinates.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput) {
