@@ -668,7 +668,7 @@ add_test(NAME string-query-test COMMAND string-query-test)
 
 ### UpstreamBackup ###
 add_executable(upstream-backup-test "Integration/UpstreamBackupTest.cpp")
-target_link_libraries(upstream-backup-test nes ${GTEST_LIBRARIES})
+target_link_libraries(upstream-backup-test nes-tests)
 add_test(NAME upstream-backup-test COMMAND upstream-backup-test)
 
 # gRPC Tests
