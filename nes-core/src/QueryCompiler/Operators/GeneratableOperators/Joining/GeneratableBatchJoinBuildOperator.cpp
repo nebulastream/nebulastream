@@ -43,12 +43,12 @@ GeneratableBatchJoinBuildOperator::GeneratableBatchJoinBuildOperator(OperatorId 
                                                            Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler)
     : OperatorNode(id), GeneratableBatchJoinOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler)){}
 
-void GeneratableBatchJoinBuildOperator::generateOpen(__attribute__((unused)) CodeGeneratorPtr codegen, __attribute__((unused)) PipelineContextPtr context) {
+void GeneratableBatchJoinBuildOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
     codegen->generateCodeForBatchJoinHandlerSetup(batchJoinDefinition, context, this->id, batchJoinOperatorHandler);
 }
 
-void GeneratableBatchJoinBuildOperator::generateExecute(__attribute__((unused)) CodeGeneratorPtr codegen, __attribute__((unused)) PipelineContextPtr context) {
+void GeneratableBatchJoinBuildOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
     codegen->generateCodeForBatchJoinBuild(batchJoinDefinition, context, batchJoinOperatorHandler);
 }

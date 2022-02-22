@@ -41,10 +41,6 @@ class PhysicalBatchJoinProbeOperator : public PhysicalBatchJoinOperator, public 
                              Join::BatchJoinOperatorHandlerPtr operatorHandler);
     [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
-
-    Runtime::Execution::ExecutablePipelineStagePtr getExecutablePipelineStage();
-private:
-    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
