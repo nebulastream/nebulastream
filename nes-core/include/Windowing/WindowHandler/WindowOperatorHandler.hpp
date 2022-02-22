@@ -91,6 +91,13 @@ class WindowOperatorHandler : public Runtime::Execution::OperatorHandler {
     */
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    /**
+     * @brief Returns the type of the operator handler.
+     */
+    Runtime::Execution::OperatorHandlerType getType() override {
+        return Runtime::Execution::OperatorHandlerType::WINDOW;
+    };
+
     ~WindowOperatorHandler() override { NES_DEBUG("~WindowOperatorHandler()" + std::to_string(windowHandler.use_count())); }
 
     LogicalWindowDefinitionPtr getWindowDefinition();

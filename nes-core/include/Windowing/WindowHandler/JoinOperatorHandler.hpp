@@ -70,6 +70,13 @@ class JoinOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    /**
+     * @brief Returns the type of the operator handler.
+     */
+    Runtime::Execution::OperatorHandlerType getType() override {
+        return Runtime::Execution::OperatorHandlerType::JOIN;
+    };
+
     LogicalJoinDefinitionPtr getJoinDefinition();
 
     SchemaPtr getResultSchema();

@@ -2802,12 +2802,6 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinit
     auto buildTypeStruct = getStructDeclarationFromSchema(structNameBuildTuple, batchJoinDef->getBuildSchema());
     context->code->structDeclarationInputTuples.emplace_back(buildTypeStruct);
 
-    // create a variable to be filled by the cuckoohash_map::find() function
-    // "InputTupleBuild joinPartner;"
-    auto joinPartnerVariableDeclaration =
-            VariableDeclaration::create(tf->createUserDefinedType(buildTypeStruct), "joinPartner");
-    code->variableInitStmts.emplace_back(VarDeclStatement(joinPartnerVariableDeclaration).copy());
-
     // "auto batchJoinHandler = pipelineExecutionContext.getBatchJoinHandler<int64_t, InputTupleBuild>();"
     auto batchJoinHandlerVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "batchJoinHandler");
     auto operatorHandlerIndex = context->registerOperatorHandler(batchJoinOperatorHandler);
@@ -2840,14 +2834,26 @@ bool CCodeGenerator::generateCodeForBatchJoinProbe(Join::LogicalBatchJoinDefinit
     auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
 
     // if a join partner for current tuple can be found proceed to emit
-    // "if (hashTable->find(inputTuples[recordIndex].key, joinPartner)) { ... }" <- find function return a boolean true on success
-    auto findJoinPartnerCall = FunctionCallStatement("find");
-    findJoinPartnerCall.addParameter(joinKeyReference);
-    findJoinPartnerCall.addParameter(VarRef(joinPartnerVariableDeclaration));
-    auto findJoinPartnerStatement = VarRef(hashTableVarDeclaration).accessPtr(findJoinPartnerCall);
-    auto ifJoinPartnerFoundStatement = IF(findJoinPartnerStatement);
+    // "if (hashTable->contains(inputTuples[recordIndex].key)) { ... }" <- contain function return a boolean true on success
+    auto containsCall = FunctionCallStatement("contains");
+    containsCall.addParameter(joinKeyReference);
+    auto containsStatement = VarRef(hashTableVarDeclaration).accessPtr(containsCall);
+    auto ifJoinPartnerFoundStatement = IF(containsStatement);
     code->currentCodeInsertionPoint->addStatement(ifJoinPartnerFoundStatement.createCopy());
     code->currentCodeInsertionPoint = ifJoinPartnerFoundStatement.getCompoundStatement();
+
+    // extract joinPartner
+    // "InputTupleBuild joinPartner = hashTable->find(inputTuples[recordIndex].key);"
+    auto joinPartnerVariableDeclaration =
+            VariableDeclaration::create(tf->createUserDefinedType(buildTypeStruct), "joinPartner");
+
+
+    auto findJoinPartnerCall = FunctionCallStatement("find");
+    findJoinPartnerCall.addParameter(joinKeyReference);
+    auto findJoinPartnerStatement = VarRef(hashTableVarDeclaration).accessPtr(findJoinPartnerCall);
+
+    auto joinPartnerDeclaration = VarDeclStatement(joinPartnerVariableDeclaration).assign(findJoinPartnerStatement);
+    code->currentCodeInsertionPoint->addStatement(joinPartnerDeclaration.copy());
 
     // register all fields of "InputTupleBuild joinPartner" in operator handler for use in emit
     for (const AttributeFieldPtr& field : batchJoinDef->getBuildSchema()->fields) {

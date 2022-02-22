@@ -44,6 +44,11 @@ class OperatorHandler : public Reconfigurable {
      * @param pipelineExecutionContext
      */
     virtual void stop(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+
+    /**
+     * @brief Returns the type of the operator handler.
+     */
+    virtual OperatorHandlerType getType() = 0;
 };
 
 }// namespace Execution

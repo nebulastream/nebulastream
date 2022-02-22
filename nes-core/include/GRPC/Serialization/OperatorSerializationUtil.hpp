@@ -26,6 +26,7 @@ class SerializableOperator_SourceDetails;
 class SerializableOperator_SinkDetails;
 class SerializableOperator_WindowDetails;
 class SerializableOperator_JoinDetails;
+class SerializableOperator_BatchJoinDetails;
 class SerializableOperator_WatermarkStrategyDetails;
 
 /**
@@ -82,6 +83,13 @@ class OperatorSerializationUtil {
     static SerializableOperator_JoinDetails serializeJoinOperator(const JoinLogicalOperatorNodePtr& joinOperator);
 
     /**
+     * @brief Serializes an batch join operator and all its properties to a SerializableOperator_JoinDetails object.
+     * @param BatchJoinLogicalOperatorNodePtr The window operator node.
+     * @return the serialized SerializableOperator_SinkDetails.
+     */
+    static SerializableOperator_BatchJoinDetails serializeBatchJoinOperator(const BatchJoinLogicalOperatorNodePtr& joinOperator);
+
+    /**
      * @brief De-serializes the SerializableOperator_SinkDetails and all its properties back to a sink operatorNodePtr
      * @param sinkDetails The serialized sink operator details.
      * @return SinkLogicalOperatorNodePtr
@@ -104,6 +112,15 @@ class OperatorSerializationUtil {
      * @return JoinLogicalOperatorNode
      */
     static JoinLogicalOperatorNodePtr deserializeJoinOperator(SerializableOperator_JoinDetails* joinDetails,
+                                                              OperatorId operatorId);
+
+    /**
+     * @brief De-serializes the SerializableOperator_BatchJoinDetails and all its properties back to a join operatorNodePtr
+     * @param sinkDetails The serialized sink operator details.
+     * @param operatorId: id of the operator to be deserialized
+     * @return BatchJoinLogicalOperatorNode
+     */
+    static BatchJoinLogicalOperatorNodePtr deserializeBatchJoinOperator(SerializableOperator_BatchJoinDetails* joinDetails,
                                                               OperatorId operatorId);
 
     /**

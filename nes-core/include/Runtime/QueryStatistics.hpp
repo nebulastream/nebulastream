@@ -49,6 +49,18 @@ class QueryStatistics {
     [[nodiscard]] uint64_t getProcessedBuffers() const;
 
     /**
+   * @brief getter for timestampQueryStart
+   * @return timestampQueryStart  In MS.
+   */
+    [[nodiscard]] uint64_t getTimestampQueryStart() const;
+
+    /**
+   * @brief getter for timestampLastProcessedTask
+   * @return timestampLastProcessedTask  In MS.
+   */
+    [[nodiscard]] uint64_t getTimestampLastProcessedTask() const;
+
+    /**
     * @brief getter for processedWatermarks
     * @return processedBuffers
     */
@@ -56,15 +68,26 @@ class QueryStatistics {
 
     /**
     * @brief setter for processedTasks
-    * @return processedTasks
     */
     void setProcessedTasks(uint64_t processedTasks);
 
     /**
    * @brief setter for processedTuple
-   * @return processedTuple
    */
     void setProcessedTuple(uint64_t processedTuple);
+
+    /**
+    * @brief setter for timestampQueryStart
+    * @param timestampQueryStart In MS.
+    * @param noOverwrite If true, the value is only set, if the previous value was 0 (if it was never set).
+   */
+    void setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite);
+
+    /**
+   * @brief setter for timestampLastProcessedTask
+    * @param timestampLastProcessedTask In MS.
+   */
+    void setTimestampLastProcessedTask(uint64_t timestampLastProcessedTask);
 
     /**
   * @brief increment processedBuffers
@@ -181,6 +204,9 @@ class QueryStatistics {
     std::atomic<uint64_t> queueSizeSum = 0;
     std::atomic<uint64_t> availableGlobalBufferSum = 0;
     std::atomic<uint64_t> availableFixedBufferSum = 0;
+
+    std::atomic<uint64_t> timestampQueryStart = 0;
+    std::atomic<uint64_t> timestampLastProcessedTask = 0;
 
   private:
     std::atomic<uint64_t> queryId = 0;

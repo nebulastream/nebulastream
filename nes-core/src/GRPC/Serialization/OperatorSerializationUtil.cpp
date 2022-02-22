@@ -44,6 +44,7 @@
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Windowing/LogicalBatchJoinDefinition.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 
@@ -65,6 +66,7 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 
+#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
@@ -171,9 +173,14 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
         auto windowDetails = serializeWindowOperator(operatorNode->as<WindowComputationOperator>());
         serializedOperator.mutable_details()->PackFrom(windowDetails);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
-        // serialize window operator
+        // serialize streaming join operator
         NES_TRACE("OperatorSerializationUtil:: serialize to JoinLogicalOperatorNode");
         auto joinDetails = serializeJoinOperator(operatorNode->as<JoinLogicalOperatorNode>());
+        serializedOperator.mutable_details()->PackFrom(joinDetails);
+    } else if (operatorNode->instanceOf<BatchJoinLogicalOperatorNode>()) {
+        // serialize batch join operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to BatchJoinLogicalOperatorNode");
+        auto joinDetails = serializeBatchJoinOperator(operatorNode->as<BatchJoinLogicalOperatorNode>());
         serializedOperator.mutable_details()->PackFrom(joinDetails);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         // serialize watermarkAssigner operator
@@ -321,11 +328,17 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         windowOperator->setOriginId(serializedWindowOperator.origin());
         operatorNode = windowOperator;
     } else if (details.Is<SerializableOperator_JoinDetails>()) {
-        // de-serialize window operator
+        // de-serialize streaming join operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to JoinLogicalOperator");
         auto serializedJoinOperator = SerializableOperator_JoinDetails();
         details.UnpackTo(&serializedJoinOperator);
         operatorNode = deserializeJoinOperator(&serializedJoinOperator, Util::getNextOperatorId());
+    } else if (details.Is<SerializableOperator_BatchJoinDetails>()) {
+        // de-serialize batch join operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to BatchJoinLogicalOperator");
+        auto serializedBatchJoinOperator = SerializableOperator_BatchJoinDetails();
+        details.UnpackTo(&serializedBatchJoinOperator);
+        operatorNode = deserializeBatchJoinOperator(&serializedBatchJoinOperator, Util::getNextOperatorId());
     } else if (details.Is<SerializableOperator_WatermarkStrategyDetails>()) {
         // de-serialize watermark assigner operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to watermarkassigner operator");
@@ -359,6 +372,12 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto joinOp = operatorNode->as<JoinLogicalOperatorNode>();
         joinOp->getJoinDefinition()->updateSourceTypes(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
         joinOp->getJoinDefinition()->updateOutputDefinition(joinOp->getOutputSchema());
+    }
+
+    if (details.Is<SerializableOperator_BatchJoinDetails>()) {
+        auto joinOp = operatorNode->as<BatchJoinLogicalOperatorNode>();
+        joinOp->getBatchJoinDefinition()->updateInputSchemas(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
+        joinOp->getBatchJoinDefinition()->updateOutputDefinition(joinOp->getOutputSchema());
     }
 
     // de-serialize and append origin id
@@ -622,6 +641,27 @@ OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperatorNodePt
     } else if (joinDefinition->getJoinType() == Join::LogicalJoinDefinition::JoinType::CARTESIAN_PRODUCT) {
         joinDetails.mutable_jointype()->set_jointype(
             SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT);
+    }
+    return joinDetails;
+}
+
+
+SerializableOperator_BatchJoinDetails
+OperatorSerializationUtil::serializeBatchJoinOperator(const BatchJoinLogicalOperatorNodePtr& joinOperator) {
+    auto joinDetails = SerializableOperator_BatchJoinDetails();
+    auto joinDefinition = joinOperator->getBatchJoinDefinition();
+
+    ExpressionSerializationUtil::serializeExpression(joinDefinition->getBuildJoinKey(), joinDetails.mutable_onbuildkey());
+    ExpressionSerializationUtil::serializeExpression(joinDefinition->getProbeJoinKey(), joinDetails.mutable_onprobekey());
+
+    joinDetails.set_numberofinputedgesbuild(joinDefinition->getNumberOfInputEdgesBuild());
+    joinDetails.set_numberofinputedgesprobe(joinDefinition->getNumberOfInputEdgesProbe());
+
+    if (joinDefinition->getJoinType() == Join::LogicalBatchJoinDefinition::JoinType::INNER_JOIN) {
+        joinDetails.mutable_jointype()->set_jointype(SerializableOperator_BatchJoinDetails_JoinTypeCharacteristic_JoinType_INNER_JOIN);
+    } else if (joinDefinition->getJoinType() == Join::LogicalBatchJoinDefinition::JoinType::CARTESIAN_PRODUCT) {
+        joinDetails.mutable_jointype()->set_jointype(
+            SerializableOperator_BatchJoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT);
     }
     return joinDetails;
 }
@@ -899,6 +939,32 @@ JoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeJoinOperator(Se
     //    } else {
     //        NES_NOT_IMPLEMENTED();
     //    }
+}
+
+BatchJoinLogicalOperatorNodePtr OperatorSerializationUtil::deserializeBatchJoinOperator(
+        SerializableOperator_BatchJoinDetails* joinDetails, OperatorId operatorId) {
+
+    auto serializedJoinType = joinDetails->jointype();
+    // check which jointype is set
+    // default: INNER_JOIN
+    Join::LogicalBatchJoinDefinition::JoinType joinType = Join::LogicalBatchJoinDefinition::INNER_JOIN;
+    // with Cartesian Product is set, change join type
+    if (serializedJoinType.jointype() == SerializableOperator_BatchJoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT) {
+        joinType = Join::LogicalBatchJoinDefinition::CARTESIAN_PRODUCT;
+    }
+
+    auto buildKeyAccessExpression =
+        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onbuildkey())->as<FieldAccessExpressionNode>();
+    auto probeKeyAccessExpression =
+        ExpressionSerializationUtil::deserializeExpression(joinDetails->mutable_onprobekey())->as<FieldAccessExpressionNode>();
+    auto joinDefinition = Join::LogicalBatchJoinDefinition::create(buildKeyAccessExpression,
+                                                              probeKeyAccessExpression,
+                                                              joinDetails->numberofinputedgesprobe(),
+                                                              joinDetails->numberofinputedgesbuild(),
+                                                              joinType);
+    auto retValue = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)->as<BatchJoinLogicalOperatorNode>();
+    return retValue;
+
 }
 SerializableOperator_SourceDetails
 OperatorSerializationUtil::serializeSourceOperator(const SourceLogicalOperatorNodePtr& sourceOperator, bool isClientOriginated) {
