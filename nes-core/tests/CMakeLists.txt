@@ -129,10 +129,6 @@ add_executable(topology-iterator-tests "UnitTests/Topology/TopologyIterationTest
 target_link_libraries(topology-iterator-tests nes-tests)
 add_test(NAME topology-iterator-tests COMMAND topology-iterator-tests)
 
-### Buffer Storage Test ###
-add_executable(buffer-storage-tests "UnitTests/Runtime/BufferStorageTest.cpp")
-target_link_libraries(buffer-storage-tests nes-tests)
-add_test(NAME buffer-storage-tests COMMAND buffer-storage-tests)
 
 ### Lineage Manager Test ###
 add_executable(lineage-manager-tests "UnitTests/Runtime/LineageManagerTest.cpp")
@@ -143,6 +139,11 @@ add_test(NAME lineage-manager-tests COMMAND lineage-manager-tests)
 add_executable(buffer-manager-tests "UnitTests/Runtime/BufferManagerTest.cpp")
 target_link_libraries(buffer-manager-tests nes-tests)
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
+
+### Buffer Storage Test ###
+add_executable(buffer-storage-tests "UnitTests/Runtime/BufferStorageTest.cpp")
+target_link_libraries(buffer-storage-tests nes-tests)
+add_test(NAME buffer-storage-tests COMMAND buffer-storage-tests)
 
 ### AbstractWindowHandler Manager Test ###
 add_executable(window-manager-tests "UnitTests/Windowing/WindowManagerTest.cpp")

@@ -17,53 +17,58 @@
 #include <Util/Logger.hpp>
 #include <NesBaseTest.hpp>
 #include <thread>
+
 namespace NES {
-const size_t buffersInserted = 21;
+const size_t buffersInserted = 5;
 const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
-const size_t expectedStorageSize = 2;
 const size_t numberOfThreads = 5;
 
 class BufferStorageTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
+    Runtime::BufferStoragePtr bufferStorage;
 
   protected:
-    virtual void SetUp() { bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1); }
+    virtual void SetUp() {
+        bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
+        bufferStorage = std::make_shared<Runtime::BufferStorage>();
+    }
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { NES::setupLogging("BufferStorageTest.log", NES::LOG_DEBUG); }
 };
 
 /**
      * @brief test inserts buffers to different queues and checks after every insertion that queue
-     * size increased on one. After the insertion is fully done the site of the buffer storage is checked to be five
+     * size increased on one. After the insertion is fully done the size of the buffer storage is checked to be buffersInserted
 */
 TEST_F(BufferStorageTest, bufferInsertionInBufferStorage) {
-    auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     for (size_t i = 0; i < buffersInserted; i++) {
         auto buffer = bufferManager->getUnpooledBuffer(16384);
-        bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
+        bufferStorage->insertBuffer(i, i, buffer.value());
         ASSERT_EQ(bufferStorage->getStorageSize(), i + 1);
-        ASSERT_EQ(bufferStorage->getStorageSizeForQueue(i), oneBuffer);
+        ASSERT_EQ(bufferStorage->getQueueSize(i, i), oneBuffer);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
 }
 
 /**
-     * @brief test inserts five buffers into one queue but starts from the biggest sequence number.
-     * The queue is then checked to be sorted to be exact to have biggest elements at the top.
+     * @brief test inserts buffersInserted amount of buffers into one queue but starts from the biggest watermark.
+     * The queue is then checked to be sorted to be exact to have the biggest watermark value at the top.
 */
 TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
     for (int i = buffersInserted - 1; i >= 0; i--) {
-        bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
+        auto buffer = bufferManager->getUnpooledBuffer(16384);
+        buffer->setWatermark(i);
+        bufferStorage->insertBuffer(0, 0, buffer.value());
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
     for (uint64_t i = 0; i < buffersInserted - 1; i++) {
-        bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, 0));
-        ASSERT_EQ(bufferStorage->getTopElementFromQueue(0)->getSequenceNumber().getSequenceNumber(), i + 1);
+        bufferStorage->trimBuffer(0, i + 1);
+        ASSERT_EQ(bufferStorage->getTopElementFromQueue(0, 0)->getWatermark(), i + 1);
     }
+    ASSERT_EQ(bufferStorage->getStorageSize(), oneBuffer);
 }
 
 /**
@@ -71,19 +76,20 @@ TEST_F(BufferStorageTest, sortedInsertionInBufferStorage) {
 */
 TEST_F(BufferStorageTest, emptyBufferCheck) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    ASSERT_EQ(bufferStorage->trimBuffer(BufferSequenceNumber(0, 0)), false);
+    ASSERT_EQ(bufferStorage->trimBuffer(0, 0), false);
 }
 
 /**
      * @brief test tries to delete non existing element
 */
-TEST_F(BufferStorageTest, trimmingOfNonExistingElement) {
+TEST_F(BufferStorageTest, trimmingOfNonExistingQueryId) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
     for (int i = buffersInserted - 1; i >= 0; i--) {
-        bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
+        auto buffer = bufferManager->getUnpooledBuffer(16384);
+        buffer->setWatermark(i);
+        bufferStorage->insertBuffer(0, 0, buffer.value());
     }
-    ASSERT_EQ(bufferStorage->trimBuffer(BufferSequenceNumber(0, 6)), false);
+    ASSERT_EQ(bufferStorage->trimBuffer(2, buffersInserted + buffersInserted), false);
 }
 
 /**
@@ -92,43 +98,45 @@ TEST_F(BufferStorageTest, trimmingOfNonExistingElement) {
 TEST_F(BufferStorageTest, oneBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     auto buffer = bufferManager->getUnpooledBuffer(16384);
-    bufferStorage->insertBuffer(BufferSequenceNumber(0, 0), buffer.value());
+    buffer->setWatermark(0);
+    bufferStorage->insertBuffer(0, 0, buffer.value());
     ASSERT_EQ(bufferStorage->getStorageSize(), oneBuffer);
-    ASSERT_EQ(bufferStorage->getStorageSizeForQueue(0), oneBuffer);
-    bufferStorage->trimBuffer(BufferSequenceNumber(1, 0));
-    ASSERT_EQ(bufferStorage->getStorageSizeForQueue(0), emptyBuffer);
+    ASSERT_EQ(bufferStorage->getQueueSize(0, 0), oneBuffer);
+    bufferStorage->trimBuffer(0, 1);
+    ASSERT_EQ(bufferStorage->getQueueSize(0, 0), emptyBuffer);
 }
 
 /**
-     * @brief test inserts five buffers in different queues and deletes them.
+     * @brief test inserts buffersInserted buffers in different queues and deletes them.
 */
 TEST_F(BufferStorageTest, manyBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
     for (size_t i = 0; i < buffersInserted; i++) {
         auto buffer = bufferManager->getUnpooledBuffer(16384);
-        bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
-        ASSERT_EQ(bufferStorage->getStorageSizeForQueue(i), oneBuffer);
+        bufferStorage->insertBuffer(i, i, buffer.value());
+        ASSERT_EQ(bufferStorage->getQueueSize(i, i), oneBuffer);
     }
     ASSERT_EQ(bufferStorage->getStorageSize(), buffersInserted);
     for (size_t i = 0; i < buffersInserted; i++) {
-        bufferStorage->trimBuffer(BufferSequenceNumber(i + 1, i));
-        ASSERT_EQ(bufferStorage->getStorageSizeForQueue(i), emptyBuffer);
+        bufferStorage->trimBuffer(i, i + 1);
+        ASSERT_EQ(bufferStorage->getQueueSize(i, i), emptyBuffer);
     }
 }
 
 /**
-     * @brief test inserts five buffers in one queue and deletes three of them. The test checks that
-     * the deleted buffers are smaller that passed id.
+     * @brief test inserts buffersInserted buffers in one queue and leaves only one after trimming. The test checks that
+     * the deleted buffers are smaller that passed timestamp.
 */
 TEST_F(BufferStorageTest, smallerBufferDeletionFromBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
     for (size_t i = 0; i < buffersInserted; i++) {
-        bufferStorage->insertBuffer(BufferSequenceNumber(i, 0), buffer.value());
-        ASSERT_EQ(bufferStorage->getStorageSizeForQueue(0), i + 1);
+        auto buffer = bufferManager->getUnpooledBuffer(16384);
+        buffer->setWatermark(i);
+        bufferStorage->insertBuffer(0, 0, buffer.value());
+        ASSERT_EQ(bufferStorage->getQueueSize(0, 0), i + 1);
     }
-    bufferStorage->trimBuffer(BufferSequenceNumber(buffersInserted - 2, 0));
-    ASSERT_EQ(bufferStorage->getStorageSizeForQueue(0), expectedStorageSize);
+    bufferStorage->trimBuffer(0, buffersInserted - 1);
+    ASSERT_EQ(bufferStorage->getQueueSize(0, 0), oneBuffer);
 }
 
 /**
@@ -140,8 +148,8 @@ TEST_F(BufferStorageTest, multithreadInsertionInBufferStorage) {
     std::vector<std::thread> t;
     for (uint32_t i = 0; i < buffersInserted; i++) {
         t.emplace_back([bufferStorage, buffer, i]() {
-            bufferStorage->insertBuffer(BufferSequenceNumber(i, i), buffer.value());
-            ASSERT_EQ(bufferStorage->getStorageSizeForQueue(i), oneBuffer);
+            bufferStorage->insertBuffer(i, i, buffer.value());
+            ASSERT_EQ(bufferStorage->getQueueSize(i, i), oneBuffer);
         });
     }
     for (auto& thread : t) {
@@ -151,19 +159,22 @@ TEST_F(BufferStorageTest, multithreadInsertionInBufferStorage) {
 }
 
 /**
-     * @brief test inserts five buffers in different queues and deletes four of them concurrently.
+     * @brief test inserts buffersInserted buffers in different queues and deletes four of them concurrently.
 */
 TEST_F(BufferStorageTest, multithreadTrimmingInBufferStorage) {
     auto bufferStorage = std::make_shared<Runtime::BufferStorage>();
-    auto buffer = bufferManager->getUnpooledBuffer(16384);
     std::vector<std::thread> t;
     for (uint64_t i = 0; i < numberOfThreads; i++) {
+        auto buffer = bufferManager->getUnpooledBuffer(16384);
+        buffer->setWatermark(i);
         t.emplace_back([bufferStorage, buffer, i]() {
             for (uint64_t j = 0; j < buffersInserted; j++) {
                 if (j && j % 4 == 0) {
-                    bufferStorage->trimBuffer(BufferSequenceNumber(j, i));
+                    bufferStorage->trimBuffer(0, j + 1);
+                    NES_INFO("Trim Buffer with watermark " << j + 1);
                 } else {
-                    bufferStorage->insertBuffer(BufferSequenceNumber(j, i), buffer.value());
+                    bufferStorage->insertBuffer(0, i, buffer.value());
+                    NES_INFO("Insert Buffer:" << i << "watermark" << buffer.value().getWatermark());
                 }
             }
         });
