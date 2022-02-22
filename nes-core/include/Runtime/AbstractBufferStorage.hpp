@@ -17,6 +17,8 @@
 
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/BufferSequenceNumber.hpp>
+#include <Network/NesPartition.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <cstddef>
 
 namespace NES::Runtime {
@@ -34,7 +36,7 @@ class AbstractBufferStorage {
      * @param nesPartitionId destination id
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    virtual void insertBuffer(uint64_t queryId, uint64_t nesPartitionId, NES::Runtime::TupleBufferPtr bufferPtr) = 0;
+    virtual void insertBuffer(QueryId queryId, Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer bufferPtr) = 0;
 
     /**
      * @brief Deletes q pair<id,buffer> from buffer storage
@@ -42,7 +44,7 @@ class AbstractBufferStorage {
      * @param timestamp max timestamp of current epoch
      * @return true in case of a success trimming
      */
-    virtual bool trimBuffer(uint64_t queryId, uint64_t timestamp) = 0;
+    virtual bool trimBuffer(QueryId queryId, uint64_t timestamp) = 0;
 
     /**
      * @brief Return current storage size

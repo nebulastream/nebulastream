@@ -41,7 +41,7 @@ class BufferStorage : public AbstractBufferStorage {
      * @param nesPartitionId destination id
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    void insertBuffer(uint64_t queryId, uint64_t nesPartitionId, NES::Runtime::TupleBufferPtr bufferPtr) override;
+    void insertBuffer(QueryId queryId, Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer bufferPtr) override;
 
     /**
      * @brief Deletes all tuple buffers which watermark timestamp is smaller than the given timestamp
@@ -49,7 +49,7 @@ class BufferStorage : public AbstractBufferStorage {
      * @param timestamp max timestamp of current epoch
      * @return true in case of a success trimming
      */
-    bool trimBuffer(uint64_t queryId, uint64_t timestamp) override;
+    bool trimBuffer(QueryId queryId, uint64_t timestamp) override;
 
     /**
      * @brief Return current storage size
@@ -63,7 +63,7 @@ class BufferStorage : public AbstractBufferStorage {
      * @param nesPartitionId destination id
      * @return Given queue size
      */
-    size_t getQueueSizeForGivenQueryAndNesPartition(uint64_t queryId, uint64_t nesPartitionId) const;
+    size_t getQueueSize(QueryId queryId, Network::PartitionId nesPartitionId) const;
 
     /**
      * @brief Return top element of the queue
@@ -71,10 +71,10 @@ class BufferStorage : public AbstractBufferStorage {
      * @param nesPartitionId destination id
      * @return buffer storage unit
      */
-    NES::Runtime::TupleBufferPtr getTopElementFromQueue(uint64_t queryId, uint64_t nesPartitionId) const;
+    std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue(QueryId queryId, Network::PartitionId nesPartitionId) const;
 
   private:
-    std::unordered_map<uint64_t, BufferStorageUnitPtr> buffers;
+    std::unordered_map<QueryId, BufferStorageUnitPtr> buffers;
     mutable std::mutex mutex;
 };
 

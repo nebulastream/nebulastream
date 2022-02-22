@@ -14,41 +14,30 @@
 
 #include <Runtime/BufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <queue>
+#include <optional>
 
 namespace NES::Runtime {
 
-void BufferStorage::insertBuffer(uint64_t queryId, uint64_t nesPartitionId, NES::Runtime::TupleBufferPtr bufferPtr) {
+void BufferStorage::insertBuffer(QueryId queryId, Network::PartitionId nesPartitionId, NES::Runtime::TupleBuffer buffer) {
     std::unique_lock<std::mutex> lock(mutex);
     auto iterator = this->buffers.find(queryId);
     if (iterator == this->buffers.end()) {
         auto queue = TupleBufferPriorityQueue();
         NES_TRACE("BufferStorage: Insert tuple with query id " << queryId << "and nes partition id" << nesPartitionId << " into buffer storage");
-        queue.push(bufferPtr);
+        queue.push(buffer);
         this->buffers[queryId] = std::make_shared<BufferStorageUnit>(nesPartitionId, queue);
     } else {
         NES_TRACE("BufferStorage: Insert tuple with query id " << queryId << "and nes partition id" << nesPartitionId << " into buffer storage");
-        iterator->second->getNesPartitionToTupleBufferQueueMapping().at(nesPartitionId).push(bufferPtr);
+        iterator->second->insert(nesPartitionId, buffer);
     }
 }
 
-bool BufferStorage::trimBuffer(uint64_t queryId, uint64_t timestamp) {
+bool BufferStorage::trimBuffer(QueryId queryId, uint64_t timestamp) {
     std::unique_lock<std::mutex> lock(mutex);
     NES_TRACE("BufferStorage: Trying to delete tuple with query id " << queryId << " and timestamp " << timestamp);
     auto iteratorQueryId = this->buffers.find(queryId);
     if (iteratorQueryId != this->buffers.end()) {
-        for (auto& iteratorNesPartition : iteratorQueryId->second->getNesPartitionToTupleBufferQueueMapping()) {
-            auto& queue = iteratorNesPartition.second;
-            if (!queue.empty()) {
-                auto topElementWatermark = queue.top()->getWatermark();
-                while (!queue.empty() && topElementWatermark < timestamp) {
-                    NES_TRACE("BufferStorage: Delete tuple with watermark" << topElementWatermark);
-                    queue.pop();
-                    topElementWatermark = queue.top()->getWatermark();
-                }
-                return true;
-            }
-        }
+        return iteratorQueryId->second->trim(timestamp);
     }
     return false;
 }
@@ -57,48 +46,30 @@ size_t BufferStorage::getStorageSize() const {
     std::unique_lock<std::mutex> lock(mutex);
     size_t size = 0;
     for (auto& iteratorQueryId : buffers) {
-        for (auto& iteratorNesPartition : iteratorQueryId.second->getNesPartitionToTupleBufferQueueMapping()) {
-            size += iteratorNesPartition.second.size();
-        }
+        size += iteratorQueryId.second->getSize();
     }
     return size;
 }
 
-size_t BufferStorage::getQueueSizeForGivenQueryAndNesPartition(uint64_t queryId, uint64_t nesPartitionId) const {
+size_t BufferStorage::getQueueSize(QueryId queryId, Network::PartitionId nesPartitionId) const {
     std::unique_lock<std::mutex> lock(mutex);
     auto iteratorQueryId = this->buffers.find(queryId);
     if (iteratorQueryId == this->buffers.end()) {
         NES_ERROR("BufferStorage: No queue with query id " << queryId << "was found");
         return 0;
     } else {
-        auto nesPartitionToQueueMapping = iteratorQueryId->second->getNesPartitionToTupleBufferQueueMapping();
-        auto iteratorNesPartition = nesPartitionToQueueMapping.find(nesPartitionId);
-        if (iteratorNesPartition == nesPartitionToQueueMapping.end()) {
-            NES_ERROR("BufferStorage: No queue with nes partition id " << nesPartitionId << "was found");
-            return 0;
-        }
-        else {
-            return iteratorNesPartition->second.size();
-        }
+        return iteratorQueryId->second->getQueueSize(nesPartitionId);
     }
 }
 
-NES::Runtime::TupleBufferPtr BufferStorage::getTopElementFromQueue(uint64_t queryId, uint64_t nesPartitionId) const {
+std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue(QueryId queryId, Network::PartitionId nesPartitionId) const {
     std::unique_lock<std::mutex> lock(mutex);
     auto iteratorQueryId = this->buffers.find(queryId);
     if (iteratorQueryId == this->buffers.end()) {
         NES_ERROR("BufferStorage: No queue with query id " << queryId << "was found");
-        return nullptr;
+        return std::optional<TupleBuffer>();
     } else {
-        auto nesPartitionToQueueMapping = iteratorQueryId->second->getNesPartitionToTupleBufferQueueMapping();
-        auto iteratorNesPartition = nesPartitionToQueueMapping.find(nesPartitionId);
-        if (iteratorNesPartition == nesPartitionToQueueMapping.end()) {
-            NES_ERROR("BufferStorage: No queue with nes partition id " << nesPartitionId << "was found");
-            return nullptr;
-        }
-        else {
-            return iteratorNesPartition->second.top();
-        }
+        return iteratorQueryId->second->getTopElementFromQueue(nesPartitionId);
     }
 }
 

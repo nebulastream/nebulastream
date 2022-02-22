@@ -28,6 +28,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        QuerySubPlanId querySubPlanId)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), querySubPlanId(querySubPlanId) {
+    //TODO: issue #2543
     watermarkProcessor = std::make_unique<Windowing::MultiOriginWatermarkProcessor>(1);
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
