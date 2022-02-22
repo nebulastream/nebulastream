@@ -17,8 +17,8 @@
 
 #include <Runtime/AbstractBufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/BufferSequenceNumber.hpp>
 #include <Util/BufferStorageUnit.hpp>
+#include <optional>
 #include <queue>
 #include <unordered_map>
 

@@ -14,7 +14,6 @@
 
 #include <Runtime/BufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <optional>
 
 namespace NES::Runtime {
 
