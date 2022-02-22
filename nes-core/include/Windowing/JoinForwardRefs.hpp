@@ -33,12 +33,6 @@ using AbstractJoinHandlerPtr = std::shared_ptr<AbstractJoinHandler>;
 class AbstractBatchJoinHandler;
 using AbstractBatchJoinHandlerPtr = std::shared_ptr<AbstractBatchJoinHandler>;
 
-// todo jm is this a good place ?
-template<class KeyType, class InputTypeBuild>
-using HashTable = cuckoohash_map<KeyType, InputTypeBuild>;
-template<class KeyType, class InputTypeBuild>
-using HashTablePtr = std::shared_ptr<HashTable<KeyType, InputTypeBuild>>;
-
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class ExecutableNestedLoopJoinTriggerAction;
 template<class KeyType, class InputTypeLeft, class InputTypeRight>

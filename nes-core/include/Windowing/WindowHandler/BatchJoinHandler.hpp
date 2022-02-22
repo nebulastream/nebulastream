@@ -30,6 +30,12 @@
 
 
 namespace NES::Join {
+
+template<class KeyType, class InputTypeBuild>
+        using HashTable = cuckoohash_map<KeyType, InputTypeBuild>;
+template<class KeyType, class InputTypeBuild>
+        using HashTablePtr = std::shared_ptr<HashTable<KeyType, InputTypeBuild>>;
+
 template<class KeyType, class InputTypeBuild>
 class BatchJoinHandler : public AbstractBatchJoinHandler {
   public:

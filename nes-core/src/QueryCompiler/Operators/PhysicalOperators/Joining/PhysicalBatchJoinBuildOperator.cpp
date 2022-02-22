@@ -22,60 +22,6 @@
 #include <Windowing/WindowHandler/BatchJoinHandler.hpp>
 
 
-// todo jm delete as it is not used anymore
-class CustomPipelineStageBatchJoinBuild : public NES::Runtime::Execution::ExecutablePipelineStage {
-
-    struct __attribute__((packed)) InputBuildTuple {
-        int64_t build$id1;
-        int64_t build$value;
-    };
-
-    NES::ExecutionResult execute(
-            NES::Runtime::TupleBuffer &inputTupleBuffer,
-            NES::Runtime::Execution::PipelineExecutionContext &pipelineExecutionContext,
-            __attribute__((unused)) NES::Runtime::WorkerContext &workerContext) {
-        /* variable declarations */
-        NES::ExecutionResult ret = NES::ExecutionResult::Ok;
-        /* statements section */
-        InputBuildTuple *inputTuples = (InputBuildTuple *) inputTupleBuffer.getBuffer();
-        uint64_t numberOfTuples = inputTupleBuffer.getNumberOfTuples();
-
-        NES::Join::BatchJoinOperatorHandlerPtr joinOperatorHandler =
-                pipelineExecutionContext.getOperatorHandler<NES::Join::BatchJoinOperatorHandler>(0); // <-- get index from
-
-        NES::Join::HashTablePtr<uint64_t, InputBuildTuple> hashTable =
-                joinOperatorHandler->getBatchJoinHandler<NES::Join::BatchJoinHandler, uint64_t, InputBuildTuple>()->getHashTable();
-
-        for (uint64_t recordIndex = 0; recordIndex < numberOfTuples;
-        ++recordIndex) {
-            uint64_t tmp_build$id = inputTuples[recordIndex].build$id1;
-            hashTable->insert(tmp_build$id, inputTuples[recordIndex]);
-        };
-
-        return ret;
-        ;
-    }
-    uint32_t setup(
-            __attribute__((unused)) NES::Runtime::Execution::PipelineExecutionContext &pipelineExecutionContext) {
-        /* variable declarations */
-
-        NES::Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler =
-                pipelineExecutionContext.getOperatorHandler<NES::Join::BatchJoinOperatorHandler>(0);
-
-        auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
-
-        NES::Join::AbstractBatchJoinHandlerPtr batchJoinHandler =
-            NES::Join::BatchJoinHandler<int64_t, InputBuildTuple>::create(batchJoinDefinition, 1000);
-
-        batchJoinOperatorHandler->setBatchJoinHandler(batchJoinHandler);
-
-        /* statements section */
-        return 0;
-        ;
-    }
-};
-
-
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalBatchJoinBuildOperator::create(SchemaPtr inputSchema,
@@ -105,11 +51,6 @@ std::string PhysicalBatchJoinBuildOperator::toString() const { return "PhysicalB
 
 OperatorNodePtr PhysicalBatchJoinBuildOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler);
-}
-
-// todo jm delete as it is not used anymore
-Runtime::Execution::ExecutablePipelineStagePtr PhysicalBatchJoinBuildOperator::getExecutablePipelineStage() {
-    return std::make_shared<CustomPipelineStageBatchJoinBuild>();
 }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

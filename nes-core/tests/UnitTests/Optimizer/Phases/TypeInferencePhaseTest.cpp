@@ -993,22 +993,22 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
  * @brief Inference test for query with manually inserted batch Join.
  */
 TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalStream("default_logical");
 
     SchemaPtr schemaProbeSide = Schema::create()
             ->addField("id1", BasicType::INT64)
             ->addField("one", BasicType::INT64)
             ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
             ;
-    streamCatalog->addLogicalStream("probe", schemaProbeSide);
+    sourceCatalog->addLogicalStream("probe", schemaProbeSide);
 
 
     SchemaPtr schemaBuildSide = Schema::create()
             ->addField("id2", BasicType::INT64)
             ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
             ;
-    streamCatalog->addLogicalStream("build", schemaBuildSide);
+    sourceCatalog->addLogicalStream("build", schemaBuildSide);
 
     auto subQuery = Query::from("build");
 
@@ -1019,7 +1019,7 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
             .sink(FileSinkDescriptor::create(""))
             ;
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     JoinLogicalOperatorNodePtr joinOp = queryPlan->getOperatorByType<JoinLogicalOperatorNode>()[0];
@@ -1062,22 +1062,22 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
  * @brief Inference test for query with batch Join.
  */
 TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
-    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>(QueryParsingServicePtr());
-    streamCatalog->removeLogicalStream("default_logical");
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    sourceCatalog->removeLogicalStream("default_logical");
 
     SchemaPtr schemaProbeSide = Schema::create()
             ->addField("id1", BasicType::INT64)
             ->addField("one", BasicType::INT64)
             ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
             ;
-    streamCatalog->addLogicalStream("probe", schemaProbeSide);
+    sourceCatalog->addLogicalStream("probe", schemaProbeSide);
 
 
     SchemaPtr schemaBuildSide = Schema::create()
             ->addField("id2", BasicType::INT64)
             ->addField("timestamp", BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
             ;
-    streamCatalog->addLogicalStream("build", schemaBuildSide);
+    sourceCatalog->addLogicalStream("build", schemaBuildSide);
 
     auto subQuery = Query::from("build");
 
@@ -1087,7 +1087,7 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
             .sink(FileSinkDescriptor::create(""))
             ;
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
 
     auto sinkOperator = queryPlan->getOperatorByType<SinkLogicalOperatorNode>();
