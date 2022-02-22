@@ -25,7 +25,6 @@
 #include <future>
 #include <vector>
 #include <memory>
-#include <s2/s2point.h>
 #include <optional>
 #include <Common/GeographicalLocation.hpp>
 
