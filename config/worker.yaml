@@ -84,4 +84,4 @@ physicalSources:
       skipHeader: false
       numberOfBuffersToProduce: 0
       numberOfTuplesToProducePerBuffer: 0
-      sourceFrequency: 0
+      sourceFrequency: 5000
