@@ -80,6 +80,14 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
         return std::dynamic_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
     }
 
+    std::vector<PredecessorExecutablePipeline>& getPredecessors() {
+        return predecessors;
+    }
+
+    void addPredecessor(PredecessorExecutablePipeline pred) {
+        predecessors.push_back(pred);
+    }
+
     QueryManagerPtr getQueryManager() {
         if (!queryManager.expired()) {
             return queryManager.lock();
@@ -123,6 +131,8 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
 
     std::weak_ptr<AbstractQueryManager> queryManager;
+
+    std::vector<PredecessorExecutablePipeline> predecessors;
 };
 
 }// namespace NES::Runtime::Execution

@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp"
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -51,7 +51,10 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
+#include <Windowing/JoinForwardRefs.hpp>
 #include <string>
 #include <utility>
 #include <variant>
@@ -176,6 +179,19 @@ void LowerToExecutableQueryPlanPhase::processSource(
                                         sourceDescriptor,
                                         nodeEngine,
                                         executableSuccessorPipelines);
+
+    // Add this source as a predecessor to the pipeline execution context's of all its children.
+    // This way you can navigate upstream.
+    for (auto executableSuccessor : executableSuccessorPipelines) {
+        if (const auto* nextExecutablePipeline =
+                std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
+            NES_DEBUG("Adding current source operator: " << source->getOperatorId()
+            << " as a predecessor to its child pipeline: " << (*nextExecutablePipeline)->getPipelineId());
+            (*nextExecutablePipeline)->getContext()->addPredecessor(source);
+        }
+        // note: we do not register predecessors for DataSinks.
+    }
+
     sources.emplace_back(source);
 }
 
@@ -259,6 +275,18 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                              pipeline->getPredecessors().size(),
                                                                              executableSuccessorPipelines);
 
+    // Add this pipeline as a predecessor to the pipeline execution context's of all its children.
+    // This way you can navigate upstream.
+    for (auto executableSuccessor : executableSuccessorPipelines) {
+        if (const auto* nextExecutablePipeline =
+                std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
+            NES_DEBUG("Adding current pipeline: " << executablePipeline->getPipelineId()
+            << " as a predecessor to its child pipeline: " << (*nextExecutablePipeline)->getPipelineId());
+            (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
+        }
+        // note: we do not register predecessors for DataSinks.
+    }
+
     executablePipelines.emplace_back(executablePipeline);
     return executablePipeline;
 }
@@ -326,8 +354,9 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
         }
         case STATIC_DATA_SOURCE: {
             auto staticDataSourceType = physicalSourceType->as<NES::Experimental::StaticDataSourceType>();
-            return NES::Experimental::StaticDataSourceDescriptor::create(schema, staticDataSourceType->getPathTableFile());
-        }
+            return NES::Experimental::StaticDataSourceDescriptor::create(schema,
+                                                                         staticDataSourceType->getPathTableFile(),
+                                                                         staticDataSourceType->getLateStart());
         case LAMBDA_SOURCE: {
             auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
             return LambdaSourceDescriptor::create(schema,

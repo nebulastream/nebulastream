@@ -629,7 +629,7 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //
 //
 //    // PROBE PIPELINE:
-//    struct __attribute__((packed)) InputTuple {
+//    struct __attribute__((packed)) InputTupleProbe {
 //        int64_t probe$id1;
 //        int64_t probe$one;
 //        int64_t probe$value;
@@ -658,7 +658,6 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //            /* statements section */
 //            InputTuple *inputTuples = (InputTuple *) inputTupleBuffer.getBuffer();
 //            uint64_t numberOfTuples = inputTupleBuffer.getNumberOfTuples();
-//            InputTupleBuild joinPartner;
 //
 //            auto batchJoinOperatorHandler = pipelineExecutionContext.getOperatorHandler<Join::BatchJoinOperatorHandler>(0);
 //            auto batchJoinHandler = batchJoinOperatorHandler->getBatchJoinHandler<NES::Join::BatchJoinHandler, int64_t, InputTupleBuild>();
@@ -668,7 +667,8 @@ TEST_F(QueryExecutionTest, streamingJoinQuery) {
 //            int64_t maxTuple = resultTupleBuffer.getBufferSize() / 40;
 //
 //            for (uint64_t recordIndex = 0; recordIndex < numberOfTuples; ++recordIndex) {
-//                if (hashTable->find(inputTuples[recordIndex].probe$id1, joinPartner)) {
+//                if (hashTable->contains(inputTuples[recordIndex].probe$id1)) {
+//                    InputBuildTuple joinPartner = hashTable->find(inputTuples[recordIndex].probe$id1);
 //                    resultTuples[numberOfResultTuples].build$id2 = joinPartner.build$id2;
 //                    resultTuples[numberOfResultTuples].build$value = joinPartner.build$value;
 //                    resultTuples[numberOfResultTuples].probe$id1 = inputTuples[recordIndex].probe$id1;

@@ -21,7 +21,7 @@ class ExchangeProtocol;
 }
 namespace NES::Runtime {
 /// this enum defines the event that can occur in the system runtime
-enum class EventType : uint8_t { kInvalidEvent, kCustomEvent };
+enum class EventType : uint8_t { kInvalidEvent, kCustomEvent, startSourceEvent };
 
 template<typename T>
 concept IsNesEvent = requires(T t) {
@@ -78,6 +78,20 @@ class CustomEventWrapper : public BaseEvent {
 
   private:
     Runtime::TupleBuffer buffer;
+};
+
+/**
+ * @brief This class shall be used to define custom events with user-supplied data
+ */
+class StartSourceEvent : public BaseEvent {
+  public:
+    /**
+     * @brief creates a custom events that lets static data sources start sending data.
+     */
+    explicit StartSourceEvent() : BaseEvent(EventType::startSourceEvent) {}
+
+    // todo only for compliance, don't call!
+    uint8_t* data() override { return nullptr; }
 };
 
 /**

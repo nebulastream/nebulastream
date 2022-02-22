@@ -52,8 +52,8 @@ namespace TestUtils {
 
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
 static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
-// in milliseconds
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
+static constexpr auto defaultCooldown = std::chrono::milliseconds(3000); // 3000 milliseconds after last task, the query should be done.
 
 [[nodiscard]] std::string coordinatorPort(uint64_t coordinatorPort) {
     return "--" + COORDINATOR_PORT_CONFIG + "=" + std::to_string(coordinatorPort);
@@ -309,7 +309,16 @@ template<typename Predicate = std::equal_to<uint64_t>>
             continue;
         }
 
-        if (statistics[0]->getProcessedBuffers() >= expectedResult) {
+        uint64_t now =
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count();
+
+        // wait for another iteration if the last processed task was very recent.
+        if (statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown) {
+            NES_DEBUG("checkCompleteOrTimeout: Atask was processed within the last "
+            << defaultCooldown << "ms, the query may still be active. Restart the timeout period.");
+            start_timestamp = std::chrono::system_clock::now();
+        } else if (statistics[0]->getProcessedBuffers() >= expectedResult) {
             NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats="
                       << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
                       << " procWatermarks=" << statistics[0]->getProcessedWatermarks());

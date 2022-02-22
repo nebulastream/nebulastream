@@ -20,6 +20,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Windowing/WindowHandler/BatchJoinHandler.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
+#include <Common/ExecutableType/Array.hpp>
 
 // todo jm delete as it is not used anymore
 class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::ExecutablePipelineStage {
@@ -31,7 +32,9 @@ class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::Execut
     struct __attribute__((packed)) InputBuildTuple {
         int64_t build$id;
         int64_t build$value;
+        NES::ExecutableTypes::Array<char, 16> tpch_customer$C_PHONE;
     };
+
     struct __attribute__((packed)) ResultTuple {
         int64_t probe$id;
         int64_t probe$one;
@@ -66,8 +69,7 @@ class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::Execut
 
 
         NES::Join::BatchJoinOperatorHandlerPtr joinOperatorHandler =
-                pipelineExecutionContext.getOperatorHandler<NES::Join::BatchJoinOperatorHandler>(0); // <-- get index from
-
+                pipelineExecutionContext.getOperatorHandler<NES::Join::BatchJoinOperatorHandler>(0);
         NES::Join::HashTablePtr<uint64_t, InputBuildTuple> hashTable =
                 joinOperatorHandler->getBatchJoinHandler<NES::Join::BatchJoinHandler, uint64_t, InputBuildTuple>()->getHashTable();
 
@@ -79,10 +81,9 @@ class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::Execut
             int64_t tmp_probe$one = inputTuples[recordIndex].probe$one;
             int64_t tmp_probe$value = inputTuples[recordIndex].probe$value;
 
+            if (hashTable->contains(tmp_probe$id)) {
 
-            InputBuildTuple joinPartner;
-            if (hashTable->find(tmp_probe$id, joinPartner)) {
-
+                InputBuildTuple joinPartner = hashTable->find(tmp_probe$id);
                 /* buffer emit */
                 resultTuples[numberOfResultTuples].probe$id = tmp_probe$id;
                 resultTuples[numberOfResultTuples].probe$one = tmp_probe$one;
@@ -104,29 +105,6 @@ class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::Execut
                 }
 
             }
-
-//            auto rangeJoinable = hashTable->equal_range(tmp_probe$id);
-//
-//            for (auto it = rangeJoinable.first; it != rangeJoinable.second; ++it) {
-//                resultTuples[numberOfResultTuples].probe$id = tmp_probe$id;
-//                resultTuples[numberOfResultTuples].probe$one = tmp_probe$one;
-//                resultTuples[numberOfResultTuples].probe$value = tmp_probe$value;
-//                resultTuples[numberOfResultTuples].build$id = it->second.build$id;
-//                resultTuples[numberOfResultTuples].build$value = it->second.build$value;
-//
-//                ++numberOfResultTuples;
-//
-//                if(numberOfResultTuples>=maxTuple){
-//                    resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
-//                    resultTupleBuffer.setOriginId(inputTupleBuffer.getOriginId());
-//                    resultTupleBuffer.setWatermark(inputTupleBuffer.getWatermark());
-//                    pipelineExecutionContext.emitBuffer(resultTupleBuffer, workerContext);
-//                    numberOfResultTuples=0;
-//                    resultTupleBuffer=workerContext.allocateTupleBuffer();
-//                    resultTuples=(ResultTuple*)resultTupleBuffer.getBuffer();
-//
-//                }
-//            }
         };
 
         resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);

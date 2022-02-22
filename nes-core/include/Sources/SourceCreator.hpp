@@ -230,6 +230,7 @@ DataSourcePtr createMemorySource(const SchemaPtr& schema,
 namespace Experimental {
 DataSourcePtr createStaticDataSource(const SchemaPtr& schema,
                                      const std::string pathTableFile,
+                                     const bool lateStart,
                                      const Runtime::BufferManagerPtr& bufferManager,
                                      const Runtime::QueryManagerPtr& queryManager,
                                      OperatorId operatorId,

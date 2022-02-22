@@ -69,6 +69,13 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     void stop(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
+    /**
+     * @brief Returns the type of the operator handler.
+     */
+    Runtime::Execution::OperatorHandlerType getType() override {
+        return Runtime::Execution::OperatorHandlerType::BATCH_JOIN;
+    };
+
     LogicalBatchJoinDefinitionPtr getBatchJoinDefinition();
 
     SchemaPtr getResultSchema();
@@ -81,6 +88,14 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
     LogicalBatchJoinDefinitionPtr batchJoinDefinition;
     AbstractBatchJoinHandlerPtr batchJoinHandler;
     SchemaPtr resultSchema;
+
+    // we save these pointers (assumed to be static data sources) to start them manually in start() and postReconfigurationCallback()
+    Runtime::Execution::PredecessorExecutablePipeline buildPredecessor;
+    Runtime::Execution::PredecessorExecutablePipeline probePredecessor;
+
+    bool foundAndStartedBuildSide = false;
+    bool foundProbeSide = false;
+    bool startedProbeSide = false;
 };
 }// namespace NES::Join
 

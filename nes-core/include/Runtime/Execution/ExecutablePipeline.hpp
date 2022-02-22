@@ -155,6 +155,11 @@ class ExecutablePipeline : public Reconfigurable {
      */
     const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
 
+
+    PipelineExecutionContextPtr getContext() {
+        return pipelineContext;
+    };
+
   private:
     const uint64_t pipelineId;
     const QueryId queryId;
