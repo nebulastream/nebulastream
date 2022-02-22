@@ -192,9 +192,9 @@ std::chrono::milliseconds KalmanFilter::getExponentialFrequency() {
      * diff is new - old, negative means new is small
      * so we don't need to cover it
      */
-//    if (errorDiff > 0.6) {
-//        return this->getExponentialDecayFrequency();
-//    } else
+    if (errorDiff > 0.6) {
+        return this->getExponentialDecayFrequency();
+    } else
     if (totalError < 0.24) {
         return this->getExponentialGrowthFrequency();
     }
