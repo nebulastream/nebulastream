@@ -178,6 +178,7 @@ TEST_F(QueryCompilerTest, inferModelQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
@@ -226,6 +227,7 @@ TEST_F(QueryCompilerTest, mapQuery) {
                                                                    1024,
                                                                    12,
                                                                    12,
+                                                                   Configurations::QueryCompilerConfiguration(),
                                                                    NES::Runtime::NumaAwarenessFlag::DISABLED);
     auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
