@@ -14,6 +14,7 @@
 
 #include <Network/NesPartition.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <optional>
 #include <queue>
 #include <unordered_map>
 
