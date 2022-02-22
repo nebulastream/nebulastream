@@ -28,15 +28,21 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
     /**
      * @brief Ctor of a StaticDataSourceDescriptor
      * @param schema the schema of the source
+     * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      */
-    explicit StaticDataSourceDescriptor(SchemaPtr schema, std::string pathTableFile);
+    explicit StaticDataSourceDescriptor(SchemaPtr schema,
+                                        std::string pathTableFile,
+                                        bool lateStart);
 
     /**
      * @brief Factory method to create a StaticDataSourceDescriptor object
      * @param schema the schema of the source
+     * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      * @return a correctly initialized shared ptr to StaticDataSourceDescriptor
      */
-    static std::shared_ptr<StaticDataSourceDescriptor> create(const SchemaPtr& schema, std::string pathTableFile);
+    static std::shared_ptr<StaticDataSourceDescriptor> create(const SchemaPtr& schema,
+                                                              std::string pathTableFile,
+                                                              bool lateStart);
 
     /**
      * @brief Provides the string representation of the table source
@@ -63,10 +69,17 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
      */
     std::string getPathTableFile() const;
 
+    /**
+     * @brief Getter for lateStart.
+     * @returns lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
+     */
+    bool getLateStart();
+
     SourceDescriptorPtr copy() override;
 
   private:
     std::string pathTableFile;
+    bool lateStart;
 };
 }// namespace NES::Experimental
 #endif// NES_INCLUDE_OPERATORS_LOGICAL_OPERATORS_SOURCES_TABLE_SOURCE_DESCRIPTOR_HPP_

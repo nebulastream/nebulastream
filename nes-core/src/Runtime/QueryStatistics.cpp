@@ -22,6 +22,10 @@ uint64_t QueryStatistics::getProcessedTuple() const { return processedTuple.load
 
 uint64_t QueryStatistics::getProcessedBuffers() const { return processedBuffers.load(); }
 
+uint64_t QueryStatistics::getTimestampQueryStart() const { return timestampQueryStart.load(); }
+
+uint64_t QueryStatistics::getTimestampLastProcessedTask() const { return timestampLastProcessedTask.load(); }
+
 uint64_t QueryStatistics::getProcessedWatermarks() const { return processedWatermarks.load(); }
 
 uint64_t QueryStatistics::getLatencySum() const { return latencySum.load(); }
@@ -34,6 +38,16 @@ uint64_t QueryStatistics::getAvailableFixedBufferSum() const { return availableF
 void QueryStatistics::setProcessedTasks(uint64_t processedTasks) { this->processedTasks = processedTasks; }
 
 void QueryStatistics::setProcessedTuple(uint64_t processedTuple) { this->processedTuple = processedTuple; }
+
+void QueryStatistics::setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite = false) {
+    if (!noOverwrite || this->timestampQueryStart == 0) {
+        this->timestampQueryStart = timestampQueryStart;
+    }
+}
+
+void QueryStatistics::setTimestampLastProcessedTask(uint64_t timestampLastProcessedTask) {
+    this->timestampLastProcessedTask = timestampLastProcessedTask;
+}
 
 void QueryStatistics::incProcessedBuffers() { this->processedBuffers++; }
 

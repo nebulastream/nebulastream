@@ -60,12 +60,12 @@ class CustomPipelineStageBatchJoinBuild : public NES::Runtime::Execution::Execut
         /* variable declarations */
 
         NES::Join::BatchJoinOperatorHandlerPtr batchJoinOperatorHandler =
-                pipelineExecutionContext.getOperatorHandler<NES::Join::BatchJoinOperatorHandler>(0); // <-- get index from
+                pipelineExecutionContext.getOperatorHandler<NES::Join::BatchJoinOperatorHandler>(0);
 
         auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
 
         NES::Join::AbstractBatchJoinHandlerPtr batchJoinHandler =
-            NES::Join::BatchJoinHandler<int64_t, InputBuildTuple>::create(batchJoinDefinition, 99999);
+            NES::Join::BatchJoinHandler<int64_t, InputBuildTuple>::create(batchJoinDefinition, 1000);
 
         batchJoinOperatorHandler->setBatchJoinHandler(batchJoinHandler);
 

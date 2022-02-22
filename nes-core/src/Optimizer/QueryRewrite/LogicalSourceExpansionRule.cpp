@@ -16,6 +16,7 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/BatchJoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -181,7 +182,8 @@ void LogicalSourceExpansionRule::removeAndAddBlockingUpstreamOperator(const Oper
 
 bool LogicalSourceExpansionRule::isBlockingOperator(const OperatorNodePtr& operatorNode) {
     return (operatorNode->instanceOf<SinkLogicalOperatorNode>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()
-            || operatorNode->instanceOf<UnionLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>());
+            || operatorNode->instanceOf<UnionLogicalOperatorNode>() || operatorNode->instanceOf<JoinLogicalOperatorNode>()
+            || operatorNode->instanceOf<BatchJoinLogicalOperatorNode>());
 }
 
 }// namespace NES::Optimizer

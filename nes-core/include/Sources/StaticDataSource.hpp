@@ -41,13 +41,31 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
      * @param operatorId the valid id of the source
      */
     explicit StaticDataSource(SchemaPtr schema,
-                              std::string pathTableFile,
-                              ::NES::Runtime::BufferManagerPtr bufferManager,
-                              ::NES::Runtime::QueryManagerPtr queryManager,
-                              OperatorId operatorId,
-                              OriginId originId,
-                              size_t numSourceLocalBuffers,
-                              std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
+                          std::string pathTableFile,
+                          const bool lateStart,
+                          ::NES::Runtime::BufferManagerPtr bufferManager,
+                          ::NES::Runtime::QueryManagerPtr queryManager,
+                          OperatorId operatorId,
+                          OriginId originId,
+                          size_t numSourceLocalBuffers,
+                          std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
+
+    /**
+     * @brief overwrite DataSource::start(). Only start runningRoutine, if lateStart==false.
+     */
+    bool start() final;
+
+
+    /**
+     * @brief method to start the source, calls DataSource::start().
+     * 1.) check if bool running is true, if true return if not start source
+     * 2.) start new thread with runningRoutine
+     */
+    bool startStaticDataSourceManually();
+
+
+    void onEvent(Runtime::BaseEvent &) final;
+
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
@@ -75,6 +93,9 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
     virtual void recycleUnpooledBuffer(::NES::Runtime::detail::MemorySegment*) override{};
 
   private:
+    bool lateStart;
+    bool startCalled = false;
+
     std::string pathTableFile;
     uint64_t numTuplesPerBuffer;
     std::shared_ptr<uint8_t> memoryArea;

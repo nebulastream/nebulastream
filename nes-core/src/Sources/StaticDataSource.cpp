@@ -42,6 +42,7 @@ namespace NES::Experimental {
 
 StaticDataSource::StaticDataSource(SchemaPtr schema,
                                    std::string pathTableFile,
+                                   const bool lateStart,
                                    ::NES::Runtime::BufferManagerPtr bufferManager,
                                    ::NES::Runtime::QueryManagerPtr queryManager,
                                    OperatorId operatorId,
@@ -57,15 +58,16 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                       numSourceLocalBuffers,
                       GatheringMode::INTERVAL_MODE,// todo: this is a placeholder. gathering mode is unnecessary for static data.
                       std::move(successors)),
-      pathTableFile(pathTableFile), currentPositionInBytes(0) {
+                      lateStart(lateStart),
+                      pathTableFile(pathTableFile),
+                      currentPositionInBytes(0) {
 
     NES_ASSERT(this->schema, "StaticDataSource: Invalid schema passed.");
     tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
-    NES_DEBUG("StaticDataSource: Initialize table with schema: |" + this->schema->toString()
+    NES_DEBUG("StaticDataSource: Initialize source with schema: |" + this->schema->toString()
               + "| size: " + std::to_string(tupleSizeInBytes));
 
     this->sourceAffinity = sourceAffinity;
-    tupleSizeInBytes = this->schema->getSchemaSizeInBytes();
     bufferSize = localBufferManager->getBufferSize();
 
     std::ifstream input;
@@ -129,6 +131,33 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
 
     NES_DEBUG("StaticDataSource() memoryAreaSize=" << memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
+}
+
+bool StaticDataSource::start() {
+    startCalled = true;
+    if (lateStart) {
+        return true; // we didn't start but still signal a success
+    }
+    return startStaticDataSourceManually();
+}
+
+bool StaticDataSource::startStaticDataSourceManually() {
+    return DataSource::start();
+}
+
+void StaticDataSource::onEvent(Runtime::BaseEvent & event) {
+    if (event.getEventType() == Runtime::EventType::startSourceEvent) {
+        NES_DEBUG("StaticDataSource received startSourceEvent. Starting now.");
+        if (startCalled) {
+            NES_DEBUG("StaticDataSource::onEvent: start() method was previously called but delayed. Starting source now.");
+            startStaticDataSourceManually();
+        } else {
+            NES_DEBUG("StaticDataSource::onEvent: Received start event. As soon as DataSource::start is called the source will start.");
+            lateStart = false;
+        }
+    } else {
+        NES_DEBUG("StaticDataSource received an unknown event.");
+    }
 }
 
 std::optional<::NES::Runtime::TupleBuffer> StaticDataSource::receiveData() {

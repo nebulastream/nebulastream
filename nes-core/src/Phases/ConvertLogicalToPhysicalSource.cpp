@@ -203,14 +203,15 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
     } else if (sourceDescriptor->instanceOf<NES::Experimental::StaticDataSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating static data source");
         auto staticDataSourceDescriptor = sourceDescriptor->as<NES::Experimental::StaticDataSourceDescriptor>();
-        return NES::Experimental::createStaticDataSource(staticDataSourceDescriptor->getSchema(),
-                                                         staticDataSourceDescriptor->getPathTableFile(),
-                                                         bufferManager,
-                                                         queryManager,
-                                                         operatorId,
-                                                         originId,
-                                                         numSourceLocalBuffers,
-                                                         successors);
+        return Experimental::createStaticDataSource(staticDataSourceDescriptor->getSchema(),
+                                                    staticDataSourceDescriptor->getPathTableFile(),
+                                                    staticDataSourceDescriptor->getLateStart(),
+                                                    bufferManager,
+                                                    queryManager,
+                                                    operatorId,
+                                                    originId,
+                                                    numSourceLocalBuffers,
+                                                    successors);
     } else if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();

@@ -188,6 +188,9 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
 
     // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
     // TODO in general this highlights how our source model has some issues
+
+    // TODO this is also an issue in the current development of the StaticDataSource. If it is still running here, we give up to early and never join the thread.
+
     try {
         if (!running.compare_exchange_strong(expected, false)) {
             NES_DEBUG("DataSource " << operatorId << " was not running, retrieving future now...");

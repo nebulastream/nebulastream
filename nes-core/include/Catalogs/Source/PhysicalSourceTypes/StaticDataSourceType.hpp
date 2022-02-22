@@ -32,17 +32,16 @@ class StaticDataSourceType : public PhysicalSourceType {
   public:
     /**
      * @brief Factory method of StaticDataSourceType
-      * @param sourceType the type of the source
-     * @param physicalSourceName the name of the physical source
-     * @param logicalSourceName the name of the logical source
-     * @param memoryArea the pointer to the memory area
-     * @param memoryAreaSize the size of the memory area
+     * @param pathTableFile here, a file in pipe-seperated .tbl file format should exist in the local file system
+     * @param numBuffersToProcess
+     * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      * @return a constructed StaticDataSourceType
      */
     static StaticDataSourceTypePtr create(const std::string& pathTableFile,
                                           uint64_t numBuffersToProcess,
                                           const std::string& gatheringMode,
-                                          uint64_t taskQueueId);
+                                          uint64_t taskQueueId,
+                                          bool lateStart);
 
     GatheringMode::Value getGatheringMode() const;
 
@@ -59,20 +58,28 @@ class StaticDataSourceType : public PhysicalSourceType {
     std::string getPathTableFile();
 
     /**
+     * @brief Getter for lateStart.
+     * @returns lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
+     */
+    bool getLateStart();
+
+    /**
      * @brief Create a StaticDataSourceType using a set of parameters
-     * @param sourceType the type of the source
      * @param pathTableFile here, a file in pipe-seperated .tbl file format should exist in the local file system
      * @param numBuffersToProcess
+     * @param lateStart indicates if the static data source should start sending data at deployment or only when receiving a "start" message
      */
     explicit StaticDataSourceType(const std::string& pathTableFile,
                                   uint64_t numBuffersToProcess,
                                   SourceMode::Value sourceMode,
-                                  uint64_t taskQueueId);
+                                  uint64_t taskQueueId,
+                                  bool lateStart);
 
     std::string pathTableFile;
     uint64_t numBuffersToProcess;// todo not used right now [#2493]
     SourceMode::Value sourceMode;
     uint64_t taskQueueId;// todo not used right now [#2493]
+    bool lateStart;
 };
 }// namespace NES::Experimental
 #endif// NES_INCLUDE_CATALOGS_TABLE_SOURCE_STREAM_CONFIG_HPP_

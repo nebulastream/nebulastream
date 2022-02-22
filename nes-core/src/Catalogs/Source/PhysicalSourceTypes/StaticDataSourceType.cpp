@@ -49,17 +49,19 @@ bool equal(const PhysicalSourceTypePtr& other) override;
 StaticDataSourceType::StaticDataSourceType(const std::string& pathTableFile,
                                            uint64_t numBuffersToProcess,
                                            SourceMode::Value sourceMode,
-                                           uint64_t taskQueueId)
+                                           uint64_t taskQueueId,
+                                           bool lateStart)
     : PhysicalSourceType(STATIC_DATA_SOURCE), pathTableFile(std::move(pathTableFile)), numBuffersToProcess(numBuffersToProcess),
-      sourceMode(sourceMode), taskQueueId(taskQueueId) {}
+      sourceMode(sourceMode), taskQueueId(taskQueueId), lateStart(lateStart) {}
 
 StaticDataSourceTypePtr StaticDataSourceType::create(const std::string& pathTableFile,
                                                      uint64_t numBuffersToProcess,
                                                      const std::string& sourceMode,
-                                                     uint64_t taskQueueId) {
+                                                     uint64_t taskQueueId,
+                                                     bool lateStart) {
     // todo check validity of path
     SourceMode::Value sourceModeEnum = SourceMode::getFromString(sourceMode);
-    return std::make_shared<StaticDataSourceType>(pathTableFile, numBuffersToProcess, sourceModeEnum, taskQueueId);
+    return std::make_shared<StaticDataSourceType>(pathTableFile, numBuffersToProcess, sourceModeEnum, taskQueueId, lateStart);
 }
 
 SourceMode::Value StaticDataSourceType::getSourceMode() const { return sourceMode; }
@@ -70,6 +72,8 @@ void StaticDataSourceType::reset() {
 
 std::string StaticDataSourceType::getPathTableFile() { return pathTableFile; };
 
+bool StaticDataSourceType::getLateStart() { return lateStart; };
+
 std::string StaticDataSourceType::toString() {
     std::stringstream ss;
     ss << "StaticDataSourceType => {\n";
@@ -77,6 +81,7 @@ std::string StaticDataSourceType::toString() {
     ss << "numBuffersToProcess :" << numBuffersToProcess;
     ss << "SourceMode :" << SourceMode::toString(sourceMode);
     ss << "taskQueueId :" << taskQueueId;
+    ss << "lateStart :" << lateStart;
     ss << "\n}";
     return ss.str();
 }
@@ -86,8 +91,11 @@ bool StaticDataSourceType::equal(const PhysicalSourceTypePtr& other) {
         return false;
     }
     auto otherSourceConfig = other->as<StaticDataSourceType>();
-    return pathTableFile == otherSourceConfig->pathTableFile && numBuffersToProcess == otherSourceConfig->numBuffersToProcess
-        && sourceMode == otherSourceConfig->sourceMode && taskQueueId == otherSourceConfig->taskQueueId;
+    return pathTableFile == otherSourceConfig->pathTableFile
+    && numBuffersToProcess == otherSourceConfig->numBuffersToProcess
+    && sourceMode == otherSourceConfig->sourceMode
+    && taskQueueId == otherSourceConfig->taskQueueId
+    && lateStart == otherSourceConfig->lateStart;
 }
 
 }// namespace NES::Experimental
