@@ -298,8 +298,8 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
     NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId() << " subplanId=" << qep->getQuerySubPlanId());
     std::cout << "queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId() << " subplanId=" << qep->getQuerySubPlanId() << std::endl;
 
-    queryToStatisticsMap[qep->getQuerySubPlanId()] =
-        std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId());
+    //TODO: THis assumes 1) that there is only one pipeline per query and 2) that the subqueryplan id is unique => both can become a problem
+    queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
 
     //currently we asume all queues have same number of threads so we can do this.
     queryToTaskQueueIdMap[qep->getQueryId()] = currentTaskQueueId++;
@@ -871,8 +871,8 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
     if (queryToStatisticsMap.contains(querySubPlanId)) {
         auto statistics = queryToStatisticsMap.find(querySubPlanId);
 
-        statistics->second->incProcessedTasks();
-        statistics->second->incProcessedBuffers();
+        statistics->incProcessedTasks();
+        statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestamp();
         auto now =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
@@ -880,25 +880,25 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
         auto diff = now - creation;
         //        std::cout << "now in queryMan=" << now << " creation=" << creation << std::endl;
         NES_ASSERT(creation <= (unsigned long) now, "timestamp is in the past");
-        statistics->second->incLatencySum(diff);
+        statistics->incLatencySum(diff);
 
         auto qSize = taskQueues[wtx.getQueueId()].size();
-        statistics->second->incQueueSizeSum(qSize > 0 ? qSize : 0);
+        statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
 
         for (auto& bufferManager : bufferManagers) {
-            statistics->second->incAvailableGlobalBufferSum(bufferManager->getAvailableBuffers());
-            statistics->second->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
+            statistics->incAvailableGlobalBufferSum(bufferManager->getAvailableBuffers());
+            statistics->incAvailableFixedBufferSum(bufferManager->getAvailableBuffersInFixedSizePools());
         }
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);
 #endif
-        statistics->second->incProcessedTuple(task.getNumberOfInputTuples());
+        statistics->incProcessedTuple(task.getNumberOfInputTuples());
     } else {
-        for (auto& elem : queryToStatisticsMap) {
-            NES_DEBUG("first elem=" << elem.first << " queyId=" << elem.second->getQueryId()
-                                    << " subquery=" << elem.second->getSubQueryId());
-        }
+//        for (auto& elem : queryToStatisticsMap) {
+//            NES_DEBUG("first elem=" << elem.first << " queyId=" << elem.second->getQueryId()
+//                                    << " subquery=" << elem.second->getSubQueryId());
+//        }
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing queryId=" << queryId << " subPlanId=" << querySubPlanId);
         std::cout << "queryToStatisticsMap not set, this should only happen for testing queryId=" << queryId << " subPlanId=" << querySubPlanId << std::endl;
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
@@ -954,8 +954,8 @@ std::string QueryManager::getQueryManagerStatistics() {
 QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
     std::unique_lock lock(statisticsMutex);
     NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qepId);
-    //    return queryToStatisticsMap.find(qepId);
-    return queryToStatisticsMap[qepId];
+        return queryToStatisticsMap.find(qepId);
+//    return queryToStatisticsMap[qepId];
 }
 
 void QueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
