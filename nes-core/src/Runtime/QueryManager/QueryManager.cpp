@@ -604,11 +604,13 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
         for (uint64_t threadId = 0; threadId < threadPool->getNumberOfThreads(); threadId++) {
             taskQueues[0].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
-    } else {
+    } else if (mode == Static) {
         for (uint64_t threadId = 0; threadId < numberOfThreadsPerQueue; threadId++) {
+            std::cout << "add reconf for query " << queryId << " uses queue=" << queryToTaskQueueIdMap[queryId] << std::endl;
             taskQueues[queryToTaskQueueIdMap[queryId]].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
     }
+
     reconfLock.unlock();
     if (blocking) {
         task->postWait();

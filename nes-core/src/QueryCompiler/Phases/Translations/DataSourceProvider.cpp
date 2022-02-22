@@ -45,6 +45,7 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
         }
     }
 
+    NES_DEBUG("Create new source for physical stream " << sourceDescriptor->getPhysicalSourceName());
     DataSourcePtr newPtr = ConvertLogicalToPhysicalSource::createDataSource(operatorId,
                                                                             std::move(sourceDescriptor),
                                                                             std::move(nodeEngine),
