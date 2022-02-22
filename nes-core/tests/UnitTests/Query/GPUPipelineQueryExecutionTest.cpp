@@ -72,7 +72,7 @@ class GPUQueryExecutionTest : public testing::Test {
                                      ->addField("test$value", BasicType::INT64);
         auto defaultSourceType = DefaultSourceType::create();
         PhysicalSourcePtr streamConf = PhysicalSource::create("default", "default1", defaultSourceType);
-        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 31337, {streamConf});
+        nodeEngine = Runtime::NodeEngineFactory::createDefaultNodeEngine("127.0.0.1", 0, {streamConf});
     }
 
     /* Will be called before a test is executed. */
@@ -140,7 +140,7 @@ class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStag
             "}\n";
 
         // setup the kernel program and allocate gpu buffer
-        cudaKernelWrapper.setup(SimpleKernel_cu, 1024 * sizeof(TupleDataType));
+        cudaKernelWrapper.setup(SimpleKernel_cu, NUMBER_OF_TUPLE * sizeof(TupleDataType));
 
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
     }
@@ -148,12 +148,20 @@ class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStag
     ExecutionResult execute(Runtime::TupleBuffer& buffer,
                             Runtime::Execution::PipelineExecutionContext& ctx,
                             Runtime::WorkerContext& wc) override {
-        auto record = buffer.getBuffer<TupleDataType>();
+        auto inputRecords = buffer.getBuffer<TupleDataType>();
+
+        // obtain an output buffer
+        auto outputBuffer = wc.allocateTupleBuffer();
+        auto outputRecords = outputBuffer.getBuffer<TupleDataType>();
+
+        // in this test, the kernel return the same number of tuples
+        auto numberOfOutputTuples = buffer.getNumberOfTuples();
+        outputBuffer.setNumberOfTuples(numberOfOutputTuples);
 
         // execute the kernel
-        cudaKernelWrapper.execute(record, buffer.getNumberOfTuples(), "simpleAdditionKernel");
+        cudaKernelWrapper.execute(inputRecords, buffer.getNumberOfTuples(), outputRecords, numberOfOutputTuples, "simpleAdditionKernel");
 
-        ctx.emitBuffer(buffer, wc);
+        ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
     }
 
@@ -164,11 +172,18 @@ class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStag
         return ExecutablePipelineStage::stop(pipelineExecutionContext);
     }
 
-    CUDAKernelWrapper<TupleDataType> cudaKernelWrapper;
+    CUDAKernelWrapper<TupleDataType, TupleDataType> cudaKernelWrapper;
 };
 
 class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
     class InputRecord {
+      public:
+        [[maybe_unused]] int64_t id;
+        [[maybe_unused]] int64_t one;
+        [[maybe_unused]] int64_t value;
+    };
+
+    class OutputRecord {
       public:
         [[maybe_unused]] int64_t id;
         [[maybe_unused]] int64_t one;
@@ -193,7 +208,7 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
 
         // setup the kernel program and allocate gpu buffer
         cudaKernelWrapper.setup(MultifieldKernel_cu,
-                                1024 * sizeof(InputRecord),
+                                NUMBER_OF_TUPLE * sizeof(InputRecord),
                                 {nes_core_tests_UnitTests_Query_GPUInputRecord_cuh});
 
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
@@ -204,10 +219,22 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
                             Runtime::WorkerContext& wc) override {
         auto record = buffer.getBuffer<InputRecord>();
 
-        // execute the kernel
-        cudaKernelWrapper.execute(record, buffer.getNumberOfTuples(), "additionKernelMultipleFields");
+        // obtain an output buffer
+        auto outputBuffer = wc.allocateTupleBuffer();
+        auto outputRecords = outputBuffer.getBuffer<OutputRecord>();
 
-        ctx.emitBuffer(buffer, wc);
+        // in this test, the kernel return the same number of tuples
+        auto numberOfOutputTuples = buffer.getNumberOfTuples();
+        outputBuffer.setNumberOfTuples(numberOfOutputTuples);
+
+        // execute the kernel
+        cudaKernelWrapper.execute(record,
+                                  buffer.getNumberOfTuples(),
+                                  outputRecords,
+                                  numberOfOutputTuples,
+                                  "additionKernelMultipleFields");
+
+        ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
     }
 
@@ -218,9 +245,10 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
         return ExecutablePipelineStage::stop(pipelineExecutionContext);
     }
 
-    CUDAKernelWrapper<InputRecord> cudaKernelWrapper;
+    CUDAKernelWrapper<InputRecord, OutputRecord> cudaKernelWrapper;
 };
 
+// Test offloading only the column to be offloaded to the gpu
 class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStage {
   public:
     uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override {
@@ -237,8 +265,9 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
                                                   "}\n";
 
         // setup the kernel program and allocate gpu buffer
+
         cudaKernelWrapper.setup(ColumnLayoutKernel_cu,
-                                1024 * sizeof(int64_t),
+                                NUMBER_OF_TUPLE * sizeof(int64_t),
                                 {nes_core_tests_UnitTests_Query_GPUInputRecord_cuh});
 
         // define the schema (to be used to create column layout and obtaining column offset)
@@ -248,8 +277,6 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
                                      ->addField("test$value", BasicType::INT64);
 
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
-
-
     }
 
     ExecutionResult execute(Runtime::TupleBuffer& buffer,
@@ -258,15 +285,23 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
 
         // obtain the column offset
         auto columnLayout = NES::Runtime::MemoryLayouts::ColumnLayout::create(testSchemaColumnLayout, buffer.getBufferSize());
-        auto valColOffset = columnLayout->getColumnOffsets()[2]; // test$value is column 2
+        auto valColOffset = columnLayout->getColumnOffsets()[2];// test$value is column 2
 
         // take the part of buffer in the specified offset
         auto valueBuffer = reinterpret_cast<int64_t*>(buffer.getBuffer() + valColOffset);
 
-        // execute the kernel
-        cudaKernelWrapper.execute(valueBuffer, buffer.getNumberOfTuples(), "additionKernelColumnLayout");
+        // obtain an output buffer
+        auto outputBuffer = wc.allocateTupleBuffer();
+        auto outputRecords = outputBuffer.getBuffer<int64_t>();
 
-        ctx.emitBuffer(buffer, wc);
+        // in this test, the kernel return the same number of tuples
+        auto numberOfOutputTuples = buffer.getNumberOfTuples();
+        outputBuffer.setNumberOfTuples(numberOfOutputTuples);
+
+        // execute the kernel
+        cudaKernelWrapper.execute(valueBuffer, buffer.getNumberOfTuples(),outputRecords, numberOfOutputTuples, "additionKernelColumnLayout");
+
+        ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
     }
 
@@ -277,7 +312,7 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
         return ExecutablePipelineStage::stop(pipelineExecutionContext);
     }
 
-    CUDAKernelWrapper<int64_t> cudaKernelWrapper;
+    CUDAKernelWrapper<int64_t, int64_t> cudaKernelWrapper;
     uint64_t columnOffset;
     SchemaPtr testSchemaColumnLayout;
 };
@@ -491,15 +526,13 @@ TEST_F(GPUQueryExecutionTest, GPUOperatorOnColumnLayout) {
         // The output buffer should contain 5 tuple;
         EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5u);
 
-        auto resultRecordIndexFields =
-            Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
+        // The result only contains a single column
         auto resultRecordValueFields =
-            Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(2, memoryLayout, resultBuffer);
+            Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(0, memoryLayout, resultBuffer);
         for (uint32_t recordIndex = 0u; recordIndex < 5u; ++recordIndex) {
             // id
-            EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
             EXPECT_EQ(resultRecordValueFields[recordIndex], (recordIndex % 2) + 42);
-            NES_DEBUG("expected: " <<  (recordIndex % 2) + 42 << " actual: " << resultRecordValueFields[recordIndex]);
+            NES_DEBUG("expected: " << (recordIndex % 2) + 42 << " actual: " << resultRecordValueFields[recordIndex]);
         }
     }
     ASSERT_TRUE(plan->stop());
