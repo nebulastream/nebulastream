@@ -295,8 +295,9 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
         queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorId);
     }
 
-    NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId()
-                                              << " subplanId=" << qep->getQuerySubPlanId());
+    NES_DEBUG("queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId() << " subplanId=" << qep->getQuerySubPlanId());
+    std::cout << "queryToStatisticsMap add for=" << qep->getQuerySubPlanId() << " pair queryId=" << qep->getQueryId() << " subplanId=" << qep->getQuerySubPlanId() << std::endl;
+
     queryToStatisticsMap[qep->getQuerySubPlanId()] =
         std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId());
 
@@ -898,8 +899,8 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
             NES_DEBUG("first elem=" << elem.first << " queyId=" << elem.second->getQueryId()
                                     << " subquery=" << elem.second->getSubQueryId());
         }
-        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing queryId=" << queryId << " subPlanId="
-                                                                                                     << querySubPlanId);
+        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing queryId=" << queryId << " subPlanId=" << querySubPlanId);
+        std::cout << "queryToStatisticsMap not set, this should only happen for testing queryId=" << queryId << " subPlanId=" << querySubPlanId << std::endl;
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
     }
 #endif
