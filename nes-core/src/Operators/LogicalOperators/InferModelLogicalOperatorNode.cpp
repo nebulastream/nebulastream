@@ -17,7 +17,7 @@
 #include <API/AttributeField.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Optimizer/QuerySignatures/QuerySignatureUtil.hpp>
 #include <API/Schema.hpp>
 #include <API/Expressions/Expressions.hpp>
 

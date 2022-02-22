@@ -15,7 +15,7 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include "Exceptions/InvalidQueryException.hpp"
-#include "tensorflow/lite/interpreter.h"
+//#include "tensorflow/lite/interpreter.h"
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -234,8 +234,8 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
 TEST_F(SemanticQueryValidationTest, validInferModelTest) {
     NES_INFO("Valid inferModel test");
 
-    SourceCatalogPtr streamCatalogPtr = std::make_shared<SourceCatalog>(queryParsingService);
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
+    SourceCatalogPtr sourceCatalog = std::make_shared<SourceCatalog>(queryParsingService);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog, true);
 
     auto query = Query::from("default_logical")
         .inferModel("models/iris.tflite",

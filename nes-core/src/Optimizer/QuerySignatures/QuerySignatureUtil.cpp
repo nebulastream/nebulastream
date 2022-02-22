@@ -109,7 +109,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(const z3::
         } else if (operatorNode->instanceOf<InferModelLogicalOperatorNode>()) {
             NES_TRACE("QuerySignatureUtil: Computing Signature for infer model operator");
             auto imOperator = operatorNode->as<InferModelLogicalOperatorNode>();
-            return createQuerySignatureForJoin(context, imOperator);
+            return createQuerySignatureForInferModel(context, imOperator);
         }
         throw SignatureComputationException("No conversion to Z3 expression possible for operator: " + operatorNode->toString());
     } catch (const std::exception& ex) {
