@@ -34,14 +34,14 @@ class CUDAKernelWrapper {
      * @param bufferSize size of the gpu buffer pool to be allocated
      * @param headers header to use in the kernel (e.g., defined in a .jit file)
      */
-    void setup(const char* const kernelCode, uint64_t bufferSize, jitify::detail::vector<std::string> headers = 0) {
+    void setup(const char* const kernelCode, uint64_t bufferSize, jitify::detail::vector<std::string> headers = 0, jitify::file_callback_type callback = 0) {
         gpuBufferSize = bufferSize;
 
         cudaMalloc(&deviceInputBuffer, gpuBufferSize);
         cudaMalloc(&deviceOutputBuffer, gpuBufferSize);
 
         static jitify::JitCache kernelCache;
-        kernelProgramPtr = std::make_shared<jitify::Program>(kernelCache.program(kernelCode, headers));
+        kernelProgramPtr = std::make_shared<jitify::Program>(kernelCache.program(kernelCode, headers, 0, callback));
     }
 
     /**

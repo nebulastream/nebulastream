@@ -20,7 +20,6 @@
 #include "../../util/TestQuery.hpp"
 #include "../../util/TestQueryCompiler.hpp"
 #include "../../util/TestSink.hpp"
-#include "GPUInputRecord.cuh.jit"
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -159,7 +158,11 @@ class SimpleGPUPipelineStage : public Runtime::Execution::ExecutablePipelineStag
         outputBuffer.setNumberOfTuples(numberOfOutputTuples);
 
         // execute the kernel
-        cudaKernelWrapper.execute(inputRecords, buffer.getNumberOfTuples(), outputRecords, numberOfOutputTuples, "simpleAdditionKernel");
+        cudaKernelWrapper.execute(inputRecords,
+                                  buffer.getNumberOfTuples(),
+                                  outputRecords,
+                                  numberOfOutputTuples,
+                                  "simpleAdditionKernel");
 
         ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
@@ -206,10 +209,23 @@ class MultifieldGPUPipelineStage : public Runtime::Execution::ExecutablePipeline
                                                 "    }\n"
                                                 "}\n";
 
+        const char* const header = "nes-core/tests/UnitTests/Query/GPUInputRecord.cuh\n"
+                                   "#ifndef NES_GPUINPUTRECORD_CUH\n"
+                                   "#define NES_GPUINPUTRECORD_CUH\n"
+                                   "\n"
+                                   "#include <cstdint>"
+                                   "\n"
+                                   "class InputRecord {\n"
+                                   "    public:\n"
+                                   "        int64_t id;\n"
+                                   "        int64_t one;\n"
+                                   "        int64_t value;\n"
+                                   "};\n"
+                                   "\n"
+                                   "#endif//NES_GPUINPUTRECORD_CUH\n";
+
         // setup the kernel program and allocate gpu buffer
-        cudaKernelWrapper.setup(MultifieldKernel_cu,
-                                NUMBER_OF_TUPLE * sizeof(InputRecord),
-                                {nes_core_tests_UnitTests_Query_GPUInputRecord_cuh});
+        cudaKernelWrapper.setup(MultifieldKernel_cu, NUMBER_OF_TUPLE * sizeof(InputRecord), {header});
 
         return ExecutablePipelineStage::setup(pipelineExecutionContext);
     }
@@ -266,9 +282,7 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
 
         // setup the kernel program and allocate gpu buffer
 
-        cudaKernelWrapper.setup(ColumnLayoutKernel_cu,
-                                NUMBER_OF_TUPLE * sizeof(int64_t),
-                                {nes_core_tests_UnitTests_Query_GPUInputRecord_cuh});
+        cudaKernelWrapper.setup(ColumnLayoutKernel_cu, NUMBER_OF_TUPLE * sizeof(int64_t));
 
         // define the schema (to be used to create column layout and obtaining column offset)
         testSchemaColumnLayout = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
@@ -299,7 +313,11 @@ class ColumnLayoutGPUPipelineStage : public Runtime::Execution::ExecutablePipeli
         outputBuffer.setNumberOfTuples(numberOfOutputTuples);
 
         // execute the kernel
-        cudaKernelWrapper.execute(valueBuffer, buffer.getNumberOfTuples(),outputRecords, numberOfOutputTuples, "additionKernelColumnLayout");
+        cudaKernelWrapper.execute(valueBuffer,
+                                  buffer.getNumberOfTuples(),
+                                  outputRecords,
+                                  numberOfOutputTuples,
+                                  "additionKernelColumnLayout");
 
         ctx.emitBuffer(outputBuffer, wc);
         return ExecutionResult::Ok;
