@@ -26,7 +26,7 @@
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryPlacement/MlHeuristicStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
-#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
+#include <Optimizer/QuerySignatures/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -71,7 +71,7 @@ bool MlHeuristicStrategy::updateGlobalExecutionPlan(QueryId queryId,
 
         // 4. Perform type inference on all updated query plans
         return runTypeInferencePhase(queryId, faultToleranceType, lineageType);
-    } catch (Exception& ex) {
+    } catch (log4cxx::helpers::Exception& ex) {
         throw QueryPlacementException(queryId, ex.what());
     }
 }
@@ -100,7 +100,7 @@ void MlHeuristicStrategy::performOperatorPlacement(QueryId queryId,
             if (candidateTopologyNode->getAvailableResources() == 0
                 && !operatorToExecutionNodeMap.contains(pinnedUpStreamOperator->getId())) {
                 NES_ERROR("MlHeuristicStrategy: Unable to find resources on the physical node for placement of source operator");
-                throw Exception(
+                throw log4cxx::helpers::Exception(
                     "MlHeuristicStrategy: Unable to find resources on the physical node for placement of source operator");
             }
             placeOperator(queryId, pinnedUpStreamOperator, candidateTopologyNode, pinnedDownStreamOperators);
@@ -145,7 +145,7 @@ void MlHeuristicStrategy::placeOperator(QueryId queryId,
                     "MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator, operatorId: "
                     << operatorNode->getId());
                 topology->print();
-                throw Exception("MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator");
+                throw log4cxx::helpers::Exception("MlHeuristicStrategy: Unable to find a common ancestor topology node to place the binary operator");
             }
 
             if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
@@ -158,7 +158,7 @@ void MlHeuristicStrategy::placeOperator(QueryId queryId,
                 } else {
                     NES_ERROR("MlHeuristicStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                               "placed.");
-                    throw Exception(
+                    throw log4cxx::helpers::Exception(
 
                         "MlHeuristicStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be "
                         "placed.");
@@ -166,7 +166,7 @@ void MlHeuristicStrategy::placeOperator(QueryId queryId,
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("MlHeuristicStrategy: Topology node where sink operator is to be placed has no capacity.");
-                    throw Exception("MlHeuristicStrategy: Topology node where sink operator is to be placed has no capacity.");
+                    throw log4cxx::helpers::Exception("MlHeuristicStrategy: Topology node where sink operator is to be placed has no capacity.");
                 }
             }
         }
@@ -187,7 +187,7 @@ void MlHeuristicStrategy::placeOperator(QueryId queryId,
 
         if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("MlHeuristicStrategy: No node available for further placement of operators");
-            throw Exception("MlHeuristicStrategy: No node available for further placement of operators");
+            throw log4cxx::helpers::Exception("MlHeuristicStrategy: No node available for further placement of operators");
         }
 
         NES_TRACE("MlHeuristicStrategy: Get the candidate execution node for the candidate topology node.");
@@ -233,7 +233,7 @@ void MlHeuristicStrategy::placeOperator(QueryId queryId,
         NES_TRACE("MlHeuristicStrategy: Add the query plan to the candidate execution node.");
         if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
             NES_ERROR("MlHeuristicStrategy: failed to create a new QuerySubPlan execution node for query.");
-            throw Exception("MlHeuristicStrategy: failed to create a new QuerySubPlan execution node for query.");
+            throw log4cxx::helpers::Exception("MlHeuristicStrategy: failed to create a new QuerySubPlan execution node for query.");
         }
         NES_TRACE("MlHeuristicStrategy: Update the global execution plan with candidate execution node");
         globalExecutionPlan->addExecutionNode(candidateExecutionNode);

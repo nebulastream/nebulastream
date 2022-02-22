@@ -140,9 +140,11 @@ register_public_header_dir(nes ${NES_DEPENDENCIES_BINARY_ROOT}/include/double-co
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator PUBLIC nes)
+target_link_libraries(nesCoordinator PUBLIC libtensorflowlite_c.so)
 
 add_executable(nesWorker src/Executables/nesWorkerStarter.cpp)
 target_link_libraries(nesWorker PUBLIC nes)
+target_link_libraries(nesWorker PUBLIC libtensorflowlite_c.so)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
