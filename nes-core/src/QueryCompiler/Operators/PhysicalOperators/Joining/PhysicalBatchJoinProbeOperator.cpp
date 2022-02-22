@@ -22,111 +22,6 @@
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <Common/ExecutableType/Array.hpp>
 
-// todo jm delete as it is not used anymore
-class CustomPipelineStageBatchJoinProbe : public NES::Runtime::Execution::ExecutablePipelineStage {
-    struct __attribute__((packed)) InputProbeTuple {
-        int64_t probe$id;
-        int64_t probe$one;
-        int64_t probe$value;
-    };
-    struct __attribute__((packed)) InputBuildTuple {
-        int64_t build$id;
-        int64_t build$value;
-        NES::ExecutableTypes::Array<char, 16> tpch_customer$C_PHONE;
-    };
-
-    struct __attribute__((packed)) ResultTuple {
-        int64_t probe$id;
-        int64_t probe$one;
-        int64_t probe$value;
-
-        int64_t build$id;
-        int64_t build$value;
-    };
-
-    NES::SchemaPtr outputSchema = NES::Schema::create()
-            ->addField("probe$id", NES::BasicType::INT64)
-            ->addField("probe$one", NES::BasicType::INT64)
-            ->addField("probe$value", NES::BasicType::INT64)
-            ->addField("build$id", NES::BasicType::INT64)
-            ->addField("build$value", NES::BasicType::INT64);
-
-
-    NES::ExecutionResult execute(
-            NES::Runtime::TupleBuffer &inputTupleBuffer,
-            NES::Runtime::Execution::PipelineExecutionContext &pipelineExecutionContext,
-            __attribute__((unused)) NES::Runtime::WorkerContext &workerContext) {
-        /* variable declarations */
-        NES::ExecutionResult ret = NES::ExecutionResult::Ok;
-        int64_t numberOfResultTuples = 0;
-        /* statements section */
-        InputProbeTuple *inputTuples = (InputProbeTuple *) inputTupleBuffer.getBuffer();
-        uint64_t numberOfTuples = inputTupleBuffer.getNumberOfTuples();
-        NES::Runtime::TupleBuffer resultTupleBuffer = workerContext.allocateTupleBuffer();;
-        ResultTuple *resultTuples = (ResultTuple *) resultTupleBuffer.getBuffer();
-
-        int64_t maxTuple=resultTupleBuffer.getBufferSize()/sizeof(ResultTuple);
-
-
-        NES::Join::BatchJoinOperatorHandlerPtr joinOperatorHandler =
-                pipelineExecutionContext.getOperatorHandler<NES::Join::BatchJoinOperatorHandler>(0);
-        NES::Join::HashTablePtr<uint64_t, InputBuildTuple> hashTable =
-                joinOperatorHandler->getBatchJoinHandler<NES::Join::BatchJoinHandler, uint64_t, InputBuildTuple>()->getHashTable();
-
-        NES_DEBUG("New call of PROBE pipeline. numberOfTuples: " << numberOfTuples);
-
-        for (uint64_t recordIndex = 0; recordIndex < numberOfTuples;
-        ++recordIndex) {
-            int64_t tmp_probe$id = inputTuples[recordIndex].probe$id;
-            int64_t tmp_probe$one = inputTuples[recordIndex].probe$one;
-            int64_t tmp_probe$value = inputTuples[recordIndex].probe$value;
-
-            if (hashTable->contains(tmp_probe$id)) {
-
-                InputBuildTuple joinPartner = hashTable->find(tmp_probe$id);
-                /* buffer emit */
-                resultTuples[numberOfResultTuples].probe$id = tmp_probe$id;
-                resultTuples[numberOfResultTuples].probe$one = tmp_probe$one;
-                resultTuples[numberOfResultTuples].probe$value = tmp_probe$value;
-                resultTuples[numberOfResultTuples].build$id = joinPartner.build$id;
-                resultTuples[numberOfResultTuples].build$value = joinPartner.build$value;
-
-                ++numberOfResultTuples;
-
-                if(numberOfResultTuples>=maxTuple){
-                    resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
-                    resultTupleBuffer.setOriginId(inputTupleBuffer.getOriginId());
-                    resultTupleBuffer.setWatermark(inputTupleBuffer.getWatermark());
-                    pipelineExecutionContext.emitBuffer(resultTupleBuffer, workerContext);
-                    numberOfResultTuples=0;
-                    resultTupleBuffer=workerContext.allocateTupleBuffer();
-                    resultTuples=(ResultTuple*)resultTupleBuffer.getBuffer();
-
-                }
-
-            }
-        };
-
-        resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
-        resultTupleBuffer.setWatermark(inputTupleBuffer.getWatermark());
-        resultTupleBuffer.setOriginId(inputTupleBuffer.getOriginId());
-        resultTupleBuffer.setSequenceNumber(inputTupleBuffer.getSequenceNumber());
-        NES_DEBUG("Buffer to emit from probe: \n" + NES::Util::prettyPrintTupleBuffer(resultTupleBuffer, outputSchema));
-        pipelineExecutionContext.emitBuffer(resultTupleBuffer, workerContext);
-        return ret;
-        ;
-    }
-    uint32_t setup(
-            __attribute__((unused)) NES::Runtime::Execution::PipelineExecutionContext &pipelineExecutionContext) {
-        /* variable declarations */
-
-        /* statements section */
-        return 0;
-        ;
-    }
-
-};
-
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalBatchJoinProbeOperator::create(SchemaPtr inputSchema,
@@ -156,10 +51,6 @@ std::string PhysicalBatchJoinProbeOperator::toString() const { return "PhysicalB
 
 OperatorNodePtr PhysicalBatchJoinProbeOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler); // todo is this a valid copy? looks like we could loose the schemas and handlers at the move operator
-}
-
-Runtime::Execution::ExecutablePipelineStagePtr PhysicalBatchJoinProbeOperator::getExecutablePipelineStage() {
-    return std::make_shared<CustomPipelineStageBatchJoinProbe>(); // todo
 }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

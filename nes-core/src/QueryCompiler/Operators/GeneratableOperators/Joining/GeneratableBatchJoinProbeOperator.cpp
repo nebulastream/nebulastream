@@ -40,8 +40,6 @@ GeneratableBatchJoinProbeOperator::create(SchemaPtr inputSchema, SchemaPtr outpu
     return create(Util::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(batchJoinOperatorHandler));
 }
 
-void GeneratableBatchJoinProbeOperator::generateOpen(__attribute__((unused)) CodeGeneratorPtr codegen, __attribute__((unused)) PipelineContextPtr context) {}
-
 void GeneratableBatchJoinProbeOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto batchJoinDefinition = batchJoinOperatorHandler->getBatchJoinDefinition();
     codegen->generateCodeForBatchJoinProbe(batchJoinDefinition, context, batchJoinOperatorHandler);
