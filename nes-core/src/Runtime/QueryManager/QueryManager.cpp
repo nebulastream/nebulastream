@@ -606,8 +606,8 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId,
         }
     } else if (mode == Static) {
         for (uint64_t threadId = 0; threadId < numberOfThreadsPerQueue; threadId++) {
-            std::cout << "add reconf for query " << queryId << " uses queue=" << queryToTaskQueueIdMap[queryId] << " numberOfThreadsPerQueue=" << numberOfThreadsPerQueue << " type=" << (int)(task->getType())
-                      << " queryExecutionPlanId=" << queryExecutionPlanId << " blocking=" << blocking << std::endl;
+//            std::cout << "add reconf for query " << queryId << " uses queue=" << queryToTaskQueueIdMap[queryId] << " numberOfThreadsPerQueue=" << numberOfThreadsPerQueue << " type=" << (int)(task->getType())
+//                      << " queryExecutionPlanId=" << queryExecutionPlanId << " blocking=" << blocking << std::endl;
             taskQueues[queryToTaskQueueIdMap[queryId]].blockingWrite(Task(pipeline, buffer, getNextTaskId()));
         }
     }

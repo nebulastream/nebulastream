@@ -130,7 +130,7 @@ bool ThreadPool::start() {
                   std::cout << "worker " << i << " pins to core=" << workerPinningPositionList[i] << " and queue=" << queueIdx << std::endl;
               }
           }
-          std::cout << "worker " << i << " uses queue=" << queueIdx << std::endl;
+//          std::cout << "worker " << i << " uses queue=" << queueIdx << std::endl;
 
           localBufferManager = bufferManagers[queueIdx];
 
