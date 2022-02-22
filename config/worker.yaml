@@ -2,10 +2,10 @@
 
 # ~~ IPs and Ports ~~
 # Set worker IP
-localWorkerIp: 192.168.6.9
+localWorkerIp: 127.0.0.1
 
 # Set IP address of NES Coordinator to which the NES Worker should connect
-coordinatorIp: 192.168.6.181
+coordinatorIp: 127.0.0.1
 
 # Set RPC Server port of NES Coordinator to which the NES Worker should connect
 # Needs to be the same as rpcPort in Coordinator
@@ -21,10 +21,10 @@ dataPort: 3001
 numberOfSlots: 65535
 
 # Set the number of worker threads
-numWorkerThreads: 10
+numWorkerThreads: 1
 
 # Number buffers in global buffer pool
-numberOfBuffersInGlobalBufferManager: 50000
+numberOfBuffersInGlobalBufferManager: 200000
 
 # Number buffers in task local buffer pool
 numberOfBuffersPerWorker: 1024
@@ -33,13 +33,13 @@ numberOfBuffersPerWorker: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
 
 # Size of buffer to pass data through the system
-bufferSizeInBytes: 4096
+bufferSizeInBytes: 131072
 
 # Set parentId of NES Worker node
 parentId: 0
 
 # The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
-logLevel: LOG_DEBUG
+logLevel: LOG_NONE
 
 # Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]
 queryCompilerCompilationStrategy: OPTIMIZE
@@ -52,10 +52,10 @@ queryCompilerPipeliningStrategy: OPERATOR_FUSION
 queryCompilerOutputBufferOptimizationLevel: ALL
 
 # Comma separated list of where to map the sources
-sourcePinList:
+sourcePinList: 0,1,2,3
 
 # Comma separated list of where to map the worker
-workerPinList:
+workerPinList: 4,6,7,8
 
 # Enable Numa-Aware execution
 numaAwareness: false
@@ -76,14 +76,12 @@ physicalSources:
     # Set physical stream name
     physicalSourceName: A1
     # Define source type, also need to specify source configurations for source type below
-    type: MQTTSource
+    type: CSVSource
     # MQTTSource and its needed configuration params
     configuration:
-      url: tcp://192.168.6.10:1883/
-      clientId: 1
-      userName: x
-      topic: X
-      qos: 1
-      cleanSession: true
-      flushIntervalMS: 10000
-      inputFormat: JSON
+      filePath: /home/ankit/dima/result-analysis/rp/macro-exp/countries.csv
+      delimiter: ,
+      skipHeader: false
+      numberOfBuffersToProduce: 0
+      numberOfTuplesToProducePerBuffer: 0
+      sourceFrequency: 0

@@ -58,7 +58,7 @@ class WindowManager {
      */
     template<class PartialAggregateType, class KeyType>
     inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store, KeyType key) {
-        NES_DEBUG("WindowManager store" << id << ": sliceStream for ts=" << ts << " key=" << key
+        NES_TRACE("WindowManager store" << id << ": sliceStream for ts=" << ts << " key=" << key
                                         << " allowedLateness=" << allowedLateness);
         // updates the maximal record ts
         // check if the slice store is empty or if the first slice has a larger ts then the current event.
@@ -73,14 +73,14 @@ class WindowManager {
             if (windowType->isTumblingWindow()) {
                 auto* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 store->prependSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
-                NES_DEBUG("WindowManager " << id
+                NES_TRACE("WindowManager " << id
                                            << ": for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs="
                                            << store->nextEdge - window->getSize().getTime()
                                            << " nextWindowEnd=" << store->nextEdge << " key=" << key);
             } else if (windowType->isSlidingWindow()) {
                 auto* window = dynamic_cast<SlidingWindow*>(windowType.get());
                 store->prependSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
-                NES_DEBUG("WindowManager " << id
+                NES_TRACE("WindowManager " << id
                                            << ": for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
                                            << store->nextEdge - window->getSlide().getTime()
                                            << " nextWindowEnd=" << store->nextEdge << " key=" << key);
@@ -88,7 +88,7 @@ class WindowManager {
                 NES_THROW_RUNTIME_ERROR("WindowManager: Undefined Window Type");
             }
         }
-        NES_DEBUG("WindowManager " << id << ": sliceStream check store-nextEdge=" << store->nextEdge << " <="
+        NES_TRACE("WindowManager " << id << ": sliceStream check store-nextEdge=" << store->nextEdge << " <="
                                    << " ts=" << ts << " key=" << key);
 
         // append new slices if needed

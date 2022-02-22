@@ -69,8 +69,7 @@ class RestServer {
     * @param host as string
     * @param port as uint
     * @param handle to coordinator
-     *
-   * */
+    */
     RestServer(std::string host,
                uint16_t port,
                const NesCoordinatorWeakPtr& coordinator,
