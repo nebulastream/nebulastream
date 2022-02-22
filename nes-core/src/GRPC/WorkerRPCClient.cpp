@@ -340,7 +340,7 @@ std::string WorkerRPCClient::requestMonitoringData(const std::string& address) {
     Status status = workerStub->GetMonitoringData(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
+        NES_DEBUG("WorkerRPCClient::RequestMonitoringData: metrics received " << reply.metricsasjson());
         return reply.metricsasjson();
     }
     NES_THROW_RUNTIME_ERROR("WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "

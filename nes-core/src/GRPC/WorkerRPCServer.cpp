@@ -108,8 +108,9 @@ Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
 
 Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
     try {
-        NES_DEBUG("WorkerRPCServer::GetMonitoringData: Got request");
+        NES_DEBUG("WorkerRPCServer: GetMonitoringData request received");
         auto metrics = monitoringAgent->getMetricsAsJson().serialize();
+        NES_DEBUG("WorkerRPCServer: Transmitting monitoring data: " << metrics);
         reply->set_metricsasjson(metrics);
         return Status::OK;
     } catch (std::exception& ex) {
