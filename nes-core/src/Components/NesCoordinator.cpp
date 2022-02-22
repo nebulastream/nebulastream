@@ -171,6 +171,7 @@ NesCoordinator::~NesCoordinator() {
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
 
 Runtime::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
+
 bool NesCoordinator::isCoordinatorRunning() { return isRunning; }
 
 uint64_t NesCoordinator::startCoordinator(bool blocking) {
@@ -229,6 +230,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
         workerConfig->numberOfBuffersInGlobalBufferManager = numberOfBuffersInGlobalBufferManager;
         workerConfig->enableMonitoring = enableMonitoring;
     }
+
     auto workerConfigCopy = workerConfig;
     worker = std::make_shared<NesWorker>(std::move(workerConfigCopy));
     worker->start(/**blocking*/ false, /**withConnect*/ true);
