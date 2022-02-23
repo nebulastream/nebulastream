@@ -12,7 +12,6 @@
 # limitations under the License.
 
 add_source_files(nes-core
-        ExecutablePath.cpp
         UtilityFunctions.cpp
         TimeMeasurement.cpp
         BufferSequenceNumber.cpp
