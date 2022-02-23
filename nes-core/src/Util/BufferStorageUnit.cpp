@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/BufferStorageUnit.hpp>
+#include <Runtime/BufferStorage.hpp>
 
 namespace NES::Runtime {
 void BufferStorageUnit::insert(Network::PartitionId nesPartitionId, TupleBuffer buffer) {
@@ -63,4 +63,14 @@ size_t BufferStorageUnit::getQueueSize(Network::PartitionId nesPartitionId) cons
     }
 }
 
+std::optional<NES::Runtime::TupleBuffer> BufferStorageUnit::getTopElementFromQueue(Network::PartitionId nesPartitionId) const {
+    std::unique_lock<std::mutex> lock(mutex);
+    auto iteratorNesPartition = nesPartitionToTupleBufferQueueMapping.find(nesPartitionId);
+    if (iteratorNesPartition == nesPartitionToTupleBufferQueueMapping.end()) {
+        NES_ERROR("BufferStorage: No queue with nes partition id " << nesPartitionId << "was found");
+        return std::optional<TupleBuffer>();
+    } else {
+        return iteratorNesPartition->second.top();
+    }
+}
 }
