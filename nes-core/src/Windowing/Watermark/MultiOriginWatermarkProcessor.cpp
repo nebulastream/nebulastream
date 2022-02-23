@@ -34,8 +34,10 @@ void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumb
         localWatermarkProcessor[origenId] = std::make_unique<WatermarkProcessor>();
     }
     NES_ASSERT2_FMT(localWatermarkProcessor.size() <= numberOfOrigins,
-                    "The watermark processor maintains watermarks from " << localWatermarkProcessor.size()
-                                                                         << " origins but we only expected  " << numberOfOrigins);
+                    "The watermark processor maintains watermarks from "
+                        << localWatermarkProcessor.size() << " origins but we only expected  " << numberOfOrigins
+                        << ", Details: Watermark Ts " << ts << " Sequence Number " << sequenceNumber << " Origin Id "
+                        << origenId);
     localWatermarkProcessor[origenId]->updateWatermark(ts, sequenceNumber);
 }
 
