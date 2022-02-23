@@ -229,7 +229,7 @@ uint32_t DistributeWindowRule::findNumberOfEdges(WindowOperatorNodePtr windowOpe
     while (!childrenToProcess.empty()) {
         auto childToProcess = childrenToProcess.front();
         childrenToProcess.pop();
-        if (childToProcess->instanceOf<WindowOperatorNodePtr>()) {
+        if (childToProcess->instanceOf<WindowOperatorNodePtr>() || childToProcess->instanceOf<SourceLogicalOperatorNode>()) {
             numberOfChildren = numberOfChildren + 1;
             continue;
         } else if (childToProcess->instanceOf<UnionLogicalOperatorNode>()) {
