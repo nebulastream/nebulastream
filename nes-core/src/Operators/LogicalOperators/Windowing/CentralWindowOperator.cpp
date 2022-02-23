@@ -35,7 +35,7 @@ CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefin
 
 std::string CentralWindowOperator::toString() const {
     std::stringstream ss;
-    ss << "CENTRALWINDOW(" << id << ")";
+    ss << "CENTRALWINDOW(" << id << ", Window Description "<< windowDefinition->toString() << ")";
     return ss.str();
 }
 
