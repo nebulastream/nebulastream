@@ -102,6 +102,7 @@ class DistributeWindowRule : public BaseRewriteRule {
     explicit DistributeWindowRule(Configurations::OptimizerConfiguration configuration);
     void createCentralWindowOperator(const WindowOperatorNodePtr& windowOp);
     void createDistributedWindowOperator(const WindowOperatorNodePtr& logicalWindowOperator, const QueryPlanPtr& queryPlan);
+    uint32_t findNumberOfEdges(WindowOperatorNodePtr windowOperator);
 
     bool performDistributedWindowOptimization;
     // The number of child nodes from which on we will replace a central window operator with a distributed window operator.

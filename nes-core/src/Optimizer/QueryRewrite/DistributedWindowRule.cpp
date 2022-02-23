@@ -52,20 +52,11 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     }
     auto windowOps = queryPlan->getOperatorByType<WindowLogicalOperatorNode>();
     if (!windowOps.empty()) {
-        /**
-         * @end
-         */
         NES_DEBUG("DistributeWindowRule::apply: found " << windowOps.size() << " window operators");
         for (auto& windowOp : windowOps) {
             NES_DEBUG("DistributeWindowRule::apply: window operator " << windowOp->toString());
-
-            if (windowOp->getChildren().size() >= windowDistributionChildrenThreshold
-                && windowOp->getWindowDefinition()->getWindowAggregation().size() == 1) {
-                createDistributedWindowOperator(windowOp, queryPlan);
-            } else {
-                createCentralWindowOperator(windowOp);
-                NES_DEBUG("DistributeWindowRule::apply: central op " << queryPlan->toString());
-            }
+            createCentralWindowOperator(windowOp);
+            NES_DEBUG("DistributeWindowRule::apply: central op " << queryPlan->toString());
         }
     } else {
         NES_DEBUG("DistributeWindowRule::apply: no window operator in query");
@@ -81,6 +72,8 @@ void DistributeWindowRule::createCentralWindowOperator(const WindowOperatorNodeP
     auto newWindowOp = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowOp->getWindowDefinition());
     newWindowOp->setInputSchema(windowOp->getInputSchema());
     newWindowOp->setOutputSchema(windowOp->getOutputSchema());
+    auto numberOfEdges = findNumberOfEdges(windowOp);
+    windowOp->getWindowDefinition()->setNumberOfInputEdges(numberOfEdges);
     NES_DEBUG("DistributeWindowRule::apply: newNode=" << newWindowOp->toString() << " old node=" << windowOp->toString());
     windowOp->replace(newWindowOp);
 }
@@ -223,6 +216,31 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
         windowDef->setOriginId(sliceOp->getId());
         child->insertBetweenThisAndParentNodes(sliceOp);
     }
+}
+
+uint32_t DistributeWindowRule::findNumberOfEdges(WindowOperatorNodePtr windowOperator) {
+    uint32_t numberOfChildren = 0;
+    std::queue<NodePtr> childrenToProcess;
+    for (auto child : windowOperator->getChildren()) {
+        childrenToProcess.push(child);
+    }
+
+    while (!childrenToProcess.empty()) {
+        auto childToProcess = childrenToProcess.front();
+        childrenToProcess.pop();
+        if (childToProcess->instanceOf<WindowOperatorNodePtr>()) {
+            numberOfChildren = numberOfChildren + 1;
+            continue;
+        } else if (childToProcess->instanceOf<UnionLogicalOperatorNode>()) {
+            numberOfChildren = numberOfChildren + childToProcess->getChildren().size();
+            continue;
+        }
+
+        for (auto child : childToProcess->getChildren()) {
+            childrenToProcess.push(child);
+        }
+    }
+    return numberOfChildren;
 }
 
 }// namespace NES::Optimizer

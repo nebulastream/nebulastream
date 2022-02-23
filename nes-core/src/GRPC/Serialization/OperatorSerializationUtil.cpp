@@ -23,22 +23,22 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/MaterializedViewSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MaterializedViewSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
@@ -692,6 +692,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
     }
 
     auto allowedLateness = windowDetails->allowedlateness();
+    auto numberOfInputEdges = windowDetails->numberofinputedges();
     std::vector<FieldAccessExpressionNodePtr> keyAccessExpression;
     auto serializedKeys = windowDetails->mutable_keys();
     for (auto& key : *serializedKeys) {
@@ -703,7 +704,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                     aggregation,
                                                                     window,
                                                                     distChar,
-                                                                    1,
+                                                                    numberOfInputEdges,
                                                                     trigger,
                                                                     action,
                                                                     allowedLateness);
@@ -714,7 +715,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                     aggregation,
                                                                     window,
                                                                     distChar,
-                                                                    windowDetails->numberofinputedges(),
+                                                                    numberOfInputEdges,
                                                                     trigger,
                                                                     action,
                                                                     allowedLateness);
@@ -726,7 +727,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                     aggregation,
                                                                     window,
                                                                     distChar,
-                                                                    windowDetails->numberofinputedges(),
+                                                                    numberOfInputEdges,
                                                                     trigger,
                                                                     action,
                                                                     allowedLateness);
@@ -737,7 +738,7 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
                                                                     aggregation,
                                                                     window,
                                                                     distChar,
-                                                                    1,
+                                                                    numberOfInputEdges,
                                                                     trigger,
                                                                     action,
                                                                     allowedLateness);
@@ -1173,8 +1174,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         sourceConfig->setDelimiter(csvSourceConfig->delimiter());
         sourceConfig->setGatheringInterval(csvSourceConfig->sourcegatheringinterval());
         sourceConfig->setNumberOfBuffersToProduce(csvSourceConfig->numberofbufferstoproduce());
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(
-            csvSourceConfig->numberoftuplestoproduceperbuffer());
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(csvSourceConfig->numberoftuplestoproduceperbuffer());
         auto ret = CsvSourceDescriptor::create(schema, sourceConfig);
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableSenseSourceDescriptor>()) {
@@ -1330,7 +1330,8 @@ OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptorPtr& sink
     } else if (sinkDescriptor->instanceOf<Experimental::MaterializedView::MaterializedViewSinkDescriptor>()) {
         NES_TRACE("OperatorSerializationUtil:: serialized MaterializedViewSinkDescriptor as "
                   "SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor");
-        auto materializedViewSinkDescriptor = sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
+        auto materializedViewSinkDescriptor =
+            sinkDescriptor->as<Experimental::MaterializedView::MaterializedViewSinkDescriptor>();
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMaterializedViewSinkDescriptor();
         serializedSinkDescriptor.set_viewid(materializedViewSinkDescriptor->getViewId());
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
