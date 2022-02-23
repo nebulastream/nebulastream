@@ -19,7 +19,7 @@
 #include <Compiler/Util/ClangFormat.hpp>
 #include <Compiler/Util/File.hpp>
 #include <Compiler/Util/SharedLibrary.hpp>
-#include <Util/ExecutablePath.hpp>
+#include <Compiler/Util/ExecutablePath.hpp>
 #include <Util/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <chrono>

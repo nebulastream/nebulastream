@@ -14,4 +14,5 @@
 add_source_files(nes-compiler
         ClangFormat.cpp
         SharedLibrary.cpp
+        ExecutablePath.cpp
 )
