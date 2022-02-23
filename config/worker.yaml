@@ -65,7 +65,8 @@ queryCompiler:
   #queryCompilerOutputBufferOptimizationLevel: ALL
 
 # set the location of a node if it is a field node (format: "<lat>, <lng>")
-locationCoordinates: 1.344, 4.55
+# standard location settings will result in an invalid location and create a node without a location
+locationCoordinates: 200.0, 200.0
 
 # set node mobile or non mobile
 isMobile: false
