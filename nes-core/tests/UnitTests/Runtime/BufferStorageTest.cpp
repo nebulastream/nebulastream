@@ -19,7 +19,7 @@
 #include <thread>
 
 namespace NES {
-const size_t buffersInserted = 5;
+const size_t buffersInserted = 101;
 const size_t emptyBuffer = 0;
 const size_t oneBuffer = 1;
 const size_t numberOfThreads = 5;

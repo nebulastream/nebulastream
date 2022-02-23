@@ -17,12 +17,74 @@
 
 #include <Runtime/AbstractBufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/BufferStorageUnit.hpp>
 #include <optional>
 #include <queue>
 #include <unordered_map>
 
 namespace NES::Runtime {
+
+struct BufferSorter : public std::greater<TupleBuffer> {
+    bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) {
+        return lhs.getWatermark() > rhs.getWatermark();
+    }
+};
+
+using TupleBufferPriorityQueue =
+    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter>;
+
+/**
+ * @brief The Buffer Storage Unit class encapsulates a nesPartitionId and a sorted queue of TupleBuffers
+ */
+class BufferStorageUnit {
+  public:
+    /**
+     * @brief Constructor, which creates map of nes partition id to sorted queue of tuple buffers
+     * @return buffer storage unit
+     */
+    BufferStorageUnit(Network::PartitionId nesPartitionId, TupleBufferPriorityQueue queue) {
+        nesPartitionToTupleBufferQueueMapping[nesPartitionId] = std::move(queue);
+    }
+
+    /**
+     * @brief inserts buffer for a given nes partition id
+     * @param nesPartitionId destination id
+     * @param buffer tuple buffer
+     */
+    void insert(Network::PartitionId nesPartitionId, TupleBuffer buffer);
+
+    /**
+     * @brief trims all tuple buffers smaller than a given timetsamp
+     * @param timestamp
+     * @return success
+     */
+    bool trim(uint64_t timestamp);
+
+    /**
+     * @brief Return current storage size
+     * @return Current storage size
+     */
+    size_t getSize() const;
+
+    /**
+     * @brief Return the size of queue with a given nes partition id
+     * @param nesPartitionId destination id
+     * @return Given queue size
+     */
+    size_t getQueueSize(Network::PartitionId nesPartitionId) const;
+
+    /**
+     * @brief Return top element of the queue
+     * @param nesPartitionId destination id
+     * @return buffer storage unit
+     */
+    std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue(Network::PartitionId nesPartitionId) const;
+
+  private:
+    mutable std::mutex mutex;
+    std::unordered_map<Network::PartitionId, TupleBufferPriorityQueue> nesPartitionToTupleBufferQueueMapping;
+};
+
+using BufferStorageUnitPtr = std::shared_ptr<BufferStorageUnit>;
 
 /**
  * @brief The Buffer Storage class stores tuples inside a queue and trims it when the right acknowledgement is received
