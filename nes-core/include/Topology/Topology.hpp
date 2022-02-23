@@ -21,7 +21,7 @@
 #include <mutex>
 #include <optional>
 #include <vector>
-#include "Common/GeographicalLocation.hpp"
+#include <Common/GeographicalLocation.hpp>
 #ifdef S2DEF
 #include <s2/s2point_index.h>
 #endif

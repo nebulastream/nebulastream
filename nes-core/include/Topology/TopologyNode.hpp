@@ -19,7 +19,7 @@
 #include <Topology/LinkProperty.hpp>
 #include <any>
 #include <optional>
-#include "Common/GeographicalLocation.hpp"
+#include <Common/GeographicalLocation.hpp>
 
 namespace NES {
 class TopologyNode;
