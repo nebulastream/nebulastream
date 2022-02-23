@@ -32,6 +32,8 @@ void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumb
     // insert new local watermark processor if the id is not present in the map
     if (localWatermarkProcessor.find(origenId) == localWatermarkProcessor.end()) {
         localWatermarkProcessor[origenId] = std::make_unique<WatermarkProcessor>();
+        NES_DEBUG("Assigned Origin Id " << origenId << " current number of origins " << localWatermarkProcessor.size()
+                                        << " number of expected origins " << numberOfOrigins);
     }
     NES_ASSERT2_FMT(localWatermarkProcessor.size() <= numberOfOrigins,
                     "The watermark processor maintains watermarks from "
