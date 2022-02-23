@@ -24,7 +24,7 @@
 #include <gtest/gtest.h>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include "../util/NesBaseTest.hpp"
+#include <../util/NesBaseTest.hpp>
 
 using namespace std;
 namespace NES {

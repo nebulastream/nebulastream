@@ -11,19 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#ifndef NES_COORDINATESOUTOFRANGEEXCEPTION_H
-#define NES_COORDINATESOUTOFRANGEEXCEPTION_H
-
+#ifndef NES_INVALIDCOORDINATEFORMATEXCEPTION_HPP
+#define NES_INVALIDCOORDINATEFORMATEXCEPTION_HPP
 #include <exception>
+
 namespace NES {
 
 /**
- * @brief an exception indicating that the entered latitude is not in range [-90, 90] or the longitude is not in range [-180, 180]
+ * @brief an exception indicating that the entered string is not of the format "<double>, <double>"
  */
-class CoordinatesOutOfRangeException : public std::exception {
+class InvalidCoordinateFormatException : public std::exception {
     const char* what () const noexcept;
 };
-}
 
-#endif//NES_COORDINATESOUTOFRANGEEXCEPTION_H
+}// namespase NES
+#endif//NES_INVALIDCOORDINATEFORMATEXCEPTION_HPP
