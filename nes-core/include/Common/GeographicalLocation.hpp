@@ -14,8 +14,8 @@
 #ifndef NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
 #define NES_NES_CORE_INCLUDE_COMMON_GEOGRAPHICALLOCATION_H_
 #include <CoordinatorRPCService.grpc.pb.h>
-#include <Exceptions/CoordinatesOutOfRangeException.h>
-#include <Exceptions/InvalidCoordinateFormatException.h>
+#include <Exceptions/CoordinatesOutOfRangeException.hpp>
+#include <Exceptions/InvalidCoordinateFormatException.hpp>
 
 namespace NES {
 

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "Common/GeographicalLocation.hpp"
+#include <Common/GeographicalLocation.hpp>
 #include <Util/Logger.hpp>
 #include <exception>
 

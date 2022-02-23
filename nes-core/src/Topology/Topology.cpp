@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <deque>
 #include <utility>
-#include "Common/GeographicalLocation.hpp"
+#include <Common/GeographicalLocation.hpp>
 #ifdef S2DEF
 #include <s2/s2latlng.h>
 #include <s2/s2closest_point_query.h>
