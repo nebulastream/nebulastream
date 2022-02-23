@@ -118,13 +118,13 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      */
     void updateMaxTs(uint64_t ts, uint64_t originId, uint64_t sequenceNumber, Runtime::WorkerContextRef workerContext) {
         std::unique_lock lock(windowMutex);
-        NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId);
+        NES_TRACE("updateMaxTs=" << ts << " orId=" << originId);
         if (windowDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
             auto oldWatermark = watermarkProcessor->getCurrentWatermark();
             watermarkProcessor->updateWatermark(ts, sequenceNumber, originId);
             auto newWatermark = watermarkProcessor->getCurrentWatermark();
             if (oldWatermark < newWatermark) {
-                NES_DEBUG("AbstractWindowHandler trigger for before=" << oldWatermark << " afterMin=" << newWatermark);
+                NES_TRACE("AbstractWindowHandler trigger for before=" << oldWatermark << " afterMin=" << newWatermark);
                 trigger(workerContext);
             }
         } else {

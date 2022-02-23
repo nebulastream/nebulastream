@@ -24,7 +24,7 @@ WindowManager::WindowManager(Windowing::WindowTypePtr windowType, uint64_t allow
 Windowing::WindowTypePtr WindowManager::getWindowType() { return windowType; }
 
 uint64_t WindowManager::getAllowedLateness() const {
-    NES_DEBUG("getAllowedLateness=" << allowedLateness);
+    NES_TRACE("getAllowedLateness=" << allowedLateness);
     return allowedLateness;
 }
 

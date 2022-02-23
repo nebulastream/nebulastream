@@ -223,11 +223,11 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                                                                          Runtime::WorkerContextRef workerContext) {
         for (const auto& executableSuccessor : executableSuccessorPipelines) {
             if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
-                NES_DEBUG("Emit Buffer to data sink " << (*sink)->toString());
+                NES_TRACE("Emit Buffer to data sink " << (*sink)->toString());
                 (*sink)->writeData(buffer, workerContext);
             } else if (const auto* nextExecutablePipeline =
                            std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor)) {
-                NES_DEBUG("Emit Buffer to pipeline" << (*nextExecutablePipeline)->getPipelineId());
+                NES_TRACE("Emit Buffer to pipeline" << (*nextExecutablePipeline)->getPipelineId());
                 (*nextExecutablePipeline)->execute(buffer, workerContext);
             }
         }

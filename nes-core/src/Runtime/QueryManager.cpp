@@ -838,7 +838,7 @@ ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, Worker
         auto numOfInputTuples = task.getNumberOfInputTuples();
         profiler->startSampling();
 #endif
-        NES_DEBUG("QueryManager: provide task" << task.toString() << " to thread (getWork())");
+        NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         auto result = task(workerContext);
 #ifdef ENABLE_PAPI_PROFILER
         profiler->stopSampling(numOfInputTuples);
@@ -1016,7 +1016,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
 }
 //#define LIGHT_WEIGHT_STATISTICS
 void QueryManager::completedWork(Task& task, WorkerContext& wtx) {
-    NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
+    NES_TRACE("QueryManager::completedWork: Work for task=" << task.toString() << "worker ctx id=" << wtx.getId());
     if (task.isReconfiguration()) {
         return;
     }
