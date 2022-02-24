@@ -454,7 +454,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
-    NES_INFO("MultipleJoinsTest: Start coordinator");
+    NES_INFO("SeqOperatorTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0UL);
@@ -477,78 +477,58 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     NES_DEBUG("SeqOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(15);
-    srcConf1->setNumberOfBuffersToProduce(5);
-    auto windowStream1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
-    workerConfig1->physicalSources.add(windowStream1);
+    auto csvSourceType1 = CSVSourceType::create();
+    csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(12);
+    csvSourceType1->setNumberOfBuffersToProduce(5);
+    auto physicalSource1 = PhysicalSource::create("QnV1", "test_stream1", csvSourceType1);
+    workerConfig1->physicalSources.add(physicalSource1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("SeqOperatorTest: Worker1 started successfully");
 
-    // Setup Worker 2
-    NES_INFO("SeqOperatorTest: Start worker 2");
+    NES_DEBUG("SeqOperatorTest: Start worker 2");
     WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
     workerConfig2->coordinatorPort = port;
-    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf2->setNumberOfTuplesToProducePerBuffer(15);
-    srcConf2->setNumberOfBuffersToProduce(5);
-    auto windowStream2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
-    workerConfig2->physicalSources.add(windowStream2);
+    auto csvSourceType2 = CSVSourceType::create();
+    csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000073.csv");
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(12);
+    csvSourceType2->setNumberOfBuffersToProduce(5);
+    auto physicalSource2 = PhysicalSource::create("QnV2", "test_stream2", csvSourceType2);
+    workerConfig2->physicalSources.add(physicalSource2);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("SeqOperatorTest: Worker2 started successfully");
 
-    // Setup Worker 3
-    NES_INFO("SeqOperatorTest: Start worker 3");
+    NES_DEBUG("SeqOperatorTest: Start worker 3");
     WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
     workerConfig3->coordinatorPort = port;
-    srcConf3->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf3->setNumberOfTuplesToProducePerBuffer(15);
-    srcConf3->setNumberOfBuffersToProduce(5);
-    auto windowStream3 = PhysicalSource::create("QnV", "test_stream_QnV", srcConf3);
-    workerConfig3->physicalSources.add(windowStream3);
+    auto csvSourceType3 = CSVSourceType::create();
+    csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short_R2000070.csv");
+    csvSourceType3->setNumberOfTuplesToProducePerBuffer(12);
+    csvSourceType3->setNumberOfBuffersToProduce(5);
+    auto physicalSource3 = PhysicalSource::create("QnV", "test_stream", csvSourceType3);
+    workerConfig3->physicalSources.add(physicalSource3);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    NES_INFO("SeqOperatorTest: Worker3 started successfully");
+    NES_INFO("SeqOperatorTest: Worker2 started successfully");
 
-    std::string outputFilePath = getTestResourceFolder() / "testMultiSEQPattern.out";
+    std::string outputFilePath = getTestResourceFolder() / "testSeqPatternWithTestStream1.out";
     remove(outputFilePath.c_str());
 
-    //  Pattern - 1 SeqS - 34 result tuple
-    std::string query1 =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 65)
-        .seqWith(Query::from("QnV1").filter(Attribute("velocity") > 65))
+    NES_INFO("SeqOperatorTest: Submit seqWith pattern");
+
+    std::string query =
+        R"(Query::from("QnV1").filter(Attribute("velocity") > 70)
+        .seqWith(Query::from("QnV2").filter(Attribute("velocity") > 65))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
+        .seqWith(Query::from("QnV").filter(Attribute("velocity") > 70))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
-
-    // Pattern - 2 Seqs
-    std::string query2 =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 70)
-        .seqWith(Query::from("QnV1").filter(Attribute("velocity") > 70))
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
-        .seqWith(Query::from("QnV2").filter(Attribute("velocity") > 70))
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
-        .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";
-
-    // join query equivalent to query2
-    std::string queryjoin =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 70).map(Attribute("key1")=1)
-        .joinWith(Query::from("QnV1").filter(Attribute("velocity") > 70)
-        .map(Attribute("key2")=1)).where(Attribute("key1")).equalsTo(Attribute("key2"))
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
-        .joinWith(Query::from("QnV2").filter(Attribute("velocity") > 70).map(Attribute("key4")=1)
-        .map(Attribute("key3")=1)).where(Attribute("key1")).equalsTo(Attribute("key3"))
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
-        .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\"));";
-
-    std::string query = query2;
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -559,30 +539,15 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    NES_INFO("AndOperatorTest: Remove query");
+    NES_INFO("SeqOperatorTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    //so far from join
     string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|QnVQnV1QnV2$start:UINT64|QnVQnV1QnV2$end:UINT64|QnVQnV1QnV2$key:INT32|QnVQnV1$start:UINT64|QnVQnV1$end:UINT64|QnVQnV1$"
-        "key:INT32|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$key1:INT32|QnV1$"
-        "sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$key2:INT32|QnV2$sensor_id:CHAR["
-        "8]|QnV2$timestamp:UINT64|QnV2$velocity:FLOAT32|QnV2$quantity:UINT64|QnV2$key3:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|"
-        "1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
-        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|"
-        "1543622580000|73.166664|5|1|R2000070|1543622640000|70.222221|7|1|\n"
-        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622640000|70.222221|7|1|R2000073|"
-        "1543622580000|73.166664|5|1|R2000070|1543622580000|75.111115|6|1|\n"
-        "|1543622400000|1543622700000|1|1543622400000|1543622700000|1|R2000070|1543622640000|70.222221|7|1|R2000073|"
-        "1543622580000|73.166664|5|1|R2000070|1543622640000|70.222221|7|1|\n"
-        "+----------------------------------------------------+";
+        "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622880000|69.388885|7|1|\n"
+        "|1543622700000|1543623000000|1|R2000070|1543622820000|70.074074|4|1|R2000073|1543622940000|66.222221|12|1|\n";
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -601,4 +566,5 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
 }
+
 }// namespace NES
