@@ -50,7 +50,7 @@ std::filesystem::path recursiveFindFileReverse(std::filesystem::path currentPath
 #if __APPLE__
 #include <mach-o/dyld.h>
 
-std::filesystem::path NES::ExecutablePath::getExecutablePath() {
+std::filesystem::path getExecutablePath() {
     typedef std::vector<char> char_vector;
     char_vector buf(1024, 0);
     uint32_t size = static_cast<uint32_t>(buf.size());
@@ -80,7 +80,7 @@ std::filesystem::path NES::ExecutablePath::getExecutablePath() {
     return std::filesystem::current_path();
 }
 
-std::filesystem::path NES::ExecutablePath::getLibPath(std::string libName) {
+std::filesystem::path getLibPath(std::string libName) {
     auto executablePath = getExecutablePath();
     auto libPath = detail::recursiveFindFileReverse(executablePath, libName);
 
