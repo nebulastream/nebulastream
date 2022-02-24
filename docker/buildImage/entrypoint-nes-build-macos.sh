@@ -31,6 +31,7 @@ then
     cd build
     cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
     make -j4
+     timeout 70m make test_debug
     # Check if build was successful
     errorCode=$?
     if [ $errorCode -ne 0 ];
