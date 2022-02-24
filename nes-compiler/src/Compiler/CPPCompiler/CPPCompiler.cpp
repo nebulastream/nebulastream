@@ -93,7 +93,7 @@ std::filesystem::path recursiveFindFileReverse(std::filesystem::path currentPath
 std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_shared<CPPCompiler>(); }
 
 CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
-    libNesPath = ExecutablePath::getLibPath("libnes.so");
+    //libNesPath = ExecutablePath::getLibPath("libnes.so");
     clangPath = ExecutablePath::getClangPath();
     publicIncludePath = ExecutablePath::getPublicIncludes();
 }
@@ -135,9 +135,9 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 #ifdef __linux__
     compilationFlags.addFlag("--shared -g -fno-omit-frame-pointer");
 #elif defined(__APPLE__)
-    compilationFlags.addFlag("-shared");
-    compilationFlags.addFlag("-lnes");
-    compilationFlags.addFlag(std::string("-L") + libNesPath.parent_path().string());
+   // compilationFlags.addFlag("-shared");
+   // compilationFlags.addFlag("-lnes");
+   // compilationFlags.addFlag(std::string("-L") + libNesPath.parent_path().string());
 #else
 #error "Unknown platform"
 #endif

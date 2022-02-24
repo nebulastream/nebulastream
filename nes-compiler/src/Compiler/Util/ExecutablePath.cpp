@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Compiler/Util/ExecutablePath.hpp>
 #include <Compiler/Exceptions/CompilerException.hpp>
+#include <Compiler/Util/ExecutablePath.hpp>
 #include <Util/Logger.hpp>
 #include <filesystem>
 #include <vector>
@@ -125,25 +125,26 @@ std::filesystem::path getExecutablePath() {
 }
 
 std::filesystem::path getLibPath(std::string libName) {
-    auto executablePath = getExecutablePath();
-    auto libPath = detail::recursiveFindFileReverse(executablePath, libName);
+    auto executablePath = getExecutablePath().parent_path().parent_path();
+    auto libPath = detail::recursiveFindFileReverse(executablePath, "lib").append(libName);
 
     if (std::filesystem::is_regular_file(libPath)) {
         NES_DEBUG("Library " << libName << " found at: " << libPath.parent_path());
         return libPath;
     }
-    return std::filesystem::current_path();
+    throw CompilerException("Path to " + libName + " not found. Executable path is: " + executablePath.string());
 }
 
 #endif
 
 std::filesystem::path getPublicIncludes() {
     auto executablePath = getExecutablePath();
-    auto includePath = detail::recursiveFindFileReverse(executablePath, "include");
-    if (exists(includePath.append("nebulastream"))) {
+    auto includePath = detail::recursiveFindFileReverse(executablePath, "include").append("nebulastream");
+    if (exists(includePath)) {
+        NES_DEBUG("NebulaStream include path found at " << includePath);
         return includePath;
     }
-    throw CompilerException("Path to the nebulastreams include files was not found");
+    throw CompilerException("NebulaStream include path found not found. Executable path is: " + executablePath.string());
 }
 std::filesystem::path getClangPath() {
     // Depending on the current environment the clang executable could be found at different places.
@@ -162,4 +163,4 @@ std::filesystem::path getClangPath() {
     throw CompilerException("Path to clang executable not found");
 }
 
-}// namespace NES::ExecutablePath
+}// namespace NES::Compiler::ExecutablePath
