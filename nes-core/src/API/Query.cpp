@@ -116,10 +116,23 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     NES_DEBUG("Sequence enters window function");
     auto timestamp = windowType->getTimeCharacteristic()->getField()->getName();
-    std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed() + "$" + timestamp;
-    std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed() + "$" + timestamp;
-    NES_DEBUG("ExpressionItem for Left source " << sourceNameLeft);
-    NES_DEBUG("ExpressionItem for Right source " << sourceNameRight);
+    std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
+    if (sourceNameLeft.find("_") != std::string::npos) {
+        uint64_t posStart = sourceNameLeft.find("_");
+        uint64_t posEnd = sourceNameLeft.find("_",posStart + 1);
+        sourceNameLeft = sourceNameLeft.substr(posStart + 1,posEnd - 2) + "$" + timestamp;
+    } else{
+        sourceNameLeft = sourceNameLeft + "$" + timestamp;
+    }
+    std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
+    if (sourceNameRight.find("_") != std::string::npos) {
+        uint64_t posStart = sourceNameRight.find_last_of("_");
+        sourceNameRight = sourceNameRight.substr(posStart + 1) + "$" + timestamp;
+    } else{
+        sourceNameRight = sourceNameRight + "$" + timestamp;
+    }
+    NES_DEBUG("ExpressionItem for Left stream " << sourceNameLeft);
+    NES_DEBUG("ExpressionItem for Right stream " << sourceNameRight);
     return originalQuery.seqWith(subQueryRhs, onLeftKey, onRightKey, windowType)
         .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight));//call original seqWith() function
 }
@@ -269,7 +282,9 @@ Query& Query::join(const Query& subQueryRhs,
     sourceNames.emplace_back(rightQueryPlan->getSourceConsumed());
     sourceNames.emplace_back(queryPlan->getSourceConsumed());
     std::sort(sourceNames.begin(), sourceNames.end());
-    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"));
+    auto updatedSourceName = std::accumulate(sourceNames.begin(), sourceNames.end(), std::string("-"),[](std::string a, std::string b){
+        return a + "_" + b;
+    });
     queryPlan->setSourceConsumed(updatedSourceName);
 
     return *this;
