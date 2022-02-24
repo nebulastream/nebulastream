@@ -1133,4 +1133,38 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical4$ts"));
 }
 
+/**
+ * @brief In this test we infer the output schemas of multiple orWith Operators (equivalent to union)
+ */
+TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto inputSchema =
+        Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
+
+    streamCatalog->addLogicalStream("QnV1", inputSchema);
+    streamCatalog->addLogicalStream("QnV2", inputSchema);
+    streamCatalog->addLogicalStream("QnV3", inputSchema);
+
+   auto query = Query::from("QnV1").filter(Attribute("velocity")>50)
+                     .orWith(Query::from("QnV2").filter(Attribute("quantity")>5)
+                     .orWith(Query::from("QnV3").filter(Attribute("quantity")>7)))
+                     .sink(FileSinkDescriptor::create(""));
+
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto resultPlan = phase->execute(query.getQueryPlan());
+
+    auto sink = resultPlan->getSinkOperators()[0];
+
+    NES_INFO(sink->getOutputSchema()->toString());
+
+    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 4);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$sensor_id"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$velocity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$quantity"));
+}
+
 }// namespace NES
