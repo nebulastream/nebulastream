@@ -164,6 +164,8 @@ class KalmanFilter {
     std::chrono::milliseconds getExponentialGrowthFrequency();
     // used to calculate the diff in error between consecutive samples
     double getEstimationErrorDifference();
+    // same as getExponentialFrequency() but cuts off on a threshold
+    std::chrono::milliseconds getExponentialFrequencyWithHalfLimit();
 
   protected:
     /**

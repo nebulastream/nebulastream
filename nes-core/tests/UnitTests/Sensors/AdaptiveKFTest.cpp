@@ -128,6 +128,7 @@ class KFProxy : public KalmanFilter {
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalMillisTest);
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalMagnitudeTest);
     FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalExponentialTest);
+    FRIEND_TEST(AdaptiveKFTest, kfNewGatheringIntervalExponentialWithLimitTest);
 };
 
 TEST_F(AdaptiveKFTest, kfErrorChangeTest) {
@@ -530,6 +531,32 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialTest) {
         std::cout << "Old freq: " << kfProxy.getCurrentFrequency().count() << std::endl;
         kfProxy.update(y);
         auto newFreq = kfProxy.getExponentialFrequency();
+        std::cout << "New freq: " << newFreq.count() << std::endl;
+    }
+
+    EXPECT_TRUE(true);
+}
+
+TEST_F(AdaptiveKFTest, kfNewGatheringIntervalExponentialWithLimitTest) {
+    // initial state estimations, values can be random
+    Eigen::VectorXd initialState(3);
+    initialState << 0, measurements[0], measurements[0];
+
+    // empty filter
+    KFProxy kfProxy{10};
+    kfProxy.init(initialState);
+    kfProxy.setFrequency(std::chrono::milliseconds{4000});
+
+    // start measurements vector
+    Eigen::VectorXd y(1);
+
+    // predict and update
+    for(uint64_t i = 1; i < measurements.size(); ++i) {
+        y << measurements[i];
+        std::cout << "Measurement: " << y.value() << std::endl;
+        std::cout << "Old freq: " << kfProxy.getCurrentFrequency().count() << std::endl;
+        kfProxy.update(y);
+        auto newFreq = kfProxy.getExponentialFrequencyWithHalfLimit();
         std::cout << "New freq: " << newFreq.count() << std::endl;
     }
 

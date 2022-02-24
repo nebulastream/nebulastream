@@ -189,9 +189,9 @@ std::chrono::milliseconds KalmanFilter::getExponentialFrequency() {
      * so we don't need to cover it
      */
     if (this->getEstimationErrorDifference() > 0.6) {
-        return this->getExponentialDecayFrequency();
+        this->gatheringInterval = this->getExponentialDecayFrequency();
     } else if (this->getTotalEstimationError() < 0.24) {
-        return this->getExponentialGrowthFrequency();
+        this->gatheringInterval = this->getExponentialGrowthFrequency();
     }
     return this->gatheringInterval;
 }
@@ -206,7 +206,7 @@ std::chrono::milliseconds KalmanFilter::getExponentialDecayFrequency() {
         auto newFreqCandidate = this->initialFreq.count() * std::pow((1 - .25), this->decreaseCounter); // y = y0 * ((1-b) ^ x)
         ++this->decreaseCounter;
         this->increaseCounter = 1;
-        this->gatheringInterval = std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
+        return std::chrono::milliseconds((int) std::abs(trunc(newFreqCandidate)));
     }
     return this->gatheringInterval;
 }
@@ -217,7 +217,26 @@ std::chrono::milliseconds KalmanFilter::getExponentialGrowthFrequency() {
         auto newFreqCandidate = this->initialFreq.count() * std::pow((1 + .25), this->increaseCounter); // y = y0 * ((1+b) ^ x)
         ++this->increaseCounter;
         this->decreaseCounter = 1;
-        this->gatheringInterval = std::chrono::milliseconds((int) trunc(newFreqCandidate));
+        return std::chrono::milliseconds((int) trunc(newFreqCandidate));
+    }
+    return this->gatheringInterval;
+}
+
+std::chrono::milliseconds KalmanFilter::getExponentialFrequencyWithHalfLimit() {
+    /**
+     * diff is new - old, negative means new is small
+     * so we don't need to cover it
+     */
+    if (this->getEstimationErrorDifference() > 0.6) {
+        auto frequencyCandidate = this->getExponentialDecayFrequency();
+        if (frequencyCandidate.count() < initialFreq.count() * 2) {
+            this->gatheringInterval = frequencyCandidate;
+        }
+    } else if (this->getTotalEstimationError() < 0.24) {
+        auto frequencyCandidate = this->getExponentialGrowthFrequency();
+        if (frequencyCandidate.count() > initialFreq.count() / 2) {
+            this->gatheringInterval = frequencyCandidate;
+        }
     }
     return this->gatheringInterval;
 }
