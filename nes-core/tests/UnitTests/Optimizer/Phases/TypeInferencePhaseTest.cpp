@@ -1167,4 +1167,145 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$quantity"));
 }
 
+/**
+ * @brief In this test we infer the output schemas of multiple andWith Operators
+ */
+TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto inputSchema =
+        Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
+
+    streamCatalog->addLogicalStream("QnV", inputSchema);
+    streamCatalog->addLogicalStream("QnV1", inputSchema);
+    streamCatalog->addLogicalStream("QnV2", inputSchema);
+
+    auto query = Query::from("QnV").filter(Attribute("velocity")>50)
+                        .andWith(Query::from("QnV1").filter(Attribute("quantity")>50))
+                        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
+                        .andWith(Query::from("QnV2").filter(Attribute("velocity") > 70))
+                        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
+                        .sink(FileSinkDescriptor::create(""));
+
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto resultPlan = phase->execute(query.getQueryPlan());
+
+    auto sink = resultPlan->getSinkOperators()[0];
+
+    NES_INFO(sink->getOutputSchema()->toString());
+
+    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 22);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1QnV2$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1QnV2$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1QnV2$key"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1$key"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$sensor_id"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$velocity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$quantity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$sensor_id"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$velocity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$quantity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV2$sensor_id"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV2$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV2$velocity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV2$quantity"));
+}
+
+/**
+ * @brief In this test we infer the output schemas of multiple seqWith Operators
+ */
+TEST_F(TypeInferencePhaseTest, DISABLED_inferSeqwithQuery) {
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto inputSchema =
+        Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
+
+    streamCatalog->addLogicalStream("QnV", inputSchema);
+    streamCatalog->addLogicalStream("QnV1", inputSchema);
+    streamCatalog->addLogicalStream("QnV2", inputSchema);
+
+    auto query = Query::from("QnV").filter(Attribute("velocity")>50)
+                     .seqWith(Query::from("QnV1").filter(Attribute("quantity")>50))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
+                     .seqWith(Query::from("QnV2").filter(Attribute("velocity") > 70))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
+                     .sink(FileSinkDescriptor::create(""));
+
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto resultPlan = phase->execute(query.getQueryPlan());
+
+    auto sink = resultPlan->getSinkOperators()[0];
+
+    NES_INFO(sink->getOutputSchema()->toString());
+
+    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 22);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1QnV2$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1QnV2$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1QnV2$key"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1$key"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$sensor_id"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$velocity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$quantity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$sensor_id"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$velocity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$quantity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV2$sensor_id"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV2$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV2$velocity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV2$quantity"));
+}
+
+/**
+ * @brief In this test we infer the output schemas of a single seqWith Operators
+ */
+TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
+    SourceCatalogPtr streamCatalog = std::make_shared<SourceCatalog>(QueryParsingServicePtr());
+    auto inputSchema =
+        Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))->addField(createField("quantity", UINT64));
+
+    streamCatalog->addLogicalStream("QnV", inputSchema);
+    streamCatalog->addLogicalStream("QnV1", inputSchema);
+    streamCatalog->addLogicalStream("QnV2", inputSchema);
+
+    auto query = Query::from("QnV").filter(Attribute("velocity")>50)
+                     .seqWith(Query::from("QnV1").filter(Attribute("quantity")>50))
+                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(10),Minutes(2)))
+                     .sink(FileSinkDescriptor::create(""));
+
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto resultPlan = phase->execute(query.getQueryPlan());
+
+    auto sink = resultPlan->getSinkOperators()[0];
+
+    NES_INFO(sink->getOutputSchema()->toString());
+
+    auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 13);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnVQnV1$key"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$sensor_id"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$velocity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV$quantity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$sensor_id"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$timestamp"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$velocity"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("QnV1$quantity"));
+}
+
 }// namespace NES
