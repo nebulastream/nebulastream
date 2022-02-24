@@ -243,7 +243,7 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
 /* 3.Test
  * Multi-OR Operators in one Query
  */
-TEST_F(OrOperatorTest, testPatternMultiOr) {
+TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
