@@ -56,7 +56,6 @@ target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES} )
 target_link_libraries(nes PUBLIC nes-common nes-compiler)
 target_link_libraries(nes PUBLIC ${GRPC_LIBRARIES})
 
-
 get_target_property(LIBA_INCLUDES nes INCLUDE_DIRECTORIES)
 foreach(dir ${LIBA_INCLUDES})
     string(APPEND INCLUDE_COMPILER_STRING "/I${dir} ")

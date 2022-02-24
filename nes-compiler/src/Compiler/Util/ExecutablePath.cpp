@@ -11,12 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Compiler/Util//ExecutablePath.hpp>
+#include <Compiler/Util/ExecutablePath.hpp>
+#include <Compiler/Exceptions/CompilerException.hpp>
 #include <Util/Logger.hpp>
 #include <filesystem>
 #include <vector>
 
-namespace NES::ExecutablePath {
+namespace NES::Compiler::ExecutablePath {
 
 namespace detail {
 
@@ -111,7 +112,7 @@ std::filesystem::path NES::ExecutablePath::getLibPath(std::string libName) {
 #include <limits.h>
 #include <unistd.h>
 
-std::filesystem::path NES::ExecutablePath::getExecutablePath() {
+std::filesystem::path getExecutablePath() {
     char result[PATH_MAX];
     ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
     auto resultString = std::string(result, (count > 0) ? count : 0);
@@ -123,7 +124,7 @@ std::filesystem::path NES::ExecutablePath::getExecutablePath() {
     return std::filesystem::current_path();
 }
 
-std::filesystem::path NES::ExecutablePath::getLibPath(std::string libName) {
+std::filesystem::path getLibPath(std::string libName) {
     auto executablePath = getExecutablePath();
     auto libPath = detail::recursiveFindFileReverse(executablePath, libName);
 
@@ -136,13 +137,13 @@ std::filesystem::path NES::ExecutablePath::getLibPath(std::string libName) {
 
 #endif
 
-std::filesystem::path NES::ExecutablePath::getPublicIncludes() {
+std::filesystem::path getPublicIncludes() {
     auto executablePath = getExecutablePath();
     auto includePath = detail::recursiveFindFileReverse(executablePath, "include");
     if (exists(includePath.append("nebulastream"))) {
         return includePath;
     }
-    return std::filesystem::path();
+    throw CompilerException("Path to the nebulastreams include files was not found");
 }
 std::filesystem::path getClangPath() {
     // Depending on the current environment the clang executable could be found at different places.
@@ -150,13 +151,15 @@ std::filesystem::path getClangPath() {
     // 2. if we are in the build environment CLANG_EXECUTABLE should indicate the location of clang.
     // TODO check locations on MacOS.
     auto executablePath = getExecutablePath();
-    auto existsInInstallPath = std::filesystem::exists(executablePath.parent_path().append("nes-clang"));
-    if (existsInInstallPath) {
-        return std::filesystem::path(executablePath.parent_path().append("nes-clang"));
+    auto nesClangPath = executablePath.parent_path().append("nes-clang");
+    if (std::filesystem::exists(nesClangPath)) {
+        NES_DEBUG("Clang found at: " << nesClangPath);
+        return std::filesystem::path(nesClangPath);
     } else if (std::filesystem::exists(CLANG_EXECUTABLE)) {
+        NES_DEBUG("Clang found at: " << CLANG_EXECUTABLE);
         return std::filesystem::path(CLANG_EXECUTABLE);
     }
-    return std::filesystem::path();
+    throw CompilerException("Path to clang executable not found");
 }
 
 }// namespace NES::ExecutablePath
