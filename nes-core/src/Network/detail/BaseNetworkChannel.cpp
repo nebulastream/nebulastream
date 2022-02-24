@@ -41,4 +41,7 @@ void BaseNetworkChannel::close(bool isEventOnly) {
     NES_DEBUG("Socket(" << socketAddr << ") closed for " << channelId << (isEventOnly ? " Event" : " Data"));
     isClosed = true;
 }
+void BaseNetworkChannel::setBuffering(bool status) {
+    isBuffering = status;
+}
 }// namespace NES::Network::detail

@@ -93,6 +93,12 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             }
             break;
         }
+        case Runtime::BufferData: {
+            workerContext.getNetworkChannel(nesPartition.getOperatorId())->setBuffering(true);
+            //trigger clean up of connections to downstream node
+            //clean up ZMQ connection?
+            break;
+        }
         default: {
             break;
         }

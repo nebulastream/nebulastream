@@ -381,7 +381,7 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
         NES_ERROR(" WorkerRPCClient::BeginBuffer "
                   "error="
                   << status.error_code() << ": " << status.error_message());
-        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::stopQuery");
+        throw log4cxx::helpers::Exception("Error while WorkerRPCClient::bufferData");
     }
     return false;
 }

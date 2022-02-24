@@ -17,6 +17,7 @@
 
 #include <Network/ZmqUtils.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <queue>
 namespace NES::Network::detail {
 
 /**
@@ -44,7 +45,11 @@ class NetworkDataSender : public BaseChannelType {
      * @param the tupleSize represents the size in bytes of one tuple in the buffer
      * @return true if send was successful, else false
      */
-    bool sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tupleSize) {
+    bool sendBuffer(Runtime::TupleBuffer inputBuffer, uint64_t tupleSize) {
+        if(this->isBuffering){
+            this->buffer.push(std::pair<Runtime::TupleBuffer, uint64_t> {inputBuffer, tupleSize});
+            return true;
+        }
         auto numOfTuples = inputBuffer.getNumberOfTuples();
         auto originId = inputBuffer.getOriginId();
         auto watermark = inputBuffer.getWatermark();
@@ -76,6 +81,14 @@ class NetworkDataSender : public BaseChannelType {
         }
         NES_DEBUG("DataChannel: Error sending buffer for " << this->channelId);
         return false;
+    }
+
+    void unbufferData(){
+        while(!this->buffer.empty()){
+            std::pair<Runtime::TupleBuffer, uint64_t> pair = this->buffer.front();
+            sendBuffer(pair.first, pair.second);
+            this->buffer.pop();
+        }
     }
 };
 

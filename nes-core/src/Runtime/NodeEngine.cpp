@@ -518,9 +518,8 @@ bool NodeEngine::bufferData(QuerySubPlanId querySubPlanId, uint64_t uniqueNetwor
         if (it != sinks.end()) {
             auto networkSink = *it;
             //below code will be added in #2395
-            //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,BufferData,networkSink);
-            //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
-            NES_NOT_IMPLEMENTED();
+            ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,BufferData,networkSink);
+            queryManager->addReconfigurationMessage(querySubPlanId,message,true);
             return true;
         }
         //query sub plan did not have network sink with specified id
@@ -557,7 +556,7 @@ bool NodeEngine::updateNetworkSink(uint64_t newNodeId,
             //ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,networkSink, newNodeLocation);
             //queryManager->addReconfigurationMessage(querySubPlanId,message,true);
             NES_NOT_IMPLEMENTED();
-            return true;
+            //return true;
         }
         //query sub plan did not have network sink with specified id
         NES_DEBUG("Query Sub Plan with ID" << querySubPlanId << "did not contain a Network Sink with a Descriptor with ID "

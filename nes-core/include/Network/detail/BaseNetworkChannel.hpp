@@ -19,6 +19,7 @@
 #include <Network/NetworkMessage.hpp>
 #include <memory>
 #include <zmq.hpp>
+#include <queue>
 
 namespace NES::Runtime {
 class BufferManager;
@@ -59,12 +60,19 @@ class BaseNetworkChannel {
      */
     void close(bool isEventOnly);
 
+    void setBuffering(bool status);
+
+    //why arent virtual functions allowed here?
+
   protected:
     const std::string socketAddr;
     zmq::socket_t zmqSocket;
     const ChannelId channelId;
     bool isClosed{false};
     Runtime::BufferManagerPtr bufferManager;
+    bool isBuffering {false};
+    std::queue<std::pair<Runtime::TupleBuffer, uint64_t>> buffer;
+
 };
 
 }// namespace NES::Network::detail

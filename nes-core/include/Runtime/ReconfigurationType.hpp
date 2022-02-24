@@ -27,6 +27,9 @@ enum ReconfigurationType : uint8_t {
     SoftEndOfStream,
     // use EndOfStream for reconfiguration tasks that communicate the end of stream event for a given query
     HardEndOfStream,
+    //use BufferData for reconfiguration tasks that stop transfer of data over NetworkSinks and instead buffer data on NetworkSink OutputChannels
+    BufferData,
+
 };
 }
 
