@@ -24,6 +24,11 @@ add_library(nes-common SHARED ${NES_COMMON_SOURCE_FILES})
 target_link_libraries(nes-common PUBLIC ${LIBRARIES})
 target_include_directories(nes-common PUBLIC "include")
 
+add_custom_command(TARGET nes-common POST_BUILD
+        COMMENT "COPY ${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/ ${CMAKE_BINARY_DIR}/include/nebulastream)
+
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
@@ -36,7 +41,3 @@ endif ()
 install(TARGETS nes-common
         COMPONENT nesLibrary
         DESTINATION lib)
-
-install(DIRECTORY "include"
-        COMPONENT nesHeaders
-        DESTINATION "/nebulastream/nes-common")

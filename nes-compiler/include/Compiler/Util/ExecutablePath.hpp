@@ -15,7 +15,7 @@
 #define NES_NES_CORE_INCLUDE_UTIL_EXECUTABLEPATH_HPP_
 
 #include <filesystem>
-namespace NES::ExecutablePath {
+namespace NES::Compiler::ExecutablePath {
 
 /**
  * @brief Gets the path of the current executable.
@@ -35,6 +35,10 @@ std::filesystem::path getPublicIncludes();
  */
 std::filesystem::path getLibPath(std::string libName);
 
+/**
+ * @brief Gets the path to the nes clang executable
+ * @return std::filesystem::path
+ */
 [[maybe_unused]] std::filesystem::path getClangPath();
 
 }// namespace NES::ExecutablePath

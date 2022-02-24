@@ -95,9 +95,7 @@ std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_share
 CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
     libNesPath = ExecutablePath::getLibPath("libnes.so");
     clangPath = ExecutablePath::getClangPath();
-    NES_DEBUG("clang path: " << clangPath.string());
     publicIncludePath = ExecutablePath::getPublicIncludes();
-    NES_DEBUG("PublicIncludePath: " << publicIncludePath.string());
 }
 
 std::string CPPCompiler::getLanguage() const { return "cpp"; }
