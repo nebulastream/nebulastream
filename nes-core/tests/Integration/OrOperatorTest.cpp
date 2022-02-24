@@ -242,9 +242,8 @@ TEST_F(OrOperatorTest, testPatternOrMap) {
 
 /* 3.Test
  * Multi-OR Operators in one Query
- * TODO OR(C,OR(A,B)) second Or does not work due to schema mismatch #2398
  */
-TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
+TEST_F(OrOperatorTest, testPatternMultiOr) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfiguration);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -263,8 +262,8 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     //Add Physical source
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
-    csvSourceType1->setNumberOfBuffersToProduce(40);
+    csvSourceType1->setNumberOfTuplesToProducePerBuffer(2);
+    csvSourceType1->setNumberOfBuffersToProduce(35);
     //register physical source R2000070
     PhysicalSourcePtr conf70 = PhysicalSource::create("QnV1", "test_stream_QnV1", csvSourceType1);
     worker1Configuration->physicalSources.add(conf70);
@@ -279,8 +278,8 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     //Add Physical source
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
-    csvSourceType2->setNumberOfBuffersToProduce(40);
+    csvSourceType2->setNumberOfTuplesToProducePerBuffer(2);
+    csvSourceType2->setNumberOfBuffersToProduce(35);
     //register physical source R2000073
     PhysicalSourcePtr conf73 = PhysicalSource::create("QnV2", "test_stream_QnV2", csvSourceType2);
     worker2Configuration->physicalSources.add(conf73);
@@ -295,8 +294,8 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     //Add Physical source
     auto csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
-    csvSourceType3->setNumberOfBuffersToProduce(40);
+    csvSourceType3->setNumberOfTuplesToProducePerBuffer(2);
+    csvSourceType3->setNumberOfBuffersToProduce(35);
     //register physical source R20000732
     PhysicalSourcePtr conf732 = PhysicalSource::create("QnV3", "test_stream_QnV3", csvSourceType3);
     worker3Configuration->physicalSources.add(conf732);
@@ -311,7 +310,10 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     NES_INFO("OrOperatorTest: Submit andWith pattern");
 
     std::string query =
-        R"(Query::from("QnV1").filter(Attribute("velocity")>50).orWith(Query::from("QnV2").filter(Attribute("quantity")>5).orWith(Query::from("QnV3").filter(Attribute("quantity")>7))).sink(FileSinkDescriptor::create(")"
+        R"(Query::from("QnV1").filter(Attribute("velocity")>50)
+        .orWith(Query::from("QnV2").filter(Attribute("quantity")>5)
+        .orWith(Query::from("QnV3").filter(Attribute("quantity")>7)))
+        .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();
@@ -337,7 +339,7 @@ TEST_F(OrOperatorTest, DISABLED_testPatternMultiOr) {
     size_t n = std::count(content.begin(), content.end(), '\n');
     NES_DEBUG("TUPLE NUMBER=" << n);
 
-    EXPECT_EQ(content, "");
+    EXPECT_EQ(n,365L);
 
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -403,7 +405,8 @@ TEST_F(OrOperatorTest, testOrPatternFilter) {
     NES_INFO("SimplePatternTest: Submit orWith pattern");
 
     std::string query =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 100).orWith(Query::from("QnV2").filter(Attribute("velocity") > 100))
+        R"(Query::from("QnV").filter(Attribute("velocity") > 100)
+        .orWith(Query::from("QnV2").filter(Attribute("velocity") > 100))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 

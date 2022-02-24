@@ -327,19 +327,8 @@ Query& Query::seqWith(const Query& subQueryRhs,
 }
 
 Query& Query::orWith(const Query& subQueryRhs) {
-    NES_DEBUG("Query: add map operator that add the original source name to the left and right side sources of the OR ");
-    //get source names
-    auto sourceNameLeft = this->getQueryPlan()->getSourceConsumed();
-    auto subQuery = const_cast<Query&>(subQueryRhs);
-    auto sourceNameRight = subQuery.getQueryPlan()->getSourceConsumed();
-    auto maxLength = std::max(sourceNameRight.length(), sourceNameLeft.length());
-    sourceNameLeft.resize(maxLength, '_');
-    sourceNameRight.resize(maxLength, '_');
-    //map the attributes with value sourceNameLeft and sourceNameRight to the left and right source
-    this->map(Attribute("SourceName") = sourceNameLeft);
-    subQuery.map(Attribute("SourceName") = sourceNameRight);
     NES_DEBUG("Query: finally we translate the OR into a union OP ");
-    return Query::unionWith(subQuery);
+    return Query::unionWith(subQueryRhs);
 }
 
 Query& Query::filter(const ExpressionNodePtr& filterExpression) {
