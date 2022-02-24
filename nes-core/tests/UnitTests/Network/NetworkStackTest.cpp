@@ -833,5 +833,135 @@ TEST_F(NetworkStackTest, testNetworkSink) {
     ASSERT_EQ(static_cast<uint32_t>(bufferCnt.load()), numSendingThreads * totalNumBuffer);
 }
 
+TEST_F(NetworkStackTest, testNetworkSinkBufferingAndUnBuffering) {
+    static constexpr auto numSendingThreads = 10;
+    std::promise<bool> completed;
+    atomic<int> bufferCnt = 0;
+    uint64_t totalNumBuffer = 100;
+
+    auto sendingThreads = std::vector<std::thread>();
+    auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
+
+    NodeLocation nodeLocation{0, "127.0.0.1", 31339};
+    NesPartition nesPartition{1, 22, 33, 44};
+
+    try {
+        class ExchangeListener : public ExchangeProtocolListener {
+          public:
+            NesPartition nesPartition;
+            std::promise<bool>& completed;
+            atomic<int> eosCnt{0};
+            atomic<int>& bufferCnt;
+
+            ExchangeListener(std::promise<bool>& completed, NesPartition nesPartition, std::atomic<int>& bufferCnt)
+                : nesPartition(nesPartition), completed(completed), bufferCnt(bufferCnt) {}
+
+            void onServerError(Messages::ErrorMessage ex) override {
+                if (ex.getErrorType() != Messages::ErrorType::PartitionNotRegisteredError) {
+                    completed.set_exception(make_exception_ptr(runtime_error("Error")));
+                }
+            }
+
+            void onChannelError(Messages::ErrorMessage) override {}
+
+            void onDataBuffer(NesPartition id, TupleBuffer&) override {
+                if (nesPartition == id) {
+                    bufferCnt++;
+                }
+                ASSERT_EQ(id, nesPartition);
+            }
+            void onEndOfStream(Messages::EndOfStreamMessage) override {
+                auto prev = eosCnt.fetch_add(1);
+                if (prev == 0) {
+                    completed.set_value(true);
+                }
+            }
+
+            void onEvent(NesPartition, Runtime::BaseEvent&) override {}
+        };
+
+        auto pManager = std::make_shared<PartitionManager>();
+        auto bMgr = std::make_shared<Runtime::BufferManager>(bufferSize, buffersManaged);
+        auto bSt = std::make_shared<Runtime::BufferStorage>();
+        auto netManager = NetworkManager::create(
+            0,
+            "127.0.0.1",
+            31339,
+            ExchangeProtocol(pManager, std::make_shared<ExchangeListener>(completed, nesPartition, bufferCnt)),
+            bMgr);
+
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+
+        std::thread receivingThread([&pManager, &netManager, &nesPartition, &completed] {
+            // register the incoming channel
+            //add latency
+            auto nodeLocation = NodeLocation(0, "127.0.0.1", 31337);
+            netManager->registerSubpartitionConsumer(nesPartition, nodeLocation, std::make_shared<DataEmitterImpl>());
+            EXPECT_TRUE(completed.get_future().get());
+            ASSERT_FALSE(pManager->getConsumerRegistrationStatus(nesPartition) == PartitionRegistrationStatus::Deleted);
+            netManager->unregisterSubpartitionConsumer(nesPartition);
+        });
+
+        auto networkSink = std::make_shared<NetworkSink>(schema,
+                                                         0,
+                                                         0,
+                                                         netManager,
+                                                         nodeLocation,
+                                                         nesPartition,
+                                                         bMgr,
+                                                         nullptr,
+                                                         bSt,
+                                                         1,
+                                                         NSOURCE_RETRY_WAIT,
+                                                         NSOURCE_RETRIES);
+        PhysicalSourcePtr streamConf = PhysicalSource::create("x", "x1");
+        auto nodeEngine =
+            Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, {streamConf}, 1, bufferSize, buffersManaged, 64, 64);
+
+        for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
+            std::thread sendingThread([&] {
+                // register the incoming channel
+                Runtime::WorkerContext workerContext(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
+                auto rt = Runtime::ReconfigurationMessage(0, Runtime::Initialize, networkSink, std::make_any<uint32_t>(1));
+                networkSink->reconfigure(rt, workerContext);
+                std::mt19937 rnd;
+                std::uniform_int_distribution gen(50'000, 100'000);
+                const auto& buffMgr = bMgr;
+                for (uint64_t i = 0; i < totalNumBuffer; ++i) {
+                    if( i == 20) {
+                        //buffer tuples 20-50
+                        workerContext.getNetworkChannel(nesPartition.getOperatorId())->setBuffering(true);
+                    }
+                    if(i == 51){
+                        workerContext.getNetworkChannel(nesPartition.getOperatorId())->setBuffering(false);
+                        workerContext.getNetworkChannel(nesPartition.getOperatorId())->unbufferData();
+                    }
+                    auto buffer = buffMgr->getBufferBlocking();
+                    for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                        buffer.getBuffer<uint64_t>()[j] = j;
+                    }
+                    buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
+                    usleep(gen(rnd));
+                    networkSink->writeData(buffer, workerContext);
+                }
+                auto rtEnd = Runtime::ReconfigurationMessage(0, Runtime::HardEndOfStream, networkSink);
+                networkSink->reconfigure(rtEnd, workerContext);
+            });
+            sendingThreads.emplace_back(std::move(sendingThread));
+        }
+
+        for (std::thread& t : sendingThreads) {
+            if (t.joinable()) {
+                t.join();
+            }
+        }
+        receivingThread.join();
+    } catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(static_cast<uint32_t>(bufferCnt.load()), numSendingThreads * totalNumBuffer);
+}
 }// namespace Network
 }// namespace NES
