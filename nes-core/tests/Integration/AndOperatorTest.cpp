@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Util/TestHarness/TestHarness.hpp>
+#include <Catalogs/Source/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -20,6 +20,7 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <chrono>//for timing execution
 #include <gtest/gtest.h>
@@ -38,7 +39,6 @@ class AndOperatorTest : public Testing::NESBaseTest {
     CSVSourceTypePtr srcConf2;
     CSVSourceTypePtr srcConf3;
 
-
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AndOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AndOperatorTest test class.");
@@ -51,7 +51,7 @@ class AndOperatorTest : public Testing::NESBaseTest {
         srcConf2 = CSVSourceType::create();
         srcConf3 = CSVSourceType::create();
 
-        coConf->rpcPort=(*rpcCoordinatorPort);
+        coConf->rpcPort = (*rpcCoordinatorPort);
         coConf->restPort = *restPort;
     }
 
@@ -189,7 +189,6 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
     EXPECT_TRUE(retStart2);
     NES_INFO("AndOperatorTest: Worker2 started successfully");
 
-
     std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
 
@@ -245,10 +244,8 @@ TEST_F(AndOperatorTest, testPatternOneAnd) {
 
 /* 3. Test
  * And operator in combination with sliding window, currently disabled as output is inconsistent
- * TODO: sliding windows create different outputs #2357
- *  - test still inconsistent, but working after refactoring of #2312
  */
-TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
+TEST_F(AndOperatorTest, testPatternAndWithSlidingWindow) {
     // Setup Coordinator
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                                          ->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))
@@ -267,14 +264,14 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     workerConfig1->coordinatorPort = port;
     // Add source 1
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf1->setNumberOfBuffersToProduce(20);
+    srcConf1->setNumberOfTuplesToProducePerBuffer(12);
+    srcConf1->setNumberOfBuffersToProduce(5);
     auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
     workerConfig1->physicalSources.add(windowSource1);
     // Add source 2
     srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf2->setNumberOfTuplesToProducePerBuffer(5);
-    srcConf2->setNumberOfBuffersToProduce(20);
+    srcConf2->setNumberOfTuplesToProducePerBuffer(12);
+    srcConf2->setNumberOfBuffersToProduce(5);
     auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
     workerConfig1->physicalSources.add(windowSource2);
     // Start Worker
@@ -283,7 +280,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
     EXPECT_TRUE(retStart1);
     NES_INFO("AndOperatorTest: Worker1 started successfully");
 
-    std::string outputFilePath = getTestResourceFolder() /  "testPatternAndSliding.out";
+    std::string outputFilePath = getTestResourceFolder() / "testPatternAndSliding.out";
     remove(outputFilePath.c_str());
 
     NES_INFO("AndOperatorTest: Submit andWith pattern");
@@ -320,11 +317,16 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
         "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
         "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
         "+----------------------------------------------------+\n"
-        "|1543622580000|1543622880000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622520000|1543622820000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622460000|1543622760000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622400000|1543622700000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
         "|1543622340000|1543622640000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
+        "+----------------------------------------------------++----------------------------------------------------+\n"
+        "|QnV1QnV2$start:UINT64|QnV1QnV2$end:UINT64|QnV1QnV2$key:INT32|QnV1$sensor_id:CHAR[8]|QnV1$timestamp:UINT64|QnV1$"
+        "velocity:FLOAT32|QnV1$quantity:UINT64|QnV1$cep_leftkey:INT32|QnV2$sensor_id:CHAR[8]|QnV2$timestamp:UINT64|QnV2$velocity:"
+        "FLOAT32|QnV2$quantity:UINT64|QnV2$cep_rightkey:INT32|\n"
+        "+----------------------------------------------------+\n"
+        "|1543622580000|1543622880000|1|R2000070|1543622580000|75.111115|6|1|R2000073|1543622580000|73.166664|5|1|\n"
         "+----------------------------------------------------+";
 
     EXPECT_EQ(removeRandomKey(content), expectedContent);
@@ -337,10 +339,8 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithSlidingWindow) {
 }
 
 /* 4.Test
- * And Operator in combination with early termination strategy, currently disabled as early termination implementation is in PR
+ * And Operator in combination with early termination strategy, currently disabled as early termination implementation is in PR (issue 2339)
  */
-//TODO Ariane issue 2339
-// - test runs through and always fails after refactoring of #2312
 TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
                                          ->addField(createField("timestamp", UINT64))->addField(createField("velocity", FLOAT32))
@@ -440,7 +440,7 @@ TEST_F(AndOperatorTest, DISABLED_testPatternAndWithEarlyTermination) {
  * Multi-AND Operators in one Query
  */
 //TODO Ariane issue 2303
-// - test always fails after refactoring of #2312
+//
 TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     //Setup Coordinator
     std::string qnv = R"(Schema::create()->addField("sensor_id", DataTypeFactory::createFixedChar(8))
@@ -450,61 +450,73 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
     NES_DEBUG("start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     crd->getSourceCatalogService()->registerLogicalSource("QnV", qnv);
-    crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
+    crd->getSourceCatalogService()->registerLogicalSource("QnV1", qnv);
     crd->getSourceCatalogService()->registerLogicalSource("QnV2", qnv);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
-    NES_INFO("SimplePatternTest: Coordinator started successfully");
+    NES_INFO("AndOperatorTest: Coordinator started successfully");
 
-    NES_INFO("SimplePatternTest: Start worker 1");
+    // Setup Worker 1
+    NES_INFO("AndOperatorTest: Start worker 1");
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
-    //Add Source 1
     srcConf1->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf1->setNumberOfTuplesToProducePerBuffer(6);
-    srcConf1->setNumberOfBuffersToProduce(10);
-    auto windowSource1 = PhysicalSource::create("QnV", "test_stream_R2000070", srcConf1);
+    srcConf1->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf1->setNumberOfBuffersToProduce(20);
+    auto windowSource1 = PhysicalSource::create("QnV1", "test_stream_QnV1", srcConf1);
     workerConfig1->physicalSources.add(windowSource1);
-    //Add Source 2
-    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000070.csv");
-    srcConf2->setNumberOfTuplesToProducePerBuffer(6);
-    srcConf2->setNumberOfBuffersToProduce(10);
-    auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_R20000702", srcConf2);
-    workerConfig1->physicalSources.add(windowSource2);
-    //Add Source 3
-    srcConf3->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
-    srcConf3->setNumberOfTuplesToProducePerBuffer(6);
-    srcConf3->setNumberOfBuffersToProduce(10);
-    auto windowSource3 = PhysicalSource::create("QnV1", "test_stream_R2000073", srcConf3);
-    workerConfig1->physicalSources.add(windowSource3);
-    //Start Worker
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
-    NES_INFO("SimplePatternTest: Worker1 started successfully");
+    NES_INFO("AndOperatorTest: Worker1 started successfully");
 
-    std::string outputFilePath = getTestResourceFolder() / "testMultiAndPatternWithTestStream.out";
+    // Setup Worker 2
+    NES_INFO("QueryDeploymentTest: Start worker 2");
+    WorkerConfigurationPtr workerConfig2 = WorkerConfiguration::create();
+    workerConfig2->coordinatorPort = port;
+    srcConf2->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf2->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf2->setNumberOfBuffersToProduce(20);
+    auto windowSource2 = PhysicalSource::create("QnV2", "test_stream_QnV2", srcConf2);
+    workerConfig2->physicalSources.add(windowSource2);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("AndOperatorTest: Worker2 started successfully");
+
+    // Setup Worker 3
+    NES_INFO("QueryDeploymentTest: Start worker 3");
+    WorkerConfigurationPtr workerConfig3 = WorkerConfiguration::create();
+    workerConfig3->coordinatorPort = port;
+    srcConf3->setFilePath("../tests/test_data/QnV_short_R2000073.csv");
+    srcConf3->setNumberOfTuplesToProducePerBuffer(5);
+    srcConf3->setNumberOfBuffersToProduce(20);
+    auto windowSource3 = PhysicalSource::create("QnV", "test_stream_QnV", srcConf3);
+    workerConfig3->physicalSources.add(windowSource3);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    NES_INFO("AndOperatorTest: Worker3 started successfully");
+
+    std::string outputFilePath = getTestResourceFolder() / "testPatternWithIterationOperator.out";
     remove(outputFilePath.c_str());
 
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    NES_INFO("SimplePatternTest: Submit andWith pattern");
+    NES_INFO("AndOperatorTest: Submit andWith pattern");
     //  Pattern - 1 ANDS - 34 result tuple
     std::string query1 =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 65)
-        .andWith(Query::from("QnV1").filter(Attribute("velocity") > 65))
+        R"(Query::from("QnV")
+        .andWith(Query::from("QnV1"))
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
     // Pattern - 2 ANDs
     std::string query2 =
-        R"(Query::from("QnV").filter(Attribute("velocity") > 70)
-        .andWith(Query::from("QnV1").filter(Attribute("velocity") > 70))
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
-        .andWith(Query::from("QnV2").filter(Attribute("velocity") > 70))
-        .window(TumblingWindow::of(EventTime(Attribute("timestamp")),Minutes(5)))
+        R"(Query::from("QnV").filter(Attribute("velocity") > 50)
+        .andWith(Query::from("QnV1").filter(Attribute("velocity") > 50))
+        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(25),Minutes(5)))
+        .andWith(Query::from("QnV2").filter(Attribute("velocity") > 50))
+        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Minutes(25),Minutes(5)))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
@@ -520,12 +532,23 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
-    std::string query = queryjoin;
+    std::string query = query2;
 
-    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    QueryId queryId =
+        queryService->validateAndQueueAddRequest(query, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+
+    NES_INFO("AndOperatorTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     //so far from join
     string expectedContent =
@@ -545,11 +568,6 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
         "1543622580000|73.166664|5|1|R2000070|1543622640000|70.222221|7|1|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
 
@@ -560,6 +578,9 @@ TEST_F(AndOperatorTest, DISABLED_testMultiAndPattern) {
 
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
+
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
 
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
