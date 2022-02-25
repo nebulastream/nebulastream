@@ -333,6 +333,11 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                             exchangeProtocol.onEvent(nesPartition, event);
                             break;
                         }
+                        case Runtime::EventType::startSourceEvent: {
+                            auto event = Runtime::StartSourceEvent();
+                            exchangeProtocol.onEvent(nesPartition, event); // todo jm finish up the funtion calls folowing from here
+                            break;
+                        }
                         default: {
                             NES_ASSERT2_FMT(false, "Invalid event");
                         }

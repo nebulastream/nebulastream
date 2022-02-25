@@ -56,7 +56,7 @@ DataSource::DataSource(SchemaPtr pSchema,
       originId(originId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode),
       sourceAffinity(sourceAffinity), taskQueueId(taskQueueId), kFilter(std::make_unique<KalmanFilter>()) {
     this->kFilter->setDefaultValues();
-    NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
+    NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema " << schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
     // TODO enable this exception -- currently many UTs are designed to assume empty executableSuccessors
@@ -518,6 +518,17 @@ bool DataSource::checkSupportedLayoutTypes(SchemaPtr& schema) {
 Runtime::MemoryLayouts::DynamicTupleBuffer DataSource::allocateBuffer() {
     auto buffer = bufferManager->getBufferBlocking();
     return Runtime::MemoryLayouts::DynamicTupleBuffer(memoryLayout, buffer);
+}
+
+void DataSource::onEvent(Runtime::BaseEvent& event) {
+    NES_DEBUG("DataSource::onEvent(event) called. operatorId: " << this->operatorId);
+    // no behaviour needed, call onEvent of direct ancestor
+    DataEmitter::onEvent(event);
+}
+
+void DataSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
+    NES_DEBUG("DataSource::onEvent(event, wrkContext) called. operatorId: " << this->operatorId);
+    onEvent(event);
 }
 
 }// namespace NES

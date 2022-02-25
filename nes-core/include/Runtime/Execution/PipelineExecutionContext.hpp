@@ -37,7 +37,8 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @param emitToQueryManagerFunctionHandler an handler to receive emitted buffers, which are then dispatched to the query manager.
      * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
      */
-    explicit PipelineExecutionContext(QuerySubPlanId queryId,
+    explicit PipelineExecutionContext(uint64_t pipelineId,
+                                      QuerySubPlanId queryId,
                                       const QueryManagerPtr& queryManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
@@ -97,6 +98,10 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
 
     std::string toString() const;
 
+    uint64_t getPipelineID() {
+        return this->pipelineId;
+    }
+
     /**
      * @brief Returns the number of worker threads
      * @return uint64_t
@@ -110,6 +115,10 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     Runtime::BufferManagerPtr getBufferManager() const;
 
   private:
+    /**
+     * @brief Id of the pipeline
+     */
+    uint64_t pipelineId;
     /**
      * @brief Id of the local qep that owns the pipeline
      */

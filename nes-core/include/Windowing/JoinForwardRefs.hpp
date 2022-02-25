@@ -15,7 +15,6 @@
 #ifndef NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_
 #define NES_INCLUDE_WINDOWING_JOINFORWARDREFS_HPP_
 #include <memory>
-#include <Util/libcuckoo/cuckoohash_map.hh>
 
 namespace NES::Join {
 class LogicalJoinDefinition;
