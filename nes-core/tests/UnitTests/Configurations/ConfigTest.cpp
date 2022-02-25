@@ -287,8 +287,8 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput) {
     EXPECT_TRUE(physicalSource1->getPhysicalSourceType()->instanceOf<DefaultSourceType>());
 
     DefaultSourceTypePtr physicalSourceType1 = physicalSource1->getPhysicalSourceType()->as<DefaultSourceType>();
-    EXPECT_EQ(physicalSourceType1->getSourceFrequency()->getValue(),
-              physicalSourceType1->getSourceFrequency()->getDefaultValue());
+    EXPECT_EQ(physicalSourceType1->getGatheringInterval()->getValue(),
+              physicalSourceType1->getGatheringInterval()->getDefaultValue());
     EXPECT_NE(physicalSourceType1->getNumberOfBuffersToProduce()->getValue(), 5u);
 
     std::string argv1[] = {"type=KafkaSource",

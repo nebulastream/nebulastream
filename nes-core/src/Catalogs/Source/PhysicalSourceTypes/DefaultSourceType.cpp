@@ -34,9 +34,9 @@ DefaultSourceType::DefaultSourceType()
                                               Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG,
                                               1,
                                               "Number of buffers to produce.")),
-      sourceFrequency(Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_FREQUENCY_CONFIG,
+      sourceGatheringInterval(Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG,
                                                                             1,
-                                                                            "Sampling frequency of the source.")) {
+                                                                            "Gathering interval of the source.")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -48,7 +48,7 @@ std::string DefaultSourceType::toString() {
     std::stringstream ss;
     ss << "Default Source Type =>{\n";
     ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG << ":" << numberOfBuffersToProduce;
-    ss << Configurations::SOURCE_FREQUENCY_CONFIG << ":" << sourceFrequency;
+    ss << Configurations::SOURCE_GATHERING_INTERVAL_CONFIG << ":" << sourceGatheringInterval;
     ss << "\n}";
     return ss.str();
 }
@@ -57,7 +57,7 @@ bool DefaultSourceType::equal(const PhysicalSourceTypePtr& other) { return !othe
 
 const Configurations::IntConfigOption& DefaultSourceType::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 
-const Configurations::IntConfigOption& DefaultSourceType::getSourceFrequency() const { return sourceFrequency; }
+const Configurations::IntConfigOption& DefaultSourceType::getGatheringInterval() const { return sourceGatheringInterval; }
 
 void DefaultSourceType::reset() {
     //nothing
@@ -67,6 +67,6 @@ void DefaultSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToPr
     this->numberOfBuffersToProduce->setValue(numberOfBuffersToProduce);
 }
 
-void DefaultSourceType::setSourceFrequency(uint32_t sourceFrequency) { this->sourceFrequency->setValue(sourceFrequency); }
+void DefaultSourceType::setGatheringInterval(uint32_t sourceGatheringInterval) { this->sourceGatheringInterval->setValue(sourceGatheringInterval); }
 
 }// namespace NES

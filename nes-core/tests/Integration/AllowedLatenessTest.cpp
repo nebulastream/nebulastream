@@ -47,7 +47,7 @@ class AllowedLatenessTest : public Testing::NESBaseTest {
         // window-out-of-order.csv contains 12 rows
         outOfOrderConf = CSVSourceType::create();
         outOfOrderConf->setFilePath("../tests/test_data/window-out-of-order.csv");
-        outOfOrderConf->setSourceFrequency(1);
+        outOfOrderConf->setGatheringInterval(1);
         outOfOrderConf->setNumberOfTuplesToProducePerBuffer(2);
         outOfOrderConf->setNumberOfBuffersToProduce(6);
         outOfOrderConf->setSkipHeader(false);
@@ -55,7 +55,7 @@ class AllowedLatenessTest : public Testing::NESBaseTest {
         inOrderConf = CSVSourceType::create();
         // window-out-of-order.csv contains 12 rows
         inOrderConf->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window-in-order.csv");
-        inOrderConf->setSourceFrequency(1);
+        inOrderConf->setGatheringInterval(1);
         inOrderConf->setNumberOfTuplesToProducePerBuffer(2);
         inOrderConf->setNumberOfBuffersToProduce(6);
         inOrderConf->setSkipHeader(false);

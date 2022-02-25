@@ -55,11 +55,11 @@ class DefaultSourceType : public PhysicalSourceType {
 
     const Configurations::IntConfigOption& getNumberOfBuffersToProduce() const;
 
-    const Configurations::IntConfigOption& getSourceFrequency() const;
+    const Configurations::IntConfigOption& getGatheringInterval() const;
 
     void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
-    void setSourceFrequency(uint32_t numberOfBuffersToProduce);
+    void setGatheringInterval(uint32_t sourceGatheringInterval);
 
     std::string toString() override;
 
@@ -86,7 +86,7 @@ class DefaultSourceType : public PhysicalSourceType {
     DefaultSourceType();
 
     Configurations::IntConfigOption numberOfBuffersToProduce;
-    Configurations::IntConfigOption sourceFrequency;
+    Configurations::IntConfigOption sourceGatheringInterval;
 };
 }// namespace NES
 #endif  // NES_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_

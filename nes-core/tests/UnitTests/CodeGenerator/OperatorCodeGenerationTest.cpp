@@ -148,7 +148,7 @@ class SelectionDataGenSource : public GeneratorSource {
                           pNum_buffers_to_process,
                           1,
                           12,
-                          GatheringMode::FREQUENCY_MODE,
+                          GatheringMode::INTERVAL_MODE,
                           {}) {}
 
     ~SelectionDataGenSource() override = default;
@@ -200,7 +200,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                           pNum_buffers_to_process,
                           1,
                           12,
-                          GatheringMode::FREQUENCY_MODE,
+                          GatheringMode::INTERVAL_MODE,
                           {}) {}
 
     ~PredicateTestingDataGeneratorSource() override = default;
@@ -269,7 +269,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
                           pNum_buffers_to_process,
                           1,
                           12,
-                          GatheringMode::FREQUENCY_MODE,
+                          GatheringMode::INTERVAL_MODE,
                           {}) {}
 
     ~WindowTestingDataGeneratorSource() override = default;
@@ -315,7 +315,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
                           pNum_buffers_to_process,
                           1,
                           12,
-                          GatheringMode::FREQUENCY_MODE,
+                          GatheringMode::INTERVAL_MODE,
                           {}) {}
 
     ~WindowTestingWindowGeneratorSource() override = default;

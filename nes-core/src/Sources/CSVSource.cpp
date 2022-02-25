@@ -49,7 +49,7 @@ CSVSource::CSVSource(SchemaPtr schema,
       numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
       delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()) {
     this->numBuffersToProcess = csvSourceType->getNumberOfBuffersToProduce()->getValue();
-    this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getSourceFrequency()->getValue());
+    this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     char* path = realpath(filePath.c_str(), nullptr);

@@ -219,7 +219,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
         NES_WARNING("Lambda last entry is=" << records[numberOfTuplesToProduce - 1].toString());
     };
 
-    auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, "frequency");
+    auto lambdaSourceType = LambdaSourceType::create(func, 10, 100, "interval");
     auto physicalSource = PhysicalSource::create("ysb", "YSB_phy", lambdaSourceType);
     workerConfig->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
@@ -281,7 +281,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
@@ -335,7 +335,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     testHarness
@@ -391,7 +391,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
 
@@ -437,7 +437,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
@@ -538,7 +538,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     testHarness
@@ -591,7 +591,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
     testHarness
@@ -650,7 +650,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     testHarness
@@ -698,7 +698,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
     testHarness
@@ -746,7 +746,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     testHarness
@@ -795,7 +795,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
     testHarness
@@ -828,7 +828,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testCentralWindowIngestionTimeIngestionTim
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(5);
+    sourceConfig->setGatheringInterval(5);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
@@ -913,7 +913,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType1->setSourceFrequency(5);
+    csvSourceType1->setGatheringInterval(5);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
@@ -928,7 +928,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     workerConfig2->coordinatorPort = *rpcCoordinatorPort;
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType2->setSourceFrequency(5);
+    csvSourceType2->setGatheringInterval(5);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("window", "test_stream", csvSourceType2);
@@ -982,7 +982,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setGatheringInterval(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(6);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
@@ -1051,7 +1051,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     auto workerConfig2 = WorkerConfiguration::create();
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setGatheringInterval(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
 
@@ -1146,7 +1146,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     testHarness
@@ -1209,7 +1209,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     // create source
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setGatheringInterval(0);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("window", "test_stream", csvSourceType1);
@@ -1226,7 +1226,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     // create source
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType2->setSourceFrequency(0);
+    csvSourceType2->setGatheringInterval(0);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(3);
     auto physicalSource2 = PhysicalSource::create("window", "test_stream", csvSourceType2);
@@ -1244,7 +1244,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     // create source
     CSVSourceTypePtr csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType3->setSourceFrequency(0);
+    csvSourceType3->setGatheringInterval(0);
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(3);
     auto physicalSource3 = PhysicalSource::create("window", "test_stream", csvSourceType3);
@@ -1261,7 +1261,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     // create source
     CSVSourceTypePtr csvSourceType4 = CSVSourceType::create();
     csvSourceType4->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType4->setSourceFrequency(0);
+    csvSourceType4->setGatheringInterval(0);
     csvSourceType4->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType4->setNumberOfBuffersToProduce(3);
     auto physicalSource4 = PhysicalSource::create("window", "test_stream", csvSourceType4);
@@ -1739,7 +1739,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
 
     CSVSourceTypePtr sourceConfig = CSVSourceType::create();
     sourceConfig->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setGatheringInterval(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setSkipHeader(false);

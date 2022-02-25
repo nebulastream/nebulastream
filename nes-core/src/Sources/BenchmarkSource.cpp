@@ -57,7 +57,7 @@ BenchmarkSource::BenchmarkSource(SchemaPtr schema,
                       std::move(successors)),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), sourceMode(sourceMode) {
     this->numBuffersToProcess = numBuffersToProcess;
-    if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
+    if (gatheringMode == GatheringMode::INTERVAL_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;

@@ -95,8 +95,8 @@ physicalSources:
       #numberOfBuffersToProduce: 1
       # Set number of tuples to produce per buffer
       #numberOfTuplesToProducePerBuffer: 1
-      # Set sampling frequency of source
-      #sourceFrequency: 1
+      # Set sampling interval of source
+      #sourceGatheringInterval: 1
       # Set input data format
       #inputFormat: JSON
 

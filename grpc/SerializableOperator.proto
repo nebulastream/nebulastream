@@ -87,7 +87,7 @@ message SerializablePhysicalSourceType{
     string delimiter = 3;
     uint32 numberOfBuffersToProduce = 4;
     uint32 numberOfTuplesToProducePerBuffer = 5;
-    uint32 sourceFrequency = 6;
+    uint32 sourceGatheringInterval = 6;
   }
 
   /**
@@ -156,7 +156,7 @@ message SerializableOperator{
 
     message SerializableDefaultSourceDescriptor {
       uint64 numBuffersToProcess = 1;
-      uint64 frequency = 2;
+      uint64 gatheringInterval = 2;
       SerializableSchema sourceSchema = 3;
     }
 

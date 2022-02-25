@@ -23,7 +23,7 @@ namespace NES {
 
 /**
  * @brief A Kalman Filter with functionality to update
- * a frequency, based on the error level during (or after)
+ * a gathering interval, based on the error level during (or after)
  * an update.
  *
  * The KF does a predict-and-update step, where internal
@@ -116,27 +116,27 @@ class KalmanFilter {
     void setLambda(float newLambda);
 
     /**
-     * Frequency related setters.
-     * @param frequencyInMillis
+     * Gathering interval related setters.
+     * @param gatheringIntervalInMillis
      */
-    void setFrequency(std::chrono::milliseconds frequencyInMillis);
-    void setFrequencyRange(std::chrono::milliseconds frequencyRange);
-    void setFrequencyWithRange(std::chrono::milliseconds frequencyInMillis,
-                               std::chrono::milliseconds frequencyRange);
+    void setGatheringInterval(std::chrono::milliseconds gatheringIntervalInMillis);
+    void setGatheringIntervalRange(std::chrono::milliseconds gatheringIntervalRange);
+    void setGatheringIntervalWithRange(std::chrono::milliseconds gatheringIntervalInMillis,
+                               std::chrono::milliseconds gatheringIntervalRange);
 
     /**
-     * Get current frequency.
-     * @return frequency in millis
+     * Get current gathering interval.
+     * @return gathering interval in millis
      */
-    std::chrono::milliseconds getCurrentFrequency();
+    std::chrono::milliseconds getCurrentGatheringInterval();
 
     /**
      * @brief calculate new gathering interval using euler number
      * as the smoothing part. The new proposed gathering interval
-     * has to stay inside the original frequency range.
+     * has to stay inside the original gathering interval range.
      * @return a new gathering interval that we can sleep on
      */
-    std::chrono::milliseconds getNewFrequency(); // eq. 7 and 10
+    std::chrono::milliseconds getNewGatheringInterval(); // eq. 7 and 10
 
     /**
      * @return the total estimation error, calculated
@@ -220,13 +220,13 @@ class KalmanFilter {
      * Paper is not clear on the magnitude (size) of
      * the range, this can be determined in tests later.
      */
-    std::chrono::milliseconds freqRange{8000}; // allowed to change by +4s/-4s
-    std::chrono::milliseconds frequency{1000}; // currently in use
-    std::chrono::milliseconds freqLastReceived{1000}; // from coordinator
+    std::chrono::milliseconds gatheringIntervalRange{8000}; // allowed to change by +4s/-4s
+    std::chrono::milliseconds gatheringInterval{1000}; // currently in use
+    std::chrono::milliseconds gatheringIntervalReceived{1000}; // from coordinator
 
     /**
      * @brief control units for changing the new
-     * frequency. Theta (θ) is static according
+     * gathering interval. Theta (θ) is static according
      * to the paper in Jain et al.
      */
     const uint64_t theta = 2; // θ = 2 in all experiments
@@ -235,7 +235,7 @@ class KalmanFilter {
     /**
      * @brief _e_ constant, used to calculate
      * magnitude of change for the new
-     * frequency estimation.
+     * gathering interval estimation.
      */
     const double eulerConstant = std::exp(1.0);
 

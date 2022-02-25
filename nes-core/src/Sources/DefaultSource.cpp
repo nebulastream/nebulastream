@@ -35,7 +35,7 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                              Runtime::BufferManagerPtr bufferManager,
                              Runtime::QueryManagerPtr queryManager,
                              const uint64_t numbersOfBufferToProduce,
-                             uint64_t frequency,
+                             uint64_t gatheringInterval,
                              OperatorId operatorId,
                              size_t numSourceLocalBuffers,
                              std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -45,10 +45,10 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                       numbersOfBufferToProduce,
                       operatorId,
                       numSourceLocalBuffers,
-                      GatheringMode::FREQUENCY_MODE,
+                      GatheringMode::INTERVAL_MODE,
                       std::move(successors)) {
     NES_DEBUG("DefaultSource:" << this << " creating");
-    this->gatheringInterval = std::chrono::milliseconds(frequency);
+    this->gatheringInterval = std::chrono::milliseconds(gatheringInterval);
 }
 
 std::optional<Runtime::TupleBuffer> DefaultSource::receiveData() {

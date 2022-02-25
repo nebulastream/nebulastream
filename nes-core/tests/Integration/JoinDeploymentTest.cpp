@@ -461,14 +461,14 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType1->setNumberOfBuffersToProduce(2);
-    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setGatheringInterval(0);
     csvSourceType1->setSkipHeader(true);
 
     auto csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
-    csvSourceType2->setSourceFrequency(1);
+    csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setSkipHeader(true);
 
     string query =

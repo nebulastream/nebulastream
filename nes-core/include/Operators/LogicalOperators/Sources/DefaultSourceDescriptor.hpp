@@ -55,9 +55,9 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     explicit DefaultSourceDescriptor(SchemaPtr schema,
                                      std::string streamName,
                                      uint64_t numbersOfBufferToProduce,
-                                     uint64_t frequency);
+                                     uint64_t gatheringInterval);
     const uint64_t numbersOfBufferToProduce;
-    const std::chrono::milliseconds frequency;
+    const std::chrono::milliseconds gatheringInterval;
 };
 
 using DefaultSourceDescriptorPtr = std::shared_ptr<DefaultSourceDescriptor>;

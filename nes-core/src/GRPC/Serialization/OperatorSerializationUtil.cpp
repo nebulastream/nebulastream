@@ -978,7 +978,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
                   "SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor");
         auto defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
-        defaultSerializedSourceDescriptor.set_frequency(defaultSourceDescriptor->getFrequencyCount());
+        defaultSerializedSourceDescriptor.set_gatheringinterval(defaultSourceDescriptor->getFrequencyCount());
         defaultSerializedSourceDescriptor.set_numbufferstoprocess(defaultSourceDescriptor->getNumbersOfBufferToProduce());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(defaultSourceDescriptor->getSchema(),
@@ -1009,7 +1009,7 @@ OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptorPtr& 
             csvSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
         csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
             csvSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
-        csvSerializedSourceConfig.set_sourcefrequency(csvSourceDescriptor->getSourceConfig()->getSourceFrequency()->getValue());
+        csvSerializedSourceConfig.set_sourcegatheringinterval(csvSourceDescriptor->getSourceConfig()->getGatheringInterval()->getValue());
         csvSerializedSourceConfig.set_filepath(csvSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
         csvSerializedSourceConfig.set_skipheader(csvSourceDescriptor->getSourceConfig()->getSkipHeader()->getValue());
         csvSerializedSourceConfig.set_delimiter(csvSourceDescriptor->getSourceConfig()->getDelimiter()->getValue());
@@ -1147,7 +1147,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         auto schema = SchemaSerializationUtil::deserializeSchema(defaultSerializedSourceDescriptor.release_sourceschema());
         auto ret = DefaultSourceDescriptor::create(schema,
                                                    defaultSerializedSourceDescriptor.numbufferstoprocess(),
-                                                   defaultSerializedSourceDescriptor.frequency());
+                                                   defaultSerializedSourceDescriptor.gatheringinterval());
         return ret;
     } else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableBinarySourceDescriptor>()) {
         // de-serialize binary source descriptor
@@ -1171,7 +1171,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
         sourceConfig->setFilePath(csvSourceConfig->filepath());
         sourceConfig->setSkipHeader(csvSourceConfig->skipheader());
         sourceConfig->setDelimiter(csvSourceConfig->delimiter());
-        sourceConfig->setSourceFrequency(csvSourceConfig->sourcefrequency());
+        sourceConfig->setGatheringInterval(csvSourceConfig->sourcegatheringinterval());
         sourceConfig->setNumberOfBuffersToProduce(csvSourceConfig->numberofbufferstoproduce());
         sourceConfig->setNumberOfTuplesToProducePerBuffer(
             csvSourceConfig->numberoftuplestoproduceperbuffer());

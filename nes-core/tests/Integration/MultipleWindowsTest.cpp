@@ -727,7 +727,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     workerConfig2->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType2->setSourceFrequency(1);
+    csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     csvSourceType2->setSkipHeader(false);
@@ -746,7 +746,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     workerConfig3->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType3->setSourceFrequency(1);
+    csvSourceType3->setGatheringInterval(1);
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
     csvSourceType3->setSkipHeader(false);
@@ -883,7 +883,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     workerConfig2->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType2->setSourceFrequency(1);
+    csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType2->setNumberOfBuffersToProduce(2);
     csvSourceType2->setSkipHeader(false);
@@ -902,7 +902,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     workerConfig3->numberOfSlots = (12);
     CSVSourceTypePtr csvSourceType3 = CSVSourceType::create();
     csvSourceType3->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType3->setSourceFrequency(1);
+    csvSourceType3->setGatheringInterval(1);
     csvSourceType3->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType3->setNumberOfBuffersToProduce(2);
     csvSourceType3->setSkipHeader(false);
