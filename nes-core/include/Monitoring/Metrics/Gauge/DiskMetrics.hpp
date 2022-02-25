@@ -88,6 +88,13 @@ void writeToBuffer(const DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64
 */
 void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
+/**
+ * @brief Parses the metric to JSON
+ * @param metrics
+ * @return the metrics as JSON
+ */
+web::json::value asJson(const DiskMetrics& metrics);
+
 }// namespace NES
 
 #endif// NES_INCLUDE_MONITORING_METRICVALUES_DISKMETRICS_HPP_

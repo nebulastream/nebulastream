@@ -65,7 +65,7 @@ class NetworkMetricsWrapper {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
     */
-    web::json::value toJson();
+    web::json::value toJson() const;
 
     bool operator==(const NetworkMetricsWrapper& rhs) const;
     bool operator!=(const NetworkMetricsWrapper& rhs) const;
@@ -92,6 +92,13 @@ void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& b
  * @return The object
 */
 void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+
+/**
+ * @brief Parses the metric to JSON
+ * @param metrics
+ * @return the metrics as JSON
+ */
+web::json::value asJson(const NetworkMetricsWrapper& metrics);
 
 }// namespace NES
 

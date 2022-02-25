@@ -72,7 +72,7 @@ class CpuMetricsWrapper {
      * @brief Returns the metrics as json
      * @return Json containing the metrics
     */
-    web::json::value toJson();
+    web::json::value toJson() const;
 
     bool operator==(const CpuMetricsWrapper& rhs) const;
     bool operator!=(const CpuMetricsWrapper& rhs) const;
@@ -98,6 +98,14 @@ void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, 
  * @return The object
 */
 void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+
+/**
+ * @brief Parses the metric to JSON
+ * @param metrics
+ * @return the metrics as JSON
+ */
+web::json::value asJson(const CpuMetricsWrapper& metrics);
+
 }// namespace NES
 
 #endif//NES_NES_CORE_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICSWRAPPER_HPP_

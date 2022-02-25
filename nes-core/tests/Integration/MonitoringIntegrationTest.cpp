@@ -15,6 +15,9 @@
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
+#include "../../tests/util/MetricValidator.hpp"
+#include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
+
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
@@ -114,20 +117,7 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
         NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
-
-        EXPECT_TRUE(json.has_field("disk"));
-        EXPECT_EQ(json["disk"].size(), 5U);
-
-        EXPECT_TRUE(json.has_field("cpu"));
-        auto numCores = json["cpu"]["NUM_CORES"].as_integer();
-        EXPECT_TRUE(numCores > 0);
-        EXPECT_EQ(json["cpu"].size(), static_cast<std::size_t>(numCores) + 2U);
-
-        EXPECT_TRUE(json.has_field("network"));
-        EXPECT_TRUE(json["network"].size() > 0);
-
-        EXPECT_TRUE(json.has_field("memory"));
-        EXPECT_EQ(json["memory"].size(), 13U);
+        EXPECT_TRUE(MetricValidator::isValid(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
     }
 
     bool retStopWrk1 = wrk1->stop(false);

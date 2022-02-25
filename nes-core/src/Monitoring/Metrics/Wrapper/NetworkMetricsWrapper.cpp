@@ -74,7 +74,7 @@ std::vector<std::string> NetworkMetricsWrapper::getInterfaceNames() {
     return keys;
 }
 
-web::json::value NetworkMetricsWrapper::toJson() {
+web::json::value NetworkMetricsWrapper::toJson() const {
     web::json::value metricsJson{};
 
     for (auto networkVal : networkMetrics) {
@@ -106,5 +106,7 @@ void writeToBuffer(const NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& b
 void readFromBuffer(NetworkMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     metrics.readFromBuffer(buf, tupleIndex);
 }
+
+web::json::value asJson(const NetworkMetricsWrapper& metrics) { return metrics.toJson(); }
 
 }// namespace NES

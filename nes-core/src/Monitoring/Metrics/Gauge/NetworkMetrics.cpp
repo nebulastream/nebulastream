@@ -128,4 +128,8 @@ void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
+web::json::value asJson(const NetworkMetrics& metrics) {
+    return metrics.toJson();
+}
+
 }// namespace NES

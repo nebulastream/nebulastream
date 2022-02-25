@@ -59,7 +59,11 @@ void CpuMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tuple
     cpuMetrics = std::move(cpuList);
 }
 
-web::json::value CpuMetricsWrapper::toJson() {
+uint64_t CpuMetricsWrapper::size() const { return cpuMetrics.size(); }
+
+CpuMetrics CpuMetricsWrapper::getTotal() const { return getValue(0); }
+
+web::json::value CpuMetricsWrapper::toJson() const {
     web::json::value metricsJson{};
 
     for (auto i = 0; i < (int) cpuMetrics.size(); i++) {
@@ -89,10 +93,6 @@ bool CpuMetricsWrapper::operator==(const CpuMetricsWrapper& rhs) const {
 
 bool CpuMetricsWrapper::operator!=(const CpuMetricsWrapper& rhs) const { return !(rhs == *this); }
 
-uint64_t CpuMetricsWrapper::size() const { return cpuMetrics.size(); }
-
-CpuMetrics CpuMetricsWrapper::getTotal() const { return getValue(0); }
-
 void writeToBuffer(const CpuMetricsWrapper& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
     metrics.writeToBuffer(buf, tupleIndex);
 }
@@ -101,6 +101,6 @@ void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint6
     wrapper.readFromBuffer(buf, tupleIndex);
 }
 
-SchemaPtr getSchema(const CpuMetricsWrapper&, const std::string& prefix) { return CpuMetrics::getSchema(prefix); }
+web::json::value asJson(const CpuMetricsWrapper& metrics) { return metrics.toJson(); }
 
 }// namespace NES

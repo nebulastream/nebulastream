@@ -26,6 +26,7 @@
 #include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/Logger.hpp>
+#include <cpprest/json.h>
 
 namespace NES {
 
@@ -182,6 +183,59 @@ class MetricValidator {
         if (!(diskMetrics.fBavail >= 0)) {
             NES_ERROR("MetricValidator: Wrong fBavail.");
             check = false;
+        }
+        return check;
+    }
+
+    static bool isValid(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+        bool check = true;
+
+        if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
+            NES_WARNING("MetricValidator: AbstractReader used for DiskMetrics. Returning true");
+            return true;
+        }
+
+        if (!json.has_field("disk")) {
+            NES_ERROR("MetricValidator: Missing field disk");
+            check = false;
+        } else {
+            if (!(json["disk"].size() == 5U)) {
+                NES_ERROR("MetricValidator: Values for disk missing");
+                check = false;
+            }
+        }
+
+        if (!json.has_field("wrapped_cpu")) {
+            NES_ERROR("MetricValidator: Missing field wrapped cpu");
+            check = false;
+        } else {
+            auto numCpuFields = json["wrapped_cpu"].size();
+            if (numCpuFields <= 1) {
+                NES_ERROR("MetricValidator: Values for wrapped_cpu missing");
+                check = false;
+            }
+        }
+
+        if (!json.has_field("wrapped_network")) {
+            NES_ERROR("MetricValidator: Missing field wrapped network");
+            check = false;
+        } else {
+            auto numFields = json["wrapped_network"].size();
+            if (numFields < 1) {
+                NES_ERROR("MetricValidator: Values for wrapped_network missing");
+                check = false;
+            }
+        }
+
+        if (!json.has_field("memory")) {
+            NES_ERROR("MetricValidator: Missing field memory");
+            check = false;
+        } else {
+            auto numFields = json["memory"].size();
+            if (numFields < 13) {
+                NES_ERROR("MetricValidator: Values for wrapped_network missing");
+                check = false;
+            }
         }
         return check;
     }
