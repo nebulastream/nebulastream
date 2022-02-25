@@ -68,9 +68,6 @@ queryCompiler:
 # standard location settings will result in an invalid location and create a node without a location
 locationCoordinates: 200.0, 200.0
 
-# set node mobile or non mobile
-isMobile: false
-
 # ~~~ Physical Stream Configurations ~~~
 
 # A Physical Stream may be associated with multiple Instances of a logicalStreamName, a physicalStreamName and a SourceType
