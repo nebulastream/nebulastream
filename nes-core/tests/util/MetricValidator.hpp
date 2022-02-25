@@ -15,6 +15,7 @@
 #ifndef NES_TESTS_UTIL_METRICVALIDATOR_HPP_
 #define NES_TESTS_UTIL_METRICVALIDATOR_HPP_
 
+#include <API/Schema.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
@@ -237,6 +238,57 @@ class MetricValidator {
                 check = false;
             }
         }
+        return check;
+    }
+
+    static bool isValidRegistrationMetrics(AbstractSystemResourcesReaderPtr reader, web::json::value json) {
+        bool check = true;
+
+        if (reader->getReaderType() == SystemResourcesReaderType::AbstractReader) {
+            NES_WARNING("MetricValidator: AbstractReader used for DiskMetrics.");
+            auto numFields = json.size();
+            if (numFields != RegistrationMetrics::getSchema("")->getSize()) {
+                NES_ERROR("MetricValidator: Entries for registration metrics missing");
+                return false;
+            }
+            return true;
+        }
+
+        if (!(json.has_field("CpuCoreNum"))) {
+            NES_ERROR("MetricValidator: Wrong CpuCoreNum.");
+            check = false;
+        }
+
+        if (!(json.has_field("CpuPeriodUS"))) {
+            NES_ERROR("MetricValidator: Wrong CpuPeriodUS.");
+            check = false;
+        }
+
+        if (!(json.has_field("CpuQuotaUS"))) {
+            NES_ERROR("MetricValidator: Wrong CpuQuotaUS.");
+            check = false;
+        }
+
+        if (!(json.has_field("HasBattery"))) {
+            NES_ERROR("MetricValidator: Wrong HasBattery.");
+            check = false;
+        }
+
+        if (!(json.has_field("IsMoving"))) {
+            NES_ERROR("MetricValidator: Wrong IsMoving.");
+            check = false;
+        }
+
+        if (!(json.has_field("TotalCPUJiffies"))) {
+            NES_ERROR("MetricValidator: Wrong TotalCPUJiffies.");
+            check = false;
+        }
+
+        if (!(json.has_field("TotalMemory"))) {
+            NES_ERROR("MetricValidator: Wrong TotalMemory.");
+            check = false;
+        }
+
         return check;
     }
 };

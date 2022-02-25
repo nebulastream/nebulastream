@@ -39,8 +39,15 @@ class MetricUtils {
      * @return json of metrics
      */
     static web::json::value toJson(std::vector<MetricPtr> metrics);
+
+    /**
+     * Converts a vector of metrics into json.
+     * @param metrics
+     * @return json of metrics
+     */
+    static web::json::value toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics);
 };
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
+#endif// NES_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_

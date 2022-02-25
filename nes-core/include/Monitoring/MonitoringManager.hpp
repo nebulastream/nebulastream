@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
 #define NES_INCLUDE_MONITORING_MONITORING_MANAGER_HPP_
 
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Monitoring/Metrics/MetricType.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -74,14 +74,14 @@ class MonitoringManager {
      * @param nodeId
      * @return the grouped metric values
     */
-    std::vector<MetricPtr> getMonitoringDataFromMetricStore(uint64_t nodeId);
+    std::unordered_map<MetricType, MetricPtr> getMonitoringDataFromMetricStore(uint64_t nodeId);
 
     /**
      * @brief Receive arbitrary monitoring data from a given node.
      * @param nodeId
      * @param GroupedMetricValuesPtr the grouped metric values
     */
-    void addMonitoringData(uint64_t nodeId, std::vector<MetricPtr> metrics);
+    void addMonitoringData(uint64_t nodeId, MetricPtr metrics);
 
     /**
      * @brief Remove node from monitoring store.
@@ -106,7 +106,7 @@ class MonitoringManager {
 
   private:
     bool registerMonitoringLogical(StreamCatalogPtr streamCatalog);
-
+    MetricStorePtr metricStore;
     std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
