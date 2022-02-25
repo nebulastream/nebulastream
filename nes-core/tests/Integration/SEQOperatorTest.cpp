@@ -595,7 +595,7 @@ TEST_F(SeqOperatorTest, DISABLED_testMultiSeqPattern) {
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
-    std::string query = queryjoin;
+    std::string query = query2;
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
