@@ -14,7 +14,9 @@
 #include <State/StateManager.hpp>
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <utility>
 #include <variant>
 #include <Sources/StaticDataSource.hpp>
@@ -50,56 +52,80 @@ LogicalBatchJoinDefinitionPtr BatchJoinOperatorHandler::getBatchJoinDefinition()
 void BatchJoinOperatorHandler::setBatchJoinHandler(AbstractBatchJoinHandlerPtr batchJoinHandler) { this->batchJoinHandler = std::move(batchJoinHandler); }
 
 SchemaPtr BatchJoinOperatorHandler::getResultSchema() { return resultSchema; }
+
 void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContextPtr context,
                                      Runtime::StateManagerPtr,
                                      uint32_t) {
-    // TODO the purpose of this code is to collect pointers to the two precessor pipelines that lie before Build&Probe pipelines
-    // TODO but it only works with simple query plans, with static data sources as precessors
+    // TODO we want a general model for pipeline predecessor access. this is a bit of a hack.
 
-    // TODO further, we want a general model for pipeline predecessor access.
-    // TODO most functions in this file are quite the hack.
+    NES_ASSERT(this->buildPipelineID != 0, "BatchJoinOperatorHandler: The Build Pipeline is not registered at start().");
+    NES_ASSERT(this->probePipelineID != 0, "BatchJoinOperatorHandler: The Probe Pipeline is not registered at start().");
 
     NES_DEBUG("BatchJoinOperatorHandler::start: Analyzing pipeline. # predecessors of pipeline: " << context->getPredecessors().size());
-    if (context->getPredecessors().size() == 1) {
-        NES_DEBUG("Build pipeline!");
+    if (context->getPipelineID() == this->buildPipelineID) {
+        NES_DEBUG("BatchJoinOperatorHandler: Identified build pipeline by ID.");
+        NES_ASSERT(context->getPredecessors().size() >= 1, "BatchJoinOperatorHandler: The Build Pipeline should have at least one predecessor.");
+
         if (foundAndStartedBuildSide) {
             NES_DEBUG("BatchJoinOperatorHandler::start() was called a second time on a build pipeline.");
+            return;
             // this currently happens all the time, because we register bjoHandler twice in one build pipeline
-            // todo change this to an error when we fixed this.
-        } else {
-            this->buildPredecessor = context->getPredecessors()[0];
-            if (const auto* source = std::get_if<std::weak_ptr<NES::DataSource>>(&(context->getPredecessors()[0]))) {
+            // todo jm change this to an error once we fixed the above.
+        }
+
+        // send start source event to all build side sources.
+        NES::Runtime::StartSourceEvent event;
+        this->buildPredecessors = context->getPredecessors();
+
+        // todo jm we can't run queries where the Build-side StaticDataSource is not on the same node as the Build Pipeline.
+        // because we have no access to the workerContext here, and can't call onEvent(event, workerContext).
+
+        for (auto buildPredecessor : this->buildPredecessors) {
+            if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&(buildPredecessor))) {
                 NES_DEBUG("BatchJoinOperatorHandler: Found Build Source in predecessors of Build pipeline. "
                           "Starting it now.");
-                NES::Runtime::StartSourceEvent event;
-                source->lock()->onEvent(event);
-                foundAndStartedBuildSide = true;
-            } else {
-                NES_ERROR("BatchJoinOperatorHandler: In this pattern the predecessor should be a DataSource!");
+                sourcePredecessor->lock()->onEvent(event);
+            } else if (const auto* pipelinePredecessor = std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&(buildPredecessor))) {
+                NES_DEBUG("BatchJoinOperatorHandler: Found Pipeline in predecessors of Build pipeline. "
+                          "Forwarding the start source event now.");
+                pipelinePredecessor->lock()->onEvent(event);
             }
         }
 
+        this->foundAndStartedBuildSide = true;
+        // we expect one EoS message & on call of reconfigure() per logical predecessor and per thread.
+        uint16_t threadsOnWorker = context->getQueryManager()->getNumThreads();
+        this->workerThreadsBuildSideTotal = this->buildPredecessors.size() * threadsOnWorker;
         return;
     }
-    if (context->getPredecessors().size() == 2) {
-        NES_DEBUG("Probe pipeline!");
-        if (foundProbeSide) {
-            NES_ERROR("BatchJoinOperatorHandler::start() was called a second time on a probe pipeline");
-        }
-        // one of the predecessors will be the Batch Join Build Pipeline
-        // we want to get a pointer to ther other predecessor
-        for (auto predecessor : context->getPredecessors()) {
-            if (const auto* source = std::get_if<std::weak_ptr<NES::DataSource>>(&predecessor)) {
-                NES_DEBUG("BatchJoinOperatorHandler: Found Probe Source in predecessors of Probe pipeline.");
-                this->probePredecessor = predecessor;
-                foundProbeSide = true;
+    if (context->getPipelineID() == this->probePipelineID) {
+        NES_DEBUG("BatchJoinOperatorHandler: Identified probe pipeline by ID.");
+        NES_ASSERT(context->getPredecessors().size() >= 2,
+                   "BatchJoinOperatorHandler: The Probe Pipeline should have the Build Pipeline and at least one other predecessor.");
+        NES_ASSERT(!foundProbeSide, "BatchJoinOperatorHandler::start() was called a second time on a probe pipeline");
 
-                return;
+        // one of the predecessors will be the Batch Join Build Pipeline
+        // we want to get a pointer to the other predecessor
+        bool encounteredBuildPipeline = false; // (within the probe pipelines predecessors)
+        for (auto probePredecessor : context->getPredecessors()) {
+            if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&probePredecessor)) {
+                NES_DEBUG("BatchJoinOperatorHandler: Found Probe Source in predecessors of Probe pipeline.");
+                this->probePredecessors.push_back(probePredecessor);
+            } else if (const auto* pipelinePredecessor = std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&probePredecessor)) {
+                if (pipelinePredecessor->lock()->getPipelineId() == this->buildPipelineID) {
+                    NES_ASSERT(!encounteredBuildPipeline,
+                               "BatchJoinOperatorHandler: More than one Predecessors of Probe Pipeline has ID of Build pipeline.");
+                    encounteredBuildPipeline = true;
+                    continue; // we do not add save the Build Pipeline as a build predecessor
+                }
+
+                NES_DEBUG("BatchJoinOperatorHandler: Found Pipeline in predecessors of Probe pipeline.");
+                this->probePredecessors.push_back(probePredecessor);
             }
-            // if not, this must be the build pipeline, we don't care about it here
         }
-        // one of the precessors should have fulfilled the if statement
-        NES_FATAL_ERROR("BatchJoinOperatorHandler: In this pattern one predecessor should be a DataSource!");
+        // one of the predecessors should have been the build side
+        NES_ASSERT(encounteredBuildPipeline,
+                   "BatchJoinOperatorHandler: One Predecessors of Probe Pipeline should have ID of Build pipeline.");
         return;
     }
 
@@ -108,29 +134,35 @@ void BatchJoinOperatorHandler::start(Runtime::Execution::PipelineExecutionContex
 }
 
 void BatchJoinOperatorHandler::stop(Runtime::Execution::PipelineExecutionContextPtr) {
-//    todo jm: anything necessary here? will the join handler and hash table destruct themselves
+    // nop
 }
+
 void BatchJoinOperatorHandler::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) {
     Runtime::Execution::OperatorHandler::reconfigure(task, context);
+    if (!startedProbeSide && ++workerThreadsBuildSideFinished == workerThreadsBuildSideTotal) {
+        startProbeSide(context);
+    }
+}
+
+void BatchJoinOperatorHandler::startProbeSide(Runtime::WorkerContext& context) {
+    NES_DEBUG("BatchJoinOperatorHandler: Starting Probe Predecessors.");
+    NES::Runtime::StartSourceEvent event;
+
+    for (auto probePredecessor : this->probePredecessors) {
+        if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&probePredecessor)) {
+            NES_DEBUG("BatchJoinOperatorHandler: Starting Probe Source predecessor.");
+            sourcePredecessor->lock()->onEvent(event, context);
+        } else if (const auto* pipelinePredecessor = std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&probePredecessor)) {
+            NES_DEBUG("BatchJoinOperatorHandler: Send Start Source event to Pipeline (a Probe Side Predecessor).");
+            pipelinePredecessor->lock()->onEvent(event, context);
+        }
+    }
+    startedProbeSide = true;
 }
 
 void BatchJoinOperatorHandler::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
     Runtime::Execution::OperatorHandler::postReconfigurationCallback(task);
     //  todo jm: I think the EoS message from the build source still gets passed upstream as the JoinBuildPipeline has the JoinProbePipeline as a parent
-
-    // on first call, this should send a message to probe child (right) to start sending data
-    // on second call (EoS from probe side) nothing has to be done
-    if (startedProbeSide) {
-        NES_ERROR("BatchJoinOperatorHandler::postReconfigurationCallback: Abort attempt to start Probe Source twice.");
-        return;
-    }
-
-    const auto* source = std::get_if<std::weak_ptr<NES::DataSource>>(&probePredecessor);
-    NES_DEBUG("BatchJoinOperatorHandler::postReconfigurationCallback:"
-              "The Build side finished processing. Starting the Probe Source now.");
-    NES::Runtime::StartSourceEvent event;
-    source->lock()->onEvent(event);
-    startedProbeSide = true;
 }
 
 }// namespace NES::Join

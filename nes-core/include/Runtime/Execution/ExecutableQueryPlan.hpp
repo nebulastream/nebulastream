@@ -194,7 +194,8 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
 
   protected:
     /**
-     * @brief
+     * @brief API method called upon receiving an event.
+     * @note Add handling for different event types here.
      * @param event
      */
     void onEvent(BaseEvent& event) override;

@@ -15,6 +15,7 @@
 #define NES_INCLUDE_RUNTIME_EVENTS_HPP_
 
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 namespace NES::Network {
 class ExchangeProtocol;

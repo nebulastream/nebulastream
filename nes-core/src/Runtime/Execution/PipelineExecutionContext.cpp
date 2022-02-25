@@ -22,12 +22,13 @@
 
 namespace NES::Runtime::Execution {
 
-PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId,
+    PipelineExecutionContext::PipelineExecutionContext(uint64_t pipelineId,
+                                                       QuerySubPlanId queryId,
                                                    const QueryManagerPtr& queryManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
                                                    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                                    std::vector<OperatorHandlerPtr> operatorHandlers)
-    : queryId(queryId), emitFunctionHandler(std::move(emitFunction)),
+    : pipelineId(pipelineId), queryId(queryId), emitFunctionHandler(std::move(emitFunction)),
       emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
       operatorHandlers(std::move(operatorHandlers)), queryManager(queryManager) {}
 

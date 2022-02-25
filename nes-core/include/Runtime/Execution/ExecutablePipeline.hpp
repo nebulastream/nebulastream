@@ -15,6 +15,7 @@
 #ifndef NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
 #define NES_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Runtime/Events.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
@@ -29,7 +30,11 @@ namespace NES::Runtime::Execution {
  * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
  * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
  */
-class ExecutablePipeline : public Reconfigurable {
+class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventListener {
+    // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
+    using inherited0 = Reconfigurable;
+    using inherited1 = Runtime::RuntimeEventListener;
+
     friend class QueryManager;
 
     enum class PipelineStatus : uint8_t { PipelineCreated, PipelineRunning, PipelineStopped, PipelineFailed };
@@ -154,6 +159,19 @@ class ExecutablePipeline : public Reconfigurable {
      * @return SuccessorPipelines
      */
     const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
+
+
+    /**
+     * @brief API method called upon receiving an event
+     * @param event
+     */
+    void onEvent(Runtime::BaseEvent& event) override;
+
+    /**
+     * @brief API method called upon receiving an event
+     * @param event
+     */
+    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef);
 
 
     PipelineExecutionContextPtr getContext() {

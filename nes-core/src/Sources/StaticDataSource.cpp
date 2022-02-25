@@ -136,8 +136,10 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
 bool StaticDataSource::start() {
     startCalled = true;
     if (lateStart) {
+        NES_DEBUG("StaticDataSource::start called while lateStart==true. Will start at StartSourceEvent. operatorId: " << this->operatorId);
         return true; // we didn't start but still signal a success
     }
+    NES_DEBUG("StaticDataSource::start called; lateStart==false. Starting now. operatorId: " << this->operatorId);
     return startStaticDataSourceManually();
 }
 
@@ -146,8 +148,9 @@ bool StaticDataSource::startStaticDataSourceManually() {
 }
 
 void StaticDataSource::onEvent(Runtime::BaseEvent & event) {
+    NES_DEBUG("StaticDataSource::onEvent(event) called. operatorId: " << this->operatorId);
     if (event.getEventType() == Runtime::EventType::startSourceEvent) {
-        NES_DEBUG("StaticDataSource received startSourceEvent. Starting now.");
+        NES_DEBUG("StaticDataSource: received startSourceEvent. operatorId: " << this->operatorId);
         if (startCalled) {
             NES_DEBUG("StaticDataSource::onEvent: start() method was previously called but delayed. Starting source now.");
             startStaticDataSourceManually();
