@@ -26,6 +26,7 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
+#include <Version/version.hpp>
 #include <iostream>
 #include <map>
 #include <sys/stat.h>
@@ -34,51 +35,61 @@
 using namespace NES;
 using namespace std;
 
-const std::string logo = "/********************************************************\n"
-                         " *     _   _   ______    _____\n"
-                         " *    | \\ | | |  ____|  / ____|\n"
-                         " *    |  \\| | | |__    | (___\n"
-                         " *    | . ` | |  __|    \\___ \\     Coordinator\n"
-                         " *    | |\\  | | |____   ____) |\n"
-                         " *    |_| \\_| |______| |_____/\n"
-                         " *\n"
-                         " ********************************************************/";
+const string logo = "\n"
+                    "███╗░░██╗███████╗██████╗░██╗░░░██╗██╗░░░░░░█████╗░░██████╗████████╗██████╗░███████╗░█████╗░███╗░░░███╗\n"
+                    "████╗░██║██╔════╝██╔══██╗██║░░░██║██║░░░░░██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██╔════╝██╔══██╗████╗░████║\n"
+                    "██╔██╗██║█████╗░░██████╦╝██║░░░██║██║░░░░░███████║╚█████╗░░░░██║░░░██████╔╝█████╗░░███████║██╔████╔██║\n"
+                    "██║╚████║██╔══╝░░██╔══██╗██║░░░██║██║░░░░░██╔══██║░╚═══██╗░░░██║░░░██╔══██╗██╔══╝░░██╔══██║██║╚██╔╝██║\n"
+                    "██║░╚███║███████╗██████╦╝╚██████╔╝███████╗██║░░██║██████╔╝░░░██║░░░██║░░██║███████╗██║░░██║██║░╚═╝░██║\n"
+                    "╚═╝░░╚══╝╚══════╝╚═════╝░░╚═════╝░╚══════╝╚═╝░░╚═╝╚═════╝░░░░╚═╝░░░╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝╚═╝░░░░░╚═╝";
+
+const string coordinator = "\n"
+                           "▒█▀▀█ █▀▀█ █▀▀█ █▀▀█ █▀▀▄ ░▀░ █▀▀▄ █▀▀█ ▀▀█▀▀ █▀▀█ █▀▀█ \n"
+                           "▒█░░░ █░░█ █░░█ █▄▄▀ █░░█ ▀█▀ █░░█ █▄▄█ ░░█░░ █░░█ █▄▄▀ \n"
+                           "▒█▄▄█ ▀▀▀▀ ▀▀▀▀ ▀░▀▀ ▀▀▀░ ▀▀▀ ▀░░▀ ▀░░▀ ░░▀░░ ▀▀▀▀ ▀░▀▀";
 
 int main(int argc, const char* argv[]) {
-    std::cout << logo << std::endl;
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
-    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
-
-    map<string, string> commandLineParams;
-    for (int i = 1; i < argc; ++i) {
-        commandLineParams.insert(
-            std::make_pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                 string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
-    auto configPath = commandLineParams.find("--configPath");
-    if (configPath != commandLineParams.end()) {
-        coordinatorConfig->overwriteConfigWithYAMLFileInput(configPath->second);
-    }
-    if (argc > 1) {
-        coordinatorConfig->overwriteConfigWithCommandLineInput(commandLineParams);
-    }
-    NES::setLogLevel(coordinatorConfig->logLevel.getValue());
-
-    NES_INFO("start coordinator with " << coordinatorConfig->toString());
-
-    NES_INFO("creating coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-
     try {
-        crd->startCoordinator(/**blocking**/ true);//blocking call
+        std::cout << logo << std::endl;
+        std::cout << coordinator << " v" << NES_VERSION << std::endl;
+        NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
+
+        map<string, string> commandLineParams;
+        for (int i = 1; i < argc; ++i) {
+            commandLineParams.insert(std::make_pair<string, string>(
+                string(argv[i]).substr(0, string(argv[i]).find('=')),
+                string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+        }
+
+        auto configPath = commandLineParams.find("--configPath");
+        if (configPath != commandLineParams.end()) {
+            coordinatorConfig->overwriteConfigWithYAMLFileInput(configPath->second);
+        }
+        if (argc > 1) {
+            coordinatorConfig->overwriteConfigWithCommandLineInput(commandLineParams);
+        }
+        NES::setLogLevel(coordinatorConfig->logLevel.getValue());
+
+        NES_INFO("start coordinator with " << coordinatorConfig->toString());
+
+        NES_INFO("creating coordinator");
+        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+
+        NES_INFO("Starting Coordinator");
+        crd->startCoordinator(/**blocking**/ true);//This is a blocking call
+        NES_INFO("Stopping Coordinator");
         crd->stopCoordinator(true);
     } catch (std::exception& exp) {
-        NES_ERROR("Problem with coordinator:  << " << exp.what());
+        NES_ERROR("Problem with coordinator: " << exp.what());
         return 1;
     } catch (...) {
         NES_ERROR("Unknown exception was thrown");
-        throw;
+        try {
+            std::rethrow_exception(std::current_exception());
+        } catch (std::exception& ex) {
+            NES_ERROR(ex.what());
+        }
+        return 1;
     }
-    NES_INFO("coordinator started");
 }

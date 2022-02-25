@@ -100,7 +100,7 @@ void setLogLevel(DebugLevel level) {
 }
 
 void setupLogging(const std::string& logFileName, DebugLevel level) {
-    std::cout << "Logger: SETUP_LOGGING" << std::endl;
+    std::cout << "Logger: Setting up logger" << std::endl;
     // create PatternLayout
     log4cxx::LayoutPtr layoutPtr(
         new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n"));
