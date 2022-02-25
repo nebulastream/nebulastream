@@ -315,9 +315,6 @@ void DataSource::runningRoutineWithFrequency() {
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
-    auto ts = std::chrono::system_clock::now();
-    std::chrono::milliseconds lastTimeStampMillis = std::chrono::duration_cast<std::chrono::milliseconds>(ts.time_since_epoch());
-
     NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType()
                             << " frequency=" << gatheringInterval.count());
     if (numBuffersToProcess == 0) {
@@ -329,46 +326,8 @@ void DataSource::runningRoutineWithFrequency() {
     open();
     uint64_t cnt = 0;
     while (running) {
-        bool recNow = false;
-        auto tsNow = std::chrono::steady_clock::now();
-        std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
-
-        //this check checks if the gathering interval is zero or a ZMQ_Source, where we do not create a watermark-only buffer
-        NES_DEBUG("DataSource::runningRoutine will now check src type with gatheringInterval=" << gatheringInterval.count());
-        if (gatheringInterval.count() == 0 || getType() == SourceType::ZMQ_SOURCE) {// 0 means never sleep
-            NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type="
-                      << getType() << " and gatheringInterval=" << gatheringInterval.count()
-                      << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
-            if (gatheringInterval.count() == 0 || lastTimeStampMillis != nowInMillis) {
-                NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer gatheringInterval="
-                          << gatheringInterval.count() << "ms, tsNow=" << lastTimeStampMillis.count()
-                          << "ms, now=" << nowInMillis.count() << "ms");
-                recNow = true;
-                lastTimeStampMillis = nowInMillis;
-            } else {
-                NES_DEBUG("lastTimeStampMillis=" << lastTimeStampMillis.count() << "nowInMillis=" << nowInMillis.count());
-            }
-        } else {
-            NES_DEBUG("DataSource::runningRoutine check for interval");
-            // check each interval
-            if (nowInMillis != lastTimeStampMillis) {//we are in another interval
-                if ((nowInMillis - lastTimeStampMillis) <= gatheringInterval
-                    || ((nowInMillis - lastTimeStampMillis) % gatheringInterval).count() == 0) {//produce a regular buffer
-                    NES_DEBUG("DataSource::runningRoutine sending regular buffer");
-                    recNow = true;
-                }
-                lastTimeStampMillis = nowInMillis;
-            }
-        }
-
-        //repeat test
-        if (!recNow) {
-            std::this_thread::sleep_for(gatheringInterval);
-            continue;
-        }
-
         //check if already produced enough buffer
-        if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
+        if (numBuffersToProcess == 0 || cnt < numBuffersToProcess) {
             auto optBuf = receiveData();// note that receiveData might block
             if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
                 break;
@@ -398,6 +357,10 @@ void DataSource::runningRoutineWithFrequency() {
             wasGracefullyStopped = true;
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
+
+        if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
+            std::this_thread::sleep_for(gatheringInterval);
+        }
     }
     close();
     // inject reconfiguration task containing end of stream
@@ -412,9 +375,6 @@ void DataSource::runningRoutineAdaptive() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
-
-    auto ts = std::chrono::system_clock::now();
-    std::chrono::milliseconds lastTimeStampMillis = std::chrono::duration_cast<std::chrono::milliseconds>(ts.time_since_epoch());
 
     NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType()
                             << " frequency=" << gatheringInterval.count());
@@ -431,44 +391,6 @@ void DataSource::runningRoutineAdaptive() {
     open();
     uint64_t cnt = 0;
     while (running) {
-        bool recNow = false;
-        auto tsNow = std::chrono::steady_clock::now();
-        std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
-
-        //this checks if the gathering interval is zero or a ZMQ_Source, where we do not create a watermark-only buffer
-        NES_DEBUG("DataSource::runningRoutine will now check src type with gatheringInterval=" << gatheringInterval.count());
-        if (gatheringInterval.count() == 0) { // 0 means never sleep
-            NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type="
-                      << getType() << " and gatheringInterval=" << gatheringInterval.count()
-                      << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
-            if (gatheringInterval.count() == 0 || lastTimeStampMillis != nowInMillis) {
-                NES_DEBUG("DataSource::runningRoutine gathering interval reached so produce a buffer gatheringInterval="
-                          << gatheringInterval.count() << "ms, tsNow=" << lastTimeStampMillis.count()
-                          << "ms, now=" << nowInMillis.count() << "ms");
-                recNow = true;
-                lastTimeStampMillis = nowInMillis;
-            } else {
-                NES_DEBUG("lastTimeStampMillis=" << lastTimeStampMillis.count() << "nowInMillis=" << nowInMillis.count());
-            }
-        } else {
-            NES_DEBUG("DataSource::runningRoutine check for interval");
-            // check each interval
-            if (nowInMillis != lastTimeStampMillis) {//we are in another interval
-                if ((nowInMillis - lastTimeStampMillis) <= gatheringInterval
-                    || ((nowInMillis - lastTimeStampMillis) % gatheringInterval).count() == 0) {//produce a regular buffer
-                    NES_DEBUG("DataSource::runningRoutine sending regular buffer");
-                    recNow = true;
-                }
-                lastTimeStampMillis = nowInMillis;
-            }
-        }
-
-        //repeat test
-        if (!recNow) {
-            std::this_thread::sleep_for(gatheringInterval);
-            continue;
-        }
-
         //check if already produced enough buffer
         if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
             auto optBuf = receiveData();// note that receiveData might block
@@ -509,6 +431,11 @@ void DataSource::runningRoutineAdaptive() {
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
     }
+
+    if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
+        std::this_thread::sleep_for(gatheringInterval);
+    }
+
     close();
     // inject reconfiguration task containing end of stream
     NES_DEBUG("DataSource " << operatorId << ": Data Source add end of stream. Gracefully= " << wasGracefullyStopped);
