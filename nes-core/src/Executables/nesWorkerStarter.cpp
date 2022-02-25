@@ -22,18 +22,13 @@
  *
  ********************************************************/
 
-#include <Exceptions/SignalHandling.hpp>
+#include "Version/version.hpp"
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <CoordinatorRPCService.pb.h>
+#include <Exceptions/SignalHandling.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <thread>
-#include <unistd.h>
 
 using namespace NES;
 using namespace Configurations;
@@ -41,64 +36,72 @@ using std::cout;
 using std::endl;
 using std::string;
 
-const string logo = "/********************************************************\n"
-                    " *     _   _   ______    _____\n"
-                    " *    | \\ | | |  ____|  / ____|\n"
-                    " *    |  \\| | | |__    | (___\n"
-                    " *    | . ` | |  __|    \\___ \\     Worker\n"
-                    " *    | |\\  | | |____   ____) |\n"
-                    " *    |_| \\_| |______| |_____/\n"
-                    " *\n"
-                    " ********************************************************/";
+const string logo = "\n"
+                    "███╗░░██╗███████╗██████╗░██╗░░░██╗██╗░░░░░░█████╗░░██████╗████████╗██████╗░███████╗░█████╗░███╗░░░███╗\n"
+                    "████╗░██║██╔════╝██╔══██╗██║░░░██║██║░░░░░██╔══██╗██╔════╝╚══██╔══╝██╔══██╗██╔════╝██╔══██╗████╗░████║\n"
+                    "██╔██╗██║█████╗░░██████╦╝██║░░░██║██║░░░░░███████║╚█████╗░░░░██║░░░██████╔╝█████╗░░███████║██╔████╔██║\n"
+                    "██║╚████║██╔══╝░░██╔══██╗██║░░░██║██║░░░░░██╔══██║░╚═══██╗░░░██║░░░██╔══██╗██╔══╝░░██╔══██║██║╚██╔╝██║\n"
+                    "██║░╚███║███████╗██████╦╝╚██████╔╝███████╗██║░░██║██████╔╝░░░██║░░░██║░░██║███████╗██║░░██║██║░╚═╝░██║\n"
+                    "╚═╝░░╚══╝╚══════╝╚═════╝░░╚═════╝░╚══════╝╚═╝░░╚═╝╚═════╝░░░░╚═╝░░░╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝╚═╝░░░░░╚═╝";
 
+const string worker = "\n"
+                      "▒█░░▒█ █▀▀█ █▀▀█ █░█ █▀▀ █▀▀█ \n"
+                      "▒█▒█▒█ █░░█ █▄▄▀ █▀▄ █▀▀ █▄▄▀ \n"
+                      "▒█▄▀▄█ ▀▀▀▀ ▀░▀▀ ▀░▀ ▀▀▀ ▀░▀▀";
 
 int main(int argc, char** argv) {
-    std::cout << logo << std::endl;
-
-    NES::setupLogging("nesWorkerStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
-
-    WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
-
-    std::map<string, string> commandLineParams;
-
-    for (int i = 1; i < argc; ++i) {
-        commandLineParams.insert(
-            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
-                                      string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
-    }
-
-    auto workerConfigPath = commandLineParams.find("--configPath");
-
-    //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
-    if (workerConfigPath != commandLineParams.end()) {
-        workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
-    }
-
-    //if command line params are provided that do not contain a path to a yaml file for worker config,
-    //command line param physicalSources are used to overwrite default physicalSources
-    if (argc >= 1 && !commandLineParams.contains("--configPath")) {
-        workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
-    }
-
-    NES::setLogLevel(workerConfiguration->logLevel.getValue());
-
-    NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
-    NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
-    Exceptions::installGlobalErrorListener(nesWorker);
-
-    if (nesWorker->getWorkerConfiguration()->parentId.getValue() != 0) {
-        NES_INFO("start with dedicated parent=" << nesWorker->getWorkerConfiguration()->parentId.getValue());
-        nesWorker->setWithParent(nesWorker->getWorkerConfiguration()->parentId.getValue());
-    }
     try {
-        nesWorker->start(/**blocking*/ true, /**withConnect*/ true);//blocking call
+        std::cout << logo << std::endl;
+        std::cout << worker << "v" << NES_VERSION << std::endl;
+        NES::setupLogging("nesWorkerStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+        WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
+
+        std::map<string, string> commandLineParams;
+
+        for (int i = 1; i < argc; ++i) {
+            commandLineParams.insert(
+                std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
+                                          string(argv[i]).substr(string(argv[i]).find('=') + 1, string(argv[i]).length() - 1)));
+        }
+
+        auto workerConfigPath = commandLineParams.find("--configPath");
+
+        //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
+        if (workerConfigPath != commandLineParams.end()) {
+            workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
+        }
+
+        //if command line params are provided that do not contain a path to a yaml file for worker config,
+        //command line param physicalSources are used to overwrite default physicalSources
+        if (argc >= 1 && !commandLineParams.contains("--configPath")) {
+            workerConfiguration->overwriteConfigWithCommandLineInput(commandLineParams);
+        }
+
+        NES::setLogLevel(workerConfiguration->logLevel.getValue());
+
+        NES_INFO("NesWorkerStarter: Start with " << workerConfiguration->toString());
+        NesWorkerPtr nesWorker = std::make_shared<NesWorker>(std::move(workerConfiguration));
+        Exceptions::installGlobalErrorListener(nesWorker);
+
+        if (nesWorker->getWorkerConfiguration()->parentId.getValue() != 0) {
+            NES_INFO("start with dedicated parent=" << nesWorker->getWorkerConfiguration()->parentId.getValue());
+            nesWorker->setWithParent(nesWorker->getWorkerConfiguration()->parentId.getValue());
+        }
+
+        NES_INFO("Starting worker");
+        nesWorker->start(/**blocking*/ true, /**withConnect*/ true);//This is a blocking call
+        NES_INFO("Stopping worker");
         nesWorker->stop(/**force*/ true);
     } catch (std::exception& exp) {
-        NES_ERROR("Problem with worker:  << " << exp.what());
+        NES_ERROR("Problem with worker: " << exp.what());
         return 1;
     } catch (...) {
         NES_ERROR("Unknown exception was thrown");
-        throw;
+        try {
+            std::rethrow_exception(std::current_exception());
+        } catch (std::exception& ex) {
+            NES_ERROR(ex.what());
+        }
+        return 1;
     }
-    NES_INFO("worker started");
 }

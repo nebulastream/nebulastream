@@ -125,7 +125,6 @@ template<class T>
 requires std::is_base_of_v<BaseOption, T>
 std::string SequenceOption<T>::toString() {
     std::stringstream os;
-    os << "Config Object: \n";
     os << "Name: " << name << "\n";
     os << "Description: " << description << "\n";
     return os.str();

@@ -81,7 +81,6 @@ class ScalarOption : public TypedBaseOption<T> {
 template<class T>
 std::string ScalarOption<T>::toString() {
     std::stringstream os;
-    os << "Config Object: \n";
     os << "Name: " << this->name << "\n";
     os << "Description: " << this->description << "\n";
     os << "Value: " << this->value << "\n";
@@ -91,7 +90,6 @@ std::string ScalarOption<T>::toString() {
 
 template<class X>
 std::ostream& operator<<(std::ostream& os, const ScalarOption<X>& option) {
-    os << "Config Object: \n";
     os << "Name: " << option.name << "\n";
     os << "Description: " << option.description << "\n";
     os << "Value: " << option.value << "\n";

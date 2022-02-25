@@ -44,7 +44,6 @@ class ConfigurationOption {
      */
     std::string toString() {
         std::stringstream ss;
-        ss << "Config Object: \n";
         ss << "Name: " << name << "\n";
         ss << "Description: " << description << "\n";
         ss << "Value: " << value << "\n";

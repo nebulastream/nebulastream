@@ -47,9 +47,9 @@ void BaseConfiguration::parseFromString(std::string identifier, std::map<std::st
         throw ConfigurationException("Identifier " + identifier + " is not known.");
     }
     auto option = optionMap[identifier];
-    if(dynamic_cast<BaseConfiguration*>(option)){
+    if (dynamic_cast<BaseConfiguration*>(option)) {
         dynamic_cast<BaseConfiguration*>(optionMap[identifier])->overwriteConfigWithCommandLineInput(inputParams);
-    }else{
+    } else {
         optionMap[identifier]->parseFromString(identifier, inputParams);
     }
 }
@@ -92,7 +92,7 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::
 std::string BaseConfiguration::toString() {
     std::stringstream ss;
     for (auto option : getOptions()) {
-        ss << option << "\n";
+        ss << option->toString() << "\n";
     }
     return ss.str();
 }
