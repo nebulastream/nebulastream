@@ -12,17 +12,7 @@
     limitations under the License.
 */
 
-/********************************************************
- *     _   _   ______    _____
- *    | \ | | |  ____|  / ____|
- *    |  \| | | |__    | (___
- *    | . ` | |  __|    \___ \     Worker
- *    | |\  | | |____   ____) |
- *    |_| \_| |______| |_____/
- *
- ********************************************************/
-
-#include "Version/version.hpp"
+#include <Version/version.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>

@@ -12,24 +12,13 @@
     limitations under the License.
 */
 
-/********************************************************
- *     _   _   ______    _____
- *    | \ | | |  ____|  / ____|
- *    |  \| | | |__    | (___
- *    | . ` | |  __|    \___ \     Coordinator
- *    | |\  | | |____   ____) |
- *    |_| \_| |______| |_____/
- *
- ********************************************************/
 #include <Components/NesCoordinator.hpp>
-#include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
 #include <Version/version.hpp>
 #include <iostream>
 #include <map>
-#include <sys/stat.h>
 #include <vector>
 
 using namespace NES;
