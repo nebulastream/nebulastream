@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
 #include <Monitoring/MonitoringCatalog.hpp>
@@ -23,7 +23,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 
-#include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/MetricCollectors/MemoryCollector.hpp>
@@ -31,15 +30,17 @@
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
+#include <Monitoring/Storage/MetricStore.hpp>
 
 namespace NES {
 
 using namespace Configurations;
 using namespace Runtime;
 
-class MonitoringSerializationTest : public testing::Test {
+class MonitoringSerializationTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
@@ -189,6 +190,26 @@ TEST_F(MonitoringSerializationTest, testJsonRuntimeConcepts) {
         metricsJson[toString(metric.getMetricType())] = asJson(metric);
     }
     NES_DEBUG("MonitoringSerializationTest: Json Concepts: " << metricsJson);
+}
+
+TEST_F(MonitoringSerializationTest, testMetricStore) {
+    uint64_t nodeId = 0;
+    auto metricStore = std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST);
+    auto networkCollector = NetworkCollector();
+
+    uint64_t myInt = 12345;
+    std::string myString = "testString";
+    MetricPtr networkMetrics = std::make_shared<Metric>(networkCollector.readMetric());
+
+    metricStore->addMetrics(nodeId, std::make_shared<Metric>(myInt));
+    metricStore->addMetrics(nodeId, std::make_shared<Metric>(myString));
+    metricStore->addMetrics(nodeId, networkMetrics);
+
+    auto storedMetrics = metricStore->getNewestMetrics(nodeId);
+    ASSERT_EQ(storedMetrics.size(), 2);
+
+    metricStore->removeMetrics(nodeId);
+    ASSERT_FALSE(metricStore->hasMetrics(nodeId));
 }
 
 }// namespace NES

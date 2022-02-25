@@ -46,4 +46,13 @@ web::json::value MetricUtils::toJson(std::vector<MetricPtr> metrics) {
     return metricsJson;
 }
 
+web::json::value MetricUtils::toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics) {
+    web::json::value metricsJson{};
+    for (const auto& metric : metrics) {
+        web::json::value jMetric = asJson(metric.second);
+        metricsJson[toString(metric.second->getMetricType())] = jMetric;
+    }
+    return metricsJson;
+}
+
 }// namespace NES

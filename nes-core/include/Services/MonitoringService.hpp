@@ -71,6 +71,12 @@ class MonitoringService {
      */
     [[nodiscard]] const MonitoringManagerPtr getMonitoringManager() const;
 
+    /**
+     * @brief Returns bool if monitoring is enabled or not.
+     * @return Monitoring flag
+     */
+    bool isEnableMonitoring() const;
+
   private:
     MonitoringManagerPtr monitoringManager;
     TopologyPtr topology;

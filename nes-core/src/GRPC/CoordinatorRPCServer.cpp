@@ -13,7 +13,6 @@
 */
 
 #include <GRPC/CoordinatorRPCServer.hpp>
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>

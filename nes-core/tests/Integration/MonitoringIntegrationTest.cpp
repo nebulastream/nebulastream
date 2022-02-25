@@ -20,11 +20,6 @@
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
-#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
 
 #include <Runtime/BufferManager.hpp>
@@ -61,7 +56,7 @@ class MonitoringIntegrationTest : public Testing::NESBaseTest {
     }
 };
 
-TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
+TEST_F(MonitoringIntegrationTest, requestRuntimeMetricsEnabled) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
@@ -105,6 +100,7 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     auto plan = MonitoringPlan::create(metrics);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
+    EXPECT_TRUE(crd->getMonitoringService()->isEnableMonitoring());
     auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
     NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
@@ -130,7 +126,7 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEnabled) {
+TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
@@ -174,6 +170,7 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
     auto plan = MonitoringPlan::create(metrics);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
+    EXPECT_TRUE(crd->getMonitoringService()->isEnableMonitoring());
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
     NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
@@ -185,22 +182,9 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
-        EXPECT_TRUE(json.has_field("staticNesMetrics"));
-        json = json["staticNesMetrics"];
-
-        EXPECT_TRUE(json.has_field("TotalMemory"));
-        EXPECT_TRUE(json["TotalMemory"].as_double() > 1);
-
-        EXPECT_TRUE(json.has_field("CpuCoreNum"));
-        EXPECT_TRUE(json["CpuCoreNum"].as_double() >= 1);
-
-        EXPECT_TRUE(json.has_field("TotalCPUJiffies"));
-        EXPECT_TRUE(json["TotalCPUJiffies"].as_double() >= 1);
-
-        EXPECT_TRUE(json.has_field("CpuPeriodUS"));
-        EXPECT_TRUE(json.has_field("CpuQuotaUS"));
-        EXPECT_TRUE(json.has_field("IsMoving"));
-        EXPECT_TRUE(json.has_field("HasBattery"));
+        EXPECT_TRUE(json.has_field("registration"));
+        json = json["registration"];
+        EXPECT_TRUE(MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
     }
 
     bool retStopWrk1 = wrk1->stop(false);
@@ -213,8 +197,7 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonEna
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDisabled) {
-    // TODO Refactor this once #2239 is solved.
+TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf1 = WorkerConfiguration::create();
     WorkerConfigurationPtr wrkConf2 = WorkerConfiguration::create();
@@ -259,34 +242,23 @@ TEST_F(MonitoringIntegrationTest, requestLocalMonitoringDataFromServiceAsJsonDis
     auto plan = MonitoringPlan::create(metrics);
 
     auto const nodeNumber = static_cast<std::size_t>(3U);
+
+    EXPECT_FALSE(crd->getMonitoringService()->isEnableMonitoring());
+
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
     NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
     EXPECT_EQ(jsons.size(), nodeNumber);
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
-    auto emptyStaticNesMetrics = RegistrationMetrics{};
 
     for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
-        EXPECT_TRUE(json.has_field("staticNesMetrics"));
-        json = json["staticNesMetrics"];
-
-        EXPECT_TRUE(json.has_field("TotalMemory"));
-        EXPECT_TRUE(json["TotalMemory"].as_double() == emptyStaticNesMetrics.totalMemoryBytes);
-
-        EXPECT_TRUE(json.has_field("CpuCoreNum"));
-        EXPECT_TRUE(json["CpuCoreNum"].as_double() == emptyStaticNesMetrics.cpuCoreNum);
-
-        EXPECT_TRUE(json.has_field("TotalCPUJiffies"));
-        EXPECT_TRUE(json["TotalCPUJiffies"].as_double() == emptyStaticNesMetrics.totalCPUJiffies);
-
-        EXPECT_TRUE(json.has_field("CpuPeriodUS"));
-        EXPECT_TRUE(json.has_field("CpuQuotaUS"));
-        EXPECT_TRUE(json.has_field("IsMoving"));
-        EXPECT_TRUE(json.has_field("HasBattery"));
+        EXPECT_TRUE(json.has_field("registration"));
+        json = json["registration"];
+        EXPECT_TRUE(MetricValidator::isValidRegistrationMetrics(SystemResourcesReaderFactory::getSystemResourcesReader(), json));
     }
 
     bool retStopWrk1 = wrk1->stop(false);

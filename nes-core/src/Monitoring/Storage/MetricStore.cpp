@@ -24,17 +24,16 @@ MetricStore::MetricStore(MetricStoreStrategy storeType) : storeType(storeType) {
     NES_DEBUG("MetricStore: Init with store type " << storeType);
 }
 
-void MetricStore::addMetrics(uint64_t nodeId, const std::vector<MetricPtr>& metrics) {
-    std::unordered_map<MetricType, MetricPtr> metricEntry;
-    for (const auto& metric : metrics) {
-        metricEntry.insert({metric->getMetricType(), metric});
-    }
-
+void MetricStore::addMetrics(uint64_t nodeId, MetricPtr metric) {
+    NES_DEBUG("MetricStore: Adding metric of type " << toString(metric->getMetricType()));
     if (storeType == MetricStoreStrategy::NEWEST) {
         if (storedMetrics.contains(nodeId)) {
-            storedMetrics[nodeId].swap(metricEntry);
+            std::unordered_map<MetricType, MetricPtr>& entry = storedMetrics[nodeId];
+            entry[metric->getMetricType()] = metric;
         } else {
-            storedMetrics.emplace(nodeId, std::move(metricEntry));
+            std::unordered_map<MetricType, MetricPtr> metricEntry;
+            metricEntry.insert({metric->getMetricType(), metric});
+            storedMetrics.emplace(nodeId, metricEntry);
         }
     } else {
         NES_THROW_RUNTIME_ERROR("MetricStore: StoreType " << storeType << " not found.");
@@ -51,14 +50,6 @@ bool MetricStore::removeMetrics(uint64_t nodeId) {
 
 bool MetricStore::hasMetrics(uint64_t nodeId) { return storedMetrics.contains(nodeId); }
 
-std::vector<MetricPtr> MetricStore::getNewestMetrics(uint64_t nodeId) {
-    using MetricMap = std::unordered_map<MetricType, MetricPtr>;
-    auto metricMap = storedMetrics.at(nodeId);
-    std::vector<MetricPtr> output;
-    transform(metricMap.begin(), metricMap.end(), back_inserter(output), [](const MetricMap::value_type& val) {
-        return val.second;
-    });
-    return output;
-}
+std::unordered_map<MetricType, MetricPtr> MetricStore::getNewestMetrics(uint64_t nodeId) { return storedMetrics[nodeId]; }
 
 }// namespace NES
