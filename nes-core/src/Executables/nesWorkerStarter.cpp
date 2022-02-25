@@ -57,7 +57,6 @@ int main(int argc, char** argv) {
         WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create();
 
         std::map<string, string> commandLineParams;
-
         for (int i = 1; i < argc; ++i) {
             commandLineParams.insert(
                 std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find('=')),
@@ -65,7 +64,6 @@ int main(int argc, char** argv) {
         }
 
         auto workerConfigPath = commandLineParams.find("--configPath");
-
         //if workerConfigPath to a yaml file is provided, system will use physicalSources in yaml file
         if (workerConfigPath != commandLineParams.end()) {
             workerConfiguration->overwriteConfigWithYAMLFileInput(workerConfigPath->second);

@@ -55,12 +55,16 @@ void BaseConfiguration::parseFromString(std::string identifier, std::map<std::st
 }
 
 void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
-    Yaml::Node config;
-    Yaml::Parse(config, filePath.c_str());
-    if (config.IsNone()) {
-        return;
+    try {
+        Yaml::Node config;
+        Yaml::Parse(config, filePath.c_str());
+        if (config.IsNone()) {
+            return;
+        }
+        parseFromYAMLNode(config);
+    } catch (std::exception& ex) {
+        throw ConfigurationException("Exception while loading configurations from " + filePath + ". Exception: " + ex.what());
     }
-    parseFromYAMLNode(config);
 }
 
 void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
