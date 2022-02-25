@@ -102,14 +102,14 @@ TEST_F(MonitoringIntegrationTest, requestRuntimeMetricsEnabled) {
     auto const nodeNumber = static_cast<std::size_t>(3U);
     EXPECT_TRUE(crd->getMonitoringService()->isEnableMonitoring());
     auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
-    NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
+    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
     EXPECT_EQ(jsons.size(), nodeNumber);
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
 
     for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
-        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
+        NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
         NES_DEBUG("MonitoringIntegrationTest: JSON for node " << i << ":\n" << json);
@@ -172,14 +172,14 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsEnabled) {
     auto const nodeNumber = static_cast<std::size_t>(3U);
     EXPECT_TRUE(crd->getMonitoringService()->isEnableMonitoring());
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
-    NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
+    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
     EXPECT_EQ(jsons.size(), nodeNumber);
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
 
     for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
-        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
+        NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
         EXPECT_TRUE(json.has_field("registration"));
@@ -246,14 +246,14 @@ TEST_F(MonitoringIntegrationTest, requestStoredRegistrationMetricsDisabled) {
     EXPECT_FALSE(crd->getMonitoringService()->isEnableMonitoring());
 
     auto jsons = crd->getMonitoringService()->requestNewestMonitoringDataFromMetricStoreAsJson();
-    NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
+    NES_INFO("ResourcesReaderTest: Jsons received: \n" + jsons.serialize());
 
     EXPECT_EQ(jsons.size(), nodeNumber);
     auto rootId = crd->getTopology()->getRoot()->getId();
     NES_INFO("MonitoringIntegrationTest: Starting iteration with ID " << rootId);
 
     for (auto i = static_cast<std::size_t>(rootId); i < rootId + nodeNumber; ++i) {
-        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
+        NES_INFO("ResourcesReaderTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
         EXPECT_TRUE(json.has_field("registration"));

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifndef NES_ABSTRACTSYSTEMRESOURCESREADER_HPP
 #define NES_ABSTRACTSYSTEMRESOURCESREADER_HPP
 
