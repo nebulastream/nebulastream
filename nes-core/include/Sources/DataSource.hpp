@@ -59,7 +59,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         GatheringMode::Value gatheringMode,
                                                 std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
-                        uint64_t sourceAffinity = 0,
+                        uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
                         uint64_t taskQueueId = 0);
 
     DataSource() = delete;
