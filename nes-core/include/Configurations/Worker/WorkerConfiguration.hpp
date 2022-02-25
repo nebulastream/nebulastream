@@ -156,7 +156,16 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     SequenceOption<WrapOption<PhysicalSourcePtr, PhysicalSourceFactory>> physicalSources = {PHYSICAL_SOURCES, "Physical sources"};
 
+    /**
+     * @brief location coordinate of the node if any
+     */
     StringOption locationCoordinates = {LOCATION_COORDINATES_CONFIG, "", "the physical location of the worker"};
+
+    /**
+     * @brief Configuration yaml path.
+     * @warning this is just a placeholder configuration
+     */
+    StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
@@ -182,7 +191,8 @@ class WorkerConfiguration : public BaseConfiguration {
                 &enableMonitoring,
                 &queryCompiler,
                 &physicalSources,
-                &locationCoordinates};
+                &locationCoordinates,
+                &configPath};
     }
 };
 }// namespace Configurations

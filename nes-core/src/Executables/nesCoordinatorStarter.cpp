@@ -66,6 +66,7 @@ int main(int argc, const char* argv[]) {
         if (configPath != commandLineParams.end()) {
             coordinatorConfig->overwriteConfigWithYAMLFileInput(configPath->second);
         }
+
         if (argc > 1) {
             coordinatorConfig->overwriteConfigWithCommandLineInput(commandLineParams);
         }
