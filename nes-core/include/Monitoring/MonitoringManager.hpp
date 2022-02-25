@@ -108,7 +108,6 @@ class MonitoringManager {
     bool registerMonitoringLogical(StreamCatalogPtr streamCatalog);
 
     std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
-    MetricStorePtr metricStore;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
     bool enableMonitoring;

@@ -43,8 +43,6 @@ bool CpuCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr CpuCollector::getSchema() { return schema; }
 
-MetricPtr CpuCollector::readMetric() {
-    return std::make_shared<Metric>(resourceReader->readCpuStats(), MetricType::WrappedCpuMetrics);
-}
+const Metric CpuCollector::readMetric() const { return Metric(resourceReader->readCpuStats(), MetricType::WrappedCpuMetrics); }
 
 }// namespace NES

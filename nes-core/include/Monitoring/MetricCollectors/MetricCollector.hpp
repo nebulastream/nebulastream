@@ -23,7 +23,6 @@
 namespace NES {
 
 class Metric;
-using MetricPtr = std::shared_ptr<Metric>;
 
 class MetricCollector {
   protected:
@@ -57,7 +56,7 @@ class MetricCollector {
      * @param tupleBuffer The tuple buffer
      * @return True if successful, else false
      */
-    virtual MetricPtr readMetric() = 0;
+    virtual const Metric readMetric() const = 0;
 };
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;

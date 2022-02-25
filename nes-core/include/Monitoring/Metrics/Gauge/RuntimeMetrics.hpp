@@ -91,6 +91,13 @@ void writeToBuffer(const RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uin
 */
 void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
+/**
+ * @brief Parses the metric to JSON
+ * @param metrics
+ * @return the metrics as JSON
+ */
+web::json::value asJson(const RuntimeMetrics& metrics);
+
 }// namespace NES
 
 #endif// NES_INCLUDE_MONITORING_METRICVALUES_RUNTIMENESMETRICS_HPP_

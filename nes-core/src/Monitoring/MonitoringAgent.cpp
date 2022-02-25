@@ -58,12 +58,12 @@ void MonitoringAgent::startContinuousMonitoring(NesWorkerPtr) {
     }
 }
 
-std::vector<MetricPtr> MonitoringAgent::getMetricsFromPlan() {
-    std::vector<MetricPtr> output;
+std::vector<Metric> MonitoringAgent::getMetricsFromPlan() {
+    std::vector<Metric> output;
     if (enabled) {
         for (auto type : monitoringPlan->getMetricTypes()) {
             auto collector = catalog->getMetricCollector(type);
-            MetricPtr metric = collector->readMetric();
+            Metric metric = collector->readMetric();
             output.emplace_back(metric);
         }
     }
@@ -82,8 +82,8 @@ web::json::value MonitoringAgent::getMetricsAsJson() {
     if (enabled) {
         for (auto type : monitoringPlan->getMetricTypes()) {
             auto collector = catalog->getMetricCollector(type);
-            MetricPtr metric = collector->readMetric();
-            metricsJson[toString(metric->getMetricType())] = asJson(metric);
+            auto metric = collector->readMetric();
+            metricsJson[toString(metric.getMetricType())] = asJson(metric);
         }
     }
     return metricsJson;

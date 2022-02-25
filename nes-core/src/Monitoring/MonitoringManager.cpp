@@ -35,7 +35,7 @@ MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPt
     : MonitoringManager(workerClient, topology, true) {}
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology, bool enableMonitoring)
-    : metricStore(std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST)), workerClient(workerClient), topology(topology),
+    : workerClient(workerClient), topology(topology),
       enableMonitoring(enableMonitoring) {
     NES_DEBUG("MonitoringManager: Init with monitoring=" << enableMonitoring);
 }
@@ -115,19 +115,20 @@ web::json::value MonitoringManager::requestRemoteMonitoringData(uint64_t nodeId)
                             + std::to_string(node->getId()));
 }
 
-std::vector<MetricPtr> MonitoringManager::getMonitoringDataFromMetricStore(uint64_t nodeId) {
-    return metricStore->getNewestMetrics(nodeId);
+std::vector<MetricPtr> MonitoringManager::getMonitoringDataFromMetricStore(uint64_t) {
+    std::vector<MetricPtr> output;
+    return output;
 }
 
-void MonitoringManager::addMonitoringData(uint64_t nodeId, std::vector<MetricPtr> metrics) {
-    NES_DEBUG("MonitoringManager: Adding metrics for node " << nodeId);
-    metricStore->addMetrics(nodeId, std::move(metrics));
+void MonitoringManager::addMonitoringData(uint64_t nodeId, std::vector<MetricPtr>) {
+    NES_ERROR("MonitoringManager: Adding metrics disabled for node " << nodeId);
+    //metricStore->addMetrics(nodeId, std::move(metrics));
 }
 
 void MonitoringManager::removeMonitoringNode(uint64_t nodeId) {
     NES_DEBUG("MonitoringManager: Removing node and metrics for node " << nodeId);
     monitoringPlanMap.erase(nodeId);
-    metricStore->removeMetrics(nodeId);
+    //metricStore->removeMetrics(nodeId);
 }
 
 MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {

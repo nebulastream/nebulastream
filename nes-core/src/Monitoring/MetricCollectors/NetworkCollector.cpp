@@ -44,7 +44,7 @@ bool NetworkCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr NetworkCollector::getSchema() { return schema; }
 
-MetricPtr NetworkCollector::readMetric() {
-    return std::make_shared<Metric>(resourceReader->readNetworkStats(), MetricType::WrappedNetworkMetrics);
+const Metric NetworkCollector::readMetric() const {
+    return Metric(resourceReader->readNetworkStats(), MetricType::WrappedNetworkMetrics);
 }
 }// namespace NES

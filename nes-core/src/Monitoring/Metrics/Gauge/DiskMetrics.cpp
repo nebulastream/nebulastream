@@ -81,4 +81,8 @@ void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tu
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
+web::json::value asJson(const DiskMetrics& metrics) {
+    return metrics.toJson();
+}
+
 }// namespace NES

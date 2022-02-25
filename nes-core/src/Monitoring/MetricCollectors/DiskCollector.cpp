@@ -44,8 +44,6 @@ bool DiskCollector::fillBuffer(Runtime::TupleBuffer& tupleBuffer) {
 
 SchemaPtr DiskCollector::getSchema() { return schema; }
 
-MetricPtr DiskCollector::readMetric() {
-    return std::make_shared<Metric>(resourceReader->readDiskStats(), MetricType::DiskMetric);
-}
+const Metric DiskCollector::readMetric() const { return Metric(resourceReader->readDiskStats(), MetricType::DiskMetric); }
 
 }// namespace NES

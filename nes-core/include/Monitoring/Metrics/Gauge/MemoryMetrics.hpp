@@ -96,6 +96,13 @@ void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint
 */
 void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
+/**
+ * @brief Parses the metric to JSON
+ * @param metrics
+ * @return the metrics as JSON
+ */
+web::json::value asJson(const MemoryMetrics& metrics);
+
 }// namespace NES
 
 #endif// NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_

@@ -22,16 +22,16 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <cpprest/json.h>
 
+#include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
+
 namespace NES {
 
 class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
-
-template<typename T>
-web::json::value asJson(const T&) {
-    web::json::value metricsJson{};
-    return metricsJson;
-}
 
 /**
 * @brief Class specific serialize methods for basic types. The serialize method to write CpuMetricsWrapper into
@@ -42,14 +42,26 @@ web::json::value asJson(const T&) {
 * @param the TupleBuffer
 * @param the prefix as std::string
 */
-void writeToBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
-void writeToBuffer(const std::string& metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void writeToBuffer(const uint64_t& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void writeToBuffer(const std::string& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void writeToBuffer(const std::shared_ptr<Metric> metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+
 
 /**
  * @brief class specific readFromBuffer()
  * @return the value
  */
-void readFromBuffer(uint64_t metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void readFromBuffer(uint64_t& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void readFromBuffer(std::string& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
+
+/**
+ * @brief class specific asJson()
+ * @return the value
+ */
+web::json::value asJson(uint64_t intMetric);
+web::json::value asJson(std::string stringMetric);
+web::json::value asJson(std::shared_ptr<Metric> ptrMetric);
 
 /**
 * @brief The metric class is a conceptual superclass that represents all metrics in NES.
@@ -62,6 +74,8 @@ class Metric {
      * @param arbitrary parameter of any type
      * @dev too broad to make non-explicit.
     */
+    template<typename T>
+    explicit Metric(T x) : self(std::make_unique<Model<T>>(std::move(x))), type(MetricType::UnknownMetric) {}
     template<typename T>
     explicit Metric(T x, MetricType type) : self(std::make_unique<Model<T>>(std::move(x))), type(type) {}
     ~Metric() = default;
@@ -95,7 +109,7 @@ class Metric {
      * @param the metric
      * @return the type of the metric
     */
-    MetricType getMetricType() { return type; }
+    MetricType getMetricType() const { return type; }
 
     /**
      * @brief This method returns the value of the metric as a JSON.

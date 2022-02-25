@@ -102,6 +102,14 @@ void writeToBuffer(const CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_
 */
 void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t byteOffset);
 
+/**
+ * @brief Parses the metric to JSON
+ * @param metrics
+ * @return the metrics as JSON
+ */
+web::json::value asJson(const CpuMetrics& metrics);
+
+
 }// namespace NES
 
 #endif  // NES_INCLUDE_MONITORING_METRICVALUES_CPUVALUES_HPP_

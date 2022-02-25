@@ -12,24 +12,54 @@
     limitations under the License.
 */
 
-#include "Monitoring/MonitoringPlan.hpp"
+#include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
+#include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
+#include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
+#include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
-#include <cstring>
 
 namespace NES {
 
-void writeToBuffer(uint64_t metric, Runtime::TupleBuffer&, uint64_t) {
-    NES_THROW_RUNTIME_ERROR("Metric: Serialization for uint64_t not possible for metric " << metric);
+void writeToBuffer(const uint64_t& metrics, Runtime::TupleBuffer&, uint64_t) {
+    NES_THROW_RUNTIME_ERROR("Metric: Serialization for uint64_t not possible for metric " << metrics);
 }
 
-void writeToBuffer(const std::string& metric, Runtime::TupleBuffer&, uint64_t) {
-    NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " << metric);
+void writeToBuffer(const std::string& metrics, Runtime::TupleBuffer&, uint64_t) {
+    NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " << metrics);
 }
 
-void readFromBuffer(uint64_t, Runtime::TupleBuffer&, uint64_t) {
+void writeToBuffer(const std::shared_ptr<Metric> metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    writeToBuffer(*metric, buf, tupleIndex);
+}
+
+void readFromBuffer(uint64_t&, Runtime::TupleBuffer&, uint64_t) {
     NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible");
+}
+
+void readFromBuffer(std::string&, Runtime::TupleBuffer&, uint64_t) {
+    NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible");
+}
+
+void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    readFromBuffer(*metrics, buf, tupleIndex);
+}
+
+web::json::value asJson(uint64_t intMetric) {
+    web::json::value metricsJson{};
+    metricsJson["intMetric"] = intMetric;
+    return metricsJson;
+}
+
+web::json::value asJson(std::string stringMetric) {
+    web::json::value metricsJson{};
+    metricsJson["stringMetric"] = web::json::value::string(stringMetric);
+    return metricsJson;
+}
+
+web::json::value asJson(std::shared_ptr<Metric> ptrMetric) {
+    return asJson(*ptrMetric);
 }
 
 }// namespace NES

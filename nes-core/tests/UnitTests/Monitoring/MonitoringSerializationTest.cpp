@@ -16,10 +16,14 @@
 
 #include <gtest/gtest.h>
 
+#include <Monitoring/MonitoringCatalog.hpp>
+#include <Monitoring/MonitoringPlan.hpp>
+
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 
+#include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MetricCollectors/CpuCollector.hpp>
 #include <Monitoring/MetricCollectors/DiskCollector.hpp>
 #include <Monitoring/MetricCollectors/MemoryCollector.hpp>
@@ -27,7 +31,6 @@
 #include <Monitoring/Metrics/Gauge/CpuMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
-#include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/Wrapper/CpuMetricsWrapper.hpp>
 #include <Monitoring/Metrics/Wrapper/NetworkMetricsWrapper.hpp>
 
@@ -63,10 +66,10 @@ class MonitoringSerializationTest : public testing::Test {
 
 TEST_F(MonitoringSerializationTest, testNetworkCollectorWrappedMetrics) {
     auto networkCollector = NetworkCollector();
-    MetricPtr NetworkMetric = networkCollector.readMetric();
-    EXPECT_EQ(NetworkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
+    Metric networkMetric = networkCollector.readMetric();
+    EXPECT_EQ(networkMetric.getMetricType(), MetricType::WrappedNetworkMetrics);
 
-    NetworkMetricsWrapper wrappedMetric = NetworkMetric->getValue<NetworkMetricsWrapper>();
+    NetworkMetricsWrapper wrappedMetric = networkMetric.getValue<NetworkMetricsWrapper>();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     wrappedMetric.writeToBuffer(tupleBuffer, 0);
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
@@ -78,10 +81,10 @@ TEST_F(MonitoringSerializationTest, testNetworkCollectorWrappedMetrics) {
 
 TEST_F(MonitoringSerializationTest, testNetworkCollectorSingleMetrics) {
     auto networkCollector = NetworkCollector();
-    MetricPtr networkMetric = networkCollector.readMetric();
-    EXPECT_EQ(networkMetric->getMetricType(), MetricType::WrappedNetworkMetrics);
+    Metric networkMetric = networkCollector.readMetric();
+    EXPECT_EQ(networkMetric.getMetricType(), MetricType::WrappedNetworkMetrics);
 
-    NetworkMetricsWrapper wrappedMetric = networkMetric->getValue<NetworkMetricsWrapper>();
+    NetworkMetricsWrapper wrappedMetric = networkMetric.getValue<NetworkMetricsWrapper>();
     NetworkMetrics totalMetrics = wrappedMetric.getNetworkValue(0);
 
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
@@ -95,10 +98,10 @@ TEST_F(MonitoringSerializationTest, testNetworkCollectorSingleMetrics) {
 
 TEST_F(MonitoringSerializationTest, testCpuCollectorWrappedMetrics) {
     auto cpuCollector = CpuCollector();
-    MetricPtr cpuMetric = cpuCollector.readMetric();
-    EXPECT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
+    Metric cpuMetric = cpuCollector.readMetric();
+    EXPECT_EQ(cpuMetric.getMetricType(), MetricType::WrappedCpuMetrics);
 
-    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
+    CpuMetricsWrapper wrappedMetric = cpuMetric.getValue<CpuMetricsWrapper>();
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     wrappedMetric.writeToBuffer(tupleBuffer, 0);
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == wrappedMetric.size());
@@ -110,10 +113,10 @@ TEST_F(MonitoringSerializationTest, testCpuCollectorWrappedMetrics) {
 
 TEST_F(MonitoringSerializationTest, testCpuCollectorSingleMetrics) {
     auto cpuCollector = CpuCollector();
-    MetricPtr cpuMetric = cpuCollector.readMetric();
-    EXPECT_EQ(cpuMetric->getMetricType(), MetricType::WrappedCpuMetrics);
+    Metric cpuMetric = cpuCollector.readMetric();
+    EXPECT_EQ(cpuMetric.getMetricType(), MetricType::WrappedCpuMetrics);
 
-    CpuMetricsWrapper wrappedMetric = cpuMetric->getValue<CpuMetricsWrapper>();
+    CpuMetricsWrapper wrappedMetric = cpuMetric.getValue<CpuMetricsWrapper>();
     CpuMetrics totalMetrics = wrappedMetric.getValue(0);
 
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
@@ -127,9 +130,9 @@ TEST_F(MonitoringSerializationTest, testCpuCollectorSingleMetrics) {
 
 TEST_F(MonitoringSerializationTest, testDiskCollector) {
     auto diskCollector = DiskCollector();
-    MetricPtr diskMetric = diskCollector.readMetric();
-    DiskMetrics typedMetric = diskMetric->getValue<DiskMetrics>();
-    EXPECT_EQ(diskMetric->getMetricType(), MetricType::DiskMetric);
+    Metric diskMetric = diskCollector.readMetric();
+    DiskMetrics typedMetric = diskMetric.getValue<DiskMetrics>();
+    EXPECT_EQ(diskMetric.getMetricType(), MetricType::DiskMetric);
 
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     auto success = diskCollector.fillBuffer(tupleBuffer);
@@ -144,9 +147,9 @@ TEST_F(MonitoringSerializationTest, testDiskCollector) {
 
 TEST_F(MonitoringSerializationTest, testMemoryCollector) {
     auto memoryCollector = MemoryCollector();
-    MetricPtr memoryMetric = memoryCollector.readMetric();
-    MemoryMetrics typedMetric = memoryMetric->getValue<MemoryMetrics>();
-    EXPECT_EQ(memoryMetric->getMetricType(), MetricType::MemoryMetric);
+    Metric memoryMetric = memoryCollector.readMetric();
+    MemoryMetrics typedMetric = memoryMetric.getValue<MemoryMetrics>();
+    EXPECT_EQ(memoryMetric.getMetricType(), MetricType::MemoryMetric);
 
     auto tupleBuffer = bufferManager->getUnpooledBuffer(bufferSize).value();
     auto success = memoryCollector.fillBuffer(tupleBuffer);
@@ -157,6 +160,35 @@ TEST_F(MonitoringSerializationTest, testMemoryCollector) {
     MemoryMetrics parsedMetric{};
     readFromBuffer(parsedMetric, tupleBuffer, 0);
     EXPECT_EQ(typedMetric, parsedMetric);
+}
+
+TEST_F(MonitoringSerializationTest, testRuntimeConcepts) {
+    web::json::value metricsJson{};
+    std::vector<Metric> metrics;
+
+    uint64_t myInt = 12345;
+    metrics.emplace_back(myInt);
+    std::string myString = "testString";
+    metrics.emplace_back(myString);
+
+    for (unsigned int i = 0; i < metrics.size(); i++) {
+        metricsJson[i] = asJson(metrics[i]);
+    }
+
+    NES_DEBUG("MonitoringSerializationTest: Json Concepts: " << metricsJson);
+}
+
+TEST_F(MonitoringSerializationTest, testJsonRuntimeConcepts) {
+    auto monitoringPlan = MonitoringPlan::createDefaultPlan();
+    auto monitoringCatalog = MonitoringCatalog::defaultCatalog();
+    web::json::value metricsJson{};
+
+    for (auto type : monitoringPlan->getMetricTypes()) {
+        auto collector = monitoringCatalog->getMetricCollector(type);
+        Metric metric = collector->readMetric();
+        metricsJson[toString(metric.getMetricType())] = asJson(metric);
+    }
+    NES_DEBUG("MonitoringSerializationTest: Json Concepts: " << metricsJson);
 }
 
 }// namespace NES

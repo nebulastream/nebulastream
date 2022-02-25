@@ -100,6 +100,13 @@ void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uin
 */
 void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex);
 
+/**
+ * @brief Parses the metric to JSON
+ * @param metrics
+ * @return the metrics as JSON
+ */
+web::json::value asJson(const NetworkMetrics& metrics);
+
 }// namespace NES
 
 #endif  // NES_INCLUDE_MONITORING_METRICVALUES_NETWORKVALUES_HPP_
