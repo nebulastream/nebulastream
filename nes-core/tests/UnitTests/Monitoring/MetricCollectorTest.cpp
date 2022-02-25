@@ -1,6 +1,4 @@
 /*
-    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -13,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <NesBaseTest.hpp>
 #include <gtest/gtest.h>
 
@@ -40,21 +39,21 @@ namespace NES {
 using namespace Configurations;
 using namespace Runtime;
 
-class MonitoringSerializationTest : public Testing::NESBaseTest {
+class MetricCollectorTest : public Testing::NESBaseTest {
   public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
 
     static void SetUpTestCase() {
-        NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
-        NES_INFO("MonitoringStackTest: Setup MonitoringStackTest test class.");
+        NES::setupLogging("MetricCollectorTest.log", NES::LOG_DEBUG);
+        NES_INFO("ResourcesReaderTest: Setup MetricCollectorTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest class." << std::endl; }
+    static void TearDownTestCase() { std::cout << "MetricCollectorTest: Tear down MetricCollectorTest class." << std::endl; }
 
     /* Will be called before a  test is executed. */
     void SetUp() override {
-        std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
+        std::cout << "MetricCollectorTest: Setup MetricCollectorTest test case." << std::endl;
 
         unsigned int numCPU = std::thread::hardware_concurrency();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
@@ -62,10 +61,10 @@ class MonitoringSerializationTest : public Testing::NESBaseTest {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
+    void TearDown() override { std::cout << "MetricCollectorTest: Tear down MetricCollectorTest test case." << std::endl; }
 };
 
-TEST_F(MonitoringSerializationTest, testNetworkCollectorWrappedMetrics) {
+TEST_F(MetricCollectorTest, testNetworkCollectorWrappedMetrics) {
     auto networkCollector = NetworkCollector();
     Metric networkMetric = networkCollector.readMetric();
     EXPECT_EQ(networkMetric.getMetricType(), MetricType::WrappedNetworkMetrics);
@@ -80,7 +79,7 @@ TEST_F(MonitoringSerializationTest, testNetworkCollectorWrappedMetrics) {
     EXPECT_EQ(wrappedMetric, parsedMetric);
 }
 
-TEST_F(MonitoringSerializationTest, testNetworkCollectorSingleMetrics) {
+TEST_F(MetricCollectorTest, testNetworkCollectorSingleMetrics) {
     auto networkCollector = NetworkCollector();
     Metric networkMetric = networkCollector.readMetric();
     EXPECT_EQ(networkMetric.getMetricType(), MetricType::WrappedNetworkMetrics);
@@ -97,7 +96,7 @@ TEST_F(MonitoringSerializationTest, testNetworkCollectorSingleMetrics) {
     EXPECT_EQ(totalMetrics, parsedMetric);
 }
 
-TEST_F(MonitoringSerializationTest, testCpuCollectorWrappedMetrics) {
+TEST_F(MetricCollectorTest, testCpuCollectorWrappedMetrics) {
     auto cpuCollector = CpuCollector();
     Metric cpuMetric = cpuCollector.readMetric();
     EXPECT_EQ(cpuMetric.getMetricType(), MetricType::WrappedCpuMetrics);
@@ -112,7 +111,7 @@ TEST_F(MonitoringSerializationTest, testCpuCollectorWrappedMetrics) {
     EXPECT_EQ(wrappedMetric, parsedMetric);
 }
 
-TEST_F(MonitoringSerializationTest, testCpuCollectorSingleMetrics) {
+TEST_F(MetricCollectorTest, testCpuCollectorSingleMetrics) {
     auto cpuCollector = CpuCollector();
     Metric cpuMetric = cpuCollector.readMetric();
     EXPECT_EQ(cpuMetric.getMetricType(), MetricType::WrappedCpuMetrics);
@@ -129,7 +128,7 @@ TEST_F(MonitoringSerializationTest, testCpuCollectorSingleMetrics) {
     EXPECT_EQ(totalMetrics, parsedMetric);
 }
 
-TEST_F(MonitoringSerializationTest, testDiskCollector) {
+TEST_F(MetricCollectorTest, testDiskCollector) {
     auto diskCollector = DiskCollector();
     Metric diskMetric = diskCollector.readMetric();
     DiskMetrics typedMetric = diskMetric.getValue<DiskMetrics>();
@@ -146,7 +145,7 @@ TEST_F(MonitoringSerializationTest, testDiskCollector) {
     EXPECT_EQ(typedMetric, parsedMetric);
 }
 
-TEST_F(MonitoringSerializationTest, testMemoryCollector) {
+TEST_F(MetricCollectorTest, testMemoryCollector) {
     auto memoryCollector = MemoryCollector();
     Metric memoryMetric = memoryCollector.readMetric();
     MemoryMetrics typedMetric = memoryMetric.getValue<MemoryMetrics>();
@@ -163,7 +162,7 @@ TEST_F(MonitoringSerializationTest, testMemoryCollector) {
     EXPECT_EQ(typedMetric, parsedMetric);
 }
 
-TEST_F(MonitoringSerializationTest, testRuntimeConcepts) {
+TEST_F(MetricCollectorTest, testRuntimeConcepts) {
     web::json::value metricsJson{};
     std::vector<Metric> metrics;
 
@@ -176,10 +175,10 @@ TEST_F(MonitoringSerializationTest, testRuntimeConcepts) {
         metricsJson[i] = asJson(metrics[i]);
     }
 
-    NES_DEBUG("MonitoringSerializationTest: Json Concepts: " << metricsJson);
+    NES_DEBUG("MetricCollectorTest: Json Concepts: " << metricsJson);
 }
 
-TEST_F(MonitoringSerializationTest, testJsonRuntimeConcepts) {
+TEST_F(MetricCollectorTest, testJsonRuntimeConcepts) {
     auto monitoringPlan = MonitoringPlan::createDefaultPlan();
     auto monitoringCatalog = MonitoringCatalog::defaultCatalog();
     web::json::value metricsJson{};
@@ -189,10 +188,10 @@ TEST_F(MonitoringSerializationTest, testJsonRuntimeConcepts) {
         Metric metric = collector->readMetric();
         metricsJson[toString(metric.getMetricType())] = asJson(metric);
     }
-    NES_DEBUG("MonitoringSerializationTest: Json Concepts: " << metricsJson);
+    NES_DEBUG("MetricCollectorTest: Json Concepts: " << metricsJson);
 }
 
-TEST_F(MonitoringSerializationTest, testMetricStore) {
+TEST_F(MetricCollectorTest, testMetricStore) {
     uint64_t nodeId = 0;
     auto metricStore = std::make_shared<MetricStore>(MetricStoreStrategy::NEWEST);
     auto networkCollector = NetworkCollector();
