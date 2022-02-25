@@ -20,15 +20,15 @@ namespace NES {
 
 std::string GatheringMode::toString(const Value gatheringMode) {
     switch (gatheringMode) {
-        case GatheringMode::FREQUENCY_MODE: return "frequency";
+        case GatheringMode::INTERVAL_MODE: return "interval";
         case GatheringMode::INGESTION_RATE_MODE: return "ingestionrate";
         case GatheringMode::ADAPTIVE_MODE: return "adaptive";
     }
 }
 
 GatheringMode::Value GatheringMode::getFromString(const std::string gatheringMode) {
-    if (gatheringMode == "frequency") {
-        return GatheringMode::FREQUENCY_MODE;
+    if (gatheringMode == "interval") {
+        return GatheringMode::INTERVAL_MODE;
     } else if (gatheringMode == "ingestionrate") {
         return GatheringMode::INGESTION_RATE_MODE;
     }   else if (gatheringMode == "adaptive") {

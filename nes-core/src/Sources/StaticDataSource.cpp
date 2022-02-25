@@ -53,7 +53,7 @@ StaticDataSource::StaticDataSource(SchemaPtr schema,
                       0, // todo  <-- dumb
                       operatorId,
                       numSourceLocalBuffers,
-                      GatheringMode::FREQUENCY_MODE, // todo: this is a placeholder. gathering mode is unnecessary for static data.
+                      GatheringMode::INTERVAL_MODE, // todo: this is a placeholder. gathering mode is unnecessary for static data.
                       std::move(successors)),
                       pathTableFile(pathTableFile),
                       currentPositionInBytes(0) {

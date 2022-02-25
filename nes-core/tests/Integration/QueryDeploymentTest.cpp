@@ -542,7 +542,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
     csvSourceType1->setSkipHeader(true);
@@ -599,7 +599,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
     csvSourceType1->setSkipHeader(true);
@@ -656,7 +656,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
     csvSourceType1->setSkipHeader(true);
@@ -902,7 +902,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1);
     csvSourceType1->setSkipHeader(true);
@@ -911,7 +911,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
 
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType2->setSourceFrequency(1);
+    csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType2->setNumberOfBuffersToProduce(1);
     csvSourceType2->setSkipHeader(true);
@@ -999,7 +999,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithoutList) {
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1);
     csvSourceType1->setSkipHeader(true);
@@ -1008,7 +1008,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithoutList) {
 
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType2->setSourceFrequency(1);
+    csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType2->setNumberOfBuffersToProduce(1);
     csvSourceType2->setSkipHeader(true);
@@ -1094,7 +1094,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
     workerConfig1->coordinatorPort = port;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(100);
     csvSourceType1->setSkipHeader(true);
@@ -1103,7 +1103,7 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
 
     CSVSourceTypePtr csvSourceType2 = CSVSourceType::create();
     csvSourceType2->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
-    csvSourceType2->setSourceFrequency(1);
+    csvSourceType2->setGatheringInterval(1);
     csvSourceType2->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType2->setNumberOfBuffersToProduce(100);
     csvSourceType2->setSkipHeader(true);

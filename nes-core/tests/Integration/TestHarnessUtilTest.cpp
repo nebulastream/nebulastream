@@ -529,7 +529,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
     // 4,3,6
     CSVSourceTypePtr csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
-    csvSourceType->setSourceFrequency(1);
+    csvSourceType->setGatheringInterval(1);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);
@@ -581,7 +581,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     // 1,2,4
     // 4,3,6
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "testCSV.csv");
-    csvSourceType->setSourceFrequency(1);
+    csvSourceType->setGatheringInterval(1);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(3);
     csvSourceType->setNumberOfBuffersToProduce(1);
     csvSourceType->setSkipHeader(false);

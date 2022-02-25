@@ -26,7 +26,7 @@ class DefaultSource : public GeneratorSource {
                   Runtime::BufferManagerPtr bufferManager,
                   Runtime::QueryManagerPtr queryManager,
                   uint64_t numbersOfBufferToProduce,
-                  uint64_t frequency,
+                  uint64_t gatheringInterval,
                   OperatorId operatorId,
                   size_t numSourceLocalBuffers,
                   std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {});

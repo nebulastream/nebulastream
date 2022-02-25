@@ -216,8 +216,8 @@ void DataSource::close() {}
 void DataSource::runningRoutine() {
     //TDOD startup delay
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
-    if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
-        runningRoutineWithFrequency();
+    if (gatheringMode == GatheringMode::INTERVAL_MODE) {
+        runningRoutineWithInterval();
     } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         runningRoutineWithIngestionRate();
     } else if (gatheringMode == GatheringMode::ADAPTIVE_MODE) {
@@ -310,13 +310,13 @@ void DataSource::runningRoutineWithIngestionRate() {
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
-void DataSource::runningRoutineWithFrequency() {
+void DataSource::runningRoutineWithInterval() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
 
     NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType()
-                            << " frequency=" << gatheringInterval.count());
+                            << " interval=" << gatheringInterval.count());
     if (numBuffersToProcess == 0) {
         NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
                   "the source is empty");
@@ -377,7 +377,7 @@ void DataSource::runningRoutineAdaptive() {
     setThreadName(thName.c_str());
 
     NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType()
-                            << " frequency=" << gatheringInterval.count());
+                            << " interval=" << gatheringInterval.count());
     if (numBuffersToProcess == 0) {
         NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
                   "the source is empty");
@@ -385,8 +385,8 @@ void DataSource::runningRoutineAdaptive() {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
 
-    this->kFilter.setFrequency(this->gatheringInterval);
-    this->kFilter.setFrequencyRange(std::chrono::milliseconds{8000});
+    this->kFilter.setGatheringInterval(this->gatheringInterval);
+    this->kFilter.setGatheringIntervalRange(std::chrono::milliseconds{8000});
 
     open();
     uint64_t cnt = 0;
@@ -404,7 +404,7 @@ void DataSource::runningRoutineAdaptive() {
                 if (this->gatheringInterval.count() != 0) {
                     NES_DEBUG("DataSource old gatheringInterval = " << this->gatheringInterval.count() << "ms");
                     this->kFilter.updateFromTupleBuffer(buf);
-                    this->gatheringInterval = this->kFilter.getNewFrequency();
+                    this->gatheringInterval = this->kFilter.getNewGatheringInterval();
                     NES_DEBUG("DataSource new gatheringInterval = " << this->gatheringInterval.count() << "ms");
                 }
 

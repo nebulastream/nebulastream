@@ -249,7 +249,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         csvSourceType->setFilePath("localhost");
         csvSourceType->setNumberOfBuffersToProduce(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(10);
-        csvSourceType->setSourceFrequency(10);
+        csvSourceType->setGatheringInterval(10);
         auto source = CsvSourceDescriptor::create(schema, csvSourceType);
         auto* serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceDescriptor(source, new SerializableOperator_SourceDetails());

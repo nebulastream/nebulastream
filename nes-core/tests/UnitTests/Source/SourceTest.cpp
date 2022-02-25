@@ -170,7 +170,7 @@ class MockDataSource : public DataSource {
         : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, executableSuccessors){
             // nop
         };
-    MOCK_METHOD(void, runningRoutineWithFrequency, ());
+    MOCK_METHOD(void, runningRoutineWithInterval, ());
     MOCK_METHOD(void, runningRoutineWithIngestionRate, ());
     MOCK_METHOD(void, runningRoutineAdaptive, ());
     MOCK_METHOD(std::optional<Runtime::TupleBuffer>, receiveData, ());
@@ -235,12 +235,12 @@ class DataSourceProxy : public DataSource, public Runtime::BufferRecycler {
     void recyclePooledBuffer(Runtime::detail::MemorySegment* buffer) { delete buffer->getPointer(); }
 
   private:
-    FRIEND_TEST(SourceTest, testDataSourceFrequencyRoutineBufWithValue);
+    FRIEND_TEST(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValue);
     FRIEND_TEST(SourceTest, testDataSourceIngestionRoutineBufWithValueWithTooSmallIngestionRate);
     FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValue);
-    FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueZeroFrequencyUpdate);
-    FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdateNonZeroInitialFrequency);
+    FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate);
+    FRIEND_TEST(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroInitialInterval);
     FRIEND_TEST(SourceTest, testDataSourceOpen);
 };
 using DataSourceProxyPtr = std::shared_ptr<DataSourceProxy>;
@@ -260,7 +260,7 @@ class BinarySourceProxy : public BinarySource {
                        file_path,
                        operatorId,
                        numSourceLocalBuffers,
-                       GatheringMode::FREQUENCY_MODE,
+                       GatheringMode::INTERVAL_MODE,
                        successors){};
 
   private:
@@ -287,7 +287,7 @@ class CSVSourceProxy : public CSVSource {
                     sourceConfig,
                     operatorId,
                     numSourceLocalBuffers,
-                    GatheringMode::FREQUENCY_MODE,
+                    GatheringMode::INTERVAL_MODE,
                     successors){};
 
   private:
@@ -327,7 +327,7 @@ class DefaultSourceProxy : public DefaultSource {
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
                        const uint64_t numbersOfBufferToProduce,
-                       uint64_t frequency,
+                       uint64_t gatheringInterval,
                        OperatorId operatorId,
                        size_t numSourceLocalBuffers,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -335,7 +335,7 @@ class DefaultSourceProxy : public DefaultSource {
                         bufferManager,
                         queryManager,
                         numbersOfBufferToProduce,
-                        frequency,
+                        gatheringInterval,
                         operatorId,
                         numSourceLocalBuffers,
                         successors){};
@@ -366,7 +366,7 @@ class LambdaSourceProxy : public LambdaSource {
                        0, 0, successors){};
 
   private:
-    FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeFrequency);
+    FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeInterval);
     FRIEND_TEST(SourceTest, testLambdaSourceInitAndTypeIngestion);
 };
 
@@ -377,7 +377,7 @@ class MonitoringSourceProxy : public MonitoringSource {
                           Runtime::BufferManagerPtr bufferManager,
                           Runtime::QueryManagerPtr queryManager,
                           const uint64_t numbersOfBufferToProduce,
-                          uint64_t frequency,
+                          uint64_t gatheringInterval,
                           OperatorId operatorId,
                           size_t numSourceLocalBuffers,
                           std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -386,7 +386,7 @@ class MonitoringSourceProxy : public MonitoringSource {
                            bufferManager,
                            queryManager,
                            numbersOfBufferToProduce,
-                           frequency,
+                           gatheringInterval,
                            operatorId,
                            numSourceLocalBuffers,
                            successors){};
@@ -461,7 +461,7 @@ class SourceTest : public Testing::NESBaseTest {
         this->numberOfTuplesToProcess = this->numberOfBuffers * (this->buffer_size / this->tuple_size);
         this->operatorId = 1;
         this->numSourceLocalBuffersDefault = 12;
-        this->frequency = 1000;
+        this->gatheringInterval = 1000;
         this->wrong_filepath = "this_doesnt_exist";
         this->queryId = 1;
         this->bufferAreaSize = this->numberOfBuffers * this->buffer_size;
@@ -513,7 +513,7 @@ class SourceTest : public Testing::NESBaseTest {
     SchemaPtr schema, lambdaSchema;
     uint8_t* singleMemoryArea;
     uint64_t tuple_size, buffer_size, numberOfBuffers, numberOfTuplesToProcess, operatorId, numSourceLocalBuffersDefault,
-        frequency, queryId, sourceAffinity;
+        gatheringInterval, queryId, sourceAffinity;
     size_t bufferAreaSize;
     std::shared_ptr<uint8_t> singleBufferMemoryArea;
 };
@@ -544,7 +544,7 @@ TEST_F(SourceTest, testDataSourceRunningImmediately) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::FREQUENCY_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {});
     ASSERT_FALSE(mDataSource.isRunning());
 }
@@ -555,7 +555,7 @@ TEST_F(SourceTest, testDataSourceStartSideEffectRunningTrue) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::FREQUENCY_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -569,7 +569,7 @@ TEST_F(SourceTest, testDataSourceStartTwiceNoSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::FREQUENCY_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -584,7 +584,7 @@ TEST_F(SourceTest, testDataSourceStopImmediately) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::FREQUENCY_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {});
     ASSERT_FALSE(mDataSource.stop(false));
 }
@@ -595,7 +595,7 @@ TEST_F(SourceTest, testDataSourceStopSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::FREQUENCY_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -610,7 +610,7 @@ TEST_F(SourceTest, testDataSourceHardStopSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::FREQUENCY_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -627,7 +627,7 @@ TEST_F(SourceTest, testDataSourceGracefulStopSideEffect) {
                                                  this->nodeEngine->getQueryManager(),
                                                  this->operatorId,
                                                  this->numSourceLocalBuffersDefault,
-                                                 GatheringMode::FREQUENCY_MODE,
+                                                 GatheringMode::INTERVAL_MODE,
                                                  {});
     ON_CALL(mDataSource, getType()).WillByDefault(Return(SourceType::DEFAULT_SOURCE));
     EXPECT_TRUE(mDataSource.start());
@@ -646,21 +646,21 @@ TEST_F(SourceTest, testDataSourceGetGatheringModeFromString) {
                                                                                this->operatorId,
                                                                                this->numSourceLocalBuffersDefault,
                                                                                {});
-    ASSERT_EQ(GatheringMode::getFromString("frequency"), GatheringMode::FREQUENCY_MODE);
+    ASSERT_EQ(GatheringMode::getFromString("interval"), GatheringMode::INTERVAL_MODE);
     ASSERT_EQ(GatheringMode::getFromString("ingestionrate"), GatheringMode::INGESTION_RATE_MODE);
     EXPECT_ANY_THROW(GatheringMode::getFromString("clearly_an_erroneous_string"));
 }
 
-TEST_F(SourceTest, testDataSourceRunningRoutineFrequency) {
+TEST_F(SourceTest, testDataSourceRunningRoutineGatheringInterval) {
     MockDataSource mDataSource(this->schema,
                                this->nodeEngine->getBufferManager(),
                                this->nodeEngine->getQueryManager(),
                                this->operatorId,
                                this->numSourceLocalBuffersDefault,
-                               GatheringMode::FREQUENCY_MODE,
+                               GatheringMode::INTERVAL_MODE,
                                {});
-    ON_CALL(mDataSource, runningRoutineWithFrequency()).WillByDefault(Return());
-    EXPECT_CALL(mDataSource, runningRoutineWithFrequency()).Times(Exactly(1));
+    ON_CALL(mDataSource, runningRoutineWithInterval()).WillByDefault(Return());
+    EXPECT_CALL(mDataSource, runningRoutineWithInterval()).Times(Exactly(1));
     mDataSource.runningRoutine();
 }
 
@@ -690,7 +690,7 @@ TEST_F(SourceTest, testDataSourceRunningRoutineKalmanFilter) {
     mDataSource.runningRoutine();
 }
 
-TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
+TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -703,7 +703,7 @@ TEST_F(SourceTest, testDataSourceFrequencyRoutineBufWithValue) {
                                                            this->nodeEngine->getQueryManager(),
                                                            this->operatorId,
                                                            this->numSourceLocalBuffersDefault,
-                                                           GatheringMode::FREQUENCY_MODE,
+                                                           GatheringMode::INTERVAL_MODE,
                                                            {pipeline});
     mDataSource->numBuffersToProcess = 1;
     mDataSource->running = true;
@@ -821,7 +821,7 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValue) {
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
-TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroFrequencyUpdate) {
+TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroIntervalUpdate) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -854,21 +854,21 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueZeroFrequencyUpdate) {
     ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    auto oldFrequency = mDataSource->gatheringInterval;
+    auto oldInterval = mDataSource->gatheringInterval;
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
         mDataSource->running = false;
         return;
     }));
     mDataSource->runningRoutine();
-    EXPECT_EQ(oldFrequency.count(), mDataSource->gatheringInterval.count());
-    EXPECT_EQ(oldFrequency.count(), 0);
+    EXPECT_EQ(oldInterval.count(), mDataSource->gatheringInterval.count());
+    EXPECT_EQ(oldInterval.count(), 0);
     EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
 }
 
-TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdateNonZeroInitialFrequency) {
+TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueIntervalUpdateNonZeroInitialInterval) {
     // create executable stage
     auto executableStage = std::make_shared<MockedExecutablePipeline>();
     // create sink
@@ -902,14 +902,14 @@ TEST_F(SourceTest, testDataSourceKFRoutineBufWithValueFrequencyUpdateNonZeroInit
     ASSERT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
     ASSERT_TRUE(this->nodeEngine->startQuery(this->queryId));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(this->queryId), Runtime::Execution::ExecutableQueryPlanStatus::Running);
-    auto oldFrequency = mDataSource->gatheringInterval;
+    auto oldInterval = mDataSource->gatheringInterval;
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
     EXPECT_CALL(*mDataSource, emitWork(_)).Times(Exactly(1)).WillOnce(InvokeWithoutArgs([&]() {
         mDataSource->running = false;
         return;
     }));
     mDataSource->runningRoutine();
-    EXPECT_NE(oldFrequency.count(), mDataSource->gatheringInterval.count());
+    EXPECT_NE(oldInterval.count(), mDataSource->gatheringInterval.count());
     EXPECT_FALSE(mDataSource->running);
     EXPECT_TRUE(mDataSource->wasGracefullyStopped);
     EXPECT_TRUE(Mock::VerifyAndClearExpectations(mDataSource.get()));
@@ -1029,7 +1029,7 @@ TEST_F(SourceTest, testCSVSourceGetType) {
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
 
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
@@ -1046,7 +1046,7 @@ TEST_F(SourceTest, testCSVSourceWrongFilePath) {
     csvSourceType->setFilePath(this->wrong_filepath);
     csvSourceType->setNumberOfBuffersToProduce(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    csvSourceType->setSourceFrequency(this->frequency);
+    csvSourceType->setGatheringInterval(this->gatheringInterval);
 
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
@@ -1063,7 +1063,7 @@ TEST_F(SourceTest, testCSVSourceCorrectFilePath) {
     csvSourceType->setFilePath(this->path_to_file);
     csvSourceType->setNumberOfBuffersToProduce(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    csvSourceType->setSourceFrequency(this->frequency);
+    csvSourceType->setGatheringInterval(this->gatheringInterval);
 
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
@@ -1080,7 +1080,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFileEnded) {
     csvSourceType->setFilePath(this->path_to_file);
     csvSourceType->setNumberOfBuffersToProduce(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    csvSourceType->setSourceFrequency(this->frequency);
+    csvSourceType->setGatheringInterval(this->gatheringInterval);
 
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
@@ -1103,7 +1103,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnce) {
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
     sourceConfig->setSkipHeader(true);
 
     CSVSourceProxy csvDataSource(this->schema,
@@ -1129,7 +1129,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferOnceColumnLayout) {
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
     sourceConfig->setSkipHeader(true);
 
     CSVSourceProxy csvDataSource(this->schema,
@@ -1155,7 +1155,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailure) {
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
 
     // read actual header, get error from casting input to schema
     CSVSourceProxy csvDataSource(this->schema,
@@ -1187,7 +1187,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsHeaderFailureColumnLayout) {
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
 
     // read actual header, get error from casting input to schema
     CSVSourceProxy csvDataSource(this->schema,
@@ -1219,7 +1219,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeader) {
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
     sourceConfig->setSkipHeader(true);
 
     CSVSourceProxy csvDataSource(this->schema,
@@ -1245,7 +1245,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferContentsSkipHeaderColumnLayout) {
     sourceConfig->setFilePath(this->path_to_file_head);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
     sourceConfig->setSkipHeader(true);
 
     CSVSourceProxy csvDataSource(this->schema,
@@ -1275,7 +1275,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFile) {
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1315,7 +1315,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileColumnLayout) {
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(expectedNumberOfBuffers);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1356,7 +1356,7 @@ TEST_F(SourceTest, testCSVSourceFillBufferFullFileOnLoop) {
     sourceConfig->setFilePath(this->path_to_file);
     sourceConfig->setNumberOfBuffersToProduce(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
 
     CSVSourceProxy csvDataSource(this->schema,
                                  this->nodeEngine->getBufferManager(),
@@ -1397,7 +1397,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     sourceConfig->setFilePath(path_to_int_file);
     sourceConfig->setNumberOfBuffersToProduce(1);// file not looping
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
     CSVSourceProxy csvDataSource(int_schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1457,7 +1457,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     sourceConfig->setFilePath(path_to_float_file);
     sourceConfig->setNumberOfBuffersToProduce(1);// file is not going to loop
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setSourceFrequency(this->frequency);
+    sourceConfig->setGatheringInterval(this->gatheringInterval);
     CSVSourceProxy csvDataSource(float_schema,
                                  this->nodeEngine->getBufferManager(),
                                  this->nodeEngine->getQueryManager(),
@@ -1495,7 +1495,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     csvSourceType->setFilePath(path_to_bool_file);
     csvSourceType->setNumberOfBuffersToProduce(1);// file is not going to loop
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
-    csvSourceType->setSourceFrequency(this->frequency);
+    csvSourceType->setGatheringInterval(this->gatheringInterval);
 
     CSVSourceProxy csvDataSource(bool_schema,
                                  this->nodeEngine->getBufferManager(),
@@ -1559,7 +1559,7 @@ TEST_F(SourceTest, testDefaultSourceReceiveData) {
     EXPECT_EQ(buf->getNumberOfTuples(), 10u);
 }
 
-TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
+TEST_F(SourceTest, testLambdaSourceInitAndTypeInterval) {
     uint64_t numBuffers = 2;
     auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         uint64_t currentEventType = 0;
@@ -1585,7 +1585,7 @@ TEST_F(SourceTest, testLambdaSourceInitAndTypeFrequency) {
                                        func,
                                        this->operatorId,
                                        12,
-                                       GatheringMode::FREQUENCY_MODE,
+                                       GatheringMode::INTERVAL_MODE,
                                        {});
     ASSERT_EQ(lambdaDataSource.getType(), SourceType::LAMBDA_SOURCE);
     ASSERT_EQ(lambdaDataSource.getGatheringIntervalCount(), 0u);
@@ -2010,7 +2010,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
             return;
         };
 
-        auto lambdaSourceType1 = LambdaSourceType::create(std::move(func), 30, 0, "frequency");
+        auto lambdaSourceType1 = LambdaSourceType::create(std::move(func), 30, 0, "interval");
         auto physicalSource1 = PhysicalSource::create("input", "test_stream" + std::to_string(i), lambdaSourceType1);
         wrkConf->physicalSources.add(physicalSource1);
     }

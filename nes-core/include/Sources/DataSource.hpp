@@ -166,12 +166,12 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t getNumBuffersToProcess() const;
 
     /**
-     * @brief Get frequency of gathering the data
+     * @brief Get gathering interval
      */
     std::chrono::milliseconds getGatheringInterval() const;
 
     /**
-     * @brief Get frequency of gathering the data
+     * @brief Get number representation of gathering interval
      */
     uint64_t getGatheringIntervalCount() const;
 
@@ -259,9 +259,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 
     /**
-    * @brief running routine with a fix frequency
+    * @brief running routine with a fixed gathering interval
     */
-    virtual void runningRoutineWithFrequency();
+    virtual void runningRoutineWithInterval();
 
     /**
     * @brief running routine with a fix ingestion rate

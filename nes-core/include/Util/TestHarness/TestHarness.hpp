@@ -335,7 +335,7 @@ class TestHarness {
                         "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                             << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
         auto memorySourceType =
-            MemorySourceType::create(memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, "frequency");
+            MemorySourceType::create(memArea, memAreaSize, memSrcNumBuffToProcess, memSrcFrequency, "interval");
         return PhysicalSource::create(logicalSourceName, workerConf->getPhysicalSourceName(), memorySourceType);
     };
 

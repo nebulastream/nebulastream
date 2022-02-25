@@ -207,7 +207,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::physicalStreamName("test_stream"),
                                           TestUtils::logicalStreamName("default_logical"),
                                           TestUtils::numberOfBuffersToProduce(2),
-                                          TestUtils::sourceFrequency(1)});
+                                          TestUtils::sourceGatheringInterval(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -271,7 +271,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
                                           TestUtils::logicalStreamName("exdra"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(11),
-                                          TestUtils::sourceFrequency(1)});
+                                          TestUtils::sourceGatheringInterval(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -369,7 +369,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
                                           TestUtils::logicalStreamName("window"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                          TestUtils::sourceFrequency(1)});
+                                          TestUtils::sourceGatheringInterval(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -430,7 +430,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
                                           TestUtils::logicalStreamName("window"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                          TestUtils::sourceFrequency(1)});
+                                          TestUtils::sourceGatheringInterval(1)});
 
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 

@@ -62,7 +62,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                                const Runtime::BufferManagerPtr& bufferManager,
                                                const Runtime::QueryManagerPtr& queryManager,
                                                uint64_t numbersOfBufferToProduce,
-                                               uint64_t frequency,
+                                               uint64_t gatheringInterval,
                                                OperatorId operatorId,
                                                size_t numSourceLocalBuffers,
                                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
@@ -70,7 +70,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                            bufferManager,
                                            queryManager,
                                            numbersOfBufferToProduce,
-                                           frequency,
+                                           gatheringInterval,
                                            operatorId,
                                            numSourceLocalBuffers,
                                            successors);
@@ -208,7 +208,7 @@ DataSourcePtr createZmqSource(const SchemaPtr& schema,
                                        port,
                                        operatorId,
                                        numSourceLocalBuffers,
-                                       GatheringMode::FREQUENCY_MODE,
+                                       GatheringMode::INTERVAL_MODE,
                                        successors);
 }
 
@@ -225,7 +225,7 @@ DataSourcePtr createBinaryFileSource(const SchemaPtr& schema,
                                           pathToFile,
                                           operatorId,
                                           numSourceLocalBuffers,
-                                          GatheringMode::FREQUENCY_MODE,
+                                          GatheringMode::INTERVAL_MODE,
                                           successors);
 }
 
@@ -258,7 +258,7 @@ DataSourcePtr createCSVFileSource(const SchemaPtr& schema,
                                        csvSourceType,
                                        operatorId,
                                        numSourceLocalBuffers,
-                                       GatheringMode::FREQUENCY_MODE,
+                                       GatheringMode::INTERVAL_MODE,
                                        successors);
 }
 
@@ -297,7 +297,7 @@ DataSourcePtr createMaterializedViewSource(const SchemaPtr schema,
                                                                                     queryManager,
                                                                                     operatorId,
                                                                                     numSourceLocalBuffers,
-                                                                                    GatheringMode::FREQUENCY_MODE,
+                                                                                    GatheringMode::INTERVAL_MODE,
                                                                                     successors,
                                                                                     view);
 }

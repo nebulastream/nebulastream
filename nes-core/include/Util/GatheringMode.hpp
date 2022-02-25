@@ -23,7 +23,7 @@ namespace NES {
 class GatheringMode {
 
   public:
-    enum Value : uint8_t { FREQUENCY_MODE = 0, INGESTION_RATE_MODE = 1, ADAPTIVE_MODE = 2 };
+    enum Value : uint8_t { INTERVAL_MODE = 0, INGESTION_RATE_MODE = 1, ADAPTIVE_MODE = 2 };
 
     /**
      * @brief Get Gathering Mode from string

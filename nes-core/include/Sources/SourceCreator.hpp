@@ -59,7 +59,7 @@ createDefaultDataSourceWithSchemaForOneBuffer(const SchemaPtr& schema,
  * @param queryManager
  * @param operatorId
  * @param number of buffers that should be produced
- * @param frequency when to gather the next buffer
+ * @param gatheringInterval when to gather the next buffer
  * @return a const data source pointer
  */
 DataSourcePtr
@@ -67,7 +67,7 @@ createDefaultDataSourceWithSchemaForVarBuffers(const SchemaPtr& schema,
                                                const Runtime::BufferManagerPtr& bufferManager,
                                                const Runtime::QueryManagerPtr& queryManager,
                                                uint64_t numbersOfBufferToProduce,
-                                               uint64_t frequency,
+                                               uint64_t gatheringInterval,
                                                OperatorId operatorId,
                                                size_t numSourceLocalBuffers,
                                                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);

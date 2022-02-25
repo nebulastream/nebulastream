@@ -408,14 +408,14 @@ TEST_F(AdaptiveKFTest, kfNewGatheringIntervalMillisTest) {
     // empty filter
     KFProxy kfProxy{2};
     kfProxy.init(initialState);
-    auto oldFrequency = kfProxy.frequency;
+    auto oldFrequency = kfProxy.gatheringInterval;
 
     kfProxy.kfErrorWindow.push(0);
     kfProxy.kfErrorWindow.push(1);
     EXPECT_NE(kfProxy.calculateTotalEstimationError(), 0);
     EXPECT_NEAR(kfProxy.calculateTotalEstimationError(), 0.6, 0.1);
 
-    auto newFrequency = kfProxy.getNewFrequency();
+    auto newFrequency = kfProxy.getNewGatheringInterval();
     EXPECT_NE(oldFrequency.count(), newFrequency.count());
     EXPECT_GT(oldFrequency.count(), newFrequency.count());
 }

@@ -149,18 +149,17 @@ void KalmanFilter::calculateTotalEstimationErrorDivider(int size) {
     }
 }
 
-std::chrono::milliseconds KalmanFilter::getNewFrequency() {
+std::chrono::milliseconds KalmanFilter::getNewGatheringInterval() {
     // eq. 10
     auto totalEstimationError = this->calculateTotalEstimationError();
     auto powerOfEuler = (totalEstimationError + lambda) / lambda;
     auto thetaPart = theta * (1 - std::pow(eulerConstant, powerOfEuler));
-    auto newFreqCandidate = this->frequency.count() + thetaPart;
-    if (newFreqCandidate >= freqLastReceived.count() - (freqRange.count() / 2) &&
-        newFreqCandidate <= freqLastReceived.count() + (freqRange.count() / 2)) { // eq. 7
+    auto newGatheringIntervalCandidate = this->gatheringInterval.count() + thetaPart;
+    if (newGatheringIntervalCandidate >= gatheringIntervalReceived.count() - (gatheringIntervalRange.count() / 2) && newGatheringIntervalCandidate <= gatheringIntervalReceived.count() + (gatheringIntervalRange.count() / 2)) { // eq. 7
         // remove fractional part from double
-        this->frequency = std::chrono::milliseconds((int) trunc(newFreqCandidate));
+        this->gatheringInterval = std::chrono::milliseconds((int) trunc(newGatheringIntervalCandidate));
     }
-    return this->frequency;
+    return this->gatheringInterval;
 }
 
 void KalmanFilter::updateFromTupleBuffer(Runtime::TupleBuffer& tupleBuffer) {
@@ -189,21 +188,21 @@ void KalmanFilter::setLambda(float newLambda) {
     this->lambda = newLambda;
 }
 
-void KalmanFilter::setFrequency(std::chrono::milliseconds frequencyInMillis) {
-    frequency = frequencyInMillis;
-    freqLastReceived = frequencyInMillis;
+void KalmanFilter::setGatheringInterval(std::chrono::milliseconds gatheringIntervalInMillis) {
+    this->gatheringInterval = gatheringIntervalInMillis;
+    this->gatheringIntervalReceived = gatheringIntervalInMillis;
 }
-void KalmanFilter::setFrequencyRange(std::chrono::milliseconds frequencyRange) {
-    freqRange = frequencyRange;
+void KalmanFilter::setGatheringIntervalRange(std::chrono::milliseconds gatheringIntervalRange) {
+    this->gatheringIntervalRange = gatheringIntervalRange;
 }
-void KalmanFilter::setFrequencyWithRange(std::chrono::milliseconds frequencyInMillis,
-                           std::chrono::milliseconds frequencyRange) {
-    this->setFrequency(frequencyInMillis);
-    this->setFrequencyRange(frequencyRange);
+void KalmanFilter::setGatheringIntervalWithRange(std::chrono::milliseconds gatheringIntervalInMillis,
+                           std::chrono::milliseconds gatheringIntervalRange) {
+    this->setGatheringInterval(gatheringIntervalInMillis);
+    this->setGatheringIntervalRange(gatheringIntervalRange);
 }
 
-std::chrono::milliseconds KalmanFilter::getCurrentFrequency() {
-    return this->frequency;
+std::chrono::milliseconds KalmanFilter::getCurrentGatheringInterval() {
+    return this->gatheringInterval;
 }
 
 }// namespace NES

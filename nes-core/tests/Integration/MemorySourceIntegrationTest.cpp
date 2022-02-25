@@ -82,7 +82,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect, 0, "frequency");
+    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect, 0, "interval");
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -181,7 +181,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, 1, 0, "frequency");
+    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, 1, 0, "interval");
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
@@ -282,7 +282,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
         records[i].timestamp = i;
     }
 
-    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect+1, 0, "frequency");
+    auto memorySourceType = MemorySourceType::create(memArea, memAreaSize, buffersToExpect+1, 0, "interval");
     auto physicalSource = PhysicalSource::create("memory_stream", "memory_stream_0", memorySourceType);
     wrkConf->physicalSources.add(physicalSource);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));

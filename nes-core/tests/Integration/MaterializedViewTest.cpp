@@ -70,7 +70,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleViewSinkTest) {
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
-    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setSkipHeader(true);
     auto physicalSource1 = PhysicalSource::create("stream", "test_stream", csvSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
@@ -183,7 +183,7 @@ TEST_F(MaterializedViewTest, MaterializedViewTupleBufferSinkAndSourceTest) {
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType1->setNumberOfBuffersToProduce(1000);
-    csvSourceType1->setSourceFrequency(1);
+    csvSourceType1->setGatheringInterval(1);
     csvSourceType1->setSkipHeader(true);
     auto physicalSource2 = PhysicalSource::create("stream", "test_stream", materializeViewSourceType);
     workerConfig1->physicalSources.add(physicalSource1);

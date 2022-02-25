@@ -150,7 +150,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                            TestUtils::logicalStreamName("QnV"),
                                            TestUtils::numberOfBuffersToProduce(1),
                                            TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                           TestUtils::sourceFrequency(1000)});
+                                           TestUtils::sourceGatheringInterval(1000)});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
@@ -161,7 +161,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                            TestUtils::logicalStreamName("QnV"),
                                            TestUtils::numberOfBuffersToProduce(1),
                                            TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                           TestUtils::sourceFrequency(1000)});
+                                           TestUtils::sourceGatheringInterval(1000)});
 
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
@@ -228,7 +228,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                 TestUtils::logicalStreamName("QnV"),
                                 TestUtils::numberOfBuffersToProduce(1),
                                 TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                TestUtils::sourceFrequency(1000)});
+                                TestUtils::sourceGatheringInterval(1000)});
 
     auto worker2 =
         TestUtils::startWorker({TestUtils::rpcPort(0),
@@ -240,7 +240,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
                                 TestUtils::logicalStreamName("QnV"),
                                 TestUtils::numberOfBuffersToProduce(1),
                                 TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                TestUtils::sourceFrequency(1000)});
+                                TestUtils::sourceGatheringInterval(1000)});
 
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
@@ -323,7 +323,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
                                            TestUtils::logicalStreamName("window"),
                                            TestUtils::numberOfBuffersToProduce(1),
                                            TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceFrequency(1000)});
+                                           TestUtils::sourceGatheringInterval(1000)});
 
     auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
                                            TestUtils::dataPort(0),
@@ -334,7 +334,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
                                            TestUtils::logicalStreamName("window"),
                                            TestUtils::numberOfBuffersToProduce(1),
                                            TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                           TestUtils::sourceFrequency(1000)});
+                                           TestUtils::sourceGatheringInterval(1000)});
 
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 

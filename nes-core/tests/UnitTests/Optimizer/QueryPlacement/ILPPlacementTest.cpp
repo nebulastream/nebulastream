@@ -106,7 +106,7 @@ class ILPPlacementTest : public testing::Test {
         streamCatalogForILP->addLogicalStream(streamName, schema);
         auto logicalSource = streamCatalogForILP->getStreamForLogicalStream(streamName);
         CSVSourceTypePtr csvSourceType = CSVSourceType::create();
-        csvSourceType->setSourceFrequency(0);
+        csvSourceType->setGatheringInterval(0);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
         auto physicalSource = PhysicalSource::create(streamName, "test2", csvSourceType);
         SourceCatalogEntryPtr streamCatalogEntry1 =

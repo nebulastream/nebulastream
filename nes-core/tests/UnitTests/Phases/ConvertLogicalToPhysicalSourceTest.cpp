@@ -70,7 +70,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogicalToPhysica
     csvSourceType->setFilePath("csv.log");
     csvSourceType->setNumberOfBuffersToProduce(10);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(0);
-    csvSourceType->setSourceFrequency(1);
+    csvSourceType->setGatheringInterval(1);
     SourceDescriptorPtr sourceDescriptor = CsvSourceDescriptor::create(schema, csvSourceType);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(1, sourceDescriptor, engine, 12);
     EXPECT_EQ(csvFileSource->getType(), CSV_SOURCE);

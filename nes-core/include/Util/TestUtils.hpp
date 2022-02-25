@@ -87,8 +87,8 @@ class TestUtils {
         return "--physicalSources." + NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + "=" + std::to_string(numberOfBuffersToProduce);
     }
 
-    [[nodiscard]] static std::string sourceFrequency(uint64_t sourceFrequency) {
-        return "--physicalSources." + SOURCE_FREQUENCY_CONFIG + "=" + std::to_string(sourceFrequency);
+    [[nodiscard]] static std::string sourceGatheringInterval(uint64_t sourceGatheringInterval) {
+        return "--physicalSources." + SOURCE_GATHERING_INTERVAL_CONFIG + "=" + std::to_string(sourceGatheringInterval);
     }
 
     [[nodiscard]] static std::string restPort(uint64_t restPort) { return "--restPort=" + std::to_string(restPort); }

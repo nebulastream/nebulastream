@@ -261,7 +261,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "QnV_short.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                          TestUtils::sourceFrequency(1000),
+                                          TestUtils::sourceGatheringInterval(1000),
                                           TestUtils::physicalStreamName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
@@ -364,7 +364,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                          TestUtils::sourceFrequency(1000),
+                                          TestUtils::sourceGatheringInterval(1000),
                                           TestUtils::physicalStreamName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
@@ -465,7 +465,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                                           TestUtils::sourceType("CSVSource"),
                                           TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY) + "window.csv"),
                                           TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::sourceFrequency(1000),
+                                          TestUtils::sourceGatheringInterval(1000),
                                           TestUtils::numberOfTuplesToProducePerBuffer(28),
                                           TestUtils::physicalStreamName("test_stream")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));

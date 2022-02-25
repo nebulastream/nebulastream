@@ -225,7 +225,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType1 = DefaultSourceType::create();
-    defaultSourceType1->setSourceFrequency(3);
+    defaultSourceType1->setGatheringInterval(3);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
@@ -276,7 +276,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType1 = DefaultSourceType::create();
-    defaultSourceType1->setSourceFrequency(1);
+    defaultSourceType1->setGatheringInterval(1);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
@@ -386,7 +386,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
     workerConfig1->coordinatorPort = port;
     auto defaultSourceType1 = DefaultSourceType::create();
-    defaultSourceType1->setSourceFrequency(1);
+    defaultSourceType1->setGatheringInterval(1);
     defaultSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", defaultSourceType1);
     workerConfig1->physicalSources.add(physicalSource1);
@@ -506,7 +506,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     outCsv.close();
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("testCSV.csv");
-    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setGatheringInterval(0);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(3);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", csvSourceType1);
@@ -566,7 +566,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     outCsv.close();
     auto csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath("testCSV.csv");
-    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setGatheringInterval(0);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(1);
     auto physicalSource1 = PhysicalSource::create("testStream", "test_stream", csvSourceType1);
@@ -642,7 +642,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     workerConfig1->coordinatorPort = *rpcCoordinatorPort;
     CSVSourceTypePtr csvSourceType1 = CSVSourceType::create();
     csvSourceType1->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
-    csvSourceType1->setSourceFrequency(0);
+    csvSourceType1->setGatheringInterval(0);
     csvSourceType1->setNumberOfTuplesToProducePerBuffer(0);
     csvSourceType1->setNumberOfBuffersToProduce(5);
     auto physicalSource1 = PhysicalSource::create("exdra", "test_stream", csvSourceType1);
@@ -785,7 +785,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
 
     auto csvSourceType = CSVSourceType::create();
     csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "long_running.csv");
-    csvSourceType->setSourceFrequency(0);
+    csvSourceType->setGatheringInterval(0);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
     csvSourceType->setNumberOfBuffersToProduce(numBufferToProduce);
     csvSourceType->setSkipHeader(false);

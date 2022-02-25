@@ -93,7 +93,7 @@ class MillisecondIntervalTest : public Testing::NESBaseTest {
 
         csvSourceType = CSVSourceType::create();
         csvSourceType->setFilePath(std::string(TEST_DATA_DIRECTORY) + "exdra.csv");
-        csvSourceType->setSourceFrequency(550);
+        csvSourceType->setGatheringInterval(550);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(1);
         csvSourceType->setNumberOfBuffersToProduce(3);
         PhysicalSourcePtr streamConf = PhysicalSource::create("testStream", "physical_test", csvSourceType);
@@ -181,7 +181,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
     csvSourceType->setFilePath(this->path_to_file);
     csvSourceType->setNumberOfBuffersToProduce(numberOfBuffers);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
-    csvSourceType->setSourceFrequency(frequency);
+    csvSourceType->setGatheringInterval(frequency);
 
     auto source = createCSVFileSource(schema,
                                       this->nodeEngine->getBufferManager(),
@@ -226,7 +226,7 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     csvSourceType->setFilePath(this->path_to_file);
     csvSourceType->setNumberOfBuffersToProduce(numberOfBuffers);
     csvSourceType->setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProcess);
-    csvSourceType->setSourceFrequency(frequency);
+    csvSourceType->setGatheringInterval(frequency);
 
     const DataSourcePtr source =
         createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), csvSourceType, 1, 12, {});

@@ -101,14 +101,14 @@ class CSVSourceType : public PhysicalSourceType {
     void setDelimiter(std::string delimiter);
 
     /**
-     * @brief gets a ConfigurationOption object with sourceFrequency
+     * @brief gets a ConfigurationOption object with sourceGatheringInterval
      */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getSourceFrequency() const;
+    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getGatheringInterval() const;
 
     /**
-     * @brief set the value for sourceFrequency with the appropriate data format
+     * @brief set the value for sourceGatheringInterval with the appropriate data format
      */
-    void setSourceFrequency(uint32_t sourceFrequencyValue);
+    void setGatheringInterval(uint32_t sourceGatheringIntervalValue);
 
     /**
      * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
@@ -150,7 +150,7 @@ class CSVSourceType : public PhysicalSourceType {
     Configurations::StringConfigOption delimiter;
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
-    Configurations::IntConfigOption sourceFrequency;
+    Configurations::IntConfigOption sourceGatheringInterval;
 };
 
 }// namespace NES
