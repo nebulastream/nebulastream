@@ -220,6 +220,20 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     bool checkSupportedLayoutTypes(SchemaPtr& schema);
 
     /**
+     * @brief API method called upon receiving an event.
+     * @note Currently has no behaviour. We need to overwrite DataEmitter::onEvent for compliance.
+     * @param event
+     */
+    virtual void onEvent(Runtime::BaseEvent&) override;
+    /**
+     * @brief API method called upon receiving an event, whose handling requires the WorkerContext (e.g. its network channels).
+     * @note Only calls onEvent(event) of this class or derived classes.
+     * @param event
+     * @param workerContext
+     */
+    virtual void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext);
+
+    /**
      * @brief method injects epoch barrier to the data source
      * @param epochBarrier current epoch barrier
      * @param queryId currect query id

@@ -39,7 +39,7 @@ class WorkerContext {
     std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// data channels that send data downstream
     std::unordered_map<Network::OperatorId, Network::NetworkChannelPtr> dataChannels;
-    /// event only channeks that send events upstream
+    /// event only channels that send events upstream
     std::unordered_map<Network::OperatorId, Network::EventOnlyNetworkChannelPtr> reverseEventChannels;
     /// worker local buffer pool
     LocalBufferPoolPtr localBufferPool;

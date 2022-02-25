@@ -80,18 +80,71 @@ class BatchJoinOperatorHandler : public Runtime::Execution::OperatorHandler {
 
     SchemaPtr getResultSchema();
 
+
+    /**
+     * @brief reconfigure callback that will be called per thread. When it is called by every thread on the build side: startProbeSide()
+    */
     void reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& context) override;
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& task) override;
 
+    /**
+    * @brief Register the ID of the probe pipeline (that holds this operator handler)
+    * @param probePipelineID
+    */
+    void setProbePipelineID(uint64_t probePipelineID) {
+        if (this->probePipelineID != 0) {
+            NES_WARNING("BatchJoinOperatorHandler::setProbePipelineID called a second time. "
+                     "Previous id: " << this->probePipelineID << "New id: " << probePipelineID);
+        }
+        this->probePipelineID = probePipelineID;
+    }
+    /**
+    * @brief Register the ID of the build pipeline (that holds this operator handler)
+    * @param probePipelineID
+    */
+    void setBuildPipelineID(uint64_t buildPipelineID) {
+        if (this->probePipelineID != 0) {
+            NES_WARNING("BatchJoinOperatorHandler::setBuildPipelineID called a second time. "
+                     "Previous id: " << this->buildPipelineID << "New id: " << buildPipelineID);
+        }
+        this->buildPipelineID = buildPipelineID;
+    }
+    /**
+    * @brief Get the ID of the probe pipeline (that holds this operator handler)
+    * @returns probePipelineID
+    */
+    uint64_t getProbePipelineID() {
+        return this->probePipelineID;
+    }
+    /**
+    * @brief Get the ID of the build pipeline (that holds this operator handler)
+    * @returns probePipelineID
+    */
+    uint64_t getBuildPipelineID() {
+        return this->buildPipelineID;
+    }
+
   private:
+
+    /**
+     * @brief Starts all predecessors on the Joins Probe side by calling onEvent(StartSourceEvent)
+    */
+    void startProbeSide(Runtime::WorkerContext& context);
+
     LogicalBatchJoinDefinitionPtr batchJoinDefinition;
     AbstractBatchJoinHandlerPtr batchJoinHandler;
     SchemaPtr resultSchema;
 
-    // we save these pointers (assumed to be static data sources) to start them manually in start() and postReconfigurationCallback()
-    Runtime::Execution::PredecessorExecutablePipeline buildPredecessor;
-    Runtime::Execution::PredecessorExecutablePipeline probePredecessor;
+    // we save these pointers (DataSources or ExecutablePipelines) to manually start the joins predecessors
+    std::vector<Runtime::Execution::PredecessorExecutablePipeline> probePredecessors;
+    std::vector<Runtime::Execution::PredecessorExecutablePipeline> buildPredecessors;
+
+    uint64_t probePipelineID;
+    uint64_t buildPipelineID;
+
+    uint64_t workerThreadsBuildSideTotal = 0;
+    std::atomic<uint64_t> workerThreadsBuildSideFinished = 0;
 
     bool foundAndStartedBuildSide = false;
     bool foundProbeSide = false;

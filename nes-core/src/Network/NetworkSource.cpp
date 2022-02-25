@@ -236,4 +236,17 @@ void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
     }
 }
 
+void NetworkSource::onEvent(Runtime::BaseEvent&) {
+    NES_WARNING("NetworkSource::onEvent(event) called. Can not send Event upstream in network without the WorkerContext."
+               " operatorId: " << this->operatorId);
+}
+
+void NetworkSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext) {
+    NES_DEBUG("NetworkSource::onEvent(event, wrkContext) called. operatorId: " << this->operatorId);
+    if (event.getEventType() == Runtime::EventType::startSourceEvent) {
+        auto senderChannel = workerContext.getEventOnlyNetworkChannel(this->operatorId);
+        senderChannel->sendEvent<Runtime::StartSourceEvent>();
+    }
+}
+
 }// namespace NES::Network

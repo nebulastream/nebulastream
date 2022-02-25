@@ -61,7 +61,11 @@ class StaticDataSourceIntegrationTest : public Testing::NESBaseTest {
     const std::string table_path_customer_s0001 = "./test_data/tpch_s0001_customer.tbl";
     const std::string table_path_nation_s0001 = "./test_data/tpch_s0001_nation.tbl";
     const std::string table_path_integers_0 = "./test_data/static_data_0.tbl";
+    const std::string table_path_integers_0a = "./test_data/static_data_0a.tbl";
+    const std::string table_path_integers_0b = "./test_data/static_data_0b.tbl";
     const std::string table_path_integers_1 = "./test_data/static_data_1.tbl";
+    const std::string table_path_integers_1a = "./test_data/static_data_1a.tbl";
+    const std::string table_path_integers_1b = "./test_data/static_data_1b.tbl";
     const std::string table_path_integers_2 = "./test_data/static_data_2.tbl";
 
     static void SetUpTestCase() {
@@ -564,15 +568,15 @@ TEST_F(StaticDataSourceIntegrationTest, DISABLED_testTwoTableStreamingJoin) {
     NES_INFO("StaticDataSourceIntegrationTest: Start worker 1");
     wrkConf->coordinatorPort = port;
 
-    PhysicalSourceTypePtr sourceType1 =
+    PhysicalSourceTypePtr sourceType0 =
             StaticDataSourceType::create(table_path_nation_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ false);
-    auto physicalSource1 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    auto physicalSource0 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType0);
+    wrkConf->physicalSources.add(physicalSource0);
 
-    PhysicalSourceTypePtr sourceType2 =
+    PhysicalSourceTypePtr sourceType1 =
             StaticDataSourceType::create(table_path_customer_l0200, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ false);
-    auto physicalSource2 = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType2);
-    wrkConf->physicalSources.add(physicalSource2);
+    auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType1);
+    wrkConf->physicalSources.add(physicalSource1);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
@@ -636,15 +640,15 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
     crdConf->logicalSources.push_back(LogicalSource::create("tpch_customer", schema_customer));
     crdConf->logicalSources.push_back(LogicalSource::create("tpch_nation", schema_nation));
 
-    PhysicalSourceTypePtr sourceType1 =
+    PhysicalSourceTypePtr sourceType0 =
             StaticDataSourceType::create(table_path_nation_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
-    auto physicalSource1 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    auto physicalSource0 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType0);
+    wrkConf->physicalSources.add(physicalSource0);
 
-    PhysicalSourceTypePtr sourceType2 =
+    PhysicalSourceTypePtr sourceType1 =
             StaticDataSourceType::create(table_path_customer_l0200, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
-    auto physicalSource2 = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType2);
-    wrkConf->physicalSources.add(physicalSource2);
+    auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_l0200_customer", sourceType1);
+    wrkConf->physicalSources.add(physicalSource1);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
@@ -700,7 +704,7 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomer200lines) {
 }
 
 // join two static data sources together with the batch join operator.
-// Joins the full 150k record Customer table, may take up to a minute (todo this is to slow)
+// Joins the full 150k record Customer table, may take up to a minute (todo this is too slow)
 TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
@@ -713,15 +717,15 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinNationCustomerFull) {
     crdConf->logicalSources.push_back(LogicalSource::create("tpch_customer", schema_customer));
     crdConf->logicalSources.push_back(LogicalSource::create("tpch_nation", schema_nation));
 
-    PhysicalSourceTypePtr sourceType1 =
+    PhysicalSourceTypePtr sourceType0 =
             StaticDataSourceType::create(table_path_nation_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
-    auto physicalSource1 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    auto physicalSource0 = PhysicalSource::create("tpch_nation", "tpch_s0001_nation", sourceType0);
+    wrkConf->physicalSources.add(physicalSource0);
 
-    PhysicalSourceTypePtr sourceType2 =
+    PhysicalSourceTypePtr sourceType1 =
             StaticDataSourceType::create(table_path_customer_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
-    auto physicalSource2 = PhysicalSource::create("tpch_customer", "tpch_s0001_customer", sourceType2);
-    wrkConf->physicalSources.add(physicalSource2);
+    auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_s0001_customer", sourceType1);
+    wrkConf->physicalSources.add(physicalSource1);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
@@ -797,15 +801,15 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     crdConf->logicalSources.push_back(LogicalSource::create("static_integers_only_0", schema_integers_0));
     crdConf->logicalSources.push_back(LogicalSource::create("static_integers_only_1", schema_integers_1));
 
-    PhysicalSourceTypePtr sourceType1 =
+    PhysicalSourceTypePtr sourceType0 =
             StaticDataSourceType::create(table_path_integers_0, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
-    auto physicalSource1 = PhysicalSource::create("static_integers_only_0", "static_integers_only_0", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    auto physicalSource0 = PhysicalSource::create("static_integers_only_0", "static_integers_only_0", sourceType0);
+    wrkConf->physicalSources.add(physicalSource0);
 
-    PhysicalSourceTypePtr sourceType2 =
+    PhysicalSourceTypePtr sourceType1 =
             StaticDataSourceType::create(table_path_integers_1, 0, "wrapBuffer", /* placeholder: */ 0, true);
-    auto physicalSource2 = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType2);
-    wrkConf->physicalSources.add(physicalSource2);
+    auto physicalSource1 = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1);
+    wrkConf->physicalSources.add(physicalSource1);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 
@@ -813,6 +817,282 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnly) {
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0UL);
     NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    auto streamCatalog = crd->getStreamCatalog();
+
+    // local fs
+    std::string filePath = getTestResourceFolder() / "testBatchJoinIntegersOut.csv";
+    remove(filePath.c_str());
+
+    //register query
+    std::string queryString =
+            R"(Query::from("static_integers_only_0")
+            .batchJoinWith(
+                Query::from("static_integers_only_1")
+                ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
+            .sink(FileSinkDescriptor::create(")"
+            + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId =
+            queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    int buffersToExpect = 1;
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+
+    // extract total query runtime from statistics
+    auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
+    printTotalQueryRuntime(stats);
+
+    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    std::ifstream ifs(filePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+
+    const std::string expected = "static_integers_only_0$id:INTEGER,static_integers_only_0$value:INTEGER,"
+                                 "static_integers_only_1$id:INTEGER,static_integers_only_1$one:INTEGER,static_integers_only_1$value:INTEGER\n"
+                                 "1,10,1,1,1000\n"
+                                 "2,20,2,1,2000\n"
+                                 "3,30,3,1,3000\n"
+                                 "4,40,4,1,4000\n"
+                                 "5,50,5,1,5000\n"
+                                 "6,60,6,1,6000\n"
+                                 "7,70,7,1,7000\n"
+                                 "8,80,8,1,8000\n"
+                                 "9,90,9,1,9000\n"
+                                 "10,100,10,1,10000\n";
+    EXPECT_EQ(content, expected);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+// join two static data sources together with the batch join operator
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyPartitioned) {
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+
+    crdConf->rpcPort=(*rpcCoordinatorPort);
+    crdConf->restPort = *restPort;
+    wrkConf->coordinatorPort = crdConf->rpcPort;
+
+    // use deprecated feature "logicalSources" to register logical streams before physical streams
+    crdConf->logicalSources.push_back(LogicalSource::create("static_integers_only_0", schema_integers_0));
+    crdConf->logicalSources.push_back(LogicalSource::create("static_integers_only_1", schema_integers_1));
+
+    // register two physical partitions of the build side source
+    PhysicalSourceTypePtr sourceType0a =
+            StaticDataSourceType::create(table_path_integers_0a, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
+    PhysicalSourceTypePtr sourceType0b =
+            StaticDataSourceType::create(table_path_integers_0b, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
+    auto physicalSource0a = PhysicalSource::create("static_integers_only_0", "static_integers_only_0a", sourceType0a);
+    auto physicalSource0b = PhysicalSource::create("static_integers_only_0", "static_integers_only_0b", sourceType0b);
+    wrkConf->physicalSources.add(physicalSource0a);
+    wrkConf->physicalSources.add(physicalSource0b);
+
+    // register two physical partitions of the probe side source
+    PhysicalSourceTypePtr sourceType1a =
+            StaticDataSourceType::create(table_path_integers_1a, 0, "wrapBuffer", /* placeholder: */ 0, true);
+    PhysicalSourceTypePtr sourceType1b =
+            StaticDataSourceType::create(table_path_integers_1b, 0, "wrapBuffer", /* placeholder: */ 0, true);
+    auto physicalSource1a = PhysicalSource::create("static_integers_only_1", "static_integers_only_1a", sourceType1a);
+    auto physicalSource1b = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1b);
+    wrkConf->physicalSources.add(physicalSource1a);
+    wrkConf->physicalSources.add(physicalSource1b);
+
+    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    auto streamCatalog = crd->getStreamCatalog();
+
+    // local fs
+    std::string filePath = getTestResourceFolder() / "testBatchJoinIntegersOut.csv";
+    remove(filePath.c_str());
+
+    //register query
+    std::string queryString =
+            R"(Query::from("static_integers_only_0")
+            .batchJoinWith(
+                Query::from("static_integers_only_1")
+                ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
+            .sink(FileSinkDescriptor::create(")"
+            + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId =
+            queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    int buffersToExpect = 1;
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+
+    // extract total query runtime from statistics
+    auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
+    printTotalQueryRuntime(stats);
+
+    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    std::ifstream ifs(filePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+
+    const std::string expected = "static_integers_only_0$id:INTEGER,static_integers_only_0$value:INTEGER,"
+                                 "static_integers_only_1$id:INTEGER,static_integers_only_1$one:INTEGER,static_integers_only_1$value:INTEGER\n"
+                                 "1,10,1,1,1000\n"
+                                 "2,20,2,1,2000\n"
+                                 "3,30,3,1,3000\n"
+                                 "4,40,4,1,4000\n"
+                                 "5,50,5,1,5000\n"
+                                 "6,60,6,1,6000\n"
+                                 "7,70,7,1,7000\n"
+                                 "8,80,8,1,8000\n"
+                                 "9,90,9,1,9000\n"
+                                 "10,100,10,1,10000\n";
+    EXPECT_EQ(content, expected);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+
+// join two static data sources together with the batch join operator
+TEST_F(StaticDataSourceIntegrationTest, testBatchJoinIntegersOnlyWithOtherOperations) {
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+
+    crdConf->rpcPort=(*rpcCoordinatorPort);
+    crdConf->restPort = *restPort;
+    wrkConf->coordinatorPort = crdConf->rpcPort;
+
+    // use deprecated feature "logicalSources" to register logical streams before physical streams
+    crdConf->logicalSources.push_back(LogicalSource::create("static_integers_only_0", schema_integers_0));
+    crdConf->logicalSources.push_back(LogicalSource::create("static_integers_only_1", schema_integers_1));
+
+    PhysicalSourceTypePtr sourceType0 =
+            StaticDataSourceType::create(table_path_integers_0, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
+    auto physicalSource0 = PhysicalSource::create("static_integers_only_0", "static_integers_only_0", sourceType0);
+    wrkConf->physicalSources.add(physicalSource0);
+
+    PhysicalSourceTypePtr sourceType1 =
+            StaticDataSourceType::create(table_path_integers_1, 0, "wrapBuffer", /* placeholder: */ 0, true);
+    auto physicalSource1 = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1);
+    wrkConf->physicalSources.add(physicalSource1);
+
+    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    auto streamCatalog = crd->getStreamCatalog();
+
+    // local fs
+    std::string filePath = getTestResourceFolder() / "testBatchJoinIntegersOut.csv";
+    remove(filePath.c_str());
+
+    //register query
+
+    // this applies a filter on the PROBE side:
+    std::string queryString =
+            R"(Query::from("static_integers_only_0")
+            .filter(Attribute("static_integers_only_0$id") < 6)
+            .project(Attribute("value"), Attribute("id"))
+            .batchJoinWith(
+                Query::from("static_integers_only_1")
+                .project(Attribute("value"), Attribute("id"), Attribute("one"))
+                ).where(Attribute("static_integers_only_1$id")).equalsTo(Attribute("static_integers_only_0$id"))
+            .map(Attribute("IDplusID") = Attribute("static_integers_only_1$id") + Attribute("static_integers_only_0$id"))
+            .sink(FileSinkDescriptor::create(")"
+            + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId =
+            queryService->validateAndQueueAddRequest(queryString, "BottomUp", FaultToleranceType::NONE, LineageType::IN_MEMORY);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    int buffersToExpect = 1;
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, buffersToExpect));
+
+    // extract total query runtime from statistics
+    auto stats = crd->getQueryStatistics(globalQueryPlan->getSharedQueryId(queryId));
+    printTotalQueryRuntime(stats);
+
+    NES_INFO("StaticDataSourceIntegrationTest: Remove query");
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    std::ifstream ifs(filePath.c_str());
+    EXPECT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+
+    const std::string expected = "static_integers_only_0$value:INTEGER,static_integers_only_0$id:INTEGER,"
+                                 "static_integers_only_1$value:INTEGER,static_integers_only_1$id:INTEGER,"
+                                 "static_integers_only_1$one:INTEGER,static_integers_only_0$IDplusID:INTEGER\n"
+                                 "10,1,1000,1,1,2\n"
+                                 "20,2,2000,2,1,4\n"
+                                 "30,3,3000,3,1,6\n"
+                                 "40,4,4000,4,1,8\n"
+                                 "50,5,5000,5,1,10\n";
+    EXPECT_EQ(content, expected);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+
+// join two static data sources together with the batch join operator
+TEST_F(StaticDataSourceIntegrationTest, DISABLED_testBatchJoinIntegersOnlyRemoteProbeSource) {
+    CoordinatorConfigurationPtr crdConf = CoordinatorConfiguration::create();
+    WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
+    WorkerConfigurationPtr wrkConfRemote = WorkerConfiguration::create();
+
+    crdConf->rpcPort=(*rpcCoordinatorPort);
+    crdConf->restPort = *restPort;
+    wrkConf->coordinatorPort = crdConf->rpcPort;
+
+    // use deprecated feature "logicalSources" to register logical streams before physical streams
+    crdConf->logicalSources.push_back(LogicalSource::create("static_integers_only_0", schema_integers_0));
+    crdConf->logicalSources.push_back(LogicalSource::create("static_integers_only_1", schema_integers_1));
+
+    PhysicalSourceTypePtr sourceType0 =
+            StaticDataSourceType::create(table_path_integers_0, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
+    auto physicalSource0 = PhysicalSource::create("static_integers_only_0", "static_integers_only_0", sourceType0);
+    wrkConf->physicalSources.add(physicalSource0);
+
+    PhysicalSourceTypePtr sourceType1 =
+            StaticDataSourceType::create(table_path_integers_1, 0, "wrapBuffer", /* placeholder: */ 0, true);
+    auto physicalSource1 = PhysicalSource::create("static_integers_only_1", "static_integers_only_1", sourceType1);
+    wrkConfRemote->physicalSources.add(physicalSource1);
+
+    NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
+
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf, wrkConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("StaticDataSourceIntegrationTest: Coordinator started successfully");
+
+    wrkConfRemote->coordinatorPort = port;
+    NesWorkerPtr wrkRemote = std::make_shared<NesWorker>(std::move(wrkConfRemote));
+    bool retStartRemote = wrkRemote->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStartRemote);
+    NES_INFO("StaticDataSourceIntegrationTest: Remote worker started successfully");
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -883,15 +1163,15 @@ TEST_F(StaticDataSourceIntegrationTest, testBatchJoinCustomerWithIntTable) {
     crdConf->logicalSources.push_back(LogicalSource::create("static_integers_only_2", schema_integers_0)); // (integers_only_2 has same schema as integers_only_0)
     crdConf->logicalSources.push_back(LogicalSource::create("tpch_customer", schema_customer));
 
-    PhysicalSourceTypePtr sourceType1 =
+    PhysicalSourceTypePtr sourceType0 =
             StaticDataSourceType::create(table_path_integers_2, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
-    auto physicalSource1 = PhysicalSource::create("static_integers_only_2", "static_integers_only_2", sourceType1);
-    wrkConf->physicalSources.add(physicalSource1);
+    auto physicalSource0 = PhysicalSource::create("static_integers_only_2", "static_integers_only_2", sourceType0);
+    wrkConf->physicalSources.add(physicalSource0);
 
-    PhysicalSourceTypePtr sourceType2 =
+    PhysicalSourceTypePtr sourceType1 =
             StaticDataSourceType::create(table_path_customer_s0001, 0, "wrapBuffer", /* placeholder: */ 0, /* late start? */ true);
-    auto physicalSource2 = PhysicalSource::create("tpch_customer", "tpch_customer_s0001", sourceType2);
-    wrkConf->physicalSources.add(physicalSource2);
+    auto physicalSource1 = PhysicalSource::create("tpch_customer", "tpch_customer_s0001", sourceType1);
+    wrkConf->physicalSources.add(physicalSource1);
 
     NES_INFO("StaticDataSourceIntegrationTest: Start coordinator");
 

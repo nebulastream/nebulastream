@@ -19,9 +19,12 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinProbeOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalBatchJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
+#include <Windowing/WindowHandler/BatchJoinOperatorHandler.hpp>
 #include <utility>
 
 namespace NES::QueryCompilation {
@@ -100,11 +103,29 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(const PipelineQueryP
                                                             const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
     // for pipeline breakers we create a new pipeline
     currentPipeline->prependOperator(currentOperator->as<PhysicalOperators::PhysicalOperator>()->copy());
+    registerPipelineWithOperatorHandlers(currentPipeline, currentOperator);
+
     for (const auto& node : currentOperator->getChildren()) {
         auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
         process(pipelinePlan, pipelineOperatorMap, newPipeline, node->as<PhysicalOperators::PhysicalOperator>());
+    }
+}
+
+void DefaultPipeliningPhase::registerPipelineWithOperatorHandlers(const OperatorPipelinePtr& currentPipeline,
+                                                                  const PhysicalOperators::PhysicalOperatorPtr& currentOperator) {
+    // this function can also be used to register with other types of operator handlers
+    // and may be called from other functions than the current processPipelineBreakerOperator().
+
+    if (currentOperator->instanceOf<PhysicalOperators::PhysicalBatchJoinProbeOperator>()) {
+        auto probeOperator = currentOperator->as<PhysicalOperators::PhysicalBatchJoinProbeOperator>();
+        uint64_t probePipelineID = currentPipeline->getPipelineId();
+        probeOperator->getBatchJoinHandler()->setProbePipelineID(probePipelineID);
+    } else if (currentOperator->instanceOf<PhysicalOperators::PhysicalBatchJoinBuildOperator>()) {
+        auto buildOperator = currentOperator->as<PhysicalOperators::PhysicalBatchJoinBuildOperator>();
+        uint64_t buildPipelineID = currentPipeline->getPipelineId();
+        buildOperator->getBatchJoinHandler()->setBuildPipelineID(buildPipelineID);
     }
 }
 
