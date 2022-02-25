@@ -348,7 +348,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema,
                                        password,
                                        operatorId,
                                        numSourceLocalBuffers,
-                                       GatheringMode::FREQUENCY_MODE,
+                                       GatheringMode::INTERVAL_MODE,
                                        successors);
 }
 #endif
@@ -367,7 +367,7 @@ DataSourcePtr createMQTTSource(const SchemaPtr& schema,
                                         mqttSourceType,
                                         operatorId,
                                         numSourceLocalBuffers,
-                                        GatheringMode::FREQUENCY_MODE,
+                                        GatheringMode::INTERVAL_MODE,
                                         successors,
                                         inputFormat);
 }
