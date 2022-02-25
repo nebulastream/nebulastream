@@ -118,10 +118,9 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief Enable reconfiguration of running query plans.
      */
-    BoolOption enableQueryReconfiguration = {
-        ENABLE_QUERY_RECONFIGURATION,
-        false,
-        "Enable reconfiguration of running query plans. (Default: false)"};
+    BoolOption enableQueryReconfiguration = {ENABLE_QUERY_RECONFIGURATION,
+                                             false,
+                                             "Enable reconfiguration of running query plans. (Default: false)"};
 
     /**
      * @brief Configures different properties for the query optimizer.
@@ -133,6 +132,12 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @deprecated This is currently only used for testing and will be removed.
      */
     std::vector<LogicalSourcePtr> logicalSources;
+
+    /**
+     * @brief Configuration yaml path.
+     * @warning this is just a placeholder configuration
+     */
+    StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
 
@@ -151,9 +156,10 @@ class CoordinatorConfiguration : public BaseConfiguration {
             &numberOfBuffersInSourceLocalBufferPool,
             &bufferSizeInBytes,
             &numWorkerThreads,
-            &optimizer,
             &enableQueryReconfiguration,
             &enableMonitoring,
+            &configPath,
+            &optimizer,
         };
     }
 };

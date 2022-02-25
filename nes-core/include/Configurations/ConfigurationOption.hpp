@@ -153,6 +153,7 @@ const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
 const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
+const std::string CONFIG_PATH = "configPath";
 
 //Optimizer Configurations
 const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";

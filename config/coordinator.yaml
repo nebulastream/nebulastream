@@ -45,6 +45,9 @@
 # Enable monitoring
 #enableMonitoring: false
 
+# Enable reconfiguration of running query plans. Default: false
+#enableQueryReconfiguration:
+
 optimizer:
   # The rule to be used for performing query merging
   #queryMergerRule: DefaultQueryMergerRule
@@ -58,5 +61,8 @@ optimizer:
   # Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule
   #performOnlySourceOperatorExpansion: false
 
-# Enable reconfiguration of running query plans. Default: false
-#enableQueryReconfiguration:
+  # The number of queries to be processed together
+  #queryBatchSize: 1
+
+  # Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule.
+  #performOnlySourceOperatorExpansion: false
