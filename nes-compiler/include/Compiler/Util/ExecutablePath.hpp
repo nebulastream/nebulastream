@@ -15,7 +15,24 @@
 #define NES_NES_CORE_INCLUDE_UTIL_EXECUTABLEPATH_HPP_
 
 #include <filesystem>
+#include <vector>
 namespace NES::Compiler::ExecutablePath {
+
+/**
+ * @brief This class holds information about the runtime path of different nes components.
+ */
+class RuntimePathConfig {
+  public:
+    std::string clangBinaryPath;
+    std::vector<std::string> includePaths;
+    std::vector<std::string> libPaths;
+    std::vector<std::string> libs;
+};
+
+
+bool isInInstallDir();
+
+[[maybe_unused]] RuntimePathConfig loadRuntimePathConfig();
 
 /**
  * @brief Gets the path of the current executable.
@@ -41,6 +58,6 @@ std::filesystem::path getLibPath(std::string libName);
  */
 [[maybe_unused]] std::filesystem::path getClangPath();
 
-}// namespace NES::ExecutablePath
+}// namespace NES::Compiler::ExecutablePath
 
 #endif//NES_NES_CORE_INCLUDE_UTIL_EXECUTABLEPATH_HPP_

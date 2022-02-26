@@ -15,6 +15,7 @@
 #define NES_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Compiler/LanguageCompiler.hpp>
+#include <Compiler/Util/ExecutablePath.hpp>
 #include <filesystem>
 #include <vector>
 
@@ -59,9 +60,7 @@ class CPPCompiler : public LanguageCompiler {
      */
     void compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File> sourceFile, std::string libraryFileName) const;
     std::unique_ptr<ClangFormat> format;
-    std::filesystem::path libNesPath;
-    std::filesystem::path publicIncludePath;
-    std::filesystem::path clangPath;
+    ExecutablePath::RuntimePathConfig runtimePathConfig;
 };
 
 }// namespace NES::Compiler

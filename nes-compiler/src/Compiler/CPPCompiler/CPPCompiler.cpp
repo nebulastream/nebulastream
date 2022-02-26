@@ -17,9 +17,9 @@
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/SourceCode.hpp>
 #include <Compiler/Util/ClangFormat.hpp>
+#include <Compiler/Util/ExecutablePath.hpp>
 #include <Compiler/Util/File.hpp>
 #include <Compiler/Util/SharedLibrary.hpp>
-#include <Compiler/Util/ExecutablePath.hpp>
 #include <Util/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <chrono>
@@ -34,69 +34,10 @@ const std::string NESCoreIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-core/includ
 const std::string NESCommonIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-common/include/";
 const std::string DEBSIncludePath = PATH_TO_DEB_SOURCE_CODE "/include/";
 
-#ifdef __APPLE__
-#include <mach-o/dyld.h>
-
-namespace detail {
-std::filesystem::path getExecutablePath() {
-    typedef std::vector<char> char_vector;
-    char_vector buf(1024, 0);
-    uint32_t size = static_cast<uint32_t>(buf.size());
-    bool havePath = false;
-    bool shouldContinue = true;
-    do {
-        int result = _NSGetExecutablePath(&buf[0], &size);
-        if (result == -1) {
-            buf.resize(size + 1);
-            std::fill(std::begin(buf), std::end(buf), 0);
-        } else {
-            shouldContinue = false;
-            if (buf.at(0) != 0) {
-                havePath = true;
-            }
-        }
-    } while (shouldContinue);
-    if (!havePath) {
-        return std::filesystem::current_path();
-    }
-    std::error_code ec;
-    std::string path(&buf[0], size);
-    std::filesystem::path p(std::filesystem::canonical(path, ec));
-    if (!ec) {
-        return p.make_preferred();
-    }
-    return std::filesystem::current_path();
-}
-std::filesystem::path recursiveFindFileReverse(std::filesystem::path currentPath, const std::string targetFileName) {
-    while (!std::filesystem::is_directory(currentPath)) {
-        currentPath = currentPath.parent_path();
-    }
-    while (currentPath != currentPath.root_directory()) {
-        for (const auto& entry : std::filesystem::directory_iterator(currentPath)) {
-            if (entry.is_directory()) {
-                continue;
-            }
-            auto path = entry.path();
-            auto fname = path.filename();
-            if (fname.string().compare(targetFileName) == 0) {
-                return path;
-            }
-        }
-        currentPath = currentPath.parent_path();
-    }
-    return currentPath;
-}
-
-}// namespace detail
-#endif
-
 std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_shared<CPPCompiler>(); }
 
-CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")) {
-    //libNesPath = ExecutablePath::getLibPath("libnes.so");
-    clangPath = ExecutablePath::getClangPath();
-    publicIncludePath = ExecutablePath::getPublicIncludes();
-}
+CPPCompiler::CPPCompiler()
+    : format(std::make_unique<ClangFormat>("cpp")), runtimePathConfig(ExecutablePath::loadRuntimePathConfig()) {}
 
 std::string CPPCompiler::getLanguage() const { return "cpp"; }
 
@@ -113,7 +54,6 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 #else
 #error "Unknown platform"
 #endif
-
     auto& sourceCode = request->getSourceCode()->getCode();
     NES_ASSERT2_FMT(sourceCode.size(), "empty source code for " << sourceFileName);
     auto file = File::createFile(sourceFileName, sourceCode);
@@ -132,21 +72,19 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         compilationFlags.addFlag(CPPCompilerFlags::TRACE_COMPILATION_TIME);
         NES_DEBUG("Compilation Time tracing is activated open: chrome://tracing/");
     }
-#ifdef __linux__
-    compilationFlags.addFlag("--shared -g -fno-omit-frame-pointer");
-#elif defined(__APPLE__)
     compilationFlags.addFlag("-shared");
-    compilationFlags.addFlag("-lnes");
-    compilationFlags.addFlag(std::string("-L") + libNesPath.parent_path().string());
-#else
-#error "Unknown platform"
-#endif
-    // add header of NES Source
-    compilationFlags.addFlag("-I" + NESCommonIncludePath);
-    compilationFlags.addFlag("-I" + NESCoreIncludePath);
-    // add header of all dependencies
-    //compilationFlags.addFlag("-I" + DEBSIncludePath);
-
+    // add libs
+    for(auto libs : runtimePathConfig.libs){
+        compilationFlags.addFlag(libs);
+    }
+    // add header
+    for(auto libPaths : runtimePathConfig.libPaths){
+        compilationFlags.addFlag(std::string("-L") + libPaths);
+    }
+    // add header
+    for(auto includePath : runtimePathConfig.includePaths){
+        compilationFlags.addFlag("-I" + includePath);
+    }
     compilationFlags.addFlag("-o" + libraryFileName);
 
 #ifdef NES_LOGGING_TRACE_LEVEL
@@ -193,7 +131,7 @@ void CPPCompiler::compileSharedLib(CPPCompilerFlags flags, std::shared_ptr<File>
     const std::lock_guard<std::mutex> fileLock(sourceFile->getFileMutex());
 
     std::stringstream compilerCall;
-    compilerCall << clangPath << " ";
+    compilerCall << runtimePathConfig.clangBinaryPath << " ";
     for (const auto& arg : flags.getFlags()) {
         compilerCall << arg << " ";
     }

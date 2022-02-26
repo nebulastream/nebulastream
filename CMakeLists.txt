@@ -550,6 +550,8 @@ endif ()
 
 file(COPY ${PATH_TO_DEB_SOURCE_CODE}/include/ DESTINATION ${CMAKE_BINARY_DIR}/include/nebulastream)
 
+
+
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
@@ -566,6 +568,8 @@ add_subdirectory(benchmark)
 add_subdirectory(cmake/docs)
 
 
+
+
 # Custom test commands --------------------------------------------------------
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j${NES_TEST_PARALLELISM} --output-on-failure DEPENDS ${UNITTESTS})
@@ -573,7 +577,10 @@ add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -j${NES_TEST_PARALLE
 message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
 install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)
 
-SET(CPACK_GENERATOR "DEB")
+
+install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
+
+SET(CPACK_GENERATOR "TGZ")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")
 set(CPACK_PACKAGE_RELEASE 1)
