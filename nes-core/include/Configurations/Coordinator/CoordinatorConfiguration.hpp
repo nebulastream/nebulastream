@@ -139,6 +139,12 @@ class CoordinatorConfiguration : public BaseConfiguration {
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
+    /**
+     * @brief Configuration yaml path.
+     * @warning this is just a placeholder configuration
+     */
+    StringOption logPath = {"logPath", "", "Path to configuration file."};
+
     static std::shared_ptr<CoordinatorConfiguration> create() { return std::make_shared<CoordinatorConfiguration>(); }
 
   private:
@@ -160,6 +166,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
             &enableMonitoring,
             &configPath,
             &optimizer,
+            &logPath,
         };
     }
 };

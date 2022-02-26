@@ -167,32 +167,41 @@ class WorkerConfiguration : public BaseConfiguration {
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
+    /**
+     * @brief Configuration yaml path.
+     * @warning this is just a placeholder configuration
+     */
+    StringOption logPath = {"logPath", "", "Path to configuration file."};
+
     static std::shared_ptr<WorkerConfiguration> create() { return std::make_shared<WorkerConfiguration>(); }
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&localWorkerIp,
-                &coordinatorIp,
-                &rpcPort,
-                &dataPort,
-                &coordinatorPort,
-                &numberOfSlots,
-                &numWorkerThreads,
-                &numberOfBuffersInGlobalBufferManager,
-                &numberOfBuffersPerWorker,
-                &numberOfBuffersInSourceLocalBufferPool,
-                &bufferSizeInBytes,
-                &parentId,
-                &logLevel,
-                &sourcePinList,
-                &workerPinList,
-                &queuePinList,
-                &numaAwareness,
-                &enableMonitoring,
-                &queryCompiler,
-                &physicalSources,
-                &locationCoordinates,
-                &configPath};
+        return {
+            &localWorkerIp,
+            &coordinatorIp,
+            &rpcPort,
+            &dataPort,
+            &coordinatorPort,
+            &numberOfSlots,
+            &numWorkerThreads,
+            &numberOfBuffersInGlobalBufferManager,
+            &numberOfBuffersPerWorker,
+            &numberOfBuffersInSourceLocalBufferPool,
+            &bufferSizeInBytes,
+            &parentId,
+            &logLevel,
+            &sourcePinList,
+            &workerPinList,
+            &queuePinList,
+            &numaAwareness,
+            &enableMonitoring,
+            &queryCompiler,
+            &physicalSources,
+            &locationCoordinates,
+            &configPath,
+            &logPath,
+        };
     }
 };
 }// namespace Configurations

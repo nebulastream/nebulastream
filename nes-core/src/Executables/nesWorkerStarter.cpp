@@ -56,9 +56,9 @@ int main(int argc, char** argv) {
         std::string logPath;
         auto logPathEntry = commandLineParams.find("--logPath");
         if (logPathEntry != commandLineParams.end()) {
-            logPath = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesWorker.log";
-        } else {
             logPath = logPathEntry->second + std::filesystem::path::preferred_separator + "nesWorker.log";
+        } else {
+            logPath = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesWorker.log";
         }
 
         NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));

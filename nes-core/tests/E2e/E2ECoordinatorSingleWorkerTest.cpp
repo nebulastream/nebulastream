@@ -80,16 +80,15 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingMultipleQueries) {
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
-                                          TestUtils::dataPort(dataPort),
-                                          TestUtils::coordinatorPort(rpcPort),
-                                          TestUtils::sourceType("DefaultSource"),
-                                          TestUtils::logicalStreamName("default_logical"),
-                                          TestUtils::physicalStreamName("test")});
-    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0), TestUtils::dataPort(0), TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType("DefaultSource"),
+         TestUtils::logicalStreamName("default_logical"),
+         TestUtils::physicalStreamName("test")});
+    EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
@@ -100,7 +99,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingMultipleQueries) {
 
     std::vector<QueryId> queryIds;
     for (uint32_t i = 0; i < 21; i++) {
-        web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+        web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(*restPort));
         NES_INFO("try to acc return");
         QueryId queryId = json_return.at("queryId").as_integer();
         NES_INFO("Query ID: " << queryId);
@@ -109,7 +108,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingMultipleQueries) {
     }
 
     for (const auto& item : queryIds) {
-        TestUtils::checkRunningOrTimeout(item, std::to_string(restPort));
+        TestUtils::checkRunningOrTimeout(item, std::to_string(*restPort));
     }
 }
 

@@ -123,13 +123,13 @@ void TopDownStrategy::placeOperator(QueryId queryId,
                 } else {
                     NES_ERROR("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is to be "
                               "placed.");
-                    throw Exception("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
+                    throw log4cxx::helpers::Exception("TopDownStrategy: Unexpected behavior. Could not find Topology node where source operator is "
                                     "to be placed.");
                 }
 
                 if (candidateTopologyNode->getAvailableResources() == 0) {
                     NES_ERROR("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
-                    throw Exception("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
+                    throw log4cxx::helpers::Exception("TopDownStrategy: Topology node where source operator is to be placed has no capacity.");
                 }
             } else {
                 NES_TRACE("TopDownStrategy: Received an NAry operator for placement.");

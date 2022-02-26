@@ -53,12 +53,13 @@ int main(int argc, const char* argv[]) {
         std::string logPath;
         auto logPathEntry = commandLineParams.find("--logPath");
         if (logPathEntry != commandLineParams.end()) {
-            logPath = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesCoordinator.log";
-        } else {
             logPath = logPathEntry->second + std::filesystem::path::preferred_separator + "nesCoordinator.log";
+        } else {
+            logPath = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesCoordinator.log";
         }
 
-        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
+        NES::setupLogging("nesCoordinator.log", NES::getDebugLevelFromString("LOG_DEBUG"));
+//        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
 
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
         auto configPath = commandLineParams.find("--configPath");

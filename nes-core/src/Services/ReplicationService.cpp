@@ -79,7 +79,7 @@ bool ReplicationService::notifyEpochTermination(uint64_t epochBarrier, uint64_t 
             if (!sourceLocations.empty()) {
                 bool success = false;
                 for (auto& sourceLocation : sourceLocations) {
-                    auto workerRpcClient = std::make_shared<WorkerRPCClient>();
+                    auto workerRpcClient = WorkerRPCClient::create();
                     success =
                         workerRpcClient->injectEpochBarrier(epochBarrier, queryId, sourceLocation->getIpAddress());
                     NES_ASSERT(success, false);

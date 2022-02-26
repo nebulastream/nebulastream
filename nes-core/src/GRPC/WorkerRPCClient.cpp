@@ -18,7 +18,7 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger.hpp>
+
 
 namespace NES {
 
