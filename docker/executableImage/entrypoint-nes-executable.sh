@@ -17,9 +17,9 @@ set -e
 
 if [ $# -eq 0 ]
 then
-    /opt/local/nebula-stream/nesCoordinator $coordinatorCLIConf &
+    nesCoordinator $coordinatorCLIConf &
     sleep 5s
-    /opt/local/nebula-stream/nesWorker $workerCLIConf
+    nesWorker $workerCLIConf
 else
     exec $@
 fi
