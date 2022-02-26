@@ -143,6 +143,8 @@ class TestUtils {
         return false;
     }
 
+    static bool checkRunningOrTimeout(QueryId queryId, const std::string& restPort);
+
     /**
      * @brief This method is used for checking if the submitted query produced the expected result within the timeout
      * @param queryId: Id of the query

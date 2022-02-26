@@ -28,8 +28,7 @@ NullOutputSink::~NullOutputSink() = default;
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 
 bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-    NES_DEBUG("NullOutputSink output=" << inputBuffer);
-
+    NES_TRACE("NullOutputSink output=" << inputBuffer);
     return true;
 }
 

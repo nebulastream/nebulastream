@@ -123,13 +123,13 @@ class JoinHandler : public AbstractJoinHandler {
     */
     void trigger(Runtime::WorkerContextRef workerContext, bool forceFlush = false) override {
         std::unique_lock lock(mutex);
-        NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString()
+        NES_TRACE("JoinHandler " << id << ": run window action " << executableJoinAction->toString()
                                  << " forceFlush=" << forceFlush);
 
         auto watermarkLeft = getMinWatermark(leftSide);
         auto watermarkRight = getMinWatermark(rightSide);
 
-        NES_DEBUG("JoinHandler " << id << ": run for watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
+        NES_TRACE("JoinHandler " << id << ": run for watermarkLeft=" << watermarkLeft << " watermarkRight=" << watermarkRight
                                  << " lastWatermark=" << lastWatermark);
         //In the following, find out the minimal watermark among the buffers/stores to know where
         // we have to start the processing from so-called lastWatermark
@@ -152,17 +152,17 @@ class JoinHandler : public AbstractJoinHandler {
                     lastWatermark = std::min(lastWatermark, slices[0].getStartTs());
                 }
             }
-            NES_DEBUG("JoinHandler " << id << ": set lastWatermarkLeft to min value of stores=" << lastWatermark);
+            NES_TRACE("JoinHandler " << id << ": set lastWatermarkLeft to min value of stores=" << lastWatermark);
         }
 
-        NES_DEBUG("JoinHandler " << id << ": run doing with watermarkLeft=" << watermarkLeft
+        NES_TRACE("JoinHandler " << id << ": run doing with watermarkLeft=" << watermarkLeft
                                  << " watermarkRight=" << watermarkRight << " lastWatermark=" << lastWatermark);
         lock.unlock();
 
         auto minMinWatermark = std::min(watermarkLeft, watermarkRight);
         executableJoinAction->doAction(leftJoinState, rightJoinState, minMinWatermark, lastWatermark, workerContext);
         lock.lock();
-        NES_DEBUG("JoinHandler " << id << ": set lastWatermarkLeft to=" << minMinWatermark);
+        NES_TRACE("JoinHandler " << id << ": set lastWatermarkLeft to=" << minMinWatermark);
         lastWatermark = minMinWatermark;
 
         if (forceFlush) {

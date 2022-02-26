@@ -203,4 +203,38 @@ bool TestUtils::waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t 
     return false;
 }
 
+bool TestUtils::checkRunningOrTimeout(QueryId queryId, const std::string& restPort) {
+    auto timeoutInSec = std::chrono::seconds(defaultTimeout);
+    auto start_timestamp = std::chrono::system_clock::now();
+    uint64_t currentResult = 0;
+    web::json::value json_return;
+    std::string currentStatus;
+
+    NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
+        web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
+        web::uri_builder builder(("/"));
+        builder.append_query(("queryId"), queryId);
+        clientProc.request(web::http::methods::GET, builder.to_string())
+            .then([](const web::http::http_response& response) {
+                cout << "Get query status" << endl;
+                return response.extract_json();
+            })
+            .then([&json_return, &currentStatus](const pplx::task<web::json::value>& task) {
+                try {
+                    NES_DEBUG("got status=" << json_return);
+                    json_return = task.get();
+                    currentStatus = json_return.at("status").as_string();
+                } catch (const web::http::http_exception& e) {
+                    NES_ERROR("error while setting return" << e.what());
+                }
+            })
+            .wait();
+        NES_DEBUG("checkCompleteOrTimeout: sleep because current status =" << currentStatus);
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepDuration));
+    }
+    NES_DEBUG("checkCompleteOrTimeout: end with status =" << currentStatus);
+    return false;
+}
+
 }// namespace NES

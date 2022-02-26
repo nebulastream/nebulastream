@@ -78,6 +78,41 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 }
 
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingMultipleQueries) {
+
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(rpcPort), TestUtils::restPort(restPort)});
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+
+    auto worker = TestUtils::startWorker({TestUtils::rpcPort(rpcPort + 3),
+                                          TestUtils::dataPort(dataPort),
+                                          TestUtils::coordinatorPort(rpcPort),
+                                          TestUtils::sourceType("DefaultSource"),
+                                          TestUtils::logicalStreamName("default_logical"),
+                                          TestUtils::physicalStreamName("test")});
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << R"("Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());")";
+    ss << R"(,"strategyName" : "BottomUp"})";
+    ss << endl;
+    NES_INFO("string submit=" << ss.str());
+
+    std::vector<QueryId> queryIds;
+    for (uint32_t i = 0; i < 21; i++) {
+        web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+        NES_INFO("try to acc return");
+        QueryId queryId = json_return.at("queryId").as_integer();
+        NES_INFO("Query ID: " << queryId);
+        EXPECT_NE(queryId, INVALID_QUERY_ID);
+        queryIds.push_back(queryId);
+    }
+
+    for (const auto& item : queryIds) {
+        TestUtils::checkRunningOrTimeout(item, std::to_string(restPort));
+    }
+}
+
 TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";

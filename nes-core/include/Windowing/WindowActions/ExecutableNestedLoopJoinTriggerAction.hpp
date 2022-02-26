@@ -128,7 +128,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             //forward buffer to next  pipeline stage
             this->emitBuffer(tupleBuffer);
         }
-        NES_DEBUG("Join handler " << toString() << " flushed " << numberOfFlushedRecords << " records");
+        NES_TRACE("Join handler " << toString() << " flushed " << numberOfFlushedRecords << " records");
         return true;
     }
 
