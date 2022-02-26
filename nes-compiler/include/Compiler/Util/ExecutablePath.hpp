@@ -16,6 +16,7 @@
 
 #include <filesystem>
 #include <vector>
+#include <ostream>
 namespace NES::Compiler::ExecutablePath {
 
 /**
@@ -27,6 +28,7 @@ class RuntimePathConfig {
     std::vector<std::string> includePaths;
     std::vector<std::string> libPaths;
     std::vector<std::string> libs;
+    friend std::ostream& operator<<(std::ostream& os, const RuntimePathConfig& config);
 };
 
 

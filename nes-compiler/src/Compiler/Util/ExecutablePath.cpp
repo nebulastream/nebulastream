@@ -40,6 +40,20 @@ bool isInLocalInstallDir() {
         && std::filesystem::exists(executablePath.append("include"));
 }
 
+std::ostream& ExecutablePath::operator<<(std::ostream& os,
+                                                        const ExecutablePath::RuntimePathConfig& config) {
+    os << "\nclangBinaryPath: " << config.clangBinaryPath << "\n";
+    os << "includePaths: \n";
+    for (auto includeDir : config.includePaths) {
+        os << "\t" << includeDir << "\n";
+    }
+    os << "libPaths:";
+    for (auto libDirs : config.libPaths) {
+        os << "\n\t" << libDirs;
+    }
+    return os;
+}
+
 RuntimePathConfig loadRuntimePathConfig() {
     auto runtimePathConfig = RuntimePathConfig();
     runtimePathConfig.libs.push_back("-lnes");
@@ -85,7 +99,7 @@ RuntimePathConfig loadRuntimePathConfig() {
         }
     }
 
-    NES_INFO("RuntimeClangPath: " << runtimePathConfig.clangBinaryPath);
+    NES_INFO("RuntimePathConfig: " << runtimePathConfig);
 
     return runtimePathConfig;
 }
