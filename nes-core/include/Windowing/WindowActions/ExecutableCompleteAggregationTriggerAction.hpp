@@ -164,7 +164,7 @@ class ExecutableCompleteAggregationTriggerAction
 
         //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction"
+            NES_TRACE("ExecutableCompleteAggregationTriggerAction"
                       << id << ": (" << this->windowDefinition->getDistributionType()->toString() << "): trigger sliceid="
                       << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
