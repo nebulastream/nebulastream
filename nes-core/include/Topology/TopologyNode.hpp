@@ -32,7 +32,7 @@ class TopologyNode : public Node {
 
   public:
     static TopologyNodePtr
-    create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
+    create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint32_t resources);
     virtual ~TopologyNode() = default;
 
     /**
@@ -45,19 +45,19 @@ class TopologyNode : public Node {
      * @brief method to get the overall cpu capacity of the node
      * @return uint64_t cpu capacity
      */
-    uint16_t getAvailableResources() const;
+    uint32_t getAvailableResources() const;
 
     /**
      * @brief method to reduce the cpu capacity of the node
      * @param uint64_t of the value that has to be subtracted
      */
-    void reduceResources(uint16_t usedCapacity);
+    void reduceResources(uint32_t usedCapacity);
 
     /**
      * @brief method to increase CPU capacity
      * @param uint64_t of the vlaue that has to be added
      */
-    void increaseResources(uint16_t freedCapacity);
+    void increaseResources(uint32_t freedCapacity);
 
     /**
      * @brief Get ip address of the node
@@ -97,7 +97,7 @@ class TopologyNode : public Node {
      */
     TopologyNodePtr copy();
 
-    explicit TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources);
+    explicit TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint32_t resources);
 
     bool containAsParent(NodePtr node) override;
 
@@ -177,8 +177,8 @@ class TopologyNode : public Node {
     std::string ipAddress;
     uint32_t grpcPort;
     uint32_t dataPort;
-    uint16_t resources;
-    uint16_t usedResources;
+    uint32_t resources;
+    uint32_t usedResources;
     bool maintenanceFlag;
     std::optional<GeographicalLocation> coordinates;
 

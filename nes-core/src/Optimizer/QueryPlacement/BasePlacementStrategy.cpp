@@ -125,8 +125,10 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNode(uint64_t nodeId) {
     }
 
     if (found->second->getAvailableResources() == 0 && !operatorToExecutionNodeMap.contains(nodeId)) {
-        NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
-        throw log4cxx::helpers::Exception("BasePlacementStrategy: Unable to find resources on the physical node for placement of source operator");
+        NES_ERROR("BasePlacementStrategy: Unable to find resources on the physical node " + found->second->toString()
+                  + " for placement of operator");
+        throw log4cxx::helpers::Exception("BasePlacementStrategy: Unable to find resources on the physical node " + found->second->toString()
+                        + " for placement of operator");
     }
     return found->second;
 }

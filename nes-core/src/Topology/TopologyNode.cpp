@@ -19,11 +19,12 @@
 
 namespace NES {
 
-TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources)
-    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0), maintenanceFlag(false) {}
+TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint32_t resources)
+    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0),
+      maintenanceFlag(false) {}
 
 TopologyNodePtr
-TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {
+TopologyNode::create(uint64_t id, const std::string& ipAddress, uint32_t grpcPort, uint32_t dataPort, uint32_t resources) {
     return std::make_shared<TopologyNode>(id, ipAddress, grpcPort, dataPort, resources);
 }
 
@@ -33,20 +34,20 @@ uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
 uint32_t TopologyNode::getDataPort() const { return dataPort; }
 
-uint16_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
+uint32_t TopologyNode::getAvailableResources() const { return resources - usedResources; }
 
 bool TopologyNode::getMaintenanceFlag() const { return maintenanceFlag; };
 
 void TopologyNode::setMaintenanceFlag(bool flag) { maintenanceFlag = flag; }
 
-void TopologyNode::increaseResources(uint16_t freedCapacity) {
+void TopologyNode::increaseResources(uint32_t freedCapacity) {
     NES_ASSERT(freedCapacity <= resources, "PhysicalNode: amount of resources to free can't be more than actual resources");
     NES_ASSERT(freedCapacity <= usedResources,
                "PhysicalNode: amount of resources to free can't be more than actual consumed resources");
     usedResources = usedResources - freedCapacity;
 }
 
-void TopologyNode::reduceResources(uint16_t usedCapacity) {
+void TopologyNode::reduceResources(uint32_t usedCapacity) {
     NES_ASSERT(usedCapacity <= resources, "PhysicalNode: amount of resources to be used can't be more than actual resources");
     NES_ASSERT(usedCapacity <= (resources - usedResources),
                "PhysicalNode: amount of resources to be used can't be more than available resources");
