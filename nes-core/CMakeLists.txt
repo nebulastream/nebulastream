@@ -96,9 +96,12 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
+
+
 #Add the nes lib and headers to cpack
 install(TARGETS nes LIBRARY
         COMPONENT nesLibrary)
+message(STATUS "nes lib dir ${CMAKE_INSTALL_FULL_LIBDIR}")
 
 install(TARGETS nesCoordinator nesWorker
         RUNTIME

@@ -19,6 +19,77 @@
 
 namespace NES::Compiler::ExecutablePath {
 
+std::string UNIX_INSTALL_BIN_DIR = "/usr/local/bin/";
+std::string DEFAULT_PUBLIC_INCLUDE_DIR_UNIX_INSTALL = "/usr/local/include/nebulastream";
+std::string DEFAULT_LIB_UNIX_INSTALL = "/usr/local/lib/";
+std::string DEFAULT_CLANG_PATH_UNIX_INSTALL = "/usr/local/bin/nes-clang";
+
+bool isInBuildDir() {
+    auto executablePath = getExecutablePath();
+    return executablePath.parent_path().string().starts_with(PATH_TO_BINARY_DIR);
+}
+
+bool isInUNIXInstallDir() {
+    auto executablePath = getExecutablePath();
+    return executablePath.parent_path().string() == UNIX_INSTALL_BIN_DIR;
+}
+
+bool isInLocalInstallDir() {
+    auto executablePath = getExecutablePath().parent_path();
+    return std::filesystem::exists(executablePath.append("bin")) && std::filesystem::exists(executablePath.append("lib"))
+        && std::filesystem::exists(executablePath.append("include"));
+}
+
+RuntimePathConfig loadRuntimePathConfig() {
+    auto runtimePathConfig = RuntimePathConfig();
+    runtimePathConfig.libs.push_back("-lnes");
+    runtimePathConfig.libs.push_back("-lnes-common");
+
+    if (isInUNIXInstallDir()) {
+        NES_DEBUG("Detected a unix install dir as a execution location");
+        runtimePathConfig.clangBinaryPath = DEFAULT_CLANG_PATH_UNIX_INSTALL;
+        runtimePathConfig.includePaths.push_back(DEFAULT_PUBLIC_INCLUDE_DIR_UNIX_INSTALL);
+        runtimePathConfig.libPaths.push_back(DEFAULT_LIB_UNIX_INSTALL);
+    } else if (isInLocalInstallDir()) {
+        NES_DEBUG("Detected a local install dir as a execution location");
+        auto executablePath = getExecutablePath().parent_path();
+        runtimePathConfig.clangBinaryPath = executablePath.append("bin/nes-clang");
+        runtimePathConfig.includePaths.push_back(executablePath.append("include/nebulatstream"));
+        runtimePathConfig.libPaths.push_back(executablePath.append("lib"));
+    } else if (isInBuildDir()) {
+        NES_DEBUG("Detected a build dir as a execution location");
+        const std::string coreBinaryDir = PATH_TO_BINARY_DIR "/nes-common/";
+        const std::string commonBinaryDir = PATH_TO_BINARY_DIR "/nes-core/";
+        runtimePathConfig.clangBinaryPath = CLANG_EXECUTABLE;
+        runtimePathConfig.libPaths.push_back(coreBinaryDir);
+        runtimePathConfig.libPaths.push_back(commonBinaryDir);
+        runtimePathConfig.includePaths.push_back(PATH_TO_BINARY_DIR "/include/nebulastream");
+    } else {
+        throw CompilerException("Runtime environment can't be detected.");
+    }
+
+    // verify is runtime path config is valid
+    if (!std::filesystem::exists(runtimePathConfig.clangBinaryPath)) {
+        throw CompilerException("Selected clang binary path dose not exists. Path: " + runtimePathConfig.clangBinaryPath);
+    }
+
+    for (auto includeDir : runtimePathConfig.includePaths) {
+        if (!std::filesystem::exists(includeDir)) {
+            throw CompilerException("Selected include path dose not exists. Path: " + includeDir);
+        }
+    }
+
+    for (auto libDir : runtimePathConfig.libPaths) {
+        if (!std::filesystem::exists(libDir)) {
+            throw CompilerException("Selected lib path dose not exists. Path: " + libDir);
+        }
+    }
+
+    NES_INFO("RuntimeClangPath: " << runtimePathConfig.clangBinaryPath);
+
+    return runtimePathConfig;
+}
+
 namespace detail {
 
 std::filesystem::path recursiveFindFileReverse(std::filesystem::path currentPath, const std::string targetFileName) {
