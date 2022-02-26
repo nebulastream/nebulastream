@@ -32,7 +32,9 @@ bool RequestQueue::add(const NESRequestPtr& request) {
 }
 
 std::vector<NESRequestPtr> RequestQueue::getNextBatch() {
+    NES_INFO("Fetching Nes batch");
     std::unique_lock<std::mutex> lock(requestMutex);
+    NES_INFO("Acquire lock. Current request size " << requestQueue.size());
     //We are using conditional variable to prevent Lost Wakeup and Spurious Wakeup
     //ref: https://www.modernescpp.com/index.php/c-core-guidelines-be-aware-of-the-traps-of-condition-variables
     availabilityTrigger.wait(lock, [&] {
