@@ -57,7 +57,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         OperatorId operatorId,
                         size_t numSourceLocalBuffers,
                         GatheringMode::Value gatheringMode,
-                                                std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
+                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
                         uint64_t taskQueueId = 0);
@@ -284,4 +284,4 @@ using DataSourcePtr = std::shared_ptr<DataSource>;
 
 }// namespace NES
 
-#endif  // NES_INCLUDE_SOURCES_DATASOURCE_HPP_
+#endif// NES_INCLUDE_SOURCES_DATASOURCE_HPP_
