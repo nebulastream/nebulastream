@@ -124,7 +124,7 @@ class WindowedJoinSliceListStore {
      * @param slice the slice to add
      */
     inline void appendSlice(SliceMetaData slice) {
-        NES_DEBUG("appendSlice with start " << slice.getStartTs());
+        NES_TRACE("appendSlice with start " << slice.getStartTs());
         std::lock_guard lock(internalMutex);
         sliceMetaData.emplace_back(slice);
         content.emplace_back(std::vector<ValueType>());
