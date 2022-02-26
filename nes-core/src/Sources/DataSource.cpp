@@ -13,7 +13,7 @@
 */
 
 #include <chrono>
-#include <fstream>
+#include <filesystem>
 #include <functional>
 #include <iostream>
 #include <thread>
@@ -217,11 +217,11 @@ void DataSource::close() {}
 void DataSource::runningRoutine() {
     //TDOD startup delay
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
-    std::ifstream f("/tmp/start.source");
+    std::string markerFile = "/tmp/start.source";
 
-    while (!f.good()) {
+    while (!std::filesystem::exists(markerFile)) {
         NES_DEBUG("Waiting for the signal");
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     }
 
     if (gatheringMode == GatheringMode::INTERVAL_MODE) {
