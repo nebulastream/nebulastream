@@ -56,7 +56,7 @@ std::ostream& ExecutablePath::operator<<(std::ostream& os,
 
 RuntimePathConfig loadRuntimePathConfig() {
     auto runtimePathConfig = RuntimePathConfig();
-    runtimePathConfig.libs.push_back("-lnes");
+    //runtimePathConfig.libs.push_back("-lnes");
     runtimePathConfig.libs.push_back("-lnes-common");
 
     if (isInUNIXInstallDir()) {
