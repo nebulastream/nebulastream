@@ -132,18 +132,18 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         compilationFlags.addFlag(CPPCompilerFlags::TRACE_COMPILATION_TIME);
         NES_DEBUG("Compilation Time tracing is activated open: chrome://tracing/");
     }
+#ifdef __linux__
     compilationFlags.addFlag("--shared -g -fno-omit-frame-pointer");
-
-
-//#elif defined(__APPLE__)
-   // compilationFlags.addFlag("-shared");
-   // compilationFlags.addFlag("-lnes");
-   // compilationFlags.addFlag(std::string("-L") + libNesPath.parent_path().string());
-//#else
-//#error "Unknown platform"
-//#endif
+#elif defined(__APPLE__)
+    compilationFlags.addFlag("-shared");
+    compilationFlags.addFlag("-lnes");
+    compilationFlags.addFlag(std::string("-L") + libNesPath.parent_path().string());
+#else
+#error "Unknown platform"
+#endif
     // add header of NES Source
-    compilationFlags.addFlag("-I" + publicIncludePath.string());
+    compilationFlags.addFlag("-I" + NESCommonIncludePath);
+    compilationFlags.addFlag("-I" + NESCoreIncludePath);
     // add header of all dependencies
     //compilationFlags.addFlag("-I" + DEBSIncludePath);
 
