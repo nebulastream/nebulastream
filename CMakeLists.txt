@@ -548,10 +548,6 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-file(COPY ${PATH_TO_DEB_SOURCE_CODE}/include/ DESTINATION ${CMAKE_BINARY_DIR}/include/nebulastream)
-
-
-
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
@@ -563,12 +559,8 @@ add_subdirectory(nes-core)
 add_subdirectory(nes-client)
 # Add target for benchmarks
 add_subdirectory(benchmark)
-
 # Documentation
 add_subdirectory(cmake/docs)
-
-
-
 
 # Custom test commands --------------------------------------------------------
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
