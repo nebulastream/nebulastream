@@ -58,8 +58,7 @@ int main(int argc, const char* argv[]) {
             logPath = std::filesystem::current_path().string() + std::filesystem::path::preferred_separator + "nesCoordinator.log";
         }
 
-        NES::setupLogging("nesCoordinator.log", NES::getDebugLevelFromString("LOG_DEBUG"));
-//        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
+        NES::setupLogging(logPath, NES::getDebugLevelFromString("LOG_DEBUG"));
 
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::create();
         auto configPath = commandLineParams.find("--configPath");
