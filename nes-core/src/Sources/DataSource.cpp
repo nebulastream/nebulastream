@@ -403,13 +403,13 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
                 auto& buf = optBuf.value();
 
                 if (this->gatheringInterval.count() != 0) {
-                    NES_DEBUG("DataSource old sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
+                    NES_TRACE("DataSource old sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
                     this->kFilter.updateFromTupleBuffer(buf);
                     this->gatheringInterval = this->kFilter.getNewGatheringInterval();
-                    NES_DEBUG("DataSource new sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
+                    NES_TRACE("DataSource new sourceGatheringInterval = " << this->gatheringInterval.count() << "ms");
                 }
 
-                NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
+                NES_TRACE("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
                                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
                                                        << " orgID=" << this->operatorId);
@@ -433,6 +433,7 @@ void DataSource::runningRoutineAdaptiveGatheringInterval() {
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
     }
 
+    // this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
     if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0) {
         std::this_thread::sleep_for(gatheringInterval);
     }
