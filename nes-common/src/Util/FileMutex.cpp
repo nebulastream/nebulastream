@@ -17,9 +17,7 @@
 #include <errno.h>
 #include <cstring>
 #include <unistd.h>
-#ifdef __linux__
-#include <sys/fcntl.h>
-#elif defined(__APPLE__)
+#if defined __linux__ || defined(__APPLE__)
 #include <fcntl.h>
 #else
 #error "Unsupported platform"

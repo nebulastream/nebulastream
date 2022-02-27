@@ -37,7 +37,9 @@ class ThreadNamingTest : public testing::Test {
 TEST_F(ThreadNamingTest, testThreadNaming) {
     char threadName[17];
     setThreadName("NES-%d", 0);
+#if defined(__GLIBC__)
     pthread_getname_np(pthread_self(), threadName, sizeof(threadName));
+#endif
     EXPECT_TRUE(std::strcmp(threadName, "NES-0") == 0);
 }
 
