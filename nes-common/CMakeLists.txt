@@ -39,8 +39,6 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-
-
 #Add the nes common and headers to cpack
 install(TARGETS nes-common
         COMPONENT nesLibrary
