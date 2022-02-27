@@ -229,6 +229,21 @@
 #include <sys/stat.h>
 #include <syscall.h>
 #include <unistd.h>
+/**
+ * From https://github.com/bombela/backward-cpp/pull/221/files but
+ * we keep the same code block in the other #if, for compatibility
+ * outside of Alpine.
+ *
+ * We needs this since the ifdefs are not detected
+ * properly under musl/Alpine.
+ */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#include <dlfcn.h>
+#undef _GNU_SOURCE
+#else
+#include <dlfcn.h>
+#endif
 
 #if BACKWARD_HAS_BFD == 1
 //              NOTE: defining PACKAGE{,_VERSION} is required before including
