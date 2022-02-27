@@ -223,3 +223,15 @@ function(get_linux_lsb_release_information)
     endif ()
 endfunction()
 
+function(set_linux_musl_release_information)
+    file(STRINGS "/etc/os-release" data_list REGEX "^(ID|VERSION_ID)=")
+    # Look for lines like "ID="..." and VERSION_ID="..."
+    foreach(_var ${data_list})
+        if("${_var}" MATCHES "^(ID)=(.*)$")
+            set(ID "${CMAKE_MATCH_2}" PARENT_SCOPE)
+        elseif("${_var}" MATCHES "^(VERSION_ID)=(.*)$")
+            set(VERSION_ID "${CMAKE_MATCH_2}" PARENT_SCOPE)
+        endif()
+    endforeach()
+endfunction()
+
